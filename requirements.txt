@@ -1,0 +1,5 @@
+matplotlib==3.8.0
+numpy==1.23.5
+PennyLane==0.32.0
+sympy==1.12
+pfapack==0.3.1
