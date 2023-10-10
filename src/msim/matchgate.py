@@ -285,8 +285,20 @@ class Matchgate:
 
     @staticmethod
     def from_matrix(matrix: np.ndarray) -> Union['Matchgate', np.ndarray]:
-        """
-        Construct a Matchgate from a matrix.
+        r"""
+        Construct a Matchgate or Matchgates from a matrix. The decomposition is in the form
+        
+        .. math::
+            X = \sum_k^{K-1} c_k M_k\qty(\mathcal{P}_k)
+            
+        where :math:`X` is the input matrix, :math:`K` is the number of matchgates in the decomposition,
+        :math:`c_k` is the coefficient of the :math:`k`-th matchgate, :math:`M_k` is the :math:`k`-th matchgate,
+        and :math:`\mathcal{P}_k` is the set of parameters
+        
+        .. math::
+            \mathcal{P}_k = \{r_{k,0}, r_{k,1}, \theta_{k,0}, \theta_{k,1}, \theta_{k,2}, \theta_{k,3}, \theta_{k,4}\}
+        
+         of the :math:`k`-th matchgate.
 
         :param matrix: The matrix to construct the Matchgate or Matchgates from.
         :type matrix: np.ndarray
@@ -304,6 +316,7 @@ class Matchgate:
         # check if the matrix can be decomposed into multiple matchgates
         # if so, return a list of matchgates
         # else, raise an error
+        raise NotImplementedError("The matrix cannot be decomposed into multiple matchgates.")
 
     @staticmethod
     def to_sympy():
