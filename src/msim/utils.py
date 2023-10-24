@@ -1,3 +1,6 @@
+import importlib
+from typing import Any, List
+
 import numpy as np
 
 
@@ -7,16 +10,17 @@ PAULI_Z = np.array([[1, 0], [0, -1]])
 PAULI_I = np.eye(2)
 
 
-def recursive_kron(__inputs, lib=np):
+def recursive_kron(__inputs: List[Any], lib=np) -> Any:
     if isinstance(lib, str):
-        lib = eval(lib)
-
+        lib = importlib.import_module(lib)
+    print(f"in_shapes: {[i.shape for i in __inputs]}")
     if len(__inputs) == 1:
         return __inputs[0]
     elif len(__inputs) == 2:
         return lib.kron(__inputs[0], __inputs[1])
     elif len(__inputs) > 2:
-        return lib.kron(__inputs[0], recursive_kron(__inputs[1:]))
+        rec = recursive_kron(__inputs[:-1], lib=lib)
+        return lib.kron(rec, __inputs[-1])
     else:
         raise ValueError("Invalid shape for input array")
 
@@ -27,11 +31,13 @@ def get_majorana_mu(k: int, n: int) -> np.ndarray:
     Get the Majorana matrix :math:`c_\mu` defined as
 
     .. math::
-        c_{2k-1} = Z^{\otimes k-1} \otimes X \otimes I^{\otimes n-k}
+        c_{2k+1} = Z^{\otimes k} \otimes X \otimes I^{\otimes n-k-1}
 
     where :math:`Z` is the Pauli Z matrix, :math:`I` is the identity matrix, :math:`X` is the Pauli X matrix,
     :math:`\otimes` is the Kronecker product, :math:`k` is the index of the Majorana operator and :math:`n` is the
     number of particles.
+    
+    :Note: The index :math:`k` starts from 0.
 
     :param k: Index of the Majorana operator
     :type k: int
@@ -40,16 +46,16 @@ def get_majorana_mu(k: int, n: int) -> np.ndarray:
     :return: Majorana matrix :math:`c_\mu`
     :rtype: np.ndarray
     """
-    assert k > 0
+    assert k >= 0
     assert n > 0
-    assert k <= n
+    assert k < n
 
-    if k == 1:
-        return PAULI_X
-    elif k == n:
-        return recursive_kron([PAULI_Z] * (n - 1) + [PAULI_X])
-    else:
-        return recursive_kron([PAULI_Z] * (k - 1) + [PAULI_X] + [PAULI_I] * (n - k))
+    # if k == 0:
+    #     return PAULI_X
+    # elif k == n:
+    #     return recursive_kron([PAULI_Z] * (n - 1) + [PAULI_X])
+    # else:
+    return recursive_kron([PAULI_Z] * k + [PAULI_X] + [PAULI_I] * (n - k - 1))
 
 
 def get_majorana_nu(k: int, n: int) -> np.ndarray:
@@ -58,11 +64,13 @@ def get_majorana_nu(k: int, n: int) -> np.ndarray:
     Get the Majorana matrix :math:`c_\nu` defined as
 
     .. math::
-        c_{2k} = Z^{\otimes k-1} \otimes Y \otimes I^{\otimes n-k}
+        c_{2k} = Z^{\otimes k} \otimes Y \otimes I^{\otimes n-k-1}
 
     where :math:`Z` is the Pauli Z matrix, :math:`I` is the identity matrix, :math:`Y` is the Pauli Y matrix,
     :math:`\otimes` is the Kronecker product, :math:`k` is the index of the Majorana operator and :math:`n` is the
     number of particles.
+    
+    :Note: The index :math:`k` starts from 0.
 
     :param k: Index of the Majorana operator
     :type k: int
@@ -71,16 +79,16 @@ def get_majorana_nu(k: int, n: int) -> np.ndarray:
     :return: Majorana matrix :math:`c_\nu`
     :rtype: np.ndarray
     """
-    assert k > 0
+    assert k >= 0
     assert n > 0
     assert k <= n
 
-    if k == 1:
+    if k == 0:
         return PAULI_Y
     elif k == n:
         return recursive_kron([PAULI_Z] * (n - 1) + [PAULI_Y])
     else:
-        return recursive_kron([PAULI_Z] * (k - 1) + [PAULI_Y] + [PAULI_I] * (n - k))
+        return recursive_kron([PAULI_Z] * k + [PAULI_Y] + [PAULI_I] * (n - k - 1))
 
 
 def get_non_interacting_fermionic_hamiltonian_from_coeffs(hamiltonian_coefficients, lib=np):
