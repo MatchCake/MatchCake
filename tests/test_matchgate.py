@@ -18,6 +18,7 @@ def test_matchgate_m_dagger_m_constraint(matchgate_rn_init):
 def test_matchgate_det_constraint(matchgate_rn_init):
     assert matchgate_rn_init.check_det_constraint()
 
+
 def test_matchgate_constructor_with_default_theta4():
     m = Matchgate()
     assert m.theta4 == 0.0
