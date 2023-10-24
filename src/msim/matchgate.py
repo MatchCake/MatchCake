@@ -1,16 +1,34 @@
-from typing import NamedTuple, Union
-
+from typing import NamedTuple, Union, Optional
+from dataclasses import dataclass
 import numpy as np
 
+from . import utils
 
-class MatchgateParams(NamedTuple):
+
+
+@dataclass(init=True, repr=True, eq=False, order=False, unsafe_hash=False, frozen=True)
+class MatchgateParams:
     r0: float
     r1: float
     theta0: float
     theta1: float
     theta2: float
     theta3: float
-    theta4: float
+    theta4: float = None
+
+    def __new__(
+            cls,
+            r0: float,
+            r1: float,
+            theta0: float,
+            theta1: float,
+            theta2: float,
+            theta3: float,
+            theta4: Optional[float] = None
+    ):
+        if theta4 is None:
+            theta4 = -theta2
+        return super().__new__(cls, (r0, r1, theta0, theta1, theta2, theta3, theta4))
 
     @staticmethod
     def parse_from_params(params):
@@ -87,15 +105,15 @@ class MatchgateParams(NamedTuple):
     def to_string(self):
         return str(self)
 
-    def __repr__(self):
-        return (f"MatchgateParams("
-                f"r0={self.r0}, "
-                f"r1={self.r1}, "
-                f"theta0={self.theta0}, "
-                f"theta1={self.theta1}, "
-                f"theta2={self.theta2}, "
-                f"theta3={self.theta3}, "
-                f"theta4={self.theta4})")
+    # def __repr__(self):
+    #     return (f"MatchgateParams("
+    #             f"r0={self.r0}, "
+    #             f"r1={self.r1}, "
+    #             f"theta0={self.theta0}, "
+    #             f"theta1={self.theta1}, "
+    #             f"theta2={self.theta2}, "
+    #             f"theta3={self.theta3}, "
+    #             f"theta4={self.theta4})")
 
     def __str__(self):
         return f"[{self.r0}, {self.r1}, {self.theta0}, {self.theta1}, {self.theta2}, {self.theta3}, {self.theta4}]"
@@ -340,6 +358,8 @@ class Matchgate:
         self._data = None
         self._make_data_()
         self.check_asserts()
+        self._hamiltonian_coeffs = None
+        self._hamiltonian_coeffs_found_order = None
 
     @property
     def params(self):
@@ -466,4 +486,34 @@ class Matchgate:
     def __getitem__(self, item):
         return self.data[item]
 
+    def find_hamiltonian_coefficients(self, order: int = 1, iterations: int = 100) -> np.ndarray:
+        r"""
+
+        Find the 2n x 2n matrix :math:`h` of elements :math:`h_{\mu\nu}` such that
+
+        .. math::
+            M = \exp{-i\sum_{\mu\neq\nu = 1}^{2n} h_{\mu\nu} c_\mu c_\nu}
+
+        where :math:`c_\mu` is the :math:`\mu`-th Majorana operator, :math:`M` is the matchgate and
+        :math:`n` is the number of qubits which is equal to the number of rows and columns of the matchgate.
+
+        :param order: The order of the taylor expansion of the exponential.
+        :type order: int
+        :return: The matrix of coefficients :math:`h`.
+        :rtype: np.ndarray
+        """
+        n = self.data.shape[0] // 2
+
+        coeffs = np.zeros((2 * n, 2 * n), dtype=np.complex128)
+        hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs)
+        for i in range(iterations):
+            pred_matchgate = np.linalg.expm(-1j * hamiltonian)
+            if np.allclose(pred_matchgate.data, self.data):
+                break
+            else:
+                coeffs = np.random.uniform(-1, 1, size=(2 * n, 2 * n))
+                hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs)
+
+        self._hamiltonian_coeffs_found_order = order
+        return self._hamiltonian_coeffs
 
