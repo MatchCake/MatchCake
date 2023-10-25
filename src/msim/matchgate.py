@@ -5,19 +5,9 @@ import numpy as np
 from . import utils
 
 
-
-@dataclass(init=True, repr=True, eq=False, order=False, unsafe_hash=False, frozen=True)
 class MatchgateParams:
-    r0: float
-    r1: float
-    theta0: float
-    theta1: float
-    theta2: float
-    theta3: float
-    theta4: float = None
-
-    def __new__(
-            cls,
+    def __init__(
+            self,
             r0: float,
             r1: float,
             theta0: float,
@@ -28,19 +18,45 @@ class MatchgateParams:
     ):
         if theta4 is None:
             theta4 = -theta2
-        return super().__new__(cls, (r0, r1, theta0, theta1, theta2, theta3, theta4))
+        self._r0 = r0
+        self._r1 = r1
+        self._theta0 = theta0
+        self._theta1 = theta1
+        self._theta2 = theta2
+        self._theta3 = theta3
+        self._theta4 = theta4
+
+    @property
+    def r0(self) -> float:
+        return self._r0
+
+    @property
+    def r1(self) -> float:
+        return self._r1
+
+    @property
+    def theta0(self) -> float:
+        return self._theta0
+
+    @property
+    def theta1(self) -> float:
+        return self._theta1
+
+    @property
+    def theta2(self) -> float:
+        return self._theta2
+
+    @property
+    def theta3(self) -> float:
+        return self._theta3
+
+    @property
+    def theta4(self) -> float:
+        return self._theta4
 
     @staticmethod
     def parse_from_params(params):
-        return MatchgateParams(
-            r0=params[0],
-            r1=params[1],
-            theta0=params[2],
-            theta1=params[3],
-            theta2=params[4],
-            theta3=params[5],
-            theta4=params[6],
-        )
+        return MatchgateParams(*params)
 
     @staticmethod
     def parse_from_full_params(full_params):
@@ -105,15 +121,15 @@ class MatchgateParams:
     def to_string(self):
         return str(self)
 
-    # def __repr__(self):
-    #     return (f"MatchgateParams("
-    #             f"r0={self.r0}, "
-    #             f"r1={self.r1}, "
-    #             f"theta0={self.theta0}, "
-    #             f"theta1={self.theta1}, "
-    #             f"theta2={self.theta2}, "
-    #             f"theta3={self.theta3}, "
-    #             f"theta4={self.theta4})")
+    def __repr__(self):
+        return (f"MatchgateParams("
+                f"r0={self.r0}, "
+                f"r1={self.r1}, "
+                f"theta0={self.theta0}, "
+                f"theta1={self.theta1}, "
+                f"theta2={self.theta2}, "
+                f"theta3={self.theta3}, "
+                f"theta4={self.theta4})")
 
     def __str__(self):
         return f"[{self.r0}, {self.r1}, {self.theta0}, {self.theta1}, {self.theta2}, {self.theta3}, {self.theta4}]"
@@ -123,6 +139,20 @@ class MatchgateParams:
 
     def __hash__(self):
         return hash(self.to_string())
+
+    def __copy__(self):
+        return MatchgateParams(
+            r0=self.r0,
+            r1=self.r1,
+            theta0=self.theta0,
+            theta1=self.theta1,
+            theta2=self.theta2,
+            theta3=self.theta3,
+            theta4=self.theta4,
+        )
+
+    def __getitem__(self, item):
+        return self.to_numpy()[item]
 
 
 class MatchgateFullParams(NamedTuple):
@@ -250,6 +280,23 @@ class Matchgate:
     .. math::
          \theta_i \in [0, 2\pi) \forall i in \{0, 1, 2, 3, 4\}
 
+    Note that by setting the parameter :math:`\theta_4` to :math:`-\theta_2`, the matchgate can be written as
+
+    .. math::
+        \begin{pmatrix}
+            r_0 e^{i\theta_0} & 0 & 0 & (\sqrt{1 - r_0^2}) e^{-i(\theta_1+\pi)} \\
+            0 & r_1 e^{i\theta_2} & (\sqrt{1 - r_1^2}) e^{-i(\theta_3+\pi)} & 0 \\
+            0 & (\sqrt{1 - r_1^2}) e^{i\theta_3} & r_1 e^{-i\theta_2} & 0 \\
+            (\sqrt{1 - r_0^2}) e^{i\theta_1} & 0 & 0 & r_0 e^{-i\theta_0}
+        \end{pmatrix}
+
+    which set
+
+    .. math::
+        \det(A) = \det(W) = 1
+
+
+
     """
     ZEROS_INDEXES = [
         (0, 1), (0, 2),
@@ -337,6 +384,54 @@ class Matchgate:
         raise NotImplementedError("The matrix cannot be decomposed into multiple matchgates.")
 
     @staticmethod
+    def from_sub_matrices(A: np.ndarray, W: np.ndarray) -> Union['Matchgate', np.ndarray]:
+        r"""
+        Construct a Matchgate from the sub-matrices :math:`A` and :math:`W` defined as
+
+        .. math::
+            A = \begin{pmatrix}
+                a & b \\
+                c & d
+            \end{pmatrix}
+
+        and
+
+        .. math::
+            W = \begin{pmatrix}
+                w & x \\
+                y & z
+            \end{pmatrix}
+
+        where :math:`a, b, c, d, w, x, y, z \in \mathbb{C}`. The matchgate is constructed as
+
+        .. math::
+            \begin{pmatrix}
+                a & 0 & 0 & b \\
+                0 & w & x & 0 \\
+                0 & y & z & 0 \\
+                c & 0 & 0 & d
+            \end{pmatrix}
+
+        """
+        if A.shape != (2, 2):
+            raise ValueError("The A matrix must be a 2x2 matrix.")
+
+        if W.shape != (2, 2):
+            raise ValueError("The W matrix must be a 2x2 matrix.")
+
+        matrix = np.zeros((4, 4), dtype=np.complex128)
+        matrix[0, 0] = A[0, 0]
+        matrix[0, 3] = A[0, 1]
+        matrix[1, 1] = W[0, 0]
+        matrix[1, 2] = W[0, 1]
+        matrix[2, 1] = W[1, 0]
+        matrix[2, 2] = W[1, 1]
+        matrix[3, 0] = A[1, 0]
+        matrix[3, 3] = A[1, 1]
+
+        return Matchgate.from_matrix(matrix)
+
+    @staticmethod
     def to_sympy():
         import sympy as sp
         params = MatchgateParams.to_sympy()
@@ -362,11 +457,11 @@ class Matchgate:
         self._hamiltonian_coeffs_found_order = None
 
     @property
-    def params(self):
+    def params(self) -> MatchgateParams:
         return self._params
 
     @property
-    def full_params(self):
+    def full_params(self) -> MatchgateFullParams:
         return self._full_params
 
     @property
