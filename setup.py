@@ -1,24 +1,10 @@
 from setuptools import setup
-# from neurotorch import __author__, __url__, __email__, __version__, __license__
 import setuptools
-# from src import neurotorch
-
-# with open("README.md", "r", encoding="utf-8") as fh:
-#     long_description = fh.read()
-#
-# with open("requirements.txt", "r", encoding="utf-8") as fh:
-#     install_requires = fh.readlines()
 
 setup(
     name='MSim',
-    # version=__version__,
-    # description=neurotorch.__doc__,
     long_description='file: README.md',
     long_description_content_type="text/markdown",
-    # url=__url__,
-    # author=__author__,
-    # author_email=__email__,
-    # license=__license__,
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.8",
@@ -33,7 +19,6 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Operating System :: OS Independent",
     ],
-    # install_requires=install_requires,
     project_urls={
         'Homepage': 'https://github.com/JeremieGince/FermionicSimulation',
         'Source': 'https://github.com/JeremieGince/FermionicSimulation',
