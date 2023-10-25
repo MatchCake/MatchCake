@@ -3,7 +3,6 @@ from msim.matchgate import MatchgateParams
 import numpy as np
 
 
-# test this for a lot of random values
 @pytest.mark.parametrize(
     "r0, r1, theta0, theta1, theta2, theta3, theta4",
     [
