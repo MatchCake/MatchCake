@@ -8,7 +8,6 @@ pythonpath = [
 requires = [
   "setuptools",
   "wheel",
-  "torch",
   "pythonbasictools",
   "numpy",
   "matplotlib",
@@ -20,7 +19,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "MSim"
 dynamic = ["version", ]
-description = "NeuroTorch: A PyTorch-based framework for deep learning in neuroscience"
+description = ""
 authors = [
   { name="Jérémie Gince", email="gincejeremie@gmail.com" },
 ]
