@@ -1,5 +1,10 @@
 import pytest
-from msim.matchgate import MatchgateParams
+from msim import (
+    MatchgateStandardParams,
+    MatchgatePolarParams,
+    MatchgateHamiltonianParams,
+    MatchgateComposedHamiltonianParams
+)
 import numpy as np
 
 
@@ -10,8 +15,8 @@ import numpy as np
         for _ in range(100)
     ]
 )
-def test_matchgate_params_constructor(r0, r1, theta0, theta1, theta2, theta3, theta4):
-    matchgate_params = MatchgateParams(
+def test_matchgate_polar_params_constructor(r0, r1, theta0, theta1, theta2, theta3, theta4):
+    matchgate_params = MatchgatePolarParams(
         r0=r0,
         r1=r1,
         theta0=theta0,
