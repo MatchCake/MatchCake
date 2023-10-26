@@ -9,13 +9,13 @@ import numpy as np
 
 
 @pytest.mark.parametrize(
-    "r0, r1, theta0, theta1, theta2, theta3, theta4",
+    "r0, r1, theta0, theta1, theta2, theta3",
     [
-        tuple(np.random.rand(7))
+        tuple(np.random.rand(6))
         for _ in range(100)
     ]
 )
-def test_matchgate_polar_params_constructor(r0, r1, theta0, theta1, theta2, theta3, theta4):
+def test_matchgate_polar_params_constructor(r0, r1, theta0, theta1, theta2, theta3):
     matchgate_params = MatchgatePolarParams(
         r0=r0,
         r1=r1,
@@ -23,7 +23,6 @@ def test_matchgate_polar_params_constructor(r0, r1, theta0, theta1, theta2, thet
         theta1=theta1,
         theta2=theta2,
         theta3=theta3,
-        theta4=theta4
     )
     assert np.isclose(matchgate_params.r0, r0)
     assert np.isclose(matchgate_params.r1, r1)
@@ -31,7 +30,6 @@ def test_matchgate_polar_params_constructor(r0, r1, theta0, theta1, theta2, thet
     assert np.isclose(matchgate_params.theta1, theta1)
     assert np.isclose(matchgate_params.theta2, theta2)
     assert np.isclose(matchgate_params.theta3, theta3)
-    assert np.isclose(matchgate_params.theta4, theta4)
 
 
 

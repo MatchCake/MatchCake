@@ -51,3 +51,31 @@ def test_skew_antisymmetric_vector_to_matrix(input_vector, target_matrix):
             out_matrix = utils.skew_antisymmetric_vector_to_matrix(input_vector)
 
 
+@pytest.mark.parametrize(
+    "state,hamming_weight",
+    [
+        #          0
+        (np.array([1, 0]), 0),
+        (np.array([0, 1]), 1),
+        #          0     1
+        (np.array([1, 0, 1, 0]), 0),
+        (np.array([1, 0, 0, 1]), 1),
+        (np.array([0, 1, 0, 1]), 2),
+        #          0     1     2
+        (np.array([1, 0, 1, 0, 1, 0]), 0),
+        (np.array([1, 0, 1, 0, 0, 1]), 1),
+        (np.array([1, 0, 0, 1, 0, 1]), 2),
+        (np.array([0, 1, 0, 1, 0, 1]), 3),
+        #          0     1     2     3
+        (np.array([1, 0, 1, 0, 1, 0, 1, 0]), 0),
+        (np.array([1, 0, 1, 0, 1, 0, 0, 1]), 1),
+        (np.array([1, 0, 1, 0, 0, 1, 0, 1]), 2),
+        (np.array([1, 0, 0, 1, 0, 1, 0, 1]), 3),
+        (np.array([0, 1, 0, 1, 0, 1, 0, 1]), 4),
+    ]
+)
+def test_get_hamming_weight(state, hamming_weight):
+    out_hamming_weight = utils.get_hamming_weight(state)
+    assert out_hamming_weight == hamming_weight, (f"The output hamming weight is not the correct one. "
+                                                  f"Got {out_hamming_weight} instead of {hamming_weight}")
+
