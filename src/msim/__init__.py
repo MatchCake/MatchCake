@@ -16,6 +16,8 @@ from .matchgate_parameter_sets import (
     MatchgateHamiltonianParams,
     MatchgateComposedHamiltonianParams,
 )
+from .matchgate_operator import MatchgateOperator
+from .nif_device import NonInteractingFermionicDevice
 
 import warnings
 
