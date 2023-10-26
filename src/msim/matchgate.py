@@ -3,222 +3,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from . import utils
-
-
-class MatchgateParams:
-    def __init__(
-            self,
-            r0: float,
-            r1: float,
-            theta0: float,
-            theta1: float,
-            theta2: float,
-            theta3: float,
-            theta4: Optional[float] = None
-    ):
-        if theta4 is None:
-            theta4 = -theta2
-        self._r0 = r0
-        self._r1 = r1
-        self._theta0 = theta0
-        self._theta1 = theta1
-        self._theta2 = theta2
-        self._theta3 = theta3
-        self._theta4 = theta4
-
-    @property
-    def r0(self) -> float:
-        return self._r0
-
-    @property
-    def r1(self) -> float:
-        return self._r1
-
-    @property
-    def theta0(self) -> float:
-        return self._theta0
-
-    @property
-    def theta1(self) -> float:
-        return self._theta1
-
-    @property
-    def theta2(self) -> float:
-        return self._theta2
-
-    @property
-    def theta3(self) -> float:
-        return self._theta3
-
-    @property
-    def theta4(self) -> float:
-        return self._theta4
-
-    @staticmethod
-    def parse_from_params(params):
-        return MatchgateParams(*params)
-
-    @staticmethod
-    def parse_from_full_params(full_params):
-        full_params = MatchgateFullParams.parse_from_full_params(full_params)
-        return MatchgateParams(
-            r0=np.sqrt(full_params.a * np.conjugate(full_params.a)),
-            r1=np.sqrt(full_params.w * np.conjugate(full_params.w)),
-            theta0=np.angle(full_params.a),
-            theta1=np.angle(full_params.c),
-            theta2=np.angle(full_params.w),
-            theta3=np.angle(full_params.y),
-            theta4=np.angle(full_params.z),
-        )
-
-    @staticmethod
-    def to_sympy():
-        import sympy as sp
-        r0, r1 = sp.symbols('r_0 r_1')
-        theta0, theta1, theta2, theta3, theta4 = sp.symbols('\\theta_0 \\theta_1 \\theta_2 \\theta_3 \\theta_4')
-        return sp.Matrix([r0, r1, theta0, theta1, theta2, theta3, theta4])
-
-    @staticmethod
-    def compute_r_tilde(r, pkg='numpy'):
-        if pkg == 'numpy':
-            _pkg = np
-        elif pkg == 'sympy':
-            import sympy
-            _pkg = sympy
-        else:
-            raise ValueError("The pkg argument must be either 'numpy' or 'sympy'.")
-        return _pkg.sqrt(1 - r ** 2)
-
-    @property
-    def r0_tilde(self) -> float:
-        """
-        Return :math:`\\Tilde{r}_0 = \\sqrt{1 - r_0^2}`
-
-        :return: :math:`\\Tilde{r}_0`
-        """
-        return self.compute_r_tilde(self.r0, pkg='numpy')
-
-    @property
-    def r1_tilde(self) -> float:
-        """
-        Return :math:`\\Tilde{r}_1 = \\sqrt{1 - r_1^2}`
-
-        :return: :math:`\\Tilde{r}_1`
-        """
-        return self.compute_r_tilde(self.r1, pkg='numpy')
-
-    def to_numpy(self):
-        return np.asarray([
-            self.r0,
-            self.r1,
-            self.theta0,
-            self.theta1,
-            self.theta2,
-            self.theta3,
-            self.theta4,
-        ])
-
-    def to_string(self):
-        return str(self)
-
-    def __repr__(self):
-        return (f"MatchgateParams("
-                f"r0={self.r0}, "
-                f"r1={self.r1}, "
-                f"theta0={self.theta0}, "
-                f"theta1={self.theta1}, "
-                f"theta2={self.theta2}, "
-                f"theta3={self.theta3}, "
-                f"theta4={self.theta4})")
-
-    def __str__(self):
-        return f"[{self.r0}, {self.r1}, {self.theta0}, {self.theta1}, {self.theta2}, {self.theta3}, {self.theta4}]"
-
-    def __eq__(self, other):
-        return np.allclose(self.to_numpy(), other.to_numpy())
-
-    def __hash__(self):
-        return hash(self.to_string())
-
-    def __copy__(self):
-        return MatchgateParams(
-            r0=self.r0,
-            r1=self.r1,
-            theta0=self.theta0,
-            theta1=self.theta1,
-            theta2=self.theta2,
-            theta3=self.theta3,
-            theta4=self.theta4,
-        )
-
-    def __getitem__(self, item):
-        return self.to_numpy()[item]
-
-
-class MatchgateFullParams(NamedTuple):
-    a: float
-    b: float
-    c: float
-    d: float
-    w: float
-    x: float
-    y: float
-    z: float
-
-    @staticmethod
-    def parse_from_full_params(full_params):
-        return MatchgateFullParams(
-            a=full_params[0],
-            b=full_params[1],
-            c=full_params[2],
-            d=full_params[3],
-            w=full_params[4],
-            x=full_params[5],
-            y=full_params[6],
-            z=full_params[7],
-        )
-
-    @staticmethod
-    def parse_from_params(params, pkg='numpy'):
-        if pkg == 'numpy':
-            _pkg = np
-        elif pkg == 'sympy':
-            import sympy
-            _pkg = sympy
-        else:
-            raise ValueError("The pkg argument must be either 'numpy' or 'sympy'.")
-        params = MatchgateParams.parse_from_params(params)
-        r0_tilde = MatchgateParams.compute_r_tilde(params.r0, pkg=pkg)
-        r1_tilde = MatchgateParams.compute_r_tilde(params.r1, pkg=pkg)
-        return MatchgateFullParams(
-            a=params.r0 * _pkg.exp(1j * params.theta0),
-            b=r0_tilde * _pkg.exp(1j * (params.theta2 + params.theta4 - (params.theta1 + _pkg.pi))),
-            c=r0_tilde * _pkg.exp(1j * params.theta1),
-            d=params.r0 * _pkg.exp(1j * (params.theta2 + params.theta4 - params.theta0)),
-            w=params.r1 * _pkg.exp(1j * params.theta2),
-            x=r1_tilde * _pkg.exp(1j * (params.theta2 + params.theta4 - (params.theta3 + _pkg.pi))),
-            y=r1_tilde * _pkg.exp(1j * params.theta3),
-            z=params.r1 * _pkg.exp(1j * params.theta4),
-        )
-
-    @staticmethod
-    def to_sympy():
-        import sympy as sp
-        a, b, c, d = sp.symbols('a b c d')
-        w, x, y, z = sp.symbols('w x y z')
-        return sp.Matrix([a, b, c, d, w, x, y, z])
-
-    def to_numpy(self):
-        return np.asarray([
-            self.a,
-            self.b,
-            self.c,
-            self.d,
-            self.w,
-            self.x,
-            self.y,
-            self.z,
-        ])
+from . import matchgate_parameter_sets as mps
 
 
 class Matchgate:
@@ -305,10 +90,10 @@ class Matchgate:
         (3, 1), (3, 2),
     ]
     ELEMENTS_INDEXES = [
-        (0, 0), (0, 3),
-        (1, 1), (1, 2),
-        (2, 1), (2, 2),
-        (3, 0), (3, 3),
+        (0, 0), (0, 3),  # a, b
+        (3, 0), (3, 3),  # c, d
+        (1, 1), (1, 2),  # w, x
+        (2, 1), (2, 2),  # y, z
     ]
 
     @staticmethod
@@ -320,7 +105,7 @@ class Matchgate:
         :rtype Matchgate:
         """
         return Matchgate(
-            params=MatchgateParams(
+            params=mps.MatchgatePolarParams(
                 r0=np.random.uniform(),
                 r1=np.random.uniform(),
                 theta0=np.random.uniform(0, 2 * np.pi),
@@ -339,8 +124,8 @@ class Matchgate:
             return False
         elements_indexes_as_array = np.asarray(Matchgate.ELEMENTS_INDEXES)
         full_params_arr = matrix[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
-        full_params = MatchgateFullParams.parse_from_full_params(full_params_arr)
-        params = MatchgateParams.parse_from_full_params(full_params)
+        full_params = mps.MatchgateStandardParams.parse_from_full_params(full_params_arr)
+        params = mps.MatchgatePolarParams.parse_from_standard_params(full_params)
         try:
             m = Matchgate(params=params)
             m.check_asserts()
@@ -349,39 +134,27 @@ class Matchgate:
             return False
 
     @staticmethod
-    def from_matrix(matrix: np.ndarray) -> Union['Matchgate', np.ndarray]:
+    def from_matrix(matrix: np.ndarray) -> 'Matchgate':
         r"""
-        Construct a Matchgate or Matchgates from a matrix. The decomposition is in the form
-        
-        .. math::
-            X = \sum_k^{K-1} c_k M_k\qty(\mathcal{P}_k)
-            
-        where :math:`X` is the input matrix, :math:`K` is the number of matchgates in the decomposition,
-        :math:`c_k` is the coefficient of the :math:`k`-th matchgate, :math:`M_k` is the :math:`k`-th matchgate,
-        and :math:`\mathcal{P}_k` is the set of parameters
-        
-        .. math::
-            \mathcal{P}_k = \{r_{k,0}, r_{k,1}, \theta_{k,0}, \theta_{k,1}, \theta_{k,2}, \theta_{k,3}, \theta_{k,4}\}
-        
-         of the :math:`k`-th matchgate.
+        Construct a Matchgate from a matrix if it is possible. The matrix must be a 4x4 matrix.
 
-        :param matrix: The matrix to construct the Matchgate or Matchgates from.
+        :param matrix: The matrix to construct the Matchgate from.
         :type matrix: np.ndarray
-        :return: The Matchgate or Matchgates constructed from the matrix.
-        :rtype: Matchgate or np.ndarray
+        :return: The Matchgate constructed from the matrix.
+        :rtype: Matchgate
+
+        :raises ValueError: If the matrix is not a 4x4 matrix.
+        :raises ValueError: If the matrix is not a matchgate.
         """
         if matrix.shape != (4, 4):
             raise ValueError("The matrix must be a 4x4 matrix.")
         if Matchgate.is_matchgate(matrix):
             elements_indexes_as_array = np.asarray(Matchgate.ELEMENTS_INDEXES)
             full_params_arr = matrix[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
-            full_params = MatchgateFullParams.parse_from_full_params(full_params_arr)
-            params = MatchgateParams.parse_from_full_params(full_params)
+            full_params = mps.MatchgateStandardParams.parse_from_full_params(full_params_arr)
+            params = mps.MatchgatePolarParams.parse_from_standard_params(full_params)
             return Matchgate(params=params)
-        # check if the matrix can be decomposed into multiple matchgates
-        # if so, return a list of matchgates
-        # else, raise an error
-        raise NotImplementedError("The matrix cannot be decomposed into multiple matchgates.")
+        raise ValueError("The matrix is not a matchgate.")
 
     @staticmethod
     def from_sub_matrices(A: np.ndarray, W: np.ndarray) -> Union['Matchgate', np.ndarray]:
@@ -432,10 +205,41 @@ class Matchgate:
         return Matchgate.from_matrix(matrix)
 
     @staticmethod
+    def from_hamiltonian_coeffs(coeffs_vector) -> 'Matchgate':
+        r"""
+        Construct a Matchgate from the Hamiltonian coefficients vector. The Hamiltonian coefficients is a vector that
+        represent the upper triangular part of a skew-symmetric 4x4 matrix defined as
+
+        .. math::
+            \begin{pmatrix}
+                0 & h_{0} & h_{1} & h_{2} \\
+                -h_{0} & 0 & h_{3} & h_{4} \\
+                -h_{1} & -h_{3} & 0 & h_{5} \\
+                -h_{2} & -h_{4} & -h_{5} & 0
+            \end{pmatrix}
+
+        where :math:`h_{i}` is the :math:`i`-th element of the Hamiltonian coefficients vector. The matchgate is
+        constructed as
+
+        .. math::
+            M = \exp{-i\sum_{\mu\nu}^{2n} h_{\mu\nu} c_\mu c_\nu}
+
+        where :math:`c_\mu` and :math:`c_\nu` are the Majorana operators.
+
+        :param coeffs_vector:
+        :return:
+        """
+        from scipy.linalg import expm
+        coeffs_matrix = utils.skew_antisymmetric_vector_to_matrix(coeffs_vector)
+        hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs_matrix)
+        pred_matchgate = expm(-1j * hamiltonian)
+        return Matchgate.from_matrix(pred_matchgate)
+
+    @staticmethod
     def to_sympy():
         import sympy as sp
-        params = MatchgateParams.to_sympy()
-        a, b, c, d, w, x, y, z = MatchgateFullParams.parse_from_params(params, pkg='sympy')
+        params = mps.MatchgatePolarParams.to_sympy()
+        a, b, c, d, w, x, y, z = mps.MatchgateStandardParams.parse_from_params(params, pkg='sympy')
         return sp.Matrix([
             [a, 0, 0, b],
             [0, w, x, 0],
@@ -445,11 +249,33 @@ class Matchgate:
 
     def __init__(
             self,
-            params: Union[MatchgateParams, np.ndarray, list, tuple]
+            params: Union[mps.MatchgateParams, np.ndarray, list, tuple],
+            *,
+            backend='numpy',
     ):
-        self._params = MatchgateParams.parse_from_params(params)
+        r"""
+        Construct a Matchgate from the parameters. The parameters can be a MatchgateParams object, a list, a tuple or
+        a numpy array. If the parameters are a list, tuple or numpy array, the parameters will be interpreted as
+        MatchgateStandardParams if the length is 8, MatchgatePolarParams if the length is 6 or 7.
+
+        If the parameters are a MatchgateParams object, the parameters will be interpreted as the type of the object.
+
+        :param params: The parameters of the Matchgate.
+        :type params: Union[mps.MatchgateParams, np.ndarray, list, tuple]
+        :param backend: The backend to use for the computations. Can be 'numpy', 'sympy' or 'torch'.
+        :type backend: str
+        """
+        self._backend = backend
+
+        self._polar_params = None
+        self._standard_params = None
+        self._hamiltonian_params = None
+        self._composed_hamiltonian_params = None
+
+        self._initialize_params_(params)
+
         self.thetas = self.thetas
-        self._full_params = self._make_full_params()
+        self._standard_params = self._make_full_params()
         self._data = None
         self._make_data_()
         self.check_asserts()
@@ -457,12 +283,32 @@ class Matchgate:
         self._hamiltonian_coeffs_found_order = None
 
     @property
-    def params(self) -> MatchgateParams:
-        return self._params
+    def polar_params(self) -> mps.MatchgatePolarParams:
+        if self._polar_params is None:
+            self._make_polar_params_()
+        return self._polar_params
 
     @property
-    def full_params(self) -> MatchgateFullParams:
-        return self._full_params
+    def standard_params(self) -> mps.MatchgateStandardParams:
+        if self._standard_params is None:
+            self._make_standard_params_()
+        return self._standard_params
+
+    @property
+    def hamiltonian_params(self) -> mps.MatchgateHamiltonianParams:
+        if self._hamiltonian_params is None:
+            self._make_hamiltonian_params_()
+        return self._hamiltonian_params
+
+    @property
+    def composed_hamiltonian_params(self) -> mps.MatchgateComposedHamiltonianParams:
+        if self._composed_hamiltonian_params is None:
+            self._make_composed_hamiltonian_params_()
+        return self._composed_hamiltonian_params
+
+    @property
+    def backend(self):
+        return self._backend
 
     @property
     def data(self):
@@ -471,71 +317,193 @@ class Matchgate:
     @property
     def thetas(self):
         return np.asarray([
-            self.params.theta0,
-            self.params.theta1,
-            self.params.theta2,
-            self.params.theta3,
-            self.params.theta4,
+            self.polar_params.theta0,
+            self.polar_params.theta1,
+            self.polar_params.theta2,
+            self.polar_params.theta3,
+            self.polar_params.theta4,
         ])
 
     @thetas.setter
     def thetas(self, thetas):
         wrapped_thetas = np.mod(thetas, 2 * np.pi)
-        self._params = MatchgateParams(
-            r0=self.params.r0,
-            r1=self.params.r1,
+        self._polar_params = mps.MatchgatePolarParams(
+            r0=self.polar_params.r0,
+            r1=self.polar_params.r1,
             theta0=wrapped_thetas[0],
             theta1=wrapped_thetas[1],
             theta2=wrapped_thetas[2],
             theta3=wrapped_thetas[3],
             theta4=wrapped_thetas[4],
         )
-        self._full_params = self._make_full_params()
+        self._standard_params = self._make_full_params()
 
     @property
     def r(self):
         return np.asarray([
-            self.params.r0,
-            self.params.r1,
+            self.polar_params.r0,
+            self.polar_params.r1,
         ])
 
     @r.setter
     def r(self, r):
-        self._params = MatchgateParams(
+        self._polar_params = mps.MatchgatePolarParams(
             r0=r[0],
             r1=r[1],
-            theta0=self.params.theta0,
-            theta1=self.params.theta1,
-            theta2=self.params.theta2,
-            theta3=self.params.theta3,
-            theta4=self.params.theta4,
+            theta0=self.polar_params.theta0,
+            theta1=self.polar_params.theta1,
+            theta2=self.polar_params.theta2,
+            theta3=self.polar_params.theta3,
+            theta4=self.polar_params.theta4,
         )
-        self._full_params = self._make_full_params()
+        self._standard_params = self._make_full_params()
 
     @property
     def A(self):
         return np.asarray([
-            [self.full_params.a, self.full_params.b],
-            [self.full_params.c, self.full_params.d],
+            [self.standard_params.a, self.standard_params.b],
+            [self.standard_params.c, self.standard_params.d],
         ])
 
     @property
     def W(self):
         return np.asarray([
-            [self.full_params.w, self.full_params.x],
-            [self.full_params.y, self.full_params.z],
+            [self.standard_params.w, self.standard_params.x],
+            [self.standard_params.y, self.standard_params.z],
+        ])
+
+    @property
+    def hamiltonian_coeffs(self):
+        r"""
+        The Hamiltonian coefficients is a vector that represent the upper triangular part of a skew-symmetric
+        4x4 matrix defined as
+
+        .. math::
+            \begin{pmatrix}
+                0 & h_{0} & h_{1} & h_{2} \\
+                -h_{0} & 0 & h_{3} & h_{4} \\
+                -h_{1} & -h_{3} & 0 & h_{5} \\
+                -h_{2} & -h_{4} & -h_{5} & 0
+            \end{pmatrix}
+
+        where :math:`h_{i}` is the :math:`i`-th element of the Hamiltonian coefficients vector.
+
+        :Note: If this quantity is not computed yet, it will be computed using the :meth:`find_hamiltonian_coefficients`
+        method with default inputs values. It may take a while to compute.
+
+        :return: The Hamiltonian coefficients vector of length 6.
+        """
+        if self._hamiltonian_coeffs is None:
+            self._hamiltonian_coeffs = self.find_hamiltonian_coefficients()
+        return self._hamiltonian_coeffs
+
+    @property
+    def hamiltonian_coeffs_found_order(self):
+        return self._hamiltonian_coeffs_found_order
+
+    @property
+    def hamiltonian_coeffs_matrix(self):
+        r"""
+
+        Since the Hamiltonian coefficients is a vector that represent the upper triangular part of a skew-symmetric
+        4x4 matrix, we can reconstruct the matrix using the following formula:
+
+        .. math::
+            \begin{pmatrix}
+                0 & h_{0} & h_{1} & h_{2} \\
+                -h_{0} & 0 & h_{3} & h_{4} \\
+                -h_{1} & -h_{3} & 0 & h_{5} \\
+                -h_{2} & -h_{4} & -h_{5} & 0
+            \end{pmatrix}
+
+        where :math:`h_{i}` is the :math:`i`-th element of the Hamiltonian coefficients vector.
+
+
+        :return: The Hamiltonian coefficients matrix.
+        """
+        coeffs = self.hamiltonian_coeffs
+        return np.asarray([
+            [0, coeffs[0], coeffs[1], coeffs[2]],
+            [-coeffs[0], 0, coeffs[3], coeffs[4]],
+            [-coeffs[1], -coeffs[3], 0, coeffs[5]],
+            [-coeffs[2], -coeffs[4], -coeffs[5], 0],
         ])
 
     def _make_full_params(self):
-        return MatchgateFullParams.parse_from_params(self.params)
+        return mps.MatchgateStandardParams.parse_from_params(self.polar_params)
 
-    def _make_data_(self):
+    def _initialize_params_(
+            self,
+            given_params: Union[mps.MatchgateParams, np.ndarray, list, tuple]
+    ) -> mps.MatchgateParams:
+        r"""
+
+        Initialize the parameters of the matchgate. The parameters can be a MatchgateParams object, a list, a tuple or
+        a numpy array. If the parameters are a list, tuple or numpy array, the parameters will be interpreted as
+        MatchgateStandardParams if the length is 8, MatchgatePolarParams if the length is 6 or 7.
+
+        If the parameters are a MatchgateParams object, the parameters will be interpreted as the type of the object.
+
+        Finally, the attribute :attr:`_polar_params`, :attr:`_standard_params`, :attr:`_hamiltonian_params` or
+        :attr:`_composed_hamiltonian_params` will be set to the given parameters converted to the corresponding type.
+
+        :param given_params: The parameters of the matchgate.
+        :type given_params: Union[mps.MatchgateParams, np.ndarray, list, tuple]
+        :return: The parameters of the matchgate.
+        :rtype: mps.MatchgateParams
+        """
+        params = None
+        if isinstance(given_params, mps.MatchgateParams):
+            params = given_params
+        elif isinstance(given_params, np.ndarray):
+            if given_params.size == 6 or given_params.size == 7:
+                params = mps.MatchgatePolarParams.from_numpy(given_params.flatten())
+            elif given_params.size == 8:
+                params = mps.MatchgateStandardParams.from_numpy(given_params.flatten())
+            else:
+                raise ValueError("The given params must be a 6, 7 or 8 elements array.")
+        elif isinstance(given_params, (list, tuple)):
+            if len(given_params) == 6 or len(given_params) == 7:
+                params = mps.MatchgatePolarParams.parse_from_params(given_params)
+            elif len(given_params) == 8:
+                params = mps.MatchgateStandardParams.parse_from_params(given_params)
+            else:
+                raise ValueError("The given params must be a 6, 7 or 8 elements array.")
+        else:
+            raise ValueError("The given params must be a 6, 7 or 8 elements array.")
+
+        if isinstance(params, mps.MatchgatePolarParams):
+            self._polar_params = params
+        elif isinstance(params, mps.MatchgateStandardParams):
+            self._standard_params = params
+        elif isinstance(params, mps.MatchgateHamiltonianParams):
+            self._hamiltonian_params = params
+        elif isinstance(params, mps.MatchgateComposedHamiltonianParams):
+            self._composed_hamiltonian_params = params
+        else:
+            raise ValueError("The given params is not a valid MatchgateParams object.")
+        return params
+
+    def _make_polar_params_(self):
+        raise NotImplementedError
+
+    def _make_standard_params_(self):
+        raise NotImplementedError
+
+    def _make_hamiltonian_params_(self):
+        raise NotImplementedError
+
+    def _make_composed_hamiltonian_params_(self):
+        raise NotImplementedError
+
+    def _make_data_(self) -> np.ndarray:
         self._data = np.asarray([
-            [self.full_params.a, 0, 0, self.full_params.b],
-            [0, self.full_params.w, self.full_params.x, 0],
-            [0, self.full_params.y, self.full_params.z, 0],
-            [self.full_params.c, 0, 0, self.full_params.d],
+            [self.standard_params.a, 0, 0, self.standard_params.b],
+            [0, self.standard_params.w, self.standard_params.x, 0],
+            [0, self.standard_params.y, self.standard_params.z, 0],
+            [self.standard_params.c, 0, 0, self.standard_params.d],
         ])
+        return self._data
 
     def compute_m_m_dagger(self):
         return np.matmul(self.data, np.conjugate(self.data.T))
@@ -564,19 +532,19 @@ class Matchgate:
         assert self.check_det_constraint()
 
     def __repr__(self):
-        return f"Matchgate(params={self._params})"
+        return f"Matchgate(params={self._polar_params})"
 
     def __str__(self):
-        return f"Matchgate(params={self._params})"
+        return f"Matchgate(params={self._polar_params})"
 
     def __eq__(self, other):
-        return np.allclose(self.params.to_numpy(), other.params.to_numpy())
+        return np.allclose(self.polar_params.to_numpy(), other.polar_params.to_numpy())
 
     def __hash__(self):
-        return hash(self.params)
+        return hash(self.polar_params)
 
     def __copy__(self):
-        return Matchgate(params=self.params)
+        return Matchgate(params=self.polar_params)
 
     def __getitem__(self, item):
         return self.data[item]
@@ -597,18 +565,23 @@ class Matchgate:
         :return: The matrix of coefficients :math:`h`.
         :rtype: np.ndarray
         """
+        from scipy.optimize import minimize
+        from scipy.linalg import expm
+
+        n_state = self.data.shape[0]
         n = self.data.shape[0] // 2
 
-        coeffs = np.zeros((2 * n, 2 * n), dtype=np.complex128)
-        hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs)
-        for i in range(iterations):
-            pred_matchgate = np.linalg.expm(-1j * hamiltonian)
-            if np.allclose(pred_matchgate.data, self.data):
-                break
-            else:
-                coeffs = np.random.uniform(-1, 1, size=(2 * n, 2 * n))
-                hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs)
+        def cost_function(coeffs_vector):
+            coeffs_matrix = utils.skew_antisymmetric_vector_to_matrix(coeffs_vector)
+            hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs_matrix)
+            pred_matchgate = expm(-1j * hamiltonian)
+            return np.linalg.norm(pred_matchgate - self.data)
 
+        result = minimize(
+            cost_function,
+            np.random.uniform(-1.0, 1.0, size=(n_state * (n_state - 1) // 2,)),
+        )
+        self._hamiltonian_coeffs = result.x
         self._hamiltonian_coeffs_found_order = order
         return self._hamiltonian_coeffs
 
