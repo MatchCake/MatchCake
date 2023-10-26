@@ -10,6 +10,12 @@ __url__ = "https://github.com/JeremieGince/FermionicSimulation"
 __version__ = "0.0.1-beta0"
 
 from .matchgate import Matchgate
+from .matchgate_parameter_sets import (
+    MatchgateStandardParams,
+    MatchgatePolarParams,
+    MatchgateHamiltonianParams,
+    MatchgateComposedHamiltonianParams,
+)
 
 import warnings
 
