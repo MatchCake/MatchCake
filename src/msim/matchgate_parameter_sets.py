@@ -94,15 +94,19 @@ class MatchgatePolarParams(MatchgateParams):
             theta1: float,
             theta2: float,
             theta3: float,
-            theta4: Optional[float] = None,
+            # theta4: Optional[float] = None,
             *,
             backend='numpy',
+            **kwargs
     ):
         super().__init__(backend=backend)
-        if theta4 is None:
-            theta4 = -theta2
-        r0, r1, theta0, theta1, theta2, theta3, theta4 = self._maybe_cast_to_real(
-            r0, r1, theta0, theta1, theta2, theta3, theta4
+        # if theta4 is None:
+        #     theta4 = -theta2
+        # r0, r1, theta0, theta1, theta2, theta3, theta4 = self._maybe_cast_to_real(
+        #     r0, r1, theta0, theta1, theta2, theta3, theta4
+        # )
+        r0, r1, theta0, theta1, theta2, theta3 = self._maybe_cast_to_real(
+            r0, r1, theta0, theta1, theta2, theta3
         )
         self._r0 = r0
         self._r1 = r1
@@ -110,7 +114,8 @@ class MatchgatePolarParams(MatchgateParams):
         self._theta1 = theta1
         self._theta2 = theta2
         self._theta3 = theta3
-        self._theta4 = theta4
+        # self._theta4 = theta4
+        self._theta4 = theta4 = -theta2
 
     @property
     def r0(self) -> float:
@@ -147,9 +152,9 @@ class MatchgatePolarParams(MatchgateParams):
         elif isinstance(params, MatchgateStandardParams):
             return MatchgatePolarParams.parse_from_standard_params(params)
         elif isinstance(params, MatchgateHamiltonianParams):
-            raise NotImplementedError("This method is not implemented yet.")
+            return MatchgatePolarParams.parse_from_hamiltonian_params(params)
         elif isinstance(params, MatchgateComposedHamiltonianParams):
-            raise NotImplementedError("This method is not implemented yet.")
+            return MatchgatePolarParams.parse_from_composed_hamiltonian_params(params)
         return MatchgatePolarParams(*params)
 
     @staticmethod
@@ -162,8 +167,20 @@ class MatchgatePolarParams(MatchgateParams):
             theta1=np.angle(entries.c),
             theta2=np.angle(entries.w),
             theta3=np.angle(entries.y),
-            theta4=np.angle(entries.z),
+            # theta4=np.angle(entries.z),
         )
+    
+    @staticmethod
+    def parse_from_hamiltonian_params(params: 'MatchgateHamiltonianParams') -> 'MatchgatePolarParams':
+        std_params = MatchgateStandardParams.parse_from_params(params)
+        return MatchgatePolarParams.parse_from_standard_params(std_params)
+    
+    @staticmethod
+    def parse_from_composed_hamiltonian_params(
+            params: 'MatchgateComposedHamiltonianParams'
+    ) -> 'MatchgatePolarParams':
+        hami_params = MatchgateHamiltonianParams.parse_from_params(params)
+        return MatchgatePolarParams.parse_from_hamiltonian_params(hami_params)
 
     @staticmethod
     def to_sympy():
@@ -203,7 +220,7 @@ class MatchgatePolarParams(MatchgateParams):
             self.theta1,
             self.theta2,
             self.theta3,
-            self.theta4,
+            # self.theta4,
         ])
 
     def to_string(self):
@@ -236,7 +253,7 @@ class MatchgatePolarParams(MatchgateParams):
             theta1=self.theta1,
             theta2=self.theta2,
             theta3=self.theta3,
-            theta4=self.theta4,
+            # theta4=self.theta4,
         )
 
 
@@ -316,13 +333,13 @@ class MatchgateStandardParams(MatchgateParams):
         elif isinstance(params, MatchgatePolarParams):
             return MatchgateStandardParams.parse_from_polar_params(params)
         elif isinstance(params, MatchgateHamiltonianParams):
-            raise NotImplementedError("This method is not implemented yet.")
+            return MatchgateStandardParams.parse_from_hamiltonian_params(params)
         elif isinstance(params, MatchgateComposedHamiltonianParams):
-            raise NotImplementedError("This method is not implemented yet.")
+            return MatchgateStandardParams.parse_from_composed_hamiltonian_params(params)
         return MatchgateStandardParams(*params)
 
     @staticmethod
-    def parse_from_polar_params(params, backend='numpy'):
+    def parse_from_polar_params(params, backend='numpy') -> 'MatchgateStandardParams':
         _pkg = MatchgateParams.load_backend_lib(backend)
 
         params = MatchgatePolarParams.parse_from_params(params)
@@ -339,6 +356,27 @@ class MatchgateStandardParams(MatchgateParams):
             z=params.r1 * _pkg.exp(1j * params.theta4),
             backend=_pkg,
         )
+    
+    @staticmethod
+    def parse_from_hamiltonian_params(params: 'MatchgateHamiltonianParams') -> 'MatchgateStandardParams':
+        params = MatchgateHamiltonianParams.parse_from_params(params)
+        return MatchgateStandardParams(
+            a=-2 * (params.h0 + params.h5) + 1,
+            b=2j * (params.h4 - params.h1) - 2 * (params.h2 + params.h3),
+            c=2j * (params.h1 - params.h4) - 2 * (params.h2 + params.h3),
+            d=2 * (params.h0 + params.h5) + 1,
+            w=2 * (params.h5 - params.h0) + 1,
+            x=-2j * (params.h1 + params.h4) - 2 * (params.h2 - params.h3),
+            y=2j * (params.h1 + params.h4) + 2 * (params.h2 - params.h3),
+            z=2 * (params.h0 - params.h5) + 1,
+        )
+    
+    @staticmethod
+    def parse_from_composed_hamiltonian_params(
+            params: 'MatchgateComposedHamiltonianParams'
+    ) -> 'MatchgateStandardParams':
+        hami_params = MatchgateHamiltonianParams.parse_from_params(params)
+        return MatchgateStandardParams.parse_from_hamiltonian_params(hami_params)
 
     @staticmethod
     def to_sympy():
@@ -436,15 +474,32 @@ class MatchgateHamiltonianParams(MatchgateParams):
         if isinstance(params, MatchgateHamiltonianParams):
             return params
         elif isinstance(params, MatchgatePolarParams):
-            raise NotImplementedError("This method is not implemented yet.")
+            return MatchgateHamiltonianParams.parse_from_polar_params(params)
         elif isinstance(params, MatchgateStandardParams):
-            raise NotImplementedError("This method is not implemented yet.")
+            return MatchgateHamiltonianParams.parse_from_standard_params(params)
         elif isinstance(params, MatchgateComposedHamiltonianParams):
             return MatchgateHamiltonianParams.parse_from_composed_hamiltonian_params(params)
         return MatchgateHamiltonianParams(*params)
+    
+    @staticmethod
+    def parse_from_polar_params(params: 'MatchgatePolarParams') -> 'MatchgateHamiltonianParams':
+        std_params = MatchgateStandardParams.parse_from_params(params)
+        return MatchgateHamiltonianParams.parse_from_standard_params(std_params)
+    
+    @staticmethod
+    def parse_from_standard_params(params: 'MatchgateStandardParams') -> 'MatchgateHamiltonianParams':
+        params = MatchgateStandardParams.parse_from_full_params(params)
+        return MatchgateHamiltonianParams(
+            h0=(2 - params.a - params.w) / 4,
+            h1=(2 * params.x + params.b) / 20j,
+            h2=(5 * params.y - 4 * params.b - 2 * params.x) / 20,
+            h3=-(7 * params.x + 6 * params.b) / 20,
+            h4=-(9 * params.b + 9 * params.x + 5 * params.y) / 20j,
+            h5=(params.w - params.a) / 4,
+        )
 
     @staticmethod
-    def parse_from_composed_hamiltonian_params(params: 'MatchgateComposedHamiltonianParams'):
+    def parse_from_composed_hamiltonian_params(params: 'MatchgateComposedHamiltonianParams') -> 'MatchgateHamiltonianParams':
         return MatchgateHamiltonianParams(
                 h0=params.n_z + params.m_z,
                 h1=params.n_y + params.m_y,
@@ -531,12 +586,34 @@ class MatchgateComposedHamiltonianParams(MatchgateParams):
         if isinstance(params, MatchgateComposedHamiltonianParams):
             return params
         elif isinstance(params, MatchgatePolarParams):
-            raise NotImplementedError("This method is not implemented yet.")
+            return MatchgateComposedHamiltonianParams.parse_from_polar_params(params)
         elif isinstance(params, MatchgateStandardParams):
-            raise NotImplementedError("This method is not implemented yet.")
+            return MatchgateComposedHamiltonianParams.parse_from_standard_params(params)
         elif isinstance(params, MatchgateHamiltonianParams):
-            raise NotImplementedError("This method is not implemented yet.")
+            return MatchgateComposedHamiltonianParams.parse_from_hamiltonian_params(params)
         return MatchgateComposedHamiltonianParams(*params)
+    
+    @staticmethod
+    def parse_from_polar_params(params: 'MatchgatePolarParams') -> 'MatchgateComposedHamiltonianParams':
+        std_params = MatchgateStandardParams.parse_from_params(params)
+        return MatchgateComposedHamiltonianParams.parse_from_standard_params(std_params)
+    
+    @staticmethod
+    def parse_from_standard_params(params: 'MatchgateStandardParams') -> 'MatchgateComposedHamiltonianParams':
+        hamiltonian_params = MatchgateHamiltonianParams.parse_from_standard_params(params)
+        return MatchgateComposedHamiltonianParams.parse_from_hamiltonian_params(hamiltonian_params)
+    
+    @staticmethod
+    def parse_from_hamiltonian_params(params: 'MatchgateHamiltonianParams') -> 'MatchgateComposedHamiltonianParams':
+        return MatchgateComposedHamiltonianParams(
+            n_x=0.5 * (params.h2 + params.h3),
+            n_y=0.5 * (params.h1 + params.h4),
+            n_z=0.5 * (params.h0 + params.h5),
+            m_x=0.5 * (params.h3 - params.h2),
+            m_y=0.5 * (params.h4 - params.h1),
+            m_z=0.5 * (params.h5 - params.h0),
+            backend=params.backend,
+        )
 
     @staticmethod
     def to_sympy():
