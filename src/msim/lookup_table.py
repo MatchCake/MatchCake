@@ -124,9 +124,10 @@ class NonInteractingFermionicLookupTable:
         return self.block_diagonal_matrix @ pnp.conjugate(self.transition_matrix.T)
     
     def _compute_c_2p_alpha_m1__c_2p_beta_m1(self):
-        return self.block_diagonal_matrix  # TODO: delta_alpha_beta
+        return np.eye(self.transition_matrix.shape[0])
 
-    def __getitem__(self, i: int, j: int):
+    def __getitem__(self, item: Tuple[int, int]):
+        i, j = item
         if i == 0 and j == 0:
             return self.c_d_alpha__c_d_beta
         elif i == 0 and j == 1:
@@ -164,5 +165,23 @@ class NonInteractingFermionicLookupTable:
         return self._observables[k]
     
     def _compute_observable(self, k: int, hamming_weight: int) -> np.ndarray:
-        raise NotImplementedError()
+        obs = np.zeros((2 * hamming_weight + 2, 2 * hamming_weight + 2), dtype=complex)
+        for i in range(2 * hamming_weight + 2):
+            for j in range(i, 2 * hamming_weight + 2):
+                if i == hamming_weight:
+                    if j == hamming_weight + 1:
+                        obs[i, j] = self[1, 0][k, k]
+                    else:
+                        obs[i, j] = self[1, 2][k, k]
+                elif i == hamming_weight + 1:
+                    obs[i, j] = self[0, 2][k, k]
+                else:
+                    if j == hamming_weight:
+                        obs[i, j] = self[2, 1][k, k]
+                    elif j == hamming_weight + 1:
+                        obs[i, j] = self[2, 0][k, k]
+                    else:
+                        obs[i, j] = self[2, 2][k, k]
+        obs = obs - obs.T
+        return obs
         
