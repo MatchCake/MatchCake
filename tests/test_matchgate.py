@@ -53,8 +53,8 @@ def test_matchgate_constructor_with_default_theta4(params):
 )
 def test_matchgate_constructor_from_matrix(input_matrix):
     mg = Matchgate.from_matrix(input_matrix)
-    assert np.allclose(mg.data, input_matrix, rtol=1.e-4, atol=1.e-5), (f"The output matrix is not the correct one. "
-                                                                        f"Got \n{mg.data} instead of \n{input_matrix}")
+    assert np.allclose(mg.gate_data, input_matrix, rtol=1.e-4, atol=1.e-5), (f"The output matrix is not the correct one. "
+                                                                        f"Got \n{mg.gate_data} instead of \n{input_matrix}")
 
 
 @pytest.mark.parametrize(
@@ -73,12 +73,13 @@ def test_matchgate_constructor_from_matrix(input_matrix):
 )
 def test_matchgate_hamiltonian_coefficient(input_matrix, target_coefficients):
     mg = Matchgate.from_matrix(input_matrix)
-    coeffs_vector = mg.hamiltonian_coeffs
+    coeffs_vector = mg.hamiltonian_params.to_numpy()
     coeff_check = np.allclose(coeffs_vector, target_coefficients, rtol=1.e-4, atol=1.e-5)
     out_matchgate = Matchgate.from_hamiltonian_coeffs(coeffs_vector)
-    mg_check = np.allclose(out_matchgate.data, mg.data, rtol=1.e-2, atol=1.e-3)
+    mg_check = np.allclose(out_matchgate.gate_data, mg.gate_data, rtol=1.e-2, atol=1.e-3)
     assert coeff_check, (f"The output vector is not the correct one. "
                          f"Got {coeffs_vector} instead of {target_coefficients}")
-    assert mg_check, f"The output matchgate is not the correct one. Got \n{out_matchgate.data} instead of \n{mg.data}"
+    assert mg_check, (f"The output matchgate is not the correct one. "
+                      f"Got \n{out_matchgate.gate_data} instead of \n{mg.gate_data}")
 
 

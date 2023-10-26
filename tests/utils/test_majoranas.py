@@ -19,7 +19,7 @@ def test_majoranas_anti_commutation(mu: int, nu: int, n: int):
     c_mu = utils.get_majorana(mu, n)
     c_nu = utils.get_majorana(nu, n)
     anti_commutator = c_mu @ c_nu + c_nu @ c_mu
-    target = 2 * np.eye(2 ** n) if mu == nu else np.zeros((2 ** n, 2 ** n))
+    target = 2 * np.eye(2 ** n) * int(mu == nu)
     assert np.allclose(anti_commutator, target), (f"The Majorana matrices do not anticommute "
                                                   f"with mu={mu}, nu={nu} and n={n}. "
                                                   f"Got {anti_commutator} instead of "
