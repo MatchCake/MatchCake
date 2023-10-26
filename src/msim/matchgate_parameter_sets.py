@@ -9,7 +9,6 @@ class MatchgateParams:
     r"""
     A matchgate can be represented by several set of parameters and there exists a mapping between them.
     """
-
     @staticmethod
     def _maybe_cast_to_real(*params):
         is_real = utils.check_if_imag_is_zero(np.array(params))
@@ -359,6 +358,32 @@ class MatchgateStandardParams(MatchgateParams):
             self.y,
             self.z,
         ])
+    
+    def to_matrix(self):
+        return np.asarray([
+            [self.a, 0, 0, self.b],
+            [0, self.w, self.x, 0],
+            [0, self.y, self.z, 0],
+            [self.c, 0, 0, self.d],
+        ])
+    
+    def adjoint(self):
+        r"""
+        Return the adjoint version of the parameters.
+        
+        :return: The adjoint parameters.
+        """
+        return MatchgateStandardParams(
+            a=np.conjugate(self.a),
+            b=np.conjugate(self.c),
+            c=np.conjugate(self.b),
+            d=np.conjugate(self.d),
+            w=np.conjugate(self.w),
+            x=np.conjugate(self.y),
+            y=np.conjugate(self.x),
+            z=np.conjugate(self.z),
+            backend=self.backend,
+        )
 
 
 class MatchgateHamiltonianParams(MatchgateParams):
