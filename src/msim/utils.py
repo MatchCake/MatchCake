@@ -1,5 +1,5 @@
 import importlib
-from typing import Any, List
+from typing import Any, List, Callable
 
 import numpy as np
 
@@ -13,13 +13,17 @@ PAULI_I = np.eye(2)
 def recursive_kron(__inputs: List[Any], lib=np) -> Any:
     if isinstance(lib, str):
         lib = importlib.import_module(lib)
+    return recursive_2in_operator(lib.kron, __inputs)
+
+    
+def recursive_2in_operator(operator: Callable, __inputs: List[Any]):
     if len(__inputs) == 1:
         return __inputs[0]
     elif len(__inputs) == 2:
-        return lib.kron(__inputs[0], __inputs[1])
+        return operator(__inputs[0], __inputs[1])
     elif len(__inputs) > 2:
-        rec = recursive_kron(__inputs[:-1], lib=lib)
-        return lib.kron(rec, __inputs[-1])
+        rec = recursive_2in_operator(operator, __inputs[:-1])
+        return operator(rec, __inputs[-1])
     else:
         raise ValueError("Invalid shape for input array")
 
@@ -108,6 +112,8 @@ def get_non_interacting_fermionic_hamiltonian_from_coeffs(hamiltonian_coefficien
 
     TODO: optimize the method by changing the sum for a matrix multiplication as :math:`H = i C^T h C` where :math:`C`
         is the matrix of Majorana operators.
+        
+    TODO: use multiprocessing to parallelize the computation of the matrix elements.
 
     :param hamiltonian_coefficients_matrix: Coefficients of the Majorana operators. Must be a square matrix of shape
         :math:`(2n, 2n)`.
@@ -176,4 +182,51 @@ def check_if_imag_is_zero(__matrix: np.ndarray, eps: float = 1e-5) -> bool:
     :return: True if the imaginary part is zero, False otherwise
     """
     return np.allclose(__matrix.imag, 0.0, atol=eps)
+
+
+def make_transition_matrix_from_action_matrix(action_matrix):
+    r"""
+    
+    Compute the transition matrix from the action matrix. The transition matrix is defined as
+    :math:`\mathbf{T}` such that
+    
+    .. math::
+        \mathbf{T}_{i,\nu} = \frac{1}{2} \left( \mathbf{A}^T_{2i-1,\nu} + i \mathbf{A}^T_{2i,\nu} \right)
+    
+    where :math:`\mathbf{A}` is the action matrix of shape (2n x 2n), :math:`\mathbf{T}` is the transition matrix
+    of shape (n x 2n), :math:`i` goes from 1 to :math:`n` and :math:`\nu` goes from 1 to :math:`2n`.
+    
+    :param action_matrix:
+    :return:
+    """
+    n = action_matrix.shape[0] // 2
+    transition_matrix = 0.5 * (
+            action_matrix.T[0:n - 1:2] + 1j * action_matrix.T[1:n:2]
+    )
+    return transition_matrix
+
+
+def get_block_diagonal_matrix(n: int) -> np.ndarray:
+    r"""
+    Construct the special block diagonal matrix of shape (2n x 2n) defined as
+    
+    .. math::
+        \mathbf{B} =
+        \oplus_{j=1}^{n}
+        \begin{pmatrix}
+            1 & i \\
+            -i & 1
+        \end{pmatrix}
+    
+    where :math:`\oplus` is the direct sum operator, :math:`n` is the number of particles and :math:`i` is the
+    imaginary unit.
+    
+    :param n: Number of particles
+    :type n: int
+    :return: Block diagonal matrix of shape (2n x 2n)
+    """
+    block_diagonal_matrix = np.zeros((2 * n, 2 * n), dtype=complex)
+    for i in range(n):
+        block_diagonal_matrix[2 * i:2 * i + 2, 2 * i:2 * i + 2] = np.array([[1, 1j], [-1j, 1]])
+    return block_diagonal_matrix
 
