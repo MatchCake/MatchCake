@@ -230,3 +230,21 @@ def get_block_diagonal_matrix(n: int) -> np.ndarray:
         block_diagonal_matrix[2 * i:2 * i + 2, 2 * i:2 * i + 2] = np.array([[1, 1j], [-1j, 1]])
     return block_diagonal_matrix
 
+
+def get_hamming_weight(binary_state: np.ndarray) -> int:
+    r"""
+    
+    Compute the Hamming weight of a state. The Hamming weight is defined as the number of non-zero elements in the
+    state.
+    
+    The binary state is a one hot vector of shape (2^n,) where n is the number of particles.
+    The Hamming weight is the number of states in the state [0, 1].
+    
+    :param binary_state: State of the system
+    :type binary_state: np.ndarray
+    :return: Hamming weight of the state
+    :rtype: int
+    """
+    state_reshape = binary_state.reshape(-1, 2)
+    hamming_weight = np.sum(state_reshape[:, 1], dtype=int)
+    return hamming_weight
