@@ -25,9 +25,10 @@ class MatchgateParams:
     def parse_from_params(params: 'MatchgateParams') -> 'MatchgateParams':
         raise NotImplementedError("This method must be implemented in the child class.")
 
-    @staticmethod
-    def from_numpy(params: np.ndarray) -> 'MatchgateParams':
-        raise NotImplementedError("This method must be implemented in the child class.")
+    @classmethod
+    def from_numpy(cls, params: np.ndarray) -> 'MatchgateParams':
+        tuple_params = tuple(params.flatten())
+        return cls(*tuple_params, backend='numpy')
 
     @staticmethod
     def parse_from_any(params: Any) -> 'MatchgateParams':
@@ -239,9 +240,6 @@ class MatchgatePolarParams(MatchgateParams):
     def __str__(self):
         return f"[{self.r0}, {self.r1}, {self.theta0}, {self.theta1}, {self.theta2}, {self.theta3}, {self.theta4}]"
 
-    def __eq__(self, other):
-        return np.allclose(self.to_numpy(), other.to_numpy())
-
     def __hash__(self):
         return hash(self.to_string())
 
@@ -258,6 +256,19 @@ class MatchgatePolarParams(MatchgateParams):
 
 
 class MatchgateStandardParams(MatchgateParams):
+    ZEROS_INDEXES = [
+        (0, 1), (0, 2),
+        (1, 0), (1, 3),
+        (2, 0), (2, 3),
+        (3, 1), (3, 2),
+    ]
+    ELEMENTS_INDEXES = [
+        (0, 0), (0, 3),  # a, b
+        (3, 0), (3, 3),  # c, d
+        (1, 1), (1, 2),  # w, x
+        (2, 1), (2, 2),  # y, z
+    ]
+
     def __init__(
             self,
             a: Union[float, complex],
@@ -360,16 +371,21 @@ class MatchgateStandardParams(MatchgateParams):
     @staticmethod
     def parse_from_hamiltonian_params(params: 'MatchgateHamiltonianParams') -> 'MatchgateStandardParams':
         params = MatchgateHamiltonianParams.parse_from_params(params)
-        return MatchgateStandardParams(
-            a=-2 * (params.h0 + params.h5) + 1,
-            b=2j * (params.h4 - params.h1) - 2 * (params.h2 + params.h3),
-            c=2j * (params.h1 - params.h4) - 2 * (params.h2 + params.h3),
-            d=2 * (params.h0 + params.h5) + 1,
-            w=2 * (params.h5 - params.h0) + 1,
-            x=-2j * (params.h1 + params.h4) - 2 * (params.h2 - params.h3),
-            y=2j * (params.h1 + params.h4) + 2 * (params.h2 - params.h3),
-            z=2 * (params.h0 - params.h5) + 1,
-        )
+        hamiltonian = utils.get_4x4_non_interacting_fermionic_hamiltonian_from_params(params)
+        gate = utils.get_unitary_from_hermitian_matrix(hamiltonian)
+        elements_indexes_as_array = np.asarray(MatchgateStandardParams.ELEMENTS_INDEXES)
+        params_arr = gate[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
+        return MatchgateStandardParams(*params_arr)
+        # return MatchgateStandardParams(
+        #     a=-2 * (params.h0 + params.h5) + 1,
+        #     b=2j * (params.h4 - params.h1) - 2 * (params.h2 + params.h3),
+        #     c=2j * (params.h1 - params.h4) - 2 * (params.h2 + params.h3),
+        #     d=2 * (params.h0 + params.h5) + 1,
+        #     w=2 * (params.h5 - params.h0) + 1,
+        #     x=-2j * (params.h1 + params.h4) - 2 * (params.h2 - params.h3),
+        #     y=2j * (params.h1 + params.h4) + 2 * (params.h2 - params.h3),
+        #     z=2 * (params.h0 - params.h5) + 1,
+        # )
     
     @staticmethod
     def parse_from_composed_hamiltonian_params(
