@@ -83,18 +83,6 @@ class Matchgate:
 
 
     """
-    ZEROS_INDEXES = [
-        (0, 1), (0, 2),
-        (1, 0), (1, 3),
-        (2, 0), (2, 3),
-        (3, 1), (3, 2),
-    ]
-    ELEMENTS_INDEXES = [
-        (0, 0), (0, 3),  # a, b
-        (3, 0), (3, 3),  # c, d
-        (1, 1), (1, 2),  # w, x
-        (2, 1), (2, 2),  # y, z
-    ]
 
     @staticmethod
     def random() -> 'Matchgate':
@@ -118,11 +106,11 @@ class Matchgate:
 
     @staticmethod
     def is_matchgate(matrix: np.ndarray) -> bool:
-        zeros_indexes_as_array = np.asarray(Matchgate.ZEROS_INDEXES)
+        zeros_indexes_as_array = np.asarray(mps.MatchgateStandardParams.ZEROS_INDEXES)
         check_zeros = np.allclose(matrix[zeros_indexes_as_array[:, 0], zeros_indexes_as_array[:, 1]], 0.0)
         if not check_zeros:
             return False
-        elements_indexes_as_array = np.asarray(Matchgate.ELEMENTS_INDEXES)
+        elements_indexes_as_array = np.asarray(mps.MatchgateStandardParams.ELEMENTS_INDEXES)
         full_params_arr = matrix[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
         full_params = mps.MatchgateStandardParams.parse_from_full_params(full_params_arr)
         params = mps.MatchgatePolarParams.parse_from_standard_params(full_params)
@@ -149,7 +137,7 @@ class Matchgate:
         if matrix.shape != (4, 4):
             raise ValueError("The matrix must be a 4x4 matrix.")
         if Matchgate.is_matchgate(matrix):
-            elements_indexes_as_array = np.asarray(Matchgate.ELEMENTS_INDEXES)
+            elements_indexes_as_array = np.asarray(mps.MatchgateStandardParams.ELEMENTS_INDEXES)
             full_params_arr = matrix[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
             full_params = mps.MatchgateStandardParams.parse_from_full_params(full_params_arr)
             params = mps.MatchgatePolarParams.parse_from_standard_params(full_params)
@@ -229,10 +217,9 @@ class Matchgate:
         :param coeffs_vector:
         :return:
         """
-        from scipy.linalg import expm
         coeffs_matrix = utils.skew_antisymmetric_vector_to_matrix(coeffs_vector)
         hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs_matrix)
-        pred_matchgate = expm(-1j * hamiltonian)
+        pred_matchgate = utils.get_unitary_from_hermitian_matrix(hamiltonian)
         return Matchgate.from_matrix(pred_matchgate)
 
     @staticmethod
