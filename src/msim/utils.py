@@ -248,3 +248,42 @@ def get_hamming_weight(binary_state: np.ndarray) -> int:
     state_reshape = binary_state.reshape(-1, 2)
     hamming_weight = np.sum(state_reshape[:, 1], dtype=int)
     return hamming_weight
+
+
+def get_4x4_non_interacting_fermionic_hamiltonian_from_params(params):
+    r"""
+
+    Compute the non-interacting fermionic Hamiltonian from the parameters of the Matchgate model.
+
+    :param params: Parameters of the Matchgate model
+    :type params: MatchgateParams
+    :return: Non-interacting fermionic Hamiltonian
+    :rtype: np.ndarray
+    """
+    from .matchgate_parameter_sets import MatchgateHamiltonianParams
+    params = MatchgateHamiltonianParams.parse_from_params(params)
+    return -1j * np.array([
+        [-2 * (params.h0 + params.h5), 0, 0, 2j*(params.h4 - params.h1) - 2*(params.h2 + params.h3)],
+        [0, 2 * (params.h5 - params.h0), 2 * (params.h2 - params.h3) - 2j*(params.h1 + params.h4), 0],
+        [0, 2 * (params.h2 - params.h3) + 2j*(params.h1 + params.h4), 2 * (params.h0 - params.h5), 0],
+        [2j*(params.h1 - params.h4) - 2*(params.h2 + params.h3), 0, 0, 2 * (params.h0 + params.h5)],
+    ])
+
+
+def get_unitary_from_hermitian_matrix(matrix: np.ndarray) -> np.ndarray:
+    r"""
+    Get the unitary matrix from a Hermitian matrix. The unitary matrix is defined as
+
+    .. math::
+        U = e^{-iH}
+
+    where :math:`H` is the Hermitian matrix and :math:`i` is the imaginary unit.
+
+    :param matrix: Hermitian matrix
+    :type matrix: np.ndarray
+    :return: Unitary matrix
+    :rtype: np.ndarray
+    """
+    from scipy.linalg import expm
+    return expm(-1j * matrix)
+
