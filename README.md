@@ -52,6 +52,5 @@ and following the instructions above.
   publisher={Université de Sherbrooke},
   url={https://github.com/JeremieGince/FermionicSimulation},
 }
-
-
+```
 
