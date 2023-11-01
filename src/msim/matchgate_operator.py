@@ -16,6 +16,8 @@ class MatchgateOperator(Matchgate, Operation):
     grad_method = "A"
     grad_recipe = None
 
+    generator = None
+
     @staticmethod
     def _matrix(*params):
         polar_params = mps.MatchgatePolarParams(*params)
