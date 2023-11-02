@@ -285,9 +285,9 @@ class Matchgate:
         return self._standard_params
 
     @property
-    def hamiltonian_params(self) -> mps.MatchgateHamiltonianParams:
+    def hamiltonian_params(self) -> mps.MatchgateHamiltonianCoefficientsParams:
         if self._hamiltonian_params is None:
-            self._make_hamiltonian_params_()
+            self._make_hamiltonian_coeffs_params_()
         return self._hamiltonian_params
 
     @property
@@ -469,7 +469,7 @@ class Matchgate:
             self._polar_params = params
         elif isinstance(params, mps.MatchgateStandardParams):
             self._standard_params = params
-        elif isinstance(params, mps.MatchgateHamiltonianParams):
+        elif isinstance(params, mps.MatchgateHamiltonianCoefficientsParams):
             self._hamiltonian_params = params
         elif isinstance(params, mps.MatchgateComposedHamiltonianParams):
             self._composed_hamiltonian_params = params
@@ -522,7 +522,7 @@ class Matchgate:
             raise ValueError("No params set. Cannot make standard params.")
         self._standard_params = mps.MatchgateStandardParams.parse_from_params(not_none_params[0])
 
-    def _make_hamiltonian_params_(self):
+    def _make_hamiltonian_coeffs_params_(self):
         not_none_params = [
             p for p in
             self.get_all_params_set(make_params=False)
@@ -530,7 +530,7 @@ class Matchgate:
         ]
         if len(not_none_params) == 0:
             raise ValueError("No params set. Cannot make hamiltonian params.")
-        self._hamiltonian_params = mps.MatchgateHamiltonianParams.parse_from_params(not_none_params[0])
+        self._hamiltonian_params = mps.MatchgateHamiltonianCoefficientsParams.parse_from_params(not_none_params[0])
 
     def _make_composed_hamiltonian_params_(self):
         not_none_params = [

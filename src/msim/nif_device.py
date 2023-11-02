@@ -1,7 +1,9 @@
 from typing import Iterable
 
+import numpy as np
 import pennylane as qml
 from pennylane import numpy as pnp
+from pennylane.wires import Wires
 from .matchgate_operator import MatchgateOperator
 from .lookup_table import NonInteractingFermionicLookupTable
 from . import utils
@@ -16,23 +18,36 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     author = "Jérémie Gince"
 
     operations = {"MatchgateOperator"}
-    observables = {"PauliZ"}
+    observables = {"PauliZ", "Identity"}
 
-    def __init__(self, wires=1):
+    def __init__(self, wires=2):
+        assert wires > 1, "At least two wires are required for this device."
         super().__init__(wires=wires, shots=None)
 
         # create the initial state
-        self._state = pnp.array([0, 1])
+        self._state = self._create_basis_state(0)
+        self._pre_rotated_state = self._state
 
         # create a variable for future copies of the state
-        self._pre_rotated_state = None
         self._transition_matrix = None
         self._block_diagonal_matrix = None
         self._lookup_table = None
-
+    
     @property
     def state(self):
-        return self._pre_rotated_state
+        """
+        Return the state of the device.
+        
+        :return: state vector of the device
+        :rtype: array[complex]
+        
+        :Note: This function comes from the ``default.qubit`` device.
+        """
+        dim = 2**self.num_wires
+        batch_size = self._get_batch_size(self._pre_rotated_state, (2,) * self.num_wires, dim)
+        # Do not flatten the state completely but leave the broadcasting dimension if there is one
+        shape = (batch_size, dim) if batch_size is not None else (dim,)
+        return self._reshape(self._pre_rotated_state, shape)
     
     @property
     def transition_matrix(self):
@@ -64,6 +79,22 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             supports_tensor_observables=False
         )
         return capabilities
+    
+    def _create_basis_state(self, index):
+        """
+        Create a computational basis state over all wires.
+        
+        :param index: integer representing the computational basis state
+        :type index: int
+        :return: complex array of shape ``[2]*self.num_wires`` representing the statevector of the basis state
+        
+        :Note: This function does not support broadcasted inputs yet.
+        :Note: This function comes from the ``default.qubit`` device.
+        """
+        state = np.zeros(2**self.num_wires, dtype=np.complex128)
+        state[index] = 1
+        state = self._asarray(state, dtype=self.C_DTYPE)
+        return self._reshape(state, [2] * self.num_wires)
 
     def apply(self, operations, rotations=None, **kwargs):
         if not isinstance(operations, Iterable):
@@ -82,21 +113,28 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         # apply the circuit rotations
         # for rot in rotations or []:
         #     self._state = qml.matrix(rot) @ self._state
-        assert rotations is None, "Rotations are not supported"
+        assert rotations is None or np.asarray([rotations]).size == 0, "Rotations are not supported"
 
     def analytic_probability(self, wires=None):
+        wires = wires or self.wires
+        wires = Wires(wires)
+        device_wires = self.map_wires(wires)
+        num_wires = len(device_wires)
+        
         if self._state is None:
             return None
         state_hamming_weight = utils.get_hamming_weight(self._state)
         
         if isinstance(wires, int):
             wires = [wires]
-        assert len(wires) == 1, "Only one wire is supported for now."
-        wire = wires[0]
-        
-        obs = self.lookup_table.get_observable(wire, state_hamming_weight)
-        prob = pfaffian.pfaffian(obs)
-        return prob
+        # assert num_wires == 1, "Only one wire is supported for now."
+        probs = pnp.zeros((num_wires, 2))
+        for wire in wires:
+            obs = self.lookup_table.get_observable(wire, state_hamming_weight)
+            prob0 = pnp.real(pfaffian.pfaffian(obs))
+            prob1 = 1.0 - prob0
+            probs[wire] = pnp.array([prob0, prob1])
+        return probs
 
     def reset(self):
         """Reset the device"""

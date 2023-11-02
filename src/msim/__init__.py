@@ -13,7 +13,7 @@ from .matchgate import Matchgate
 from .matchgate_parameter_sets import (
     MatchgateStandardParams,
     MatchgatePolarParams,
-    MatchgateHamiltonianParams,
+    MatchgateHamiltonianCoefficientsParams,
     MatchgateComposedHamiltonianParams,
 )
 from .matchgate_operator import MatchgateOperator

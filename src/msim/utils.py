@@ -260,8 +260,8 @@ def get_4x4_non_interacting_fermionic_hamiltonian_from_params(params):
     :return: Non-interacting fermionic Hamiltonian
     :rtype: np.ndarray
     """
-    from .matchgate_parameter_sets import MatchgateHamiltonianParams
-    params = MatchgateHamiltonianParams.parse_from_params(params)
+    from .matchgate_parameter_sets import MatchgateHamiltonianCoefficientsParams
+    params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params)
     return -1j * np.array([
         [-2 * (params.h0 + params.h5), 0, 0, 2j*(params.h4 - params.h1) - 2*(params.h2 + params.h3)],
         [0, 2 * (params.h5 - params.h0), 2 * (params.h2 - params.h3) - 2j*(params.h1 + params.h4), 0],

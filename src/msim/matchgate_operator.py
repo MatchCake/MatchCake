@@ -20,9 +20,13 @@ class MatchgateOperator(Matchgate, Operation):
 
     @staticmethod
     def _matrix(*params):
-        polar_params = mps.MatchgatePolarParams(*params)
+        polar_params = mps.MatchgatePolarParams(*params, backend=pnp)
         std_params = mps.MatchgateStandardParams.parse_from_params(polar_params)
         return pnp.array(std_params.to_matrix())
+    
+    @staticmethod
+    def compute_matrix(*params, **hyperparams):
+        return MatchgateOperator._matrix(*params)
     
     def __init__(
             self,

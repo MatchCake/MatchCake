@@ -22,7 +22,8 @@ class MatchgateParams:
         raise NotImplementedError("This method must be implemented in the child class.")
 
     @staticmethod
-    def parse_from_params(params: 'MatchgateParams') -> 'MatchgateParams':
+    def parse_from_params(params: 'MatchgateParams', backend="numpy") -> 'MatchgateParams':
+        # TODO: Add the backend argument to the parse_from_params method of the child classes.
         raise NotImplementedError("This method must be implemented in the child class.")
 
     @classmethod
@@ -147,41 +148,57 @@ class MatchgatePolarParams(MatchgateParams):
         return self._theta4
 
     @staticmethod
-    def parse_from_params(params: 'MatchgateParams') -> 'MatchgatePolarParams':
+    def parse_from_params(params: 'MatchgateParams', backend="numpy") -> 'MatchgatePolarParams':
         if isinstance(params, MatchgatePolarParams):
             return params
         elif isinstance(params, MatchgateStandardParams):
-            return MatchgatePolarParams.parse_from_standard_params(params)
-        elif isinstance(params, MatchgateHamiltonianParams):
-            return MatchgatePolarParams.parse_from_hamiltonian_params(params)
+            return MatchgatePolarParams.parse_from_standard_params(params, backend=backend)
+        elif isinstance(params, MatchgateHamiltonianCoefficientsParams):
+            return MatchgatePolarParams.parse_from_hamiltonian_params(params, backend=backend)
         elif isinstance(params, MatchgateComposedHamiltonianParams):
-            return MatchgatePolarParams.parse_from_composed_hamiltonian_params(params)
+            return MatchgatePolarParams.parse_from_composed_hamiltonian_params(params, backend=backend)
+        elif isinstance(params, MatchgateStandardHamiltonianParams):
+            return MatchgatePolarParams.parse_from_standard_hamiltonian_params(params, backend=backend)
         return MatchgatePolarParams(*params)
 
     @staticmethod
-    def parse_from_standard_params(entries: 'MatchgateStandardParams'):
-        entries = MatchgateStandardParams.parse_from_full_params(entries)
+    def parse_from_standard_params(params: 'MatchgateStandardParams', backend='numpy') -> 'MatchgatePolarParams':
+        params = MatchgateStandardParams.parse_from_params(params, backend=backend)
         return MatchgatePolarParams(
-            r0=np.sqrt(entries.a * np.conjugate(entries.a)),
-            r1=np.sqrt(entries.w * np.conjugate(entries.w)),
-            theta0=np.angle(entries.a),
-            theta1=np.angle(entries.c),
-            theta2=np.angle(entries.w),
-            theta3=np.angle(entries.y),
+            r0=np.sqrt(params.a * np.conjugate(params.a)),
+            r1=np.sqrt(params.w * np.conjugate(params.w)),
+            theta0=np.angle(params.a),
+            theta1=np.angle(params.c),
+            theta2=np.angle(params.w),
+            theta3=np.angle(params.y),
             # theta4=np.angle(entries.z),
+            backend=backend,
         )
     
     @staticmethod
-    def parse_from_hamiltonian_params(params: 'MatchgateHamiltonianParams') -> 'MatchgatePolarParams':
-        std_params = MatchgateStandardParams.parse_from_params(params)
-        return MatchgatePolarParams.parse_from_standard_params(std_params)
+    def parse_from_hamiltonian_params(
+            params: 'MatchgateHamiltonianCoefficientsParams',
+            backend='numpy'
+    ) -> 'MatchgatePolarParams':
+        std_params = MatchgateStandardParams.parse_from_params(params, backend=backend)
+        return MatchgatePolarParams.parse_from_standard_params(std_params, backend=backend)
     
     @staticmethod
     def parse_from_composed_hamiltonian_params(
-            params: 'MatchgateComposedHamiltonianParams'
+            params: 'MatchgateComposedHamiltonianParams',
+            backend='numpy'
     ) -> 'MatchgatePolarParams':
-        hami_params = MatchgateHamiltonianParams.parse_from_params(params)
-        return MatchgatePolarParams.parse_from_hamiltonian_params(hami_params)
+        hami_params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params, backend=backend)
+        return MatchgatePolarParams.parse_from_hamiltonian_params(hami_params, backend=backend)
+    
+    @staticmethod
+    def parse_from_standard_hamiltonian_params(
+            params: 'MatchgateStandardHamiltonianParams',
+            backend='numpy'
+    ) -> 'MatchgatePolarParams':
+        std_hami_params = MatchgateStandardHamiltonianParams.parse_from_params(params, backend=backend)
+        std_params = MatchgateStandardParams.parse_from_standard_hamiltonian_params(std_hami_params, backend=backend)
+        return MatchgatePolarParams.parse_from_standard_params(std_params, backend=backend)
 
     @staticmethod
     def to_sympy():
@@ -338,22 +355,24 @@ class MatchgateStandardParams(MatchgateParams):
         )
 
     @staticmethod
-    def parse_from_params(params: 'MatchgateParams') -> 'MatchgateStandardParams':
+    def parse_from_params(params: 'MatchgateParams', backend="numpy") -> 'MatchgateStandardParams':
         if isinstance(params, MatchgateStandardParams):
             return params
         elif isinstance(params, MatchgatePolarParams):
-            return MatchgateStandardParams.parse_from_polar_params(params)
-        elif isinstance(params, MatchgateHamiltonianParams):
-            return MatchgateStandardParams.parse_from_hamiltonian_params(params)
+            return MatchgateStandardParams.parse_from_polar_params(params, backend=backend)
+        elif isinstance(params, MatchgateHamiltonianCoefficientsParams):
+            return MatchgateStandardParams.parse_from_hamiltonian_params(params, backend=backend)
         elif isinstance(params, MatchgateComposedHamiltonianParams):
-            return MatchgateStandardParams.parse_from_composed_hamiltonian_params(params)
+            return MatchgateStandardParams.parse_from_composed_hamiltonian_params(params, backend=backend)
+        elif isinstance(params, MatchgateStandardHamiltonianParams):
+            return MatchgateStandardParams.parse_from_standard_hamiltonian_params(params, backend=backend)
         return MatchgateStandardParams(*params)
 
     @staticmethod
     def parse_from_polar_params(params, backend='numpy') -> 'MatchgateStandardParams':
         _pkg = MatchgateParams.load_backend_lib(backend)
 
-        params = MatchgatePolarParams.parse_from_params(params)
+        params = MatchgatePolarParams.parse_from_params(params, backend=backend)
         r0_tilde = MatchgatePolarParams.compute_r_tilde(params.r0, backend=_pkg)
         r1_tilde = MatchgatePolarParams.compute_r_tilde(params.r1, backend=_pkg)
         return MatchgateStandardParams(
@@ -369,13 +388,15 @@ class MatchgateStandardParams(MatchgateParams):
         )
     
     @staticmethod
-    def parse_from_hamiltonian_params(params: 'MatchgateHamiltonianParams') -> 'MatchgateStandardParams':
-        params = MatchgateHamiltonianParams.parse_from_params(params)
+    def parse_from_hamiltonian_params(
+            params: 'MatchgateHamiltonianCoefficientsParams', backend='numpy'
+    ) -> 'MatchgateStandardParams':
+        params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params, backend=backend)
         hamiltonian = utils.get_4x4_non_interacting_fermionic_hamiltonian_from_params(params)
         gate = utils.get_unitary_from_hermitian_matrix(hamiltonian)
         elements_indexes_as_array = np.asarray(MatchgateStandardParams.ELEMENTS_INDEXES)
         params_arr = gate[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
-        return MatchgateStandardParams(*params_arr)
+        return MatchgateStandardParams(*params_arr, backend=backend)
         # return MatchgateStandardParams(
         #     a=-2 * (params.h0 + params.h5) + 1,
         #     b=2j * (params.h4 - params.h1) - 2 * (params.h2 + params.h3),
@@ -389,10 +410,20 @@ class MatchgateStandardParams(MatchgateParams):
     
     @staticmethod
     def parse_from_composed_hamiltonian_params(
-            params: 'MatchgateComposedHamiltonianParams'
+            params: 'MatchgateComposedHamiltonianParams', backend='numpy'
     ) -> 'MatchgateStandardParams':
-        hami_params = MatchgateHamiltonianParams.parse_from_params(params)
-        return MatchgateStandardParams.parse_from_hamiltonian_params(hami_params)
+        hami_params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params, backend=backend)
+        return MatchgateStandardParams.parse_from_hamiltonian_params(hami_params, backend=backend)
+    
+    @staticmethod
+    def parse_from_standard_hamiltonian_params(
+            params: 'MatchgateStandardHamiltonianParams', backend='numpy'
+    ) -> 'MatchgateStandardParams':
+        std_hamil_params = MatchgateStandardHamiltonianParams.parse_from_params(params, backend=backend)
+        gate = utils.get_unitary_from_hermitian_matrix(std_hamil_params.to_matrix())
+        elements_indexes_as_array = np.asarray(MatchgateStandardParams.ELEMENTS_INDEXES)
+        params_arr = gate[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
+        return MatchgateStandardParams(*params_arr, backend=backend)
 
     @staticmethod
     def to_sympy():
@@ -414,7 +445,7 @@ class MatchgateStandardParams(MatchgateParams):
         ])
     
     def to_matrix(self):
-        return np.asarray([
+        return self.backend.asarray([
             [self.a, 0, 0, self.b],
             [0, self.w, self.x, 0],
             [0, self.y, self.z, 0],
@@ -440,7 +471,27 @@ class MatchgateStandardParams(MatchgateParams):
         )
 
 
-class MatchgateHamiltonianParams(MatchgateParams):
+class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
+    r"""
+    The hamiltionian of a system of non-interacting fermions can be written as:
+    
+    .. math::
+        H = \sum_{\mu\nu}h_{\mu\nu}c_{\mu}c_{\nu}
+    
+    where :math:`c_{\mu}` and :math:`c_{\nu}` are the fermionic majorana operators and :math:`h_{\mu\nu}` are the
+    hamiltonian coefficients that can be expressed in terms of a skew-symmetric matrix :math:`h` as:
+    
+    .. math::
+        h = \begin{pmatrix}
+            0 & h_{0} & h_{1} & h_{2} \\
+            -h_{0} & 0 & h_{3} & h_{4} \\
+            -h_{1} & -h_{3} & 0 & h_{5} \\
+            -h_{2} & -h_{4} & -h_{5} & 0
+        \end{pmatrix}
+        
+    where :math:`h_{0}, h_{1}, h_{2}, h_{3}, h_{4}, h_{5}` are the hamiltonian coefficients.
+    
+    """
     def __init__(
             self,
             h0: float,
@@ -486,45 +537,78 @@ class MatchgateHamiltonianParams(MatchgateParams):
         return self._h5
 
     @staticmethod
-    def parse_from_params(params: 'MatchgateParams') -> 'MatchgateHamiltonianParams':
-        if isinstance(params, MatchgateHamiltonianParams):
+    def parse_from_params(params: 'MatchgateParams', backend="numpy") -> 'MatchgateHamiltonianCoefficientsParams':
+        if isinstance(params, MatchgateHamiltonianCoefficientsParams):
             return params
         elif isinstance(params, MatchgatePolarParams):
-            return MatchgateHamiltonianParams.parse_from_polar_params(params)
+            return MatchgateHamiltonianCoefficientsParams.parse_from_polar_params(params, backend=backend)
         elif isinstance(params, MatchgateStandardParams):
-            return MatchgateHamiltonianParams.parse_from_standard_params(params)
+            return MatchgateHamiltonianCoefficientsParams.parse_from_standard_params(params, backend=backend)
         elif isinstance(params, MatchgateComposedHamiltonianParams):
-            return MatchgateHamiltonianParams.parse_from_composed_hamiltonian_params(params)
-        return MatchgateHamiltonianParams(*params)
+            return MatchgateHamiltonianCoefficientsParams.parse_from_composed_hamiltonian_params(
+                params, backend=backend
+            )
+        elif isinstance(params, MatchgateStandardHamiltonianParams):
+            return MatchgateHamiltonianCoefficientsParams.parse_from_standard_hamiltonian_params(
+                params, backend=backend
+            )
+        return MatchgateHamiltonianCoefficientsParams(*params)
     
     @staticmethod
-    def parse_from_polar_params(params: 'MatchgatePolarParams') -> 'MatchgateHamiltonianParams':
-        std_params = MatchgateStandardParams.parse_from_params(params)
-        return MatchgateHamiltonianParams.parse_from_standard_params(std_params)
-    
-    @staticmethod
-    def parse_from_standard_params(params: 'MatchgateStandardParams') -> 'MatchgateHamiltonianParams':
-        params = MatchgateStandardParams.parse_from_full_params(params)
-        return MatchgateHamiltonianParams(
-            h0=(2 - params.a - params.w) / 4,
-            h1=(2 * params.x + params.b) / 20j,
-            h2=(5 * params.y - 4 * params.b - 2 * params.x) / 20,
-            h3=-(7 * params.x + 6 * params.b) / 20,
-            h4=-(9 * params.b + 9 * params.x + 5 * params.y) / 20j,
-            h5=(params.w - params.a) / 4,
+    def parse_from_polar_params(
+            params: 'MatchgatePolarParams',
+            backend="numpy"
+    ) -> 'MatchgateHamiltonianCoefficientsParams':
+        std_params = MatchgateStandardParams.parse_from_params(params, backend=backend)
+        std_hamil_params = MatchgateStandardHamiltonianParams.parse_from_standard_params(
+            std_params, backend=backend
         )
-
+        return MatchgateHamiltonianCoefficientsParams.parse_from_standard_hamiltonian_params(
+            std_hamil_params, backend=backend
+        )
+    
     @staticmethod
-    def parse_from_composed_hamiltonian_params(params: 'MatchgateComposedHamiltonianParams') -> 'MatchgateHamiltonianParams':
-        return MatchgateHamiltonianParams(
+    def parse_from_standard_params(params: 'MatchgateStandardParams', backend="numpy") -> 'MatchgateHamiltonianCoefficientsParams':
+        std_params = MatchgateStandardParams.parse_from_params(params, backend=backend)
+        std_hamil_params = MatchgateStandardHamiltonianParams.parse_from_standard_params(
+            std_params, backend=backend
+        )
+        return MatchgateHamiltonianCoefficientsParams.parse_from_standard_hamiltonian_params(
+            std_hamil_params, backend=backend
+        )
+    
+    @staticmethod
+    def parse_from_composed_hamiltonian_params(
+            params: 'MatchgateComposedHamiltonianParams',
+            backend='numpy',
+    ) -> 'MatchgateHamiltonianCoefficientsParams':
+        return MatchgateHamiltonianCoefficientsParams(
                 h0=params.n_z + params.m_z,
                 h1=params.n_y + params.m_y,
                 h2=params.n_x - params.m_x,
                 h3=params.n_x + params.m_x,
                 h4=params.n_y - params.m_y,
                 h5=params.n_z - params.m_z,
-                backend=params.backend,
+                backend=backend,
             )
+    
+    @staticmethod
+    def parse_from_standard_hamiltonian_params(
+            params: 'MatchgateStandardHamiltonianParams',
+            backend='numpy'
+    ) -> 'MatchgateHamiltonianCoefficientsParams':
+        params = MatchgateStandardHamiltonianParams.parse_from_params(params, backend=backend)
+        h5 = (params.h0 - params.h2) / 4j
+        h3 = -(1j * params.h3 - 0.5 * params.h1 - 2 * params.h4 - params.h6) / 6j
+        return MatchgateHamiltonianCoefficientsParams(
+            h0=(params.h0 / 2j) - h5,
+            h1=0.25 * (1j * params.h3 + params.h1 - params.h4 - 1j * h3),
+            h2=0.25 * (params.h3 + 1j * params.h4) + h3,
+            h3=h3,
+            h4=0.5 * (params.h4 + params.h1) - 2j * h3,
+            h5=h5,
+            backend=backend,
+        )
 
     @staticmethod
     def to_sympy():
@@ -598,29 +682,43 @@ class MatchgateComposedHamiltonianParams(MatchgateParams):
         return self._m_z
 
     @staticmethod
-    def parse_from_params(params: 'MatchgateParams') -> 'MatchgateComposedHamiltonianParams':
+    def parse_from_params(
+            params: 'MatchgateParams',
+            backend="numpy",
+    ) -> 'MatchgateComposedHamiltonianParams':
         if isinstance(params, MatchgateComposedHamiltonianParams):
             return params
         elif isinstance(params, MatchgatePolarParams):
-            return MatchgateComposedHamiltonianParams.parse_from_polar_params(params)
+            return MatchgateComposedHamiltonianParams.parse_from_polar_params(params, backend=backend)
         elif isinstance(params, MatchgateStandardParams):
-            return MatchgateComposedHamiltonianParams.parse_from_standard_params(params)
-        elif isinstance(params, MatchgateHamiltonianParams):
-            return MatchgateComposedHamiltonianParams.parse_from_hamiltonian_params(params)
+            return MatchgateComposedHamiltonianParams.parse_from_standard_params(params, backend=backend)
+        elif isinstance(params, MatchgateHamiltonianCoefficientsParams):
+            return MatchgateComposedHamiltonianParams.parse_from_hamiltonian_params(params, backend=backend)
+        elif isinstance(params, MatchgateStandardHamiltonianParams):
+            return MatchgateComposedHamiltonianParams.parse_from_standard_hamiltonian_params(params, backend=backend)
         return MatchgateComposedHamiltonianParams(*params)
     
     @staticmethod
-    def parse_from_polar_params(params: 'MatchgatePolarParams') -> 'MatchgateComposedHamiltonianParams':
-        std_params = MatchgateStandardParams.parse_from_params(params)
-        return MatchgateComposedHamiltonianParams.parse_from_standard_params(std_params)
+    def parse_from_polar_params(
+            params: 'MatchgatePolarParams',
+            backend='numpy',
+    ) -> 'MatchgateComposedHamiltonianParams':
+        std_params = MatchgateStandardParams.parse_from_params(params, backend=backend)
+        return MatchgateComposedHamiltonianParams.parse_from_standard_params(std_params, backend=backend)
     
     @staticmethod
-    def parse_from_standard_params(params: 'MatchgateStandardParams') -> 'MatchgateComposedHamiltonianParams':
-        hamiltonian_params = MatchgateHamiltonianParams.parse_from_standard_params(params)
-        return MatchgateComposedHamiltonianParams.parse_from_hamiltonian_params(hamiltonian_params)
+    def parse_from_standard_params(
+            params: 'MatchgateStandardParams',
+            backend='numpy',
+    ) -> 'MatchgateComposedHamiltonianParams':
+        hamiltonian_params = MatchgateHamiltonianCoefficientsParams.parse_from_standard_params(params, backend=backend)
+        return MatchgateComposedHamiltonianParams.parse_from_hamiltonian_params(hamiltonian_params, backend=backend)
     
     @staticmethod
-    def parse_from_hamiltonian_params(params: 'MatchgateHamiltonianParams') -> 'MatchgateComposedHamiltonianParams':
+    def parse_from_hamiltonian_params(
+            params: 'MatchgateHamiltonianCoefficientsParams',
+            backend='numpy',
+    ) -> 'MatchgateComposedHamiltonianParams':
         return MatchgateComposedHamiltonianParams(
             n_x=0.5 * (params.h2 + params.h3),
             n_y=0.5 * (params.h1 + params.h4),
@@ -628,8 +726,20 @@ class MatchgateComposedHamiltonianParams(MatchgateParams):
             m_x=0.5 * (params.h3 - params.h2),
             m_y=0.5 * (params.h4 - params.h1),
             m_z=0.5 * (params.h5 - params.h0),
-            backend=params.backend,
+            backend=backend,
         )
+    
+    @staticmethod
+    def parse_from_standard_hamiltonian_params(
+            params: 'MatchgateStandardHamiltonianParams',
+            backend='numpy',
+    ) -> 'MatchgateComposedHamiltonianParams':
+        std_hamil_params = MatchgateStandardHamiltonianParams.parse_from_params(params, backend=backend)
+        hamil_params = MatchgateHamiltonianCoefficientsParams.parse_from_standard_hamiltonian_params(
+            std_hamil_params, backend=backend
+        )
+        return MatchgateComposedHamiltonianParams.parse_from_hamiltonian_params(hamil_params, backend=backend)
+        
 
     @staticmethod
     def to_sympy():
@@ -655,3 +765,196 @@ class MatchgateComposedHamiltonianParams(MatchgateParams):
                 f"m_x={self.m_x}, "
                 f"m_y={self.m_y}, "
                 f"m_z={self.m_z})")
+
+
+class MatchgateStandardHamiltonianParams(MatchgateParams):
+    r"""
+    The hamiltonian in the standard form is given by:
+    
+    .. math::
+        H = \begin{pmatrix}
+                \Tilde{h}_0 & 0 & 0 & \Tilde{h}_1 \\
+                0 & \Tilde{h}_2 & \Tilde{h}_3 & 0 \\
+                0 & \Tilde{h}_4 & \Tilde{h}_5 & 0 \\
+                \Tilde{h}_6 & 0 & 0 & \Tilde{h}_7
+            \end{pmatrix}
+    
+    where the :math:`\Tilde{h}_i` are the parameters and :math:`H` is the hamiltonian matrix of shape
+    :math:`2^n \times 2^n` where :math:`n` is the number of particles in the system. In our case, :math:`n=2`.
+    """
+    def __init__(
+            self,
+            h0: Union[float, complex],
+            h1: Union[float, complex],
+            h2: Union[float, complex],
+            h3: Union[float, complex],
+            h4: Union[float, complex],
+            h5: Union[float, complex],
+            h6: Union[float, complex],
+            h7: Union[float, complex],
+            *,
+            backend='numpy',
+    ):
+        super().__init__(backend=backend)
+        self._h0 = h0
+        self._h1 = h1
+        self._h2 = h2
+        self._h3 = h3
+        self._h4 = h4
+        self._h5 = h5
+        self._h6 = h6
+        self._h7 = h7
+    
+    @property
+    def h0(self) -> Union[float, complex]:
+        return self._h0
+    
+    @property
+    def h1(self) -> Union[float, complex]:
+        return self._h1
+    
+    @property
+    def h2(self) -> Union[float, complex]:
+        return self._h2
+    
+    @property
+    def h3(self) -> Union[float, complex]:
+        return self._h3
+    
+    @property
+    def h4(self) -> Union[float, complex]:
+        return self._h4
+    
+    @property
+    def h5(self) -> Union[float, complex]:
+        return self._h5
+    
+    @property
+    def h6(self) -> Union[float, complex]:
+        return self._h6
+    
+    @property
+    def h7(self) -> Union[float, complex]:
+        return self._h7
+    
+    @staticmethod
+    def parse_from_params(params: 'MatchgateParams', backend="numpy") -> 'MatchgateStandardHamiltonianParams':
+        if isinstance(params, MatchgateStandardHamiltonianParams):
+            return params
+        elif isinstance(params, MatchgatePolarParams):
+            return MatchgateStandardHamiltonianParams.parse_from_polar_params(params, backend=backend)
+        elif isinstance(params, MatchgateStandardParams):
+            return MatchgateStandardHamiltonianParams.parse_from_standard_params(params, backend=backend)
+        elif isinstance(params, MatchgateHamiltonianCoefficientsParams):
+            return MatchgateStandardHamiltonianParams.parse_from_hamiltonian_params(params, backend=backend)
+        elif isinstance(params, MatchgateComposedHamiltonianParams):
+            return MatchgateStandardHamiltonianParams.parse_from_composed_hamiltonian_params(params, backend=backend)
+        return MatchgateStandardHamiltonianParams(*params, backend=backend)
+    
+    @staticmethod
+    def parse_from_polar_params(
+            params: 'MatchgatePolarParams', backend="numpy"
+    ) -> 'MatchgateStandardHamiltonianParams':
+        std_params = MatchgateStandardParams.parse_from_params(params)
+        return MatchgateStandardHamiltonianParams.parse_from_standard_params(std_params)
+    
+    @staticmethod
+    def parse_from_standard_params(
+            params: 'MatchgateStandardParams', backend="numpy"
+    ) -> 'MatchgateStandardHamiltonianParams':
+        from scipy.linalg import logm
+        
+        std_params = MatchgateStandardParams.parse_from_params(params)
+        gate = std_params.to_matrix()
+        hamiltonian = 1j * logm(gate)
+        return MatchgateStandardHamiltonianParams(
+            h0=hamiltonian[0, 0],
+            h1=hamiltonian[0, 3],
+            h2=hamiltonian[1, 1],
+            h3=hamiltonian[1, 2],
+            h4=hamiltonian[2, 1],
+            h5=hamiltonian[2, 2],
+            h6=hamiltonian[3, 0],
+            h7=hamiltonian[3, 3],
+            backend=backend,
+        )
+    
+    @staticmethod
+    def parse_from_hamiltonian_params(
+            params: 'MatchgateHamiltonianCoefficientsParams', backend="numpy"
+    ) -> 'MatchgateStandardHamiltonianParams':
+        params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params)
+        return MatchgateStandardHamiltonianParams(
+            h0=2j * (params.h0 + params.h5),
+            h1=2 * (params.h4 - params.h1) + 2j * (params.h2 + params.h3),
+            h2=2j * (params.h0 - params.h5),
+            h3=2j * (params.h3 - params.h2) - 2 * (params.h1 + params.h4),
+            h4=2 * (params.h1 + params.h4) + 2j * (params.h3 - params.h2),
+            h5=2j * (params.h5 - params.h0),
+            h6=2 * (params.h1 - params.h4) + 2j * (params.h2 + params.h3),
+            h7=-2j * (params.h0 + params.h5),
+            backend=backend,
+        )
+    
+    @staticmethod
+    def parse_from_composed_hamiltonian_params(
+            params: 'MatchgateComposedHamiltonianParams', backend="numpy"
+    ) -> 'MatchgateStandardHamiltonianParams':
+        hami_params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params)
+        return MatchgateStandardHamiltonianParams.parse_from_hamiltonian_params(hami_params, backend)
+    
+    @staticmethod
+    def to_sympy():
+        import sympy as sp
+        h0, h1, h2, h3, h4, h5, h6, h7 = sp.symbols('h_0 h_1 h_2 h_3 h_4 h_5 h_6 h_7')
+        return sp.Matrix([h0, h1, h2, h3, h4, h5, h6, h7])
+    
+    def to_numpy(self):
+        return self.backend.asarray([
+            self.h0,
+            self.h1,
+            self.h2,
+            self.h3,
+            self.h4,
+            self.h5,
+            self.h6,
+            self.h7,
+        ])
+    
+    def to_matrix(self):
+        return self.backend.asarray([
+            [self.h0, 0, 0, self.h1],
+            [0, self.h2, self.h3, 0],
+            [0, self.h4, self.h5, 0],
+            [self.h6, 0, 0, self.h7],
+        ])
+    
+    def adjoint(self):
+        r"""
+        Return the adjoint version of the parameters.
+        
+        :return: The adjoint parameters.
+        """
+        return MatchgateStandardHamiltonianParams(
+            h0=np.conjugate(self.h0),
+            h1=np.conjugate(self.h6),
+            h2=np.conjugate(self.h2),
+            h3=np.conjugate(self.h4),
+            h4=np.conjugate(self.h3),
+            h5=np.conjugate(self.h5),
+            h6=np.conjugate(self.h1),
+            h7=np.conjugate(self.h7),
+            backend=self.backend,
+        )
+    
+    def __repr__(self):
+        return (f"MatchgateParams("
+                f"h0={self.h0}, "
+                f"h1={self.h1}, "
+                f"h2={self.h2}, "
+                f"h3={self.h3}, "
+                f"h4={self.h4}, "
+                f"h5={self.h5}, "
+                f"h6={self.h6}, "
+                f"h7={self.h7})")
+    
