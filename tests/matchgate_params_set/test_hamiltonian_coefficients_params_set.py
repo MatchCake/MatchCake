@@ -17,8 +17,8 @@ np.random.seed(42)
     "hamiltonian_params0,hamiltonian_params1",
     [
         (
-                MatchgateHamiltonianCoefficientsParams.from_numpy(vector),
-                MatchgateHamiltonianCoefficientsParams.from_numpy(vector),
+            MatchgateHamiltonianCoefficientsParams.from_numpy(vector),
+            MatchgateHamiltonianCoefficientsParams.from_numpy(vector),
         )
         for vector in np.random.rand(100, 6)
     ],
@@ -35,8 +35,8 @@ def test_hamiltonian_from_hamiltonian_params(
     "polar_params,hamiltonian_params",
     [
         (
-                MatchgatePolarParams(r0=1, r1=1, theta0=0, theta1=0, theta2=0, theta3=0),
-                MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
+            MatchgatePolarParams(r0=1, r1=1, theta0=0, theta1=0, theta2=0, theta3=0),
+            MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
         ),
     ],
 )
@@ -55,8 +55,8 @@ def test_parse_from_polar_params(
     "composed_hamiltonian_params,hamiltonian_params",
     [
         (
-                MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
-                MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
+            MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
+            MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
         ),
     ],
 )
@@ -77,8 +77,8 @@ def test_parse_from_composed_hamiltonian_params(
     "standard_params,hamiltonian_params",
     [
         (
-                MatchgateStandardParams(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
-                MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
+            MatchgateStandardParams(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
+            MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
         ),
     ],
 )
@@ -97,8 +97,8 @@ def test_parse_from_standard_params(
     "std_ham_params,ham_params",
     [
         (
-                MatchgateStandardHamiltonianParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0, h6=0.0, h7=0.0),
-                MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
+            MatchgateStandardHamiltonianParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0, h6=0.0, h7=0.0),
+            MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
         ),
     ],
 )
@@ -117,7 +117,7 @@ def test_parse_from_standard_hamiltonian_params(
     "params",
     [
         (
-                MatchgateComposedHamiltonianParams.from_numpy(vector)
+            MatchgateComposedHamiltonianParams.from_numpy(vector)
         )
         for vector in np.random.rand(100, 6)
     ],
@@ -133,7 +133,7 @@ def test_parse_from_composed_hamiltonian_params_is_real(
     "params",
     [
         (
-                MatchgatePolarParams.from_numpy(vector)
+            MatchgatePolarParams.from_numpy(vector)
         )
         for vector in np.random.rand(100, 6)
     ],
