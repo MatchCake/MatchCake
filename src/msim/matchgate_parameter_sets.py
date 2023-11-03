@@ -846,7 +846,7 @@ class MatchgateStandardHamiltonianParams(MatchgateParams):
         elif isinstance(params, MatchgateStandardParams):
             return MatchgateStandardHamiltonianParams.parse_from_standard_params(params, backend=backend)
         elif isinstance(params, MatchgateHamiltonianCoefficientsParams):
-            return MatchgateStandardHamiltonianParams.parse_from_hamiltonian_params(params, backend=backend)
+            return MatchgateStandardHamiltonianParams.parse_from_hamiltonian_coefficients_params(params, backend=backend)
         elif isinstance(params, MatchgateComposedHamiltonianParams):
             return MatchgateStandardHamiltonianParams.parse_from_composed_hamiltonian_params(params, backend=backend)
         return MatchgateStandardHamiltonianParams(*params, backend=backend)
@@ -880,7 +880,7 @@ class MatchgateStandardHamiltonianParams(MatchgateParams):
         )
     
     @staticmethod
-    def parse_from_hamiltonian_params(
+    def parse_from_hamiltonian_coefficients_params(
             params: 'MatchgateHamiltonianCoefficientsParams', backend="numpy"
     ) -> 'MatchgateStandardHamiltonianParams':
         params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params)
@@ -901,7 +901,7 @@ class MatchgateStandardHamiltonianParams(MatchgateParams):
             params: 'MatchgateComposedHamiltonianParams', backend="numpy"
     ) -> 'MatchgateStandardHamiltonianParams':
         hami_params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params)
-        return MatchgateStandardHamiltonianParams.parse_from_hamiltonian_params(hami_params, backend)
+        return MatchgateStandardHamiltonianParams.parse_from_hamiltonian_coefficients_params(hami_params, backend)
     
     @staticmethod
     def to_sympy():
