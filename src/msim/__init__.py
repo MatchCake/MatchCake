@@ -15,7 +15,9 @@ from .matchgate_parameter_sets import (
     MatchgatePolarParams,
     MatchgateHamiltonianCoefficientsParams,
     MatchgateComposedHamiltonianParams,
+    MatchgateStandardHamiltonianParams
 )
+from msim import matchgate_parameter_sets as mps  # Alias
 from .matchgate_operator import MatchgateOperator
 from .nif_device import NonInteractingFermionicDevice
 
