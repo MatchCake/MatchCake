@@ -1,11 +1,14 @@
+import numpy as np
 import pytest
+
 from msim import (
     MatchgateStandardParams,
     MatchgatePolarParams,
     MatchgateHamiltonianCoefficientsParams,
-    MatchgateComposedHamiltonianParams
+    MatchgateComposedHamiltonianParams,
+    MatchgateStandardHamiltonianParams,
+    utils
 )
-import numpy as np
 
 np.random.seed(42)
 
@@ -20,7 +23,7 @@ np.random.seed(42)
         for vector in np.random.rand(100, 6)
     ],
 )
-def test_composed_hamiltonian_to_composed_hamiltonian_params(
+def test_composed_hamiltonian_from_composed_hamiltonian_params(
         composed_hamiltonian_params0: MatchgateComposedHamiltonianParams,
         composed_hamiltonian_params1: MatchgateComposedHamiltonianParams
 ):
@@ -29,62 +32,113 @@ def test_composed_hamiltonian_to_composed_hamiltonian_params(
 
 
 @pytest.mark.parametrize(
-    "composed_hamiltonian_params,standard_params",
+    "standard_params,composed_hamiltonian_params",
     [
         (
-                MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
                 MatchgateStandardParams(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
+                MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
         ),
     ],
 )
-def test_composed_hamiltonian_to_standard_params(
-        composed_hamiltonian_params: MatchgateComposedHamiltonianParams,
-        standard_params: MatchgateStandardParams
+def test_parse_from_standard_params(
+        standard_params: MatchgateStandardParams,
+        composed_hamiltonian_params: MatchgateComposedHamiltonianParams
 ):
-    standard_params_ = MatchgateStandardParams.parse_from_composed_hamiltonian_params(composed_hamiltonian_params)
-    assert standard_params_ == standard_params
-    
-    standard_params__ = MatchgateStandardParams.parse_from_params(composed_hamiltonian_params)
-    assert standard_params__ == standard_params
+    composed_hamiltonian_params_ = MatchgateComposedHamiltonianParams.parse_from_standard_params(standard_params)
+    assert composed_hamiltonian_params_ == composed_hamiltonian_params
+
+    composed_hamiltonian_params__ = MatchgateComposedHamiltonianParams.parse_from_params(standard_params)
+    assert composed_hamiltonian_params__ == composed_hamiltonian_params
 
 
 @pytest.mark.parametrize(
-    "composed_hamiltonian_params,polar_params",
+    "polar_params,composed_hamiltonian_params",
     [
         (
-                MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
                 MatchgatePolarParams(r0=1, r1=1, theta0=0, theta1=0, theta2=0, theta3=0),
+                MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
         ),
     ],
 )
-def test_composed_hamiltonian_to_polar_params(
-        composed_hamiltonian_params: MatchgateComposedHamiltonianParams,
-        polar_params: MatchgatePolarParams
+def test_parse_from_polar_params(
+        polar_params: MatchgatePolarParams,
+        composed_hamiltonian_params: MatchgateComposedHamiltonianParams
 ):
-    polar_params_ = MatchgatePolarParams.parse_from_composed_hamiltonian_params(composed_hamiltonian_params)
-    assert polar_params_ == polar_params
-    
-    polar_params__ = MatchgatePolarParams.parse_from_params(composed_hamiltonian_params)
-    assert polar_params__ == polar_params
+    composed_hamiltonian_params_ = MatchgateComposedHamiltonianParams.parse_from_polar_params(polar_params)
+    assert composed_hamiltonian_params_ == composed_hamiltonian_params
+
+    composed_hamiltonian_params__ = MatchgateComposedHamiltonianParams.parse_from_params(polar_params)
+    assert composed_hamiltonian_params__ == composed_hamiltonian_params
 
 
 @pytest.mark.parametrize(
-    "composed_hamiltonian_params,hamiltonian_params",
+    "hamiltonian_params,composed_hamiltonian_params",
     [
         (
-                MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
                 MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
+                MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
         ),
     ],
 )
-def test_composed_hamiltonian_to_hamiltonian_params(
-        composed_hamiltonian_params: MatchgateComposedHamiltonianParams,
-        hamiltonian_params: MatchgateHamiltonianCoefficientsParams
+def test_parse_from_hamiltonian_params(
+        hamiltonian_params: MatchgateHamiltonianCoefficientsParams,
+        composed_hamiltonian_params: MatchgateComposedHamiltonianParams
 ):
-    hamiltonian_params_ = MatchgateHamiltonianCoefficientsParams.parse_from_composed_hamiltonian_params(
-        composed_hamiltonian_params
+    composed_hamiltonian_params_ = MatchgateComposedHamiltonianParams.parse_from_hamiltonian_params(hamiltonian_params)
+    assert composed_hamiltonian_params_ == composed_hamiltonian_params
+
+    composed_hamiltonian_params__ = MatchgateComposedHamiltonianParams.parse_from_params(hamiltonian_params)
+    assert composed_hamiltonian_params__ == composed_hamiltonian_params
+
+
+@pytest.mark.parametrize(
+    "std_ham_params,composed_ham_params",
+    [
+        (
+                MatchgateStandardHamiltonianParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0, h6=0.0, h7=0.0),
+                MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
+        ),
+    ],
+)
+def test_parse_from_standard_hamiltonian_params(
+        std_ham_params: MatchgateStandardHamiltonianParams,
+        composed_ham_params: MatchgateComposedHamiltonianParams
+):
+    composed_ham_params_ = MatchgateComposedHamiltonianParams.parse_from_standard_hamiltonian_params(std_ham_params)
+    assert composed_ham_params_ == composed_ham_params
+
+    composed_ham_params__ = MatchgateComposedHamiltonianParams.parse_from_params(std_ham_params)
+    assert composed_ham_params__ == composed_ham_params
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        (
+            MatchgateHamiltonianCoefficientsParams.from_numpy(vector)
         )
-    assert hamiltonian_params_ == hamiltonian_params
-    
-    hamiltonian_params__ = MatchgateHamiltonianCoefficientsParams.parse_from_params(composed_hamiltonian_params)
-    assert hamiltonian_params__ == hamiltonian_params
+        for vector in np.random.rand(100, 6)
+    ],
+)
+def test_parse_from_standard_hamiltonian_params_is_real(
+        params: MatchgateHamiltonianCoefficientsParams,
+):
+    composed_ham_params = MatchgateComposedHamiltonianParams.parse_from_hamiltonian_params(params)
+    assert utils.check_if_imag_is_zero(composed_ham_params.to_numpy()), "Composed Hamiltonian params must be real."
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        (
+                MatchgatePolarParams.from_numpy(vector)
+        )
+        for vector in np.random.rand(100, 6)
+    ],
+)
+def test_parse_from_polar_params_is_real(
+        params: MatchgatePolarParams,
+):
+    composed_ham_params = MatchgateComposedHamiltonianParams.parse_from_polar_params(params)
+    assert utils.check_if_imag_is_zero(composed_ham_params.to_numpy()), "Composed Hamiltonian params must be real."
+

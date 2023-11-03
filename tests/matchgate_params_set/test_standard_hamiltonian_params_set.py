@@ -3,9 +3,128 @@ from msim import (
     MatchgateStandardParams,
     MatchgatePolarParams,
     MatchgateHamiltonianCoefficientsParams,
-    MatchgateComposedHamiltonianParams
+    MatchgateComposedHamiltonianParams,
+    MatchgateStandardHamiltonianParams,
 )
+from msim import utils
 import numpy as np
 
 np.random.seed(42)
+
+
+@pytest.mark.parametrize(
+    "std_ham_params0,std_ham_params1",
+    [
+        (
+            MatchgateStandardHamiltonianParams.from_numpy(vector),
+            MatchgateStandardHamiltonianParams.from_numpy(vector),
+        )
+        for vector in np.random.rand(100, 8)
+    ],
+)
+def test_standard_ham_from_standard_ham_params(
+        std_ham_params0: MatchgateStandardHamiltonianParams,
+        std_ham_params1: MatchgateStandardHamiltonianParams
+):
+    standard_params1_ = MatchgateStandardHamiltonianParams.parse_from_params(std_ham_params0)
+    assert standard_params1_ == std_ham_params1
+
+
+@pytest.mark.parametrize(
+    "std_params,std_ham_params",
+    [
+        (
+            MatchgateStandardParams(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
+            MatchgateStandardHamiltonianParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0, h6=0.0, h7=0.0),
+        ),
+    ],
+)
+def test_parse_from_standard_params(
+        std_params: MatchgateStandardParams,
+        std_ham_params: MatchgateStandardHamiltonianParams
+):
+    std_ham_params_ = MatchgateStandardHamiltonianParams.parse_from_standard_params(std_params)
+    assert std_ham_params_ == std_ham_params
+
+    std_ham_params__ = MatchgateStandardHamiltonianParams.parse_from_params(std_params)
+    assert std_ham_params__ == std_ham_params
+
+
+@pytest.mark.parametrize(
+    "polar_params,std_ham_params",
+    [
+        (
+            MatchgatePolarParams(r0=1, r1=1, theta0=0, theta1=0, theta2=0, theta3=0),
+            MatchgateStandardHamiltonianParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0, h6=0.0, h7=0.0),
+        ),
+    ],
+)
+def test_parse_from_polar_params(
+        polar_params: MatchgatePolarParams,
+        std_ham_params: MatchgateStandardHamiltonianParams
+):
+    std_ham_params_ = MatchgateStandardHamiltonianParams.parse_from_polar_params(polar_params)
+    assert std_ham_params_ == std_ham_params
+
+    std_ham_params__ = MatchgateStandardHamiltonianParams.parse_from_params(polar_params)
+    assert std_ham_params__ == std_ham_params
+
+
+@pytest.mark.parametrize(
+    "ham_params,std_ham_params",
+    [
+        (
+            MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
+            MatchgateStandardHamiltonianParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0, h6=0.0, h7=0.0),
+        ),
+    ],
+)
+def test_parse_from_hamiltonian_coeffs_params(
+        ham_params: MatchgateHamiltonianCoefficientsParams,
+        std_ham_params: MatchgateStandardHamiltonianParams
+):
+    std_ham_params_ = MatchgateStandardHamiltonianParams.parse_from_hamiltonian_coefficients_params(ham_params)
+    assert std_ham_params_ == std_ham_params
+
+    std_ham_params__ = MatchgateStandardHamiltonianParams.parse_from_params(ham_params)
+    assert std_ham_params__ == std_ham_params
+
+
+@pytest.mark.parametrize(
+    "composed_ham_params,std_ham_params",
+    [
+        (
+            MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
+            MatchgateStandardHamiltonianParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0, h6=0.0, h7=0.0),
+        ),
+    ],
+)
+def test_parse_from_composed_hamiltonian_params(
+        composed_ham_params: MatchgateComposedHamiltonianParams,
+        std_ham_params: MatchgateStandardHamiltonianParams
+):
+    std_ham_params_ = MatchgateStandardHamiltonianParams.parse_from_composed_hamiltonian_params(composed_ham_params)
+    assert std_ham_params_ == std_ham_params
+
+    std_ham_params__ = MatchgateStandardHamiltonianParams.parse_from_params(composed_ham_params)
+    assert std_ham_params__ == std_ham_params
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

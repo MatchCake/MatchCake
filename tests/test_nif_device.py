@@ -6,13 +6,14 @@ import pennylane as qml
 from msim import MatchgateOperator, NonInteractingFermionicDevice, Matchgate
 from msim import matchgate_parameter_sets as mps
 from msim import utils
+from functools import partial
 
 np.random.seed(42)
 
 
 def devices_init(*args, **kwargs) -> Tuple[NonInteractingFermionicDevice, qml.Device]:
-    nif_device = NonInteractingFermionicDevice(wires=2)
-    qubit_device = qml.device('default.qubit', wires=2, shots=kwargs.get("shots", 1))
+    nif_device = NonInteractingFermionicDevice(wires=kwargs.get("wires", 2))
+    qubit_device = qml.device('default.qubit', wires=kwargs.get("wires", 2), shots=kwargs.get("shots", 1))
     qubit_device.operations.add(MatchgateOperator)
     return nif_device, qubit_device
 
@@ -43,27 +44,63 @@ def single_matchgate_circuit(params):
 
 @pytest.mark.parametrize(
     "polar_params",
-    # [
-    #     np.array([1.0, 1.0, 0.0, 0.0, 0.0, 0.0])
-    # ]
-    # +
+    [
+        np.array([1.0, 1.0, 0.0, 0.0, 0.0, 0.0])
+    ]
+    +
     [
         np.random.rand(6)
         for _ in range(100)
     ]
 )
-def test_single_matchgate_expval_with_qbit_device(polar_params):
+def test_single_matchgate_probs_with_qbit_device(polar_params):
     nif_device, qubit_device = devices_init()
     
     nif_qnode = qml.QNode(single_matchgate_circuit, nif_device)
     qubit_qnode = qml.QNode(single_matchgate_circuit, qubit_device)
     
-    nif_expectation_value = nif_qnode(polar_params)
-    qubit_expectation_value = qubit_qnode(polar_params)
-    check = np.allclose(nif_expectation_value, qubit_expectation_value)
-    assert check, (f"The expectation value is not the correct one. "
-                   f"Got {nif_expectation_value} instead of {qubit_expectation_value}")
+    nif_probs = nif_qnode(polar_params)
+    qubit_probs = qubit_qnode(polar_params)
+    check = np.allclose(nif_probs, qubit_probs)
+    assert check, f"The probs are not the correct one. Got {nif_probs} instead of {qubit_probs}"
 
 
+def multiples_matchgate_circuit(polar_params_list, all_wires=None):
+    if all_wires is None:
+        all_wires = [0, 1]
+    all_wires = np.sort(np.asarray(all_wires))
+    for params in polar_params_list:
+        polar_params = mps.MatchgatePolarParams.parse_from_params(params)
+        wire0 = np.random.choice(all_wires[:-1], size=1).item()
+        wire1 = wire0 + 1
+        op = MatchgateOperator(polar_params, wires=[wire0, wire1])
+        qml.apply(op)
+    return qml.probs(wires=0)
 
 
+@pytest.mark.parametrize(
+    "polar_params_list,n_wires",
+    [
+        ([np.array([1.0, 1.0, 0.0, 0.0, 0.0, 0.0]) for _ in range(num_gates)], num_wires)
+        for num_gates in range(1, 3)
+        for num_wires in range(2, 6)
+    ]
+    +
+    [
+        ([np.random.rand(6) for _ in range(num_gates)], num_wires)
+        for _ in range(10)
+        for num_gates in range(1, 3)
+        for num_wires in range(2, 6)
+    ]
+)
+def test_multiples_matchgate_probs_with_qbit_device(polar_params_list, n_wires):
+    nif_device, qubit_device = devices_init(wires=n_wires)
+
+    multiples_matchgate_circuit_func = partial(multiples_matchgate_circuit, all_wires=list(range(n_wires)))
+    nif_qnode = qml.QNode(multiples_matchgate_circuit_func, nif_device)
+    qubit_qnode = qml.QNode(multiples_matchgate_circuit_func, qubit_device)
+
+    nif_probs = nif_qnode(polar_params_list)
+    qubit_probs = qubit_qnode(polar_params_list)
+    check = np.allclose(nif_probs, qubit_probs)
+    assert check, f"The probs are not the correct one. Got {nif_probs} instead of {qubit_probs}"
