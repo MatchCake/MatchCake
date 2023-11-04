@@ -36,7 +36,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pytest
+        python run_pytests.py tests --N_RANDOM_TESTS_PER_CASE==10
 
   Run-tests-on-Windows:
     name: Run tests on Windows-latest
@@ -62,4 +62,4 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pytest 
+        python run_pytests.py tests --N_RANDOM_TESTS_PER_CASE==10 

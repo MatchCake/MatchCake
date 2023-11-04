@@ -293,3 +293,4 @@ pip-selfcheck.json
 
 
 user/
+tests/tmp
