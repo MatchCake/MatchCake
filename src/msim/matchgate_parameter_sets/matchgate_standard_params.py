@@ -11,6 +11,7 @@ from .. import utils
 
 
 class MatchgateStandardParams(MatchgateParams):
+    N_PARAMS = 8
     ZEROS_INDEXES = [
         (0, 1), (0, 2),
         (1, 0), (1, 3),

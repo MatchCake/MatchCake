@@ -8,6 +8,8 @@ from .matchgate_standard_params import MatchgateStandardParams
 
 
 class MatchgateComposedHamiltonianParams(MatchgateParams):
+    N_PARAMS = 6
+
     def __init__(
             self,
             n_x: float,

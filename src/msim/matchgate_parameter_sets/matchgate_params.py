@@ -10,6 +10,7 @@ class MatchgateParams:
     r"""
     A matchgate can be represented by several set of parameters and there exists a mapping between them.
     """
+    N_PARAMS = None
 
     @staticmethod
     def _maybe_cast_to_real(*params):
@@ -19,22 +20,25 @@ class MatchgateParams:
         else:
             raise ValueError("The parameters must be real.")
 
-    @staticmethod
-    def to_sympy():
-        raise NotImplementedError("This method must be implemented in the child class.")
+    @classmethod
+    def to_sympy(cls):
+        import sympy as sp
+        return sp.symbols(' '.join([f'p{i}' for i in range(cls.N_PARAMS)]))
 
     @staticmethod
     def parse_from_params(params: 'MatchgateParams', backend="numpy") -> 'MatchgateParams':
         # TODO: Add the backend argument to the parse_from_params method of the child classes.
         raise NotImplementedError("This method must be implemented in the child class.")
+        from . import transfer_functions
+        return transfer_functions.params_to(params, cls, **kwargs)
 
     @classmethod
     def from_numpy(cls, params: np.ndarray) -> 'MatchgateParams':
         tuple_params = tuple(params.flatten())
         return cls(*tuple_params, backend='numpy')
 
-    @staticmethod
-    def parse_from_any(params: Any) -> 'MatchgateParams':
+    @classmethod
+    def parse_from_any(cls, params: Any) -> 'MatchgateParams':
         r"""
         Try to parse the input parameters to a MatchgateParams object.
 
@@ -43,12 +47,14 @@ class MatchgateParams:
         :return: The parsed parameters.
         :rtype: MatchgateParams
         """
-        if isinstance(params, MatchgateParams):
+        if isinstance(params, cls):
             return params
         elif isinstance(params, np.ndarray):
-            return MatchgateParams.from_numpy(params)
+            return cls.from_numpy(params)
+        elif isinstance(params, MatchgateParams):
+            return cls.parse_from_params(params)
         else:
-            return MatchgateParams.from_numpy(np.asarray(params))
+            return cls.from_numpy(np.asarray(params))
 
     @staticmethod
     def load_backend_lib(backend):
@@ -90,3 +96,7 @@ class MatchgateParams:
 
     def __iter__(self):
         return iter(self.to_numpy())
+
+    @classmethod
+    def random(cls):
+        return cls.from_numpy(np.random.rand(cls.N_PARAMS))

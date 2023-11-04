@@ -24,6 +24,7 @@ class MatchgateStandardHamiltonianParams(MatchgateParams):
     where the :math:`\Tilde{h}_i` are the parameters and :math:`H` is the hamiltonian matrix of shape
     :math:`2^n \times 2^n` where :math:`n` is the number of particles in the system. In our case, :math:`n=2`.
     """
+    N_PARAMS = 8
 
     def __init__(
             self,

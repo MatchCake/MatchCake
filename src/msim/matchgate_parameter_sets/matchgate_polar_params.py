@@ -10,6 +10,8 @@ from .matchgate_standard_params import MatchgateStandardParams
 
 
 class MatchgatePolarParams(MatchgateParams):
+    N_PARAMS = 7
+
     def __init__(
             self,
             r0: float,

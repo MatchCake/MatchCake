@@ -28,6 +28,7 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
     where :math:`h_{0}, h_{1}, h_{2}, h_{3}, h_{4}, h_{5}` are the hamiltonian coefficients.
 
     """
+    N_PARAMS = 6
 
     def __init__(
             self,
