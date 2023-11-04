@@ -37,7 +37,7 @@ class MatchgateOperator(Matchgate, Operation):
             backend=pnp
     ):
         Matchgate.__init__(self, params, backend=backend)
-        Operation.__init__(self, *self.polar_params.to_numpy(), wires=wires, id=id)
+        Operation.__init__(self, *self.hamiltonian_coefficients_params.to_numpy(), wires=wires, id=id)
 
     def adjoint(self):
         return MatchgateOperator(self.standard_params.adjoint(), wires=self.wires, backend=self.backend)

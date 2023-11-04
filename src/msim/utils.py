@@ -4,9 +4,18 @@ from typing import Any, List, Callable
 import numpy as np
 
 
-PAULI_X = np.array([[0, 1], [1, 0]])
-PAULI_Y = np.array([[0, -1j], [1j, 0]])
-PAULI_Z = np.array([[1, 0], [0, -1]])
+PAULI_X = np.array([
+    [0, 1],
+    [1, 0]
+])
+PAULI_Y = np.array([
+    [0, -1j],
+    [1j, 0]
+])
+PAULI_Z = np.array([
+    [1, 0],
+    [0, -1]
+])
 PAULI_I = np.eye(2)
 
 
@@ -262,12 +271,12 @@ def get_4x4_non_interacting_fermionic_hamiltonian_from_params(params):
     """
     from .matchgate_parameter_sets import MatchgateHamiltonianCoefficientsParams
     params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params)
-    return -1j * np.array([
-        [-2 * (params.h0 + params.h5), 0, 0, 2j*(params.h4 - params.h1) - 2*(params.h2 + params.h3)],
-        [0, 2 * (params.h5 - params.h0), 2 * (params.h2 - params.h3) - 2j*(params.h1 + params.h4), 0],
-        [0, 2 * (params.h2 - params.h3) + 2j*(params.h1 + params.h4), 2 * (params.h0 - params.h5), 0],
-        [2j*(params.h1 - params.h4) - 2*(params.h2 + params.h3), 0, 0, 2 * (params.h0 + params.h5)],
-    ])
+    return np.array([
+        [-2j * (params.h0 + params.h5), 0, 0, 2*(params.h4 - params.h1) + 2j*(params.h2 + params.h3)],
+        [0, 2j * (params.h0 - params.h5), 2j * (params.h3 - params.h2) - 2*(params.h1 + params.h4), 0],
+        [0, 2 * (params.h1 + params.h4) + 2j*(params.h3 - params.h2), 2j * (params.h5 - params.h0), 0],
+        [2*(params.h1 - params.h4) + 2j*(params.h2 + params.h3), 0, 0, -2j * (params.h0 + params.h5)],
+    ], dtype=complex)
 
 
 def get_unitary_from_hermitian_matrix(matrix: np.ndarray) -> np.ndarray:
@@ -285,5 +294,16 @@ def get_unitary_from_hermitian_matrix(matrix: np.ndarray) -> np.ndarray:
     :rtype: np.ndarray
     """
     from scipy.linalg import expm
-    return expm(-1j * matrix)
+    return expm(1j * matrix.astype(complex))
+
+
+def cast_to_complex(__inputs):
+    r"""
+
+    Cast the inputs to complex numbers.
+
+    :param __inputs: Inputs to cast
+    :return: Inputs casted to complex numbers
+    """
+    return type(__inputs)(np.asarray(__inputs).astype(complex))
 

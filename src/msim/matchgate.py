@@ -238,6 +238,7 @@ class Matchgate:
             params: Union[mps.MatchgateParams, np.ndarray, list, tuple],
             *,
             backend='numpy',
+            raise_errors_if_not_matchgate=True,
     ):
         r"""
         Construct a Matchgate from the parameters. The parameters can be a MatchgateParams object, a list, a tuple or
@@ -257,7 +258,8 @@ class Matchgate:
         # Parameters sets
         self._polar_params = None
         self._standard_params = None
-        self._hamiltonian_params = None
+        self._standard_hamiltonian_params = None
+        self._hamiltonian_coefficients_params = None
         self._composed_hamiltonian_params = None
 
         self._initialize_params_(params)
@@ -265,8 +267,9 @@ class Matchgate:
         # Basic properties
         self._gate_data = None
         self._hamiltonian_matrix = None
-        
-        self.check_asserts()
+
+        if raise_errors_if_not_matchgate:
+            self.check_asserts()
         
         # Interaction properties
         self._action_matrix = None
@@ -285,10 +288,16 @@ class Matchgate:
         return self._standard_params
 
     @property
-    def hamiltonian_params(self) -> mps.MatchgateHamiltonianCoefficientsParams:
-        if self._hamiltonian_params is None:
+    def hamiltonian_coefficients_params(self) -> mps.MatchgateHamiltonianCoefficientsParams:
+        if self._hamiltonian_coefficients_params is None:
             self._make_hamiltonian_coeffs_params_()
-        return self._hamiltonian_params
+        return self._hamiltonian_coefficients_params
+
+    @property
+    def standard_hamiltonian_params(self) -> mps.MatchgateStandardHamiltonianParams:
+        if self._standard_hamiltonian_params is None:
+            self._make_standard_hamiltonian_params_()
+        return self._standard_hamiltonian_params
 
     @property
     def composed_hamiltonian_params(self) -> mps.MatchgateComposedHamiltonianParams:
@@ -417,7 +426,7 @@ class Matchgate:
 
         :return: The Hamiltonian coefficients matrix.
         """
-        coeffs = self.hamiltonian_params.to_numpy()
+        coeffs = self.hamiltonian_coefficients_params.to_numpy()
         return np.asarray([
             [0, coeffs[0], coeffs[1], coeffs[2]],
             [-coeffs[0], 0, coeffs[3], coeffs[4]],
@@ -433,7 +442,7 @@ class Matchgate:
 
         Initialize the parameters of the matchgate. The parameters can be a MatchgateParams object, a list, a tuple or
         a numpy array. If the parameters are a list, tuple or numpy array, the parameters will be interpreted as
-        MatchgateStandardParams if the length is 8, MatchgatePolarParams if the length is 6 or 7.
+        MatchgateStandardParams if the length is 8, MatchgatePolarParams if the length is 6.
 
         If the parameters are a MatchgateParams object, the parameters will be interpreted as the type of the object.
 
@@ -449,28 +458,28 @@ class Matchgate:
         if isinstance(given_params, mps.MatchgateParams):
             params = given_params
         elif isinstance(given_params, np.ndarray):
-            if given_params.size == 6 or given_params.size == 7:
+            if given_params.size == 6:
                 params = mps.MatchgatePolarParams.from_numpy(given_params.flatten())
             elif given_params.size == 8:
                 params = mps.MatchgateStandardParams.from_numpy(given_params.flatten())
             else:
-                raise ValueError("The given params must be a 6, 7 or 8 elements array.")
+                raise ValueError("The given params must be a 6 or 8 elements array.")
         elif isinstance(given_params, (list, tuple)):
-            if len(given_params) == 6 or len(given_params) == 7:
+            if len(given_params) == 6:
                 params = mps.MatchgatePolarParams.parse_from_params(given_params)
             elif len(given_params) == 8:
                 params = mps.MatchgateStandardParams.parse_from_params(given_params)
             else:
-                raise ValueError("The given params must be a 6, 7 or 8 elements array.")
+                raise ValueError("The given params must be a 6 or 8 elements array.")
         else:
-            raise ValueError("The given params must be a 6, 7 or 8 elements array or a MatchgateParams object.")
+            raise ValueError("The given params must be a 6 or 8 elements array or a MatchgateParams object.")
 
         if isinstance(params, mps.MatchgatePolarParams):
             self._polar_params = params
         elif isinstance(params, mps.MatchgateStandardParams):
             self._standard_params = params
         elif isinstance(params, mps.MatchgateHamiltonianCoefficientsParams):
-            self._hamiltonian_params = params
+            self._hamiltonian_coefficients_params = params
         elif isinstance(params, mps.MatchgateComposedHamiltonianParams):
             self._composed_hamiltonian_params = params
         else:
@@ -491,14 +500,15 @@ class Matchgate:
             return [
                 self.polar_params,
                 self.standard_params,
-                self.hamiltonian_params,
+                self.standard_hamiltonian_params,
+                self.hamiltonian_coefficients_params,
                 self.composed_hamiltonian_params,
             ]
         else:
             return [
                 self._polar_params,
                 self._standard_params,
-                self._hamiltonian_params,
+                self._hamiltonian_coefficients_params,
                 self._composed_hamiltonian_params,
             ]
 
@@ -522,6 +532,16 @@ class Matchgate:
             raise ValueError("No params set. Cannot make standard params.")
         self._standard_params = mps.MatchgateStandardParams.parse_from_params(not_none_params[0])
 
+    def _make_standard_hamiltonian_params_(self):
+        not_none_params = [
+            p for p in
+            self.get_all_params_set(make_params=False)
+            if p is not None
+        ]
+        if len(not_none_params) == 0:
+            raise ValueError("No params set. Cannot make standard hamiltonian params.")
+        self._standard_hamiltonian_params = mps.MatchgateStandardHamiltonianParams.parse_from_params(not_none_params[0])
+
     def _make_hamiltonian_coeffs_params_(self):
         not_none_params = [
             p for p in
@@ -530,7 +550,7 @@ class Matchgate:
         ]
         if len(not_none_params) == 0:
             raise ValueError("No params set. Cannot make hamiltonian params.")
-        self._hamiltonian_params = mps.MatchgateHamiltonianCoefficientsParams.parse_from_params(not_none_params[0])
+        self._hamiltonian_coefficients_params = mps.MatchgateHamiltonianCoefficientsParams.parse_from_params(not_none_params[0])
 
     def _make_composed_hamiltonian_params_(self):
         not_none_params = [
@@ -589,9 +609,12 @@ class Matchgate:
         return np.isclose(self.get_outer_determinant(), self.get_inner_determinant())
 
     def check_asserts(self):
-        assert self.check_m_m_dagger_constraint()
-        assert self.check_m_dagger_m_constraint()
-        assert self.check_det_constraint()
+        if not self.check_m_m_dagger_constraint():
+            raise ValueError(r"The matchgate does not satisfy the M M^\dagger constraint.")
+        if not self.check_m_dagger_m_constraint():
+            raise ValueError(r"The matchgate does not satisfy the M^\dagger M constraint.")
+        if not self.check_det_constraint():
+            raise ValueError(r"The matchgate does not satisfy the determinant constraint.")
 
     def __repr__(self):
         return f"Matchgate(params={self._polar_params})"
@@ -654,7 +677,8 @@ class Matchgate:
         
         - :attr:`polar_params`
         - :attr:`standard_params`
-        - :attr:`hamiltonian_params`
+        - :attr:`hamiltonian_coefficients_params`
+        - :attr:`hamiltonian_coefficients_params`
         - :attr:`composed_hamiltonian_params`
         - :attr:`gate_data`
         - :attr:`hamiltonian_matrix`

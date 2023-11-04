@@ -131,8 +131,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         probs = pnp.zeros((num_wires, 2))
         for wire in wires:
             obs = self.lookup_table.get_observable(wire, state_hamming_weight)
-            prob0 = pnp.real(pfaffian.pfaffian(obs))
-            prob1 = 1.0 - prob0
+            prob1 = pnp.real(pfaffian.pfaffian(obs))
+            prob0 = 1.0 - prob1
             probs[wire] = pnp.array([prob0, prob1])
         return probs
 
