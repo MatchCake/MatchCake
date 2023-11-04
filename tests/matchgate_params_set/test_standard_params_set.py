@@ -8,6 +8,13 @@ from msim import (
     MatchgateComposedHamiltonianParams,
     MatchgateStandardHamiltonianParams
 )
+from msim.utils import (
+    PAULI_X,
+    PAULI_Y,
+    PAULI_Z,
+    PAULI_I,
+)
+from ..configs import N_RANDOM_TESTS_PER_CASE
 
 np.random.seed(42)
 
@@ -16,10 +23,10 @@ np.random.seed(42)
     "standard_params0,standard_params1",
     [
         (
-                MatchgateStandardParams.from_numpy(vector),
-                MatchgateStandardParams.from_numpy(vector),
+            MatchgateStandardParams.from_numpy(vector),
+            MatchgateStandardParams.from_numpy(vector),
         )
-        for vector in np.random.rand(100, 8)
+        for vector in np.random.rand(N_RANDOM_TESTS_PER_CASE, 8)
     ],
 )
 def test_standard_from_standard_params(
@@ -34,8 +41,8 @@ def test_standard_from_standard_params(
     "std_ham_params,std_params",
     [
         (
-                MatchgateStandardHamiltonianParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0, h6=0.0, h7=0.0),
-                MatchgateStandardParams(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
+            MatchgateStandardHamiltonianParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0, h6=0.0, h7=0.0),
+            MatchgateStandardParams(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
         ),
     ],
 )
@@ -53,9 +60,16 @@ def test_parse_from_standard_hamiltonian_params(
 @pytest.mark.parametrize(
     "polar_params,standard_params",
     [
+        # (
+        #     MatchgatePolarParams(r0=1, r1=1, theta0=0, theta1=0, theta2=0, theta3=0),
+        #     MatchgateStandardParams(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
+        # ),
         (
-                MatchgatePolarParams(r0=1, r1=1, theta0=0, theta1=0, theta2=0, theta3=0),
-                MatchgateStandardParams(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
+            MatchgatePolarParams(r0=1, r1=0, theta0=np.pi / 2, theta1=0, theta2=0, theta3=np.pi / 2),
+            MatchgateStandardParams(
+                a=PAULI_Z[0, 0], b=PAULI_Z[0, 1], c=PAULI_Z[1, 0], d=PAULI_Z[1, 1],
+                w=PAULI_X[0, 0], x=PAULI_X[0, 1], y=PAULI_X[1, 0], z=PAULI_X[1, 1]
+            ),  # fSWAP
         ),
     ],
 )
@@ -74,8 +88,8 @@ def test_parse_from_polar_params(
     "hamiltonian_params,standard_params",
     [
         (
-                MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
-                MatchgateStandardParams(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
+            MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
+            MatchgateStandardParams(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
         ),
     ],
 )
@@ -94,8 +108,8 @@ def test_parse_from_hamiltonian_params(
     "composed_hamiltonian_params,standard_params",
     [
         (
-                MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
-                MatchgateStandardParams(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
+            MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
+            MatchgateStandardParams(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
         ),
     ],
 )
@@ -108,3 +122,18 @@ def test_parse_from_composed_hamiltonian_params(
 
     standard_params__ = MatchgateStandardParams.parse_from_params(composed_hamiltonian_params)
     assert standard_params__ == standard_params
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        MatchgateStandardParams.from_numpy(vector)
+        for vector in np.random.rand(N_RANDOM_TESTS_PER_CASE, 8)
+    ],
+)
+def test_parse_to_standard_hamiltonian_back_and_forth(
+        params: MatchgateStandardParams,
+):
+    standard_h_params = MatchgateStandardHamiltonianParams.parse_from_params(params)
+    params_ = MatchgateStandardParams.parse_from_params(standard_h_params)
+    assert params_ == params

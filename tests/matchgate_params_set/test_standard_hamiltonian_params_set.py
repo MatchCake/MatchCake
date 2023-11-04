@@ -8,6 +8,7 @@ from msim import (
 )
 from msim import utils
 import numpy as np
+from ..configs import N_RANDOM_TESTS_PER_CASE
 
 np.random.seed(42)
 
@@ -19,7 +20,7 @@ np.random.seed(42)
             MatchgateStandardHamiltonianParams.from_numpy(vector),
             MatchgateStandardHamiltonianParams.from_numpy(vector),
         )
-        for vector in np.random.rand(100, 8)
+        for vector in np.random.rand(N_RANDOM_TESTS_PER_CASE, 8)
     ],
 )
 def test_standard_ham_from_standard_ham_params(
@@ -110,19 +111,38 @@ def test_parse_from_composed_hamiltonian_params(
     assert std_ham_params__ == std_ham_params
 
 
+@pytest.mark.parametrize(
+    "params",
+    [
+        MatchgateStandardHamiltonianParams.from_numpy(vector)
+        for vector in np.random.rand(N_RANDOM_TESTS_PER_CASE, 8)
+    ],
+)
+def test_parse_to_standard_back_and_forth(
+        params: MatchgateStandardHamiltonianParams,
+):
+    standard_params = MatchgateStandardParams.parse_from_params(params)
+    params_ = MatchgateStandardHamiltonianParams.parse_from_params(standard_params)
+    assert params_ == params
 
 
+@pytest.mark.parametrize(
+    "params",
+    [
+        MatchgateHamiltonianCoefficientsParams.from_numpy(vector)
+        for vector in np.random.rand(N_RANDOM_TESTS_PER_CASE, 6)
+    ],
+)
+def test_parse_from_hamiltonian_coeffs_with_slow_method(
+        params: MatchgateHamiltonianCoefficientsParams,
+):
+    std_h_params = MatchgateStandardHamiltonianParams.parse_from_params(params)
 
-
-
-
-
-
-
-
-
-
-
+    hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(std_h_params.to_matrix())
+    elements_indexes_as_array = np.asarray(MatchgateStandardParams.ELEMENTS_INDEXES)
+    params_arr = hamiltonian[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
+    params_ = MatchgateHamiltonianCoefficientsParams.from_numpy(params_arr)
+    assert params_ == std_h_params
 
 
 
