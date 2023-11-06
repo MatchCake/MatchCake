@@ -4,4 +4,5 @@ from .matchgate_params import MatchgateParams
 from .matchgate_standard_hamiltonian_params import MatchgateStandardHamiltonianParams
 from .matchgate_standard_params import MatchgateStandardParams
 from .matchgate_polar_params import MatchgatePolarParams
+from . import transfer_functions
 

@@ -1,5 +1,6 @@
 import importlib
 from typing import Any
+import warnings
 
 import numpy as np
 
@@ -11,24 +12,29 @@ class MatchgateParams:
     A matchgate can be represented by several set of parameters and there exists a mapping between them.
     """
     N_PARAMS = None
+    RAISE_ERROR_IF_INVALID_PARAMS = True
+    EQUALITY_ABSOLUTE_TOLERANCE = 1e-4
+    EQUALITY_RELATIVE_TOLERANCE = 1e-4
 
-    @staticmethod
-    def _maybe_cast_to_real(*params):
+    @classmethod
+    def _maybe_cast_to_real(cls, *params):
         is_real = utils.check_if_imag_is_zero(np.array(params))
+        real_params = tuple(np.real(np.array(params)))
         if is_real:
-            return tuple(np.real(np.array(params)))
-        else:
+            return real_params
+        elif cls.RAISE_ERROR_IF_INVALID_PARAMS:
             raise ValueError("The parameters must be real.")
+        else:
+            warnings.warn("The parameters must be real.")
+            return tuple(np.array(params))
 
     @classmethod
     def to_sympy(cls):
         import sympy as sp
         return sp.symbols(' '.join([f'p{i}' for i in range(cls.N_PARAMS)]))
 
-    @staticmethod
-    def parse_from_params(params: 'MatchgateParams', backend="numpy") -> 'MatchgateParams':
-        # TODO: Add the backend argument to the parse_from_params method of the child classes.
-        raise NotImplementedError("This method must be implemented in the child class.")
+    @classmethod
+    def parse_from_params(cls, params: 'MatchgateParams', **kwargs) -> 'MatchgateParams':
         from . import transfer_functions
         return transfer_functions.params_to(params, cls, **kwargs)
 
@@ -76,14 +82,19 @@ class MatchgateParams:
         return str(self)
 
     def __repr__(self):
-        return f"MatchgateParams({str(self)})"
+        return f"{self.__class__.__name__}({str(self)})"
 
     def __str__(self):
         params_as_str = ", ".join([f"{p:.4f}" for p in self.to_numpy()])
         return f"[{params_as_str}]"
 
     def __eq__(self, other):
-        return np.allclose(self.to_numpy(), other.to_numpy())
+        return np.allclose(
+            self.to_numpy(),
+            other.to_numpy(),
+            atol=self.EQUALITY_ABSOLUTE_TOLERANCE,
+            rtol=self.EQUALITY_RELATIVE_TOLERANCE,
+        )
 
     def __hash__(self):
         return hash(self.to_string())

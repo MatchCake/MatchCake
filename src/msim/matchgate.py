@@ -112,8 +112,8 @@ class Matchgate:
             return False
         elements_indexes_as_array = np.asarray(mps.MatchgateStandardParams.ELEMENTS_INDEXES)
         full_params_arr = matrix[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
-        full_params = mps.MatchgateStandardParams.parse_from_full_params(full_params_arr)
-        params = mps.MatchgatePolarParams.parse_from_standard_params(full_params)
+        full_params = mps.MatchgateStandardParams.parse_from_params(full_params_arr)
+        params = mps.MatchgatePolarParams.parse_from_params(full_params)
         try:
             m = Matchgate(params=params)
             m.check_asserts()
@@ -139,8 +139,8 @@ class Matchgate:
         if Matchgate.is_matchgate(matrix):
             elements_indexes_as_array = np.asarray(mps.MatchgateStandardParams.ELEMENTS_INDEXES)
             full_params_arr = matrix[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
-            full_params = mps.MatchgateStandardParams.parse_from_full_params(full_params_arr)
-            params = mps.MatchgatePolarParams.parse_from_standard_params(full_params)
+            full_params = mps.MatchgateStandardParams.parse_from_params(full_params_arr)
+            params = mps.MatchgatePolarParams.parse_from_params(full_params)
             return Matchgate(params=params)
         raise ValueError("The matrix is not a matchgate.")
 

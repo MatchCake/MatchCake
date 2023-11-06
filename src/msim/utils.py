@@ -67,17 +67,18 @@ def get_majorana_pauli_list(i: int, n: int) -> List[np.ndarray]:
         gate = PAULI_Y
     else:
         gate = PAULI_X
-    return [PAULI_Z] * k + [gate] + [PAULI_I] * (n - k - 1)
+    # return [PAULI_Z] * k + [gate] + [PAULI_I] * (n - k - 1)
+    return [PAULI_Z for _ in range(k)] + [gate] + [PAULI_I for _ in range(n - k - 1)]
 
 
-def get_majorana_pauli_string(i: int, n: int) -> str:
+def get_majorana_pauli_string(i: int, n: int, join_char='⊗') -> str:
     assert 0 <= i < 2 * n
     k = int(i / 2)  # 0, ..., n-1
     if (i + 1) % 2 == 0:
         gate = "Y"
     else:
         gate = "X"
-    return '⊗'.join(["Z"] * k + [gate] + ["I"] * (n - k - 1))
+    return join_char.join(["Z"] * k + [gate] + ["I"] * (n - k - 1))
 
 
 def get_majorana(i: int, n: int) -> np.ndarray:
@@ -129,9 +130,6 @@ def get_non_interacting_fermionic_hamiltonian_from_coeffs(hamiltonian_coefficien
     :param lib: Library to use for the operations
     :return: Non-interacting fermionic Hamiltonian
     """
-    # if isinstance(lib, str):
-    #     lib = eval(lib)
-
     n_particles = int(len(hamiltonian_coefficients_matrix) / 2)
     hamiltonian = np.zeros((2**n_particles, 2**n_particles), dtype=complex)
 

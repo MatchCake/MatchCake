@@ -246,50 +246,54 @@ def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePol
     r1 = backend.sqrt(w * backend.conjugate(w))
     r1_tilde = MatchgatePolarParams.compute_r_tilde(r1, backend=backend)
     eps = 1e-12
-    if backend.isclose(r0, 0) or backend.isclose(r1, 0):
+    if backend.isclose(r0, 0) and backend.isclose(r1, 0):
         theta0 = 0
         theta1 = -1j * backend.log(c + eps)
         theta2 = -0.5j * (backend.log(-b + eps) - backend.log(backend.conjugate(c) + eps))
         theta3 = -1j * backend.log(z + eps)
         theta4 = -0.5j * (backend.log(-b + eps) - backend.log(backend.conjugate(c) + eps))
-    elif backend.isclose(r0, 0) or backend.isclose(r1, 1):
+    elif backend.isclose(r0, 0) and backend.isclose(r1, 1):
         theta0 = 0
         theta1 = -1j * backend.log(c + eps)
         theta2 = -1j * backend.log(w + eps)
         theta3 = 0
         theta4 = -1j * backend.log(z + eps)
-    elif backend.isclose(r0, 0) or not backend.isclose(r1, 0) or backend.isclose(r1, 1):
+    elif backend.isclose(r0, 0) and (not backend.isclose(r1, 0) or backend.isclose(r1, 1)):
         theta0 = 0
         theta1 = -1j * backend.log(c + eps)
         theta2 = -1j * (backend.log(w + eps) - backend.log(r1 + eps))
         theta3 = -1j * (backend.log(y + eps) - backend.log(r1_tilde + eps))
         theta4 = -1j * (backend.log(z + eps) - backend.log(r1 + eps))
-    elif backend.isclose(r0, 1) or backend.isclose(r1, 0):
+    elif backend.isclose(r0, 1) and backend.isclose(r1, 0):
         theta0 = -1j * backend.log(a + eps)
         theta1 = 0
         theta2 = -0.5j * (backend.log(d + eps) - backend.log(backend.conjugate(a) + eps))
         theta3 = -1j * backend.log(y + eps)
         theta4 = -0.5j * (backend.log(d + eps) - backend.log(backend.conjugate(a) + eps))
-    elif backend.isclose(r0, 1) or backend.isclose(r1, 1):
+    elif backend.isclose(r0, 1) and backend.isclose(r1, 1):
         theta0 = -1j * backend.log(a + eps)
         theta1 = 0
         theta2 = -1j * backend.log(w + eps)
         theta3 = 0
         theta4 = -1j * backend.log(z + eps)
-    elif backend.isclose(r0, 1) or not backend.isclose(r1, 0) or backend.isclose(r1, 1):
+    elif backend.isclose(r0, 1) and (not backend.isclose(r1, 0) or backend.isclose(r1, 1)):
         theta0 = -1j * backend.log(a + eps)
         theta1 = 0
         theta2 = -1j * (backend.log(w + eps) - backend.log(r1 + eps))
         theta3 = -1j * (backend.log(y + eps) - backend.log(r1_tilde + eps))
         theta4 = -1j * (backend.log(z + eps) - backend.log(r1 + eps))
-    elif not backend.isclose(r0, 0) or backend.isclose(r0, 1) or backend.isclose(r1, 0) or backend.isclose(r1, 1):
+    elif (not backend.isclose(r0, 0) or backend.isclose(r0, 1)) and (backend.isclose(r1, 0) or backend.isclose(r1, 1)):
         theta0 = -1j * (backend.log(a + eps) - backend.log(r0 + eps))
         theta1 = -1j * (backend.log(c + eps) - backend.log(r0_tilde + eps))
         theta2 = -1j * (backend.log(w + eps) - backend.log(r1 + eps))
         theta3 = -1j * (backend.log(y + eps) - backend.log(r1_tilde + eps))
         theta4 = -1j * (backend.log(z + eps) - backend.log(r1 + eps))
     else:
-        raise ValueError(f"Invalid parameters: {params}")
+        theta0 = -1j * (backend.log(a + eps) - backend.log(r0 + eps))
+        theta1 = -1j * (backend.log(c + eps) - backend.log(r0_tilde + eps))
+        theta2 = -1j * (backend.log(w + eps) - backend.log(r1 + eps))
+        theta3 = -1j * (backend.log(y + eps) - backend.log(r1_tilde + eps))
+        theta4 = -1j * (backend.log(z + eps) - backend.log(r1 + eps))
 
     return MatchgatePolarParams(
         r0=r0,
@@ -354,11 +358,84 @@ def _infer_transfer_func(from_cls: Type[MatchgateParams], to_cls: Type[Matchgate
     path = utils.dijkstra(_transfer_adj_matrix, from_cls_idx, to_cls_idx)
 
 
+def polar_to_standard_hamiltonian(params: MatchgatePolarParams, **kwargs) -> MatchgateStandardHamiltonianParams:
+    params = polar_to_standard(params, **kwargs)
+    return standard_to_standard_hamiltonian(params, **kwargs)
+
+
+def polar_to_hamiltonian_coefficients(params: MatchgatePolarParams, **kwargs) -> MatchgateHamiltonianCoefficientsParams:
+    params = polar_to_standard_hamiltonian(params, **kwargs)
+    return standard_hamiltonian_to_hamiltonian_coefficients(params, **kwargs)
+
+
+def polar_to_composed_hamiltonian(params: MatchgatePolarParams, **kwargs) -> MatchgateComposedHamiltonianParams:
+    params = polar_to_hamiltonian_coefficients(params, **kwargs)
+    return hamiltonian_coefficients_to_composed_hamiltonian(params, **kwargs)
+
+
+def standard_to_hamiltonian_coefficients(
+        params: MatchgateStandardParams,
+        **kwargs
+) -> MatchgateHamiltonianCoefficientsParams:
+    params = standard_to_standard_hamiltonian(params, **kwargs)
+    return standard_hamiltonian_to_hamiltonian_coefficients(params, **kwargs)
+
+
+def standard_to_composed_hamiltonian(params: MatchgateStandardParams, **kwargs) -> MatchgateComposedHamiltonianParams:
+    params = standard_to_hamiltonian_coefficients(params, **kwargs)
+    return hamiltonian_coefficients_to_composed_hamiltonian(params, **kwargs)
+
+
+def hamiltonian_coefficients_to_standard(
+        params: MatchgateHamiltonianCoefficientsParams,
+        **kwargs
+) -> MatchgateStandardParams:
+    params = hamiltonian_coefficients_to_standard_hamiltonian(params, **kwargs)
+    return standard_hamiltonian_to_standard(params, **kwargs)
+
+
+def hamiltonian_coefficients_to_polar(params: MatchgateHamiltonianCoefficientsParams, **kwargs) -> MatchgatePolarParams:
+    params = hamiltonian_coefficients_to_standard(params, **kwargs)
+    return standard_to_polar(params, **kwargs)
+
+
+def composed_hamiltonian_to_standard_hamiltonian(
+        params: MatchgateComposedHamiltonianParams,
+        **kwargs
+) -> MatchgateStandardHamiltonianParams:
+    params = composed_hamiltonian_to_hamiltonian_coefficients(params, **kwargs)
+    return hamiltonian_coefficients_to_standard_hamiltonian(params, **kwargs)
+
+
+def composed_hamiltonian_to_standard(params: MatchgateComposedHamiltonianParams, **kwargs) -> MatchgateStandardParams:
+    params = composed_hamiltonian_to_standard_hamiltonian(params, **kwargs)
+    return standard_hamiltonian_to_standard(params, **kwargs)
+
+
+def composed_hamiltonian_to_polar(params: MatchgateComposedHamiltonianParams, **kwargs) -> MatchgatePolarParams:
+    params = composed_hamiltonian_to_standard(params, **kwargs)
+    return standard_to_polar(params, **kwargs)
+
+
+def standard_hamiltonian_to_polar(
+        params: MatchgateStandardHamiltonianParams,
+        **kwargs
+) -> MatchgatePolarParams:
+    params = standard_hamiltonian_to_standard(params, **kwargs)
+    return standard_to_polar(params, **kwargs)
+
+
+def standard_hamiltonian_to_composed_hamiltonian(
+        params: MatchgateStandardHamiltonianParams,
+        **kwargs
+) -> MatchgateComposedHamiltonianParams:
+    params = standard_hamiltonian_to_hamiltonian_coefficients(params, **kwargs)
+    return hamiltonian_coefficients_to_composed_hamiltonian(params, **kwargs)
 
 
 _transfer_funcs_by_type: Dict[
     Type[MatchgateParams], Dict[
-        Type[MatchgateParams], Callable[[MatchgateParams, dict], MatchgateParams]
+        Type[MatchgateParams], Callable[[MatchgateParams, ...], MatchgateParams]
     ]
 ] = {
     # from              : to
@@ -400,5 +477,4 @@ def params_to(params, __cls: Type[MatchgateParams], **kwargs) -> MatchgateParams
         return params
     if not isinstance(params, MatchgateParams):
         return __cls(*params, **kwargs)
-
     return _transfer_funcs_by_type[type(params)][__cls](params, **kwargs)
