@@ -90,7 +90,7 @@ def test_matchgate_hamiltonian_coefficient(input_matrix, target_coefficients):
 @pytest.mark.parametrize(
     "params",
     [
-        mps.MatchgatePolarParams.from_numpy(np.random.rand(7))
+        mps.MatchgatePolarParams.random()
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
@@ -101,24 +101,10 @@ def test_random_polar_params_gives_matchgate(params):
     assert matchgate.check_det_constraint(), f"det_constraint failed for random {type(params)}"
 
 
-# @pytest.mark.parametrize(
-#     "params",
-#     [
-#         mps.MatchgateHamiltonianCoefficientsParams.from_numpy(np.random.rand(6))
-#         for _ in range(10)
-#     ]
-# )
-# def test_random_hamiltonian_coeffs_params_gives_matchgate(params):
-#     matchgate = Matchgate(params, raise_errors_if_not_matchgate=False)
-#     assert matchgate.check_m_m_dagger_constraint(), f"m_m_dagger_constraint failed for random {type(params)}"
-#     assert matchgate.check_m_dagger_m_constraint(), f"m_dagger_m_constraint failed for random {type(params)}"
-#     assert matchgate.check_det_constraint(), f"det_constraint failed for random {type(params)}"
-
-
 @pytest.mark.parametrize(
     "params",
     [
-        mps.MatchgateComposedHamiltonianParams.from_numpy(np.random.rand(6))
+        mps.MatchgateComposedHamiltonianParams.random()
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
