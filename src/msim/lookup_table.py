@@ -184,4 +184,4 @@ class NonInteractingFermionicLookupTable:
                         obs[i, j] = self[2, 2][k, k]
         obs = obs - obs.T
         return obs
-        
+

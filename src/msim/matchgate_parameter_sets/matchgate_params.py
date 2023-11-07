@@ -12,6 +12,7 @@ class MatchgateParams:
     A matchgate can be represented by several set of parameters and there exists a mapping between them.
     """
     N_PARAMS = None
+    ALLOW_COMPLEX_PARAMS = True
     RAISE_ERROR_IF_INVALID_PARAMS = True
     EQUALITY_ABSOLUTE_TOLERANCE = 1e-4
     EQUALITY_RELATIVE_TOLERANCE = 1e-4
@@ -64,9 +65,7 @@ class MatchgateParams:
 
     @staticmethod
     def load_backend_lib(backend):
-        if isinstance(backend, str):
-            backend = importlib.import_module(backend)
-        return backend
+        return utils.load_backend_lib(backend)
 
     def __init__(self, backend='numpy'):
         self._backend = self.load_backend_lib(backend)

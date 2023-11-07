@@ -114,11 +114,10 @@ def get_non_interacting_fermionic_hamiltonian_from_coeffs(hamiltonian_coefficien
     Compute the non-interacting fermionic Hamiltonian from the coefficients of the Majorana operators.
 
     .. math::
-        H = i \sum_{\mu\neq\nu}^{2n} h_{\mu \nu} c_\mu c_\nu
+        H = \sum_{\mu,\nu = 0}^{2n-1} h_{\mu \nu} c_\mu c_\nu
 
     where :math:`h_{\mu \nu}` are the coefficients of the Majorana operators :math:`c_\mu` and :math:`c_\nu`,
-    :math:`n` is the number of particles, :math:`\mu` and :math:`\nu` are the indices of the Majorana operators, and
-    :math:`i` is the imaginary unit.
+    :math:`n` is the number of particles, :math:`\mu` and :math:`\nu` are the indices of the Majorana operators.
 
     TODO: optimize the method by changing the sum for a matrix multiplication as :math:`H = i C^T h C` where :math:`C`
         is the matrix of Majorana operators.
@@ -130,14 +129,15 @@ def get_non_interacting_fermionic_hamiltonian_from_coeffs(hamiltonian_coefficien
     :param lib: Library to use for the operations
     :return: Non-interacting fermionic Hamiltonian
     """
+    backend = load_backend_lib(lib)
     n_particles = int(len(hamiltonian_coefficients_matrix) / 2)
-    hamiltonian = np.zeros((2**n_particles, 2**n_particles), dtype=complex)
+    hamiltonian = backend.zeros((2**n_particles, 2**n_particles), dtype=complex)
 
     for mu in range(2*n_particles):
         for nu in range(2*n_particles):
             c_mu = get_majorana(mu, n_particles)
             c_nu = get_majorana(nu, n_particles)
-            hamiltonian += hamiltonian_coefficients_matrix[mu, nu] * c_mu @ c_nu
+            hamiltonian += hamiltonian_coefficients_matrix[mu, nu] * (c_mu @ c_nu)
     return hamiltonian
 
 
@@ -206,9 +206,8 @@ def make_transition_matrix_from_action_matrix(action_matrix):
     :param action_matrix:
     :return:
     """
-    n = action_matrix.shape[0] // 2
     transition_matrix = 0.5 * (
-            action_matrix.T[0:n - 1:2] + 1j * action_matrix.T[1:n:2]
+            action_matrix.T[::2] + 1j * action_matrix.T[1::2]
     )
     return transition_matrix
 
@@ -305,3 +304,8 @@ def cast_to_complex(__inputs):
     """
     return type(__inputs)(np.asarray(__inputs).astype(complex))
 
+
+def load_backend_lib(backend):
+    if isinstance(backend, str):
+        backend = importlib.import_module(backend)
+    return backend

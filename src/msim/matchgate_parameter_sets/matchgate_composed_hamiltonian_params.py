@@ -5,20 +5,22 @@ from .matchgate_params import MatchgateParams
 
 class MatchgateComposedHamiltonianParams(MatchgateParams):
     N_PARAMS = 6
+    ALLOW_COMPLEX_PARAMS = False
 
     def __init__(
             self,
-            n_x: float,
-            n_y: float,
-            n_z: float,
-            m_x: float,
-            m_y: float,
-            m_z: float,
+            n_x: float = 0.0,
+            n_y: float = 0.0,
+            n_z: float = 0.0,
+            m_x: float = 0.0,
+            m_y: float = 0.0,
+            m_z: float = 0.0,
             *,
             backend='numpy',
     ):
         super().__init__(backend=backend)
-        n_x, n_y, n_z, m_x, m_y, m_z = self._maybe_cast_to_real(n_x, n_y, n_z, m_x, m_y, m_z)
+        if not self.ALLOW_COMPLEX_PARAMS:
+            n_x, n_y, n_z, m_x, m_y, m_z = self._maybe_cast_to_real(n_x, n_y, n_z, m_x, m_y, m_z)
         self._n_x = n_x
         self._n_y = n_y
         self._n_z = n_z

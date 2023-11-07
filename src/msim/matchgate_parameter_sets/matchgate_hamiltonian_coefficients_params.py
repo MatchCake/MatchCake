@@ -25,6 +25,7 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
 
     """
     N_PARAMS = 6
+    ALLOW_COMPLEX_PARAMS = True
 
     def __init__(
             self,
@@ -38,7 +39,8 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
             backend='numpy',
     ):
         super().__init__(backend=backend)
-        h0, h1, h2, h3, h4, h5 = self._maybe_cast_to_real(h0, h1, h2, h3, h4, h5)
+        if not self.ALLOW_COMPLEX_PARAMS:
+            h0, h1, h2, h3, h4, h5 = self._maybe_cast_to_real(h0, h1, h2, h3, h4, h5)
         self._h0 = h0
         self._h1 = h1
         self._h2 = h2

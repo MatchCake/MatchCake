@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from msim import utils
+from msim import matchgate_parameter_sets as mps
 
 
 @pytest.mark.parametrize(
@@ -79,3 +80,22 @@ def test_get_hamming_weight(state, hamming_weight):
     assert out_hamming_weight == hamming_weight, (f"The output hamming weight is not the correct one. "
                                                   f"Got {out_hamming_weight} instead of {hamming_weight}")
 
+
+@pytest.mark.parametrize(
+    "coeffs,hamiltonian",
+    [
+        (
+            mps.MatchgateHamiltonianCoefficientsParams(h0=1.0, h1=1.0, h2=1.0, h3=1.0, h4=1.0, h5=1.0),
+            2*np.array([
+                [2j, 0, 0, 2j],
+                [0, 0, -2, 0],
+                [0, 2, 0, 0],
+                [2j, 0, 0, -2j],
+            ])
+        ),
+    ]
+)
+def test_get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs, hamiltonian):
+    out_hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs.to_matrix())
+    assert np.allclose(out_hamiltonian, hamiltonian), (f"The output hamiltonian is not the correct one. "
+                                                       f"Got \n{out_hamiltonian} instead of \n{hamiltonian}")

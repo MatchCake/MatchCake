@@ -239,11 +239,12 @@ class Matchgate:
             *,
             backend='numpy',
             raise_errors_if_not_matchgate=True,
+            **kwargs
     ):
         r"""
         Construct a Matchgate from the parameters. The parameters can be a MatchgateParams object, a list, a tuple or
         a numpy array. If the parameters are a list, tuple or numpy array, the parameters will be interpreted as
-        MatchgateStandardParams if the length is 8, MatchgatePolarParams if the length is 6 or 7.
+        the keyword argument `default_given_params_cls`.
 
         If the parameters are a MatchgateParams object, the parameters will be interpreted as the type of the object.
 
@@ -262,6 +263,7 @@ class Matchgate:
         self._hamiltonian_coefficients_params = None
         self._composed_hamiltonian_params = None
 
+        self._default_given_params_cls = kwargs.get('default_given_params_cls', mps.MatchgatePolarParams)
         self._initialize_params_(params)
         
         # Basic properties
@@ -442,7 +444,7 @@ class Matchgate:
 
         Initialize the parameters of the matchgate. The parameters can be a MatchgateParams object, a list, a tuple or
         a numpy array. If the parameters are a list, tuple or numpy array, the parameters will be interpreted as
-        MatchgateStandardParams if the length is 8, MatchgatePolarParams if the length is 6.
+        the :attr:`_default_given_params_cls`.
 
         If the parameters are a MatchgateParams object, the parameters will be interpreted as the type of the object.
 
@@ -457,22 +459,8 @@ class Matchgate:
         params = None
         if isinstance(given_params, mps.MatchgateParams):
             params = given_params
-        elif isinstance(given_params, np.ndarray):
-            if given_params.size == 6:
-                params = mps.MatchgatePolarParams.from_numpy(given_params.flatten())
-            elif given_params.size == 8:
-                params = mps.MatchgateStandardParams.from_numpy(given_params.flatten())
-            else:
-                raise ValueError("The given params must be a 6 or 8 elements array.")
-        elif isinstance(given_params, (list, tuple)):
-            if len(given_params) == 6:
-                params = mps.MatchgatePolarParams.parse_from_params(given_params)
-            elif len(given_params) == 8:
-                params = mps.MatchgateStandardParams.parse_from_params(given_params)
-            else:
-                raise ValueError("The given params must be a 6 or 8 elements array.")
         else:
-            raise ValueError("The given params must be a 6 or 8 elements array or a MatchgateParams object.")
+            params = self._default_given_params_cls.parse_from_any(given_params)
 
         if isinstance(params, mps.MatchgatePolarParams):
             self._polar_params = params

@@ -24,3 +24,121 @@ def test_majoranas_anti_commutation(mu: int, nu: int, n: int):
                                                   f"with mu={mu}, nu={nu} and n={n}. "
                                                   f"Got {anti_commutator} instead of "
                                                   f"{target}")
+
+
+@pytest.mark.parametrize(
+    "i,c_i",
+    [
+        (
+                0,
+                np.array([
+                    [0, 0, 1, 0],
+                    [0, 0, 0, 1],
+                    [1, 0, 0, 0],
+                    [0, 1, 0, 0]
+                ])
+        ),
+        (
+                1,
+                np.array([
+                    [0, 0, -1j, 0],
+                    [0, 0, 0, -1j],
+                    [1j, 0, 0, 0],
+                    [0, 1j, 0, 0]
+                ])
+        ),
+        (
+                2,
+                np.array([
+                    [0, 1, 0, 0],
+                    [1, 0, 0, 0],
+                    [0, 0, 0, -1],
+                    [0, 0, -1, 0]
+                ])
+        ),
+        (
+                3,
+                np.array([
+                    [0, -1j, 0, 0],
+                    [1j, 0, 0, 0],
+                    [0, 0, 0, 1j],
+                    [0, 0, -1j, 0]
+                ])
+        ),
+    ]
+)
+def test_get_majorana(i, c_i):
+    _c_i = utils.get_majorana(i, len(c_i) // 2)
+    assert np.allclose(_c_i, c_i), (f"The Majorana matrix is not the correct one. "
+                                    f"Got \n{_c_i} instead of \n{c_i}")
+
+
+@pytest.mark.parametrize(
+    "i,j,c_ij",
+    [
+        (
+                0, 1,
+                np.array([
+                    [1j, 0, 0, 0],
+                    [0, 1j, 0, 0],
+                    [0, 0, -1j, 0],
+                    [0, 0, 0, -1j]
+                ])
+        ),
+        (
+                0, 2,
+                np.array([
+                    [0, 0, 0, -1],
+                    [0, 0, -1, 0],
+                    [0, 1, 0, 0],
+                    [1, 0, 0, 0]
+                ])
+        ),
+        (
+                0, 3,
+                np.array([
+                    [0, 0, 0, 1j],
+                    [0, 0, -1j, 0],
+                    [0, -1j, 0, 0],
+                    [1j, 0, 0, 0]
+                ])
+        ),
+        (
+                1, 2,
+                np.array([
+                    [0, 0, 0, 1j],
+                    [0, 0, 1j, 0],
+                    [0, 1j, 0, 0],
+                    [1j, 0, 0, 0]
+                ])
+        ),
+        (
+                1, 3,
+                np.array([
+                    [0, 0, 0, 1],
+                    [0, 0, -1, 0],
+                    [0, 1, 0, 0],
+                    [-1, 0, 0, 0]
+                ])
+        ),
+        (
+                2, 3,
+                np.array([
+                    [1j, 0, 0, 0],
+                    [0, -1j, 0, 0],
+                    [0, 0, 1j, 0],
+                    [0, 0, 0, -1j]
+                ])
+        ),
+    ]
+)
+def test_get_majorana_product(i, j, c_ij):
+    c_i = utils.get_majorana(i, len(c_ij) // 2)
+    c_j = utils.get_majorana(j, len(c_ij) // 2)
+    _c_ij = c_i @ c_j
+    assert np.allclose(_c_ij, c_ij), (f"The Majorana matrix is not the correct one. "
+                                      f"Got \n{_c_ij} instead of \n{c_ij}")
+
+
+
+

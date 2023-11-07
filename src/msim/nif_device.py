@@ -108,7 +108,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self._transition_matrix = utils.make_transition_matrix_from_action_matrix(action_matrix)
         
         # store the pre-rotated state
-        self._pre_rotated_state = self._state.copy()
+        # self._pre_rotated_state = self._state.copy()
 
         # apply the circuit rotations
         # for rot in rotations or []:
@@ -116,17 +116,18 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         assert rotations is None or np.asarray([rotations]).size == 0, "Rotations are not supported"
 
     def analytic_probability(self, wires=None):
-        wires = wires or self.wires
+        if wires is None:
+            wires = self.wires
+        if isinstance(wires, int):
+            wires = [wires]
         wires = Wires(wires)
         device_wires = self.map_wires(wires)
         num_wires = len(device_wires)
         
-        if self._state is None:
+        if self.state is None:
             return None
-        state_hamming_weight = utils.get_hamming_weight(self._state)
-        
-        if isinstance(wires, int):
-            wires = [wires]
+        state_hamming_weight = utils.get_hamming_weight(self.state)
+
         # assert num_wires == 1, "Only one wire is supported for now."
         probs = pnp.zeros((num_wires, 2))
         for wire in wires:

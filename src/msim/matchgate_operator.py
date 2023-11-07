@@ -9,7 +9,7 @@ from . import matchgate_parameter_sets as mps
 
 
 class MatchgateOperator(Matchgate, Operation):
-    num_params = 6
+    num_params = 7
     num_wires = 2
     par_domain = "A"
 
@@ -34,10 +34,13 @@ class MatchgateOperator(Matchgate, Operation):
             wires=None,
             id=None,
             *,
-            backend=pnp
+            backend=pnp,
+            **kwargs
     ):
-        Matchgate.__init__(self, params, backend=backend)
-        Operation.__init__(self, *self.hamiltonian_coefficients_params.to_numpy(), wires=wires, id=id)
+        Matchgate.__init__(self, params, backend=backend, **kwargs)
+        params = self.composed_hamiltonian_params.to_numpy()
+        self.num_params = len(params)
+        Operation.__init__(self, *params, wires=wires, id=id)
 
     def adjoint(self):
         return MatchgateOperator(self.standard_params.adjoint(), wires=self.wires, backend=self.backend)
