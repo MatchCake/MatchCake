@@ -99,6 +99,42 @@ def test_random_polar_params_gives_matchgate(params):
     assert matchgate.check_m_m_dagger_constraint(), f"m_m_dagger_constraint failed for random {type(params)}"
     assert matchgate.check_m_dagger_m_constraint(), f"m_dagger_m_constraint failed for random {type(params)}"
     assert matchgate.check_det_constraint(), f"det_constraint failed for random {type(params)}"
+    
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        mps.MatchgatePolarParams.random()[:-1]
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_random_simple_polar_params_respect_constraint_in_hamiltonian_form(params):
+    from scipy.linalg import expm
+    matchgate = Matchgate(params, raise_errors_if_not_matchgate=False)
+    gate_det = np.linalg.det(matchgate.gate_data)
+    hamiltonian_form_det = np.linalg.det(expm(1j * matchgate.hamiltonian_matrix))
+    hamiltonian_trace = np.trace(matchgate.hamiltonian_matrix)
+    exp_trace = np.exp(1j * hamiltonian_trace)
+    assert np.isclose(hamiltonian_form_det, gate_det), f"{hamiltonian_form_det = }, {gate_det = }"
+    assert np.isclose(gate_det, exp_trace), f"{gate_det = }, {exp_trace = }"
+    
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        mps.MatchgatePolarParams.random()
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_random_polar_params_respect_constraint_in_hamiltonian_form(params):
+    from scipy.linalg import expm
+    matchgate = Matchgate(params, raise_errors_if_not_matchgate=False)
+    gate_det = np.linalg.det(matchgate.gate_data)
+    hamiltonian_form_det = np.linalg.det(expm(1j * matchgate.hamiltonian_matrix))
+    hamiltonian_trace = np.trace(matchgate.hamiltonian_matrix)
+    exp_trace = np.exp(1j * hamiltonian_trace)
+    assert np.isclose(hamiltonian_form_det, gate_det), f"{hamiltonian_form_det = }, {gate_det = }"
+    assert np.isclose(gate_det, exp_trace), f"{gate_det = }, {exp_trace = }"
 
 
 @pytest.mark.parametrize(
@@ -113,3 +149,5 @@ def test_random_composed_hamiltonian_params_gives_matchgate(params):
     assert matchgate.check_m_m_dagger_constraint(), f"m_m_dagger_constraint failed for random {type(params)}"
     assert matchgate.check_m_dagger_m_constraint(), f"m_dagger_m_constraint failed for random {type(params)}"
     assert matchgate.check_det_constraint(), f"det_constraint failed for random {type(params)}"
+
+
