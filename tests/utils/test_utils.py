@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from msim import utils
 from msim import matchgate_parameter_sets as mps
+from ..configs import N_RANDOM_TESTS_PER_CASE
 
 
 @pytest.mark.parametrize(
@@ -99,3 +100,22 @@ def test_get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs, hamiltoni
     out_hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs.to_matrix())
     assert np.allclose(out_hamiltonian, hamiltonian), (f"The output hamiltonian is not the correct one. "
                                                        f"Got \n{out_hamiltonian} instead of \n{hamiltonian}")
+
+
+@pytest.mark.parametrize(
+    "coefficients",
+    [
+        np.random.rand(4)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_decompose_matrix_into_majoranas(coefficients):
+    matrix = np.zeros((coefficients.size, coefficients.size), dtype=complex)
+    n = int(np.log2(coefficients.size))
+    for i in range(coefficients.size):
+        matrix += coefficients[i] * utils.get_majorana(i, n)
+
+    out_coefficients = utils.decompose_matrix_into_majoranas(matrix)
+    assert np.allclose(out_coefficients, coefficients), (f"The output coefficients are not the correct one. "
+                                                         f"Got {out_coefficients} instead of {coefficients}")
+

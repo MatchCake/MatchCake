@@ -58,3 +58,21 @@ def test_from_numpy(
     )
     assert params__ == params
 
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        MatchgateHamiltonianCoefficientsParams.random()
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ],
+)
+def test_compute_hamiltonian(params):
+    hamiltonian = params.compute_hamiltonian()
+    elements_indexes_as_array = np.asarray(MatchgateStandardHamiltonianParams.ELEMENTS_INDEXES)
+    params_arr = hamiltonian[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
+    std_params = MatchgateStandardHamiltonianParams.from_numpy(params_arr)
+    std_params_from = MatchgateStandardHamiltonianParams.parse_from_params(params)
+    assert std_params == std_params_from
+
+
+
