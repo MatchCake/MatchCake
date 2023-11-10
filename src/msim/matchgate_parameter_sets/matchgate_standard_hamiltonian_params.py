@@ -11,96 +11,109 @@ class MatchgateStandardHamiltonianParams(MatchgateParams):
 
     .. math::
         H = \begin{pmatrix}
-                \Tilde{h}_0 & 0 & 0 & \Tilde{h}_1 \\
-                0 & \Tilde{h}_2 & \Tilde{h}_3 & 0 \\
-                0 & \Tilde{h}_4 & \Tilde{h}_5 & 0 \\
-                \Tilde{h}_6 & 0 & 0 & \Tilde{h}_7
+                u_0 & 0 & 0 & u_1 \\
+                0 & u_2 & u_3 & 0 \\
+                0 & u_4 & u_5 & 0 \\
+                u_6 & 0 & 0 & u_7
             \end{pmatrix}
 
-    where the :math:`\Tilde{h}_i` are the parameters and :math:`H` is the hamiltonian matrix of shape
+    where the :math:`u_i` are the parameters and :math:`H` is the hamiltonian matrix of shape
     :math:`2^n \times 2^n` where :math:`n` is the number of particles in the system. In our case, :math:`n=2`.
     """
     N_PARAMS = 8
+    ALLOW_COMPLEX_PARAMS = True
+    ZEROS_INDEXES = [
+        (0, 1), (0, 2),
+        (1, 0), (1, 3),
+        (2, 0), (2, 3),
+        (3, 1), (3, 2),
+    ]
+    ELEMENTS_INDEXES = [
+        (0, 0), (0, 3),  # u_0, u_1
+        (1, 1), (1, 2),  # u_2, u_3
+        (2, 1), (2, 2),  # u_4, u_5
+        (3, 0), (3, 3),  # u_6, u_7
+    ]
 
     def __init__(
             self,
-            h0: Union[float, complex],
-            h1: Union[float, complex],
-            h2: Union[float, complex],
-            h3: Union[float, complex],
-            h4: Union[float, complex],
-            h5: Union[float, complex],
-            h6: Union[float, complex],
-            h7: Union[float, complex],
+            u0: float = 0.0,
+            u1: Union[float, complex] = 0.0,
+            u2: float = 0.0,
+            u3: Union[float, complex] = 0.0,
+            u4: Union[float, complex] = 0.0,
+            u5: float = 0.0,
+            u6: Union[float, complex] = 0.0,
+            u7: float = 0.0,
             *,
             backend='numpy',
     ):
         super().__init__(backend=backend)
-        self._h0 = complex(h0)
-        self._h1 = complex(h1)
-        self._h2 = complex(h2)
-        self._h3 = complex(h3)
-        self._h4 = complex(h4)
-        self._h5 = complex(h5)
-        self._h6 = complex(h6)
-        self._h7 = complex(h7)
+        self._u0 = u0
+        self._u1 = complex(u1)
+        self._u2 = u2
+        self._u3 = complex(u3)
+        self._u4 = complex(u4)
+        self._u5 = u5
+        self._u6 = complex(u6)
+        self._u7 = u7
 
     @property
-    def h0(self) -> Union[float, complex]:
-        return self._h0
+    def u0(self) -> Union[float, complex]:
+        return self._u0
 
     @property
-    def h1(self) -> Union[float, complex]:
-        return self._h1
+    def u1(self) -> Union[float, complex]:
+        return self._u1
 
     @property
-    def h2(self) -> Union[float, complex]:
-        return self._h2
+    def u2(self) -> Union[float, complex]:
+        return self._u2
 
     @property
-    def h3(self) -> Union[float, complex]:
-        return self._h3
+    def u3(self) -> Union[float, complex]:
+        return self._u3
 
     @property
-    def h4(self) -> Union[float, complex]:
-        return self._h4
+    def u4(self) -> Union[float, complex]:
+        return self._u4
 
     @property
-    def h5(self) -> Union[float, complex]:
-        return self._h5
+    def u5(self) -> Union[float, complex]:
+        return self._u5
 
     @property
-    def h6(self) -> Union[float, complex]:
-        return self._h6
+    def u6(self) -> Union[float, complex]:
+        return self._u6
 
     @property
-    def h7(self) -> Union[float, complex]:
-        return self._h7
+    def u7(self) -> Union[float, complex]:
+        return self._u7
 
     @classmethod
     def to_sympy(cls):
         import sympy as sp
-        h0, h1, h2, h3, h4, h5, h6, h7 = sp.symbols('h_0 h_1 h_2 h_3 h_4 h_5 h_6 h_7')
-        return sp.Matrix([h0, h1, h2, h3, h4, h5, h6, h7])
+        u0, u1, u2, u3, u4, u5, u6, u7 = sp.symbols('u_0 u_1 u_2 u_3 u_4 u_5 u_6 u_7')
+        return sp.Matrix([u0, u1, u2, u3, u4, u5, u6, u7])
 
     def to_numpy(self):
         return self.backend.asarray([
-            self.h0,
-            self.h1,
-            self.h2,
-            self.h3,
-            self.h4,
-            self.h5,
-            self.h6,
-            self.h7,
+            self.u0,
+            self.u1,
+            self.u2,
+            self.u3,
+            self.u4,
+            self.u5,
+            self.u6,
+            self.u7,
         ])
 
     def to_matrix(self):
         return self.backend.asarray([
-            [self.h0, 0, 0, self.h1],
-            [0, self.h2, self.h3, 0],
-            [0, self.h4, self.h5, 0],
-            [self.h6, 0, 0, self.h7],
+            [self.u0, 0, 0, self.u1],
+            [0, self.u2, self.u3, 0],
+            [0, self.u4, self.u5, 0],
+            [self.u6, 0, 0, self.u7],
         ])
 
     def adjoint(self):
@@ -110,24 +123,24 @@ class MatchgateStandardHamiltonianParams(MatchgateParams):
         :return: The adjoint parameters.
         """
         return MatchgateStandardHamiltonianParams(
-            h0=np.conjugate(self.h0),
-            h1=np.conjugate(self.h6),
-            h2=np.conjugate(self.h2),
-            h3=np.conjugate(self.h4),
-            h4=np.conjugate(self.h3),
-            h5=np.conjugate(self.h5),
-            h6=np.conjugate(self.h1),
-            h7=np.conjugate(self.h7),
+            u0=np.conjugate(self.u0),
+            u1=np.conjugate(self.u6),
+            u2=np.conjugate(self.u2),
+            u3=np.conjugate(self.u4),
+            u4=np.conjugate(self.u3),
+            u5=np.conjugate(self.u5),
+            u6=np.conjugate(self.u1),
+            u7=np.conjugate(self.u7),
             backend=self.backend,
         )
 
     def __repr__(self):
-        return (f"MatchgateParams("
-                f"h0={self.h0}, "
-                f"h1={self.h1}, "
-                f"h2={self.h2}, "
-                f"h3={self.h3}, "
-                f"h4={self.h4}, "
-                f"h5={self.h5}, "
-                f"h6={self.h6}, "
-                f"h7={self.h7})")
+        return (f"{self.__class__.__name__}("
+                f"u0={self.u0}, "
+                f"u1={self.u1}, "
+                f"u2={self.u2}, "
+                f"u3={self.u3}, "
+                f"u4={self.u4}, "
+                f"u5={self.u5}, "
+                f"u6={self.u6}, "
+                f"u7={self.u7})")

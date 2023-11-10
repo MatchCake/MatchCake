@@ -1,5 +1,7 @@
 from typing import Type, Dict, Callable
 
+import numpy as np
+
 from . import (
     MatchgateParams,
     MatchgatePolarParams,
@@ -62,14 +64,14 @@ def standard_to_standard_hamiltonian(params: MatchgateStandardParams, **kwargs) 
     gate = params.to_matrix().astype(complex)
     hamiltonian = -1j * logm(gate)
     return MatchgateStandardHamiltonianParams(
-        h0=hamiltonian[0, 0],
-        h1=hamiltonian[0, 3],
-        h2=hamiltonian[1, 1],
-        h3=hamiltonian[1, 2],
-        h4=hamiltonian[2, 1],
-        h5=hamiltonian[2, 2],
-        h6=hamiltonian[3, 0],
-        h7=hamiltonian[3, 3],
+        u0=hamiltonian[0, 0],
+        u1=hamiltonian[0, 3],
+        u2=hamiltonian[1, 1],
+        u3=hamiltonian[1, 2],
+        u4=hamiltonian[2, 1],
+        u5=hamiltonian[2, 2],
+        u6=hamiltonian[3, 0],
+        u7=hamiltonian[3, 3],
         backend=backend,
     )
 
@@ -101,13 +103,15 @@ def standard_hamiltonian_to_hamiltonian_coefficients(
     :rtype: MatchgateHamiltonianCoefficientsParams
     """
     backend = MatchgateParams.load_backend_lib(kwargs.get("backend", "numpy"))
+    epsilon = (params.u0 + params.u7) / 2
     return MatchgateHamiltonianCoefficientsParams(
-        h0=-0.25j * (params.h0 + params.h2),
-        h1=0.125 * (params.h6 - params.h1 + params.h4 - params.h3),
-        h2=0.125j * (params.h3 + params.h4 - params.h1 - params.h6),
-        h3=-0.125j * (params.h3 + params.h4 + params.h1 + params.h6),
-        h4=0.125 * (params.h1 - params.h6 + params.h4 - params.h3),
-        h5=0.25j * (params.h2 - params.h0),
+        h0=0.25 * (params.u0 + params.u2 - 2 * epsilon),
+        h1=-0.125j * (params.u1 - params.u6 + params.u3 - params.u4),
+        h2=0.125 * (params.u1 + params.u6 - params.u3 - params.u4),
+        h3=0.125 * (params.u1 + params.u6 + params.u3 + params.u4),
+        h4=-0.125j * (params.u3 - params.u4 - params.u1 + params.u6),
+        h5=0.25 * (params.u0 - params.u2),
+        epsilon=epsilon,
         backend=backend,
     )
 
@@ -146,6 +150,7 @@ def hamiltonian_coefficients_to_composed_hamiltonian(
         m_x=2 * (params.h3 - params.h2),
         m_y=2 * (params.h1 - params.h4),
         m_z=2 * (params.h0 - params.h5),
+        epsilon=params.epsilon,
         backend=backend,
     )
 
@@ -183,6 +188,7 @@ def composed_hamiltonian_to_hamiltonian_coefficients(
         h3=0.25 * (params.n_x + params.m_x),
         h4=0.25 * (params.n_y - params.m_y),
         h5=0.25 * (params.n_z - params.m_z),
+        epsilon=params.epsilon,
         backend=backend,
     )
 
@@ -195,14 +201,14 @@ def hamiltonian_coefficients_to_standard_hamiltonian(
 
     .. math::
         \begin{align}
-            \hat{h}_0 &= 2i (h_0 + h_5) \\
+            \hat{h}_0 &= 2i (h_0 + h_5) + \epsilon \\
             \hat{h}_1 &= 2(h_4 - h_1) + 2i(h_2 + h_3) \\
-            \hat{h}_2 &= 2i(h_0 - h_5) \\
+            \hat{h}_2 &= 2i(h_0 - h_5) + \epsilon \\
             \hat{h}_3 &= 2i(h_3 - h_2) - 2(h_1 + h_4) \\
             \hat{h}_4 &= 2(h_1 + h_4) + 2i(h_3 - h_2) \\
-            \hat{h}_5 &= 2i (h_5 - h_0) \\
+            \hat{h}_5 &= 2i (h_5 - h_0) + \epsilon \\
             \hat{h}_6 &= 2(h_1 - h_4) + 2i(h_2 + h_3) \\
-            \hat{h}_7 &= -2i (h_0 + h_5)
+            \hat{h}_7 &= -2i (h_0 + h_5) + \epsilon
         \end{align}
 
     :param params: The hamiltonian coefficients parameters
@@ -216,18 +222,19 @@ def hamiltonian_coefficients_to_standard_hamiltonian(
     """
     backend = MatchgateParams.load_backend_lib(kwargs.get("backend", "numpy"))
     # hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(params.to_matrix())
-    # elements_indexes_as_array = backend.array(MatchgateStandardParams.ELEMENTS_INDEXES)
+    # hamiltonian = params.compute_hamiltonian()
+    # elements_indexes_as_array = backend.array(MatchgateStandardHamiltonianParams.ELEMENTS_INDEXES)
     # params_arr = hamiltonian[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
     # return MatchgateStandardHamiltonianParams.from_numpy(params_arr)
     return MatchgateStandardHamiltonianParams(
-        h0=2j * (params.h0 + params.h5),
-        h1=2 * (params.h4 - params.h1) + 2j * (params.h2 + params.h3),
-        h2=2j * (params.h0 - params.h5),
-        h3=2j * (params.h3 - params.h2) - 2 * (params.h1 + params.h4),
-        h4=2 * (params.h1 + params.h4) + 2j * (params.h3 - params.h2),
-        h5=2j * (params.h5 - params.h0),
-        h6=2 * (params.h1 - params.h4) + 2j * (params.h2 + params.h3),
-        h7=-2j * (params.h0 + params.h5),
+        u0=2 * (params.h0 + params.h5) + params.epsilon,
+        u1=2 * (params.h3 + params.h2) + 2j * (params.h1 - params.h4),
+        u2=2 * (params.h0 - params.h5) + params.epsilon,
+        u3=2 * (params.h3 - params.h2) + 2j * (params.h1 + params.h4),
+        u4=2 * (params.h3 - params.h2) - 2j * (params.h1 + params.h4),
+        u5=2 * (params.h5 - params.h0) + params.epsilon,
+        u6=2 * (params.h3 + params.h2) - 2j * (params.h1 - params.h4),
+        u7=-2 * (params.h0 + params.h5) + params.epsilon,
         backend=backend,
     )
 
