@@ -109,15 +109,20 @@ def get_majorana(i: int, n: int) -> np.ndarray:
     return recursive_kron(get_majorana_pauli_list(i, n))
 
 
-def get_non_interacting_fermionic_hamiltonian_from_coeffs(hamiltonian_coefficients_matrix, lib=np):
+def get_non_interacting_fermionic_hamiltonian_from_coeffs(
+        hamiltonian_coefficients_matrix,
+        energy_offset=0.0,
+        lib=np
+):
     r"""
     Compute the non-interacting fermionic Hamiltonian from the coefficients of the Majorana operators.
 
     .. math::
-        H = \sum_{\mu,\nu = 0}^{2n-1} h_{\mu \nu} c_\mu c_\nu
+        H = -i\sum_{\mu,\nu = 0}^{2n-1} h_{\mu \nu} c_\mu c_\nu + \epsilon \mathbb{I}
 
     where :math:`h_{\mu \nu}` are the coefficients of the Majorana operators :math:`c_\mu` and :math:`c_\nu`,
-    :math:`n` is the number of particles, :math:`\mu` and :math:`\nu` are the indices of the Majorana operators.
+    :math:`n` is the number of particles, :math:`\mu`, :math:`\nu` are the indices of the Majorana operators,
+    :math:`\epsilon` is the energy offset and :math:`\mathbb{I}` is the identity matrix.
 
     TODO: optimize the method by changing the sum for a matrix multiplication as :math:`H = i C^T h C` where :math:`C`
         is the matrix of Majorana operators.
@@ -126,18 +131,21 @@ def get_non_interacting_fermionic_hamiltonian_from_coeffs(hamiltonian_coefficien
 
     :param hamiltonian_coefficients_matrix: Coefficients of the Majorana operators. Must be a square matrix of shape
         :math:`(2n, 2n)`.
+    :type hamiltonian_coefficients_matrix: np.ndarray
+    :param energy_offset: Energy offset
+    :type energy_offset: float
     :param lib: Library to use for the operations
     :return: Non-interacting fermionic Hamiltonian
     """
     backend = load_backend_lib(lib)
     n_particles = int(len(hamiltonian_coefficients_matrix) / 2)
-    hamiltonian = backend.zeros((2**n_particles, 2**n_particles), dtype=complex)
+    hamiltonian = energy_offset * backend.eye(2**n_particles, dtype=complex)
 
     for mu in range(2*n_particles):
         for nu in range(2*n_particles):
             c_mu = get_majorana(mu, n_particles)
             c_nu = get_majorana(nu, n_particles)
-            hamiltonian += hamiltonian_coefficients_matrix[mu, nu] * (c_mu @ c_nu)
+            hamiltonian += -1j * hamiltonian_coefficients_matrix[mu, nu] * (c_mu @ c_nu)
     return hamiltonian
 
 
@@ -189,6 +197,35 @@ def check_if_imag_is_zero(__matrix: np.ndarray, eps: float = 1e-5) -> bool:
     :return: True if the imaginary part is zero, False otherwise
     """
     return np.allclose(__matrix.imag, 0.0, atol=eps)
+
+
+def decompose_matrix_into_majoranas(__matrix: np.ndarray) -> np.ndarray:
+    r"""
+    Decompose a matrix into Majorana operators. The matrix is decomposed as
+
+    .. math::
+        \mathbf{M} = \sum_{i=0}^{2^{n}-1} m_i c_i
+
+    where :math:`\mathbf{M}` is the matrix, :math:`m_i` are the coefficients of the matrix, :math:`n` is the number
+    of particles and :math:`c_i` are the Majorana operators.
+
+    :param __matrix: Input matrix
+    :type __matrix: np.ndarray
+    :return: Coefficients of the Majorana operators
+    :rtype: np.ndarray
+    """
+    n_states = __matrix.shape[0]
+    n = int(np.log2(n_states))
+    assert n_states == 2 ** n, f"Invalid number of states: {n_states}, must be a power of 2."
+    assert n == 2, f"Invalid number of particles: {n}, must be 2."
+    assert __matrix.shape == (n_states, n_states), f"Invalid shape for matrix: {__matrix.shape}, must be square."
+    matrix = __matrix.copy()
+    matrix = matrix.astype(complex)
+    coeffs = np.zeros(n_states, dtype=complex)
+    for i in range(n_states):
+        c_i = get_majorana(i, n)
+        coeffs[i] = np.trace(matrix @ c_i) / n_states
+    return coeffs
 
 
 def make_transition_matrix_from_action_matrix(action_matrix):
