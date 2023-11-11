@@ -346,3 +346,22 @@ def load_backend_lib(backend):
     if isinstance(backend, str):
         backend = importlib.import_module(backend)
     return backend
+
+
+def camel_case_to_spaced_camel_case(__string: str) -> str:
+    r"""
+
+    Convert a camel case string to a spaced camel case string. The conversion is done by adding a space before
+    every capital letter.
+
+    :param __string: Camel case string
+    :type __string: str
+    :return: Spaced camel case string
+    :rtype: str
+    """
+    spaced_camel_case_string = ""
+    for i, char in enumerate(__string):
+        if char.isupper() and i > 0:
+            spaced_camel_case_string += " "
+        spaced_camel_case_string += char
+    return spaced_camel_case_string
