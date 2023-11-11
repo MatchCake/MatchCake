@@ -103,7 +103,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         action_matrix = pnp.eye(2 * self.num_wires, dtype=complex)
         for op in operations:
             assert isinstance(op, MatchgateOperator), "Only MatchgateOperator is supported"
-            action_matrix = op.action_matrix @ action_matrix
+            action_matrix = op.single_transition_particle_matrix @ action_matrix
         
         self._transition_matrix = utils.make_transition_matrix_from_action_matrix(action_matrix)
         
@@ -135,7 +135,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             prob1 = pnp.real(pfaffian.pfaffian(obs))
             prob0 = 1.0 - prob1
             probs[wire] = pnp.array([prob0, prob1])
-        return probs
+        return probs.flatten()
 
     def reset(self):
         """Reset the device"""

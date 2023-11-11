@@ -18,6 +18,21 @@ class MatchgateParams:
     EQUALITY_RELATIVE_TOLERANCE = 1e-4
 
     @classmethod
+    def get_short_name(cls):
+        r"""
+        Remove the "Matchgate" prefix from the class name and the "Params" suffix.
+
+        :return: The short name of the class.
+        """
+        long_name = cls.__name__
+        short_name = long_name
+        if long_name.lower().startswith('matchgate'):
+            short_name = long_name[9:]
+        if long_name.lower().endswith('params'):
+            short_name = short_name[:-6]
+        return short_name
+
+    @classmethod
     def _maybe_cast_to_real(cls, *params):
         is_real = utils.check_if_imag_is_zero(np.array(params))
         real_params = tuple(np.real(np.array(params)))

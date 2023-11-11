@@ -193,36 +193,6 @@ class Matchgate:
         return Matchgate.from_matrix(matrix)
 
     @staticmethod
-    def from_hamiltonian_coeffs(coeffs_vector) -> 'Matchgate':
-        r"""
-        Construct a Matchgate from the Hamiltonian coefficients vector. The Hamiltonian coefficients is a vector that
-        represent the upper triangular part of a skew-symmetric 4x4 matrix defined as
-
-        .. math::
-            \begin{pmatrix}
-                0 & h_{0} & h_{1} & h_{2} \\
-                -h_{0} & 0 & h_{3} & h_{4} \\
-                -h_{1} & -h_{3} & 0 & h_{5} \\
-                -h_{2} & -h_{4} & -h_{5} & 0
-            \end{pmatrix}
-
-        where :math:`h_{i}` is the :math:`i`-th element of the Hamiltonian coefficients vector. The matchgate is
-        constructed as
-
-        .. math::
-            M = \exp{-i\sum_{\mu\nu}^{2n} h_{\mu\nu} c_\mu c_\nu}
-
-        where :math:`c_\mu` and :math:`c_\nu` are the Majorana operators.
-
-        :param coeffs_vector:
-        :return:
-        """
-        coeffs_matrix = utils.skew_antisymmetric_vector_to_matrix(coeffs_vector)
-        hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs_matrix)
-        pred_matchgate = utils.get_unitary_from_hermitian_matrix(hamiltonian)
-        return Matchgate.from_matrix(pred_matchgate)
-
-    @staticmethod
     def to_sympy():
         import sympy as sp
         a, b, c, d, w, x, y, z = mps.MatchgateStandardParams.to_sympy()
@@ -274,7 +244,7 @@ class Matchgate:
             self.check_asserts()
         
         # Interaction properties
-        self._action_matrix = None
+        self._single_transition_particle_matrix = None
         self._transition_matrix = None
 
     @property
@@ -324,13 +294,14 @@ class Matchgate:
         return self._hamiltonian_matrix
     
     @property
-    def action_matrix(self):
-        if self._action_matrix is None:
-            self._make_action_matrix_()
-        return self._action_matrix
+    def single_transition_particle_matrix(self):
+        if self._single_transition_particle_matrix is None:
+            self._make_single_transition_particle_matrix_()
+        return self._single_transition_particle_matrix
     
     @property
     def transition_matrix(self):
+        # TODO: find a better name for this property
         if self._transition_matrix is None:
             self._make_transition_matrix_()
         return self._transition_matrix
@@ -561,18 +532,34 @@ class Matchgate:
     
     def _make_hamiltonian_matrix_(self) -> np.ndarray:
         self._hamiltonian_matrix = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(
-            self.hamiltonian_coeffs_matrix
+            self.hamiltonian_coeffs_matrix,
+            energy_offset=self.hamiltonian_coefficients_params.epsilon,
         )
         return self._hamiltonian_matrix
     
-    def _make_action_matrix_(self) -> np.ndarray:
-        from scipy.linalg import expm
-        
-        self._action_matrix = expm(-4 * self.hamiltonian_coeffs_matrix)
-        return self._action_matrix
+    def _make_single_transition_particle_matrix_(self) -> np.ndarray:
+        # from scipy.linalg import expm
+        # self._action_matrix = expm(-4 * self.hamiltonian_coeffs_matrix)
+
+        u = self.gate_data
+        u_dagger = np.conjugate(self.gate_data.T)
+        n_states = u.shape[0]
+        n = int(np.log2(n_states))
+
+        matrix = np.zeros((2*n, 2*n), dtype=complex)
+
+        for i in range(n_states):
+            c_mu = utils.get_majorana(i, n)
+            row = utils.decompose_matrix_into_majoranas(u @ c_mu @ u_dagger)
+            matrix[i, :] = row
+
+        self._single_transition_particle_matrix = matrix
+        return self._single_transition_particle_matrix
     
     def _make_transition_matrix_(self) -> np.ndarray:
-        self._transition_matrix = utils.make_transition_matrix_from_action_matrix(self.action_matrix)
+        self._transition_matrix = utils.make_transition_matrix_from_action_matrix(
+            self.single_transition_particle_matrix
+        )
         return self._transition_matrix
 
     def compute_m_m_dagger(self):
@@ -678,6 +665,6 @@ class Matchgate:
         self.get_all_params_set(make_params=True)
         _ = self.gate_data
         _ = self.hamiltonian_matrix
-        _ = self.action_matrix
+        _ = self.single_transition_particle_matrix
         _ = self.transition_matrix
 

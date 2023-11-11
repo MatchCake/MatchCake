@@ -82,6 +82,10 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
     def epsilon(self) -> float:
         return self._epsilon
 
+    @epsilon.setter
+    def epsilon(self, value: float):
+        self._epsilon = value
+
     @property
     def h0_op(self):
         return -2j * utils.get_majorana(0, 2) @ utils.get_majorana(1, 2)
