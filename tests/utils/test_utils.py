@@ -87,7 +87,7 @@ def test_get_hamming_weight(state, hamming_weight):
     [
         (
             mps.MatchgateHamiltonianCoefficientsParams(h0=1.0, h1=1.0, h2=1.0, h3=1.0, h4=1.0, h5=1.0),
-            2*np.array([
+            -2j*np.array([
                 [2j, 0, 0, 2j],
                 [0, 0, -2, 0],
                 [0, 2, 0, 0],
@@ -118,4 +118,24 @@ def test_decompose_matrix_into_majoranas(coefficients):
     out_coefficients = utils.decompose_matrix_into_majoranas(matrix)
     assert np.allclose(out_coefficients, coefficients), (f"The output coefficients are not the correct one. "
                                                          f"Got {out_coefficients} instead of {coefficients}")
+
+
+@pytest.mark.parametrize(
+    "matrix",
+    [
+        np.random.rand(4, 4)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_make_transition_matrix_from_action_matrix(matrix):
+    t_matrix = utils.make_transition_matrix_from_action_matrix(matrix)
+
+    reconstructed_matrix = np.zeros_like(matrix)
+    reconstructed_matrix[:, ::2] = 2 * np.real(t_matrix).T
+    reconstructed_matrix[:, 1::2] = 2 * np.imag(t_matrix).T
+    assert np.allclose(matrix, reconstructed_matrix), (f"The output matrix is not the correct one. "
+                                                       f"Got \n{matrix} instead of \n{reconstructed_matrix}")
+
+
+
 

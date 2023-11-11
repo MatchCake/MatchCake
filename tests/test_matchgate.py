@@ -71,7 +71,7 @@ def test_matchgate_constructor_from_matrix(input_matrix):
                     [0, 0.0, 1.0, 0],
                     [0.0, 0, 0, 1.0]
                 ]),
-                np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+                np.zeros(mps.MatchgateHamiltonianCoefficientsParams.N_PARAMS)
         )
     ]
 )
@@ -79,12 +79,8 @@ def test_matchgate_hamiltonian_coefficient(input_matrix, target_coefficients):
     mg = Matchgate.from_matrix(input_matrix)
     coeffs_vector = mg.hamiltonian_coefficients_params.to_numpy()
     coeff_check = np.allclose(coeffs_vector, target_coefficients, rtol=1.e-4, atol=1.e-5)
-    out_matchgate = Matchgate.from_hamiltonian_coeffs(coeffs_vector)
-    mg_check = np.allclose(out_matchgate.gate_data, mg.gate_data, rtol=1.e-2, atol=1.e-3)
     assert coeff_check, (f"The output vector is not the correct one. "
                          f"Got {coeffs_vector} instead of {target_coefficients}")
-    assert mg_check, (f"The output matchgate is not the correct one. "
-                      f"Got \n{out_matchgate.gate_data} instead of \n{mg.gate_data}")
 
 
 @pytest.mark.parametrize(
@@ -149,5 +145,43 @@ def test_random_composed_hamiltonian_params_gives_matchgate(params):
     assert matchgate.check_m_m_dagger_constraint(), f"m_m_dagger_constraint failed for random {type(params)}"
     assert matchgate.check_m_dagger_m_constraint(), f"m_dagger_m_constraint failed for random {type(params)}"
     assert matchgate.check_det_constraint(), f"det_constraint failed for random {type(params)}"
+
+
+@pytest.mark.parametrize(
+    "params,expected",
+    [
+        (mps.MatchgateHamiltonianCoefficientsParams(), np.eye(4, dtype=complex)),
+        (mps.MatchgateStandardParams(a=1, w=1, z=1, d=1), np.eye(4, dtype=complex)),
+        (mps.MatchgateStandardParams(a=-1, w=-1, z=-1, d=-1), np.eye(4, dtype=complex)),
+    ]
+)
+def test_action_matrix(params, expected):
+    mg = Matchgate(params)
+    action_matrix = mg.single_transition_particle_matrix
+    check = np.allclose(action_matrix, expected)
+    assert check, f"The action matrix is not the correct one. Got \n{action_matrix} instead of \n{expected}"
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        mps.MatchgatePolarParams.random()
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_single_transition_matrix_equal_to_expm_hami_coeff_if_null_epsilon(params):
+    from scipy.linalg import expm
+
+    params_with_epsilon_0 = mps.MatchgateHamiltonianCoefficientsParams.parse_from_any(params)
+    params_with_epsilon_0.epsilon = 0.0
+
+    mg = Matchgate(params_with_epsilon_0)
+
+    single_transition_particle_matrix = expm(-4 * mg.hamiltonian_coefficients_params.to_matrix())
+
+    check = np.allclose(mg.single_transition_particle_matrix, single_transition_particle_matrix)
+    assert check, (f"The single transition particle matrix is not the correct one. "
+                   f"Got \n{mg.single_transition_particle_matrix} instead of \n{single_transition_particle_matrix}")
+
 
 

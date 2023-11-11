@@ -54,6 +54,7 @@ def test_from_numpy(
         h3=vector[3],
         h4=vector[4],
         h5=vector[5],
+        epsilon=vector[6],
         backend="numpy",
     )
     assert params__ == params

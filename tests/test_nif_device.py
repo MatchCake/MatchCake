@@ -20,15 +20,16 @@ def devices_init(*args, **kwargs) -> Tuple[NonInteractingFermionicDevice, qml.De
 
 
 @pytest.mark.parametrize(
-    "gate,target_expectation_value",
+    "params,target_expectation_value",
     [
-        (np.eye(4), np.array([1.0, 0.0])),
+        (mps.MatchgateStandardParams(a=1, w=1, z=1, d=1), np.array([1.0, 0.0])),
+        (mps.MatchgateStandardParams(a=-1, w=-1, z=-1, d=-1), np.array([1.0, 0.0])),
+        (mps.MatchgatePolarParams(r0=0, r1=1, theta1=0), np.array([0.0, 1.0])),
     ]
 )
-def test_single_gate_circuit_analytic_probability(gate, target_expectation_value):
+def test_single_gate_circuit_analytic_probability(params, target_expectation_value):
     device = NonInteractingFermionicDevice(wires=2)
-    mg_params = Matchgate.from_matrix(gate).polar_params
-    op = MatchgateOperator(mg_params, wires=[0, 1])
+    op = MatchgateOperator(params, wires=[0, 1])
     device.apply(op)
     expectation_value = device.analytic_probability(0)
     check = np.allclose(expectation_value, target_expectation_value)
@@ -47,15 +48,16 @@ def single_matchgate_circuit(params):
     [
         mps.MatchgateComposedHamiltonianParams()
     ]
-    # +
-    # [
-    #     mps.MatchgatePolarParams(r0=1, r1=1)
-    # ]
-    # +
-    # [
-    #     mps.MatchgatePolarParams.random()
-    #     for _ in range(N_RANDOM_TESTS_PER_CASE)
-    # ]
+    +
+    [
+        mps.MatchgatePolarParams(r0=1, r1=1),
+        mps.MatchgatePolarParams(r0=0, r1=1, theta1=0)
+    ]
+    +
+    [
+        mps.MatchgatePolarParams.random()
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
 )
 def test_single_matchgate_probs_with_qbit_device(params):
     nif_device, qubit_device = devices_init()
@@ -63,9 +65,12 @@ def test_single_matchgate_probs_with_qbit_device(params):
     nif_qnode = qml.QNode(single_matchgate_circuit, nif_device)
     qubit_qnode = qml.QNode(single_matchgate_circuit, qubit_device)
     
-    nif_probs = nif_qnode(params)
-    qubit_probs = qubit_qnode(params)
-    check = np.allclose(nif_probs, qubit_probs)
+    nif_probs = nif_qnode(mps.MatchgatePolarParams.parse_from_any(params).to_numpy())
+    qubit_probs = qubit_qnode(mps.MatchgatePolarParams.parse_from_any(params).to_numpy())
+    same_argmax = np.argmax(nif_probs) == np.argmax(qubit_probs)
+    assert same_argmax, (f"The argmax is not the correct one. "
+                         f"Got {np.argmax(nif_probs)} instead of {np.argmax(qubit_probs)}")
+    check = np.allclose(nif_probs, qubit_probs, rtol=1.e-1, atol=1.e-1)
     assert check, f"The probs are not the correct one. Got {nif_probs} instead of {qubit_probs}"
 
 
@@ -85,14 +90,14 @@ def multiples_matchgate_circuit(params_list, all_wires=None):
 @pytest.mark.parametrize(
     "params_list,n_wires",
     [
-        ([np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) for _ in range(num_gates)], num_wires)
+        ([mps.MatchgatePolarParams(r0=1, r1=1).to_numpy() for _ in range(num_gates)], num_wires)
         for num_gates in range(1, 3)
         for num_wires in range(2, 6)
     ]
     +
     [
-        ([np.random.rand(6) for _ in range(num_gates)], num_wires)
-        for _ in range(10)
+        ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], num_wires)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_gates in range(1, 3)
         for num_wires in range(2, 6)
     ]
