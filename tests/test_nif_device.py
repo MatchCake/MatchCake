@@ -38,8 +38,7 @@ def test_single_gate_circuit_analytic_probability(params, target_expectation_val
 
 
 def single_matchgate_circuit(params):
-    op = MatchgateOperator(params, wires=[0, 1])
-    qml.apply(op)
+    MatchgateOperator(params, wires=[0, 1])
     return qml.probs(wires=0)
 
 
@@ -82,8 +81,7 @@ def multiples_matchgate_circuit(params_list, all_wires=None):
         mg_params = mps.MatchgatePolarParams.parse_from_any(params)
         wire0 = np.random.choice(all_wires[:-1], size=1).item()
         wire1 = wire0 + 1
-        op = MatchgateOperator(mg_params, wires=[wire0, wire1])
-        qml.apply(op)
+        MatchgateOperator(mg_params, wires=[wire0, wire1])
     return qml.probs(wires=0)
 
 
