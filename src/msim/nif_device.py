@@ -103,8 +103,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         action_matrix = pnp.eye(2 * self.num_wires, dtype=complex)
         for op in operations:
             assert isinstance(op, MatchgateOperator), "Only MatchgateOperator is supported"
-            action_matrix = op.single_transition_particle_matrix @ action_matrix
-        
+            action_matrix = qml.math.dot(op.single_transition_particle_matrix, action_matrix)
+            # action_matrix = qml.math.dot(action_matrix, op.single_transition_particle_matrix)
+
         self._transition_matrix = utils.make_transition_matrix_from_action_matrix(action_matrix)
         
         # store the pre-rotated state
