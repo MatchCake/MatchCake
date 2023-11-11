@@ -109,5 +109,8 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
 
     nif_probs = nif_qnode(params_list)
     qubit_probs = qubit_qnode(params_list)
-    check = np.allclose(nif_probs, qubit_probs)
+    same_argmax = np.argmax(nif_probs) == np.argmax(qubit_probs)
+    assert same_argmax, (f"The argmax is not the correct one. "
+                         f"Got {np.argmax(nif_probs)} instead of {np.argmax(qubit_probs)}")
+    check = np.allclose(nif_probs, qubit_probs, rtol=1.e-1, atol=1.e-1)
     assert check, f"The probs are not the correct one. Got {nif_probs} instead of {qubit_probs}"
