@@ -413,23 +413,23 @@ def test_polar_to_hamiltonian_coefficients(
             MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
             MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
         ),
-        # (
+        # (TODO: has to be re-computed by hand
         #     MatchgateComposedHamiltonianParams(n_x=1.0, n_y=1.0, n_z=1.0, m_x=1.0, m_y=1.0, m_z=1.0),
         #     MatchgateHamiltonianCoefficientsParams(h0=2.0, h1=2.0, h2=0.0, h3=2.0, h4=0.0, h5=0.0),
         # ),
-        # (
+        # (TODO: has to be re-computed by hand
         #     MatchgateComposedHamiltonianParams(n_x=1.0, n_y=1.0, n_z=1.0, m_x=2.0, m_y=2.0, m_z=2.0),
         #     MatchgateHamiltonianCoefficientsParams(h0=3.0, h1=3.0, h2=-1.0, h3=3.0, h4=-1.0, h5=-1.0),
         # ),
-        # (
+        # (TODO: has to be re-computed by hand
         #     MatchgateComposedHamiltonianParams(n_x=2.0, n_y=2.0, n_z=2.0, m_x=1.0, m_y=1.0, m_z=1.0),
         #     MatchgateHamiltonianCoefficientsParams(h0=3.0, h1=3.0, h2=1.0, h3=3.0, h4=1.0, h5=1.0),
         # ),
-        # (
+        # (TODO: has to be re-computed by hand
         #     MatchgateComposedHamiltonianParams(n_x=1.0, n_y=1.0, n_z=1.0, m_x=0.0, m_y=0.0, m_z=0.0),
         #     MatchgateHamiltonianCoefficientsParams(h0=1.0, h1=1.0, h2=1.0, h3=1.0, h4=1.0, h5=1.0),
         # ),
-        # (
+        # (TODO: has to be re-computed by hand
         #     MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=1.0, m_y=1.0, m_z=1.0),
         #     MatchgateHamiltonianCoefficientsParams(h0=1.0, h1=1.0, h2=-1.0, h3=1.0, h4=-1.0, h5=-1.0),
         # ),
@@ -467,11 +467,11 @@ def test_standard_to_hamiltonian_coefficients(
             MatchgateStandardHamiltonianParams(u0=0.0, u1=0.0, u2=0.0, u3=0.0, u4=0.0, u5=0.0, u6=0.0, u7=0.0),
             MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
         ),
-        # (
+        # (TODO: has to be re-computed by hand
         #     MatchgateStandardHamiltonianParams(h0=1.0, h1=1.0, h2=1.0, h3=1.0, h4=1.0, h5=1.0, h6=1.0, h7=1.0),
         #     MatchgateHamiltonianCoefficientsParams(h0=-0.5j, h1=0, h2=0, h3=-0.5j, h4=0, h5=0),
         # ),
-        # (
+        # (TODO: has to be re-computed by hand
         #     MatchgateStandardHamiltonianParams(h0=1.0, h1=2.0, h2=3.0, h3=4.0, h4=5.0, h5=6.0, h6=7.0, h7=8.0),
         #     MatchgateHamiltonianCoefficientsParams(h0=-1j, h1=6/8, h2=0, h3=-18j/8, h4=-0.5, h5=0.5j),
         # )
@@ -526,11 +526,11 @@ def test_polar_to_composed_hamiltonian(
             MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
             MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
         ),
-        # (
+        # (TODO: has to be re-computed by hand
         #     MatchgateHamiltonianCoefficientsParams(h0=1.0, h1=1.0, h2=1.0, h3=1.0, h4=1.0, h5=1.0),
         #     MatchgateComposedHamiltonianParams(n_x=1.0, n_y=1.0, n_z=1.0, m_x=0.0, m_y=0.0, m_z=0.0),
         # ),
-        # (
+        # (TODO: has to be re-computed by hand
         #     MatchgateHamiltonianCoefficientsParams(h0=-1.0, h1=-1.0, h2=-1.0, h3=1.0, h4=1.0, h5=1.0),
         #     MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=1.0, m_y=-1.0, m_z=-1.0),
         # ),
