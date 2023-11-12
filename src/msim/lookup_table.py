@@ -1,6 +1,7 @@
 from typing import Optional, Tuple
 
 import numpy as np
+import pennylane as qml
 from pennylane import numpy as pnp
 from . import utils
 
@@ -96,33 +97,33 @@ class NonInteractingFermionicLookupTable:
         return self._c_2p_alpha_m1__c_2p_beta_m1
     
     def _compute_c_d_alpha__c_d_beta(self):
-        return self._transition_matrix @ self.block_diagonal_matrix @ self.transition_matrix.T
-    
+        b_t = qml.math.dot(self.block_diagonal_matrix, self._transition_matrix.T)
+        return qml.math.dot(self._transition_matrix, b_t)
+
     def _compute_c_d_alpha__c_e_beta(self):
-        return self._transition_matrix @ self.block_diagonal_matrix @ pnp.conjugate(self.transition_matrix.T)
+        b_t = qml.math.dot(self.block_diagonal_matrix, pnp.conjugate(self.transition_matrix.T))
+        return qml.math.dot(self._transition_matrix, b_t)
     
     def _compute_c_d_alpha__c_2p_beta_m1(self):
-        return self._transition_matrix @ self.block_diagonal_matrix
-    
+        return qml.math.dot(self._transition_matrix, self.block_diagonal_matrix)
+
     def _compute_c_e_alpha__c_d_beta(self):
-        return pnp.conjugate(self._transition_matrix) @ self.block_diagonal_matrix @ self.transition_matrix.T
+        b_t = qml.math.dot(self.block_diagonal_matrix, self.transition_matrix.T)
+        return qml.math.dot(pnp.conjugate(self._transition_matrix), b_t)
     
     def _compute_c_e_alpha__c_e_beta(self):
-        return (
-                pnp.conjugate(self._transition_matrix)
-                @ self.block_diagonal_matrix
-                @ pnp.conjugate(self.transition_matrix.T)
-        )
+        b_t = qml.math.dot(self.block_diagonal_matrix, pnp.conjugate(self.transition_matrix.T))
+        return qml.math.dot(pnp.conjugate(self._transition_matrix), b_t)
     
     def _compute_c_e_alpha__c_2p_beta_m1(self):
-        return pnp.conjugate(self._transition_matrix) @ self.block_diagonal_matrix
-    
+        return qml.math.dot(pnp.conjugate(self._transition_matrix), self.block_diagonal_matrix)
+
     def _compute_c_2p_alpha_m1__c_d_beta(self):
-        return self.block_diagonal_matrix @ self.transition_matrix.T
-    
+        return qml.math.dot(self.block_diagonal_matrix, self.transition_matrix.T)
+
     def _compute_c_2p_alpha_m1__c_e_beta(self):
-        return self.block_diagonal_matrix @ pnp.conjugate(self.transition_matrix.T)
-    
+        return qml.math.dot(self.block_diagonal_matrix, pnp.conjugate(self.transition_matrix.T))
+
     def _compute_c_2p_alpha_m1__c_2p_beta_m1(self):
         return np.eye(self.transition_matrix.shape[0])
 
