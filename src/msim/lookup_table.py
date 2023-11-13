@@ -125,7 +125,7 @@ class NonInteractingFermionicLookupTable:
         return qml.math.dot(self.block_diagonal_matrix, pnp.conjugate(self.transition_matrix.T))
 
     def _compute_c_2p_alpha_m1__c_2p_beta_m1(self):
-        return np.eye(self.transition_matrix.shape[0])
+        return np.eye(self.transition_matrix.shape[-1])
 
     def __getitem__(self, item: Tuple[int, int]):
         i, j = item
@@ -166,23 +166,15 @@ class NonInteractingFermionicLookupTable:
         return self._observables[k]
     
     def _compute_observable(self, k: int, hamming_weight: int) -> np.ndarray:
-        obs = np.zeros((2 * hamming_weight + 2, 2 * hamming_weight + 2), dtype=complex)
-        for i in range(2 * hamming_weight + 2):
-            for j in range(i, 2 * hamming_weight + 2):
-                if i == hamming_weight:
-                    if j == hamming_weight + 1:
-                        obs[i, j] = self[1, 0][k, k]
-                    else:
-                        obs[i, j] = self[1, 2][k, k]
-                elif i == hamming_weight + 1:
-                    obs[i, j] = self[0, 2][k, k]
-                else:
-                    if j == hamming_weight:
-                        obs[i, j] = self[2, 1][k, k]
-                    elif j == hamming_weight + 1:
-                        obs[i, j] = self[2, 0][k, k]
-                    else:
-                        obs[i, j] = self[2, 2][k, k]
+        majoranas_indexes = list(reversed(range(hamming_weight))) + [k, k] + list(range(hamming_weight))
+        lt_indexes = [2 for _ in range(hamming_weight)] + [1, 0] + [2 for _ in range(hamming_weight)]
+        obs_size = len(majoranas_indexes)
+        obs = np.zeros((obs_size, obs_size), dtype=complex)
+        for (i, j) in zip(*np.triu_indices(obs_size, k=1)):
+            i_k, j_k = majoranas_indexes[i], majoranas_indexes[j]
+            row, col = lt_indexes[i], lt_indexes[j]
+            obs[i, j] = self[row, col][i_k, j_k]
+            if row == 2 and col == 2:
+                obs[i, j] = bool(i_k == j_k)
         obs = obs - obs.T
         return obs
-
