@@ -1,5 +1,6 @@
 from typing import Type, Dict, Callable
 
+import networkx as nx
 import numpy as np
 
 from . import (
@@ -58,22 +59,9 @@ def polar_to_standard(params: MatchgatePolarParams, **kwargs) -> MatchgateStanda
 
 def standard_to_standard_hamiltonian(params: MatchgateStandardParams, **kwargs) -> MatchgateStandardHamiltonianParams:
     from scipy.linalg import logm
-
-    backend = MatchgateParams.load_backend_lib(kwargs.get("backend", "numpy"))
-
     gate = params.to_matrix().astype(complex)
     hamiltonian = -1j * logm(gate)
-    return MatchgateStandardHamiltonianParams(
-        u0=hamiltonian[0, 0],
-        u1=hamiltonian[0, 3],
-        u2=hamiltonian[1, 1],
-        u3=hamiltonian[1, 2],
-        u4=hamiltonian[2, 1],
-        u5=hamiltonian[2, 2],
-        u6=hamiltonian[3, 0],
-        u7=hamiltonian[3, 3],
-        backend=backend,
-    )
+    return MatchgateStandardHamiltonianParams.from_matrix(hamiltonian, **kwargs)
 
 
 def standard_hamiltonian_to_hamiltonian_coefficients(
@@ -242,11 +230,8 @@ def hamiltonian_coefficients_to_standard_hamiltonian(
 def standard_hamiltonian_to_standard(
         params: MatchgateStandardHamiltonianParams, **kwargs
 ) -> MatchgateStandardParams:
-    backend = MatchgateParams.load_backend_lib(kwargs.get("backend", "numpy"))
     gate = utils.get_unitary_from_hermitian_matrix(params.to_matrix())
-    elements_indexes_as_array = backend.array(MatchgateStandardParams.ELEMENTS_INDEXES)
-    params_arr = gate[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
-    return MatchgateStandardParams(*params_arr, backend=backend)
+    return MatchgateStandardParams.from_matrix(gate, **kwargs)
 
 
 def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePolarParams:
@@ -257,37 +242,37 @@ def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePol
     r1 = backend.sqrt(w * backend.conjugate(w))
     r1_tilde = MatchgatePolarParams.compute_r_tilde(r1, backend=backend)
     eps = 1e-12
-    if backend.isclose(r0, 0) and backend.isclose(r1, 0):
+    if backend.isclose(r0, 0) and backend.isclose(r1, 0):  # case 1
         theta0 = 0
         theta1 = -1j * backend.log(c + eps)
-        theta2 = -0.5j * (backend.log(-b + eps) - backend.log(backend.conjugate(c) + eps))
-        theta3 = -1j * backend.log(z + eps)
-        theta4 = -0.5j * (backend.log(-b + eps) - backend.log(backend.conjugate(c) + eps))
-    elif backend.isclose(r0, 0) and backend.isclose(r1, 1):
+        theta2 = -0.5j * backend.log(-b*c + eps)
+        theta3 = -1j * backend.log(y + eps)
+        theta4 = -0.5j * backend.log(-b*c + eps)
+    elif backend.isclose(r0, 0) and backend.isclose(r1, 1):  # case 2
         theta0 = 0
         theta1 = -1j * backend.log(c + eps)
         theta2 = -1j * backend.log(w + eps)
         theta3 = 0
         theta4 = -1j * backend.log(z + eps)
-    elif backend.isclose(r0, 0) and not (backend.isclose(r1, 0) or backend.isclose(r1, 1)):
+    elif backend.isclose(r0, 0) and not (backend.isclose(r1, 0) or backend.isclose(r1, 1)):  # case 3
         theta0 = 0
         theta1 = -1j * backend.log(c + eps)
         theta2 = -1j * (backend.log(w + eps) - backend.log(r1 + eps))
         theta3 = -1j * (backend.log(y + eps) - backend.log(r1_tilde + eps))
         theta4 = -1j * (backend.log(z + eps) - backend.log(r1 + eps))
-    elif backend.isclose(r0, 1) and backend.isclose(r1, 0):
+    elif backend.isclose(r0, 1) and backend.isclose(r1, 0):  # case 4
         theta0 = -1j * backend.log(a + eps)
         theta1 = 0
-        theta2 = -0.5j * (backend.log(d + eps) - backend.log(backend.conjugate(a) + eps))
+        theta2 = -0.5j * backend.log(d*a + eps)
         theta3 = -1j * backend.log(y + eps)
-        theta4 = -0.5j * (backend.log(d + eps) - backend.log(backend.conjugate(a) + eps))
-    elif backend.isclose(r0, 1) and backend.isclose(r1, 1):
+        theta4 = -0.5j * backend.log(d*a + eps)
+    elif backend.isclose(r0, 1) and backend.isclose(r1, 1):  # case 5
         theta0 = -1j * backend.log(a + eps)
         theta1 = 0
         theta2 = -1j * backend.log(w + eps)
         theta3 = 0
         theta4 = -1j * backend.log(z + eps)
-    elif backend.isclose(r0, 1) and not (backend.isclose(r1, 0) or backend.isclose(r1, 1)):
+    elif backend.isclose(r0, 1) and not (backend.isclose(r1, 0) or backend.isclose(r1, 1)):  # case 6
         theta0 = -1j * backend.log(a + eps)
         theta1 = 0
         theta2 = -1j * (backend.log(w + eps) - backend.log(r1 + eps))
@@ -343,30 +328,35 @@ _backward_transfer_path = [
     standard_hamiltonian_to_standard,
     standard_to_polar,
 ]
-
-_transfer_adj_matrix = [
+_NODE_ORDER = [
+    MatchgatePolarParams,
+    MatchgateStandardParams,
+    MatchgateStandardHamiltonianParams,
+    MatchgateHamiltonianCoefficientsParams,
+    MatchgateComposedHamiltonianParams,
+]
+_transfer_adj_matrix = np.asarray([
     # (i->j)
     # polar, standard, standard_hamiltonian, hamiltonian_coefficients, composed_hamiltonian
-    [identity_transfer, polar_to_standard, None, None, None],  # polar
-    [standard_to_polar, identity_transfer, standard_to_standard_hamiltonian, None, None],  # standard
-    [
-        None, standard_hamiltonian_to_standard, identity_transfer,
-        standard_hamiltonian_to_hamiltonian_coefficients, None
-    ],  # standard_hamiltonian
-    [
-        None, None, hamiltonian_coefficients_to_standard_hamiltonian,
-        identity_transfer, hamiltonian_coefficients_to_composed_hamiltonian
-    ],  # hamiltonian_coefficients
-    [None, None, None, composed_hamiltonian_to_hamiltonian_coefficients, identity_transfer],  # composed_hamiltonian
-]
-
-
-def _infer_transfer_func(from_cls: Type[MatchgateParams], to_cls: Type[MatchgateParams]) -> Callable:
-    from_cls_idx = _classes_transfer_path.index(from_cls)
-    to_cls_idx = _classes_transfer_path.index(to_cls)
-
-    # TODO: find the path from the adjency matrix to transfer from `from_cls` to `to_cls` using dijkstra
-    path = utils.dijkstra(_transfer_adj_matrix, from_cls_idx, to_cls_idx)
+    [1, 1, 0, 0, 0],  # polar
+    [1, 1, 1, 0, 0],  # standard
+    [0, 1, 1, 1, 0],  # standard_hamiltonian
+    [0, 0, 1, 1, 1],  # hamiltonian_coefficients
+    [0, 0, 0, 1, 1],  # composed_hamiltonian
+])
+_commutative_transfer_adj_matrix = np.asarray([
+    # (i->j)
+    # polar, standard, standard_hamiltonian, hamiltonian_coefficients, composed_hamiltonian
+    [1, 0, 0, 0, 0],  # polar
+    [0, 1, 1, 0, 0],  # standard
+    [0, 0, 1, 1, 0],  # standard_hamiltonian
+    [0, 0, 1, 1, 1],  # hamiltonian_coefficients
+    [0, 0, 0, 1, 1],  # composed_hamiltonian
+])
+all_pairs_dijkstra_paths = dict(nx.all_pairs_dijkstra_path(nx.from_numpy_array(_transfer_adj_matrix)))
+all_pairs_dijkstra_commutative_paths = dict(nx.all_pairs_dijkstra_path(
+    nx.from_numpy_array(_commutative_transfer_adj_matrix)
+))
 
 
 def polar_to_standard_hamiltonian(params: MatchgatePolarParams, **kwargs) -> MatchgateStandardHamiltonianParams:
@@ -444,11 +434,7 @@ def standard_hamiltonian_to_composed_hamiltonian(
     return hamiltonian_coefficients_to_composed_hamiltonian(params, **kwargs)
 
 
-_transfer_funcs_by_type: Dict[
-    Type[MatchgateParams], Dict[
-        Type[MatchgateParams], Callable[[MatchgateParams, ...], MatchgateParams]
-    ]
-] = {
+_transfer_funcs_by_type = {
     # from              : to
     MatchgatePolarParams: {
         MatchgateStandardParams: polar_to_standard,
@@ -483,9 +469,25 @@ _transfer_funcs_by_type: Dict[
 }
 
 
+# def infer_transfer_func(from_cls: Type[MatchgateParams], to_cls: Type[MatchgateParams]) -> Callable:
+#     from_cls_idx = _NODE_ORDER.index(from_cls)
+#     to_cls_idx = _NODE_ORDER.index(to_cls)
+#     path = all_pairs_dijkstra_paths[from_cls_idx][to_cls_idx]
+#
+#     def func(params: MatchgateParams, **kwargs) -> MatchgateParams:
+#         for i in range(len(path) - 1):
+#             params = _transfer_funcs_by_type[path[i]][path[i + 1]](params, **kwargs)
+#         return params
+#
+#     return func
+
+
 def params_to(params, __cls: Type[MatchgateParams], **kwargs) -> MatchgateParams:
     if isinstance(params, __cls):
         return params
     if not isinstance(params, MatchgateParams):
         return __cls(*params, **kwargs)
-    return _transfer_funcs_by_type[type(params)][__cls](params, **kwargs)
+    _from_cls = type(params)
+    if _from_cls in _transfer_funcs_by_type and __cls in _transfer_funcs_by_type[_from_cls]:
+        return _transfer_funcs_by_type[_from_cls][__cls](params, **kwargs)
+    # return infer_transfer_func(_from_cls, __cls)(params, **kwargs)
