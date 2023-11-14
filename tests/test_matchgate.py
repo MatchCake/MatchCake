@@ -184,4 +184,19 @@ def test_single_transition_matrix_equal_to_expm_hami_coeff_if_null_epsilon(param
                    f"Got \n{mg.single_transition_particle_matrix} instead of \n{single_transition_particle_matrix}")
 
 
+@pytest.mark.parametrize(
+    "params",
+    [
+        mps.MatchgatePolarParams.random()
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_single_transition_matrix_equal_to_expm_hami_coeff(params):
+    from scipy.linalg import expm
 
+    mg = Matchgate(params)
+    single_transition_particle_matrix = expm(-4 * mg.hamiltonian_coefficients_params.to_matrix())
+
+    check = np.allclose(mg.single_transition_particle_matrix, single_transition_particle_matrix)
+    assert check, (f"The single transition particle matrix is not the correct one. "
+                   f"Got \n{mg.single_transition_particle_matrix} instead of \n{single_transition_particle_matrix}")
