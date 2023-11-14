@@ -21,16 +21,19 @@ def single_measure_p1(params):
 
 
 def compute_absolute_errors(n_points: int = 10_000, seed: int = 0, **kwargs):
+    params_type = kwargs.get('params_type', mps.MatchgatePolarParams)
     save_path = kwargs.get("save_path", None)
     if save_path is not None and os.path.exists(save_path):
         data = np.load(save_path)
-        params_list = [mps.MatchgatePolarParams.parse_from_any(params) for params in data['params_list']]
+        params_list = [params_type.parse_from_any(params) for params in data['params_list']]
         return data['errors'], params_list
 
     np.random.seed(seed)
     errors, params_list = [], []
     for _ in tqdm.trange(n_points):
-        params = mps.MatchgatePolarParams.random()
+        h_params = mps.MatchgateHamiltonianCoefficientsParams.random()
+        h_params.epsilon = 0.0
+        params = mps.transfer_functions.params_to(h_params, params_type)
         nif_p1, qubit_p1 = single_measure_p1(params)
         errors.append(np.abs(nif_p1 - qubit_p1))
         params_list.append(params)
@@ -38,7 +41,7 @@ def compute_absolute_errors(n_points: int = 10_000, seed: int = 0, **kwargs):
 
     if save_path is not None:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        np.savez(save_path, errors=errors, params_list=params_list)
+        np.savez(save_path, errors=errors, params_list=[params.to_numpy() for params in params_list])
 
     return errors, params_list
 
@@ -132,16 +135,8 @@ def show_correlation_between_error_and_params(
 
 if __name__ == '__main__':
     e, p = compute_absolute_errors(
-        n_points=10_000,
-        save_path=os.path.join(os.path.dirname(__file__), "cache", 'abs_errors.npz')
+        n_points=1_000,
+        # save_path=os.path.join(os.path.dirname(__file__), "cache", 'abs_errors.npz')
     )
     show_absolute_error_distribution(errors=e, params_list=p, show=False, save=True)
     show_correlation_between_error_and_params(errors=e, params_list=p, show=True, save=True)
-
-
-
-
-
-
-
-
