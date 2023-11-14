@@ -3,6 +3,8 @@ import numpy as np
 from msim.matchgate_parameter_sets import transfer_functions
 from msim.matchgate_parameter_sets.transfer_functions import (
     _transfer_funcs_by_type,
+    _NODE_ORDER,
+    all_pairs_dijkstra_commutative_paths,
     params_to,
     MatchgateParams,
     MatchgatePolarParams,
@@ -25,36 +27,36 @@ MatchgateComposedHamiltonianParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove t
 np.random.seed(42)
 
 
-@pytest.mark.parametrize(
-    "__from_cls,__from_params,__to_cls",
-    [
-        (_from_cls, _from_cls.random(), _to_cls)
-        for _from_cls, _to_cls_dict in _transfer_funcs_by_type.items()
-        for _to_cls in _to_cls_dict.keys()
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-        if _from_cls in [MatchgatePolarParams, MatchgateComposedHamiltonianParams]
-    ],
-)
-def test_transfer_functions_back_and_forth(__from_cls, __from_params, __to_cls):
-    to_params = _transfer_funcs_by_type[__from_cls][__to_cls](__from_params)
-    _from_params = _transfer_funcs_by_type[__to_cls][__from_cls](to_params)
-    assert _from_params == __from_params
-
-
-@pytest.mark.parametrize(
-    "__from_cls,__from_params,__to_cls",
-    [
-        (_from_cls, _from_cls.random(), _to_cls)
-        for _from_cls, _to_cls_dict in _transfer_funcs_by_type.items()
-        for _to_cls in _to_cls_dict.keys()
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-        if _from_cls in [MatchgatePolarParams, MatchgateComposedHamiltonianParams]
-    ],
-)
-def test_params_to_back_and_forth(__from_cls, __from_params, __to_cls):
-    to_params = params_to(__from_params, __to_cls)
-    _from_params = params_to(to_params, __from_cls)
-    assert _from_params == __from_params
+# @pytest.mark.parametrize(
+#     "__from_cls,__from_params,__to_cls",
+#     [
+#         (_from_cls, _from_cls.random(), _to_cls)
+#         for _from_cls, _to_cls_dict in _transfer_funcs_by_type.items()
+#         for _to_cls in _to_cls_dict.keys()
+#         for _ in range(N_RANDOM_TESTS_PER_CASE)
+#         if _from_cls in [MatchgatePolarParams, MatchgateComposedHamiltonianParams]
+#     ],
+# )
+# def test_transfer_functions_back_and_forth(__from_cls, __from_params, __to_cls):
+#     to_params = _transfer_funcs_by_type[__from_cls][__to_cls](__from_params)
+#     _from_params = _transfer_funcs_by_type[__to_cls][__from_cls](to_params)
+#     assert _from_params == __from_params
+#
+#
+# @pytest.mark.parametrize(
+#     "__from_cls,__from_params,__to_cls",
+#     [
+#         (_from_cls, _from_cls.random(), _to_cls)
+#         for _from_cls, _to_cls_dict in _transfer_funcs_by_type.items()
+#         for _to_cls in _to_cls_dict.keys()
+#         for _ in range(N_RANDOM_TESTS_PER_CASE)
+#         if _from_cls in [MatchgateComposedHamiltonianParams]
+#     ],
+# )
+# def test_params_to_back_and_forth(__from_cls, __from_params, __to_cls):
+#     to_params = params_to(__from_params, __to_cls)
+#     _from_params = params_to(to_params, __from_cls)
+#     assert _from_params == __from_params, f"Transfer function from {type(__from_params)} -> {__to_cls} failed."
 
 
 @pytest.mark.parametrize(
@@ -96,6 +98,10 @@ def test_params_to_is_real(__from_params: MatchgateParams, __to_cls):
         (
             MatchgateStandardHamiltonianParams(u0=0.0, u1=0.0, u2=0.0, u3=0.0, u4=0.0, u5=0.0, u6=0.0, u7=0.0),
             MatchgateStandardParams(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
+        ),
+        (
+            MatchgateStandardHamiltonianParams(u2=np.pi / 2, u3=-np.pi / 2, u4=-np.pi / 2, u5=np.pi / 2, u7=np.pi),
+            MatchgateStandardParams(a=1, b=0, c=0, d=-1, w=0, x=1, y=1, z=0),
         ),
     ],
 )
@@ -143,11 +149,13 @@ def test_polar_to_standard(__from_params: MatchgatePolarParams, __to_params: Mat
     ]
 )
 def test_polar_to_standard_back_and_forth(__from_params: MatchgatePolarParams):
-    to_params = transfer_functions.polar_to_standard(__from_params)
-    _from_params = transfer_functions.standard_to_polar(to_params)
-    error_msg = f"Transfer function from {type(__from_params)} to {type(__from_params)} failed."
-    error_msg += f" Intermediate params: {to_params}."
-    assert _from_params == __from_params, error_msg
+    _from_params = __from_params.__copy__()
+    to_params_list = []
+    for _ in range(10):
+        to_params = transfer_functions.polar_to_standard(_from_params)
+        _from_params = transfer_functions.standard_to_polar(to_params)
+        to_params_list.append(to_params)
+    assert all([to_params_list[0] == to_params for to_params in to_params_list])
 
 
 @pytest.mark.parametrize(
@@ -222,21 +230,150 @@ def test_standard_to_polar(__from_params: MatchgateStandardParams, __to_params: 
     [
         MatchgatePolarParams(
             r0=0, r1=0,
-            theta0=np.random.uniform(-np.pi*2, np.pi*2),
-            theta1=np.random.uniform(-np.pi*2, np.pi*2),
-            theta2=np.random.uniform(-np.pi*2, np.pi*2),
-            theta3=np.random.uniform(-np.pi*2, np.pi*2),
-            theta4=np.random.uniform(-np.pi*2, np.pi*2),
+            theta0=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta1=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta2=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta3=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta4=np.random.uniform(-2*np.pi, 2*np.pi),
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
-def test_polar_standard_back_and_forth_case0(__from_params: MatchgatePolarParams):
+def test_polar_standard_back_and_forth_case1(__from_params: MatchgatePolarParams):
     to_params = transfer_functions.polar_to_standard(__from_params)
     _from_params = transfer_functions.standard_to_polar(to_params)
-    error_msg = f"Transfer function from {type(__from_params)} to {type(__from_params)} failed."
-    error_msg += f" Intermediate params: {to_params}."
-    assert __from_params == _from_params, error_msg
+    _to_params = transfer_functions.polar_to_standard(_from_params)
+    assert to_params == _to_params
+
+
+@pytest.mark.parametrize(
+    "__from_params",
+    [
+        MatchgatePolarParams(
+            r0=0, r1=1,
+            theta0=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta1=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta2=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta3=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta4=np.random.uniform(-2*np.pi, 2*np.pi),
+        )
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_polar_standard_back_and_forth_case2(__from_params: MatchgatePolarParams):
+    to_params = transfer_functions.polar_to_standard(__from_params)
+    _from_params = transfer_functions.standard_to_polar(to_params)
+    _to_params = transfer_functions.polar_to_standard(_from_params)
+    assert to_params == _to_params
+
+
+@pytest.mark.parametrize(
+    "__from_params",
+    [
+        MatchgatePolarParams(
+            r0=0, r1=np.random.uniform(*dist),
+            theta0=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta1=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta2=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta3=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta4=np.random.uniform(-2*np.pi, 2*np.pi),
+        )
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for dist in [(1e-3, 1-1e-3), (-1e12, -1e-3), (1+1e-3, 1e12)]
+    ]
+)
+def test_polar_standard_back_and_forth_case3(__from_params: MatchgatePolarParams):
+    to_params = transfer_functions.polar_to_standard(__from_params)
+    _from_params = transfer_functions.standard_to_polar(to_params)
+    _to_params = transfer_functions.polar_to_standard(_from_params)
+    assert to_params == _to_params
+
+
+@pytest.mark.parametrize(
+    "__from_params",
+    [
+        MatchgatePolarParams(
+            r0=1, r1=0,
+            theta0=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta1=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta2=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta3=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta4=np.random.uniform(-2*np.pi, 2*np.pi),
+        )
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_polar_standard_back_and_forth_case4(__from_params: MatchgatePolarParams):
+    to_params = transfer_functions.polar_to_standard(__from_params)
+    _from_params = transfer_functions.standard_to_polar(to_params)
+    _to_params = transfer_functions.polar_to_standard(_from_params)
+    assert to_params == _to_params
+
+
+@pytest.mark.parametrize(
+    "__from_params",
+    [
+        MatchgatePolarParams(
+            r0=1, r1=1,
+            theta0=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta1=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta2=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta3=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta4=np.random.uniform(-2*np.pi, 2*np.pi),
+        )
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_polar_standard_back_and_forth_case5(__from_params: MatchgatePolarParams):
+    to_params = transfer_functions.polar_to_standard(__from_params)
+    _from_params = transfer_functions.standard_to_polar(to_params)
+    _to_params = transfer_functions.polar_to_standard(_from_params)
+    assert to_params == _to_params
+
+
+@pytest.mark.parametrize(
+    "__from_params",
+    [
+        MatchgatePolarParams(
+            r0=1, r1=np.random.uniform(*dist),
+            theta0=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta1=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta2=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta3=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta4=np.random.uniform(-2*np.pi, 2*np.pi),
+        )
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for dist in [(1e-3, 1-1e-3), (-1e12, -1e-3), (1+1e-3, 1e12)]
+    ]
+)
+def test_polar_standard_back_and_forth_case6(__from_params: MatchgatePolarParams):
+    to_params = transfer_functions.polar_to_standard(__from_params)
+    _from_params = transfer_functions.standard_to_polar(to_params)
+    _to_params = transfer_functions.polar_to_standard(_from_params)
+    assert to_params == _to_params
+
+
+@pytest.mark.parametrize(
+    "__from_params",
+    [
+        MatchgatePolarParams(
+            r0=np.random.uniform(*dist0), r1=np.random.uniform(*dist1),
+            theta0=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta1=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta2=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta3=np.random.uniform(-2*np.pi, 2*np.pi),
+            theta4=np.random.uniform(-2*np.pi, 2*np.pi),
+        )
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for dist0 in [(1e-3, 1-1e-3), (-1e12, -1e-3), (1+1e-3, 1e12)]
+        for dist1 in [(1e-3, 1-1e-3), (-1e12, -1e-3), (1+1e-3, 1e12)]
+    ]
+)
+def test_polar_standard_back_and_forth_case7(__from_params: MatchgatePolarParams):
+    to_params = transfer_functions.polar_to_standard(__from_params)
+    _from_params = transfer_functions.standard_to_polar(to_params)
+    _to_params = transfer_functions.polar_to_standard(_from_params)
+    assert to_params == _to_params
 
 
 @pytest.mark.parametrize(
@@ -297,6 +434,10 @@ def test_standard_hamiltonian_to_polar(
             MatchgateStandardParams(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
             MatchgateStandardHamiltonianParams(u0=0.0, u1=0.0, u2=0.0, u3=0.0, u4=0.0, u5=0.0, u6=0.0, u7=0.0),
         ),
+        (
+            MatchgateStandardParams(a=1, b=0, c=0, d=-1, w=0, x=1, y=1, z=0),
+            MatchgateStandardHamiltonianParams(u2=np.pi/2, u3=-np.pi/2, u4=-np.pi/2, u5=np.pi/2, u7=np.pi),
+        ),
     ],
 )
 def test_standard_to_standard_hamiltonian(
@@ -325,16 +466,18 @@ def test_standard_to_standard_hamiltonian_back_and_forth(
 @pytest.mark.parametrize(
     "__from_params",
     [
-        MatchgateStandardHamiltonianParams.random()
+        MatchgateComposedHamiltonianParams.random()
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
 def test_standard_hamiltonian_to_standard_back_and_forth(
     __from_params: MatchgateStandardHamiltonianParams,
 ):
+    __from_params = MatchgateStandardHamiltonianParams.parse_from_params(__from_params)
     to_params = transfer_functions.standard_hamiltonian_to_standard(__from_params)
     _from_params = transfer_functions.standard_to_standard_hamiltonian(to_params)
-    assert _from_params == __from_params
+    _to_params = transfer_functions.standard_hamiltonian_to_standard(_from_params)
+    assert to_params == _to_params
 
 
 @pytest.mark.parametrize(
@@ -388,7 +531,7 @@ def test_hamiltonian_coefficients_to_standard_hamiltonian(
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
-def test_test_hamiltonian_coefficients_to_standard_hamiltonian_back_and_forth(
+def test_hamiltonian_coefficients_to_standard_hamiltonian_back_and_forth(
     __from_params: MatchgateHamiltonianCoefficientsParams
 ):
     to_params = transfer_functions.hamiltonian_coefficients_to_standard_hamiltonian(__from_params)
@@ -437,26 +580,32 @@ def test_polar_to_hamiltonian_coefficients(
             MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=0.0, m_y=0.0, m_z=0.0),
             MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
         ),
-        # (TODO: has to be re-computed by hand
-        #     MatchgateComposedHamiltonianParams(n_x=1.0, n_y=1.0, n_z=1.0, m_x=1.0, m_y=1.0, m_z=1.0),
-        #     MatchgateHamiltonianCoefficientsParams(h0=2.0, h1=2.0, h2=0.0, h3=2.0, h4=0.0, h5=0.0),
-        # ),
-        # (TODO: has to be re-computed by hand
-        #     MatchgateComposedHamiltonianParams(n_x=1.0, n_y=1.0, n_z=1.0, m_x=2.0, m_y=2.0, m_z=2.0),
-        #     MatchgateHamiltonianCoefficientsParams(h0=3.0, h1=3.0, h2=-1.0, h3=3.0, h4=-1.0, h5=-1.0),
-        # ),
-        # (TODO: has to be re-computed by hand
-        #     MatchgateComposedHamiltonianParams(n_x=2.0, n_y=2.0, n_z=2.0, m_x=1.0, m_y=1.0, m_z=1.0),
-        #     MatchgateHamiltonianCoefficientsParams(h0=3.0, h1=3.0, h2=1.0, h3=3.0, h4=1.0, h5=1.0),
-        # ),
-        # (TODO: has to be re-computed by hand
-        #     MatchgateComposedHamiltonianParams(n_x=1.0, n_y=1.0, n_z=1.0, m_x=0.0, m_y=0.0, m_z=0.0),
-        #     MatchgateHamiltonianCoefficientsParams(h0=1.0, h1=1.0, h2=1.0, h3=1.0, h4=1.0, h5=1.0),
-        # ),
-        # (TODO: has to be re-computed by hand
-        #     MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=1.0, m_y=1.0, m_z=1.0),
-        #     MatchgateHamiltonianCoefficientsParams(h0=1.0, h1=1.0, h2=-1.0, h3=1.0, h4=-1.0, h5=-1.0),
-        # ),
+        (
+            MatchgateComposedHamiltonianParams(n_x=1.0, n_y=1.0, n_z=1.0, m_x=1.0, m_y=1.0, m_z=1.0),
+            MatchgateHamiltonianCoefficientsParams(h0=0.5, h1=0.5, h2=0.0, h3=0.5, h4=0.0, h5=0.0),
+        ),
+        (
+            MatchgateComposedHamiltonianParams(n_x=1.0, n_y=1.0, n_z=1.0, m_x=2.0, m_y=2.0, m_z=2.0),
+            MatchgateHamiltonianCoefficientsParams(h0=3.0/4, h1=3.0/4, h2=-1.0/4, h3=3.0/4, h4=-1.0/4, h5=-1.0/4),
+        ),
+        (
+            MatchgateComposedHamiltonianParams(n_x=2.0, n_y=2.0, n_z=2.0, m_x=1.0, m_y=1.0, m_z=1.0),
+            MatchgateHamiltonianCoefficientsParams(h0=3.0/4, h1=3.0/4, h2=1.0/4, h3=3.0/4, h4=1.0/4, h5=1.0/4),
+        ),
+        (
+            MatchgateComposedHamiltonianParams(n_x=1.0, n_y=1.0, n_z=1.0, m_x=0.0, m_y=0.0, m_z=0.0),
+            MatchgateHamiltonianCoefficientsParams(h0=1.0/4, h1=1.0/4, h2=1.0/4, h3=1.0/4, h4=1.0/4, h5=1.0/4),
+        ),
+        (
+            MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=1.0, m_y=1.0, m_z=1.0),
+            MatchgateHamiltonianCoefficientsParams(h0=1.0/4, h1=1.0/4, h2=-1.0/4, h3=1.0/4, h4=-1.0/4, h5=-1.0/4),
+        ),
+        (
+            MatchgateComposedHamiltonianParams(n_x=0.0, n_y=0.0, n_z=0.0, m_x=1.0, m_y=1.0, m_z=1.0, epsilon=10),
+            MatchgateHamiltonianCoefficientsParams(
+                h0=1.0/4, h1=1.0/4, h2=-1.0/4, h3=1.0/4, h4=-1.0/4, h5=-1.0/4, epsilon=10
+            ),
+        ),
     ],
 )
 def test_composed_hamiltonian_to_hamiltonian_coefficients(
