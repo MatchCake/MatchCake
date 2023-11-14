@@ -54,6 +54,14 @@ def single_matchgate_circuit(params):
     ]
     +
     [
+        mps.MatchgateHamiltonianCoefficientsParams(
+            *np.random.rand(mps.MatchgateHamiltonianCoefficientsParams.N_PARAMS-1),
+            epsilon=0.0
+        )
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+    +
+    [
         mps.MatchgatePolarParams.random()
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
