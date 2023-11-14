@@ -20,6 +20,7 @@ class MatchgateParams:
     RAISE_ERROR_IF_INVALID_PARAMS = True
     EQUALITY_ABSOLUTE_TOLERANCE = 1e-4
     EQUALITY_RELATIVE_TOLERANCE = 1e-4
+    ELEMENTS_INDEXES = None
 
     @classmethod
     def get_short_name(cls):
@@ -62,6 +63,12 @@ class MatchgateParams:
     def from_numpy(cls, params: np.ndarray) -> 'MatchgateParams':
         tuple_params = tuple(params.flatten())
         return cls(*tuple_params, backend='numpy')
+
+    @classmethod
+    def from_matrix(cls, matrix: np.ndarray, **kwargs) -> 'MatchgateParams':
+        elements_indexes_as_array = np.array(cls.ELEMENTS_INDEXES)
+        params_arr = matrix[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
+        return cls.from_numpy(params_arr)
 
     @classmethod
     def parse_from_any(cls, params: Any) -> 'MatchgateParams':
