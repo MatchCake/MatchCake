@@ -174,7 +174,7 @@ class NonInteractingFermionicLookupTable:
             i_k, j_k = majoranas_indexes[i], majoranas_indexes[j]
             row, col = lt_indexes[i], lt_indexes[j]
             obs[i, j] = self[row, col][i_k, j_k]
-            if row == 2 and col == 2:
-                obs[i, j] = bool(i_k == j_k)
+            # if row == 2 and col == 2:
+            #     obs[i, j] = bool(i_k == j_k)
         obs = obs - obs.T
         return obs
