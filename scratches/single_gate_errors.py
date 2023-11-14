@@ -31,8 +31,16 @@ def compute_absolute_errors(n_points: int = 10_000, seed: int = 0, **kwargs):
     np.random.seed(seed)
     errors, params_list = [], []
     for _ in tqdm.trange(n_points):
-        h_params = mps.MatchgateHamiltonianCoefficientsParams.random()
-        h_params.epsilon = 0.0
+        # h_params = mps.MatchgateHamiltonianCoefficientsParams.random()
+        # h_params.epsilon = 0.0
+        h_params = mps.MatchgatePolarParams(
+            r0=0,
+            r1=np.random.rand(),
+            theta0=np.random.rand() * 2 * np.pi,
+            theta1=np.random.rand() * 2 * np.pi,
+            theta2=np.random.rand() * 2 * np.pi,
+            theta3=np.random.rand() * 2 * np.pi,
+        )
         params = mps.transfer_functions.params_to(h_params, params_type)
         nif_p1, qubit_p1 = single_measure_p1(params)
         errors.append(np.abs(nif_p1 - qubit_p1))
@@ -50,7 +58,10 @@ def show_absolute_error_distribution(**kwargs):
     errors, params_list = kwargs.get('errors', None), kwargs.get('params_list', None)
     if errors is None or params_list is None:
         errors, params_list = compute_absolute_errors(n_points=kwargs.get('n_points', 10_000))
-
+    
+    mean, std = np.mean(errors), np.std(errors)
+    mean_std_str = rf"{mean:.3f} $\pm$ {std:.3f}"
+    
     fig, ax = plt.subplots()
     # Histogram:
     # Bin it
@@ -66,6 +77,7 @@ def show_absolute_error_distribution(**kwargs):
 
     ax.set_xlabel("Absolute error [-]")
     ax.set_ylabel("Probability [-]")
+    ax.set_title(f"Absolute error distribution ({mean_std_str})")
 
     if kwargs.get('tight_layout', True):
         plt.tight_layout()
@@ -99,7 +111,7 @@ def show_correlation_between_error_and_params(
     n_rows = int(np.ceil(np.sqrt(n_plots)))
     n_cols = int(np.ceil(n_plots / n_rows))
 
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(16, 12), sharex=False, sharey=True)
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(14, 10), sharex=False, sharey=True)
     axes = np.ravel(np.asarray([axes]))
     for ax, params_type in zip(axes, params_types):
         __params_list = np.asarray([params_type.parse_from_any(params).to_numpy() for params in params_list])
@@ -138,5 +150,5 @@ if __name__ == '__main__':
         n_points=1_000,
         # save_path=os.path.join(os.path.dirname(__file__), "cache", 'abs_errors.npz')
     )
-    show_absolute_error_distribution(errors=e, params_list=p, show=False, save=True)
+    show_absolute_error_distribution(errors=e, params_list=p, show=True, save=True)
     show_correlation_between_error_and_params(errors=e, params_list=p, show=True, save=True)
