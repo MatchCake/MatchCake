@@ -7,6 +7,7 @@ from .matchgate_params import MatchgateParams
 
 class MatchgatePolarParams(MatchgateParams):
     N_PARAMS = 7
+    RANGE_OF_PARAMS = [(0.0, 1e12) for _ in range(2)] + [(0, 2 * np.pi) for _ in range(N_PARAMS - 2)]
     ALLOW_COMPLEX_PARAMS = False
 
     def __init__(
@@ -91,12 +92,12 @@ class MatchgatePolarParams(MatchgateParams):
         return sp.Matrix([r0, r1, theta0, theta1, theta2, theta3, theta4])
 
     @staticmethod
-    def compute_r_tilde(r, backend='numpy'):
+    def compute_r_tilde(r, backend='numpy') -> complex:
         _pkg = MatchgateParams.load_backend_lib(backend)
-        return _pkg.sqrt(1 - r ** 2)
+        return _pkg.sqrt(1 - complex(r) ** 2)
 
     @property
-    def r0_tilde(self) -> float:
+    def r0_tilde(self) -> complex:
         """
         Return :math:`\\Tilde{r}_0 = \\sqrt{1 - r_0^2}`
 
@@ -105,7 +106,7 @@ class MatchgatePolarParams(MatchgateParams):
         return self.compute_r_tilde(self.r0, backend=self.backend)
 
     @property
-    def r1_tilde(self) -> float:
+    def r1_tilde(self) -> complex:
         """
         Return :math:`\\Tilde{r}_1 = \\sqrt{1 - r_1^2}`
 

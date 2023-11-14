@@ -269,7 +269,7 @@ def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePol
         theta2 = -1j * backend.log(w + eps)
         theta3 = 0
         theta4 = -1j * backend.log(z + eps)
-    elif backend.isclose(r0, 0) and (not backend.isclose(r1, 0) or backend.isclose(r1, 1)):
+    elif backend.isclose(r0, 0) and not (backend.isclose(r1, 0) or backend.isclose(r1, 1)):
         theta0 = 0
         theta1 = -1j * backend.log(c + eps)
         theta2 = -1j * (backend.log(w + eps) - backend.log(r1 + eps))
@@ -287,13 +287,13 @@ def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePol
         theta2 = -1j * backend.log(w + eps)
         theta3 = 0
         theta4 = -1j * backend.log(z + eps)
-    elif backend.isclose(r0, 1) and (not backend.isclose(r1, 0) or backend.isclose(r1, 1)):
+    elif backend.isclose(r0, 1) and not (backend.isclose(r1, 0) or backend.isclose(r1, 1)):
         theta0 = -1j * backend.log(a + eps)
         theta1 = 0
         theta2 = -1j * (backend.log(w + eps) - backend.log(r1 + eps))
         theta3 = -1j * (backend.log(y + eps) - backend.log(r1_tilde + eps))
         theta4 = -1j * (backend.log(z + eps) - backend.log(r1 + eps))
-    elif (not backend.isclose(r0, 0) or backend.isclose(r0, 1)) and (backend.isclose(r1, 0) or backend.isclose(r1, 1)):
+    elif not (backend.isclose(r0, 0) or backend.isclose(r0, 1)) and (backend.isclose(r1, 0) or backend.isclose(r1, 1)):
         theta0 = -1j * (backend.log(a + eps) - backend.log(r0 + eps))
         theta1 = -1j * (backend.log(c + eps) - backend.log(r0_tilde + eps))
         theta2 = -1j * (backend.log(w + eps) - backend.log(r1 + eps))

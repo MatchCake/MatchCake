@@ -145,7 +145,9 @@ def test_polar_to_standard(__from_params: MatchgatePolarParams, __to_params: Mat
 def test_polar_to_standard_back_and_forth(__from_params: MatchgatePolarParams):
     to_params = transfer_functions.polar_to_standard(__from_params)
     _from_params = transfer_functions.standard_to_polar(to_params)
-    assert _from_params == __from_params
+    error_msg = f"Transfer function from {type(__from_params)} to {type(__from_params)} failed."
+    error_msg += f" Intermediate params: {to_params}."
+    assert _from_params == __from_params, error_msg
 
 
 @pytest.mark.parametrize(
@@ -213,6 +215,28 @@ def test_composed_hamiltonian_to_standard(
 def test_standard_to_polar(__from_params: MatchgateStandardParams, __to_params: MatchgatePolarParams):
     to_params = transfer_functions.standard_to_polar(__from_params)
     assert to_params == __to_params, f"Transfer function from {type(__from_params)} to {type(__to_params)} failed."
+    
+
+@pytest.mark.parametrize(
+    "__from_params",
+    [
+        MatchgatePolarParams(
+            r0=0, r1=0,
+            theta0=np.random.uniform(-np.pi*2, np.pi*2),
+            theta1=np.random.uniform(-np.pi*2, np.pi*2),
+            theta2=np.random.uniform(-np.pi*2, np.pi*2),
+            theta3=np.random.uniform(-np.pi*2, np.pi*2),
+            theta4=np.random.uniform(-np.pi*2, np.pi*2),
+        )
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_polar_standard_back_and_forth_case0(__from_params: MatchgatePolarParams):
+    to_params = transfer_functions.polar_to_standard(__from_params)
+    _from_params = transfer_functions.standard_to_polar(to_params)
+    error_msg = f"Transfer function from {type(__from_params)} to {type(__from_params)} failed."
+    error_msg += f" Intermediate params: {to_params}."
+    assert __from_params == _from_params, error_msg
 
 
 @pytest.mark.parametrize(

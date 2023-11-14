@@ -12,6 +12,10 @@ class MatchgateParams:
     A matchgate can be represented by several set of parameters and there exists a mapping between them.
     """
     N_PARAMS = None
+    RANGE_OF_PARAMS = None
+    DEFAULT_RANGE_OF_PARAMS = (-1e12, 1e12)
+    PARAMS_TYPES = None
+    DEFAULT_PARAMS_TYPE = float
     ALLOW_COMPLEX_PARAMS = True
     RAISE_ERROR_IF_INVALID_PARAMS = True
     EQUALITY_ABSOLUTE_TOLERANCE = 1e-4
@@ -124,4 +128,11 @@ class MatchgateParams:
 
     @classmethod
     def random(cls):
-        return cls.from_numpy(np.random.rand(cls.N_PARAMS))
+        ranges = cls.RANGE_OF_PARAMS
+        types = cls.PARAMS_TYPES
+        if ranges is None:
+            ranges = [cls.DEFAULT_RANGE_OF_PARAMS for _ in range(cls.N_PARAMS)]
+        if types is None:
+            types = [cls.DEFAULT_PARAMS_TYPE for _ in range(cls.N_PARAMS)]
+        vector = np.asarray([np.random.uniform(*r) for r, dtype in zip(ranges, types)])
+        return cls.from_numpy(vector)

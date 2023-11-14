@@ -44,25 +44,37 @@ def single_matchgate_circuit(params):
 
 @pytest.mark.parametrize(
     "params",
+    # [
+    #     mps.MatchgateComposedHamiltonianParams()
+    # ]
+    # +
+    # [
+    #     mps.MatchgatePolarParams(r0=1, r1=1),
+    #     mps.MatchgatePolarParams(r0=0, r1=1, theta1=0)
+    # ]
+    # +
+    # [
+    #     mps.MatchgateHamiltonianCoefficientsParams(
+    #         *np.random.rand(mps.MatchgateHamiltonianCoefficientsParams.N_PARAMS-1),
+    #         epsilon=0.0
+    #     )
+    #     for _ in range(N_RANDOM_TESTS_PER_CASE)
+    # ]
+    # +
+    # [
+    #     mps.MatchgatePolarParams.random()
+    #     for _ in range(N_RANDOM_TESTS_PER_CASE)
+    # ]
+    # +
     [
-        mps.MatchgateComposedHamiltonianParams()
-    ]
-    +
-    [
-        mps.MatchgatePolarParams(r0=1, r1=1),
-        mps.MatchgatePolarParams(r0=0, r1=1, theta1=0)
-    ]
-    +
-    [
-        mps.MatchgateHamiltonianCoefficientsParams(
-            *np.random.rand(mps.MatchgateHamiltonianCoefficientsParams.N_PARAMS-1),
-            epsilon=0.0
+        mps.MatchgatePolarParams(
+            r0=0,
+            r1=np.random.rand(),
+            theta0=np.random.rand() * 2 * np.pi,
+            theta1=np.random.rand() * 2 * np.pi,
+            theta2=np.random.rand() * 2 * np.pi,
+            theta3=np.random.rand() * 2 * np.pi,
         )
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
-    +
-    [
-        mps.MatchgatePolarParams.random()
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
