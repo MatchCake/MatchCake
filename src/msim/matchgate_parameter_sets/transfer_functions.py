@@ -349,13 +349,15 @@ _commutative_transfer_adj_matrix = np.asarray([
     # polar, standard, standard_hamiltonian, hamiltonian_coefficients, composed_hamiltonian
     [1, 0, 0, 0, 0],  # polar
     [0, 1, 1, 0, 0],  # standard
-    [0, 0, 1, 1, 0],  # standard_hamiltonian
+    [0, 0, 1, 0, 0],  # standard_hamiltonian
     [0, 0, 1, 1, 1],  # hamiltonian_coefficients
     [0, 0, 0, 1, 1],  # composed_hamiltonian
 ])
-all_pairs_dijkstra_paths = dict(nx.all_pairs_dijkstra_path(nx.from_numpy_array(_transfer_adj_matrix)))
+all_pairs_dijkstra_paths = dict(nx.all_pairs_dijkstra_path(
+    nx.from_numpy_array(_transfer_adj_matrix, create_using=nx.DiGraph)
+))
 all_pairs_dijkstra_commutative_paths = dict(nx.all_pairs_dijkstra_path(
-    nx.from_numpy_array(_commutative_transfer_adj_matrix)
+    nx.from_numpy_array(_commutative_transfer_adj_matrix, create_using=nx.DiGraph)
 ))
 
 
@@ -469,17 +471,19 @@ _transfer_funcs_by_type = {
 }
 
 
-# def infer_transfer_func(from_cls: Type[MatchgateParams], to_cls: Type[MatchgateParams]) -> Callable:
-#     from_cls_idx = _NODE_ORDER.index(from_cls)
-#     to_cls_idx = _NODE_ORDER.index(to_cls)
-#     path = all_pairs_dijkstra_paths[from_cls_idx][to_cls_idx]
-#
-#     def func(params: MatchgateParams, **kwargs) -> MatchgateParams:
-#         for i in range(len(path) - 1):
-#             params = _transfer_funcs_by_type[path[i]][path[i + 1]](params, **kwargs)
-#         return params
-#
-#     return func
+def infer_transfer_func(from_cls: Type[MatchgateParams], to_cls: Type[MatchgateParams]) -> Callable:
+    from_cls_idx = _NODE_ORDER.index(from_cls)
+    to_cls_idx = _NODE_ORDER.index(to_cls)
+    path = all_pairs_dijkstra_paths[from_cls_idx][to_cls_idx]
+
+    def func(params: MatchgateParams, **kwargs) -> MatchgateParams:
+        if len(path) == 1:
+            return params
+        for i, j in zip(path[:-1], path[1:]):
+            params = _transfer_funcs_by_type[_NODE_ORDER[i]][_NODE_ORDER[j]](params, **kwargs)
+        return params
+
+    return func
 
 
 def params_to(params, __cls: Type[MatchgateParams], **kwargs) -> MatchgateParams:
@@ -490,4 +494,4 @@ def params_to(params, __cls: Type[MatchgateParams], **kwargs) -> MatchgateParams
     _from_cls = type(params)
     if _from_cls in _transfer_funcs_by_type and __cls in _transfer_funcs_by_type[_from_cls]:
         return _transfer_funcs_by_type[_from_cls][__cls](params, **kwargs)
-    # return infer_transfer_func(_from_cls, __cls)(params, **kwargs)
+    return infer_transfer_func(_from_cls, __cls)(params, **kwargs)
