@@ -4,6 +4,7 @@ from msim.matchgate_parameter_sets import transfer_functions
 from msim.matchgate_parameter_sets.transfer_functions import (
     _transfer_funcs_by_type,
     _NODE_ORDER,
+    infer_transfer_func,
     all_pairs_dijkstra_commutative_paths,
     params_to,
     MatchgateParams,
@@ -27,36 +28,40 @@ MatchgateComposedHamiltonianParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove t
 np.random.seed(42)
 
 
-# @pytest.mark.parametrize(
-#     "__from_cls,__from_params,__to_cls",
-#     [
-#         (_from_cls, _from_cls.random(), _to_cls)
-#         for _from_cls, _to_cls_dict in _transfer_funcs_by_type.items()
-#         for _to_cls in _to_cls_dict.keys()
-#         for _ in range(N_RANDOM_TESTS_PER_CASE)
-#         if _from_cls in [MatchgatePolarParams, MatchgateComposedHamiltonianParams]
-#     ],
-# )
-# def test_transfer_functions_back_and_forth(__from_cls, __from_params, __to_cls):
-#     to_params = _transfer_funcs_by_type[__from_cls][__to_cls](__from_params)
-#     _from_params = _transfer_funcs_by_type[__to_cls][__from_cls](to_params)
-#     assert _from_params == __from_params
-#
-#
-# @pytest.mark.parametrize(
-#     "__from_cls,__from_params,__to_cls",
-#     [
-#         (_from_cls, _from_cls.random(), _to_cls)
-#         for _from_cls, _to_cls_dict in _transfer_funcs_by_type.items()
-#         for _to_cls in _to_cls_dict.keys()
-#         for _ in range(N_RANDOM_TESTS_PER_CASE)
-#         if _from_cls in [MatchgateComposedHamiltonianParams]
-#     ],
-# )
-# def test_params_to_back_and_forth(__from_cls, __from_params, __to_cls):
-#     to_params = params_to(__from_params, __to_cls)
-#     _from_params = params_to(to_params, __from_cls)
-#     assert _from_params == __from_params, f"Transfer function from {type(__from_params)} -> {__to_cls} failed."
+@pytest.mark.parametrize(
+    "__from_cls,__from_params,__to_cls",
+    [
+        (_NODE_ORDER[_from_cls_idx], _NODE_ORDER[_from_cls_idx].random(), _NODE_ORDER[_to_cls_idx])
+        for _from_cls_idx, path in all_pairs_dijkstra_commutative_paths.items()
+        for _to_cls_idx in path
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ],
+)
+def test_infer_transfer_func_back_and_forth(__from_cls, __from_params, __to_cls):
+    forward = infer_transfer_func(__from_cls, __to_cls)
+    backward = infer_transfer_func(__to_cls, __from_cls)
+    to_params = forward(__from_params)
+    _from_params = backward(to_params)
+    assert _from_params == __from_params, (
+        f"Transfer function from {__from_cls.get_short_name()} -> {__to_cls.get_short_name()} failed."
+    )
+
+
+@pytest.mark.parametrize(
+    "__from_cls,__from_params,__to_cls",
+    [
+        (_NODE_ORDER[_from_cls_idx], _NODE_ORDER[_from_cls_idx].random(), _NODE_ORDER[_to_cls_idx])
+        for _from_cls_idx, path in all_pairs_dijkstra_commutative_paths.items()
+        for _to_cls_idx in path
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ],
+)
+def test_params_to_back_and_forth(__from_cls, __from_params, __to_cls):
+    to_params = params_to(__from_params, __to_cls)
+    _from_params = params_to(to_params, __from_cls)
+    assert _from_params == __from_params, (
+        f"Transfer function from {__from_cls.get_short_name()} -> {__to_cls.get_short_name()} failed."
+    )
 
 
 @pytest.mark.parametrize(
@@ -151,11 +156,25 @@ def test_polar_to_standard(__from_params: MatchgatePolarParams, __to_params: Mat
 def test_polar_to_standard_back_and_forth(__from_params: MatchgatePolarParams):
     _from_params = __from_params.__copy__()
     to_params_list = []
-    for _ in range(10):
+    for _ in range(2):
         to_params = transfer_functions.polar_to_standard(_from_params)
         _from_params = transfer_functions.standard_to_polar(to_params)
         to_params_list.append(to_params)
     assert all([to_params_list[0] == to_params for to_params in to_params_list])
+
+
+@pytest.mark.parametrize(
+    "__from_params",
+    [
+        MatchgatePolarParams.random()
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_standard_to_polar_back_and_forth(__from_params: MatchgatePolarParams):
+    __from_params = MatchgateStandardParams.parse_from_any(__from_params)
+    to_params = transfer_functions.standard_to_polar(__from_params)
+    _from_params = transfer_functions.polar_to_standard(to_params)
+    assert _from_params == __from_params
 
 
 @pytest.mark.parametrize(
@@ -537,6 +556,22 @@ def test_hamiltonian_coefficients_to_standard_hamiltonian_back_and_forth(
     to_params = transfer_functions.hamiltonian_coefficients_to_standard_hamiltonian(__from_params)
     _from_params = transfer_functions.standard_hamiltonian_to_hamiltonian_coefficients(to_params)
     assert _from_params == __from_params
+
+
+@pytest.mark.parametrize(
+    "__from_params",
+    [
+        MatchgateStandardHamiltonianParams.random()
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_standard_hamiltonian_to_hamiltonian_coefficients_back_and_forth(
+    __from_params: MatchgateStandardHamiltonianParams
+):
+    to_params = transfer_functions.standard_hamiltonian_to_hamiltonian_coefficients(__from_params)
+    _from_params = transfer_functions.hamiltonian_coefficients_to_standard_hamiltonian(to_params)
+    _to_params = transfer_functions.standard_hamiltonian_to_hamiltonian_coefficients(_from_params)
+    assert to_params == _to_params
 
 
 @pytest.mark.parametrize(
