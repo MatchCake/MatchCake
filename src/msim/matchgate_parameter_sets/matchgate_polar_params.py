@@ -7,7 +7,7 @@ from .matchgate_params import MatchgateParams
 
 class MatchgatePolarParams(MatchgateParams):
     N_PARAMS = 7
-    RANGE_OF_PARAMS = [(0.0, 1e12) for _ in range(2)] + [(0, 2 * np.pi) for _ in range(N_PARAMS - 2)]
+    RANGE_OF_PARAMS = [(0.0, 1.0) for _ in range(2)] + [(0, 2 * np.pi) for _ in range(N_PARAMS - 2)]
     ALLOW_COMPLEX_PARAMS = False
 
     def __init__(
@@ -24,11 +24,6 @@ class MatchgatePolarParams(MatchgateParams):
             **kwargs
     ):
         super().__init__(backend=backend)
-        # if theta4 is None:
-        #     theta4 = -theta2
-        # r0, r1, theta0, theta1, theta2, theta3, theta4 = self._maybe_cast_to_real(
-        #     r0, r1, theta0, theta1, theta2, theta3, theta4
-        # )
         if not self.ALLOW_COMPLEX_PARAMS:
             r0, r1, theta0, theta1, theta2, theta3 = self._maybe_cast_to_real(
                 r0, r1, theta0, theta1, theta2, theta3
