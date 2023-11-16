@@ -70,12 +70,17 @@ mps.MatchgatePolarParams.ALLOW_COMPLEX_PARAMS = True
 from_params = mps.MatchgatePolarParams(
     r0=0, r1=0, theta0=np.pi, theta1=np.pi/2, theta2=np.pi/3, theta3=np.pi/4, theta4=np.pi/5
 )
-print(f"{from_params = }")
+
 to_params = mps.MatchgateStandardParams.parse_from_params(from_params)
-print(f"{to_params = }")
 reconstructed_params = mps.MatchgatePolarParams.parse_from_params(to_params)
+reconstructed_to_params = mps.MatchgateStandardParams.parse_from_params(reconstructed_params)
+print(f"{from_params = }")
 print(f"{reconstructed_params = }")
 print(f"{from_params == reconstructed_params = }")
+print(f"{to_params = }")
+print(f"{reconstructed_to_params = }")
+print(f"{reconstructed_to_params == to_params = }")
+
 
 
 

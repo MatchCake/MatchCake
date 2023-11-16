@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from msim import Matchgate, mps
+from msim import Matchgate, mps, utils
 from .configs import N_RANDOM_TESTS_PER_CASE
 
 np.random.seed(42)
@@ -163,6 +163,34 @@ def test_action_matrix(params, expected):
 
 
 @pytest.mark.parametrize(
+    "params,expected",
+    [
+        (
+                mps.MatchgatePolarParams(r0=1, r1=1),
+                np.array([
+                    [0.25 * np.trace(utils.get_majorana(i, 2) @ utils.get_majorana(j, 2)) for j in range(4)]
+                    for i in range(4)
+                ])
+        ),
+        (
+                mps.MatchgatePolarParams(r0=1, r1=1),
+                np.array([
+                    [1, 0, 0, 0],
+                    [0, 1, 0, 0],
+                    [0, 0, 1, 0],
+                    [0, 0, 0, 1],
+                ])
+        )
+    ]
+)
+def test_single_transition_matrix(params, expected):
+    mg = Matchgate(params)
+    check = np.allclose(mg.single_transition_particle_matrix, expected)
+    assert check, (f"The single transition particle matrix is not the correct one. "
+                   f"Got \n{mg.single_transition_particle_matrix} instead of \n{expected}")
+
+
+@pytest.mark.parametrize(
     "params",
     [
         mps.MatchgatePolarParams.random()
@@ -195,8 +223,12 @@ def test_single_transition_matrix_equal_to_expm_hami_coeff(params):
     from scipy.linalg import expm
 
     mg = Matchgate(params)
-    h = mg.hamiltonian_coefficients_params.to_matrix() + mg.hamiltonian_coefficients_params.epsilon * np.eye(4)
-    single_transition_particle_matrix = expm(-4 * h)
+    h = (
+            mg.hamiltonian_coefficients_params.to_matrix(add_epsilon=False)
+            # +
+            # mg.hamiltonian_coefficients_params.epsilon * np.eye(4)
+    )
+    single_transition_particle_matrix = expm(-4 * h) * expm(1j * mg.hamiltonian_coefficients_params.epsilon * np.eye(4))
 
     check = np.allclose(mg.single_transition_particle_matrix, single_transition_particle_matrix)
     assert check, (f"The single transition particle matrix is not the correct one. "

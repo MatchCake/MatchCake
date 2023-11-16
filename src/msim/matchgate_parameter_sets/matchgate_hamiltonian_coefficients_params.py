@@ -131,12 +131,13 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
             self.epsilon,
         ])
 
-    def to_matrix(self):
+    def to_matrix(self, add_epsilon: bool = True):
+        eps = 1j * self.epsilon * int(add_epsilon)
         return self.backend.array([
-            [0, self.h0, self.h1, self.h2],
-            [-self.h0, 0, self.h3, self.h4],
-            [-self.h1, -self.h3, 0, self.h5],
-            [-self.h2, -self.h4, -self.h5, 0],
+            [eps, self.h0, self.h1, self.h2],
+            [-self.h0, eps, self.h3, self.h4],
+            [-self.h1, -self.h3, eps, self.h5],
+            [-self.h2, -self.h4, -self.h5, eps],
         ])
 
     def compute_hamiltonian(self):

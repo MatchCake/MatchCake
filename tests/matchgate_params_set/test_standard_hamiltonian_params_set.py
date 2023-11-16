@@ -24,11 +24,9 @@ def test_parse_from_hamiltonian_coeffs_with_slow_method(
         params: MatchgateHamiltonianCoefficientsParams,
 ):
     hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(
-        params.to_matrix(), params.epsilon
+        params.to_matrix(add_epsilon=True), 0*params.epsilon
     )
-    elements_indexes_as_array = np.asarray(MatchgateStandardHamiltonianParams.ELEMENTS_INDEXES)
-    params_arr = hamiltonian[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
-    std_params = MatchgateStandardHamiltonianParams.from_numpy(params_arr)
+    std_params = MatchgateStandardHamiltonianParams.from_matrix(hamiltonian)
     std_params_from = MatchgateStandardHamiltonianParams.parse_from_params(params)
     assert std_params == std_params_from
 

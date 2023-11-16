@@ -26,6 +26,15 @@ def test_majoranas_anti_commutation(mu: int, nu: int, n: int):
                                                   f"{target}")
 
 
+@pytest.mark.parametrize("i,n", [(i, n) for n in range(1, 5) for i in range(2*n)])
+def test_majoranas_identity(i: int, n: int):
+    c_mu = utils.get_majorana(i, n)
+    c_nu = utils.get_majorana(i, n)
+    product = c_mu @ c_nu
+    target = np.eye(2 ** n)
+    assert np.allclose(product, target)
+
+
 @pytest.mark.parametrize(
     "i,c_i",
     [
