@@ -1,4 +1,4 @@
-from typing import Type, Dict, Callable
+from typing import Type, Dict, Callable, List
 
 import networkx as nx
 import numpy as np
@@ -495,3 +495,33 @@ def params_to(params, __cls: Type[MatchgateParams], **kwargs) -> MatchgateParams
     if _from_cls in _transfer_funcs_by_type and __cls in _transfer_funcs_by_type[_from_cls]:
         return _transfer_funcs_by_type[_from_cls][__cls](params, **kwargs)
     return infer_transfer_func(_from_cls, __cls)(params, **kwargs)
+
+
+def get_closest_cls(cls_list: List[Type[MatchgateParams]], target_cls: Type[MatchgateParams], **kwargs):
+    if len(cls_list) == 0:
+        raise ValueError("cls_list cannot be empty")
+    if len(cls_list) == 1:
+        return cls_list[0]
+    _target_cls_idx = _NODE_ORDER.index(target_cls)
+    _cls_indexes = [_NODE_ORDER.index(cls) for cls in cls_list]
+    path_list = [all_pairs_dijkstra_paths[_cls_idx][_target_cls_idx] for _cls_idx in _cls_indexes]
+    # pairwise_path_list = [nx.utils.pairwise(path) for path in path_list]
+    # cost_list = [
+    #     sum(_transfer_adj_matrix[list(path)])
+    #     for path in path_list
+    # ]
+    cost_list = [len(path) for path in path_list]
+    min_cost_idx = np.argmin(cost_list)
+    return cls_list[min_cost_idx]
+
+
+def shortest_transfer_to(params_list: List[MatchgateParams], __cls: Type[MatchgateParams], **kwargs):
+    if len(params_list) == 0:
+        raise ValueError("params_list cannot be empty")
+    if len(params_list) == 1:
+        return params_to(params_list[0], __cls, **kwargs)
+    _cls_list = [type(params) for params in params_list]
+    closest_cls = get_closest_cls(_cls_list, __cls, **kwargs)
+    _from_params = params_list[_cls_list.index(closest_cls)]
+    return params_to(_from_params, __cls, **kwargs)
+
