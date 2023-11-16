@@ -7,6 +7,9 @@ from .matchgate_params import MatchgateParams
 
 class MatchgateStandardParams(MatchgateParams):
     N_PARAMS = 8
+    ALLOW_COMPLEX_PARAMS = True
+    DEFAULT_RANGE_OF_PARAMS = (-1e12, 1e12)
+    DEFAULT_PARAMS_TYPE = complex
     ZEROS_INDEXES = [
         (0, 1), (0, 2),
         (1, 0), (1, 3),

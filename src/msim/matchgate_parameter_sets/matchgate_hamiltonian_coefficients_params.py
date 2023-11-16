@@ -29,7 +29,9 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
 
     """
     N_PARAMS = 7
-    ALLOW_COMPLEX_PARAMS = True
+    ALLOW_COMPLEX_PARAMS = False
+    DEFAULT_PARAMS_TYPE = float
+    DEFAULT_RANGE_OF_PARAMS = (-1e6, 1e6)
 
     def __init__(
             self,

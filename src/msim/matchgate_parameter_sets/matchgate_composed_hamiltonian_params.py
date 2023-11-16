@@ -6,7 +6,8 @@ from .matchgate_params import MatchgateParams
 class MatchgateComposedHamiltonianParams(MatchgateParams):
     N_PARAMS = 7
     ALLOW_COMPLEX_PARAMS = False
-    DEFAULT_RANGE_OF_PARAMS = (-1.0e6, 10.0e6)
+    DEFAULT_PARAMS_TYPE = float
+    DEFAULT_RANGE_OF_PARAMS = (-1e0, 1e0)
 
     def __init__(
             self,

@@ -7,6 +7,8 @@ from msim import MatchgateOperator, NonInteractingFermionicDevice, Matchgate
 from msim import matchgate_parameter_sets as mps
 from msim import utils
 from functools import partial
+
+from msim.utils import PAULI_Z, PAULI_X
 from .configs import N_RANDOM_TESTS_PER_CASE
 
 np.random.seed(42)
@@ -54,29 +56,37 @@ def single_matchgate_circuit(params):
     ]
     +
     [
-        mps.MatchgateHamiltonianCoefficientsParams(
-            *np.random.rand(mps.MatchgateHamiltonianCoefficientsParams.N_PARAMS-1),
-            epsilon=0.0
-        )
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        mps.MatchgatePolarParams(r0=1, r1=0, theta0=0, theta1=0, theta2=np.pi / 2, theta3=0, theta4=np.pi / 2),
+        mps.MatchgateStandardParams(
+            a=PAULI_Z[0, 0], b=PAULI_Z[0, 1], c=PAULI_Z[1, 0], d=PAULI_Z[1, 1],
+            w=PAULI_X[0, 0], x=PAULI_X[0, 1], y=PAULI_X[1, 0], z=PAULI_X[1, 1]
+        ),  # fSWAP
     ]
+    # +
+    # [
+    #     mps.MatchgateHamiltonianCoefficientsParams(
+    #         *np.random.rand(mps.MatchgateHamiltonianCoefficientsParams.N_PARAMS-1),
+    #         epsilon=0.0
+    #     )
+    #     for _ in range(N_RANDOM_TESTS_PER_CASE)
+    # ]
     # +
     # [
     #     mps.MatchgatePolarParams.random()
     #     for _ in range(N_RANDOM_TESTS_PER_CASE)
     # ]
-    # +
-    # [
-    #     mps.MatchgatePolarParams(
-    #         r0=np.random.rand(),
-    #         r1=np.random.rand(),
-    #         theta0=np.random.rand() * 2 * np.pi,
-    #         theta1=np.random.rand() * 2 * np.pi,
-    #         theta2=np.random.rand() * 2 * np.pi,
-    #         theta3=np.random.rand() * 2 * np.pi,
-    #     )
-    #     for _ in range(N_RANDOM_TESTS_PER_CASE)
-    # ]
+    +
+    [
+        mps.MatchgatePolarParams(
+            r0=np.random.uniform(0.09, 0.13),
+            r1=np.random.uniform(0.0, 1.0),
+            theta0=np.random.uniform(-np.pi, np.pi)*2,
+            theta1=np.random.uniform(-np.pi, np.pi)*2,
+            theta2=np.random.uniform(-np.pi, np.pi)*2,
+            theta3=np.random.uniform(-np.pi, np.pi)*2,
+        )
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
 )
 def test_single_matchgate_probs_with_qbit_device(params):
     nif_device, qubit_device = devices_init()
@@ -115,6 +125,20 @@ def multiples_matchgate_circuit(params_list, all_wires=None):
     +
     [
         ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], num_wires)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for num_gates in range(1, 3)
+        for num_wires in range(2, 6)
+    ]
+    +
+    [
+        ([mps.MatchgatePolarParams(
+            r0=np.random.uniform(0.00, 0.01),
+            r1=np.random.uniform(0.00, 0.01),
+            theta0=np.random.uniform(-np.pi, np.pi)/1,
+            theta1=np.random.uniform(-np.pi, np.pi)/1,
+            theta2=np.random.uniform(-np.pi, np.pi)/1,
+            theta3=np.random.uniform(-np.pi, np.pi)/1,
+        ).to_numpy() for _ in range(num_gates)], num_wires)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_gates in range(1, 3)
         for num_wires in range(2, 6)

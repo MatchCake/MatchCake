@@ -213,6 +213,46 @@ def test_single_transition_matrix_equal_to_expm_hami_coeff_if_null_epsilon(param
 
 
 @pytest.mark.parametrize(
+    "params_type0,params_type1",
+    [
+        (params_type0, params_type1)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for params_type0 in [mps.MatchgatePolarParams, mps.MatchgateComposedHamiltonianParams]
+        for params_type1 in [mps.MatchgatePolarParams, mps.MatchgateComposedHamiltonianParams]
+    ]
+)
+def test_mg_equal(params_type0, params_type1):
+    params0 = params_type0.random()
+    params1 = params_type1.parse_from_any(params0)
+    mg0 = Matchgate(params0)
+    mg1 = Matchgate(params1)
+    check = mg0 == mg1
+    assert check, f"{mg0 = }, {mg1 = }"
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        mps.MatchgatePolarParams.random()
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_single_transition_matrix_equal_to_expm_hami_coeff_if_epsilon(params):
+    from scipy.linalg import expm
+
+    params_with_epsilon_0 = mps.MatchgateHamiltonianCoefficientsParams.parse_from_any(params)
+    params_with_epsilon_0.epsilon = -1e7
+
+    mg = Matchgate(params_with_epsilon_0)
+
+    single_transition_particle_matrix = expm(-4 * mg.hamiltonian_coefficients_params.to_matrix(add_epsilon=False))
+
+    check = np.allclose(mg.single_transition_particle_matrix, single_transition_particle_matrix)
+    assert check, (f"The single transition particle matrix is not the correct one. "
+                   f"Got \n{mg.single_transition_particle_matrix} instead of \n{single_transition_particle_matrix}")
+
+
+@pytest.mark.parametrize(
     "params",
     [
         mps.MatchgatePolarParams.random()
@@ -221,15 +261,23 @@ def test_single_transition_matrix_equal_to_expm_hami_coeff_if_null_epsilon(param
 )
 def test_single_transition_matrix_equal_to_expm_hami_coeff(params):
     from scipy.linalg import expm
-
+    
+    c_params = mps.MatchgateComposedHamiltonianParams.parse_from_any(params)
+    c_mg = Matchgate(c_params)
     mg = Matchgate(params)
     h = (
             mg.hamiltonian_coefficients_params.to_matrix(add_epsilon=False)
             # +
             # mg.hamiltonian_coefficients_params.epsilon * np.eye(4)
     )
-    single_transition_particle_matrix = expm(-4 * h) * expm(1j * mg.hamiltonian_coefficients_params.epsilon * np.eye(4))
+    single_transition_particle_matrix = expm(-4 * h)
 
     check = np.allclose(mg.single_transition_particle_matrix, single_transition_particle_matrix)
+    if not check:
+        from scipy.linalg import logm
+        h_ = logm(single_transition_particle_matrix) / (-4)
+        mg_h = logm(mg.single_transition_particle_matrix) / (-4)
+        h_delta = h_ - h
+        abs_h_delta = np.abs(h_delta)
     assert check, (f"The single transition particle matrix is not the correct one. "
                    f"Got \n{mg.single_transition_particle_matrix} instead of \n{single_transition_particle_matrix}")

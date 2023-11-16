@@ -23,6 +23,7 @@ class MatchgateStandardHamiltonianParams(MatchgateParams):
     N_PARAMS = 8
     ALLOW_COMPLEX_PARAMS = True
     DEFAULT_RANGE_OF_PARAMS = (-1e12, 1e12)
+    PARAMS_TYPES = [float, complex, float, complex, complex, float, complex, float]
     ZEROS_INDEXES = [
         (0, 1), (0, 2),
         (1, 0), (1, 3),

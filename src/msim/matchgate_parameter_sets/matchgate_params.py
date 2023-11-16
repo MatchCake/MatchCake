@@ -139,7 +139,11 @@ class MatchgateParams:
         types = cls.PARAMS_TYPES
         if ranges is None:
             ranges = [cls.DEFAULT_RANGE_OF_PARAMS for _ in range(cls.N_PARAMS)]
+        ranges = np.asarray(ranges, dtype=float)
         if types is None:
             types = [cls.DEFAULT_PARAMS_TYPE for _ in range(cls.N_PARAMS)]
-        vector = np.asarray([np.random.uniform(*r) for r, dtype in zip(ranges, types)])
+        vector = np.asarray([
+            np.random.uniform(*r, size=2).view(np.complex128).astype(dtype)
+            for r, dtype in zip(ranges, types)
+        ]).flatten()
         return cls.from_numpy(vector)
