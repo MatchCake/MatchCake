@@ -71,16 +71,16 @@ def test_decompose_binary_state_into_majorana_indexes_specific_cases(binary_stat
     ]
 )
 def test_decompose_binary_state_into_majorana_indexes(binary_state):
-    n = len(binary_state)
-    state = utils.binary_state_to_state(binary_state)
     majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(binary_state)
+    n = len(binary_state)
+    state = utils.binary_state_to_state(binary_state).reshape(-1, 1)
     majoranas = [utils.get_majorana(i, n) for i in majorana_indexes]
-    op = utils.recursive_2in_operator(np.matmul, majoranas)
-    zero_state = np.zeros(2 ** n)
+    if len(majoranas) == 0:
+        op = np.eye(2 ** n)
+    else:
+        op = utils.recursive_2in_operator(np.matmul, majoranas)
+    zero_state = np.zeros((2 ** n, 1))
     zero_state[0] = 1
     predicted_state = op @ zero_state
     assert np.allclose(predicted_state, state), (f"The state is not the correct one. "
                                                  f"Got \n{predicted_state} instead of \n{state}")
-
-
-
