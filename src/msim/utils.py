@@ -1,5 +1,5 @@
 import importlib
-from typing import Any, List, Callable
+from typing import Any, List, Callable, Union
 
 import numpy as np
 
@@ -35,6 +35,25 @@ def recursive_2in_operator(operator: Callable, __inputs: List[Any]):
         return operator(rec, __inputs[-1])
     else:
         raise ValueError("Invalid shape for input array")
+
+
+def binary_state_to_state(binary_state: Union[np.ndarray, List[Union[int, bool]], str]) -> np.ndarray:
+    r"""
+    Convert a binary state to a state. The binary state is binary string of length :math:`2^n` where :math:`n` is
+    the number of particles. The state is a vector of length :math:`2^n` where :math:`n` is the number of particles.
+
+    :param binary_state: Binary state
+    :type binary_state: Union[np.ndarray, List[Union[int, bool]], str]
+    :return: State
+    :rtype: np.ndarray
+    """
+    if isinstance(binary_state, str):
+        binary_state = np.asarray([int(char) for char in binary_state], dtype=int).flatten()
+    elif isinstance(binary_state, list):
+        binary_state = np.asarray(binary_state, dtype=int).flatten()
+    states = [np.asarray([1-s, s]) for s in binary_state]
+    state = recursive_kron(states)
+    return state
 
 
 def get_majorana_pauli_list(i: int, n: int) -> List[np.ndarray]:
@@ -226,6 +245,58 @@ def decompose_matrix_into_majoranas(__matrix: np.ndarray) -> np.ndarray:
         c_i = get_majorana(i, n)
         coeffs[i] = np.trace(matrix @ c_i) / n_states
     return coeffs
+
+
+def decompose_state_into_majorana_indexes(__state: np.ndarray) -> np.ndarray:
+    r"""
+    Decompose a state into Majorana operators. The state is decomposed as
+
+    .. math::
+        |x> = c_{2p_{1}} ... c_{2p_{\ell}} |0>
+
+    where :math:`|x>` is the state, :math:`c_i` are the Majorana operators, :math:`p_i` are the indices of the
+    Majorana operators and :math:`\ell` is the hamming weight of the state.
+
+    Note: The state must be a pure state in the computational basis.
+
+    :param __state: Input state
+    :type __state: np.ndarray
+    :return: Indices of the Majorana operators
+    :rtype: np.ndarray
+    """
+    n_states = __state.shape[0]
+    n = int(np.log2(n_states))
+    assert n_states == 2 ** n, f"Invalid number of states: {n_states}, must be a power of 2."
+    state_number = np.argmax(__state)
+    state_binary = np.binary_repr(state_number, width=n)
+    return decompose_binary_state_into_majorana_indexes(state_binary)
+
+
+def decompose_binary_state_into_majorana_indexes(
+        __binary_state: Union[np.ndarray, List[Union[int, bool]], str]
+) -> np.ndarray:
+    r"""
+    Decompose a state into Majorana operators. The state is decomposed as
+
+    .. math::
+        |x> = c_{2p_{1}} ... c_{2p_{\ell}} |0>
+
+    where :math:`|x>` is the state, :math:`c_i` are the Majorana operators, :math:`p_i` are the indices of the
+    Majorana operators and :math:`\ell` is the hamming weight of the state.
+
+    Note: The state must be a pure state in the computational basis.
+
+    :param __binary_state: Input state as a binary string.
+    :type __binary_state: Union[np.ndarray, List[Union[int, bool]], str]
+    :return: Indices of the Majorana operators
+    :rtype: np.ndarray
+    """
+    if isinstance(__binary_state, str):
+        binary_state_array = np.fromstring(__binary_state, dtype='u1', sep='') - ord('0')
+    else:
+        binary_state_array = np.asarray(__binary_state, dtype=int).flatten()
+    majorana_indexes = 2 * np.nonzero(binary_state_array)[0]
+    return majorana_indexes
 
 
 def make_transition_matrix_from_action_matrix(action_matrix):
