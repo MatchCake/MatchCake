@@ -241,7 +241,7 @@ def test_single_transition_matrix_equal_to_expm_hami_coeff_if_epsilon(params):
     from scipy.linalg import expm
 
     params_with_epsilon_0 = mps.MatchgateHamiltonianCoefficientsParams.parse_from_any(params)
-    params_with_epsilon_0.epsilon = -1e7
+    params_with_epsilon_0.epsilon = 1e7
 
     mg = Matchgate(params_with_epsilon_0)
 
