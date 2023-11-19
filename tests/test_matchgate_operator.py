@@ -27,10 +27,10 @@ np.random.seed(42)
             ),
             0, "01",
             np.array([
-                [0, 0, 1, 1],
-                [0, 0, 1, 0],
-                [-1, -1, 0, 0],
-                [-1, 0, 0, 0]
+                [0, 1, 0, 1],
+                [-1, 0, 0, 0],
+                [0, 0, 0, 1],
+                [-1, 0, -1, 0]
             ])
         )
     ]
@@ -44,6 +44,9 @@ def test_single_matchgate_obs_on_specific_cases(params, k, binary_state, observa
     pf = pfaffian.pfaffian(observable)
     assert np.allclose(pred_obs, observable), (
         f"The observable is not the correct one. Got \n{pred_obs} instead of \n{observable}"
+    )
+    assert np.allclose(pred_pf, pf), (
+        f"The Pfaffian is not the correct one. Got \n{pred_pf} instead of \n{pf}"
     )
 
 
