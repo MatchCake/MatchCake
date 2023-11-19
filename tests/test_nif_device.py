@@ -47,6 +47,30 @@ def single_matchgate_circuit(params):
 @pytest.mark.parametrize(
     "params",
     [
+        mps.MatchgateStandardParams(
+            a=PAULI_Z[0, 0], b=PAULI_Z[0, 1], c=PAULI_Z[1, 0], d=PAULI_Z[1, 1],
+            w=PAULI_X[0, 0], x=PAULI_X[0, 1], y=PAULI_X[1, 0], z=PAULI_X[1, 1]
+        ),  # fSWAP
+    ]
+)
+def test_single_matchgate_probs_with_qbit_device_on_specific_cases(params):
+    nif_device, qubit_device = devices_init()
+
+    nif_qnode = qml.QNode(single_matchgate_circuit, nif_device)
+    qubit_qnode = qml.QNode(single_matchgate_circuit, qubit_device)
+
+    nif_probs = nif_qnode(mps.MatchgatePolarParams.parse_from_any(params).to_numpy())
+    qubit_probs = qubit_qnode(mps.MatchgatePolarParams.parse_from_any(params).to_numpy())
+    same_argmax = np.argmax(nif_probs) == np.argmax(qubit_probs)
+    assert same_argmax, (f"The argmax is not the correct one. "
+                         f"Got {np.argmax(nif_probs)} instead of {np.argmax(qubit_probs)}")
+    check = np.allclose(nif_probs, qubit_probs, rtol=1.e-1, atol=1.e-1)
+    assert check, f"The probs are not the correct one. Got {nif_probs} instead of {qubit_probs}"
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
         mps.MatchgateComposedHamiltonianParams()
     ]
     +
@@ -62,19 +86,19 @@ def single_matchgate_circuit(params):
             w=PAULI_X[0, 0], x=PAULI_X[0, 1], y=PAULI_X[1, 0], z=PAULI_X[1, 1]
         ),  # fSWAP
     ]
-    # +
-    # [
-    #     mps.MatchgateHamiltonianCoefficientsParams(
-    #         *np.random.rand(mps.MatchgateHamiltonianCoefficientsParams.N_PARAMS-1),
-    #         epsilon=0.0
-    #     )
-    #     for _ in range(N_RANDOM_TESTS_PER_CASE)
-    # ]
-    # +
-    # [
-    #     mps.MatchgatePolarParams.random()
-    #     for _ in range(N_RANDOM_TESTS_PER_CASE)
-    # ]
+    +
+    [
+        mps.MatchgateHamiltonianCoefficientsParams(
+            *np.random.rand(mps.MatchgateHamiltonianCoefficientsParams.N_PARAMS-1),
+            epsilon=0.0
+        )
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+    +
+    [
+        mps.MatchgatePolarParams.random()
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
     +
     [
         mps.MatchgatePolarParams(
