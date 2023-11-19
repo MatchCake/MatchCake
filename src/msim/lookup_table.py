@@ -161,9 +161,10 @@ class NonInteractingFermionicLookupTable:
         :return: The observable of shape (2(h + k), 2(h + k)) where h is the hamming weight of the state.
         :rtype: np.ndarray
         """
-        if k not in self._observables:
-            self._observables[k] = self._compute_observable(k, state)
-        return self._observables[k]
+        key = (k, utils.state_to_binary_state(state))
+        if key not in self._observables:
+            self._observables[key] = self._compute_observable(k, state)
+        return self._observables[key]
     
     def _compute_observable(self, k: int, state: np.ndarray) -> np.ndarray:
         ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(state)
@@ -172,7 +173,7 @@ class NonInteractingFermionicLookupTable:
         majorana_indexes = list(bra_majorana_indexes) + measure_indexes + list(ket_majorana_indexes)
 
         unmeasured_cls_indexes = [2 for _ in range(len(ket_majorana_indexes))]
-        measure_cls_indexes = np.array([[0, 1] for i in range(k + 1)]).flatten().tolist()
+        measure_cls_indexes = np.array([[0, 1] for _ in range(k + 1)]).flatten().tolist()
         lt_indexes = unmeasured_cls_indexes + measure_cls_indexes + unmeasured_cls_indexes
 
         obs_size = len(majorana_indexes)
