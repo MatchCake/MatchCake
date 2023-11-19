@@ -56,6 +56,25 @@ def binary_state_to_state(binary_state: Union[np.ndarray, List[Union[int, bool]]
     return state
 
 
+def state_to_binary_state(state: np.ndarray) -> str:
+    r"""
+    Convert a state to a binary state. The binary state is binary string of length :math:`2^n` where :math:`n` is
+    the number of particles. The state is a vector of length :math:`2^n` where :math:`n` is the number of particles.
+
+    :param state: State
+    :type state: np.ndarray
+    :return: Binary state
+    :rtype: str
+    """
+    state = np.asarray(state).flatten()
+    n_states = state.shape[0]
+    n = int(np.log2(n_states))
+    assert n_states == 2 ** n, f"Invalid number of states: {n_states}, must be a power of 2."
+    state_number = np.argmax(state)
+    binary_state = np.binary_repr(state_number, width=n)
+    return binary_state
+
+
 def get_majorana_pauli_list(i: int, n: int) -> List[np.ndarray]:
     r"""
 
@@ -264,12 +283,8 @@ def decompose_state_into_majorana_indexes(__state: np.ndarray) -> np.ndarray:
     :return: Indices of the Majorana operators
     :rtype: np.ndarray
     """
-    n_states = __state.shape[0]
-    n = int(np.log2(n_states))
-    assert n_states == 2 ** n, f"Invalid number of states: {n_states}, must be a power of 2."
-    state_number = np.argmax(__state)
-    state_binary = np.binary_repr(state_number, width=n)
-    return decompose_binary_state_into_majorana_indexes(state_binary)
+    binary_state = state_to_binary_state(__state)
+    return decompose_binary_state_into_majorana_indexes(binary_state)
 
 
 def decompose_binary_state_into_majorana_indexes(
