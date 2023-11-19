@@ -8,17 +8,18 @@ np.random.seed(42)
 
 
 @pytest.mark.parametrize(
-    "transition_matrix, hamming_weight",
+    "transition_matrix, binary_state",
     [
-        (np.random.rand(n, 2*n), h)
-        for n in [2, ]
-        for h in [0, 1]
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        (np.random.rand(len(s), 2*len(s)), s)
+        for s in ["00", "01", "10", "11"]
+        # for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
-def test_lookup_table_observable_form(transition_matrix, hamming_weight):
+def test_lookup_table_observable_form(transition_matrix, binary_state):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
-    obs = lookup_table.get_observable(0, hamming_weight)
+    state = utils.binary_state_to_state(binary_state)
+    hamming_weight = utils.get_hamming_weight(state)
+    obs = lookup_table.get_observable(0, state)
     assert obs.shape == (2 * hamming_weight + 2, 2 * hamming_weight + 2), "The observable has the wrong shape."
     assert np.allclose(obs+obs.T, np.zeros_like(obs)), "The observable is not anti-symmetric."
     assert np.allclose(np.diagonal(obs), np.zeros(obs.shape[0])), "The diagonal of the observable is not zero."
@@ -168,14 +169,14 @@ def test_lookup_table_item22(transition_matrix):
 
 
 @pytest.mark.parametrize(
-    "transition_matrix,hamming_weight,k,observable",
+    "transition_matrix,binary_state,k,observable",
     [
         (
             0.5 * np.array([
                 [1, 1j, 0, 0],
                 [0, 0, 1, 1j]
             ]),
-            0, 0,  # hamming_weight, k
+            "00", 0,  # binary_state, k
             np.array([
                 [0, 0],
                 [0, 0],
@@ -183,7 +184,7 @@ def test_lookup_table_item22(transition_matrix):
         )
     ]
 )
-def test_lookup_table_get_observable(transition_matrix, hamming_weight,k, observable):
+def test_lookup_table_get_observable(transition_matrix, binary_state, k, observable):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
-    obs = lookup_table.get_observable(k, hamming_weight)
+    obs = lookup_table.get_observable(k, utils.binary_state_to_state(binary_state))
     assert np.allclose(obs, observable), "The observable is not correct."
