@@ -150,31 +150,34 @@ class NonInteractingFermionicLookupTable:
         else:
             raise IndexError(f"Index ({i}, {j}) out of bounds for lookup table of shape {self.shape}")
 
-    def get_observable(self, k: int, state: np.ndarray) -> np.ndarray:
+    def get_observable(self, k: int, system_state: np.ndarray) -> np.ndarray:
         r"""
+        TODO: change k to y*
         Get the observable corresponding to the index k and the state.
         
         :param k: Index of the observable
         :type k: int
-        :param state: State of the system
-        :type state: np.ndarray
+        :param system_state: State of the system
+        :type system_state: np.ndarray
         :return: The observable of shape (2(h + k), 2(h + k)) where h is the hamming weight of the state.
         :rtype: np.ndarray
         """
-        key = (k, utils.state_to_binary_state(state))
+        key = (k, utils.state_to_binary_state(system_state))
         if key not in self._observables:
-            self._observables[key] = self._compute_observable(k, state)
+            self._observables[key] = self._compute_observable(k, system_state)
         return self._observables[key]
     
-    def _compute_observable(self, k: int, state: np.ndarray) -> np.ndarray:
-        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(state)
+    def _compute_observable(self, k: int, system_state: np.ndarray) -> np.ndarray:
+        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(system_state)
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
-        measure_indexes = np.array([[i, i] for i in range(k+1)]).flatten().tolist()
-        majorana_indexes = list(bra_majorana_indexes) + measure_indexes + list(ket_majorana_indexes)
 
         unmeasured_cls_indexes = [2 for _ in range(len(ket_majorana_indexes))]
-        measure_cls_indexes = np.array([[0, 1] for _ in range(k + 1)]).flatten().tolist()
+        measure_cls_indexes = np.array([[1, 0] for _ in range(k + 1)]).flatten().tolist()
         lt_indexes = unmeasured_cls_indexes + measure_cls_indexes + unmeasured_cls_indexes
+
+        # measure_indexes = np.array([[i, i] for i in range(k+1)]).flatten().tolist()
+        measure_indexes = [k, k]
+        majorana_indexes = list(bra_majorana_indexes) + measure_indexes + list(ket_majorana_indexes)
 
         obs_size = len(majorana_indexes)
         obs = np.zeros((obs_size, obs_size), dtype=complex)
