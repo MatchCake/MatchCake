@@ -150,31 +150,36 @@ class NonInteractingFermionicLookupTable:
         else:
             raise IndexError(f"Index ({i}, {j}) out of bounds for lookup table of shape {self.shape}")
 
-    def get_observable(self, k: int, hamming_weight: int) -> np.ndarray:
+    def get_observable(self, k: int, state: np.ndarray) -> np.ndarray:
         r"""
-        Get the observable corresponding to the index k and the hamming weight of the system state.
+        Get the observable corresponding to the index k and the state.
         
         :param k: Index of the observable
         :type k: int
-        :param hamming_weight: Hamming weight of the system state
-        :type hamming_weight: int
-        :return: The observable of shape (2h + 2, 2h + 2) where h is the hamming weight.
+        :param state: State of the system
+        :type state: np.ndarray
+        :return: The observable of shape (2(h + k), 2(h + k)) where h is the hamming weight of the state.
         :rtype: np.ndarray
         """
         if k not in self._observables:
-            self._observables[k] = self._compute_observable(k, hamming_weight)
+            self._observables[k] = self._compute_observable(k, state)
         return self._observables[k]
     
-    def _compute_observable(self, k: int, hamming_weight: int) -> np.ndarray:
-        majoranas_indexes = list(reversed(range(hamming_weight))) + [k, k] + list(range(hamming_weight))
-        lt_indexes = [2 for _ in range(hamming_weight)] + [1, 0] + [2 for _ in range(hamming_weight)]
-        obs_size = len(majoranas_indexes)
+    def _compute_observable(self, k: int, state: np.ndarray) -> np.ndarray:
+        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(state)
+        bra_majorana_indexes = list(reversed(ket_majorana_indexes))
+        measure_indexes = np.array([[i, i] for i in range(k+1)]).flatten().tolist()
+        majorana_indexes = list(bra_majorana_indexes) + measure_indexes + list(ket_majorana_indexes)
+
+        unmeasured_cls_indexes = [2 for _ in range(len(ket_majorana_indexes))]
+        measure_cls_indexes = np.array([[0, 1] for i in range(k + 1)]).flatten().tolist()
+        lt_indexes = unmeasured_cls_indexes + measure_cls_indexes + unmeasured_cls_indexes
+
+        obs_size = len(majorana_indexes)
         obs = np.zeros((obs_size, obs_size), dtype=complex)
         for (i, j) in zip(*np.triu_indices(obs_size, k=1)):
-            i_k, j_k = majoranas_indexes[i], majoranas_indexes[j]
+            i_k, j_k = majorana_indexes[i], majorana_indexes[j]
             row, col = lt_indexes[i], lt_indexes[j]
             obs[i, j] = self[row, col][i_k, j_k]
-            # if row == 2 and col == 2:
-            #     obs[i, j] = bool(i_k == j_k)
         obs = obs - obs.T
         return obs
