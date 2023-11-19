@@ -127,12 +127,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         
         if self.state is None:
             return None
-        state_hamming_weight = utils.get_hamming_weight(self.state)
 
         # assert num_wires == 1, "Only one wire is supported for now."
         probs = pnp.zeros((num_wires, 2))
         for wire in wires:
-            obs = self.lookup_table.get_observable(wire, state_hamming_weight)
+            obs = self.lookup_table.get_observable(wire, self.state)
             prob1 = pnp.real(pfaffian.pfaffian(obs))
             prob0 = 1.0 - prob1
             probs[wire] = pnp.array([prob0, prob1])
