@@ -48,7 +48,7 @@ def binary_state_to_state(binary_state: Union[np.ndarray, List[Union[int, bool]]
     :rtype: np.ndarray
     """
     if isinstance(binary_state, str):
-        binary_state = np.asarray([int(char) for char in binary_state], dtype=int).flatten()
+        binary_state = np.fromstring(binary_state, dtype='u1', sep='') - ord('0')
     elif isinstance(binary_state, list):
         binary_state = np.asarray(binary_state, dtype=int).flatten()
     states = [np.asarray([1-s, s]) for s in binary_state]
@@ -360,7 +360,7 @@ def get_block_diagonal_matrix(n: int) -> np.ndarray:
     return block_diagonal_matrix
 
 
-def get_hamming_weight(binary_state: np.ndarray) -> int:
+def get_hamming_weight(state: np.ndarray) -> int:
     r"""
     
     Compute the Hamming weight of a state. The Hamming weight is defined as the number of non-zero elements in the
@@ -369,12 +369,12 @@ def get_hamming_weight(binary_state: np.ndarray) -> int:
     The binary state is a one hot vector of shape (2^n,) where n is the number of particles.
     The Hamming weight is the number of states in the state [0, 1].
     
-    :param binary_state: State of the system
-    :type binary_state: np.ndarray
+    :param state: State of the system
+    :type state: np.ndarray
     :return: Hamming weight of the state
     :rtype: int
     """
-    state_reshape = binary_state.reshape(-1, 2)
+    state_reshape = state.reshape(-1, 2)
     hamming_weight = np.sum(state_reshape[:, 1], dtype=int)
     return hamming_weight
 
