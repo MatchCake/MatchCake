@@ -12,13 +12,15 @@ np.random.seed(42)
     [
         (np.random.rand(len(s), 2*len(s)), s)
         for s in ["00", "01", "10", "11"]
-        # for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
 def test_lookup_table_observable_form(transition_matrix, binary_state):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
+    binary_state = utils.binary_string_to_vector(binary_state)
+    hamming_weight = np.sum(binary_state, dtype=int)
     state = utils.binary_state_to_state(binary_state)
-    hamming_weight = utils.get_hamming_weight(state)
+    
     obs = lookup_table.get_observable(0, state)
     assert obs.shape == (2 * hamming_weight + 2, 2 * hamming_weight + 2), "The observable has the wrong shape."
     assert np.allclose(obs+obs.T, np.zeros_like(obs)), "The observable is not anti-symmetric."
@@ -28,9 +30,8 @@ def test_lookup_table_observable_form(transition_matrix, binary_state):
 @pytest.mark.parametrize(
     "transition_matrix",
     [
-        np.random.rand(n, 2*n)
-        for n in [2, ]
-        for h in [0, 1]
+        np.random.rand(n, 2 * n)
+        for n in range(2, 5)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
@@ -45,8 +46,7 @@ def test_lookup_table_item00(transition_matrix):
     "transition_matrix",
     [
         np.random.rand(n, 2*n)
-        for n in [2, ]
-        for h in [0, 1]
+        for n in range(2, 5)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
@@ -60,9 +60,8 @@ def test_lookup_table_item01(transition_matrix):
 @pytest.mark.parametrize(
     "transition_matrix",
     [
-        np.random.rand(n, 2*n)
-        for n in [2, ]
-        for h in [0, 1]
+        np.random.rand(n, 2 * n)
+        for n in range(2, 5)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
@@ -76,9 +75,8 @@ def test_lookup_table_item02(transition_matrix):
 @pytest.mark.parametrize(
     "transition_matrix",
     [
-        np.random.rand(n, 2*n)
-        for n in [2, ]
-        for h in [0, 1]
+        np.random.rand(n, 2 * n)
+        for n in range(2, 5)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
@@ -92,9 +90,8 @@ def test_lookup_table_item10(transition_matrix):
 @pytest.mark.parametrize(
     "transition_matrix",
     [
-        np.random.rand(n, 2*n)
-        for n in [2, ]
-        for h in [0, 1]
+        np.random.rand(n, 2 * n)
+        for n in range(2, 5)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
@@ -108,9 +105,8 @@ def test_lookup_table_item11(transition_matrix):
 @pytest.mark.parametrize(
     "transition_matrix",
     [
-        np.random.rand(n, 2*n)
-        for n in [2, ]
-        for h in [0, 1]
+        np.random.rand(n, 2 * n)
+        for n in range(2, 5)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
@@ -124,9 +120,8 @@ def test_lookup_table_item12(transition_matrix):
 @pytest.mark.parametrize(
     "transition_matrix",
     [
-        np.random.rand(n, 2*n)
-        for n in [2, ]
-        for h in [0, 1]
+        np.random.rand(n, 2 * n)
+        for n in range(2, 5)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
@@ -140,9 +135,8 @@ def test_lookup_table_item20(transition_matrix):
 @pytest.mark.parametrize(
     "transition_matrix",
     [
-        np.random.rand(n, 2*n)
-        for n in [2, ]
-        for h in [0, 1]
+        np.random.rand(n, 2 * n)
+        for n in range(2, 5)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
@@ -156,9 +150,8 @@ def test_lookup_table_item21(transition_matrix):
 @pytest.mark.parametrize(
     "transition_matrix",
     [
-        np.random.rand(n, 2*n)
-        for n in [2, ]
-        for h in [0, 1]
+        np.random.rand(n, 2 * n)
+        for n in range(2, 5)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
