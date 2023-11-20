@@ -37,6 +37,17 @@ def recursive_2in_operator(operator: Callable, __inputs: List[Any]):
         raise ValueError("Invalid shape for input array")
 
 
+def binary_string_to_vector(binary_string: str) -> np.ndarray:
+    r"""
+    Convert a binary string to a vector. The binary string is a string of 0s and 1s. The vector is a vector of
+    integers.
+    
+    :param binary_string: Binary string
+    :return: Vector
+    """
+    return np.fromstring(binary_string, dtype='u1', sep='') - ord('0')
+
+
 def binary_state_to_state(binary_state: Union[np.ndarray, List[Union[int, bool]], str]) -> np.ndarray:
     r"""
     Convert a binary state to a state. The binary state is binary string of length :math:`2^n` where :math:`n` is
@@ -48,7 +59,7 @@ def binary_state_to_state(binary_state: Union[np.ndarray, List[Union[int, bool]]
     :rtype: np.ndarray
     """
     if isinstance(binary_state, str):
-        binary_state = np.fromstring(binary_state, dtype='u1', sep='') - ord('0')
+        binary_state = binary_string_to_vector(binary_state)
     elif isinstance(binary_state, list):
         binary_state = np.asarray(binary_state, dtype=int).flatten()
     states = [np.asarray([1-s, s]) for s in binary_state]
