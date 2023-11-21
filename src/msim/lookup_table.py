@@ -10,10 +10,10 @@ class NonInteractingFermionicLookupTable:
     def __init__(
             self,
             transition_matrix: pnp.ndarray,
-            block_diagonal_matrix: Optional[pnp.ndarray] = None,
+            **kwargs
     ):
         self._transition_matrix = transition_matrix
-        self._block_diagonal_matrix = block_diagonal_matrix
+        self._block_diagonal_matrix = utils.get_block_diagonal_matrix(transition_matrix.shape[0])
         
         # Entries of the lookup table
         self._c_d_alpha__c_d_beta = None
@@ -152,7 +152,7 @@ class NonInteractingFermionicLookupTable:
 
     def get_observable(self, k: int, system_state: np.ndarray) -> np.ndarray:
         r"""
-        TODO: change k to y*
+        TODO: change k to y* or wires
         Get the observable corresponding to the index k and the state.
         
         :param k: Index of the observable
