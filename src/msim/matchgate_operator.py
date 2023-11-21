@@ -37,10 +37,17 @@ class MatchgateOperator(Matchgate, Operation):
             backend=pnp,
             **kwargs
     ):
-        Matchgate.__init__(self, params, backend=backend, **kwargs)
-        params = self.polar_params.to_numpy()
-        self.num_params = len(params)
-        Operation.__init__(self, *params, wires=wires, id=id)
+        in_param_type = kwargs.get("in_param_type", mps.MatchgatePolarParams)
+        in_params = in_param_type.parse_from_any(params)
+        Matchgate.__init__(self, in_params, backend=backend, **kwargs)
+        np_params = self.polar_params.to_numpy()
+        self.num_params = len(np_params)
+        Operation.__init__(self, *np_params, wires=wires, id=id)
 
     def adjoint(self):
-        return MatchgateOperator(self.standard_params.adjoint(), wires=self.wires, backend=self.backend)
+        return MatchgateOperator(
+            self.polar_params.adjoint(),
+            wires=self.wires,
+            backend=self.backend,
+            in_param_type=mps.MatchgatePolarParams,
+        )

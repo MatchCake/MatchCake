@@ -151,3 +151,15 @@ class MatchgatePolarParams(MatchgateParams):
             theta3=self.theta3,
             theta4=self.theta4,
         )
+    
+    def adjoint(self):
+        return MatchgatePolarParams(
+            r0=self.r0,
+            r1=self.r1,
+            theta0=-self.theta0,
+            theta1=-self.theta1,
+            theta2=-self.theta2,
+            theta3=-self.theta3,
+            theta4=-self.theta4,
+        )
+    

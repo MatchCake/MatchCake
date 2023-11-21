@@ -20,7 +20,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     version = "0.0.1"
     author = "Jérémie Gince"
 
-    operations = {"MatchgateOperator", "BasisEmbedding"}
+    operations = {"MatchgateOperator", "BasisEmbedding", "StatePrep", "BasisState", "Snapshot"}
     observables = {"PauliZ", "Identity"}
 
     prob_strategies = {"lookup_table", "explicit_sum"}

@@ -59,6 +59,15 @@ def test_single_gate_circuit_analytic_probability_lt_vs_es(initial_binary_state,
         ("01", mps.fSWAP, 1, [1, 0]),
         ("10", mps.fSWAP, 1, [0, 1]),
         ("11", mps.fSWAP, 1, [0, 1]),
+        # Hell
+        ("00", mps.HellParams, 0, [0.25, 0.75]),
+        # ("01", mps.HellParams, 0, [0.25, 0.75]),
+        # ("10", mps.HellParams, 0, [0.25, 0.75]),
+        # ("11", mps.HellParams, 0, [0.25, 0.75]),
+        ("00", mps.HellParams, 1, [0.25, 0.75]),
+        # ("01", mps.HellParams, 1, [0.25, 0.75]),
+        # ("10", mps.HellParams, 1, [0.25, 0.75]),
+        # ("11", mps.HellParams, 1, [0.25, 0.75]),
     ]
 )
 def test_single_gate_circuit_analytic_probability_explicit_sum(initial_binary_string, params, wire, prob):

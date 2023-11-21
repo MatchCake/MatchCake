@@ -9,6 +9,7 @@ from msim import utils
 from functools import partial
 
 from msim.utils import PAULI_Z, PAULI_X
+from .test_single_matchgate_circuit import single_matchgate_circuit
 
 
 def devices_init(*args, **kwargs) -> Tuple[NonInteractingFermionicDevice, qml.Device]:

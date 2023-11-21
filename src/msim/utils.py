@@ -2,7 +2,8 @@ import importlib
 from typing import Any, List, Callable, Union
 
 import numpy as np
-
+import pennylane as qml
+from pennylane.wires import Wires
 
 PAULI_X = np.array([
     [0, 1],
@@ -462,3 +463,33 @@ def camel_case_to_spaced_camel_case(__string: str) -> str:
             spaced_camel_case_string += " "
         spaced_camel_case_string += char
     return spaced_camel_case_string
+
+
+def get_probabilities_from_state(state: np.ndarray, wires=None) -> np.ndarray:
+    r"""
+    
+    Compute the probabilities from a state. The probabilities are defined as
+    
+    .. math::
+        p_i = |x_i|^2
+    
+    where :math:`|x_i>` is the state.
+    
+    :param state: State of the system
+    :type state: np.ndarray
+    :param wires: Wires to consider
+    :type wires: list[int]
+    :return: Probabilities
+    :rtype: np.ndarray
+    """
+    n_states = int(np.log2(len(state)))
+    all_wires = Wires(list(range(n_states)))
+    if wires is None:
+        wires = all_wires
+    elif isinstance(wires, int):
+        wires = [wires]
+        wires = all_wires.subset(wires)
+    else:
+        wires = all_wires.subset(wires)
+    meas = qml.measurements.ProbabilityMP(wires=wires)
+    return meas.process_state(state=state, wire_order=all_wires)
