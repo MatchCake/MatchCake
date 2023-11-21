@@ -122,5 +122,5 @@ def test_single_matchgate_probs_with_qbit_device(params, initial_binary_state):
         out_wires=prob_wires,
     )
 
-    check = np.allclose(nif_probs, qubit_probs, rtol=1.e-1, atol=1.e-1)
+    check = np.allclose(nif_probs, qubit_probs, rtol=1.e-3, atol=1.e-3)
     assert check, f"The probs are not the correct one. Got {nif_probs} instead of {qubit_probs}"
