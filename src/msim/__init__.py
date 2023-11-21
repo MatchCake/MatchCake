@@ -20,8 +20,10 @@ from .matchgate_parameter_sets import (
 from msim import matchgate_parameter_sets as mps  # Alias
 from .matchgate_operator import MatchgateOperator
 from .nif_device import NonInteractingFermionicDevice
+from . import utils
 
 import warnings
 
 warnings.filterwarnings("ignore", category=Warning, module="docutils")
 warnings.filterwarnings("ignore", category=Warning, module="sphinx")
+
