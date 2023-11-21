@@ -16,6 +16,8 @@ from .test_nif_device import single_matchgate_circuit
 
 np.random.seed(42)
 
+fSWAP_R = Matchgate(mps.fSWAP).single_transition_particle_matrix
+
 
 @pytest.mark.parametrize(
     "params,initial_binary_state,output_state",
@@ -118,4 +120,20 @@ def test_single_matchgate_obs_on_specific_cases(params, k, binary_state, observa
         f"The Pfaffian is not the correct one. Got \n{pred_pf} instead of \n{pf}"
     )
 
+
+@pytest.mark.parametrize(
+    "wires, n_wires, padded_matrix",
+    [
+        (
+            [0, 1], 2, fSWAP_R,
+        ),
+    ]
+)
+def test_get_padded_single_transition_particle_matrix(wires, n_wires, padded_matrix):
+    mgo = MatchgateOperator(mps.fSWAP, wires=wires)
+    all_wires = list(range(n_wires))
+    pred_padded_matrix = mgo.get_padded_single_transition_particle_matrix(wires=all_wires)
+    assert np.allclose(pred_padded_matrix, padded_matrix), (
+        f"The padded matrix is not the correct one. Got \n{pred_padded_matrix} instead of \n{padded_matrix}"
+    )
 
