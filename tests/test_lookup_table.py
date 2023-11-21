@@ -164,6 +164,7 @@ def test_lookup_table_item22(transition_matrix):
 @pytest.mark.parametrize(
     "transition_matrix,binary_state,k,observable",
     [
+        #
         (
             0.5 * np.array([
                 [1, 1j, 0, 0],
@@ -174,7 +175,22 @@ def test_lookup_table_item22(transition_matrix):
                 [0, 0],
                 [0, 0],
             ])
-        )
+        ),
+        #
+        (
+            0.5 * np.array([
+                [0, 0, 1, 1j],
+                [1, 1j, 0, 0]
+            ]),
+            "01", 0,  # binary_state, k
+            np.array([
+                [0, 1, 0, 1],
+                [-1, 0, 0, 0],
+                [0, 0, 0, 1],
+                [-1, 0, -1, 0],
+            ])
+        ),
+        #
     ]
 )
 def test_lookup_table_get_observable(transition_matrix, binary_state, k, observable):

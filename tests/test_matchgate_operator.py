@@ -32,7 +32,19 @@ np.random.seed(42)
                 [0, 0, 0, 1],
                 [-1, 0, -1, 0]
             ])
-        )
+        ),
+        # (
+        #     mps.MatchgatePolarParams(
+        #         r0=1, r1=0, theta0=np.pi, theta1=np.pi / 2, theta2=np.pi / 3, theta3=np.pi / 4, theta4=np.pi / 5
+        #     ),
+        #     0, "01",
+        #     np.array([
+        #         [0, 1, 0, 1],
+        #         [-1, 0, 0, 0],
+        #         [0, 0, 0, 1],
+        #         [-1, 0, -1, 0]
+        #     ])
+        # )
     ]
 )
 def test_single_matchgate_obs_on_specific_cases(params, k, binary_state, observable):
