@@ -136,4 +136,3 @@ def test_get_padded_single_transition_particle_matrix(wires, n_wires, padded_mat
     assert np.allclose(pred_padded_matrix, padded_matrix), (
         f"The padded matrix is not the correct one. Got \n{pred_padded_matrix} instead of \n{padded_matrix}"
     )
-

@@ -49,8 +49,8 @@ class MatchgateOperator(Matchgate, Operation):
         Return the padded single transition particle matrix in order to have the block diagonal form where
         the block is the single transition particle matrix at the corresponding wires.
         
-        :param wires:
-        :return:
+        :param wires: The wires of the whole system.
+        :return: padded single transition particle matrix
         """
         if wires is None:
             wires = self.wires
@@ -58,19 +58,22 @@ class MatchgateOperator(Matchgate, Operation):
         padded_matrix = pnp.eye(2*len(wires), dtype=matrix.dtype)
         
         wire0_idx = wires.index(self.wires[0])
-        wire0_submatrix = matrix[:matrix.shape[0]//2, :matrix.shape[1]//2]
-        wire0_shape = wire0_submatrix.shape
-        wire0_slice0 = slice(2 * wire0_idx, 2 * wire0_idx + wire0_shape[0])
-        wire0_slice1 = slice(2 * wire0_idx, 2 * wire0_idx + wire0_shape[1])
+        # wire0_submatrix = matrix[:matrix.shape[0]//2, :matrix.shape[1]//2]
+        # wire0_shape = wire0_submatrix.shape
+        # wire0_slice0 = slice(2 * wire0_idx, 2 * wire0_idx + wire0_shape[0])
+        # wire0_slice1 = slice(2 * wire0_idx, 2 * wire0_idx + wire0_shape[1])
         
         wire1_idx = wires.index(self.wires[1])
-        wire1_submatrix = matrix[matrix.shape[0]//2:, matrix.shape[1]//2:]
-        wire1_shape = wire1_submatrix.shape
-        wire1_slice0 = slice(2 * wire1_idx, 2 * wire1_idx + wire1_shape[0])
-        wire1_slice1 = slice(2 * wire1_idx, 2 * wire1_idx + wire1_shape[1])
+        # wire1_submatrix = matrix[matrix.shape[0]//2:, matrix.shape[1]//2:]
+        # wire1_shape = wire1_submatrix.shape
+        # wire1_slice0 = slice(2 * wire1_idx, 2 * wire1_idx + wire1_shape[0])
+        # wire1_slice1 = slice(2 * wire1_idx, 2 * wire1_idx + wire1_shape[1])
         
-        padded_matrix[wire0_slice0, wire0_slice1] = wire0_submatrix
-        padded_matrix[wire1_slice0, wire1_slice1] = wire1_submatrix
+        # padded_matrix[wire0_slice0, wire0_slice1] = wire0_submatrix
+        # padded_matrix[wire1_slice0, wire1_slice1] = wire1_submatrix
+        slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[0])
+        slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[1])
+        padded_matrix[slice_0, slice_1] = matrix
         return padded_matrix
     
     def adjoint(self):

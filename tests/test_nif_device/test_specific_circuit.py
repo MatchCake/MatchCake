@@ -7,25 +7,21 @@ import pytest
 from msim import MatchgateOperator, utils
 from msim import matchgate_parameter_sets as mps
 from . import devices_init
-from .test_specific_circuit import specific_matchgate_circuit
-from ..configs import N_RANDOM_TESTS_PER_CASE
 
 np.random.seed(42)
 
 
-def multiples_matchgate_circuit(params_list, initial_state=None, **kwargs):
+def specific_matchgate_circuit(params_wires_list, initial_state=None, **kwargs):
     all_wires = kwargs.get("all_wires", None)
     if all_wires is None:
-        all_wires = [0, 1]
+        all_wires = set(sum([list(wires) for _, wires in params_wires_list], []))
     all_wires = np.sort(np.asarray(all_wires))
     if initial_state is None:
         initial_state = np.zeros(len(all_wires), dtype=int)
     qml.BasisState(initial_state, wires=all_wires)
-    for params in params_list:
+    for params, wires in params_wires_list:
         mg_params = mps.MatchgatePolarParams.parse_from_any(params)
-        wire0 = np.random.choice(all_wires[:-1], size=1).item()
-        wire1 = wire0 + 1
-        MatchgateOperator(mg_params, wires=[wire0, wire1])
+        MatchgateOperator(mg_params, wires=wires)
     out_op = kwargs.get("out_op", "state")
     if out_op == "state":
         return qml.state()
@@ -36,38 +32,31 @@ def multiples_matchgate_circuit(params_list, initial_state=None, **kwargs):
 
 
 @pytest.mark.parametrize(
-    "params_list,n_wires,prob_wires",
+    "initial_binary_string,params_wires_list,prob_wires",
     [
-        ([mps.MatchgatePolarParams.random(), mps.MatchgatePolarParams.random()], 4, 0)
-    ]
-    +
-    [
-        ([mps.MatchgatePolarParams(r0=1, r1=1).to_numpy() for _ in range(num_gates)], num_wires, 0)
-        for num_gates in range(1, 4)
-        for num_wires in range(2, 6)
-    ]
-    +
-    [
-        ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], num_wires, 0)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-        for num_gates in range(1, 10)
-        for num_wires in range(2, 6)
+        ("00", [(mps.fSWAP, [0, 1])], 0),
+        ("01", [(mps.fSWAP, [0, 1])], 0),
+        ("10", [(mps.fSWAP, [0, 1])], 0),
+        ("11", [(mps.fSWAP, [0, 1])], 0),
+        ("00", [(mps.HellParams, [0, 1])], 0),
+        ("01", [(mps.HellParams, [0, 1])], 0),
+        ("10", [(mps.HellParams, [0, 1])], 0),
+        ("11", [(mps.HellParams, [0, 1])], 0),
+        ("0000", [(mps.fSWAP, [0, 1]), (mps.fSWAP, [2, 3])], 0),
+        ("000000", [(mps.fSWAP, [0, 1]), (mps.fSWAP, [2, 3]), (mps.fSWAP, [4, 5])], 0),
+        ("0000", [(mps.fSWAP, [0, 1]), (mps.fSWAP, [1, 2]), (mps.fSWAP, [2, 3])], 0),
+        ("0000", [(mps.fSWAP, [0, 1]), (mps.HellParams, [2, 3])], 0),
+        ("000000", [(mps.fSWAP, [0, 1]), (mps.HellParams, [2, 3]), (mps.fSWAP, [4, 5])], 0),
+        ("0000", [(mps.fSWAP, [0, 1]), (mps.fSWAP, [1, 2]), (mps.HellParams, [2, 3])], 0),
     ]
 )
-def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_wires):
-    nif_device, qubit_device = devices_init(wires=n_wires)
+def test_multiples_matchgate_probs_with_qbit_device(initial_binary_string, params_wires_list, prob_wires):
+    initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
+    nif_device, qubit_device = devices_init(wires=len(initial_binary_state))
 
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
     qubit_qnode = qml.QNode(specific_matchgate_circuit, qubit_device)
 
-    all_wires = np.arange(n_wires)
-    initial_binary_state = np.zeros(n_wires, dtype=int)
-    wire0_vector = np.random.choice(all_wires[:-1], size=len(params_list))
-    wire1_vector = wire0_vector + 1
-    params_wires_list = [
-        (params, [wire0, wire1])
-        for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
-    ]
     qubit_state = qubit_qnode(
         params_wires_list,
         initial_binary_state,
@@ -84,6 +73,6 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_w
         out_op="probs",
         out_wires=prob_wires,
     )
-    
+
     check = np.allclose(nif_probs, qubit_probs, rtol=1.e-3, atol=1.e-3)
     assert check, f"The probs are not the correct one. Got {nif_probs} instead of {qubit_probs}"

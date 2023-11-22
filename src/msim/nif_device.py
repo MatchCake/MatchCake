@@ -226,7 +226,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             else:
                 assert op.name in self.operations, f"Operation {op.name} is not supported."
                 if isinstance(op, MatchgateOperator):
-                    self.single_transition_particle_matrices.append(op.single_transition_particle_matrix)
+                    self.single_transition_particle_matrices.append(
+                        op.get_padded_single_transition_particle_matrix(self.wires)
+                    )
 
         self._transition_matrix = utils.make_transition_matrix_from_action_matrix(
             self.global_single_transition_particle_matrix

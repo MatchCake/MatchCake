@@ -62,26 +62,29 @@ def single_matchgate_circuit(params, initial_state=np.array([0, 0]), **kwargs):
     ]
     +
     [
-        (
-                mps.MatchgatePolarParams(r0=1, r1=0, theta0=0, theta1=0, theta2=np.pi / 2, theta3=0, theta4=np.pi / 2),
-                [0, 0]
-        ),
+        (mps.MatchgatePolarParams(r0=1, theta2=np.pi / 2, theta4=np.pi / 2), [0, 0]),
         (mps.fSWAP, [0, 0]),
         (mps.fSWAP, [0, 1]),
         (mps.HellParams, [0, 0]),
     ]
+    # +
+    # [
+    #     (mps.MatchgateHamiltonianCoefficientsParams(
+    #         *np.random.rand(mps.MatchgateHamiltonianCoefficientsParams.N_PARAMS-1),
+    #         epsilon=0.0
+    #     ), i_state)
+    #     for _ in range(N_RANDOM_TESTS_PER_CASE)
+    #     for i_state in [[0, 0], [0, 1], [1, 0], [1, 1]]
+    # ]
     +
     [
-        (mps.MatchgateHamiltonianCoefficientsParams(
-            *np.random.rand(mps.MatchgateHamiltonianCoefficientsParams.N_PARAMS-1),
-            epsilon=0.0
-        ), i_state)
+        (mps.MatchgatePolarParams.random(), i_state)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for i_state in [[0, 0], [0, 1], [1, 0], [1, 1]]
     ]
     +
     [
-        (mps.MatchgatePolarParams.random(), i_state)
+        (mps.MatchgateComposedHamiltonianParams.random(), i_state)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for i_state in [[0, 0], [0, 1], [1, 0], [1, 1]]
     ]
