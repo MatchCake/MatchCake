@@ -2,16 +2,13 @@ import numpy as np
 import pytest
 
 from msim import (
-    MatchgateStandardParams,
-    MatchgatePolarParams,
     MatchgateHamiltonianCoefficientsParams,
     MatchgateComposedHamiltonianParams,
     MatchgateStandardHamiltonianParams,
-    utils,
 )
-from ..configs import N_RANDOM_TESTS_PER_CASE
+from ..configs import N_RANDOM_TESTS_PER_CASE, TEST_SEED
 
-np.random.seed(42)
+np.random.seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(
@@ -20,7 +17,7 @@ np.random.seed(42)
         MatchgateHamiltonianCoefficientsParams(h0=0.0, h1=0.0, h2=0.0, h3=0.0, h4=0.0, h5=0.0),
         MatchgateHamiltonianCoefficientsParams(h0=1.0, h1=1.0, h2=1.0, h3=1.0, h4=1.0, h5=1.0),
         MatchgateHamiltonianCoefficientsParams(h0=-1.0, h1=-1.0, h2=-1.0, h3=1.0, h4=1.0, h5=1.0),
-
+    
     ]
 )
 def test_parse_to_composed_hamiltonian_back_and_forth(
@@ -43,10 +40,10 @@ def test_from_numpy(
 ):
     params = MatchgateHamiltonianCoefficientsParams.from_numpy(vector)
     assert np.allclose(params.to_numpy(), vector)
-
+    
     params_ = MatchgateHamiltonianCoefficientsParams.parse_from_params(params)
     assert params_ == params
-
+    
     params__ = MatchgateHamiltonianCoefficientsParams(
         h0=vector[0],
         h1=vector[1],
@@ -74,6 +71,3 @@ def test_compute_hamiltonian(params):
     std_params = MatchgateStandardHamiltonianParams.from_numpy(params_arr)
     std_params_from = MatchgateStandardHamiltonianParams.parse_from_params(params)
     assert std_params == std_params_from
-
-
-

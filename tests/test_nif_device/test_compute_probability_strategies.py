@@ -1,18 +1,18 @@
-from typing import Tuple
-
 import numpy as np
-import pytest
 import pennylane as qml
-from msim import MatchgateOperator, NonInteractingFermionicDevice, Matchgate
+import pytest
+
+from msim import MatchgateOperator, NonInteractingFermionicDevice
 from msim import matchgate_parameter_sets as mps
 from msim import utils
-from functools import partial
+from ..configs import (
+    N_RANDOM_TESTS_PER_CASE,
+    TEST_SEED,
+    ATOL_APPROX_COMPARISON,
+    RTOL_APPROX_COMPARISON,
+)
 
-from msim.utils import PAULI_Z, PAULI_X
-from . import devices_init
-from ..configs import N_RANDOM_TESTS_PER_CASE
-
-np.random.seed(42)
+np.random.seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(
@@ -33,9 +33,11 @@ def test_single_gate_circuit_analytic_probability_lt_vs_es(initial_binary_state,
     device.apply(operations)
     lt_probs = device.compute_probability_using_lookup_table(wire)
     es_probs = device.compute_probability_using_explicit_sum(wire)
-    check = np.allclose(lt_probs, es_probs)
-    assert check, (f"The probabilities are not the same. "
-                   f"Got {lt_probs=} and {es_probs=}.")
+    np.testing.assert_allclose(
+        lt_probs, es_probs,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    )
 
 
 @pytest.mark.parametrize(
@@ -80,5 +82,8 @@ def test_single_gate_circuit_analytic_probability_explicit_sum(initial_binary_st
     ]
     device.apply(operations)
     es_probs = device.compute_probability_using_explicit_sum(wire)
-    check = np.allclose(prob, es_probs)
-    assert check, f"The probabilities are not the same. Got {es_probs=} and {prob=}. {initial_binary_string=}"
+    np.testing.assert_allclose(
+        prob, es_probs,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    )

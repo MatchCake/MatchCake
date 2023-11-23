@@ -1,5 +1,3 @@
-from functools import partial
-
 import numpy as np
 import pennylane as qml
 import pytest
@@ -8,9 +6,14 @@ from msim import MatchgateOperator, utils
 from msim import matchgate_parameter_sets as mps
 from . import devices_init
 from .test_specific_circuit import specific_matchgate_circuit
-from ..configs import N_RANDOM_TESTS_PER_CASE
+from ..configs import (
+    N_RANDOM_TESTS_PER_CASE,
+    TEST_SEED,
+    ATOL_APPROX_COMPARISON,
+    RTOL_APPROX_COMPARISON,
+)
 
-np.random.seed(42)
+np.random.seed(TEST_SEED)
 
 
 def multiples_matchgate_circuit(params_list, initial_state=None, **kwargs):
@@ -56,10 +59,10 @@ def multiples_matchgate_circuit(params_list, initial_state=None, **kwargs):
 )
 def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_wires):
     nif_device, qubit_device = devices_init(wires=n_wires)
-
+    
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
     qubit_qnode = qml.QNode(specific_matchgate_circuit, qubit_device)
-
+    
     all_wires = np.arange(n_wires)
     initial_binary_state = np.zeros(n_wires, dtype=int)
     wire0_vector = np.random.choice(all_wires[:-1], size=len(params_list))
@@ -85,5 +88,8 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_w
         out_wires=prob_wires,
     )
     
-    check = np.allclose(nif_probs, qubit_probs, rtol=1.e-3, atol=1.e-3)
-    assert check, f"The probs are not the correct one. Got {nif_probs} instead of {qubit_probs}"
+    np.testing.assert_allclose(
+        nif_probs, qubit_probs,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    )

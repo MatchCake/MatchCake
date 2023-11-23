@@ -1,8 +1,12 @@
-import pytest
-from .configs import N_RANDOM_TESTS_PER_CASE
 import numpy as np
+import pytest
 from scipy.linalg import expm, logm
 
+from .configs import (
+    N_RANDOM_TESTS_PER_CASE,
+    ATOL_MATRIX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+)
 
 NEAR_ZERO, NEAR_INF = 1e-16, 1e0
 
@@ -15,11 +19,15 @@ NEAR_ZERO, NEAR_INF = 1e-16, 1e0
     ]
 )
 def test_logm(x):
-    assert np.allclose(x, expm(logm(x))), (
-        f"expm(logm(x)) is not equal to x. x = \n{x}\nexpm(logm(x)) = \n{expm(logm(x))}"
+    np.testing.assert_allclose(
+        x, expm(logm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
-    assert np.allclose(x, logm(expm(x))), (
-        f"logm(expm(x)) is not equal to x. x = \n{x}\nlogm(expm(x)) = \n{logm(expm(x))}"
+    np.testing.assert_allclose(
+        x, logm(expm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
 
 
@@ -31,43 +39,55 @@ def test_logm(x):
     ]
 )
 def test_logm_near_0(x):
-    assert np.allclose(x, expm(logm(x))), (
-        f"expm(logm(x)) is not equal to x. x = \n{x}\nexpm(logm(x)) = \n{expm(logm(x))}"
+    np.testing.assert_allclose(
+        x, expm(logm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
-    assert np.allclose(x, logm(expm(x))), (
-        f"logm(expm(x)) is not equal to x. x = \n{x}\nlogm(expm(x)) = \n{logm(expm(x))}"
+    np.testing.assert_allclose(
+        x, logm(expm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
 
 
 @pytest.mark.parametrize(
     "x",
     [
-        np.random.uniform(NEAR_INF/10, NEAR_INF, size=(4, 4))
+        np.random.uniform(NEAR_INF / 10, NEAR_INF, size=(4, 4))
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
 def test_logm_near_inf(x):
-    assert np.allclose(x, expm(logm(x))), (
-        f"expm(logm(x)) is not equal to x. x = \n{x}\nexpm(logm(x)) = \n{expm(logm(x))}"
+    np.testing.assert_allclose(
+        x, expm(logm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
-    assert np.allclose(x, logm(expm(x))), (
-        f"logm(expm(x)) is not equal to x. x = \n{x}\nlogm(expm(x)) = \n{logm(expm(x))}"
+    np.testing.assert_allclose(
+        x, logm(expm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
 
 
 @pytest.mark.parametrize(
     "x",
     [
-        np.random.uniform(-NEAR_INF, -NEAR_INF/10, size=(4, 4))
+        np.random.uniform(-NEAR_INF, -NEAR_INF / 10, size=(4, 4))
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
 def test_logm_near_minf(x):
-    assert np.allclose(x, expm(logm(x))), (
-        f"expm(logm(x)) is not equal to x. x = \n{x}\nexpm(logm(x)) = \n{expm(logm(x))}"
+    np.testing.assert_allclose(
+        x, expm(logm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
-    assert np.allclose(x, logm(expm(x))), (
-        f"logm(expm(x)) is not equal to x. x = \n{x}\nlogm(expm(x)) = \n{logm(expm(x))}"
+    np.testing.assert_allclose(
+        x, logm(expm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
 
 
@@ -79,11 +99,15 @@ def test_logm_near_minf(x):
     ]
 )
 def test_logm_complex(x):
-    assert np.allclose(x, expm(logm(x))), (
-        f"expm(logm(x)) is not equal to x. x = \n{x}\nexpm(logm(x)) = \n{expm(logm(x))}"
+    np.testing.assert_allclose(
+        x, expm(logm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
-    assert np.allclose(x, logm(expm(x))), (
-        f"logm(expm(x)) is not equal to x. x = \n{x}\nlogm(expm(x)) = \n{logm(expm(x))}"
+    np.testing.assert_allclose(
+        x, logm(expm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
 
 
@@ -95,41 +119,53 @@ def test_logm_complex(x):
     ]
 )
 def test_logm_complex_near_0(x):
-    assert np.allclose(x, expm(logm(x))), (
-        f"expm(logm(x)) is not equal to x. x = \n{x}\nexpm(logm(x)) = \n{expm(logm(x))}"
+    np.testing.assert_allclose(
+        x, expm(logm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
-    assert np.allclose(x, logm(expm(x))), (
-        f"logm(expm(x)) is not equal to x. x = \n{x}\nlogm(expm(x)) = \n{logm(expm(x))}"
+    np.testing.assert_allclose(
+        x, logm(expm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
 
 
 @pytest.mark.parametrize(
     "x",
     [
-        np.random.uniform(NEAR_INF/10, NEAR_INF, size=(4, 4, 2)).view(np.complex128).reshape(4, 4)
+        np.random.uniform(NEAR_INF / 10, NEAR_INF, size=(4, 4, 2)).view(np.complex128).reshape(4, 4)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
 def test_logm_complex_near_inf(x):
-    assert np.allclose(x, expm(logm(x))), (
-        f"expm(logm(x)) is not equal to x. x = \n{x}\nexpm(logm(x)) = \n{expm(logm(x))}"
+    np.testing.assert_allclose(
+        x, expm(logm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
-    assert np.allclose(x, logm(expm(x))), (
-        f"logm(expm(x)) is not equal to x. x = \n{x}\nlogm(expm(x)) = \n{logm(expm(x))}"
+    np.testing.assert_allclose(
+        x, logm(expm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
-    
+
 
 @pytest.mark.parametrize(
     "x",
     [
-        np.random.uniform(-NEAR_INF, -NEAR_INF/10, size=(4, 4, 2)).view(np.complex128).reshape(4, 4)
+        np.random.uniform(-NEAR_INF, -NEAR_INF / 10, size=(4, 4, 2)).view(np.complex128).reshape(4, 4)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
 def test_logm_complex_near_minf(x):
-    assert np.allclose(x, expm(logm(x))), (
-        f"expm(logm(x)) is not equal to x. x = \n{x}\nexpm(logm(x)) = \n{expm(logm(x))}"
+    np.testing.assert_allclose(
+        x, expm(logm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
-    assert np.allclose(x, logm(expm(x))), (
-        f"logm(expm(x)) is not equal to x. x = \n{x}\nlogm(expm(x)) = \n{logm(expm(x))}"
+    np.testing.assert_allclose(
+        x, logm(expm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )

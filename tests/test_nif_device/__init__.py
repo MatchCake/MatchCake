@@ -16,7 +16,7 @@ def devices_init(*args, **kwargs) -> Tuple[NonInteractingFermionicDevice, qml.De
     nif_device = NonInteractingFermionicDevice(
         wires=kwargs.get("wires", 2), prob_strategy=kwargs.get("prob_strategy", "lookup_table")
     )
-    qubit_device = qml.device('default.qubit', wires=kwargs.get("wires", 2), shots=kwargs.get("shots", 1))
+    qubit_device = qml.device('default.qubit', wires=kwargs.get("wires", 2), shots=kwargs.get("shots", None))
     qubit_device.operations.add(MatchgateOperator)
     return nif_device, qubit_device
 

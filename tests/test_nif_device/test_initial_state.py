@@ -10,9 +10,14 @@ from functools import partial
 
 from msim.utils import PAULI_Z, PAULI_X
 from . import devices_init
-from ..configs import N_RANDOM_TESTS_PER_CASE
+from ..configs import (
+    N_RANDOM_TESTS_PER_CASE,
+    TEST_SEED,
+    ATOL_MATRIX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+)
 
-np.random.seed(42)
+np.random.seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(
@@ -28,5 +33,8 @@ def test_single_gate_circuit_analytic_probability_lt_vs_es(initial_binary_state)
     device.apply(qml.BasisState(initial_binary_state, wires=range(len(initial_binary_state))))
     state = device.state
     initial_state = utils.binary_state_to_state(initial_binary_state)
-    check = np.allclose(initial_state, state)
-    assert check, f"The probabilities are not the same. Got {initial_binary_state=} and {state=}."
+    np.testing.assert_allclose(
+        initial_state, state,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )

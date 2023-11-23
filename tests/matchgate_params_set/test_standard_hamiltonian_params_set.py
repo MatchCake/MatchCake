@@ -1,16 +1,17 @@
+import numpy as np
 import pytest
+
 from msim import (
-    MatchgateStandardParams,
-    MatchgatePolarParams,
     MatchgateHamiltonianCoefficientsParams,
-    MatchgateComposedHamiltonianParams,
     MatchgateStandardHamiltonianParams,
 )
 from msim import utils
-import numpy as np
-from ..configs import N_RANDOM_TESTS_PER_CASE
+from ..configs import (
+    N_RANDOM_TESTS_PER_CASE,
+    TEST_SEED,
+)
 
-np.random.seed(42)
+np.random.seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(
@@ -29,8 +30,3 @@ def test_parse_from_hamiltonian_coeffs_with_slow_method(
     std_params = MatchgateStandardHamiltonianParams.from_matrix(hamiltonian)
     std_params_from = MatchgateStandardHamiltonianParams.parse_from_params(params)
     assert std_params == std_params_from
-
-
-
-
-

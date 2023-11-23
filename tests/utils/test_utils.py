@@ -2,7 +2,16 @@ import pytest
 import numpy as np
 from msim import utils
 from msim import matchgate_parameter_sets as mps
-from ..configs import N_RANDOM_TESTS_PER_CASE
+from ..configs import (
+    N_RANDOM_TESTS_PER_CASE,
+    TEST_SEED,
+    ATOL_MATRIX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+    ATOL_SCALAR_COMPARISON,
+    RTOL_SCALAR_COMPARISON,
+)
+
+np.random.seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(
@@ -45,8 +54,7 @@ from ..configs import N_RANDOM_TESTS_PER_CASE
 def test_skew_antisymmetric_vector_to_matrix(input_vector, target_matrix):
     if isinstance(target_matrix, np.ndarray):
         out_matrix = utils.skew_antisymmetric_vector_to_matrix(input_vector)
-        assert np.allclose(out_matrix, target_matrix), (f"The output matrix is not the correct one. "
-                                                        f"Got {out_matrix} instead of {target_matrix}")
+        np.testing.assert_allclose(out_matrix, target_matrix)
 
     elif issubclass(target_matrix, BaseException):
         with pytest.raises(target_matrix):
@@ -78,8 +86,11 @@ def test_skew_antisymmetric_vector_to_matrix(input_vector, target_matrix):
 )
 def test_get_hamming_weight(state, hamming_weight):
     out_hamming_weight = utils.get_hamming_weight(state)
-    assert out_hamming_weight == hamming_weight, (f"The output hamming weight is not the correct one. "
-                                                  f"Got {out_hamming_weight} instead of {hamming_weight}")
+    np.testing.assert_allclose(
+        out_hamming_weight, hamming_weight,
+        atol=ATOL_SCALAR_COMPARISON,
+        rtol=RTOL_SCALAR_COMPARISON,
+    )
 
 
 @pytest.mark.parametrize(
@@ -98,8 +109,11 @@ def test_get_hamming_weight(state, hamming_weight):
 )
 def test_get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs, hamiltonian):
     out_hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs.to_matrix())
-    assert np.allclose(out_hamiltonian, hamiltonian), (f"The output hamiltonian is not the correct one. "
-                                                       f"Got \n{out_hamiltonian} instead of \n{hamiltonian}")
+    np.testing.assert_allclose(
+        out_hamiltonian, hamiltonian,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
 
 
 @pytest.mark.parametrize(
@@ -116,8 +130,11 @@ def test_decompose_matrix_into_majoranas(coefficients):
         matrix += coefficients[i] * utils.get_majorana(i, n)
 
     out_coefficients = utils.decompose_matrix_into_majoranas(matrix)
-    assert np.allclose(out_coefficients, coefficients), (f"The output coefficients are not the correct one. "
-                                                         f"Got {out_coefficients} instead of {coefficients}")
+    np.testing.assert_allclose(
+        out_coefficients, coefficients,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
 
 
 @pytest.mark.parametrize(
@@ -133,9 +150,26 @@ def test_make_transition_matrix_from_action_matrix(matrix):
     reconstructed_matrix = np.zeros_like(matrix)
     reconstructed_matrix[:, ::2] = 2 * np.real(t_matrix).T
     reconstructed_matrix[:, 1::2] = 2 * np.imag(t_matrix).T
-    assert np.allclose(matrix, reconstructed_matrix), (f"The output matrix is not the correct one. "
-                                                       f"Got \n{matrix} instead of \n{reconstructed_matrix}")
+    np.testing.assert_allclose(
+        reconstructed_matrix, matrix,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
 
 
-
-
+@pytest.mark.parametrize(
+    "binary_string,binary_vector",
+    [
+        (''.join(str(x) for x in vector), vector)
+        for vector_length in range(1, 10)
+        for vector in np.random.randint(0, 2, size=(N_RANDOM_TESTS_PER_CASE, vector_length))
+    ]
+)
+def test_binary_string_to_vector(binary_string, binary_vector):
+    binary_vector = np.asarray(binary_vector)
+    out_binary_vector = utils.binary_string_to_vector(binary_string)
+    np.testing.assert_allclose(
+        out_binary_vector, binary_vector,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )

@@ -1,6 +1,11 @@
-import pytest
-from msim import utils
 import numpy as np
+import pytest
+
+from msim import utils
+from ..configs import (
+    ATOL_MATRIX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+)
 
 
 @pytest.mark.parametrize(
@@ -18,7 +23,8 @@ import numpy as np
 def test_get_probabilities_from_state(state, wires, expected_probs):
     state = np.asarray(state)
     probs = utils.get_probabilities_from_state(state, wires)
-    assert np.allclose(probs, expected_probs), (
-        f"The probabilities are not the correct ones. Got {probs} instead of {expected_probs}."
+    np.testing.assert_allclose(
+        probs, expected_probs,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
-

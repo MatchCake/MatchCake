@@ -1,14 +1,20 @@
-import pytest
 import numpy as np
+import pytest
+
 from msim import utils
-import pennylane as qml
-from ..configs import N_RANDOM_TESTS_PER_CASE
+from ..configs import (
+    N_RANDOM_TESTS_PER_CASE,
+    ATOL_MATRIX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+    ATOL_SHAPE_COMPARISON,
+    RTOL_SHAPE_COMPARISON,
+)
 
 
 @pytest.mark.parametrize(
     "state_idx",
     [
-        np.random.randint(0, 2 ** n)
+        np.random.randint(0, 2**n)
         for n in range(1, 10)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
@@ -16,10 +22,13 @@ from ..configs import N_RANDOM_TESTS_PER_CASE
 def test_binary_state_to_state(state_idx):
     binary_state = np.binary_repr(state_idx)
     state = utils.binary_state_to_state(binary_state)
-    target_state = np.zeros(2 ** len(binary_state))
+    target_state = np.zeros(2**len(binary_state))
     target_state[state_idx] = 1
-    assert np.allclose(state, target_state), (f"The state is not the correct one. "
-                                              f"Got \n{state} instead of \n{target_state}")
+    np.testing.assert_allclose(
+        state, target_state,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
 
 
 @pytest.mark.parametrize(
@@ -56,9 +65,10 @@ def test_binary_state_to_state(state_idx):
 )
 def test_decompose_binary_state_into_majorana_indexes_specific_cases(binary_state, majorana_indexes):
     pred_majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(binary_state)
-    assert np.allclose(majorana_indexes, pred_majorana_indexes), (
-            f"The majorana indexes are not the correct ones. "
-            f"Got \n{pred_majorana_indexes} instead of \n{majorana_indexes}"
+    np.testing.assert_allclose(
+        majorana_indexes, pred_majorana_indexes,
+        atol=ATOL_SHAPE_COMPARISON,
+        rtol=RTOL_SHAPE_COMPARISON,
     )
 
 
@@ -76,11 +86,14 @@ def test_decompose_binary_state_into_majorana_indexes(binary_state):
     state = utils.binary_state_to_state(binary_state).reshape(-1, 1)
     majoranas = [utils.get_majorana(i, n) for i in majorana_indexes]
     if len(majoranas) == 0:
-        op = np.eye(2 ** n)
+        op = np.eye(2**n)
     else:
         op = utils.recursive_2in_operator(np.matmul, majoranas)
-    zero_state = np.zeros((2 ** n, 1))
+    zero_state = np.zeros((2**n, 1))
     zero_state[0] = 1
     predicted_state = op @ zero_state
-    assert np.allclose(predicted_state, state), (f"The state is not the correct one. "
-                                                 f"Got \n{predicted_state} instead of \n{state}")
+    np.testing.assert_allclose(
+        predicted_state, state,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )

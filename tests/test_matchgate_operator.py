@@ -1,20 +1,15 @@
-from typing import Tuple
-
 import numpy as np
-import pytest
 import pennylane as qml
+import pytest
 from pfapack import pfaffian
 
 from msim import MatchgateOperator, NonInteractingFermionicDevice, Matchgate
 from msim import matchgate_parameter_sets as mps
 from msim import utils
-from functools import partial
-
-from msim.utils import PAULI_Z, PAULI_X
-from .configs import N_RANDOM_TESTS_PER_CASE
+from .configs import ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON, TEST_SEED
 from .test_nif_device import single_matchgate_circuit
 
-np.random.seed(42)
+np.random.seed(TEST_SEED)
 
 fSWAP_R = Matchgate(mps.fSWAP).single_transition_particle_matrix
 
@@ -30,7 +25,7 @@ fSWAP_R = Matchgate(mps.fSWAP).single_transition_particle_matrix
         (mps.fSWAP, "01", np.array([0, 0, 1, 0])),
         (mps.fSWAP, "10", np.array([0, 1, 0, 0])),
         (mps.fSWAP, "11", np.array([0, 0, 0, -1])),
-        (mps.HellParams, "00", np.array([-0.5, 0, 0, np.sqrt(0.75)*1j])),
+        (mps.HellParams, "00", np.array([-0.5, 0, 0, np.sqrt(0.75) * 1j])),
     ]
 )
 def test_single_matchgate_circuit_output_state(params, initial_binary_state, output_state):
@@ -44,11 +39,13 @@ def test_single_matchgate_circuit_output_state(params, initial_binary_state, out
         in_param_type=mps.MatchgatePolarParams,
         out_op="state",
     )
-    assert np.allclose(qubit_state, output_state), (
-        f"The output state is not the correct one. Got {qubit_state} instead of {output_state}."
+    np.testing.assert_allclose(
+        qubit_state, output_state,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
-    
-    
+
+
 @pytest.mark.parametrize(
     "params,initial_binary_state,output_probs",
     [
@@ -75,8 +72,10 @@ def test_single_matchgate_circuit_output_probs(params, initial_binary_state, out
         out_op="state",
     )
     qubit_probs = utils.get_probabilities_from_state(qubit_state)
-    assert np.allclose(qubit_probs, output_probs), (
-        f"The output probs is not the correct one. Got {qubit_probs} instead of {output_probs}."
+    np.testing.assert_allclose(
+        qubit_probs, output_probs,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
 
 
@@ -84,26 +83,16 @@ def test_single_matchgate_circuit_output_probs(params, initial_binary_state, out
     "params,k,binary_state,observable",
     [
         (
-            mps.fSWAP, 0, "01",
-            np.array([
-                [0, 1, 0, 1],
-                [-1, 0, 0, 0],
-                [0, 0, 0, 1],
-                [-1, 0, -1, 0]
-            ])
+                mps.fSWAP, 0, "01",
+                np.array(
+                    [
+                        [0, 1, 0, 1],
+                        [-1, 0, 0, 0],
+                        [0, 0, 0, 1],
+                        [-1, 0, -1, 0]
+                    ]
+                )
         ),
-        # (
-        #     mps.MatchgatePolarParams(
-        #         r0=1, r1=0, theta0=np.pi, theta1=np.pi / 2, theta2=np.pi / 3, theta3=np.pi / 4, theta4=np.pi / 5
-        #     ),
-        #     0, "01",
-        #     np.array([
-        #         [0, 1, 0, 1],
-        #         [-1, 0, 0, 0],
-        #         [0, 0, 0, 1],
-        #         [-1, 0, -1, 0]
-        #     ])
-        # )
     ]
 )
 def test_single_matchgate_obs_on_specific_cases(params, k, binary_state, observable):
@@ -113,19 +102,19 @@ def test_single_matchgate_obs_on_specific_cases(params, k, binary_state, observa
     pred_obs = nif_device.lookup_table.get_observable(k, state)
     pred_pf = pfaffian.pfaffian(pred_obs)
     pf = pfaffian.pfaffian(observable)
-    assert np.allclose(pred_obs, observable), (
-        f"The observable is not the correct one. Got \n{pred_obs} instead of \n{observable}"
+    np.testing.assert_allclose(
+        pred_obs, observable,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
-    assert np.allclose(pred_pf, pf), (
-        f"The Pfaffian is not the correct one. Got \n{pred_pf} instead of \n{pf}"
-    )
+    np.testing.assert_almost_equal(pred_pf, pf)
 
 
 @pytest.mark.parametrize(
     "wires, n_wires, padded_matrix",
     [
         (
-            [0, 1], 2, fSWAP_R,
+                [0, 1], 2, fSWAP_R,
         ),
     ]
 )
@@ -133,6 +122,8 @@ def test_get_padded_single_transition_particle_matrix(wires, n_wires, padded_mat
     mgo = MatchgateOperator(mps.fSWAP, wires=wires)
     all_wires = list(range(n_wires))
     pred_padded_matrix = mgo.get_padded_single_transition_particle_matrix(wires=all_wires)
-    assert np.allclose(pred_padded_matrix, padded_matrix), (
-        f"The padded matrix is not the correct one. Got \n{pred_padded_matrix} instead of \n{padded_matrix}"
+    np.testing.assert_allclose(
+        pred_padded_matrix, padded_matrix,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )
