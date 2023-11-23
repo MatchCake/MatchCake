@@ -38,15 +38,18 @@ def recursive_2in_operator(operator: Callable, __inputs: List[Any]):
         raise ValueError("Invalid shape for input array")
 
 
-def binary_string_to_vector(binary_string: str) -> np.ndarray:
+def binary_string_to_vector(binary_string: str, encoding: str = "ascii") -> np.ndarray:
     r"""
     Convert a binary string to a vector. The binary string is a string of 0s and 1s. The vector is a vector of
     integers.
     
     :param binary_string: Binary string
+    :type binary_string: str
+    :param encoding: Encoding of the binary string. Default is ascii.
+    :type encoding: str
     :return: Vector
     """
-    return np.fromstring(binary_string, dtype='u1', sep='') - ord('0')
+    return np.frombuffer(binary_string.encode(encoding), dtype='u1') - ord('0')
 
 
 def binary_state_to_state(binary_state: Union[np.ndarray, List[Union[int, bool]], str]) -> np.ndarray:
@@ -319,7 +322,7 @@ def decompose_binary_state_into_majorana_indexes(
     :rtype: np.ndarray
     """
     if isinstance(__binary_state, str):
-        binary_state_array = np.fromstring(__binary_state, dtype='u1', sep='') - ord('0')
+        binary_state_array = binary_string_to_vector(__binary_state)
     else:
         binary_state_array = np.asarray(__binary_state, dtype=int).flatten()
     majorana_indexes = 2 * np.nonzero(binary_state_array)[0]
