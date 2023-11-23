@@ -31,7 +31,7 @@ def test_single_gate_circuit_probability_single_vs_target_specific_cases(initial
     device.apply(operations)
     es_probs = device.compute_probability_using_explicit_sum(wire)
     es_m_probs = np.asarray([
-        # device.compute_probability_of_target_using_explicit_sum(wire, target_binary_state="0"),
+        device.compute_probability_of_target_using_explicit_sum(wire, target_binary_state="0"),
         device.compute_probability_of_target_using_explicit_sum(wire, target_binary_state="1"),
     ])
     np.testing.assert_allclose(
@@ -63,6 +63,30 @@ def test_single_gate_circuit_probability_single_vs_target_random_cases(initial_b
     ])
     np.testing.assert_allclose(
         es_m_probs, es_probs,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    )
+    
+
+@pytest.mark.parametrize(
+    "initial_binary_string,params,wires,target_binary_state,prob",
+    [
+        ("01", mps.fSWAP, [0, 1], "10", 1),
+    ]
+)
+def test_single_gate_circuit_probability_target_state_specific_cases(
+        initial_binary_string, params, wires, target_binary_state, prob
+):
+    initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
+    device = NonInteractingFermionicDevice(wires=wires)
+    operations = [
+        qml.BasisState(initial_binary_state, wires=device.wires),
+        MatchgateOperator(params, wires=wires)
+    ]
+    device.apply(operations)
+    es_m_prob = device.compute_probability_of_target_using_explicit_sum(wires, target_binary_state=target_binary_state)
+    np.testing.assert_allclose(
+        es_m_prob, prob,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
