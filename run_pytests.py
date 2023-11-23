@@ -1,5 +1,4 @@
 import pytest
-import sys
 import os
 from pytest_jsonreport.plugin import JSONReport
 import json
@@ -21,8 +20,4 @@ if __name__ == '__main__':
     json_data = json.load(open(json_path))
     with open(json_path, "w") as f:
         json.dump(json_data, f, indent=4)
-
-
-
-
 
