@@ -1,0 +1,45 @@
+<mxfile host="Electron" modified="2023-11-01T12:01:00.789Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.1.2 Chrome/106.0.5249.199 Electron/21.4.3 Safari/537.36" etag="JgCaMiU4eM4lS04s7d-H" version="21.1.2" type="device">
+  <diagram name="Page-1" id="4l_1mA_5cx2hDEZCY7Ug">
+    <mxGraphModel dx="1418" dy="820" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="1" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ZcIY2EhZ8-uhHCD0QohR-1" value="x" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=400;fontColor=#000066;" vertex="1" parent="1">
+          <mxGeometry x="270" y="100" width="220" height="490" as="geometry" />
+        </mxCell>
+        <mxCell id="ZcIY2EhZ8-uhHCD0QohR-2" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#000066;" vertex="1" parent="1">
+          <mxGeometry x="218" y="160" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZcIY2EhZ8-uhHCD0QohR-3" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#000066;" vertex="1" parent="1">
+          <mxGeometry x="477" y="160" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZcIY2EhZ8-uhHCD0QohR-4" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#000066;" vertex="1" parent="1">
+          <mxGeometry x="477" y="520" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZcIY2EhZ8-uhHCD0QohR-5" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#000066;" vertex="1" parent="1">
+          <mxGeometry x="218" y="520" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZcIY2EhZ8-uhHCD0QohR-7" value="" style="curved=1;endArrow=async;html=1;rounded=0;strokeWidth=11;endFill=1;fontColor=#000066;strokeColor=#000066;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="218" y="636" as="sourcePoint" />
+            <mxPoint x="208" y="156" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="118" y="466" />
+              <mxPoint x="98" y="346" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZcIY2EhZ8-uhHCD0QohR-9" value="" style="curved=1;endArrow=async;html=1;rounded=0;strokeWidth=11;endFill=1;fontColor=#000066;strokeColor=#000066;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="554" y="151" as="sourcePoint" />
+            <mxPoint x="564" y="631" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="654" y="321" />
+              <mxPoint x="674" y="441" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
