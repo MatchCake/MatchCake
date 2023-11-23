@@ -28,7 +28,7 @@ and following the instructions above.
 
 # Important Links
   - Documentation at [https://JeremieGince.github.io/FermionicSimulation/](https://JeremieGince.github.io/FermionicSimulation/).
-  - Github at [https://github.com/NeuroTorch/NeuroTorch/](https://github.com/JeremieGince/FermionicSimulation/).
+  - Github at [https://github.com/JeremieGince/FermionicSimulation/](https://github.com/JeremieGince/FermionicSimulation/).
 
 
 
