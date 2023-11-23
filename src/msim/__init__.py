@@ -1,5 +1,5 @@
 """
-MSim is a Python library for simulating non-interacting fermionic systems using the Matchgates.
+MSim is a Python library for simulating non-interacting fermionic systems using Matchgate Circuits.
 """
 
 __author__ = "Jérémie Gince"
