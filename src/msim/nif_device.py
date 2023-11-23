@@ -26,7 +26,10 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     prob_strategies = {"lookup_table", "explicit_sum"}
 
     def __init__(self, wires=2, **kwargs):
-        assert wires > 1, "At least two wires are required for this device."
+        if isinstance(wires, int):
+            assert wires > 1, "At least two wires are required for this device."
+        else:
+            assert len(wires) > 1, "At least two wires are required for this device."
         super().__init__(wires=wires, shots=None)
 
         self.prob_strategy = kwargs.get("prob_strategy", "lookup_table").lower()
@@ -311,8 +314,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             for m, n in np.ndindex((2*self.num_wires, 2*self.num_wires)):
                 c_m = utils.get_majorana(m, self.num_wires)
                 c_n = utils.get_majorana(n, self.num_wires)
-                inner_op = qml.math.dot(bra_op, qml.math.dot(c_n, qml.math.dot(c_m, ket_op)))
-                inner_product = qml.math.dot(qml.math.dot(zero_state.T.conj(), inner_op), zero_state)
+                inner_op_list = [zero_state.T.conj(), bra_op, c_n, c_m, ket_op, zero_state]
+                inner_product = utils.recursive_2in_operator(qml.math.dot, inner_op_list)
                 t_wire_m = self.transition_matrix[wire, m]
                 t_wire_n = pnp.conjugate(self.transition_matrix[wire, n])
                 p += t_wire_m * t_wire_n * inner_product
@@ -360,18 +363,20 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         else:
             bra_op = pnp.eye(2*self.num_wires)
         zero_state = self._create_basis_state(0).flatten()
-        m_fist_cls, n_fist_cls = 0, 1
-        inner_classes = np.where(np.isclose(target_binary_state, 0), m_fist_cls, n_fist_cls)
         target_prob = 0.0
-        for m, n in np.ndindex((2*self.num_wires, 2*self.num_wires)):
-            c_m = utils.get_majorana(m, self.num_wires)
-            c_n = utils.get_majorana(n, self.num_wires)
-            inner_op_vector = np.where(inner_classes == m_fist_cls, c_m @ c_n, c_n @ c_m)
+        for m_n_vector in np.ndindex(tuple([2*self.num_wires for _ in range(2 * len(target_binary_state))])):
+            c_m_n_list = [utils.get_majorana(i, self.num_wires) for i in m_n_vector]
+            inner_op_vector = [
+                c_m_n_list[i] @ c_m_n_list[i+1]
+                if target_binary_state[i//2] == 0
+                else c_m_n_list[i+1] @ c_m_n_list[i]
+                for i in range(0, len(c_m_n_list), 2)
+            ]
             inner_op_list = [zero_state.T.conj(), bra_op, *inner_op_vector, ket_op, zero_state]
             inner_product = utils.recursive_2in_operator(qml.math.dot, inner_op_list)
-            t_wire_m = self.transition_matrix[wires, m]
-            t_wire_n = pnp.conjugate(self.transition_matrix[wires, n])
-            product_coeff = qml.math.prod(t_wire_m * t_wire_n)
+            t_wire_m = qml.math.prod(self.transition_matrix[wires, m_n_vector[::2]])
+            t_wire_n = qml.math.prod(pnp.conjugate(self.transition_matrix[wires, m_n_vector[1::2]]))
+            product_coeff = t_wire_m * t_wire_n
             target_prob += product_coeff * inner_product
         return pnp.real(target_prob)
 
