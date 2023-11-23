@@ -320,6 +320,60 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             prob0 = 1.0 - prob1
             probs[wire_idx] = pnp.array([prob0, prob1])
         return probs.flatten()
+    
+    def compute_probability_of_target_using_explicit_sum(self, wires=None, target_binary_state=None):
+        if self.state is None:
+            return None
+        if wires is None:
+            wires = self.wires
+        if isinstance(wires, int):
+            wires = [wires]
+        wires = Wires(wires)
+        device_wires = self.map_wires(wires)
+        num_wires = len(device_wires)
+        
+        if target_binary_state is None:
+            target_binary_state = np.ones(num_wires, dtype=int)
+        if isinstance(target_binary_state, int):
+            target_binary_state = np.array([target_binary_state])
+        elif isinstance(target_binary_state, list):
+            target_binary_state = np.array(target_binary_state)
+        elif isinstance(target_binary_state, str):
+            target_binary_state = utils.binary_string_to_vector(target_binary_state)
+        else:
+            target_binary_state = np.asarray(target_binary_state)
+        assert len(target_binary_state) == num_wires, (
+            f"The target binary state must have {num_wires} elements. "
+            f"Got {len(target_binary_state)} instead."
+        )
+        
+        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(self.state)
+        ket_majorana_list = [utils.get_majorana(i, self.num_wires) for i in ket_majorana_indexes]
+        if ket_majorana_list:
+            ket_op = utils.recursive_2in_operator(pnp.matmul, ket_majorana_list)
+        else:
+            ket_op = pnp.eye(2*self.num_wires)
+        bra_majorana_indexes = list(reversed(ket_majorana_indexes))
+        bra_majorana_list = [utils.get_majorana(i, self.num_wires) for i in bra_majorana_indexes]
+        if bra_majorana_list:
+            bra_op = utils.recursive_2in_operator(pnp.matmul, bra_majorana_list)
+        else:
+            bra_op = pnp.eye(2*self.num_wires)
+        zero_state = self._create_basis_state(0).flatten()
+        m_fist_cls, n_fist_cls = 0, 1
+        inner_classes = np.where(np.isclose(target_binary_state, 0), m_fist_cls, n_fist_cls)
+        target_prob = 0.0
+        for m, n in np.ndindex((2*self.num_wires, 2*self.num_wires)):
+            c_m = utils.get_majorana(m, self.num_wires)
+            c_n = utils.get_majorana(n, self.num_wires)
+            inner_op_vector = np.where(inner_classes == m_fist_cls, c_m @ c_n, c_n @ c_m)
+            inner_op_list = [zero_state.T.conj(), bra_op, *inner_op_vector, ket_op, zero_state]
+            inner_product = utils.recursive_2in_operator(qml.math.dot, inner_op_list)
+            t_wire_m = self.transition_matrix[wires, m]
+            t_wire_n = pnp.conjugate(self.transition_matrix[wires, n])
+            product_coeff = qml.math.prod(t_wire_m * t_wire_n)
+            target_prob += product_coeff * inner_product
+        return pnp.real(target_prob)
 
     def reset(self):
         """Reset the device"""
