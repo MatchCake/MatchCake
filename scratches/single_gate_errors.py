@@ -15,8 +15,15 @@ def single_measure_p1(params):
     nif_qnode = qml.QNode(single_matchgate_circuit, nif_device)
     qubit_qnode = qml.QNode(single_matchgate_circuit, qubit_device)
 
-    nif_probs = nif_qnode(mps.MatchgatePolarParams.parse_from_any(params).to_numpy())
-    qubit_probs = qubit_qnode(mps.MatchgatePolarParams.parse_from_any(params).to_numpy())
+    nif_probs = nif_qnode(
+        mps.MatchgatePolarParams.parse_from_any(params).to_numpy(),
+        out_op="probs"
+    )
+    qubit_state = qubit_qnode(
+        mps.MatchgatePolarParams.parse_from_any(params).to_numpy(),
+        out_op="state"
+    )
+    qubit_probs = utils.get_probabilities_from_state(qubit_state, wires=0)
     return nif_probs[-1], qubit_probs[-1]
 
 
