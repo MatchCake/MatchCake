@@ -87,3 +87,35 @@ def test_single_gate_circuit_analytic_probability_explicit_sum(initial_binary_st
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
+
+
+@pytest.mark.parametrize(
+    "initial_binary_state,params,wires,target_binary_state",
+    [
+        (
+                np.random.randint(0, 2, size=n),
+                mps.MatchgatePolarParams.random(),
+                [0, 1],
+                np.random.randint(0, 2, size=n),
+        )
+        for n in [2, ]
+        # for n in range(2, 10)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_single_gate_circuit_probability_lt_vs_es(
+        initial_binary_state, params, wires, target_binary_state
+):
+    device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
+    operations = [
+        qml.BasisState(initial_binary_state, wires=device.wires),
+        MatchgateOperator(params, wires=[0, 1])
+    ]
+    device.apply(operations)
+    lt_probs = device.compute_probability_of_target_using_lookup_table(wires, target_binary_state)
+    es_probs = device.compute_probability_of_target_using_explicit_sum(wires, target_binary_state)
+    np.testing.assert_allclose(
+        lt_probs, es_probs,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    )
