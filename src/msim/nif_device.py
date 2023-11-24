@@ -283,6 +283,17 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             probs[wire] = pnp.array([prob0, prob1])
         return probs.flatten()
 
+    def compute_probability_of_target_using_lookup_table(self, wires=None, target_binary_state=None):
+        if self.state is None:
+            return None
+        if wires is None:
+            wires = self.wires
+        if isinstance(wires, int):
+            wires = [wires]
+        wires = Wires(wires)
+        obs = self.lookup_table.compute_observable_of_target_state(self.state, target_binary_state, wires)
+        return pnp.real(pfaffian.pfaffian(obs))
+
     def compute_probability_using_explicit_sum(self, wires=None):
         if wires is None:
             wires = self.wires
