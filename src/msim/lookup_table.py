@@ -201,16 +201,18 @@ class NonInteractingFermionicLookupTable:
             indexes_of_target_state = np.arange(len(target_binary_state), dtype=int)
         elif target_binary_state is None and indexes_of_target_state is not None:
             target_binary_state = np.ones(len(indexes_of_target_state), dtype=int)
-            
+
         ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(system_state)
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
 
         unmeasured_cls_indexes = [2 for _ in range(len(ket_majorana_indexes))]
-        measure_cls_indexes = np.array([[1, 0] for _ in range(k + 1)]).flatten().tolist()
+        measure_cls_indexes = np.array([
+            [0, 1] if b == 0 else [1, 0]
+            for b in target_binary_state
+        ]).flatten().tolist()
         lt_indexes = unmeasured_cls_indexes + measure_cls_indexes + unmeasured_cls_indexes
 
-        # measure_indexes = np.array([[i, i] for i in range(k+1)]).flatten().tolist()
-        measure_indexes = [k, k]
+        measure_indexes = np.array([[i, i] for i in indexes_of_target_state]).flatten().tolist()
         majorana_indexes = list(bra_majorana_indexes) + measure_indexes + list(ket_majorana_indexes)
 
         obs_size = len(majorana_indexes)
