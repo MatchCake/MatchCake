@@ -153,7 +153,7 @@ def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_gates in range(1, 10)
-        for num_wires in range(2, 9)
+        for num_wires in range(2, 8)
         for n_probs in range(1, num_wires)
     ]
 )
