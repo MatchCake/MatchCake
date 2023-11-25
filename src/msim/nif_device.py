@@ -1,4 +1,5 @@
 import itertools
+import warnings
 from typing import Iterable
 
 import numpy as np
@@ -10,7 +11,6 @@ from pennylane.wires import Wires
 from .matchgate_operator import MatchgateOperator
 from .lookup_table import NonInteractingFermionicLookupTable
 from . import utils
-from pfapack import pfaffian
 
 
 class NonInteractingFermionicDevice(qml.QubitDevice):
@@ -254,17 +254,26 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             wires = [wires]
         wires = Wires(wires)
         wires_states = np.array(list(itertools.product([0, 1], repeat=len(wires))))
-        probs = np.zeros(len(wires_states))
         if self.prob_strategy == "lookup_table":
-            return self.compute_probability_using_lookup_table(wires)
+            return np.asarray([
+                self.compute_probability_of_target_using_lookup_table(wires, wires_state)
+                for wires_state in wires_states
+            ])
         elif self.prob_strategy == "explicit_sum":
-            for i, wires_state in enumerate(wires_states):
-                probs[i] = self.compute_probability_of_target_using_explicit_sum(wires, wires_state)
-            return probs
+            return np.asarray([
+                self.compute_probability_of_target_using_explicit_sum(wires, wires_state)
+                for wires_state in wires_states
+            ])
         else:
             raise NotImplementedError(f"Probability strategy {self.prob_strategy} is not implemented.")
 
     def compute_probability_using_lookup_table(self, wires=None):
+        warnings.warn(
+            "This method is deprecated. Please use compute_probability_of_target_using_lookup_table instead.",
+            DeprecationWarning
+        )
+        if self.state is None:
+            return None
         if wires is None:
             wires = self.wires
         if isinstance(wires, int):
@@ -273,14 +282,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         device_wires = self.map_wires(wires)
         num_wires = len(device_wires)
 
-        if self.state is None:
-            return None
-
         # assert num_wires == 1, "Only one wire is supported for now."
         probs = pnp.zeros((num_wires, 2))
         for wire in wires:
             obs = self.lookup_table.get_observable(wire, self.state)
-            prob1 = pnp.real(pfaffian.pfaffian(obs))
+            prob1 = pnp.real(utils.pfaffian(obs))
             prob0 = 1.0 - prob1
             probs[wire] = pnp.array([prob0, prob1])
         return probs.flatten()
@@ -293,10 +299,16 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if isinstance(wires, int):
             wires = [wires]
         wires = Wires(wires)
-        obs = self.lookup_table.compute_observable_of_target_state(self.state, target_binary_state, wires)
-        return pnp.real(pfaffian.pfaffian(obs))
+        obs = self.lookup_table.get_observable_of_target_state(self.state, target_binary_state, wires)
+        return pnp.real(utils.pfaffian(obs))
 
     def compute_probability_using_explicit_sum(self, wires=None):
+        warnings.warn(
+            "This method is deprecated. Please use compute_probability_of_target_using_explicit_sum instead.",
+            DeprecationWarning
+        )
+        if self.state is None:
+            return None
         if wires is None:
             wires = self.wires
         if isinstance(wires, int):
@@ -304,9 +316,6 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         wires = Wires(wires)
         device_wires = self.map_wires(wires)
         num_wires = len(device_wires)
-
-        if self.state is None:
-            return None
 
         ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(self.state)
         ket_majorana_list = [utils.get_majorana(i, self.num_wires) for i in ket_majorana_indexes]
@@ -362,6 +371,12 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The target binary state must have {num_wires} elements. "
             f"Got {len(target_binary_state)} instead."
         )
+        if len(target_binary_state) > 4:
+            warnings.warn(
+                f"Computing the probability of a target state with more than 4 bits "
+                f"may take a long time. Please consider using the lookup table strategy instead.",
+                UserWarning,
+            )
 
         ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(self.state)
         ket_majorana_list = [utils.get_majorana(i, self.num_wires) for i in ket_majorana_indexes]
@@ -369,8 +384,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         bra_majorana_list = [utils.get_majorana(i, self.num_wires) for i in bra_majorana_indexes]
         zero_state = self._create_basis_state(0).flatten()
         target_prob = 0.0
-        # iterator = itertools.product(*[range(2*self.num_wires) for _ in range(len(target_binary_state))])
-        for m_n_vector in np.ndindex(tuple([2*self.num_wires for _ in range(2 * len(target_binary_state))])):
+        # iterator = itertools.product(*[range(2*self.num_wires) for _ in range(2 * len(target_binary_state))])
+        np_iterator = np.ndindex(tuple([2*self.num_wires for _ in range(2 * len(target_binary_state))]))
+        for m_n_vector in np_iterator:
             c_m_n_list = [utils.get_majorana(i, self.num_wires) for i in m_n_vector]
             inner_op_list = [
                 c_m_n_list[i] @ c_m_n_list[i+1]
@@ -389,4 +405,3 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     def reset(self):
         """Reset the device"""
         self._state = self._create_basis_state(0)
-
