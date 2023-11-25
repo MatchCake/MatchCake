@@ -14,7 +14,7 @@ from .test_single_matchgate_circuit import single_matchgate_circuit
 
 def devices_init(*args, **kwargs) -> Tuple[NonInteractingFermionicDevice, qml.Device]:
     nif_device = NonInteractingFermionicDevice(
-        wires=kwargs.get("wires", 2), prob_strategy=kwargs.get("prob_strategy", "lookup_table")
+        wires=kwargs.get("wires", 2), prob_strategy=kwargs.pop("prob_strategy", "lookup_table")
     )
     qubit_device = qml.device('default.qubit', wires=kwargs.get("wires", 2), shots=kwargs.get("shots", None))
     qubit_device.operations.add(MatchgateOperator)
