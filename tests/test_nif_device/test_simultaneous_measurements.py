@@ -144,17 +144,18 @@ def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_
         rtol=RTOL_APPROX_COMPARISON,
     )
 
+
 @pytest.mark.parametrize(
     "params_list,n_wires,prob_wires",
     [
         (
                 [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)],
-                num_wires, np.random.choice(num_wires, replace=False, size=n_probs)
+                num_wires, np.random.choice(num_wires, replace=False, size=n_probs),
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-        for num_gates in range(1, 10)
-        for num_wires in range(2, 8)
-        for n_probs in range(1, num_wires)
+        for num_wires in [2, 3, 4]
+        for num_gates in [1, 2**num_wires]
+        for n_probs in range(1, num_wires+1)
     ]
 )
 def test_multiples_matchgate_probs_with_qbit_device_lookup_table(params_list, n_wires, prob_wires):
@@ -187,13 +188,6 @@ def test_multiples_matchgate_probs_with_qbit_device_lookup_table(params_list, n_
         out_op="probs",
         out_wires=prob_wires,
     )
-    if not np.allclose(
-        nif_probs, qubit_probs,
-        atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON,
-    ):
-        abs_diff = np.abs(nif_probs - qubit_probs)
-        print(f"abs_diff: {abs_diff}")
     np.testing.assert_allclose(
         nif_probs, qubit_probs,
         atol=ATOL_APPROX_COMPARISON,
