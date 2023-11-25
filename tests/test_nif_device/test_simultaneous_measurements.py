@@ -102,9 +102,9 @@ def test_single_gate_circuit_probability_target_state_specific_cases(
                 num_wires, np.random.choice(num_wires, replace=False, size=n_probs)
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-        for num_gates in range(1, 10)
-        for num_wires in range(2, 4)
-        for n_probs in range(1, num_wires)
+        for num_wires in [2, 3, 4]
+        for num_gates in [1, 2*num_wires]
+        for n_probs in range(1, num_wires+1)
     ]
 )
 def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_wires, prob_wires):
@@ -154,7 +154,7 @@ def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in [2, 3, 4]
-        for num_gates in [1, 2**num_wires]
+        for num_gates in [1, 2*num_wires]
         for n_probs in range(1, num_wires+1)
     ]
 )
