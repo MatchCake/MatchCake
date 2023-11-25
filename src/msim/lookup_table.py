@@ -1,3 +1,4 @@
+import warnings
 from typing import Optional, Tuple
 
 import numpy as np
@@ -162,12 +163,43 @@ class NonInteractingFermionicLookupTable:
         :return: The observable of shape (2(h + k), 2(h + k)) where h is the hamming weight of the state.
         :rtype: np.ndarray
         """
+        warnings.warn("This method is deprecated. Use get_observable_of_target_state instead.", DeprecationWarning)
         key = (k, utils.state_to_binary_state(system_state))
         if key not in self._observables:
             self._observables[key] = self._compute_observable(k, system_state)
         return self._observables[key]
+
+    def get_observable_of_target_state(
+            self,
+            system_state: np.ndarray,
+            target_binary_state: Optional[np.ndarray] = None,
+            indexes_of_target_state: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        r"""
+        Get the observable corresponding to target_binary_state and the system_state.
+
+        :param system_state: State of the system
+        :type system_state: np.ndarray
+        :param target_binary_state: Target state of the system
+        :type target_binary_state: Optional[np.ndarray]
+        :param indexes_of_target_state: Indexes of the target state of the system
+        :type indexes_of_target_state: Optional[np.ndarray]
+        :return: The observable of shape (2(h + k), 2(h + k)) where h is the hamming weight of the system state.
+        :rtype: np.ndarray
+        """
+        key = (
+            utils.state_to_binary_state(system_state),
+            ''.join([str(i) for i in target_binary_state]),
+            ','.join([str(i) for i in indexes_of_target_state]),
+        )
+        if key not in self._observables:
+            self._observables[key] = self.compute_observable_of_target_state(
+                system_state, target_binary_state, indexes_of_target_state
+            )
+        return self._observables[key]
     
     def _compute_observable(self, k: int, system_state: np.ndarray) -> np.ndarray:
+        warnings.warn("This method is deprecated. Use compute_observable_of_target_state instead.", DeprecationWarning)
         ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(system_state)
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
 
