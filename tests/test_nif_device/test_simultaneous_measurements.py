@@ -98,18 +98,13 @@ def test_single_gate_circuit_probability_target_state_specific_cases(
     "params_list,n_wires,prob_wires",
     [
         (
-                [mps.MatchgatePolarParams.random().to_numpy() for _ in range(10)],
-                10, np.random.choice(10, replace=False, size=10),
+                [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)],
+                num_wires, np.random.choice(num_wires, replace=False, size=n_probs)
         )
-        # (
-        #         [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)],
-        #         num_wires,
-        #         np.random.choice(num_wires, replace=False, size=n_probs)
-        # )
-        # # for _ in range(N_RANDOM_TESTS_PER_CASE)
-        # for num_gates in range(1, 10)
-        # for num_wires in range(2, 10)
-        # for n_probs in range(1, num_wires)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for num_gates in range(1, 10)
+        for num_wires in range(2, 4)
+        for n_probs in range(1, num_wires)
     ]
 )
 def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_wires, prob_wires):
@@ -149,3 +144,58 @@ def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_
         rtol=RTOL_APPROX_COMPARISON,
     )
 
+@pytest.mark.parametrize(
+    "params_list,n_wires,prob_wires",
+    [
+        (
+                [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)],
+                num_wires, np.random.choice(num_wires, replace=False, size=n_probs)
+        )
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for num_gates in range(1, 10)
+        for num_wires in range(2, 9)
+        for n_probs in range(1, num_wires)
+    ]
+)
+def test_multiples_matchgate_probs_with_qbit_device_lookup_table(params_list, n_wires, prob_wires):
+    nif_device, qubit_device = devices_init(wires=n_wires, prob_strategy="lookup_table")
+
+    nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
+    qubit_qnode = qml.QNode(specific_matchgate_circuit, qubit_device)
+
+    all_wires = np.arange(n_wires)
+    initial_binary_state = np.zeros(n_wires, dtype=int)
+    wire0_vector = np.random.choice(all_wires[:-1], size=len(params_list))
+    wire1_vector = wire0_vector + 1
+    params_wires_list = [
+        (params, [wire0, wire1])
+        for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
+    ]
+    qubit_state = qubit_qnode(
+        params_wires_list,
+        initial_binary_state,
+        all_wires=qubit_device.wires,
+        in_param_type=mps.MatchgatePolarParams,
+        out_op="state",
+    )
+    qubit_probs = utils.get_probabilities_from_state(qubit_state, wires=prob_wires)
+    nif_probs = nif_qnode(
+        params_wires_list,
+        initial_binary_state,
+        all_wires=nif_device.wires,
+        in_param_type=mps.MatchgatePolarParams,
+        out_op="probs",
+        out_wires=prob_wires,
+    )
+    if not np.allclose(
+        nif_probs, qubit_probs,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    ):
+        abs_diff = np.abs(nif_probs - qubit_probs)
+        print(f"abs_diff: {abs_diff}")
+    np.testing.assert_allclose(
+        nif_probs, qubit_probs,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    )
