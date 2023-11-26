@@ -239,7 +239,8 @@ class NonInteractingFermionicLookupTable:
 
         unmeasured_cls_indexes = [2 for _ in range(len(ket_majorana_indexes))]
         measure_cls_indexes = np.array([
-            [0, 1] if b == 0 else [1, 0]
+            # [0, 1] if b == 0 else [1, 0]
+            [b, 1 - b]
             for b in target_binary_state
         ]).flatten().tolist()
         lt_indexes = unmeasured_cls_indexes + measure_cls_indexes + unmeasured_cls_indexes

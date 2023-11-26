@@ -49,6 +49,16 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self._transition_matrix = None
         self._lookup_table = None
 
+        self.majorana_getter = kwargs.get("majorana_getter", utils.MajoranaGetter(self.num_wires, maxsize=256))
+        assert isinstance(self.majorana_getter, utils.MajoranaGetter), (
+            f"The majorana_getter must be an instance of {utils.MajoranaGetter}. "
+            f"Got {type(self.majorana_getter)} instead."
+        )
+        assert self.majorana_getter.n == self.num_wires, (
+            f"The majorana_getter must be initialized with {self.num_wires} wires. "
+            f"Got {self.majorana_getter.n} instead."
+        )
+
     @property
     def state(self):
         """
@@ -379,29 +389,50 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             )
 
         ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(self.state)
-        ket_majorana_list = [utils.get_majorana(i, self.num_wires) for i in ket_majorana_indexes]
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
-        bra_majorana_list = [utils.get_majorana(i, self.num_wires) for i in bra_majorana_indexes]
         zero_state = self._create_basis_state(0).flatten()
-        target_prob = 0.0
+
+        bra = utils.recursive_2in_operator(
+            qml.math.dot, [zero_state.T.conj(), *[self.majorana_getter(i) for i in bra_majorana_indexes]]
+        )
+        ket = utils.recursive_2in_operator(
+            qml.math.dot, [*[self.majorana_getter(i) for i in ket_majorana_indexes], zero_state]
+        )
+
         # iterator = itertools.product(*[range(2*self.num_wires) for _ in range(2 * len(target_binary_state))])
         np_iterator = np.ndindex(tuple([2*self.num_wires for _ in range(2 * len(target_binary_state))]))
-        majorana_dict = {i: utils.get_majorana(i, self.num_wires) for i in range(2*self.num_wires)}
-        for m_n_vector in np_iterator:
-            c_m_n_list = [majorana_dict.get(i) for i in m_n_vector]
-            inner_op_list = [
-                c_m_n_list[i] @ c_m_n_list[i+1]
-                if target_binary_state[i//2] == 0
-                else c_m_n_list[i+1] @ c_m_n_list[i]
-                for i in range(0, len(c_m_n_list), 2)
-            ]
-            inner_op_list = [zero_state.T.conj(), *bra_majorana_list, *inner_op_list, *ket_majorana_list, zero_state]
-            inner_product = utils.recursive_2in_operator(qml.math.dot, inner_op_list)
-            t_wire_m = qml.math.prod(self.transition_matrix[wires, m_n_vector[::2]])
-            t_wire_n = qml.math.prod(pnp.conjugate(self.transition_matrix[wires, m_n_vector[1::2]]))
-            product_coeff = t_wire_m * t_wire_n
-            target_prob += product_coeff * inner_product
+        target_prob = sum(
+            (
+                self._compute_partial_prob_of_m_n_vector(
+                    m_n_vector=m_n_vector,
+                    target_binary_state=target_binary_state,
+                    wires=wires,
+                    bra=bra,
+                    ket=ket,
+                )
+                for m_n_vector in np_iterator
+            ),
+            start=0.0,
+        )
         return pnp.real(target_prob)
+
+    def _compute_partial_prob_of_m_n_vector(
+            self,
+            m_n_vector,
+            target_binary_state,
+            wires,
+            bra,
+            ket,
+    ):
+        inner_op_list = [
+            self.majorana_getter((1 - b) * i + b * j, (1 - b) * j + b * i)
+            for i, j, b in zip(m_n_vector[::2], m_n_vector[1::2], target_binary_state)
+        ]
+        inner_product = utils.recursive_2in_operator(qml.math.dot, [bra, *inner_op_list, ket])
+        t_wire_m = qml.math.prod(self.transition_matrix[wires, m_n_vector[::2]])
+        t_wire_n = qml.math.prod(pnp.conjugate(self.transition_matrix[wires, m_n_vector[1::2]]))
+        product_coeff = t_wire_m * t_wire_n
+        return product_coeff * inner_product
 
     def reset(self):
         """Reset the device"""
