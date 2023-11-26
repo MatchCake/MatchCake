@@ -26,7 +26,18 @@ def recursive_kron(__inputs: List[Any], lib=np) -> Any:
     return recursive_2in_operator(lib.kron, __inputs)
 
     
-def recursive_2in_operator(operator: Callable, __inputs: List[Any]):
+def recursive_2in_operator(operator: Callable[[Any, Any], Any], __inputs: List[Any]) -> Any:
+    r"""
+    Apply an operator recursively to a list of inputs. The operator must accept two inputs. The inputs are applied
+    from left to right.
+
+    :param operator: Operator to apply
+    :type operator: Callable[[Any, Any], Any]
+    :param __inputs: Inputs to apply the operator to
+    :type __inputs: List[Any]
+    :return: Result of the operator applied to the inputs
+    :rtype: Any
+    """
     if len(__inputs) == 1:
         return __inputs[0]
     elif len(__inputs) == 2:
