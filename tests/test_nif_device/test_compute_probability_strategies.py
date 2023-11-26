@@ -99,7 +99,6 @@ def test_single_gate_circuit_analytic_probability_explicit_sum(initial_binary_st
                 np.random.randint(0, 2, size=n),
         )
         for n in [2, ]
-        # for n in range(2, 10)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
