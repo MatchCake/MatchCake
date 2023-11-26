@@ -6,7 +6,9 @@ import pennylane as qml
 from pennylane.wires import Wires
 
 from . import (
+    constants,
     majorana,
+    operators,
 )
 from .constants import (
     PAULI_I,
