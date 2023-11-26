@@ -386,8 +386,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         target_prob = 0.0
         # iterator = itertools.product(*[range(2*self.num_wires) for _ in range(2 * len(target_binary_state))])
         np_iterator = np.ndindex(tuple([2*self.num_wires for _ in range(2 * len(target_binary_state))]))
+        majorana_dict = {i: utils.get_majorana(i, self.num_wires) for i in range(2*self.num_wires)}
         for m_n_vector in np_iterator:
-            c_m_n_list = [utils.get_majorana(i, self.num_wires) for i in m_n_vector]
+            c_m_n_list = [majorana_dict.get(i) for i in m_n_vector]
             inner_op_list = [
                 c_m_n_list[i] @ c_m_n_list[i+1]
                 if target_binary_state[i//2] == 0
