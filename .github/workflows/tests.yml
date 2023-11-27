@@ -40,11 +40,6 @@ jobs:
         python run_pytests.py tests --N_RANDOM_TESTS_PER_CASE=10 --run_slow=False
         coverage-lcov
 
-    - name: Coveralls github action
-      uses: coverallsapp/github-action@v1.1.2
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-
   Run-tests-on-Windows:
     name: Run tests on Windows-latest
     runs-on: windows-latest
