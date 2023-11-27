@@ -4,6 +4,7 @@ numpy==1.23.5
 PennyLane==0.32.0
 pfapack==0.3.1
 pytest==7.4.2
+pytest_cov==4.1.0
 pytest_json_report==1.5.0
 pythonbasictools==0.0.1a10
 scipy==1.11.4
