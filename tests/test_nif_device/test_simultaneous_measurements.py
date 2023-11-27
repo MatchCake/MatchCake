@@ -7,6 +7,7 @@ from msim import matchgate_parameter_sets as mps
 from msim import utils
 from . import devices_init
 from .test_specific_circuit import specific_matchgate_circuit
+from .. import get_slow_test_mark
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
     TEST_SEED,
@@ -94,6 +95,7 @@ def test_single_gate_circuit_probability_target_state_specific_cases(
     )
 
 
+@get_slow_test_mark()
 @pytest.mark.slow
 @pytest.mark.parametrize(
     "params_list,n_wires,prob_wires",
