@@ -8,6 +8,8 @@
 
 ![Tests Workflow](https://github.com/JeremieGince/FermionicSimulation/actions/workflows/tests.yml/badge.svg)
 ![Dist Workflow](https://github.com/JeremieGince/FermionicSimulation/actions/workflows/build_dist.yml/badge.svg)
+![Code coverage](https://raw.githubusercontent.com/JeremieGince/FermionicSimulation/coverage-badge/coverage.svg?raw=true)
+
 
 
 

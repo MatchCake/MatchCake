@@ -37,6 +37,11 @@ jobs:
     - name: Test with pytest
       run: |
         python run_pytests.py tests --N_RANDOM_TESTS_PER_CASE=10 --run_slow=False
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: coverage.xml
 
   Run-tests-on-Windows:
     name: Run tests on Windows-latest
@@ -62,4 +67,4 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        python run_pytests.py tests --N_RANDOM_TESTS_PER_CASE=10 
+        python run_pytests.py tests --N_RANDOM_TESTS_PER_CASE=10 --run_slow=False
