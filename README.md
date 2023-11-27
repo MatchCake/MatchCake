@@ -8,14 +8,16 @@
 
 ![Tests Workflow](https://github.com/JeremieGince/FermionicSimulation/actions/workflows/tests.yml/badge.svg)
 ![Dist Workflow](https://github.com/JeremieGince/FermionicSimulation/actions/workflows/build_dist.yml/badge.svg)
+![Code coverage](https://raw.githubusercontent.com/JeremieGince/FermionicSimulation/coverage-badge/coverage.svg?raw=true)
+
 
 
 
 # Installation
 
-| Method     | Commands                                                                                                                                                                       |
-|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **PyPi**   | `pip install neurotorch`                                                                                                                                                       |
+| Method     | Commands                                                                                                                                                                                  |
+|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **PyPi**   | `pip install msim`                                                                                                                                                                        |
 | **source** | `pip install git+https://github.com/JeremieGince/FermionicSimulation`                                                                                                                     |
 | **wheel**  | 1.Download the .whl file [here](https://github.com/JeremieGince/FermionicSimulation/tree/main/dist);<br> 2. Copy the path of this file on your computer; <br> 3. `pip install [path].whl` |
 

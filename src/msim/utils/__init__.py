@@ -1,48 +1,38 @@
 import importlib
-from typing import Any, List, Callable, Union
+from typing import List, Union
 
 import numpy as np
 import pennylane as qml
 from pennylane.wires import Wires
 
-PAULI_X = np.array([
-    [0, 1],
-    [1, 0]
-])
-PAULI_Y = np.array([
-    [0, -1j],
-    [1j, 0]
-])
-PAULI_Z = np.array([
-    [1, 0],
-    [0, -1]
-])
-PAULI_I = np.eye(2)
-
-
-def recursive_kron(__inputs: List[Any], lib=np) -> Any:
-    if isinstance(lib, str):
-        lib = importlib.import_module(lib)
-    return recursive_2in_operator(lib.kron, __inputs)
-
-    
-def recursive_2in_operator(operator: Callable, __inputs: List[Any]):
-    if len(__inputs) == 1:
-        return __inputs[0]
-    elif len(__inputs) == 2:
-        return operator(__inputs[0], __inputs[1])
-    elif len(__inputs) > 2:
-        rec = recursive_2in_operator(operator, __inputs[:-1])
-        return operator(rec, __inputs[-1])
-    else:
-        raise ValueError("Invalid shape for input array")
+from . import (
+    constants,
+    majorana,
+    operators,
+)
+from .constants import (
+    PAULI_I,
+    PAULI_X,
+    PAULI_Y,
+    PAULI_Z,
+)
+from .majorana import (
+    get_majorana_pauli_list,
+    get_majorana_pauli_string,
+    get_majorana,
+    MajoranaGetter,
+)
+from .operators import (
+    recursive_kron,
+    recursive_2in_operator,
+)
 
 
 def binary_string_to_vector(binary_string: str, encoding: str = "ascii") -> np.ndarray:
     r"""
     Convert a binary string to a vector. The binary string is a string of 0s and 1s. The vector is a vector of
     integers.
-    
+
     :param binary_string: Binary string
     :type binary_string: str
     :param encoding: Encoding of the binary string. Default is ascii.
@@ -66,7 +56,7 @@ def binary_state_to_state(binary_state: Union[np.ndarray, List[Union[int, bool]]
         binary_state = binary_string_to_vector(binary_state)
     elif isinstance(binary_state, list):
         binary_state = np.asarray(binary_state, dtype=int).flatten()
-    states = [np.asarray([1-s, s]) for s in binary_state]
+    states = [np.asarray([1 - s, s]) for s in binary_state]
     state = recursive_kron(states)
     return state
 
@@ -90,78 +80,6 @@ def state_to_binary_state(state: np.ndarray) -> str:
     return binary_state
 
 
-def get_majorana_pauli_list(i: int, n: int) -> List[np.ndarray]:
-    r"""
-
-    Get the list of Pauli matrices for the computation of the Majorana operator :math:`c_i` defined as
-
-    .. math::
-        c_{2k+1} = Z^{\otimes k} \otimes X \otimes I^{\otimes n-k-1}
-
-    for odd :math:`i` and
-
-    .. math::
-        c_{2k} = Z^{\otimes k} \otimes Y \otimes I^{\otimes n-k-1}
-
-    for even :math:`i`, where :math:`Z` is the Pauli Z matrix, :math:`I` is the identity matrix, :math:`X`
-    is the Pauli X matrix, :math:`\otimes` is the Kronecker product, :math:`k` is the index of the Majorana
-    operator and :math:`n` is the number of particles.
-
-    :param i: Index of the Majorana operator
-    :type i: int
-    :param n: Number of particles
-    :type n: int
-    :return: List of Pauli matrices
-    :rtype: List[np.ndarray]
-    """
-    assert 0 <= i < 2 * n
-    k = int(i / 2)  # 0, ..., n-1
-    if (i + 1) % 2 == 0:
-        gate = PAULI_Y
-    else:
-        gate = PAULI_X
-    # return [PAULI_Z] * k + [gate] + [PAULI_I] * (n - k - 1)
-    return [PAULI_Z for _ in range(k)] + [gate] + [PAULI_I for _ in range(n - k - 1)]
-
-
-def get_majorana_pauli_string(i: int, n: int, join_char='⊗') -> str:
-    assert 0 <= i < 2 * n
-    k = int(i / 2)  # 0, ..., n-1
-    if (i + 1) % 2 == 0:
-        gate = "Y"
-    else:
-        gate = "X"
-    return join_char.join(["Z"] * k + [gate] + ["I"] * (n - k - 1))
-
-
-def get_majorana(i: int, n: int) -> np.ndarray:
-    r"""
-    Get the Majorana matrix defined as
-
-    .. math::
-        c_{2k+1} = Z^{\otimes k} \otimes X \otimes I^{\otimes n-k-1}
-
-    for odd :math:`i` and
-
-    .. math::
-        c_{2k} = Z^{\otimes k} \otimes Y \otimes I^{\otimes n-k-1}
-
-    for even :math:`i`, where :math:`Z` is the Pauli Z matrix, :math:`I` is the identity matrix, :math:`X`
-    is the Pauli X matrix, :math:`\otimes` is the Kronecker product, :math:`k` is the index of the Majorana
-    operator and :math:`n` is the number of particles.
-
-    :Note: The index :math:`i` starts from 0.
-
-    :param i: Index of the Majorana operator
-    :type i: int
-    :param n: Number of particles
-    :type n: int
-    :return: Majorana matrix
-    :rtype: np.ndarray
-    """
-    return recursive_kron(get_majorana_pauli_list(i, n))
-
-
 def get_non_interacting_fermionic_hamiltonian_from_coeffs(
         hamiltonian_coefficients_matrix,
         energy_offset=0.0,
@@ -179,7 +97,7 @@ def get_non_interacting_fermionic_hamiltonian_from_coeffs(
 
     TODO: optimize the method by changing the sum for a matrix multiplication as :math:`H = i C^T h C` where :math:`C`
         is the matrix of Majorana operators.
-        
+
     TODO: use multiprocessing to parallelize the computation of the matrix elements.
 
     :param hamiltonian_coefficients_matrix: Coefficients of the Majorana operators. Must be a square matrix of shape
@@ -192,10 +110,10 @@ def get_non_interacting_fermionic_hamiltonian_from_coeffs(
     """
     backend = load_backend_lib(lib)
     n_particles = int(len(hamiltonian_coefficients_matrix) / 2)
-    hamiltonian = energy_offset * backend.eye(2**n_particles, dtype=complex)
+    hamiltonian = energy_offset * backend.eye(2 ** n_particles, dtype=complex)
 
-    for mu in range(2*n_particles):
-        for nu in range(2*n_particles):
+    for mu in range(2 * n_particles):
+        for nu in range(2 * n_particles):
             c_mu = get_majorana(mu, n_particles)
             c_nu = get_majorana(nu, n_particles)
             hamiltonian += -1j * hamiltonian_coefficients_matrix[mu, nu] * (c_mu @ c_nu)
@@ -233,7 +151,7 @@ def skew_antisymmetric_vector_to_matrix(__vector) -> np.ndarray:
     matrix = np.zeros((n, n))
     current_idx = 0
     for i in range(n):
-        for j in range(i+1, n):
+        for j in range(i + 1, n):
             matrix[i, j] = vector_1d[current_idx]
             current_idx += 1
     matrix -= matrix.T
@@ -331,16 +249,16 @@ def decompose_binary_state_into_majorana_indexes(
 
 def make_transition_matrix_from_action_matrix(action_matrix):
     r"""
-    
+
     Compute the transition matrix from the action matrix. The transition matrix is defined as
     :math:`\mathbf{T}` such that
-    
+
     .. math::
         \mathbf{T}_{i,\nu} = \frac{1}{2} \left( \mathbf{A}^T_{2i-1,\nu} + i \mathbf{A}^T_{2i,\nu} \right)
-    
+
     where :math:`\mathbf{A}` is the action matrix of shape (2n x 2n), :math:`\mathbf{T}` is the transition matrix
     of shape (n x 2n), :math:`i` goes from 1 to :math:`n` and :math:`\nu` goes from 1 to :math:`2n`.
-    
+
     :param action_matrix:
     :return:
     """
@@ -353,7 +271,7 @@ def make_transition_matrix_from_action_matrix(action_matrix):
 def get_block_diagonal_matrix(n: int) -> np.ndarray:
     r"""
     Construct the special block diagonal matrix of shape (2n x 2n) defined as
-    
+
     .. math::
         \mathbf{B} =
         \oplus_{j=1}^{n}
@@ -361,10 +279,10 @@ def get_block_diagonal_matrix(n: int) -> np.ndarray:
             1 & i \\
             -i & 1
         \end{pmatrix}
-    
+
     where :math:`\oplus` is the direct sum operator, :math:`n` is the number of particles and :math:`i` is the
     imaginary unit.
-    
+
     :param n: Number of particles
     :type n: int
     :return: Block diagonal matrix of shape (2n x 2n)
@@ -377,13 +295,13 @@ def get_block_diagonal_matrix(n: int) -> np.ndarray:
 
 def get_hamming_weight(state: np.ndarray) -> int:
     r"""
-    
+
     Compute the Hamming weight of a state. The Hamming weight is defined as the number of non-zero elements in the
     state.
-    
+
     The binary state is a one hot vector of shape (2^n,) where n is the number of particles.
     The Hamming weight is the number of states in the state [0, 1].
-    
+
     :param state: State of the system
     :type state: np.ndarray
     :return: Hamming weight of the state
@@ -404,13 +322,13 @@ def get_4x4_non_interacting_fermionic_hamiltonian_from_params(params):
     :return: Non-interacting fermionic Hamiltonian
     :rtype: np.ndarray
     """
-    from .matchgate_parameter_sets import MatchgateHamiltonianCoefficientsParams
+    from ..matchgate_parameter_sets import MatchgateHamiltonianCoefficientsParams
     params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params)
     return np.array([
-        [-2j * (params.h0 + params.h5), 0, 0, 2*(params.h4 - params.h1) + 2j*(params.h2 + params.h3)],
-        [0, 2j * (params.h0 - params.h5), 2j * (params.h3 - params.h2) - 2*(params.h1 + params.h4), 0],
-        [0, 2 * (params.h1 + params.h4) + 2j*(params.h3 - params.h2), 2j * (params.h5 - params.h0), 0],
-        [2*(params.h1 - params.h4) + 2j*(params.h2 + params.h3), 0, 0, -2j * (params.h0 + params.h5)],
+        [-2j * (params.h0 + params.h5), 0, 0, 2 * (params.h4 - params.h1) + 2j * (params.h2 + params.h3)],
+        [0, 2j * (params.h0 - params.h5), 2j * (params.h3 - params.h2) - 2 * (params.h1 + params.h4), 0],
+        [0, 2 * (params.h1 + params.h4) + 2j * (params.h3 - params.h2), 2j * (params.h5 - params.h0), 0],
+        [2 * (params.h1 - params.h4) + 2j * (params.h2 + params.h3), 0, 0, -2j * (params.h0 + params.h5)],
     ], dtype=complex)
 
 
@@ -470,14 +388,14 @@ def camel_case_to_spaced_camel_case(__string: str) -> str:
 
 def get_probabilities_from_state(state: np.ndarray, wires=None) -> np.ndarray:
     r"""
-    
+
     Compute the probabilities from a state. The probabilities are defined as
-    
+
     .. math::
         p_i = |x_i|^2
-    
+
     where :math:`|x_i>` is the state.
-    
+
     :param state: State of the system
     :type state: np.ndarray
     :param wires: Wires to consider
@@ -496,3 +414,116 @@ def get_probabilities_from_state(state: np.ndarray, wires=None) -> np.ndarray:
         wires = all_wires.subset(wires)
     meas = qml.measurements.ProbabilityMP(wires=wires)
     return meas.process_state(state=state, wire_order=all_wires)
+
+
+def pfaffian_ltl(__matrix, overwrite_input=False) -> Union[float, complex]:
+    r"""
+    Compute the Pfaffian of a real or complex skew-symmetric
+    matrix A (A=-A^T). If overwrite_a=True, the matrix A
+    is overwritten in the process. This function uses
+    the Parlett-Reid algorithm.
+
+    This code is adapted of the function `pfaffian_LTL`
+    from https://github.com/basnijholt/pfapack/blob/master/pfapack/pfaffian.py.
+
+    :param __matrix: Matrix to compute the Pfaffian of
+    :type __matrix: np.ndarray
+    :param overwrite_input: Whether to overwrite the input matrix
+    :type overwrite_input: bool
+    :return: Pfaffian of the matrix
+    :rtype: Union[float, complex]
+    """
+    if overwrite_input:
+        matrix = __matrix
+    else:
+        matrix = __matrix.copy()
+    # Check if matrix is square
+    assert matrix.shape[0] == matrix.shape[1] > 0
+    # Check if it's skew-symmetric
+    assert np.abs((matrix + matrix.T).max()) < 1e-14
+
+    n, m = matrix.shape
+    # Quick return if possible
+    if n % 2 == 1:
+        return 0.0
+    matrix = matrix.astype(np.complex128)
+    pfaffian_val = 1.0
+
+    for k in range(0, n - 1, 2):
+        # First, find the largest entry in A[k+1:,k] and
+        # permute it to A[k+1,k]
+        kp = k + 1 + np.abs(matrix[k + 1:, k]).argmax()
+
+        # Check if we need to pivot
+        if kp != k + 1:
+            # interchange rows k+1 and kp
+            temp = matrix[k + 1, k:].copy()
+            matrix[k + 1, k:] = matrix[kp, k:]
+            matrix[kp, k:] = temp
+
+            # Then interchange columns k+1 and kp
+            temp = matrix[k:, k + 1].copy()
+            matrix[k:, k + 1] = matrix[k:, kp]
+            matrix[k:, kp] = temp
+
+            # every interchange corresponds to a "-" in det(P)
+            pfaffian_val *= -1
+
+        if np.isclose(matrix[k + 1, k], 0.0):
+            # if we encounter a zero on the super/subdiagonal, the Pfaffian is 0
+            return 0.0
+        else:
+            # Now form the Gauss vector
+            tau = matrix[k, k + 2:].copy()
+            tau = np.divide(
+                tau, matrix[k, k + 1],
+                out=np.zeros_like(tau),
+                where=not np.isclose(matrix[k, k + 1], 0.0)
+            )
+            pfaffian_val *= matrix[k, k + 1]
+
+            if k + 2 < n:
+                # Update the matrix block A(k+2:,k+2)
+                matrix[k + 2:, k + 2:] = matrix[k + 2:, k + 2:] + np.outer(
+                    tau, matrix[k + 2:, k + 1]
+                )
+                matrix[k + 2:, k + 2:] = matrix[k + 2:, k + 2:] - np.outer(
+                    matrix[k + 2:, k + 1], tau
+                )
+
+    return pfaffian_val
+
+
+def pfaffian(__matrix, overwrite_input=False, method="P") -> Union[float, complex]:
+    """pfaffian(A, overwrite_a=False, method='P')
+
+    Compute the Pfaffian of a real or complex skew-symmetric
+    matrix A (A=-A^T). If overwrite_a=True, the matrix A
+    is overwritten in the process. This function uses
+    either the Parlett-Reid algorithm (method='P', default),
+    or the Householder tridiagonalization (method='H').
+
+    This code is adapted of the function `pfaffian`
+    from https://github.com/basnijholt/pfapack/blob/master/pfapack/pfaffian.py.
+
+    :param __matrix: Matrix to compute the Pfaffian of
+    :type __matrix: np.ndarray
+    :param overwrite_input: Whether to overwrite the input matrix
+    :type overwrite_input: bool
+    :param method: Method to use. Either 'P' or 'H'.
+    :type method: str
+    :return: Pfaffian of the matrix
+    :rtype: Union[float, complex]
+    """
+    # Check if matrix is square
+    assert __matrix.shape[0] == __matrix.shape[1] > 0
+    # Check if it's skew-symmetric
+    assert abs((__matrix + __matrix.T).max()) < 1e-14
+
+    if method == "P":
+        return pfaffian_ltl(__matrix, overwrite_input)
+    elif method == "H":
+        from pfapack.pfaffian import pfaffian_householder
+        return pfaffian_householder(__matrix, overwrite_input)
+    else:
+        raise ValueError(f"Invalid method. Got {method}, must be 'P' or 'H'.")

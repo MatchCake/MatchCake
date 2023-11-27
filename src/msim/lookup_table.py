@@ -1,3 +1,4 @@
+import warnings
 from typing import Optional, Tuple
 
 import numpy as np
@@ -162,12 +163,43 @@ class NonInteractingFermionicLookupTable:
         :return: The observable of shape (2(h + k), 2(h + k)) where h is the hamming weight of the state.
         :rtype: np.ndarray
         """
+        warnings.warn("This method is deprecated. Use get_observable_of_target_state instead.", DeprecationWarning)
         key = (k, utils.state_to_binary_state(system_state))
         if key not in self._observables:
             self._observables[key] = self._compute_observable(k, system_state)
         return self._observables[key]
+
+    def get_observable_of_target_state(
+            self,
+            system_state: np.ndarray,
+            target_binary_state: Optional[np.ndarray] = None,
+            indexes_of_target_state: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        r"""
+        Get the observable corresponding to target_binary_state and the system_state.
+
+        :param system_state: State of the system
+        :type system_state: np.ndarray
+        :param target_binary_state: Target state of the system
+        :type target_binary_state: Optional[np.ndarray]
+        :param indexes_of_target_state: Indexes of the target state of the system
+        :type indexes_of_target_state: Optional[np.ndarray]
+        :return: The observable of shape (2(h + k), 2(h + k)) where h is the hamming weight of the system state.
+        :rtype: np.ndarray
+        """
+        key = (
+            utils.state_to_binary_state(system_state),
+            ''.join([str(i) for i in target_binary_state]),
+            ','.join([str(i) for i in indexes_of_target_state]),
+        )
+        if key not in self._observables:
+            self._observables[key] = self.compute_observable_of_target_state(
+                system_state, target_binary_state, indexes_of_target_state
+            )
+        return self._observables[key]
     
     def _compute_observable(self, k: int, system_state: np.ndarray) -> np.ndarray:
+        warnings.warn("This method is deprecated. Use compute_observable_of_target_state instead.", DeprecationWarning)
         ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(system_state)
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
 
@@ -177,6 +209,39 @@ class NonInteractingFermionicLookupTable:
 
         # measure_indexes = np.array([[i, i] for i in range(k+1)]).flatten().tolist()
         measure_indexes = [k, k]
+        majorana_indexes = list(bra_majorana_indexes) + measure_indexes + list(ket_majorana_indexes)
+
+        obs_size = len(majorana_indexes)
+        obs = np.zeros((obs_size, obs_size), dtype=complex)
+        for (i, j) in zip(*np.triu_indices(obs_size, k=1)):
+            i_k, j_k = majorana_indexes[i], majorana_indexes[j]
+            row, col = lt_indexes[i], lt_indexes[j]
+            obs[i, j] = self[row, col][i_k, j_k]
+        obs = obs - obs.T
+        return obs
+    
+    def compute_observable_of_target_state(
+            self,
+            system_state: np.ndarray,
+            target_binary_state: Optional[np.ndarray] = None,
+            indexes_of_target_state: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        if target_binary_state is None and indexes_of_target_state is None:
+            target_binary_state = np.array([1, ])
+            indexes_of_target_state = np.array([0, ])
+        elif target_binary_state is not None and indexes_of_target_state is None:
+            indexes_of_target_state = np.arange(len(target_binary_state), dtype=int)
+        elif target_binary_state is None and indexes_of_target_state is not None:
+            target_binary_state = np.ones(len(indexes_of_target_state), dtype=int)
+
+        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(system_state)
+        bra_majorana_indexes = list(reversed(ket_majorana_indexes))
+
+        unmeasured_cls_indexes = [2 for _ in range(len(ket_majorana_indexes))]
+        measure_cls_indexes = np.array([[b, 1 - b] for b in target_binary_state]).flatten().tolist()
+        lt_indexes = unmeasured_cls_indexes + measure_cls_indexes + unmeasured_cls_indexes
+
+        measure_indexes = np.array([[i, i] for i in indexes_of_target_state]).flatten().tolist()
         majorana_indexes = list(bra_majorana_indexes) + measure_indexes + list(ket_majorana_indexes)
 
         obs_size = len(majorana_indexes)
