@@ -1,5 +1,5 @@
 import importlib
-from typing import Any
+from typing import Any, Optional
 import warnings
 
 import numpy as np
@@ -134,7 +134,8 @@ class MatchgateParams:
         return iter(self.to_numpy())
 
     @classmethod
-    def random(cls):
+    def random(cls, seed: Optional[int] = None):
+        rn_state = np.random.RandomState(seed)
         ranges = cls.RANGE_OF_PARAMS
         types = cls.PARAMS_TYPES
         if ranges is None:
@@ -142,8 +143,32 @@ class MatchgateParams:
         ranges = np.asarray(ranges, dtype=float)
         if types is None:
             types = [cls.DEFAULT_PARAMS_TYPE for _ in range(cls.N_PARAMS)]
-        vector = np.asarray([
-            np.random.uniform(*r, size=2).view(np.complex128).astype(dtype)
-            for r, dtype in zip(ranges, types)
-        ]).flatten()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            vector = np.asarray([
+                rn_state.uniform(*r, size=2).view(np.complex128).astype(dtype)
+                for r, dtype in zip(ranges, types)
+            ]).flatten()
         return cls.from_numpy(vector)
+
+    @classmethod
+    def random_numpy(cls, *args, **kwargs):
+        return cls.random(*args, **kwargs).to_numpy()
+
+    @classmethod
+    def random_batch_numpy(cls, batch_size: int = 1, seed: Optional[int] = None, **kwargs):
+        rn_state = np.random.RandomState(seed)
+        ranges = cls.RANGE_OF_PARAMS
+        types = cls.PARAMS_TYPES
+        if ranges is None:
+            ranges = [cls.DEFAULT_RANGE_OF_PARAMS for _ in range(cls.N_PARAMS)]
+        ranges = np.asarray(ranges, dtype=float)
+        if types is None:
+            types = [cls.DEFAULT_PARAMS_TYPE for _ in range(cls.N_PARAMS)]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            batch = np.asarray([
+                rn_state.uniform(*r, size=(batch_size, 2)).view(np.complex128).astype(dtype)
+                for r, dtype in zip(ranges, types)
+            ]).squeeze().transpose()
+        return batch

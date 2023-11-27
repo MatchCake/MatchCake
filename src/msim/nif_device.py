@@ -26,7 +26,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     prob_strategies = {"lookup_table", "explicit_sum"}
 
     def __init__(self, wires=2, **kwargs):
-        if isinstance(wires, int):
+        if np.isscalar(wires):
             assert wires > 1, "At least two wires are required for this device."
         else:
             assert len(wires) > 1, "At least two wires are required for this device."
@@ -104,7 +104,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 global_single_transition_particle_matrix = self.single_transition_particle_matrices[0]
             else:
                 global_single_transition_particle_matrix = utils.recursive_2in_operator(
-                    qml.math.dot, self.single_transition_particle_matrices
+                    qml.math.dot, self.single_transition_particle_matrices,
+                    recursive=False,
                 )
         else:
             global_single_transition_particle_matrix = pnp.eye(2*self.num_wires)
