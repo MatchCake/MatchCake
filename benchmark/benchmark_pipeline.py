@@ -182,6 +182,11 @@ class BenchmarkPipeline:
             gate_wires[:, 1] = gate_wires[:, 0] + 1
             self.wires_list.append(gate_wires)
         return self.wires_list
+    
+    # def _init_wires_list_block_wall_(self):
+    #     self.wires_list = []
+    #     for n_wires, n_gates in zip(self.n_wires, self.n_gates):
+    
 
     def _init_parameters_list_(self):
         r"""
@@ -319,9 +324,10 @@ class BenchmarkPipeline:
         methods_colors = ["tab:blue", "tab:orange", "tab:green"]
         xaxis = kwargs.get("xaxis", "n_wires")
         xaxis_label = kwargs.get("xaxis_name", f"Number of {xaxis} [-]")
+        std_coeff = kwargs.get("std_coeff", 1)
         for i, method in enumerate(self.methods):
             mean_time = np.mean(self.time_data[i], axis=0)
-            std_time = 10 * np.std(self.time_data[i], axis=0)
+            std_time = std_coeff * np.std(self.time_data[i], axis=0)
             if xaxis == "n_wires":
                 x = np.asarray(self.n_wires, dtype=int)
             elif xaxis == "n_gates":
@@ -334,13 +340,28 @@ class BenchmarkPipeline:
             axes.fill_between(
                 x, mean_time - std_time, mean_time + std_time, alpha=0.2, color=methods_colors[i]
             )
-        axes.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+        # axes.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+        n_ticks = len(axes.get_xticks())
+        pt_indexes = np.linspace(0, self.n_pts, num=n_ticks, dtype=int, endpoint=False)
+        if xaxis == "n_wires":
+            axes.set_xticks(self.n_wires[pt_indexes])
+            axes.set_xticklabels([f"{int(n_wires)}" for n_wires in axes.get_xticks()])
+        elif xaxis == "n_gates":
+            # axes.set_xticks(self.n_gates[pt_indexes])
+            # log2_n_gates = np.log2(np.asarray(axes.get_xticks()))
+            # axes.set_xticklabels([r"$2^{"+f"{n_gates}"+r"}$" for n_gates in log2_n_gates])
+            pass
+        elif xaxis == "n_probs":
+            # axes.set_xticks(self.n_probs)
+            axes.set_xticklabels([f"{int(n_probs)}" for n_probs in axes.get_xticks()])
+        else:
+            raise ValueError(f"Unknown xaxis: {xaxis}.")
         axes.set_xlabel(xaxis_label)
         axes.set_ylabel("Execution time [s]")
         axes.set_title(kwargs.get("title", ""))
-        std_patch = matplotlib.patches.Patch(color="gray", alpha=0.2, label="10 Std")
+        std_patch = matplotlib.patches.Patch(color="gray", alpha=0.2, label=f"{std_coeff} Std")
         lines, labels = axes.get_legend_handles_labels()
-        axes.legend(handles=lines + [std_patch], labels=labels + ["10 Std"])
+        axes.legend(handles=lines + [std_patch], labels=labels + [f"{std_coeff} Std"])
         if kwargs.get("tight_layout", False):
             fig.tight_layout()
         save_folder = kwargs.get("save_folder", None)
@@ -359,11 +380,13 @@ class BenchmarkPipeline:
             os.makedirs(os.path.dirname(self.save_path), exist_ok=True)
             np.savez(self.save_path, result_data=self.result_data, time_data=self.time_data)
 
-    def np_load(self):
+    def np_load(self) -> "BenchmarkPipeline":
         if self.save_path is not None:
             save_path = self.save_path
             if not save_path.endswith(".npz"):
                 save_path += ".npz"
+            if not os.path.exists(save_path):
+                return self
             data = np.load(save_path)
             assert np.allclose(self.result_data.shape, data["result_data"].shape), \
                 f"result_data shape mismatch: {self.result_data.shape} != {data['result_data'].shape}"
@@ -371,6 +394,7 @@ class BenchmarkPipeline:
                 f"time_data shape mismatch: {self.time_data.shape} != {data['time_data'].shape}"
             self.result_data = data["result_data"]
             self.time_data = data["time_data"]
+        return self
 
     def to_pickle(self):
         if self.save_path is not None:
