@@ -30,12 +30,14 @@ if __name__ == '__main__':
         becnhmark_pipeline.show(
             fig=fig, ax=axes[0, i],
             xaxis="n_wires",
+            std_coeff=3,
             # save_folder=os.path.join(folder, "figures"),
             show=False,
         )
         becnhmark_pipeline.show(
             fig=fig, ax=axes[1, i],
             xaxis="n_gates",
+            std_coeff=3,
             # save_folder=os.path.join(folder, "figures"),
             show=False,
         )
