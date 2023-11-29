@@ -63,13 +63,13 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         )
         
     @property
-    def sparse_state(self) -> sparse.bsr_matrix:
+    def sparse_state(self) -> sparse.bsr_array:
         if self._sparse_state is None:
             assert self._state is not None, "The state is not initialized."
-            return sparse.bsr_matrix(self.state)
+            return sparse.bsr_array(self.state)
         self._sparse_state.reshape((-1, 2**self.num_wires))
-        if self._sparse_state.shape[0] == 1:
-            self._sparse_state = self._sparse_state.reshape(-1)
+        # if self._sparse_state.shape[0] == 1:
+        #     self._sparse_state = self._sparse_state.reshape(-1)
         return self._sparse_state
 
     @property
@@ -157,7 +157,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         state = self._asarray(state, dtype=self.C_DTYPE)
         return self._reshape(state, [2] * self.num_wires)
     
-    def _create_basis_sparse_state(self, index) -> sparse.bsr_matrix:
+    def _create_basis_sparse_state(self, index) -> sparse.bsr_array:
         """
         Create a computational basis state over all wires.
 
@@ -168,7 +168,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         :Note: This function does not support broadcasted inputs yet.
         :Note: This function comes from the ``default.qubit`` device.
         """
-        sparse_state = sparse.bsr_matrix(([1], ([index], [0])), shape=(2**self.num_wires, 1), dtype=self.C_DTYPE)
+        sparse_state = sparse.bsr_array(([1], ([index], [0])), shape=(2**self.num_wires, 1), dtype=self.C_DTYPE)
         return sparse_state
 
     def _apply_state_vector(self, state, device_wires):
