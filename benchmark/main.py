@@ -20,6 +20,7 @@ def main():
             methods=[
                 "nif.lookup_table",
                 "default.qubit",
+                "nif.explicit_sum"
             ],
             save_path=f"{folder}/objects",
         )
@@ -54,17 +55,21 @@ def main():
 def main_nif():
     n_wires = 26
     n_gates = "quadratic"
-    folder = f"data/results_{n_wires}qubits_{n_gates}_gates_nif"
+    folder = f"data/results_{n_wires}qubits_{n_gates}_gates_nif_ceil"
     fig, axes = plt.subplots(1, 2, figsize=(20, 10))
     benchmark_pipeline = BenchmarkPipeline(
         n_variance_pts=10,
         n_wires=np.linspace(2, n_wires, num=max(n_wires//10, n_wires), dtype=int),
         n_gates=n_gates,
-        methods=["nif.lookup_table"],
+        methods=[
+            "nif.lookup_table",
+            "default.qubit",
+            "nif.explicit_sum"
+        ],
         save_path=f"{folder}/objects",
     )
     benchmark_pipeline.run(
-        nb_workers=0,
+        nb_workers=-2,
         # overwrite=True,
     )
     benchmark_pipeline.show(
