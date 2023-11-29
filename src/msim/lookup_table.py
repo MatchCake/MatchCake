@@ -1,9 +1,11 @@
 import warnings
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import pennylane as qml
 from pennylane import numpy as pnp
+from scipy import sparse
+
 from . import utils
 
 
@@ -171,7 +173,7 @@ class NonInteractingFermionicLookupTable:
 
     def get_observable_of_target_state(
             self,
-            system_state: np.ndarray,
+            system_state: Union[np.ndarray, sparse.sparray],
             target_binary_state: Optional[np.ndarray] = None,
             indexes_of_target_state: Optional[np.ndarray] = None,
     ) -> np.ndarray:
@@ -179,7 +181,7 @@ class NonInteractingFermionicLookupTable:
         Get the observable corresponding to target_binary_state and the system_state.
 
         :param system_state: State of the system
-        :type system_state: np.ndarray
+        :type system_state: Union[np.ndarray, sparse.sparray]
         :param target_binary_state: Target state of the system
         :type target_binary_state: Optional[np.ndarray]
         :param indexes_of_target_state: Indexes of the target state of the system
@@ -222,7 +224,7 @@ class NonInteractingFermionicLookupTable:
     
     def compute_observable_of_target_state(
             self,
-            system_state: np.ndarray,
+            system_state: Union[np.ndarray, sparse.sparray],
             target_binary_state: Optional[np.ndarray] = None,
             indexes_of_target_state: Optional[np.ndarray] = None,
     ) -> np.ndarray:

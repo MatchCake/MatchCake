@@ -254,7 +254,7 @@ class BenchmarkPipeline:
         return self.time_data[method_idx, variance_idx, pt_idx]
 
     def gen_all_data_points_(self, **kwargs):
-        iterable_of_args = list(np.ndindex(self.result_data.shape))
+        iterable_of_args = list(np.ndindex(self.time_data.shape))
         times = pbt.apply_func_multiprocess(
             self.gen_data_point_,
             iterable_of_args=iterable_of_args,
@@ -421,3 +421,10 @@ class BenchmarkPipeline:
         import pickle
         with open(pickle_path, "rb") as f:
             return pickle.load(f)
+        
+    @classmethod
+    def from_pickle_or_new(cls, pickle_path: str, **kwargs):
+        if os.path.exists(pickle_path):
+            return cls.from_pickle(pickle_path)
+        else:
+            return cls(**kwargs)

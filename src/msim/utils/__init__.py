@@ -2,6 +2,7 @@ import importlib
 from typing import List, Union
 
 import numpy as np
+from scipy import sparse
 import pennylane as qml
 from pennylane.wires import Wires
 
@@ -61,21 +62,21 @@ def binary_state_to_state(binary_state: Union[np.ndarray, List[Union[int, bool]]
     return state
 
 
-def state_to_binary_state(state: np.ndarray) -> str:
+def state_to_binary_state(state: Union[np.ndarray, sparse.sparray]) -> str:
     r"""
     Convert a state to a binary state. The binary state is binary string of length :math:`2^n` where :math:`n` is
     the number of particles. The state is a vector of length :math:`2^n` where :math:`n` is the number of particles.
 
     :param state: State
-    :type state: np.ndarray
+    :type state: Union[np.ndarray, sparse.sparray]
     :return: Binary state
     :rtype: str
     """
-    state = np.asarray(state).flatten()
-    n_states = state.shape[0]
+    state = state.reshape(-1)
+    n_states = state.size
     n = int(np.log2(n_states))
     assert n_states == 2 ** n, f"Invalid number of states: {n_states}, must be a power of 2."
-    state_number = np.argmax(state)
+    state_number = np.asarray(state.argmax()).astype(int).item()
     binary_state = np.binary_repr(state_number, width=n)
     return binary_state
 
@@ -199,7 +200,7 @@ def decompose_matrix_into_majoranas(__matrix: np.ndarray) -> np.ndarray:
     return coeffs
 
 
-def decompose_state_into_majorana_indexes(__state: np.ndarray) -> np.ndarray:
+def decompose_state_into_majorana_indexes(__state: Union[np.ndarray, sparse.sparray]) -> np.ndarray:
     r"""
     Decompose a state into Majorana operators. The state is decomposed as
 
@@ -212,7 +213,7 @@ def decompose_state_into_majorana_indexes(__state: np.ndarray) -> np.ndarray:
     Note: The state must be a pure state in the computational basis.
 
     :param __state: Input state
-    :type __state: np.ndarray
+    :type __state: Union[np.ndarray, sparse.sparray]
     :return: Indices of the Majorana operators
     :rtype: np.ndarray
     """

@@ -3,6 +3,7 @@ import warnings
 from typing import Iterable
 
 import numpy as np
+from scipy import sparse
 import pennylane as qml
 from pennylane import numpy as pnp
 from pennylane.pulse import ParametrizedEvolution
@@ -42,8 +43,10 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self.single_transition_particle_matrices = []
 
         # create the initial state
-        self._state = self._create_basis_state(0)
-        self._pre_rotated_state = self._state
+        self._sparse_state = self._create_basis_sparse_state(0)
+        self._pre_rotated_sparse_state = self._sparse_state
+        self._state = None
+        self._pre_rotated_state = None
 
         # create a variable for future copies of the state
         self._transition_matrix = None
@@ -58,9 +61,19 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The majorana_getter must be initialized with {self.num_wires} wires. "
             f"Got {self.majorana_getter.n} instead."
         )
+        
+    @property
+    def sparse_state(self) -> sparse.bsr_matrix:
+        if self._sparse_state is None:
+            assert self._state is not None, "The state is not initialized."
+            return sparse.bsr_matrix(self.state)
+        self._sparse_state.reshape((-1, 2**self.num_wires))
+        if self._sparse_state.shape[0] == 1:
+            self._sparse_state = self._sparse_state.reshape(-1)
+        return self._sparse_state
 
     @property
-    def state(self):
+    def state(self) -> np.ndarray:
         """
         Return the state of the device.
 
@@ -69,11 +82,20 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
         :Note: This function comes from the ``default.qubit`` device.
         """
+        if self._state is None:
+            assert self._sparse_state is not None, "The sparse state is not initialized."
+            pre_state = self.sparse_state.toarray()
+        else:
+            pre_state = self._pre_rotated_state
         dim = 2**self.num_wires
-        batch_size = self._get_batch_size(self._pre_rotated_state, (2,) * self.num_wires, dim)
+        batch_size = self._get_batch_size(pre_state, (2,) * self.num_wires, dim)
         # Do not flatten the state completely but leave the broadcasting dimension if there is one
         shape = (batch_size, dim) if batch_size is not None else (dim,)
-        return self._reshape(self._pre_rotated_state, shape)
+        return self._reshape(pre_state, shape)
+    
+    @property
+    def is_state_initialized(self) -> bool:
+        return self._state is not None or self._sparse_state is not None
 
     @property
     def transition_matrix(self):
@@ -110,6 +132,14 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         else:
             global_single_transition_particle_matrix = pnp.eye(2*self.num_wires)
         return global_single_transition_particle_matrix
+    
+    def get_sparse_or_dense_state(self):
+        if self._state is not None:
+            return self.state
+        elif self._sparse_state is not None:
+            return self.sparse_state
+        else:
+            raise RuntimeError("The state is not initialized.")
 
     def _create_basis_state(self, index):
         """
@@ -126,6 +156,20 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         state[index] = 1
         state = self._asarray(state, dtype=self.C_DTYPE)
         return self._reshape(state, [2] * self.num_wires)
+    
+    def _create_basis_sparse_state(self, index) -> sparse.bsr_matrix:
+        """
+        Create a computational basis state over all wires.
+
+        :param index: integer representing the computational basis state
+        :type index: int
+        :return: complex array of shape ``[2]*self.num_wires`` representing the statevector of the basis state
+
+        :Note: This function does not support broadcasted inputs yet.
+        :Note: This function comes from the ``default.qubit`` device.
+        """
+        sparse_state = sparse.bsr_matrix(([1], ([index], [0])), shape=(2**self.num_wires, 1), dtype=self.C_DTYPE)
+        return sparse_state
 
     def _apply_state_vector(self, state, device_wires):
         """Initialize the internal state vector in a specified state.
@@ -135,7 +179,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 or broadcasted state of shape ``(batch_size, 2**len(wires))``
             device_wires (Wires): wires that get initialized in the state
         """
-
+        
         # translate to wire labels used by device
         device_wires = self.map_wires(device_wires)
         dim = 2 ** len(device_wires)
@@ -169,9 +213,10 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             state = self._scatter(ravelled_indices, state, [2**self.num_wires])
         state = self._reshape(state, output_shape)
         self._state = self._asarray(state, dtype=self.C_DTYPE)
+        self._sparse_state = None
 
     def _apply_basis_state(self, state, wires):
-        """Initialize the state vector in a specified computational basis state.
+        """Initialize the sparse state vector in a specified computational basis state.
 
         Args:
             state (array[int]): computational basis state of shape ``(wires,)``
@@ -196,8 +241,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         basis_states = 2 ** (self.num_wires - 1 - np.array(device_wires))
         basis_states = qml.math.convert_like(basis_states, state)
         num = int(qml.math.dot(state, basis_states))
-
-        self._state = self._create_basis_state(num)
+        
+        self._sparse_state = self._create_basis_sparse_state(num)
+        self._state = None
 
     def _apply_parametrized_evolution(self, state: TensorLike, operation: ParametrizedEvolution):
         """Applies a parametrized evolution to the input state.
@@ -249,6 +295,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         )
 
         # store the pre-rotated state
+        self._pre_rotated_sparse_state = self._sparse_state
         self._pre_rotated_state = self._state
 
         assert rotations is None or np.asarray([rotations]).size == 0, "Rotations are not supported"
@@ -257,23 +304,23 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         #     self._state = self._apply_operation(self._state, operation)
 
     def analytic_probability(self, wires=None):
-        if self.state is None:
+        if not self.is_state_initialized:
             return None
         if wires is None:
             wires = self.wires
         if isinstance(wires, int):
             wires = [wires]
         wires = Wires(wires)
-        wires_states = np.array(list(itertools.product([0, 1], repeat=len(wires))))
+        wires_binary_states = np.array(list(itertools.product([0, 1], repeat=len(wires))))
         if self.prob_strategy == "lookup_table":
             return np.asarray([
-                self.compute_probability_of_target_using_lookup_table(wires, wires_state)
-                for wires_state in wires_states
+                self.compute_probability_of_target_using_lookup_table(wires, wires_binary_state)
+                for wires_binary_state in wires_binary_states
             ])
         elif self.prob_strategy == "explicit_sum":
             return np.asarray([
-                self.compute_probability_of_target_using_explicit_sum(wires, wires_state)
-                for wires_state in wires_states
+                self.compute_probability_of_target_using_explicit_sum(wires, wires_binary_state)
+                for wires_binary_state in wires_binary_states
             ])
         else:
             raise NotImplementedError(f"Probability strategy {self.prob_strategy} is not implemented.")
@@ -303,14 +350,16 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         return probs.flatten()
 
     def compute_probability_of_target_using_lookup_table(self, wires=None, target_binary_state=None):
-        if self.state is None:
+        if not self.is_state_initialized:
             return None
         if wires is None:
             wires = self.wires
         if isinstance(wires, int):
             wires = [wires]
         wires = Wires(wires)
-        obs = self.lookup_table.get_observable_of_target_state(self.state, target_binary_state, wires)
+        obs = self.lookup_table.get_observable_of_target_state(
+            self.get_sparse_or_dense_state(), target_binary_state, wires
+        )
         return pnp.real(utils.pfaffian(obs))
 
     def compute_probability_using_explicit_sum(self, wires=None):
@@ -318,7 +367,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             "This method is deprecated. Please use compute_probability_of_target_using_explicit_sum instead.",
             DeprecationWarning
         )
-        if self.state is None:
+        if not self.is_state_initialized:
             return None
         if wires is None:
             wires = self.wires
@@ -358,7 +407,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         return probs.flatten()
 
     def compute_probability_of_target_using_explicit_sum(self, wires=None, target_binary_state=None):
-        if self.state is None:
+        if not self.is_state_initialized:
             return None
         if wires is None:
             wires = self.wires
@@ -389,7 +438,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 UserWarning,
             )
 
-        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(self.state)
+        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(self.get_sparse_or_dense_state())
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
         zero_state = self._create_basis_state(0).flatten()
 

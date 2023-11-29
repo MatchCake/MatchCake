@@ -57,7 +57,8 @@ def main_nif():
     n_gates = "quadratic"
     folder = f"data/results_{n_wires}qubits_{n_gates}_gates_nif_ceil"
     fig, axes = plt.subplots(1, 2, figsize=(20, 10))
-    benchmark_pipeline = BenchmarkPipeline(
+    benchmark_pipeline = BenchmarkPipeline.from_pickle_or_new(
+        pickle_path=f"{folder}/objects.pkl",
         n_variance_pts=10,
         n_wires=np.linspace(2, n_wires, num=max(int(np.ceil(n_wires/10)), n_wires), dtype=int),
         n_gates=n_gates,
