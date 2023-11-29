@@ -486,7 +486,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
     def reset(self):
         """Reset the device"""
-        self._state = self._create_basis_state(0)
+        self._sparse_state = self._create_basis_sparse_state(0)
+        self._pre_rotated_sparse_state = self._sparse_state
+        self._state = None
         self._pre_rotated_state = self._state
         self.single_transition_particle_matrices = []
         self._transition_matrix = None
