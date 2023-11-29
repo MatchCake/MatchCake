@@ -47,7 +47,7 @@ class BenchmarkPipeline:
     max_wires_methods = {
         "nif.lookup_table": np.inf,
         "nif.explicit_sum": 5,
-        "default.qubit": 25,
+        "default.qubit": 20,
     }
     DEFAULT_N_WIRES = "linear"
     DEFAULT_N_GATES = "quadratic"
