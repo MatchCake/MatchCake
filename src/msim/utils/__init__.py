@@ -72,11 +72,10 @@ def state_to_binary_state(state: Union[np.ndarray, sparse.sparray]) -> str:
     :return: Binary state
     :rtype: str
     """
-    state = state.reshape(-1)
-    n_states = state.size
+    n_states = np.prod(state.shape)
     n = int(np.log2(n_states))
     assert n_states == 2 ** n, f"Invalid number of states: {n_states}, must be a power of 2."
-    state_number = np.asarray(state.argmax()).astype(int).item()
+    state_number = np.asarray(state.reshape(-1, n_states).argmax(-1)).astype(int).item()
     binary_state = np.binary_repr(state_number, width=n)
     return binary_state
 
