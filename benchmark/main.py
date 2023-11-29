@@ -53,7 +53,7 @@ def main():
 
 
 def main_nif():
-    n_wires = 26
+    n_wires = 32
     n_gates = "quadratic"
     folder = f"data/results_{n_wires}qubits_{n_gates}_gates_nif_ceil"
     fig, axes = plt.subplots(1, 2, figsize=(20, 10))
