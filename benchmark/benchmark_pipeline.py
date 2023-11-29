@@ -44,6 +44,11 @@ class BenchmarkPipeline:
         "default.qubit",
         # "lightning.qubit",
     }
+    max_wires_methods = {
+        "nif.lookup_table": np.inf,
+        "nif.explicit_sum": 5,
+        "default.qubit": 25,
+    }
     DEFAULT_N_WIRES = "linear"
     DEFAULT_N_GATES = "quadratic"
     DEFAULT_N_PROBS = "single"
@@ -88,12 +93,12 @@ class BenchmarkPipeline:
         self._init_wires_list_()
         self._init_parameters_list_()
 
-        self.result_data = np.full((len(self.methods), self.n_variance_pts, self.n_pts), np.NaN)
-        self.time_data = np.full_like(self.result_data, np.NaN)
+        self.result_data = np.full((len(self.methods), self.n_variance_pts, self.n_pts), -1.0)
+        self.time_data = np.full_like(self.result_data, -1.0)
 
     @property
     def all_data_generated(self):
-        return np.all(np.isfinite(self.time_data))
+        return np.all(self.time_data >= 0)
 
     def _init_n_pts_(self):
         length_list = []
@@ -183,10 +188,11 @@ class BenchmarkPipeline:
             self.wires_list.append(gate_wires)
         return self.wires_list
     
-    # def _init_wires_list_block_wall_(self):
-    #     self.wires_list = []
-    #     for n_wires, n_gates in zip(self.n_wires, self.n_gates):
-    
+    def _init_wires_list_block_wall_(self):
+        self.wires_list = []
+        for n_wires, n_gates in zip(self.n_wires, self.n_gates):
+            pass
+        raise NotImplementedError
 
     def _init_parameters_list_(self):
         r"""
@@ -237,10 +243,14 @@ class BenchmarkPipeline:
         if isinstance(method_idx, str):
             method_idx = self.methods.index(method_idx)
         method_function = self.methods_functions[self.methods[method_idx]]
-        start_time = time.time()
-        out = method_function(variance_idx, pt_idx)
-        # self.result_data[method_idx, variance_idx, pt_idx] = out
-        self.time_data[method_idx, variance_idx, pt_idx] = time.time() - start_time
+        max_wires = self.max_wires_methods[self.methods[method_idx]]
+        if self.n_wires[pt_idx] > max_wires:
+            self.time_data[method_idx, variance_idx, pt_idx] = np.NaN
+        else:
+            start_time = time.time()
+            out = method_function(variance_idx, pt_idx)
+            # self.result_data[method_idx, variance_idx, pt_idx] = out
+            self.time_data[method_idx, variance_idx, pt_idx] = time.time() - start_time
         return self.time_data[method_idx, variance_idx, pt_idx]
 
     def gen_all_data_points_(self, **kwargs):
@@ -326,8 +336,8 @@ class BenchmarkPipeline:
         xaxis_label = kwargs.get("xaxis_name", f"Number of {xaxis} [-]")
         std_coeff = kwargs.get("std_coeff", 1)
         for i, method in enumerate(self.methods):
-            mean_time = np.mean(self.time_data[i], axis=0)
-            std_time = std_coeff * np.std(self.time_data[i], axis=0)
+            mean_time = np.nanmean(self.time_data[i], axis=0)
+            std_time = std_coeff * np.nanstd(self.time_data[i], axis=0)
             if xaxis == "n_wires":
                 x = np.asarray(self.n_wires, dtype=int)
             elif xaxis == "n_gates":
