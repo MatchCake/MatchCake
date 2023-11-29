@@ -59,7 +59,7 @@ def main_nif():
     fig, axes = plt.subplots(1, 2, figsize=(20, 10))
     benchmark_pipeline = BenchmarkPipeline(
         n_variance_pts=10,
-        n_wires=np.linspace(2, n_wires, num=max(n_wires//10, n_wires), dtype=int),
+        n_wires=np.linspace(2, n_wires, num=max(int(np.ceil(n_wires/10)), n_wires), dtype=int),
         n_gates=n_gates,
         methods=[
             "nif.lookup_table",
