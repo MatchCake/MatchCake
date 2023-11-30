@@ -53,7 +53,7 @@ def main():
 
 
 def main_nif():
-    n_wires = 32
+    n_wires = 128
     n_gates = "quadratic"
     folder = f"data/results_{n_wires}qubits_{n_gates}_gates_ceil"
     std_coeff = 3
@@ -95,7 +95,7 @@ def main_nif():
         filepath = os.path.join("data", "figures", f"benchmark.{ext}")
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         plt.savefig(filepath, dpi=300, bbox_inches="tight")
-    plt.show()
+    # plt.show()
 
 
 if __name__ == '__main__':
