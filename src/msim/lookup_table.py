@@ -60,7 +60,7 @@ class NonInteractingFermionicLookupTable:
     @property
     def block_diagonal_matrix(self):
         if self._block_diagonal_matrix is None:
-            self._block_diagonal_matrix = utils.get_block_diagonal_matrix(self.transition_matrix.shape[0])
+            self._block_diagonal_matrix = utils.get_block_diagonal_matrix(self.n_particles)
         return self._block_diagonal_matrix
     
     @property

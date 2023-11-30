@@ -133,24 +133,13 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             supports_tensor_observables=False
         )
         return capabilities
-
-    @property
-    def global_single_transition_particle_matrix(self):
-        if len(self.single_transition_particle_matrices) > 0:
-            if len(self.single_transition_particle_matrices) == 1:
-                global_single_transition_particle_matrix = self.single_transition_particle_matrices[0]
-            else:
-                global_single_transition_particle_matrix = utils.recursive_2in_operator(
-                    qml.math.dot, self.single_transition_particle_matrices,
-                    recursive=False,
-                )
-        else:
-            global_single_transition_particle_matrix = pnp.eye(2*self.num_wires)
-        return global_single_transition_particle_matrix
     
     @property
     def memory_usage(self):
         mem = 0
+        if self._basis_state_index is not None:
+            arr = np.asarray([self._basis_state_index])
+            mem += arr.size * arr.dtype.itemsize
         if self._state is not None:
             mem += self._state.size * self._state.dtype.itemsize
         if self._sparse_state is not None:
@@ -302,7 +291,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         rotations = rotations or []
         if not isinstance(operations, Iterable):
             operations = [operations]
-
+        single_transition_particle_matrices = []
+        global_single_transition_particle_matrix = pnp.eye(2 * self.num_wires)
         # apply the circuit operations
         for i, op in enumerate(operations):
             if i > 0 and isinstance(op, (qml.StatePrep, qml.BasisState)):
@@ -327,13 +317,13 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             else:
                 assert op.name in self.operations, f"Operation {op.name} is not supported."
                 if isinstance(op, MatchgateOperator):
-                    self.single_transition_particle_matrices.append(
-                        op.get_padded_single_transition_particle_matrix(self.wires)
+                    # single_transition_particle_matrices.append(
+                    #     op.get_padded_single_transition_particle_matrix(self.wires)
+                    # )
+                    global_single_transition_particle_matrix = qml.math.dot(
+                        global_single_transition_particle_matrix,
+                        op.get_padded_single_transition_particle_matrix(self.wires),
                     )
-
-        self._transition_matrix = utils.make_transition_matrix_from_action_matrix(
-            self.global_single_transition_particle_matrix
-        )
 
         # store the pre-rotated state
         self._pre_rotated_sparse_state = self._sparse_state
@@ -343,6 +333,27 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         # apply the circuit rotations
         # for operation in rotations:
         #     self._state = self._apply_operation(self._state, operation)
+        # self._transition_matrix = utils.make_transition_matrix_from_action_matrix(
+        #     self.compute_global_single_transition_particle_matrix(single_transition_particle_matrices)
+        # )
+        self._transition_matrix = utils.make_transition_matrix_from_action_matrix(
+            global_single_transition_particle_matrix
+        )
+    
+    def compute_global_single_transition_particle_matrix(self, single_transition_particle_matrices=None):
+        if single_transition_particle_matrices is None:
+            single_transition_particle_matrices = []
+        if len(single_transition_particle_matrices) > 0:
+            if len(single_transition_particle_matrices) == 1:
+                global_single_transition_particle_matrix = single_transition_particle_matrices[0]
+            else:
+                global_single_transition_particle_matrix = utils.recursive_2in_operator(
+                    qml.math.dot, single_transition_particle_matrices,
+                    recursive=False,
+                )
+        else:
+            global_single_transition_particle_matrix = pnp.eye(2*self.num_wires)
+        return global_single_transition_particle_matrix
 
     def analytic_probability(self, wires=None):
         if not self.is_state_initialized:

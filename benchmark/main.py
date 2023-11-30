@@ -55,12 +55,12 @@ def main():
 def main_nif():
     n_wires = 32
     n_gates = "quadratic"
-    folder = f"data/results_{n_wires}qubits_{n_gates}_gates_nif_ceil"
+    folder = f"data/results_{n_wires}qubits_{n_gates}_gates_ceil"
     std_coeff = 3
     fig, axes = plt.subplots(1, 2, figsize=(20, 10))
     benchmark_pipeline = BenchmarkPipeline.from_pickle_or_new(
         pickle_path=f"{folder}/objects.pkl",
-        n_variance_pts=10,
+        n_variance_pts=3,
         n_wires=np.linspace(2, n_wires, num=max(int(np.ceil(n_wires/10)), n_wires), dtype=int),
         n_gates=n_gates,
         methods=[
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     main_nif()
     # benchmark_pipeline = BenchmarkPipeline(
     #     n_variance_pts=1,
-    #     n_wires=np.linspace(2, 128, num=2, dtype=int),
+    #     n_wires=np.linspace(2, 128, num=3, dtype=int),
     #     n_gates="quadratic",
     #     methods=["nif.lookup_table"],
     # )
