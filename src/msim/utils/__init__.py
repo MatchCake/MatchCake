@@ -1,5 +1,5 @@
 import importlib
-from typing import List, Union
+from typing import List, Union, Optional
 
 import numpy as np
 from scipy import sparse
@@ -62,16 +62,45 @@ def binary_state_to_state(binary_state: Union[np.ndarray, List[Union[int, bool]]
     return state
 
 
-def state_to_binary_state(state: Union[np.ndarray, sparse.sparray]) -> str:
+def state_to_binary_state(state: Union[int, np.ndarray, sparse.sparray], n: Optional[int] = None) -> str:
     r"""
     Convert a state to a binary state. The binary state is binary string of length :math:`2^n` where :math:`n` is
     the number of particles. The state is a vector of length :math:`2^n` where :math:`n` is the number of particles.
 
-    :param state: State
+    :param state: State. If the state is an integer, the state is assumed to be a pure state in the computational
+        basis and the number of particles must be specified. If the state is a vector, the number of particles is
+        inferred from the shape of the vector as :math:`n = \log_2(\text{len}(\text{state}))`.
     :type state: Union[np.ndarray, sparse.sparray]
-    :return: Binary state
+    :param n: Number of particles. Used only if the state is an integer.
+    :type n: Optional[int]
+    :return: Binary state as a binary string.
     :rtype: str
+    
+    
+    .. Example:
+    >>> state_to_binary_state(0, n=2)
+    '00'
+    >>> state_to_binary_state(1, n=2)
+    '01'
+    >>> state_to_binary_state(2, n=2)
+    '10'
+    >>> state_to_binary_state(3, n=2)
+    '11'
+    >>> state_to_binary_state(np.array([1, 0, 0, 0]))
+    '00'
+    >>> state_to_binary_state(np.array([0, 1, 0, 0]))
+    '01'
+    >>> state_to_binary_state(np.array([0, 0, 1, 0]))
+    '10'
+    >>> state_to_binary_state(np.array([0, 0, 0, 1]))
+    '11'
+    >>> state_to_binary_state(np.array([1, 0, 0, 0, 0, 0, 0, 0]))
+    '000'
     """
+    if isinstance(state, int):
+        assert n is not None, "Number of particles must be specified if the state is an integer."
+        assert state < 2 ** n, f"Invalid state: {state}, must be smaller than 2^n = {2 ** n}."
+        return np.binary_repr(state, width=n)
     n_states = np.prod(state.shape)
     n = int(np.log2(n_states))
     assert n_states == 2 ** n, f"Invalid number of states: {n_states}, must be a power of 2."
@@ -199,7 +228,10 @@ def decompose_matrix_into_majoranas(__matrix: np.ndarray) -> np.ndarray:
     return coeffs
 
 
-def decompose_state_into_majorana_indexes(__state: Union[np.ndarray, sparse.sparray]) -> np.ndarray:
+def decompose_state_into_majorana_indexes(
+        __state: Union[int, np.ndarray, sparse.sparray],
+        n: Optional[int] = None
+) -> np.ndarray:
     r"""
     Decompose a state into Majorana operators. The state is decomposed as
 
@@ -212,11 +244,13 @@ def decompose_state_into_majorana_indexes(__state: Union[np.ndarray, sparse.spar
     Note: The state must be a pure state in the computational basis.
 
     :param __state: Input state
-    :type __state: Union[np.ndarray, sparse.sparray]
+    :type __state: Union[int, np.ndarray, sparse.sparray]
+    :param n: Number of particles. Used only if the state is an integer.
+    :type n: Optional[int]
     :return: Indices of the Majorana operators
     :rtype: np.ndarray
     """
-    binary_state = state_to_binary_state(__state)
+    binary_state = state_to_binary_state(__state, n=n)
     return decompose_binary_state_into_majorana_indexes(binary_state)
 
 

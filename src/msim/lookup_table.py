@@ -36,6 +36,10 @@ class NonInteractingFermionicLookupTable:
         return self._transition_matrix
     
     @property
+    def n_particles(self):
+        return self.transition_matrix.shape[0]
+    
+    @property
     def block_diagonal_matrix(self):
         if self._block_diagonal_matrix is None:
             self._block_diagonal_matrix = utils.get_block_diagonal_matrix(self.transition_matrix.shape[0])
@@ -166,14 +170,14 @@ class NonInteractingFermionicLookupTable:
         :rtype: np.ndarray
         """
         warnings.warn("This method is deprecated. Use get_observable_of_target_state instead.", DeprecationWarning)
-        key = (k, utils.state_to_binary_state(system_state))
+        key = (k, utils.state_to_binary_state(system_state, n=self.n_particles))
         if key not in self._observables:
             self._observables[key] = self._compute_observable(k, system_state)
         return self._observables[key]
 
     def get_observable_of_target_state(
             self,
-            system_state: Union[np.ndarray, sparse.sparray],
+            system_state: Union[int, np.ndarray, sparse.sparray],
             target_binary_state: Optional[np.ndarray] = None,
             indexes_of_target_state: Optional[np.ndarray] = None,
     ) -> np.ndarray:
@@ -181,7 +185,7 @@ class NonInteractingFermionicLookupTable:
         Get the observable corresponding to target_binary_state and the system_state.
 
         :param system_state: State of the system
-        :type system_state: Union[np.ndarray, sparse.sparray]
+        :type system_state: Union[int, np.ndarray, sparse.sparray]
         :param target_binary_state: Target state of the system
         :type target_binary_state: Optional[np.ndarray]
         :param indexes_of_target_state: Indexes of the target state of the system
@@ -190,7 +194,7 @@ class NonInteractingFermionicLookupTable:
         :rtype: np.ndarray
         """
         key = (
-            utils.state_to_binary_state(system_state),
+            utils.state_to_binary_state(system_state, n=self.n_particles),
             ''.join([str(i) for i in target_binary_state]),
             ','.join([str(i) for i in indexes_of_target_state]),
         )
@@ -200,9 +204,9 @@ class NonInteractingFermionicLookupTable:
             )
         return self._observables[key]
     
-    def _compute_observable(self, k: int, system_state: np.ndarray) -> np.ndarray:
+    def _compute_observable(self, k: int, system_state: Union[int, np.ndarray, sparse.sparray]) -> np.ndarray:
         warnings.warn("This method is deprecated. Use compute_observable_of_target_state instead.", DeprecationWarning)
-        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(system_state)
+        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(system_state, n=self.n_particles)
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
 
         unmeasured_cls_indexes = [2 for _ in range(len(ket_majorana_indexes))]
@@ -224,7 +228,7 @@ class NonInteractingFermionicLookupTable:
     
     def compute_observable_of_target_state(
             self,
-            system_state: Union[np.ndarray, sparse.sparray],
+            system_state: Union[int, np.ndarray, sparse.sparray],
             target_binary_state: Optional[np.ndarray] = None,
             indexes_of_target_state: Optional[np.ndarray] = None,
     ) -> np.ndarray:
@@ -236,7 +240,7 @@ class NonInteractingFermionicLookupTable:
         elif target_binary_state is None and indexes_of_target_state is not None:
             target_binary_state = np.ones(len(indexes_of_target_state), dtype=int)
 
-        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(system_state)
+        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(system_state, n=self.n_particles)
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
 
         unmeasured_cls_indexes = [2 for _ in range(len(ket_majorana_indexes))]

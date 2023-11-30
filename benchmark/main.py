@@ -102,13 +102,9 @@ if __name__ == '__main__':
     main_nif()
     # benchmark_pipeline = BenchmarkPipeline(
     #     n_variance_pts=10,
-    #     n_wires=np.linspace(2, 32, num=2, dtype=int),
+    #     n_wires=np.linspace(2, 128, num=2, dtype=int),
     #     n_gates="quadratic",
-    #     methods=[
-    #         "nif.lookup_table",
-    #         # "default.qubit",
-    #         # "nif.explicit_sum"
-    #     ],
+    #     methods=["nif.lookup_table"],
     # )
     # benchmark_pipeline.gen_data_point_(
     #     0, 0, -1

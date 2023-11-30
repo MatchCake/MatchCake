@@ -1,6 +1,6 @@
 import itertools
 import warnings
-from typing import Iterable
+from typing import Iterable, Tuple, Union
 
 import numpy as np
 from scipy import sparse
@@ -43,8 +43,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self.single_transition_particle_matrices = []
 
         # create the initial state
-        self._sparse_state = self._create_basis_sparse_state(0)
-        self._pre_rotated_sparse_state = self._sparse_state
+        self._basis_state_index = 0
+        self._sparse_state = None
+        self._pre_rotated_sparse_state = None
         self._state = None
         self._pre_rotated_state = None
 
@@ -61,10 +62,21 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The majorana_getter must be initialized with {self.num_wires} wires. "
             f"Got {self.majorana_getter.n} instead."
         )
-        
+    
+    @property
+    def basis_state_index(self) -> int:
+        if self._basis_state_index is None:
+            if self._sparse_state is not None:
+                return self._sparse_state.indices[0]
+            assert self._state is not None, "The state is not initialized."
+            return np.argmax(np.abs(self.state))
+        return self._basis_state_index
+    
     @property
     def sparse_state(self) -> sparse.coo_array:
         if self._sparse_state is None:
+            if self._basis_state_index is not None:
+                return self._create_basis_sparse_state(self._basis_state_index)
             assert self._state is not None, "The state is not initialized."
             return sparse.coo_array(self.state)
         self._sparse_state.reshape((-1, 2**self.num_wires))
@@ -83,8 +95,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         :Note: This function comes from the ``default.qubit`` device.
         """
         if self._state is None:
-            assert self._sparse_state is not None, "The sparse state is not initialized."
-            pre_state = self.sparse_state.toarray()
+            if self._basis_state_index is not None:
+                pre_state = self._create_basis_state(self._basis_state_index)
+            else:
+                assert self._sparse_state is not None, "The sparse state is not initialized."
+                pre_state = self.sparse_state.toarray()
         else:
             pre_state = self._pre_rotated_state
         dim = 2**self.num_wires
@@ -95,7 +110,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     
     @property
     def is_state_initialized(self) -> bool:
-        return self._state is not None or self._sparse_state is not None
+        return self._state is not None or self._sparse_state is not None or self._basis_state_index is not None
 
     @property
     def transition_matrix(self):
@@ -133,8 +148,10 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             global_single_transition_particle_matrix = pnp.eye(2*self.num_wires)
         return global_single_transition_particle_matrix
     
-    def get_sparse_or_dense_state(self):
-        if self._state is not None:
+    def get_sparse_or_dense_state(self) -> Union[int, sparse.coo_array, np.ndarray]:
+        if self._basis_state_index is not None:
+            return self.basis_state_index
+        elif self._state is not None:
             return self.state
         elif self._sparse_state is not None:
             return self.sparse_state
@@ -242,7 +259,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         basis_states = qml.math.convert_like(basis_states, state)
         num = int(qml.math.dot(state, basis_states))
         
-        self._sparse_state = self._create_basis_sparse_state(num)
+        self._basis_state_index = num
+        self._sparse_state = None
         self._state = None
 
     def _apply_parametrized_evolution(self, state: TensorLike, operation: ParametrizedEvolution):
@@ -377,7 +395,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         device_wires = self.map_wires(wires)
         num_wires = len(device_wires)
 
-        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(self.get_sparse_or_dense_state())
+        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(
+            self.get_sparse_or_dense_state(), n=self.num_wires
+        )
         ket_majorana_list = [utils.get_majorana(i, self.num_wires) for i in ket_majorana_indexes]
         if ket_majorana_list:
             ket_op = utils.recursive_2in_operator(pnp.matmul, ket_majorana_list)
@@ -438,7 +458,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 UserWarning,
             )
 
-        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(self.get_sparse_or_dense_state())
+        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(
+            self.get_sparse_or_dense_state(), n=self.num_wires
+        )
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
         zero_state = self._create_basis_state(0).flatten()
 
@@ -486,7 +508,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
     def reset(self):
         """Reset the device"""
-        self._sparse_state = self._create_basis_sparse_state(0)
+        self._basis_state_index = 0
+        self._sparse_state = None
         self._pre_rotated_sparse_state = self._sparse_state
         self._state = None
         self._pre_rotated_state = self._state
