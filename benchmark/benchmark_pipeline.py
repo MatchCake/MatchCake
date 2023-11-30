@@ -1,6 +1,7 @@
 import os
+import sys
 import time
-from typing import Optional, Union, List, Any
+from typing import Optional, Union, List, Any, Tuple
 
 import matplotlib
 import numpy as np
@@ -46,12 +47,24 @@ class BenchmarkPipeline:
     }
     max_wires_methods = {
         "nif.lookup_table": np.inf,
-        "nif.explicit_sum": 5,
+        "nif.explicit_sum": 10,
         "default.qubit": 20,
     }
     DEFAULT_N_WIRES = "linear"
     DEFAULT_N_GATES = "quadratic"
     DEFAULT_N_PROBS = "single"
+    MISSING_VALUE = -1.0
+    UNREACHABLE_VALUE = np.NaN
+    DEFAULT_Y_LABELS = {
+        "time": "Execution time [s]",
+        "result": "Result [-]",
+        "memory": "Memory [B]",
+    }
+    DEFAULT_X_LABELS = {
+        "n_wires": "Number of wires [-]",
+        "n_gates": "Number of gates [-]",
+        "n_probs": "Number of probabilities [-]",
+    }
 
     def __init__(
             self,
@@ -93,12 +106,13 @@ class BenchmarkPipeline:
         self._init_wires_list_()
         self._init_parameters_list_()
 
-        self.result_data = np.full((len(self.methods), self.n_variance_pts, self.n_pts), -1.0)
-        self.time_data = np.full_like(self.result_data, -1.0)
+        self.result_data = np.full((len(self.methods), self.n_variance_pts, self.n_pts), self.MISSING_VALUE)
+        self.time_data = np.full_like(self.result_data, self.MISSING_VALUE)
+        self.memory_data = np.full_like(self.result_data, self.MISSING_VALUE)
 
     @property
     def all_data_generated(self):
-        return np.all(self.time_data >= 0)
+        return np.all(np.logical_not(np.isclose(self.time_data, self.MISSING_VALUE)))
 
     def _init_n_pts_(self):
         length_list = []
@@ -245,28 +259,54 @@ class BenchmarkPipeline:
         method_function = self.methods_functions[self.methods[method_idx]]
         max_wires = self.max_wires_methods[self.methods[method_idx]]
         if self.n_wires[pt_idx] > max_wires:
-            self.time_data[method_idx, variance_idx, pt_idx] = np.NaN
+            self.time_data[method_idx, variance_idx, pt_idx] = self.UNREACHABLE_VALUE
+            self.result_data[method_idx, variance_idx, pt_idx] = self.UNREACHABLE_VALUE
+            self.memory_data[method_idx, variance_idx, pt_idx] = self.UNREACHABLE_VALUE
         else:
             start_time = time.time()
-            out = method_function(variance_idx, pt_idx)
+            out, device = method_function(variance_idx, pt_idx)
             # self.result_data[method_idx, variance_idx, pt_idx] = out
             self.time_data[method_idx, variance_idx, pt_idx] = time.time() - start_time
-        return self.time_data[method_idx, variance_idx, pt_idx]
+            self.memory_data[method_idx, variance_idx, pt_idx] = sys.getsizeof(device)
+        return dict(
+            time=self.time_data[method_idx, variance_idx, pt_idx],
+            result=self.result_data[method_idx, variance_idx, pt_idx],
+            memory=self.memory_data[method_idx, variance_idx, pt_idx],
+        )
+    
+    def _filter_unreachable_points_(self):
+        mth_indexes = {
+            mth: [tuple(index) for index in np.argwhere(self.n_wires > max_value)]
+            for mth, max_value in self.max_wires_methods.items()
+        }
+        for mth, indexes in mth_indexes.items():
+            if len(indexes) == 0:
+                continue
+            mth_idx = self.methods.index(mth)
+            self.time_data[mth_idx, :, indexes] = self.UNREACHABLE_VALUE
+            self.result_data[mth_idx, :, indexes] = self.UNREACHABLE_VALUE
+            self.memory_data[mth_idx, :, indexes] = self.UNREACHABLE_VALUE
 
     def gen_all_data_points_(self, **kwargs):
-        iterable_of_args = list(np.ndindex(self.time_data.shape))
-        times = pbt.apply_func_multiprocess(
+        self._filter_unreachable_points_()
+        indexes = np.argwhere(np.isclose(self.time_data, self.MISSING_VALUE))
+        indexes = [tuple(index) for index in indexes]
+        if len(indexes) == 0:
+            return
+        out_dict_list = pbt.apply_func_multiprocess(
             self.gen_data_point_,
-            iterable_of_args=iterable_of_args,
+            iterable_of_args=indexes,
             nb_workers=kwargs.get("nb_workers", 0),
             desc="Generating data points",
             verbose=kwargs.get("verbose", True),
             unit="pt",
         )
-        for indexes, time_ in zip(iterable_of_args, times):
-            self.time_data[indexes] = time_
+        for indexes, out_dict in zip(indexes, out_dict_list):
+            self.time_data[indexes] = out_dict["time"]
+            self.result_data[indexes] = out_dict["result"]
+            self.memory_data[indexes] = out_dict["memory"]
 
-    def execute_pennylane_qubit(self, variance_idx: int, pt_idx: int, device_name: str):
+    def execute_pennylane_qubit(self, variance_idx: int, pt_idx: int, device_name: str) -> Tuple[Any, Any]:
         params = self.parameters_list[pt_idx][variance_idx]
         wires = self.wires_list[pt_idx]
         n_wires = self.n_wires[pt_idx]
@@ -283,15 +323,15 @@ class BenchmarkPipeline:
             out_op="state",
         )
         probs = msim.utils.get_probabilities_from_state(qubit_state, wires=prob_wires)
-        return probs
+        return probs, device
 
-    def execute_default_qubit(self, variance_idx: int, pt_idx: int):
+    def execute_default_qubit(self, variance_idx: int, pt_idx: int) -> Tuple[Any, Any]:
         return self.execute_pennylane_qubit(variance_idx, pt_idx, device_name="default.qubit")
 
-    def execute_lightning_qubit(self, variance_idx: int, pt_idx: int):
+    def execute_lightning_qubit(self, variance_idx: int, pt_idx: int) -> Tuple[Any, Any]:
         return self.execute_pennylane_qubit(variance_idx, pt_idx, device_name="lightning.qubit")
 
-    def execute_nif(self, variance_idx: int, pt_idx: int, prob_strategy: str):
+    def execute_nif(self, variance_idx: int, pt_idx: int, prob_strategy: str) -> Tuple[Any, Any]:
         params = self.parameters_list[pt_idx][variance_idx]
         wires = self.wires_list[pt_idx]
         n_wires = self.n_wires[pt_idx]
@@ -308,12 +348,12 @@ class BenchmarkPipeline:
             out_op="probs",
             out_wires=prob_wires,
         )
-        return probs
+        return probs, device
 
-    def execute_nif_lookup_table(self, variance_idx: int, pt_idx: int):
+    def execute_nif_lookup_table(self, variance_idx: int, pt_idx: int) -> Tuple[Any, Any]:
         return self.execute_nif(variance_idx, pt_idx, prob_strategy="lookup_table")
 
-    def execute_nif_explicit_sum(self, variance_idx: int, pt_idx: int):
+    def execute_nif_explicit_sum(self, variance_idx: int, pt_idx: int) -> Tuple[Any, Any]:
         return self.execute_nif(variance_idx, pt_idx, prob_strategy="explicit_sum")
 
     def run(self, **kwargs):
@@ -331,13 +371,26 @@ class BenchmarkPipeline:
             fig, axes = plt.subplots(1, 1, figsize=(12, 6))
         if self.name is not None:
             fig.suptitle(self.name)
-        methods_colors = ["tab:blue", "tab:orange", "tab:green"]
+        methods_colors = kwargs.get("methods_colors", plt.cm.get_cmap("tab10").colors)
+        yaxis = kwargs.get("yaxis", "time")
+        yaxis_label = kwargs.get("yaxis_name", self.DEFAULT_Y_LABELS.get(yaxis, yaxis))
         xaxis = kwargs.get("xaxis", "n_wires")
-        xaxis_label = kwargs.get("xaxis_name", f"Number of {xaxis} [-]")
+        xaxis_label = kwargs.get("xaxis_name", self.DEFAULT_X_LABELS.get(xaxis, xaxis))
         std_coeff = kwargs.get("std_coeff", 1)
-        for i, method in enumerate(self.methods):
-            mean_time = np.nanmean(self.time_data[i], axis=0)
-            std_time = std_coeff * np.nanstd(self.time_data[i], axis=0)
+        methods = kwargs.get("methods", self.methods)
+        for i, method in enumerate(methods):
+            method_idx = self.methods.index(method)
+            if yaxis == "time":
+                y = self.time_data[method_idx]
+            elif yaxis == "result":
+                y = self.result_data[method_idx]
+            elif yaxis == "memory":
+                y = self.memory_data[method_idx]
+            else:
+                raise ValueError(f"Unknown yaxis: {yaxis}.")
+            y = np.where(np.isclose(y, self.UNREACHABLE_VALUE), np.NaN, y)
+            mean_y = np.nanmean(y, axis=0)
+            std_y = std_coeff * np.nanstd(y, axis=0)
             if xaxis == "n_wires":
                 x = np.asarray(self.n_wires, dtype=int)
             elif xaxis == "n_gates":
@@ -346,9 +399,9 @@ class BenchmarkPipeline:
                 x = np.asarray(self.n_probs, dtype=int)
             else:
                 raise ValueError(f"Unknown xaxis: {xaxis}.")
-            axes.plot(x, mean_time, label=method, color=methods_colors[i])
+            axes.plot(x, mean_y, label=method, color=methods_colors[i])
             axes.fill_between(
-                x, mean_time - std_time, mean_time + std_time, alpha=0.2, color=methods_colors[i]
+                x, mean_y - std_y, mean_y + std_y, alpha=0.2, color=methods_colors[i]
             )
         # axes.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
         n_ticks = len(axes.get_xticks())
@@ -367,7 +420,7 @@ class BenchmarkPipeline:
         else:
             raise ValueError(f"Unknown xaxis: {xaxis}.")
         axes.set_xlabel(xaxis_label)
-        axes.set_ylabel("Execution time [s]")
+        axes.set_ylabel(yaxis_label)
         axes.set_title(kwargs.get("title", ""))
         std_patch = matplotlib.patches.Patch(color="gray", alpha=0.2, label=f"{std_coeff} Std")
         lines, labels = axes.get_legend_handles_labels()
@@ -378,7 +431,7 @@ class BenchmarkPipeline:
         if save_folder is not None:
             os.makedirs(f"{save_folder}", exist_ok=True)
             ext_list = ["pdf", "png"]
-            filename = f"time_vs_{xaxis}"
+            filename = f"{yaxis}_vs_{xaxis}"
             for ext in ext_list:
                 fig.savefig(f"{save_folder}/{filename}.{ext}", bbox_inches='tight', pad_inches=0.1, dpi=900)
         if kwargs.get("show", True):
