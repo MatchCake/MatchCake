@@ -53,9 +53,10 @@ def main():
 
 
 def main_nif():
-    n_wires = 128
+    n_wires = 32
     n_gates = "quadratic"
     folder = f"data/results_{n_wires}qubits_{n_gates}_gates_nif_ceil"
+    std_coeff = 3
     fig, axes = plt.subplots(1, 2, figsize=(20, 10))
     benchmark_pipeline = BenchmarkPipeline.from_pickle_or_new(
         pickle_path=f"{folder}/objects.pkl",
@@ -77,7 +78,7 @@ def main_nif():
         fig=fig, ax=axes[0],
         xaxis="n_wires",
         yaxis="time",
-        std_coeff=3,
+        std_coeff=std_coeff,
         # save_folder=os.path.join(folder, "figures"),
         show=False,
     )
@@ -85,7 +86,7 @@ def main_nif():
         fig=fig, ax=axes[1],
         xaxis="n_wires",
         yaxis="memory",
-        std_coeff=3,
+        std_coeff=std_coeff,
         # save_folder=os.path.join(folder, "figures"),
         show=False,
     )
@@ -101,11 +102,16 @@ if __name__ == '__main__':
     # main()
     main_nif()
     # benchmark_pipeline = BenchmarkPipeline(
-    #     n_variance_pts=10,
+    #     n_variance_pts=1,
     #     n_wires=np.linspace(2, 128, num=2, dtype=int),
     #     n_gates="quadratic",
     #     methods=["nif.lookup_table"],
     # )
-    # benchmark_pipeline.gen_data_point_(
-    #     0, 0, -1
+    # benchmark_pipeline.gen_all_data_points_(nb_workers=-2)
+    # print(f"{benchmark_pipeline.memory_data[0, 0] = }")
+    # benchmark_pipeline.show(
+    #     xaxis="n_wires",
+    #     yaxis="memory",
+    #     std_coeff=3,
+    #     show=True,
     # )

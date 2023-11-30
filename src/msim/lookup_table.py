@@ -32,6 +32,24 @@ class NonInteractingFermionicLookupTable:
         self._observables = {}
     
     @property
+    def memory_usage(self):
+        mem = self.transition_matrix.size * self.transition_matrix.dtype.itemsize
+        tensors = [
+            self._c_d_alpha__c_d_beta,
+            self._c_d_alpha__c_e_beta,
+            self._c_d_alpha__c_2p_beta_m1,
+            self._c_e_alpha__c_d_beta,
+            self._c_e_alpha__c_e_beta,
+            self._c_e_alpha__c_2p_beta_m1,
+            self._c_2p_alpha_m1__c_d_beta,
+            self._c_2p_alpha_m1__c_e_beta,
+            self._c_2p_alpha_m1__c_2p_beta_m1,
+        ]
+        tensors = [t for t in tensors if t is not None]
+        mem += sum([t.size * t.dtype.itemsize for t in tensors])
+        return mem
+    
+    @property
     def transition_matrix(self):
         return self._transition_matrix
     

@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 from typing import Optional, Union, List, Any, Tuple
 
@@ -8,10 +7,10 @@ import numpy as np
 import pennylane as qml
 import matplotlib.pyplot as plt
 import pythonbasictools as pbt
-from tqdm import tqdm
 
 import msim
 from utils import MPL_RC_DEFAULT_PARAMS
+from utils import get_device_memory_usage
 from msim import MatchgateOperator, mps
 from tests.test_nif_device import init_nif_device, init_qubit_device
 
@@ -267,7 +266,7 @@ class BenchmarkPipeline:
             out, device = method_function(variance_idx, pt_idx)
             # self.result_data[method_idx, variance_idx, pt_idx] = out
             self.time_data[method_idx, variance_idx, pt_idx] = time.time() - start_time
-            self.memory_data[method_idx, variance_idx, pt_idx] = sys.getsizeof(device)
+            self.memory_data[method_idx, variance_idx, pt_idx] = get_device_memory_usage(device)
         return dict(
             time=self.time_data[method_idx, variance_idx, pt_idx],
             result=self.result_data[method_idx, variance_idx, pt_idx],
@@ -276,8 +275,8 @@ class BenchmarkPipeline:
     
     def _filter_unreachable_points_(self):
         mth_indexes = {
-            mth: [tuple(index) for index in np.argwhere(self.n_wires > max_value)]
-            for mth, max_value in self.max_wires_methods.items()
+            mth: [tuple(index) for index in np.argwhere(self.n_wires > self.max_wires_methods.get(mth, np.inf))]
+            for mth in self.methods
         }
         for mth, indexes in mth_indexes.items():
             if len(indexes) == 0:

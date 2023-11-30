@@ -148,6 +148,29 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             global_single_transition_particle_matrix = pnp.eye(2*self.num_wires)
         return global_single_transition_particle_matrix
     
+    @property
+    def memory_usage(self):
+        mem = 0
+        if self._state is not None:
+            mem += self._state.size * self._state.dtype.itemsize
+        if self._sparse_state is not None:
+            mem += self._sparse_state.data.size * self._sparse_state.data.dtype.itemsize
+            mem += self._sparse_state.indices.size * self._sparse_state.indices.dtype.itemsize
+            mem += self._sparse_state.indptr.size * self._sparse_state.indptr.dtype.itemsize
+        if self._pre_rotated_state is not None:
+            mem += self._pre_rotated_state.size * self._pre_rotated_state.dtype.itemsize
+        if self._pre_rotated_sparse_state is not None:
+            mem += self._pre_rotated_sparse_state.data.size * self._pre_rotated_sparse_state.data.dtype.itemsize
+            mem += self._pre_rotated_sparse_state.indices.size * self._pre_rotated_sparse_state.indices.dtype.itemsize
+            mem += self._pre_rotated_sparse_state.indptr.size * self._pre_rotated_sparse_state.indptr.dtype.itemsize
+        if self._transition_matrix is not None:
+            mem += self._transition_matrix.size * self._transition_matrix.dtype.itemsize
+        if self._lookup_table is not None:
+            mem += self._lookup_table.memory_usage
+        for single_transition_particle_matrix in self.single_transition_particle_matrices:
+            mem += single_transition_particle_matrix.size * single_transition_particle_matrix.dtype.itemsize
+        return mem
+    
     def get_sparse_or_dense_state(self) -> Union[int, sparse.coo_array, np.ndarray]:
         if self._basis_state_index is not None:
             return self.basis_state_index
