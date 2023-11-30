@@ -53,7 +53,7 @@ def main():
 
 
 def main_nif():
-    n_wires = 32
+    n_wires = 128
     n_gates = "quadratic"
     folder = f"data/results_{n_wires}qubits_{n_gates}_gates_nif_ceil"
     fig, axes = plt.subplots(1, 2, figsize=(20, 10))
@@ -76,13 +76,15 @@ def main_nif():
     benchmark_pipeline.show(
         fig=fig, ax=axes[0],
         xaxis="n_wires",
+        yaxis="time",
         std_coeff=3,
         # save_folder=os.path.join(folder, "figures"),
         show=False,
     )
     benchmark_pipeline.show(
         fig=fig, ax=axes[1],
-        xaxis="n_gates",
+        xaxis="n_wires",
+        yaxis="memory",
         std_coeff=3,
         # save_folder=os.path.join(folder, "figures"),
         show=False,
@@ -98,3 +100,16 @@ def main_nif():
 if __name__ == '__main__':
     # main()
     main_nif()
+    # benchmark_pipeline = BenchmarkPipeline(
+    #     n_variance_pts=10,
+    #     n_wires=np.linspace(2, 32, num=2, dtype=int),
+    #     n_gates="quadratic",
+    #     methods=[
+    #         "nif.lookup_table",
+    #         # "default.qubit",
+    #         # "nif.explicit_sum"
+    #     ],
+    # )
+    # benchmark_pipeline.gen_data_point_(
+    #     0, 0, -1
+    # )
