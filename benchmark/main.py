@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 from matplotlib import pyplot as plt
+import pythonbasictools as pbt
 
 try:
     from .benchmark_pipeline import BenchmarkPipeline
@@ -9,77 +10,32 @@ except ImportError:
     from benchmark_pipeline import BenchmarkPipeline
 
 
-def main():
-    fig, axes = plt.subplots(2, 3, figsize=(20, 10))
-    for i, (n_gates, n_wires) in enumerate(zip(["2_power", "quadratic", "linear"], [10, 20, 20])):
-        folder = f"data/results_{n_wires}qubits_{n_gates}_gates"
-        benchmark_pipeline = BenchmarkPipeline(
-            n_variance_pts=10,
-            n_wires=np.linspace(2, n_wires, num=n_wires - 2, dtype=int),
-            n_gates=n_gates,
-            methods=[
-                "nif.lookup_table",
-                "default.qubit",
-                "nif.explicit_sum"
-            ],
-            save_path=f"{folder}/objects",
-        )
-        benchmark_pipeline.run(
-            nb_workers=-2,
-            # overwrite=True,
-        )
-        benchmark_pipeline.show(
-            fig=fig, ax=axes[0, i],
-            xaxis="n_wires",
-            std_coeff=3,
-            # save_folder=os.path.join(folder, "figures"),
-            show=False,
-        )
-        benchmark_pipeline.show(
-            fig=fig, ax=axes[1, i],
-            xaxis="n_gates",
-            std_coeff=3,
-            # save_folder=os.path.join(folder, "figures"),
-            show=False,
-        )
-        axes[0, i].set_title(f"Gate distribution: {n_gates}")
-
-    plt.tight_layout()
-    for ext in ["pdf", "png"]:
-        filepath = os.path.join("data", "figures", f"benchmark.{ext}")
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        plt.savefig(filepath, dpi=300, bbox_inches="tight")
-    plt.show()
-
-
-def main_nif():
-    n_wires = 128
-    n_gates = "quadratic"
-    folder = f"data/results_{n_wires}qubits_{n_gates}_gates_ceil"
-    std_coeff = 3
+def main(kwargs):
+    max_n_wires = [n for n in BenchmarkPipeline.max_wires_methods.values() if np.isfinite(n)]
+    n_wires = list(sorted(set([2, 128, 1024, 2048, ] + max_n_wires)))
+    n_wires = kwargs.get("n_wires", n_wires)
+    n_wires_str = "-".join(map(str, n_wires))
+    n_gates = kwargs.get("n_gates", 10 * max(n_wires))
+    folder = kwargs.get("folder", f"data/results_{n_wires_str}-qubits_{n_gates}-gates_ceil")
+    std_coeff = kwargs.get("std_coeff", 3)
     fig, axes = plt.subplots(1, 2, figsize=(20, 10))
     benchmark_pipeline = BenchmarkPipeline.from_pickle_or_new(
         pickle_path=f"{folder}/objects.pkl",
-        n_variance_pts=3,
-        n_wires=np.linspace(2, n_wires, num=max(int(np.ceil(n_wires/10)), n_wires), dtype=int),
+        n_variance_pts=kwargs.get("n_variance_pts", 3),
+        n_wires=n_wires,
         n_gates=n_gates,
-        methods=[
-            "nif.lookup_table",
-            "default.qubit",
-            "nif.explicit_sum"
-        ],
+        methods=kwargs.get("methods", ["nif.lookup_table", "default.qubit", "nif.explicit_sum"]),
         save_path=f"{folder}/objects",
     )
     benchmark_pipeline.run(
         nb_workers=-2,
-        # overwrite=True,
+        overwrite=kwargs.get("overwrite", False),
     )
     benchmark_pipeline.show(
         fig=fig, ax=axes[0],
         xaxis="n_wires",
         yaxis="time",
         std_coeff=std_coeff,
-        # save_folder=os.path.join(folder, "figures"),
         show=False,
     )
     benchmark_pipeline.show(
@@ -87,24 +43,23 @@ def main_nif():
         xaxis="n_wires",
         yaxis="memory",
         std_coeff=std_coeff,
-        # save_folder=os.path.join(folder, "figures"),
         show=False,
     )
     plt.tight_layout()
     for ext in ["pdf", "png"]:
-        filepath = os.path.join("data", "figures", f"benchmark.{ext}")
+        filepath = os.path.join(folder, "figures", f"benchmark.{ext}")
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         plt.savefig(filepath, dpi=300, bbox_inches="tight")
-    # plt.show()
+    plt.show()
 
 
 if __name__ == '__main__':
-    # main()
-    main_nif()
+    args = pbt.cmds.get_cmd_kwargs()
+    main(args)
     # benchmark_pipeline = BenchmarkPipeline(
     #     n_variance_pts=1,
-    #     n_wires=np.linspace(2, 128, num=3, dtype=int),
-    #     n_gates="quadratic",
+    #     n_wires=args.get("n_wires", [2, 128]),
+    #     n_gates=args.get("n_gates", "linear"),
     #     methods=["nif.lookup_table"],
     # )
     # benchmark_pipeline.gen_all_data_points_(nb_workers=-2)
