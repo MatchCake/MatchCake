@@ -1,7 +1,15 @@
 import pennylane as qml
 import sys
 import numpy as np
-from msim import NonInteractingFermionicDevice
+import os
+try:
+    import msim
+except ImportError:
+    import sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
+    import msim
+from msim import NonInteractingFermionicDevice, MatchgateOperator, utils
+
 
 MPL_RC_DEFAULT_PARAMS = {
     "font.size": 18,
@@ -45,4 +53,20 @@ def get_device_memory_usage(device: qml.Device) -> int:
     else:
         return device.state.size * device.state.dtype.itemsize
 
+
+def init_nif_device(*args, **kwargs) -> NonInteractingFermionicDevice:
+    wires = kwargs.pop("wires", 2)
+    nif_device = NonInteractingFermionicDevice(
+        wires=wires,
+        prob_strategy=kwargs.pop("prob_strategy", "lookup_table"),
+        **kwargs,
+    )
+    return nif_device
+
+
+def init_qubit_device(*args, **kwargs) -> qml.Device:
+    wires = kwargs.pop("wires", 2)
+    qubit_device = qml.device(kwargs.pop("name", 'default.qubit'), wires=wires, shots=kwargs.get("shots", None))
+    qubit_device.operations.add(MatchgateOperator)
+    return qubit_device
 
