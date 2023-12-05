@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from typing import Optional, Union, List, Any, Tuple
 
@@ -8,11 +9,16 @@ import pennylane as qml
 import matplotlib.pyplot as plt
 import pythonbasictools as pbt
 
-import msim
+try:
+    import msim
+except ImportError:
+    sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
+    import msim
 from utils import MPL_RC_DEFAULT_PARAMS
 from utils import get_device_memory_usage
+from utils import init_nif_device, init_qubit_device
 from msim import MatchgateOperator, mps
-from tests.test_nif_device import init_nif_device, init_qubit_device
+
 
 matplotlib.rcParams.update(MPL_RC_DEFAULT_PARAMS)
 
@@ -77,6 +83,8 @@ class BenchmarkPipeline:
             save_path: Optional[str] = None,
             figures_folder: Optional[str] = None,
             name: Optional[str] = None,
+            interface: str = "auto",
+            use_cuda: bool = False,
     ):
         self.n_variance_pts = n_variance_pts
         self.n_pts = n_pts
@@ -85,14 +93,22 @@ class BenchmarkPipeline:
         self.n_probs = n_probs
         self.methods = methods
         self.methods_functions = {
-            "nif.lookup_table": self.execute_nif_lookup_table,
-            "nif.explicit_sum": self.execute_nif_explicit_sum,
-            "default.qubit": self.execute_default_qubit,
-            "lightning.qubit": self.execute_lightning_qubit,
+            "nif.lookup_table": self.execute_nif,
+            "nif.explicit_sum": self.execute_nif,
+            "default.qubit": self.execute_pennylane_qubit,
+            "lightning.qubit": self.execute_pennylane_qubit,
+        }
+        self.device_init_functions = {
+            "nif.lookup_table": self.init_nif_lookup_table,
+            "nif.explicit_sum": self.init_nif_explicit_sum,
+            "default.qubit": self.init_pennylane_default_qubit,
+            "lightning.qubit": self.init_pennylane_lightning_qubit,
         }
         self.save_path = save_path
         self.figures_folder = figures_folder
         self.name = name
+        self.interface = interface
+        self.use_cuda = use_cuda
 
         self._init_n_pts_()
         self._init_n_wires_()
@@ -102,8 +118,8 @@ class BenchmarkPipeline:
 
         self.wires_list = []
         self.parameters_list = []
-        self._init_wires_list_()
-        self._init_parameters_list_()
+        # self._init_wires_list_()
+        # self._init_parameters_list_()
 
         self.result_data = np.full((len(self.methods), self.n_variance_pts, self.n_pts), self.MISSING_VALUE)
         self.time_data = np.full_like(self.result_data, self.MISSING_VALUE)
@@ -195,11 +211,15 @@ class BenchmarkPipeline:
         """
         self.wires_list = []
         for n_wires, n_gates in zip(self.n_wires, self.n_gates):
-            gate_wires = np.zeros((n_gates, 2), dtype=int)
-            gate_wires[:, 0] = np.arange(n_gates, dtype=int) % (n_wires - 1)
-            gate_wires[:, 1] = gate_wires[:, 0] + 1
+            gate_wires = self.get_wires(n_wires, n_gates)
             self.wires_list.append(gate_wires)
         return self.wires_list
+
+    def get_wires(self, n_wires, n_gates):
+        gate_wires = np.zeros((n_gates, 2), dtype=int)
+        gate_wires[:, 0] = np.arange(n_gates, dtype=int) % (n_wires - 1)
+        gate_wires[:, 1] = gate_wires[:, 0] + 1
+        return gate_wires
     
     def _init_wires_list_block_wall_(self):
         self.wires_list = []
@@ -255,18 +275,26 @@ class BenchmarkPipeline:
     def gen_data_point_(self, method_idx: Union[int, str], variance_idx: int, pt_idx: int):
         if isinstance(method_idx, str):
             method_idx = self.methods.index(method_idx)
-        method_function = self.methods_functions[self.methods[method_idx]]
         max_wires = self.max_wires_methods[self.methods[method_idx]]
+
         if self.n_wires[pt_idx] > max_wires:
             self.time_data[method_idx, variance_idx, pt_idx] = self.UNREACHABLE_VALUE
             self.result_data[method_idx, variance_idx, pt_idx] = self.UNREACHABLE_VALUE
             self.memory_data[method_idx, variance_idx, pt_idx] = self.UNREACHABLE_VALUE
         else:
+            method_function = self.methods_functions[self.methods[method_idx]]
+            device_init_function = self.device_init_functions[self.methods[method_idx]]
+            n_wires, n_gates, n_probs = self.n_wires[pt_idx], self.n_gates[pt_idx], self.n_probs[pt_idx]
+            wires = self.get_wires(n_wires, n_gates)
+            params = mps.MatchgatePolarParams.random_batch_numpy(n_gates,  seed=variance_idx * pt_idx + pt_idx)
+            params = self.push_params_to_interface(params)
+            device = device_init_function(wires=n_wires)
+
             start_time = time.time()
-            out, device = method_function(variance_idx, pt_idx)
-            # self.result_data[method_idx, variance_idx, pt_idx] = out
+            out = method_function(device, params, wires, n_probs)
             self.time_data[method_idx, variance_idx, pt_idx] = time.time() - start_time
             self.memory_data[method_idx, variance_idx, pt_idx] = get_device_memory_usage(device)
+            self.result_data[method_idx, variance_idx, pt_idx] = np.NaN
         return dict(
             time=self.time_data[method_idx, variance_idx, pt_idx],
             result=self.result_data[method_idx, variance_idx, pt_idx],
@@ -305,15 +333,25 @@ class BenchmarkPipeline:
             self.result_data[indexes] = out_dict["result"]
             self.memory_data[indexes] = out_dict["memory"]
 
-    def execute_pennylane_qubit(self, variance_idx: int, pt_idx: int, device_name: str) -> Tuple[Any, Any]:
-        params = self.parameters_list[pt_idx][variance_idx]
-        wires = self.wires_list[pt_idx]
-        n_wires = self.n_wires[pt_idx]
-        n_probs = self.n_probs[pt_idx]
+    def init_pennylane_default_qubit(self, wires):
+        return init_qubit_device(wires=wires, name="default.qubit")
+
+    def init_pennylane_lightning_qubit(self, wires):
+        return init_qubit_device(wires=wires, name="lightning.qubit")
+
+    def init_nif_lookup_table(self, wires):
+        return init_nif_device(wires=wires, prob_strategy="lookup_table")
+
+    def init_nif_explicit_sum(self, wires):
+        return init_nif_device(wires=wires, prob_strategy="explicit_sum")
+
+    def execute_pennylane_qubit(
+            self,
+            device, params, wires, n_probs,
+    ) -> Any:
         prob_wires = np.arange(n_probs)
-        initial_binary_state = np.zeros(n_wires, dtype=int)
-        device = init_qubit_device(wires=n_wires, name=device_name)
-        qnode = qml.QNode(specific_matchgate_circuit, device)
+        initial_binary_state = np.zeros(device.num_wires, dtype=int)
+        qnode = qml.QNode(specific_matchgate_circuit, device, interface=self.interface)
         qubit_state = qnode(
             list(zip(params, wires)),
             initial_binary_state,
@@ -322,23 +360,12 @@ class BenchmarkPipeline:
             out_op="state",
         )
         probs = msim.utils.get_probabilities_from_state(qubit_state, wires=prob_wires)
-        return probs, device
+        return probs
 
-    def execute_default_qubit(self, variance_idx: int, pt_idx: int) -> Tuple[Any, Any]:
-        return self.execute_pennylane_qubit(variance_idx, pt_idx, device_name="default.qubit")
-
-    def execute_lightning_qubit(self, variance_idx: int, pt_idx: int) -> Tuple[Any, Any]:
-        return self.execute_pennylane_qubit(variance_idx, pt_idx, device_name="lightning.qubit")
-
-    def execute_nif(self, variance_idx: int, pt_idx: int, prob_strategy: str) -> Tuple[Any, Any]:
-        params = self.parameters_list[pt_idx][variance_idx]
-        wires = self.wires_list[pt_idx]
-        n_wires = self.n_wires[pt_idx]
-        n_probs = self.n_probs[pt_idx]
+    def execute_nif(self, device, params, wires, n_probs) -> Any:
         prob_wires = np.arange(n_probs)
-        initial_binary_state = np.zeros(n_wires, dtype=int)
-        device = init_nif_device(wires=n_wires, prob_strategy=prob_strategy)
-        qnode = qml.QNode(specific_matchgate_circuit, device)
+        initial_binary_state = np.zeros(device.num_wires, dtype=int)
+        qnode = qml.QNode(specific_matchgate_circuit, device, interface=self.interface)
         probs = qnode(
             list(zip(params, wires)),
             initial_binary_state,
@@ -347,13 +374,7 @@ class BenchmarkPipeline:
             out_op="probs",
             out_wires=prob_wires,
         )
-        return probs, device
-
-    def execute_nif_lookup_table(self, variance_idx: int, pt_idx: int) -> Tuple[Any, Any]:
-        return self.execute_nif(variance_idx, pt_idx, prob_strategy="lookup_table")
-
-    def execute_nif_explicit_sum(self, variance_idx: int, pt_idx: int) -> Tuple[Any, Any]:
-        return self.execute_nif(variance_idx, pt_idx, prob_strategy="explicit_sum")
+        return probs
 
     def run(self, **kwargs):
         overwrite = kwargs.get("overwrite", False)
@@ -480,3 +501,24 @@ class BenchmarkPipeline:
             return cls.from_pickle(pickle_path)
         else:
             return cls(**kwargs)
+
+    def push_params_to_interface(self, params):
+        if self.interface == "auto":
+            return params
+        elif self.interface == "torch":
+            import torch
+            return torch.tensor(
+                params,
+                dtype=torch.float64,
+                requires_grad=getattr(params, "requires_grad", False),
+            ).to(device="cuda" if self.use_cuda else "cpu")
+        elif self.interface == "jax":
+            import jax
+            return jax.numpy.asarray(params)
+        elif self.interface == "tensorflow":
+            import tensorflow as tf
+            return tf.convert_to_tensor(params)
+        elif self.interface == "numpy":
+            return np.asarray(params)
+        else:
+            raise ValueError(f"Unknown interface: {self.interface}.")
