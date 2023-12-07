@@ -65,8 +65,13 @@ class BenchmarkPipeline:
         "result": "Result [-]",
         "memory": "Memory [B]",
     }
+    DEFAULT_NORMALIZED_Y_LABELS = {
+        "time": "Normalized execution time [-]",
+        "result": "Normalized result [-]",
+        "memory": "Normalized memory size [-]",
+    }
     DEFAULT_X_LABELS = {
-        "n_wires": "Number of wires [-]",
+        "n_wires": "Number of qubits [-]",
         "n_gates": "Number of gates [-]",
         "n_probs": "Number of probabilities [-]",
     }
@@ -393,41 +398,52 @@ class BenchmarkPipeline:
             fig.suptitle(self.name)
         methods_colors = kwargs.get("methods_colors", plt.cm.get_cmap("tab10").colors)
         yaxis = kwargs.get("yaxis", "time")
-        yaxis_label = kwargs.get("yaxis_name", self.DEFAULT_Y_LABELS.get(yaxis, yaxis))
+        norm_y = kwargs.get("norm_y", False)
+        default_yaxis_label = self.DEFAULT_Y_LABELS.get(yaxis, yaxis)
+        if norm_y:
+            default_yaxis_label = self.DEFAULT_NORMALIZED_Y_LABELS.get(yaxis, default_yaxis_label)
+        yaxis_label = kwargs.get("yaxis_name", default_yaxis_label)
         xaxis = kwargs.get("xaxis", "n_wires")
         xaxis_label = kwargs.get("xaxis_name", self.DEFAULT_X_LABELS.get(xaxis, xaxis))
         std_coeff = kwargs.get("std_coeff", 1)
         methods = kwargs.get("methods", self.methods)
+        methods_names = kwargs.get("methods_names", {k: k for k in methods})
+        pt_indexes = kwargs.get("pt_indexes", np.arange(self.n_pts))
         for i, method in enumerate(methods):
             method_idx = self.methods.index(method)
             if yaxis == "time":
-                y = self.time_data[method_idx]
+                y = self.time_data[method_idx][:, pt_indexes]
+                max_y = np.nanmax(self.time_data)
             elif yaxis == "result":
-                y = self.result_data[method_idx]
+                y = self.result_data[method_idx][:, pt_indexes]
+                max_y = np.nanmax(self.result_data)
             elif yaxis == "memory":
-                y = self.memory_data[method_idx]
+                y = self.memory_data[method_idx][:, pt_indexes]
+                max_y = np.nanmax(self.memory_data)
             else:
                 raise ValueError(f"Unknown yaxis: {yaxis}.")
             y = np.where(np.isclose(y, self.UNREACHABLE_VALUE), np.NaN, y)
+            if norm_y:
+                y = y / max_y
             mean_y = np.nanmean(y, axis=0)
             std_y = std_coeff * np.nanstd(y, axis=0)
             if xaxis == "n_wires":
-                x = np.asarray(self.n_wires, dtype=int)
+                x = np.asarray(self.n_wires, dtype=int)[pt_indexes]
             elif xaxis == "n_gates":
-                x = np.asarray(self.n_gates, dtype=int)
+                x = np.asarray(self.n_gates, dtype=int)[pt_indexes]
             elif xaxis == "n_probs":
-                x = np.asarray(self.n_probs, dtype=int)
+                x = np.asarray(self.n_probs, dtype=int)[pt_indexes]
             else:
                 raise ValueError(f"Unknown xaxis: {xaxis}.")
-            axes.plot(x, mean_y, label=method, color=methods_colors[i])
+            axes.plot(x, mean_y, label=methods_names.get(method, method), color=methods_colors[i])
             axes.fill_between(
                 x, mean_y - std_y, mean_y + std_y, alpha=0.2, color=methods_colors[i]
             )
-        # axes.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
-        n_ticks = len(axes.get_xticks())
-        pt_indexes = np.linspace(0, self.n_pts, num=n_ticks, dtype=int, endpoint=False)
+        n_ticks = kwargs.get("n_ticks", len(axes.get_xticks()))
+        pt_indexes_ticks = np.linspace(0, len(pt_indexes) - 1, num=n_ticks, dtype=int, endpoint=True)
+        pt_indexes_ticks = kwargs.get("pt_indexes_ticks", pt_indexes_ticks)
         if xaxis == "n_wires":
-            axes.set_xticks(self.n_wires[pt_indexes])
+            axes.set_xticks(self.n_wires[pt_indexes][pt_indexes_ticks])
             axes.set_xticklabels([f"{int(n_wires)}" for n_wires in axes.get_xticks()])
         elif xaxis == "n_gates":
             # axes.set_xticks(self.n_gates[pt_indexes])
@@ -443,8 +459,9 @@ class BenchmarkPipeline:
         axes.set_ylabel(yaxis_label)
         axes.set_title(kwargs.get("title", ""))
         std_patch = matplotlib.patches.Patch(color="gray", alpha=0.2, label=f"{std_coeff} Std")
-        lines, labels = axes.get_legend_handles_labels()
-        axes.legend(handles=lines + [std_patch], labels=labels + [f"{std_coeff} Std"])
+        if kwargs.get("legend", True):
+            lines, labels = axes.get_legend_handles_labels()
+            axes.legend(handles=lines + [std_patch], labels=labels + [f"{std_coeff} Std"])
         if kwargs.get("tight_layout", False):
             fig.tight_layout()
         save_folder = kwargs.get("save_folder", None)
