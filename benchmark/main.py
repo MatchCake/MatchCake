@@ -19,6 +19,7 @@ def main(kwargs):
     max_n_wires = [n for n in BenchmarkPipeline.max_wires_methods.values() if np.isfinite(n)]
     n_wires = list(sorted(set([2, 128, 1024, 2048, ] + max_n_wires)))
     # n_wires = np.linspace(2, 32, num=30, endpoint=True, dtype=int).tolist()
+    # n_wires = list(sorted(set([2, 128, 1024, ] + max_n_wires)))
     n_wires = kwargs.get("n_wires", n_wires)
     n_wires_str = "-".join(map(str, n_wires))
     n_gates = kwargs.get("n_gates", 10 * max(n_wires))
