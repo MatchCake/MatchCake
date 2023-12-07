@@ -14,7 +14,7 @@ from msim import NonInteractingFermionicDevice, MatchgateOperator, utils
 MPL_RC_DEFAULT_PARAMS = {
     "font.size": 18,
     "legend.fontsize": 16,
-    "lines.linewidth": 2.0,
+    "lines.linewidth": 3.0,
     "xtick.direction": "in",
     "ytick.direction": "in",
     "font.family": "sans-serif",
