@@ -6,7 +6,7 @@ try:
     import msim
 except ImportError:
     import sys
-    sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
+    sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import msim
 from msim import NonInteractingFermionicDevice, MatchgateOperator, utils
 

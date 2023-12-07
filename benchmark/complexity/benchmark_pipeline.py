@@ -12,7 +12,7 @@ import pythonbasictools as pbt
 try:
     import msim
 except ImportError:
-    sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
+    sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import msim
 from utils import MPL_RC_DEFAULT_PARAMS
 from utils import get_device_memory_usage
