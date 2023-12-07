@@ -1,18 +1,24 @@
 import os
 
+import matplotlib
 import numpy as np
 from matplotlib import pyplot as plt
 import pythonbasictools as pbt
 
+
 try:
     from .benchmark_pipeline import BenchmarkPipeline
+    from .utils import MPL_RC_DEFAULT_PARAMS
 except ImportError:
     from benchmark_pipeline import BenchmarkPipeline
+    from utils import MPL_RC_DEFAULT_PARAMS
 
 
 def main(kwargs):
+    matplotlib.rcParams.update(MPL_RC_DEFAULT_PARAMS)
     max_n_wires = [n for n in BenchmarkPipeline.max_wires_methods.values() if np.isfinite(n)]
     n_wires = list(sorted(set([2, 128, 1024, 2048, ] + max_n_wires)))
+    # n_wires = np.linspace(2, 32, num=30, endpoint=True, dtype=int).tolist()
     n_wires = kwargs.get("n_wires", n_wires)
     n_wires_str = "-".join(map(str, n_wires))
     n_gates = kwargs.get("n_gates", 10 * max(n_wires))
@@ -36,6 +42,12 @@ def main(kwargs):
         xaxis="n_wires",
         yaxis="time",
         std_coeff=std_coeff,
+        methods_names={"nif.lookup_table": "NIF", "default.qubit": "Pennylane", "nif.explicit_sum": "NIF.es"},
+        # pt_indexes=[0, 1, 2],
+        # n_ticks=kwargs.get("n_ticks", 3),
+        pt_indexes_ticks=[0, -3, -2, -1],
+        norm_y=True,
+        legend=False,
         show=False,
     )
     benchmark_pipeline.show(
@@ -43,6 +55,12 @@ def main(kwargs):
         xaxis="n_wires",
         yaxis="memory",
         std_coeff=std_coeff,
+        methods_names={"nif.lookup_table": "NIF", "default.qubit": "Pennylane", "nif.explicit_sum": "NIF.es"},
+        # pt_indexes=[0, 1, 2],
+        # n_ticks=kwargs.get("n_ticks", 3),
+        pt_indexes_ticks=[0, -3, -2, -1],
+        norm_y=True,
+        legend=True,
         show=False,
     )
     plt.tight_layout()
