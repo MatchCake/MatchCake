@@ -47,7 +47,7 @@ and following the instructions above.
 
 # Citation
 ```
-@misc{Gince2023,
+@misc{msim_Gince2023,
   title={Matchgate Circuits using Non-Interacting Fermionic Simulation},
   author={Jérémie Gince},
   year={2023},
