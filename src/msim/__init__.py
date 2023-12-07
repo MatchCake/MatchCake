@@ -21,6 +21,7 @@ from msim import matchgate_parameter_sets as mps  # Alias
 from .matchgate_operator import MatchgateOperator
 from .nif_device import NonInteractingFermionicDevice
 from . import utils
+from . import ml
 
 import warnings
 
