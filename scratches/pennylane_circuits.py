@@ -4,20 +4,20 @@ import numpy as np
 import pennylane as qml
 from pennylane import numpy as pnp
 
-from msim import MatchgateOperator, NonInteractingFermionicDevice
+from msim import MatchgateOperation, NonInteractingFermionicDevice
 from msim import matchgate_parameter_sets as mps
 
 
 def devices_init(*args, **kwargs) -> Tuple[NonInteractingFermionicDevice, qml.Device]:
     nif_device = NonInteractingFermionicDevice(wires=kwargs.get("wires", 2))
     qubit_device = qml.device('default.qubit', wires=kwargs.get("wires", 2), shots=kwargs.get("shots", 1))
-    qubit_device.operations.add(MatchgateOperator)
+    qubit_device.operations.add(MatchgateOperation)
     return nif_device, qubit_device
 
 
 def single_matchgate_circuit(params):
     h_params = mps.MatchgateHamiltonianCoefficientsParams.parse_from_params(params)
-    op = MatchgateOperator(h_params, wires=[0, 1])
+    op = MatchgateOperation(h_params, wires=[0, 1])
     qml.apply(op)
     return qml.probs(wires=0)
 

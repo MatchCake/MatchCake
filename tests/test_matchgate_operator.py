@@ -3,7 +3,7 @@ import pennylane as qml
 import pytest
 from pfapack import pfaffian
 
-from msim import MatchgateOperator, NonInteractingFermionicDevice, Matchgate
+from msim import MatchgateOperation, NonInteractingFermionicDevice, Matchgate
 from msim import matchgate_parameter_sets as mps
 from msim import utils
 from .configs import ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON, TEST_SEED
@@ -97,7 +97,7 @@ def test_single_matchgate_circuit_output_probs(params, initial_binary_state, out
 )
 def test_single_matchgate_obs_on_specific_cases(params, k, binary_state, observable):
     nif_device = NonInteractingFermionicDevice(wires=2)
-    nif_device.apply(MatchgateOperator(params, wires=[0, 1]))
+    nif_device.apply(MatchgateOperation(params, wires=[0, 1]))
     state = utils.binary_state_to_state(binary_state)
     pred_obs = nif_device.lookup_table.get_observable(k, state)
     pred_pf = pfaffian.pfaffian(pred_obs)
@@ -119,7 +119,7 @@ def test_single_matchgate_obs_on_specific_cases(params, k, binary_state, observa
     ]
 )
 def test_get_padded_single_transition_particle_matrix(wires, n_wires, padded_matrix):
-    mgo = MatchgateOperator(mps.fSWAP, wires=wires)
+    mgo = MatchgateOperation(mps.fSWAP, wires=wires)
     all_wires = list(range(n_wires))
     pred_padded_matrix = mgo.get_padded_single_transition_particle_matrix(wires=all_wires)
     np.testing.assert_allclose(

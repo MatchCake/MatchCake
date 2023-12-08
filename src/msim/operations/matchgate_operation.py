@@ -1,14 +1,13 @@
 from typing import Union
 
-import pennylane as qml
 from pennylane.operation import Operation
 from pennylane import numpy as pnp
 
-from .matchgate import Matchgate
-from . import matchgate_parameter_sets as mps
+from ..base.matchgate import Matchgate
+from .. import matchgate_parameter_sets as mps
 
 
-class MatchgateOperator(Matchgate, Operation):
+class MatchgateOperation(Matchgate, Operation):
     num_params = mps.MatchgatePolarParams.N_PARAMS
     num_wires = 2
     par_domain = "A"
@@ -26,7 +25,7 @@ class MatchgateOperator(Matchgate, Operation):
     
     @staticmethod
     def compute_matrix(*params, **hyperparams):
-        return MatchgateOperator._matrix(*params)
+        return MatchgateOperation._matrix(*params)
     
     def __init__(
             self,
@@ -77,7 +76,7 @@ class MatchgateOperator(Matchgate, Operation):
         return padded_matrix
     
     def adjoint(self):
-        return MatchgateOperator(
+        return MatchgateOperation(
             self.polar_params.adjoint(),
             wires=self.wires,
             backend=self.backend,

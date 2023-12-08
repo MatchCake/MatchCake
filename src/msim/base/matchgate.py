@@ -2,8 +2,8 @@ from typing import NamedTuple, Union, Optional
 from dataclasses import dataclass
 import numpy as np
 
-from . import utils
-from . import matchgate_parameter_sets as mps
+from .. import utils
+from .. import matchgate_parameter_sets as mps
 
 
 class Matchgate:

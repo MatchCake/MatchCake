@@ -2,7 +2,7 @@ from typing import Tuple
 
 import pennylane as qml
 
-from msim import MatchgateOperator, NonInteractingFermionicDevice
+from msim import MatchgateOperation, NonInteractingFermionicDevice
 from msim import utils
 from .test_single_matchgate_circuit import single_matchgate_circuit
 
@@ -27,7 +27,7 @@ def init_nif_device(*args, **kwargs) -> NonInteractingFermionicDevice:
 def init_qubit_device(*args, **kwargs) -> qml.Device:
     wires = kwargs.pop("wires", 2)
     qubit_device = qml.device(kwargs.pop("name", 'default.qubit'), wires=wires, shots=kwargs.get("shots", None))
-    qubit_device.operations.add(MatchgateOperator)
+    qubit_device.operations.add(MatchgateOperation)
     return qubit_device
 
 

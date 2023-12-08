@@ -1,6 +1,6 @@
 import itertools
 import warnings
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Tuple, Union, Callable, Any
 
 import numpy as np
 from scipy import sparse
@@ -9,9 +9,11 @@ from pennylane import numpy as pnp
 from pennylane.pulse import ParametrizedEvolution
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
-from .matchgate_operator import MatchgateOperator
-from .lookup_table import NonInteractingFermionicLookupTable
-from . import utils
+from pennylane.ops.qubit.observables import BasisStateProjector
+from ..operations.matchgate_operation import MatchgateOperation
+from ..operations.m_rot import MRot
+from ..base.lookup_table import NonInteractingFermionicLookupTable
+from .. import utils
 
 
 class NonInteractingFermionicDevice(qml.QubitDevice):
@@ -21,8 +23,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     version = "0.0.1"
     author = "Jérémie Gince"
 
-    operations = {"MatchgateOperator", "BasisEmbedding", "StatePrep", "BasisState", "Snapshot"}
-    observables = {"PauliZ", "Identity"}
+    operations = {MatchgateOperation.__name__, MRot.__name__, "BasisEmbedding", "StatePrep", "BasisState", "Snapshot"}
+    observables = {"BasisStateProjector", "Identity"}
 
     prob_strategies = {"lookup_table", "explicit_sum"}
 
@@ -311,7 +313,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 self._state = self._apply_parametrized_evolution(self._state, op)
             else:
                 assert op.name in self.operations, f"Operation {op.name} is not supported."
-                if isinstance(op, MatchgateOperator):
+                if isinstance(op, MatchgateOperation):
                     global_single_transition_particle_matrix = qml.math.dot(
                         global_single_transition_particle_matrix,
                         op.get_padded_single_transition_particle_matrix(self.wires),
@@ -329,6 +331,14 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             global_single_transition_particle_matrix
         )
 
+    def get_prob_strategy_func(self) -> Callable[[Wires, Any], float]:
+        if self.prob_strategy == "lookup_table":
+            return self.compute_probability_of_target_using_lookup_table
+        elif self.prob_strategy == "explicit_sum":
+            return self.compute_probability_of_target_using_explicit_sum
+        else:
+            raise NotImplementedError(f"Probability strategy {self.prob_strategy} is not implemented.")
+
     def analytic_probability(self, wires=None):
         if not self.is_state_initialized:
             return None
@@ -338,18 +348,22 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             wires = [wires]
         wires = Wires(wires)
         wires_binary_states = np.array(list(itertools.product([0, 1], repeat=len(wires))))
-        if self.prob_strategy == "lookup_table":
-            return np.asarray([
-                self.compute_probability_of_target_using_lookup_table(wires, wires_binary_state)
-                for wires_binary_state in wires_binary_states
-            ])
-        elif self.prob_strategy == "explicit_sum":
-            return np.asarray([
-                self.compute_probability_of_target_using_explicit_sum(wires, wires_binary_state)
-                for wires_binary_state in wires_binary_states
-            ])
+        prob_func = self.get_prob_strategy_func()
+        return np.asarray([
+            prob_func(wires, wires_binary_state)
+            for wires_binary_state in wires_binary_states
+        ])
+
+    def expval(self, observable, shot_range=None, bin_size=None):
+        if isinstance(observable, BasisStateProjector):
+            wires = observable.wires
+            idx = int("".join(str(i) for i in observable.parameters[0]), 2)
+            prob_func = self.get_prob_strategy_func()
+            return prob_func(wires, idx)
+        elif isinstance(observable, qml.Identity):
+            return 1.0
         else:
-            raise NotImplementedError(f"Probability strategy {self.prob_strategy} is not implemented.")
+            raise NotImplementedError(f"Observable {observable.name} is not implemented.")
 
     def compute_probability_using_lookup_table(self, wires=None):
         warnings.warn(

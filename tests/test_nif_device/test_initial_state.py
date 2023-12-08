@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 import pytest
 import pennylane as qml
-from msim import MatchgateOperator, NonInteractingFermionicDevice, Matchgate
+from msim import MatchgateOperation, NonInteractingFermionicDevice, Matchgate
 from msim import matchgate_parameter_sets as mps
 from msim import utils
 from functools import partial

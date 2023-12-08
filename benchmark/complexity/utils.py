@@ -8,7 +8,7 @@ except ImportError:
     import sys
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import msim
-from msim import NonInteractingFermionicDevice, MatchgateOperator, utils
+from msim import NonInteractingFermionicDevice, MatchgateOperation, utils
 
 
 MPL_RC_DEFAULT_PARAMS = {
@@ -67,6 +67,6 @@ def init_nif_device(*args, **kwargs) -> NonInteractingFermionicDevice:
 def init_qubit_device(*args, **kwargs) -> qml.Device:
     wires = kwargs.pop("wires", 2)
     qubit_device = qml.device(kwargs.pop("name", 'default.qubit'), wires=wires, shots=kwargs.get("shots", None))
-    qubit_device.operations.add(MatchgateOperator)
+    qubit_device.operations.add(MatchgateOperation)
     return qubit_device
 

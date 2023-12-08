@@ -2,7 +2,7 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from msim import MatchgateOperator, utils
+from msim import MatchgateOperation, utils
 from msim import matchgate_parameter_sets as mps
 from . import devices_init
 from ..configs import (
@@ -23,7 +23,7 @@ def single_line_matchgates_circuit(params_list, initial_state=None, **kwargs):
     qml.BasisState(initial_state, wires=all_wires)
     for params in params_list:
         mg_params = mps.MatchgatePolarParams.parse_from_any(params)
-        MatchgateOperator(mg_params, wires=all_wires)
+        MatchgateOperation(mg_params, wires=all_wires)
     out_op = kwargs.get("out_op", "state")
     if out_op == "state":
         return qml.state()

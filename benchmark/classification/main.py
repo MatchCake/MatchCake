@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 import umap
 
-from kernels import ClassicalKernel, PennylaneQuantumKernel
+from kernels import ClassicalKernel, PennylaneQuantumKernel, NIFKernel
 try:
     import msim
 except ImportError:
@@ -68,16 +68,25 @@ if __name__ == '__main__':
         seed=0,
         # encoder_matrix=rn_embed_matrix,
         shots=1,
-        nb_workers=max(0, psutil.cpu_count(logical=False) - 2),
+        # nb_workers=max(0, psutil.cpu_count(logical=False) - 2),
+        interface="auto",
+    ).fit(X, y)
+    nif_kernel = NIFKernel(
+        embedding_dim=embedding_size,
+        seed=0,
+        # encoder_matrix=rn_embed_matrix,
+        # nb_workers=max(0, psutil.cpu_count(logical=False) - 2),
         interface="auto",
     ).fit(X, y)
     
     clas_model = svm.SVC(kernel=clas_kernel.kernel, random_state=0)
     pennylane_model = svm.SVC(kernel=pennylane_kernel.kernel, random_state=0)
+    nif_model = svm.SVC(kernel=nif_kernel.kernel, random_state=0)
     
     models = {
-        "classical": clas_model,
-        "pennylane": pennylane_model,
+        # "classical": clas_model,
+        # "pennylane": pennylane_model,
+        "nif": nif_model,
     }
     n_plots = len(models)
     n_rows = int(np.ceil(np.sqrt(n_plots)))
@@ -95,9 +104,9 @@ if __name__ == '__main__':
             model=model,
             X=X, y=y,
             # reducer=decomposition.PCA(n_components=2, random_state=0),
-            reducer=umap.UMAP(n_components=2, transform_seed=0, n_jobs=max(0, psutil.cpu_count() - 2)),
+            # reducer=umap.UMAP(n_components=2, transform_seed=0, n_jobs=max(0, psutil.cpu_count() - 2)),
             check_estimators=False,
-            n_pts=(100 if m_name.startswith('q') else 1_000),
+            n_pts=1_000,
             title=f"Decision boundaries in the reduced space.",
             legend_labels=getattr(dataset, "target_names", None),
             # axis_name="RN",

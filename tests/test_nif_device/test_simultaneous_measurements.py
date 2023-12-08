@@ -2,7 +2,7 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from msim import MatchgateOperator, NonInteractingFermionicDevice
+from msim import MatchgateOperation, NonInteractingFermionicDevice
 from msim import matchgate_parameter_sets as mps
 from msim import utils
 from . import devices_init
@@ -29,7 +29,7 @@ def test_single_gate_circuit_probability_single_vs_target_specific_cases(initial
     device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
-        MatchgateOperator(params, wires=[0, 1])
+        MatchgateOperation(params, wires=[0, 1])
     ]
     device.apply(operations)
     es_probs = device.compute_probability_using_explicit_sum(wire)
@@ -56,7 +56,7 @@ def test_single_gate_circuit_probability_single_vs_target_random_cases(initial_b
     device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
-        MatchgateOperator(params, wires=[0, 1])
+        MatchgateOperation(params, wires=[0, 1])
     ]
     device.apply(operations)
     es_probs = device.compute_probability_using_explicit_sum(wire)
@@ -84,7 +84,7 @@ def test_single_gate_circuit_probability_target_state_specific_cases(
     device = NonInteractingFermionicDevice(wires=wires)
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
-        MatchgateOperator(params, wires=wires)
+        MatchgateOperation(params, wires=wires)
     ]
     device.apply(operations)
     es_m_prob = device.compute_probability_of_target_using_explicit_sum(wires, target_binary_state=target_binary_state)

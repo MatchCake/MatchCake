@@ -9,17 +9,22 @@ __license__ = "Apache 2.0"
 __url__ = "https://github.com/JeremieGince/FermionicSimulation"
 __version__ = "0.0.1-beta0"
 
-from .matchgate import Matchgate
+from .base import Matchgate
 from .matchgate_parameter_sets import (
     MatchgateStandardParams,
     MatchgatePolarParams,
     MatchgateHamiltonianCoefficientsParams,
     MatchgateComposedHamiltonianParams,
-    MatchgateStandardHamiltonianParams
+    MatchgateStandardHamiltonianParams,
 )
 from msim import matchgate_parameter_sets as mps  # Alias
-from .matchgate_operator import MatchgateOperator
-from .nif_device import NonInteractingFermionicDevice
+from .operations import (
+    MatchgateOperation,
+)
+from .devices import (
+    NonInteractingFermionicDevice,
+    NIFDevice,
+)
 from . import utils
 from . import ml
 

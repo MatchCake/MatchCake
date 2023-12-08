@@ -6,7 +6,7 @@ import pennylane as qml
 from pennylane import numpy as pnp
 from scipy import sparse
 
-from . import utils
+from .. import utils
 
 
 class NonInteractingFermionicLookupTable:

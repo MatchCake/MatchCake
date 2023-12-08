@@ -2,7 +2,7 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from msim import MatchgateOperator, NonInteractingFermionicDevice
+from msim import MatchgateOperation, NonInteractingFermionicDevice
 from msim import matchgate_parameter_sets as mps
 from msim import utils
 from ..configs import (
@@ -25,7 +25,7 @@ np.random.seed(TEST_SEED)
 )
 def test_single_gate_circuit_analytic_probability(params, target_expectation_value):
     device = NonInteractingFermionicDevice(wires=2)
-    op = MatchgateOperator(params, wires=[0, 1])
+    op = MatchgateOperation(params, wires=[0, 1])
     device.apply(op)
     expectation_value = device.analytic_probability(0)
     np.testing.assert_allclose(
@@ -37,7 +37,7 @@ def test_single_gate_circuit_analytic_probability(params, target_expectation_val
 
 def single_matchgate_circuit(params, initial_state=np.array([0, 0]), **kwargs):
     qml.BasisState(initial_state, wires=[0, 1])
-    MatchgateOperator(params, wires=[0, 1], **kwargs)
+    MatchgateOperation(params, wires=[0, 1], **kwargs)
     out_op = kwargs.get("out_op", "state")
     if out_op == "state":
         return qml.state()

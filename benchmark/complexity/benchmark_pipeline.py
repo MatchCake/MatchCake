@@ -17,7 +17,7 @@ except ImportError:
 from utils import MPL_RC_DEFAULT_PARAMS
 from utils import get_device_memory_usage
 from utils import init_nif_device, init_qubit_device
-from msim import MatchgateOperator, mps
+from msim import MatchgateOperation, mps
 
 
 matplotlib.rcParams.update(MPL_RC_DEFAULT_PARAMS)
@@ -33,7 +33,7 @@ def specific_matchgate_circuit(params_wires_list, initial_state=None, **kwargs):
     qml.BasisState(initial_state, wires=all_wires)
     for params, wires in params_wires_list:
         mg_params = mps.MatchgatePolarParams.parse_from_any(params)
-        MatchgateOperator(mg_params, wires=wires)
+        MatchgateOperation(mg_params, wires=wires)
     out_op = kwargs.get("out_op", "state")
     if out_op == "state":
         return qml.state()
@@ -91,6 +91,21 @@ class BenchmarkPipeline:
             interface: str = "auto",
             use_cuda: bool = False,
     ):
+        r"""
+
+
+        :param n_variance_pts:
+        :param n_pts:
+        :param n_wires:
+        :param n_gates:
+        :param n_probs:
+        :param methods:
+        :param save_path:
+        :param figures_folder:
+        :param name:
+        :param interface:
+        :param use_cuda:
+        """
         self.n_variance_pts = n_variance_pts
         self.n_pts = n_pts
         self.n_wires = n_wires
@@ -507,7 +522,7 @@ class BenchmarkPipeline:
                 pickle.dump(self, f)
 
     @classmethod
-    def from_pickle(cls, pickle_path: str):
+    def from_pickle(cls, pickle_path: str) -> "BenchmarkPipeline":
         import pickle
         with open(pickle_path, "rb") as f:
             return pickle.load(f)
