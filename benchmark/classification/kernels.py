@@ -97,7 +97,7 @@ class PennylaneQuantumKernel(BaseEstimator):
         self._embedding_rotation = kwargs.get("embedding_rotation", "X")
 
         self._dev_kernel = None
-        self._qnode = None
+        self.qnode = None
 
     def __getstate__(self):
         state = {
@@ -123,7 +123,7 @@ class PennylaneQuantumKernel(BaseEstimator):
 
         self._embedding_dim = self._encoder_matrix.shape[-1]
         self._dev_kernel = qml.device(self._device, wires=self._embedding_dim, shots=self._shots)
-        self._qnode = qml.QNode(self.circuit, self._dev_kernel, interface=self._interface)
+        self.qnode = qml.QNode(self.circuit, self._dev_kernel, interface=self._interface)
 
         return self
 
@@ -155,7 +155,7 @@ class PennylaneQuantumKernel(BaseEstimator):
         check_is_fitted(self)
 
         _list_results = pbt.apply_func_multiprocess(
-            func=self._qnode,
+            func=self.qnode,
             iterable_of_args=[
                 (a, b)
                 for a in x0
@@ -194,7 +194,7 @@ class NIFKernel(BaseEstimator):
         self._shots = shots
         self._nb_workers = nb_workers
 
-        self._qnode = None
+        self.qnode = None
         self.classes_ = None
         self.X_ = None
         self.y_ = None
@@ -223,7 +223,7 @@ class NIFKernel(BaseEstimator):
 
         self._embedding_dim = self._encoder_matrix.shape[-1]
         self._device = msim.NonInteractingFermionicDevice(wires=self._embedding_dim)
-        self._qnode = qml.QNode(self.circuit, self._device, interface=self._interface)
+        self.qnode = qml.QNode(self.circuit, self._device, interface=self._interface)
 
         return self
 
@@ -255,7 +255,7 @@ class NIFKernel(BaseEstimator):
         x1 = check_array(x1)
         check_is_fitted(self)
         _list_results = pbt.apply_func_multiprocess(
-            func=self._qnode,
+            func=self.qnode,
             iterable_of_args=[(a, b) for a in x0 for b in x1],
             iterable_of_kwargs=[kwargs for _ in range(len(x0) * len(x1))],
             nb_workers=self._nb_workers,
