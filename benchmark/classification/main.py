@@ -70,6 +70,7 @@ if __name__ == '__main__':
         shots=1,
         # nb_workers=max(0, psutil.cpu_count(logical=False) - 2),
         interface="auto",
+        embedding_rotation="Z",
     ).fit(X, y)
     nif_kernel = NIFKernel(
         embedding_dim=embedding_size,
@@ -84,9 +85,9 @@ if __name__ == '__main__':
     nif_model = svm.SVC(kernel=nif_kernel.kernel, random_state=0)
     
     models = {
-        # "classical": clas_model,
-        # "pennylane": pennylane_model,
-        "nif": nif_model,
+        "classical": clas_model,
+        "pennylane": pennylane_model,
+        # "nif": nif_model,
     }
     n_plots = len(models)
     n_rows = int(np.ceil(np.sqrt(n_plots)))
