@@ -16,13 +16,14 @@ except ImportError:
 def main(kwargs):
     matplotlib.rcParams.update(MPL_RC_DEFAULT_PARAMS)
     max_n_wires = [n for n in BenchmarkPipeline.max_wires_methods.values() if np.isfinite(n)]
-    n_wires = np.linspace(2, 32, num=30, endpoint=True, dtype=int).tolist()
+    n_wires_range = (2, 32, 30)
+    n_wires = np.linspace(n_wires_range[0], n_wires_range[1], num=n_wires_range[2], endpoint=True, dtype=int).tolist()
     n_wires = list(sorted(set(n_wires + max_n_wires)))
     # n_wires = list(sorted(set([2, 128, 1024, ] + max_n_wires)))
     n_wires = kwargs.get("n_wires", n_wires)
-    n_wires_str = "-".join(map(str, n_wires))
+    n_wires_str = n_wires if isinstance(n_wires, str) else "-".join(map(str, n_wires_range))
     n_gates = kwargs.get("n_gates", 10 * max(n_wires))
-    folder = kwargs.get("folder", f"data/results_{n_wires_str}-qubits_{n_gates}-gates_ceil")
+    folder = kwargs.get("folder", f"data/results_{n_wires_str}-qubits_{n_gates}-gates_ceil_expval")
     std_coeff = kwargs.get("std_coeff", 3)
     fig, axes = plt.subplots(1, 2, figsize=(20, 10))
     benchmark_pipeline = BenchmarkPipeline.from_pickle_or_new(
