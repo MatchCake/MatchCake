@@ -242,6 +242,8 @@ class Matchgate:
 
         if raise_errors_if_not_matchgate:
             self.check_asserts()
+
+        self.majorana_getter = kwargs.get("majorana_getter", utils.MajoranaGetter(n=2))
         
         # Interaction properties
         self._single_transition_particle_matrix = None
@@ -561,15 +563,19 @@ class Matchgate:
         u = self.gate_data
         u_dagger = np.conjugate(self.gate_data.T)
         n_states = u.shape[0]
-        n = int(np.log2(n_states))
 
-        matrix = np.zeros((2*n, 2*n), dtype=complex)
-
-        for i in range(n_states):
-            c_mu = utils.get_majorana(i, n)
-            row = utils.decompose_matrix_into_majoranas(u @ c_mu @ u_dagger)
-            matrix[i, :] = row
-
+        majorana_tensor = np.stack([self.majorana_getter[i] for i in range(2*self.majorana_getter.n)])  # (2n, 2^n, 2^n)
+        u_c_u_dagger = u @ majorana_tensor @ u_dagger  # (2^n, 2^n) @ (2n, 2^n, 2^n) @ (2^n, 2^n) -> (2n, 2^n, 2^n)
+        # _matrix = np.stack([
+        #     np.trace(u_c_u_dagger[i] @ majorana_tensor.T) / n_states
+        #     for i in range(2*self.majorana_getter.n)
+        # ])  # [2n, Tr{(2^n, 2^n) @ (2^n, 2^n, 2n)}] -> [2n, Tr{(2^n, 2^n, 2n)}] -> [2n, (2n, )]
+        matrix = np.stack([
+            utils.decompose_matrix_into_majoranas(u_c_u_dagger[i], majorana_getter=self.majorana_getter)
+            for i in range(2*self.majorana_getter.n)
+        ])
+        # TODO: use an einsum to compute the matrix without the for loop
+        # _matrix_with_einsum = np.einsum("bij,klj->bk", u_c_u_dagger, majorana_tensor) / n_states
         self._single_transition_particle_matrix = matrix
         return self._single_transition_particle_matrix
     
