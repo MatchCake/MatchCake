@@ -10,10 +10,9 @@ from .. import matchgate_parameter_sets as mps
 from .matchgate_operation import MatchgateOperation
 
 
-class MatchgateRotation(Operation):
+class MatchgateRotation(MatchgateOperation):
     num_wires = 2
     num_params = 1
-    ndim_params = (1,)
 
     def __init__(
             self,
@@ -26,12 +25,12 @@ class MatchgateRotation(Operation):
     ):
         shape = qml.math.shape(params)[-1:]
         n_params = shape[0]
-        if n_params != 2:
+        if n_params != self.num_params:
             raise ValueError(
-                f"{self.__class__.__name__} requires 2 parameters; got {n_params}."
+                f"{self.__class__.__name__} requires {self.num_params} parameters; got {n_params}."
             )
-        m_params = mps.MatchgatePolarParams(r0=1, r1=1, theta0=params[0], theta2=params[1])
-        super().__init__(self, m_params, wires=wires, id=id, backend=backend, **kwargs)
+        m_params = mps.MatchgatePolarParams(r0=1, r1=1, theta0=params[0], theta2=params[0])
+        super().__init__(m_params, wires=wires, id=id, backend=backend, **kwargs)
 
 
 MRot = MatchgateRotation
