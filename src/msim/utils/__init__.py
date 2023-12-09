@@ -1,4 +1,5 @@
 import importlib
+from functools import partial
 from typing import List, Union, Optional
 
 import numpy as np
@@ -199,7 +200,10 @@ def check_if_imag_is_zero(__matrix: np.ndarray, eps: float = 1e-5) -> bool:
     return np.allclose(__matrix.imag, 0.0, atol=eps)
 
 
-def decompose_matrix_into_majoranas(__matrix: np.ndarray) -> np.ndarray:
+def decompose_matrix_into_majoranas(
+        __matrix: np.ndarray,
+        majorana_getter: Optional[MajoranaGetter] = None
+) -> np.ndarray:
     r"""
     Decompose a matrix into Majorana operators. The matrix is decomposed as
 
@@ -211,6 +215,8 @@ def decompose_matrix_into_majoranas(__matrix: np.ndarray) -> np.ndarray:
 
     :param __matrix: Input matrix
     :type __matrix: np.ndarray
+    :param majorana_getter: Majorana getter
+    :type majorana_getter: Optional[MajoranaGetter]
     :return: Coefficients of the Majorana operators
     :rtype: np.ndarray
     """
@@ -219,13 +225,12 @@ def decompose_matrix_into_majoranas(__matrix: np.ndarray) -> np.ndarray:
     assert n_states == 2 ** n, f"Invalid number of states: {n_states}, must be a power of 2."
     assert n == 2, f"Invalid number of particles: {n}, must be 2."
     assert __matrix.shape == (n_states, n_states), f"Invalid shape for matrix: {__matrix.shape}, must be square."
-    matrix = __matrix.copy()
-    matrix = matrix.astype(complex)
-    coeffs = np.zeros(n_states, dtype=complex)
-    for i in range(n_states):
-        c_i = get_majorana(i, n)
-        coeffs[i] = np.trace(matrix @ c_i) / n_states
-    return coeffs
+    if majorana_getter is None:
+        get_majorana_func = partial(get_majorana, n=n)
+    else:
+        get_majorana_func = majorana_getter.__getitem__
+    majorana_tensor = np.stack([get_majorana_func(i) for i in range(2*n)])
+    return np.trace(__matrix @ majorana_tensor.T) / n_states
 
 
 def decompose_state_into_majorana_indexes(
