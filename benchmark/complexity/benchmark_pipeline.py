@@ -39,6 +39,10 @@ def specific_matchgate_circuit(params_wires_list, initial_state=None, **kwargs):
         return qml.state()
     elif out_op == "probs":
         return qml.probs(wires=kwargs.get("out_wires", None))
+    elif out_op == "expval":
+        out_wires = kwargs.get("out_wires", all_wires)
+        projector = qml.Projector(np.zeros(len(out_wires), dtype=int), wires=out_wires)
+        return qml.expval(projector)
     else:
         raise ValueError(f"Unknown out_op: {out_op}.")
 
@@ -75,6 +79,8 @@ class BenchmarkPipeline:
         "n_gates": "Number of gates [-]",
         "n_probs": "Number of probabilities [-]",
     }
+    possible_output_type = {"probs", "expval"}
+    DEFAULT_OUTPUT_TYPE = "expval"
 
     def __init__(
             self,
@@ -90,6 +96,7 @@ class BenchmarkPipeline:
             name: Optional[str] = None,
             interface: str = "auto",
             use_cuda: bool = False,
+            **kwargs
     ):
         r"""
 
@@ -129,6 +136,10 @@ class BenchmarkPipeline:
         self.name = name
         self.interface = interface
         self.use_cuda = use_cuda
+        self.kwargs = kwargs
+        self._output_type = kwargs.get("output_type", self.DEFAULT_OUTPUT_TYPE)
+        assert self._output_type in self.possible_output_type, \
+            f"output_type must be one of {self.possible_output_type}. Got {self._output_type}."
 
         self._init_n_pts_()
         self._init_n_wires_()
@@ -314,7 +325,7 @@ class BenchmarkPipeline:
             out = method_function(device, params, wires, n_probs)
             self.time_data[method_idx, variance_idx, pt_idx] = time.time() - start_time
             self.memory_data[method_idx, variance_idx, pt_idx] = get_device_memory_usage(device)
-            self.result_data[method_idx, variance_idx, pt_idx] = np.NaN
+            self.result_data[method_idx, variance_idx, pt_idx] = out if np.isscalar(out) else np.NaN
         return dict(
             time=self.time_data[method_idx, variance_idx, pt_idx],
             result=self.result_data[method_idx, variance_idx, pt_idx],
@@ -372,29 +383,41 @@ class BenchmarkPipeline:
         prob_wires = np.arange(n_probs)
         initial_binary_state = np.zeros(device.num_wires, dtype=int)
         qnode = qml.QNode(specific_matchgate_circuit, device, interface=self.interface)
-        qubit_state = qnode(
+        if self._output_type == "probs":
+            out_op = "state"
+        elif self._output_type == "expval":
+            out_op = "expval"
+        else:
+            raise ValueError(f"Unknown output_type: {self._output_type}.")
+        qubit_out = qnode(
             list(zip(params, wires)),
             initial_binary_state,
             all_wires=device.wires,
             in_param_type=mps.MatchgatePolarParams,
-            out_op="state",
+            out_op=out_op,
+            out_wires=prob_wires,
         )
-        probs = msim.utils.get_probabilities_from_state(qubit_state, wires=prob_wires)
-        return probs
+        if self._output_type == "probs":
+            out = msim.utils.get_probabilities_from_state(qubit_out, wires=prob_wires)
+        elif self._output_type == "expval":
+            out = qubit_out
+        else:
+            raise ValueError(f"Unknown output_type: {self._output_type}.")
+        return out
 
     def execute_nif(self, device, params, wires, n_probs) -> Any:
         prob_wires = np.arange(n_probs)
         initial_binary_state = np.zeros(device.num_wires, dtype=int)
         qnode = qml.QNode(specific_matchgate_circuit, device, interface=self.interface)
-        probs = qnode(
+        out = qnode(
             list(zip(params, wires)),
             initial_binary_state,
             all_wires=device.wires,
             in_param_type=mps.MatchgatePolarParams,
-            out_op="probs",
+            out_op=self._output_type,
             out_wires=prob_wires,
         )
-        return probs
+        return out
 
     def run(self, **kwargs):
         overwrite = kwargs.get("overwrite", False)
@@ -423,6 +446,7 @@ class BenchmarkPipeline:
         std_coeff = kwargs.get("std_coeff", 1)
         methods = kwargs.get("methods", self.methods)
         methods_names = kwargs.get("methods_names", {k: k for k in methods})
+        fit_complexity = kwargs.get("fit_complexity", True)
         pt_indexes = kwargs.get("pt_indexes", np.arange(self.n_pts))
         for i, method in enumerate(methods):
             method_idx = self.methods.index(method)
@@ -450,6 +474,9 @@ class BenchmarkPipeline:
                 x = np.asarray(self.n_probs, dtype=int)[pt_indexes]
             else:
                 raise ValueError(f"Unknown xaxis: {xaxis}.")
+            if fit_complexity:
+                y_cfit = self.fit_complexity(x, mean_y, **kwargs)
+                axes.plot(x, y_cfit, '--', color=methods_colors[i])
             axes.plot(x, mean_y, label=methods_names.get(method, method), color=methods_colors[i])
             axes.fill_between(
                 x, mean_y - std_y, mean_y + std_y, alpha=0.2, color=methods_colors[i]
@@ -474,9 +501,15 @@ class BenchmarkPipeline:
         axes.set_ylabel(yaxis_label)
         axes.set_title(kwargs.get("title", ""))
         std_patch = matplotlib.patches.Patch(color="gray", alpha=0.2, label=f"{std_coeff} Std")
+        fitc_patch = matplotlib.lines.Line2D([], [], linestyle="--", color="black", label="Complexity fit")
         if kwargs.get("legend", True):
             lines, labels = axes.get_legend_handles_labels()
-            axes.legend(handles=lines + [std_patch], labels=labels + [f"{std_coeff} Std"])
+            handles = lines + [std_patch]
+            labels = labels + [f"{std_coeff} Std"]
+            if fit_complexity:
+                handles = handles + [fitc_patch]
+                labels = labels + ["Complexity fit"]
+            axes.legend(handles=handles, labels=labels)
         if kwargs.get("tight_layout", False):
             fig.tight_layout()
         save_folder = kwargs.get("save_folder", None)
@@ -554,3 +587,11 @@ class BenchmarkPipeline:
             return np.asarray(params)
         else:
             raise ValueError(f"Unknown interface: {self.interface}.")
+
+    def fit_complexity(self, x, y, complexity_func="poly", **kwargs):
+        all_complexity_func = {"poly", "exp", "log"}
+        if complexity_func == "poly":
+            return np.poly1d(np.polyfit(x, y, deg=x[-1]))(x)
+        elif complexity_func == "exp":
+            return np.exp(np.poly1d(np.polyfit(x, np.log(y), deg=x[-1]))(x))
+
