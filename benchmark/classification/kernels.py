@@ -84,6 +84,7 @@ class PennylaneQuantumKernel(BaseEstimator):
             device: Optional[str] = "lightning.qubit",
             shots: int = 1,
             nb_workers: int = 0,
+            **kwargs
     ):
         self._embedding_dim = embedding_dim
         self._seed = seed
@@ -93,6 +94,7 @@ class PennylaneQuantumKernel(BaseEstimator):
         self._device = device
         self._shots = shots
         self._nb_workers = nb_workers
+        self._embedding_rotation = kwargs.get("embedding_rotation", "X")
 
         self._dev_kernel = None
         self._qnode = None
@@ -143,8 +145,8 @@ class PennylaneQuantumKernel(BaseEstimator):
         x0_t = self.transform(x0)
         x1_t = self.transform(x1)
         projector: BasisStateProjector = qml.Projector(np.zeros(self._embedding_dim), wires=range(self._embedding_dim))
-        AngleEmbedding(x0_t, wires=range(self._embedding_dim))
-        qml.adjoint(AngleEmbedding)(x1_t, wires=range(self._embedding_dim))
+        AngleEmbedding(x0_t, wires=range(self._embedding_dim), rotation=self._embedding_rotation)
+        qml.adjoint(AngleEmbedding)(x1_t, wires=range(self._embedding_dim), rotation=self._embedding_rotation)
         return qml.expval(projector)
 
     def kernel(self, x0, x1, **kwargs):
