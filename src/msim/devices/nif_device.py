@@ -24,7 +24,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     author = "Jérémie Gince"
 
     operations = {MatchgateOperation.__name__, MRot.__name__, "BasisEmbedding", "StatePrep", "BasisState", "Snapshot"}
-    observables = {"BasisStateProjector", "Identity"}
+    observables = {"BasisStateProjector", "Projector", "Identity"}
 
     prob_strategies = {"lookup_table", "explicit_sum"}
 
@@ -357,9 +357,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):
             wires = observable.wires
-            idx = int("".join(str(i) for i in observable.parameters[0]), 2)
             prob_func = self.get_prob_strategy_func()
-            return prob_func(wires, idx)
+            return prob_func(wires, observable.parameters[0])
         elif isinstance(observable, qml.Identity):
             return 1.0
         else:
