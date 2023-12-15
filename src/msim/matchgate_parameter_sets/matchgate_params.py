@@ -1,6 +1,7 @@
 import importlib
 from typing import Any, Optional
 import warnings
+import pennylane as qml
 
 import numpy as np
 
@@ -38,11 +39,13 @@ class MatchgateParams:
         return short_name
 
     @classmethod
-    def _maybe_cast_to_real(cls, *params):
+    def _maybe_cast_to_real(cls, *params, **kwargs):
         is_real = utils.check_if_imag_is_zero(np.array(params))
         real_params = tuple(np.real(np.array(params)))
         if is_real:
             return real_params
+        elif kwargs.get("force_cast_to_real", False):
+            return qml.math.cast(real_params, dtype=float)
         elif cls.RAISE_ERROR_IF_INVALID_PARAMS:
             raise ValueError("The parameters must be real.")
         else:

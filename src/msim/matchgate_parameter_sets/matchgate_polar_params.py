@@ -26,7 +26,7 @@ class MatchgatePolarParams(MatchgateParams):
         super().__init__(backend=backend)
         if not self.ALLOW_COMPLEX_PARAMS:
             r0, r1, theta0, theta1, theta2, theta3 = self._maybe_cast_to_real(
-                r0, r1, theta0, theta1, theta2, theta3
+                r0, r1, theta0, theta1, theta2, theta3, **kwargs
             )
         self._r0 = r0
         self._r1 = r1

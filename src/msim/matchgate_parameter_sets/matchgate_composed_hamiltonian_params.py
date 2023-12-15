@@ -20,11 +20,12 @@ class MatchgateComposedHamiltonianParams(MatchgateParams):
             epsilon: float = 0.0,
             *,
             backend='numpy',
+            **kwargs
     ):
         super().__init__(backend=backend)
         if not self.ALLOW_COMPLEX_PARAMS:
             n_x, n_y, n_z, m_x, m_y, m_z, epsilon = self._maybe_cast_to_real(
-                n_x, n_y, n_z, m_x, m_y, m_z, epsilon
+                n_x, n_y, n_z, m_x, m_y, m_z, epsilon, **kwargs
             )
         self._n_x = n_x
         self._n_y = n_y

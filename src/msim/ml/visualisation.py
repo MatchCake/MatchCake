@@ -3,6 +3,7 @@ from typing import Optional, Any, Callable
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import psutil
 import seaborn as sns
 from matplotlib.colors import ListedColormap
 from sklearn import decomposition
@@ -44,11 +45,12 @@ class ClassificationVisualizer(Visualizer):
             if reducer is None:
                 reducer = "pca"
             if isinstance(reducer, str):
+                n_jobs = kwargs.get("n_jobs", max(0, psutil.cpu_count() - 2))
                 if reducer.lower() == "pca":
                     reducer = decomposition.PCA(n_components=2, random_state=seed)
                 elif reducer.lower() == "umap":
                     import umap
-                    reducer = umap.UMAP(n_components=2, transform_seed=seed)
+                    reducer = umap.UMAP(n_components=2, transform_seed=seed, n_jobs=n_jobs)
                 else:
                     raise ValueError(f"Unknown reducer: {reducer}")
             if kwargs.get("check_estimators", True):
@@ -178,6 +180,13 @@ class ClassificationVisualizer(Visualizer):
         y_label = kwargs.get("y_label", f"{axis_name} 2")
         ax.set_xlabel(x_label, fontsize=kwargs.get("fontsize", 18))
         ax.set_ylabel(y_label, fontsize=kwargs.get("fontsize", 18))
+        
+        kwargs["output"] = dict(
+            x_reduced=x_reduced,
+            x_mesh=x_mesh,
+            y_mesh=y_mesh,
+            y_pred=y_pred,
+        )
         
         if kwargs.get("show", False):
             plt.show()

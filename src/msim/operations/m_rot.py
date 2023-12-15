@@ -12,7 +12,7 @@ from .matchgate_operation import MatchgateOperation
 
 class MatchgateRotation(MatchgateOperation):
     num_wires = 2
-    num_params = 1
+    num_params = 2
 
     def __init__(
             self,
@@ -29,8 +29,15 @@ class MatchgateRotation(MatchgateOperation):
             raise ValueError(
                 f"{self.__class__.__name__} requires {self.num_params} parameters; got {n_params}."
             )
-        m_params = mps.MatchgatePolarParams(r0=1, r1=1, theta0=params[0], theta2=params[0])
-        super().__init__(m_params, wires=wires, id=id, backend=backend, **kwargs)
+        m_params = mps.MatchgateStandardParams(
+            a=pnp.cos(params[0] / 2), b=-1j*pnp.sin(params[0] / 2),
+            c=-1j*pnp.sin(params[0] / 2), d=pnp.cos(params[0] / 2),
+            w=pnp.cos(params[1] / 2), x=-1j*pnp.sin(params[1] / 2),
+            y=-1j*pnp.sin(params[1] / 2), z=pnp.cos(params[1] / 2),
+        )
+        in_params = mps.MatchgatePolarParams.parse_from_params(m_params, force_cast_to_real=True)
+        kwargs["in_param_type"] = mps.MatchgatePolarParams
+        super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
 
 
 MRot = MatchgateRotation

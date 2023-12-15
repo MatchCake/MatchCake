@@ -11,12 +11,28 @@ class MAngleEmbedding(Operation):
 
     @staticmethod
     def compute_decomposition(*params, wires=None, **hyperparameters):
+        params = qml.math.concatenate(params, axis=-1)
+        params = MAngleEmbedding.pad_params(params)
         batched = qml.math.ndim(params) > 1
         params = qml.math.T(params) if batched else params
         wires = Wires(wires)
-        w0 = np.asarray(wires) % max(wires)
-        wires_tuple = list(zip(w0, w0 + 1))
-        return [MRot(params[i], wires=[w0, w1]) for i, (w0, w1) in enumerate(wires_tuple)]
+        return [
+            MRot([p0, p1], wires=[wires[i], wires[i+1]])
+            for i, (p0, p1) in enumerate(zip(params[0::2], params[1::2]))
+        ]
+    
+    @staticmethod
+    def pad_params(params):
+        r"""
+        If the number of parameters is odd, pad the parameters with zero to make it even.
+        
+        :param params: The parameters to pad.
+        :return: The padded parameters.
+        """
+        n_params = qml.math.shape(params)[-1]
+        if n_params % 2 != 0:
+            params = qml.math.concatenate([params, qml.math.zeros_like(params[..., :1])], axis=-1)
+        return params
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.data}, wires={self.wires.tolist()})"
@@ -31,6 +47,7 @@ class MAngleEmbedding(Operation):
         :param wires: The wires to embed the features on.
         :param id: The id of the operation.
         """
+        features = self.pad_params(features)
         shape = qml.math.shape(features)[-1:]
         n_features = shape[0]
         if n_features > len(wires):

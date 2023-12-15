@@ -82,3 +82,20 @@ class MatchgateOperation(Matchgate, Operation):
             backend=self.backend,
             in_param_type=mps.MatchgatePolarParams,
         )
+    
+    def __matmul__(self, other):
+        if not isinstance(other, MatchgateOperation):
+            raise ValueError(f"Cannot multiply MatchgateOperation with {type(other)}")
+        
+        if self.wires != other.wires:
+            raise NotImplementedError("Cannot multiply MatchgateOperation with different wires yet.")
+        
+        std_params = mps.MatchgateStandardParams.from_matrix(self.matrix() @ other.matrix())
+        polar_params = mps.MatchgatePolarParams.parse_from_params(std_params)
+        return MatchgateOperation(
+            polar_params,
+            wires=self.wires,
+            backend=self.backend,
+            in_param_type=mps.MatchgatePolarParams,
+        )
+        

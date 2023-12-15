@@ -27,6 +27,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     observables = {"BasisStateProjector", "Projector", "Identity"}
 
     prob_strategies = {"lookup_table", "explicit_sum"}
+    contraction_methods = {None, "neighbours"}
 
     def __init__(self, wires=2, **kwargs):
         if np.isscalar(wires):
@@ -61,6 +62,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         assert self.majorana_getter.n == self.num_wires, (
             f"The majorana_getter must be initialized with {self.num_wires} wires. "
             f"Got {self.majorana_getter.n} instead."
+        )
+        self.contraction_method = kwargs.get("contraction_method", None)
+        assert self.contraction_method in self.contraction_methods, (
+            f"The contraction method must be one of {self.contraction_methods}. "
+            f"Got {self.contraction_method} instead."
         )
     
     @property
@@ -284,12 +290,46 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The device {self.short_name} cannot execute a ParametrizedEvolution operation. "
             "Please use the jax interface."
         )
+    
+    def contract_operations(self, operations, contraction_method=None):
+        contraction_method = contraction_method or self.contraction_method
+        if contraction_method is None:
+            return operations
+        elif contraction_method == "neighbours":
+            return self.do_neighbours_contraction(operations)
+        else:
+            raise NotImplementedError(
+                f"The contraction method {contraction_method} is not implemented."
+            )
+        
+    def do_neighbours_contraction(self, operations):
+        if len(operations) <= 1:
+            return operations
+        queue = operations.copy()
+        new_operations = []
+        while len(queue) > 1:
+            op1 = queue.pop(0)
+            if not isinstance(op1, MatchgateOperation):
+                new_operations.append(op1)
+                continue
+            op2 = queue.pop(0)
+            if not isinstance(op2, MatchgateOperation):
+                new_operations.append(op1)
+                new_operations.append(op2)
+                continue
+            if op1.wires == op2.wires:
+                queue.insert(0, op1 @ op2)
+        new_operations.extend(queue)
+        return new_operations
 
     def apply(self, operations, rotations=None, **kwargs):
         rotations = rotations or []
         if not isinstance(operations, Iterable):
             operations = [operations]
         global_single_transition_particle_matrix = pnp.eye(2 * self.num_wires)
+        
+        operations = self.contract_operations(operations, self.contraction_method)
+        
         # apply the circuit operations
         for i, op in enumerate(operations):
             if i > 0 and isinstance(op, (qml.StatePrep, qml.BasisState)):

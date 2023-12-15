@@ -235,7 +235,7 @@ def standard_hamiltonian_to_standard(
 
 
 def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePolarParams:
-    backend = MatchgateParams.load_backend_lib(kwargs.get("backend", "numpy"))
+    backend = MatchgateParams.load_backend_lib(kwargs.pop("backend", "numpy"))
     a, b, c, d, w, x, y, z = params.to_numpy().astype(complex)
     r0 = backend.sqrt(a * backend.conjugate(a))
     r0_tilde = MatchgatePolarParams.compute_r_tilde(r0, backend=backend)
@@ -304,6 +304,7 @@ def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePol
         theta3=theta3,
         theta4=theta4,
         backend=backend,
+        **kwargs
     )
 
 
