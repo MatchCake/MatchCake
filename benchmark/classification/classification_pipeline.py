@@ -13,8 +13,9 @@ from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 import umap
+from tqdm import tqdm
 
-from kernels import ClassicalKernel, PennylaneQuantumKernel, NIFKernel
+from kernels import ClassicalKernel, MPennylaneQuantumKernel, CPennylaneQuantumKernel, NIFKernel
 try:
     import msim
 except ImportError:
@@ -31,7 +32,8 @@ class ClassificationPipeline:
     }
     available_kernels = {
         "classical": ClassicalKernel,
-        "pennylane": PennylaneQuantumKernel,
+        "m_pennylane": MPennylaneQuantumKernel,
+        "c_pennylane": CPennylaneQuantumKernel,
         "nif": NIFKernel,
     }
 
@@ -41,8 +43,8 @@ class ClassificationPipeline:
             methods: Optional[Union[str, List[str]]] = None,
             **kwargs
     ):
-        self.classifiers = None
-        self.kernels = None
+        self.classifiers = {}
+        self.kernels = {}
         self.dataset_name = dataset_name
         self.methods = methods or list(self.available_kernels.keys())
         if isinstance(self.methods, str):
@@ -51,9 +53,13 @@ class ClassificationPipeline:
         self.dataset = None
         self.X, self.y = None, None
         self.x_train, self.x_test, self.y_train, self.y_test = None, None, None, None
+        self.fit_times = {}
+        self.fit_kernels_times = {}
+        self.plot_times = {}
+        self.accuracies = {}
 
     @property
-    def embedding_size(self):
+    def kernel_size(self):
         if self.X is None:
             return None
         return self.X.shape[-1]
@@ -101,10 +107,7 @@ class ClassificationPipeline:
         for kernel_name in self.methods:
             kernel_class = self.available_kernels[kernel_name]
             self.kernels[kernel_name] = kernel_class(
-                embedding_dim=self.embedding_size,
                 seed=self.kwargs.get("kernel_seed", 0),
-                shots=self.kwargs.get("kernel_shots", 1),
-                interface=self.kwargs.get("kernel_interface", "auto"),
                 **self.kwargs.get("kernel_kwargs", {})
             )
         return self.kernels
@@ -113,20 +116,32 @@ class ClassificationPipeline:
         if self.kernels is None:
             self.make_kernels()
         for kernel_name, kernel in self.kernels.items():
-            kernel.fit(self.X, self.y)
+            start_time = time.perf_counter()
+            kernel.fit(self.x_train, self.y_train)
+            self.fit_kernels_times[kernel_name] = time.perf_counter() - start_time
         return self.kernels
 
     def make_classifiers(self):
         self.classifiers = {}
         for kernel_name, kernel in self.kernels.items():
-            self.classifiers[kernel_name] = svm.SVC(kernel=kernel.kernel, random_state=0)
+            self.classifiers[kernel_name] = svm.SVC(kernel=kernel.pairwise_distances, random_state=0)
         return self.classifiers
 
     def fit_classifiers(self):
         if self.classifiers is None:
             self.make_classifiers()
+        p_bar = tqdm(self.classifiers.items(), desc="Fitting classifiers", unit="cls")
         for kernel_name, classifier in self.classifiers.items():
+            start_time = time.perf_counter()
             classifier.fit(self.x_train, self.y_train)
+            self.fit_times[kernel_name] = time.perf_counter() - start_time
+            self.accuracies[kernel_name] = classifier.score(self.x_test, self.y_test)
+            p_bar.update()
+            p_bar.set_postfix({
+                f"{kernel_name} fit time": f"{self.fit_times.get(kernel_name, np.NaN):.2f} [s]",
+                f"{kernel_name} accuracy": f"{self.accuracies.get(kernel_name, np.NaN) * 100:.2f} %",
+            })
+        p_bar.close()
         return self.classifiers
 
     def run(self):
@@ -142,48 +157,72 @@ class ClassificationPipeline:
         print(f"(N Samples, N features): {self.X.shape}")
         print(f"Classes: {set(np.unique(self.y))}, labels: {getattr(self.dataset, 'target_names', set(np.unique(self.y)))}")
         print(f"N train samples: {self.x_train.shape[0]}, N test samples: {self.x_test.shape[0]}")
-        print(f"Embedding size: {self.embedding_size}")
+        print(f"Embedding size: {self.kernel_size}")
+        
+        def _print_times(m_name):
+            print(
+                f"{m_name} test accuracy: {self.accuracies.get(m_name, np.NaN) * 100 :.4f}%, "
+                f"fit time: {self.fit_times.get(m_name, np.NaN):.5f} [s], "
+                f"plot time: {self.plot_times.get(m_name, np.NaN):.5f} [s]"
+            )
+        
         if "pennylane" in self.kernels:
             pennylane_kernel = self.kernels["pennylane"]
             print(f"pennylane_kernel: \n{qml.draw(pennylane_kernel.qnode)(self.X[0], self.X[-1])}\n")
+            
         if "nif" in self.kernels:
             nif_kernel = self.kernels["nif"]
             print(f"nif_kernel: \n{qml.draw(nif_kernel.qnode)(self.X[0], self.X[-1])}\n")
+        
+        for m_name in self.kernels:
+            _print_times(m_name)
 
     def show(
             self,
+            fig: Optional[plt.Figure] = None,
+            axes: Optional[np.ndarray] = None,
             **kwargs
     ):
-        models = self.classifiers
+        kwargs.setdefault("check_estimators", False)
+        kwargs.setdefault("n_pts", 512)
+        kwargs.setdefault("interpolation", "nearest")
+        kwargs.setdefault("title", f"Decision boundaries in the reduced space.")
+        
+        show = kwargs.pop("show", True)
+        models = kwargs.pop("models", self.classifiers)
         n_plots = len(models)
         n_rows = int(np.ceil(np.sqrt(n_plots)))
         n_cols = int(np.ceil(n_plots / n_rows))
-        fig, axes = plt.subplots(n_rows, n_cols, tight_layout=True, figsize=(14, 10), sharex="all", sharey="all")
+        if fig is None or axes is None:
+            fig, axes = plt.subplots(n_rows, n_cols, tight_layout=True, figsize=(14, 10), sharex="all", sharey="all")
         axes = np.ravel(np.asarray([axes]))
+        assert len(axes) >= n_plots, f"The number of axes ({len(axes)}) is less than the number of models ({models})."
+        p_bar = tqdm(models.items(), desc="Plotting decision boundaries", unit="model")
         for i, (m_name, model) in enumerate(models.items()):
-            fit_start_time = time.time()
-            fit_end_time = time.time()
-            fit_time = fit_end_time - fit_start_time
-            accuracy = model.score(self.x_test, self.y_test)
-            plot_start_time = time.time()
+            plot_start_time = time.perf_counter()
             fig, ax = ClassificationVisualizer.plot_2d_decision_boundaries(
                 model=model,
                 X=self.X, y=self.y,
                 # reducer=decomposition.PCA(n_components=2, random_state=0),
                 # reducer=umap.UMAP(n_components=2, transform_seed=0, n_jobs=max(0, psutil.cpu_count() - 2)),
-                check_estimators=False,
-                n_pts=1_000,
-                title=f"Decision boundaries in the reduced space.",
                 legend_labels=getattr(self.dataset, "target_names", None),
-                # axis_name="RN",
                 fig=fig, ax=axes[i],
-                interpolation="nearest",
+                show=False,
+                **kwargs
             )
-            ax.set_title(f"{m_name} accuracy: {accuracy * 100:.2f}%")
-            plot_end_time = time.time()
-            plot_time = plot_end_time - plot_start_time
-            print(f"{m_name} test accuracy: {accuracy * 100 :.4f}%, {fit_time = :.5f} [s], {plot_time = :.5f} [s]")
+            self.plot_times[m_name] = time.perf_counter() - plot_start_time
+            ax.set_title(f"{m_name} accuracy: {self.accuracies.get(m_name, np.NaN) * 100:.2f}%")
+            p_bar.update()
+            p_bar.set_postfix({
+                f"{m_name} plot time": f"{self.plot_times.get(m_name, np.NaN):.2f} [s]",
+                f"{m_name} fit time": f"{self.fit_times.get(m_name, np.NaN):.2f} [s]",
+                f"{m_name} accuracy": f"{self.accuracies.get(m_name, np.NaN) * 100:.2f} %",
+            })
+        p_bar.close()
 
-        if kwargs.get("show", True):
+        if show:
             plt.show()
         return fig, axes
+
+    def plot(self, *args, **kwargs):
+        return self.show(*args, **kwargs)
