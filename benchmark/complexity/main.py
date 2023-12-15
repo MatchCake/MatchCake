@@ -6,33 +6,43 @@ from matplotlib import pyplot as plt
 import pythonbasictools as pbt
 
 try:
-    from .benchmark_pipeline import BenchmarkPipeline
+    from .benchmark_pipeline import BenchmarkPipeline, angle_embedding_circuit
     from .utils import MPL_RC_DEFAULT_PARAMS
 except ImportError:
-    from benchmark_pipeline import BenchmarkPipeline
+    from benchmark_pipeline import BenchmarkPipeline, angle_embedding_circuit
     from utils import MPL_RC_DEFAULT_PARAMS
+    
+
+def filter_odd_wires_number(wires) -> np.ndarray:
+    wires = np.array(wires)
+    return wires[wires % 2 == 0]
 
 
 def main(kwargs):
     matplotlib.rcParams.update(MPL_RC_DEFAULT_PARAMS)
     max_n_wires = [n for n in BenchmarkPipeline.max_wires_methods.values() if np.isfinite(n)]
-    n_wires_range = (2, 32, 30)
+    n_wires_range = (2, 8, 30)
     n_wires = np.linspace(n_wires_range[0], n_wires_range[1], num=n_wires_range[2], endpoint=True, dtype=int).tolist()
-    n_wires = list(sorted(set(n_wires + max_n_wires)))
+    # n_wires = list(sorted(set(n_wires + max_n_wires)))
+    n_wires = filter_odd_wires_number(n_wires)
     # n_wires = list(sorted(set([2, 128, 1024, ] + max_n_wires)))
     n_wires = kwargs.get("n_wires", n_wires)
     n_wires_str = n_wires if isinstance(n_wires, str) else "-".join(map(str, n_wires_range))
     n_gates = kwargs.get("n_gates", 10 * max(n_wires))
-    folder = kwargs.get("folder", f"data/results_{n_wires_str}-qubits_{n_gates}-gates_ceil_expval")
+    n_gates = 1
+    folder = kwargs.get("folder", f"data/results_{n_wires_str}-qubits_{n_gates}_expval_angle")
     std_coeff = kwargs.get("std_coeff", 3)
     fig, axes = plt.subplots(1, 2, figsize=(20, 10))
     benchmark_pipeline = BenchmarkPipeline.from_pickle_or_new(
         pickle_path=f"{folder}/objects.pkl",
-        n_variance_pts=kwargs.get("n_variance_pts", 3),
+        n_variance_pts=kwargs.get("n_variance_pts", 100),
         n_wires=n_wires,
         n_gates=n_gates,
-        methods=kwargs.get("methods", ["nif.lookup_table", "default.qubit", "nif.explicit_sum"]),
+        # methods=kwargs.get("methods", ["nif.lookup_table", "default.qubit", "nif.explicit_sum"]),
+        methods=kwargs.get("methods", ["nif.lookup_table", "default.qubit"]),
         save_path=f"{folder}/objects",
+        circuit=angle_embedding_circuit,
+        n_params_per_gate=kwargs.get("n_params_per_gate", "wires"),
     )
     benchmark_pipeline.run(
         nb_workers=-2,

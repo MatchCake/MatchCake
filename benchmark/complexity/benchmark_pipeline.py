@@ -6,6 +6,7 @@ from typing import Optional, Union, List, Any, Tuple
 import matplotlib
 import numpy as np
 import pennylane as qml
+from pennylane.ops.qubit.observables import BasisStateProjector
 import matplotlib.pyplot as plt
 import pythonbasictools as pbt
 
@@ -21,6 +22,20 @@ from msim import MatchgateOperation, mps
 
 
 matplotlib.rcParams.update(MPL_RC_DEFAULT_PARAMS)
+
+
+def angle_embedding_circuit(params_wires_list, initial_state=None, **kwargs):
+    all_wires = kwargs.get("all_wires", None)
+    if all_wires is None:
+        all_wires = set(sum([list(wires) for _, wires in params_wires_list], []))
+    all_wires = np.sort(np.asarray(all_wires))
+    if initial_state is None:
+        initial_state = np.zeros(len(all_wires), dtype=int)
+    qml.BasisState(initial_state, wires=all_wires)
+    for params, wires in params_wires_list:
+        msim.operations.MAngleEmbedding(params, wires=all_wires)
+    projector: BasisStateProjector = qml.Projector(initial_state, wires=all_wires)
+    return qml.expval(projector)
 
 
 def specific_matchgate_circuit(params_wires_list, initial_state=None, **kwargs):
@@ -149,12 +164,13 @@ class BenchmarkPipeline:
 
         self.wires_list = []
         self.parameters_list = []
-        # self._init_wires_list_()
-        # self._init_parameters_list_()
 
         self.result_data = np.full((len(self.methods), self.n_variance_pts, self.n_pts), self.MISSING_VALUE)
         self.time_data = np.full_like(self.result_data, self.MISSING_VALUE)
         self.memory_data = np.full_like(self.result_data, self.MISSING_VALUE)
+        
+        self._circuit = kwargs.get("circuit", specific_matchgate_circuit)
+        self._n_params_per_gate = kwargs.get("n_params_per_gate", mps.MatchgatePolarParams.N_PARAMS)
 
     @property
     def all_data_generated(self):
@@ -197,7 +213,14 @@ class BenchmarkPipeline:
         if self.n_gates is None:
             self.n_gates = self.DEFAULT_N_GATES
         if isinstance(self.n_gates, str):
-            self.n_gates = self._get_space(self.n_gates.lower(), constant=self.n_wires, shift=self.n_wires, dtype=int)
+            if self.n_gates.lower() == "wires":
+                self.n_gates = self.n_wires
+            elif self.n_gates.lower() == "wires/2":
+                self.n_gates = self.n_wires // 2
+            else:
+                self.n_gates = self._get_space(
+                    self.n_gates.lower(), constant=self.n_wires, shift=self.n_wires, dtype=int
+                )
         if isinstance(self.n_gates, int):
             self.n_gates = self._get_constant_space(constant=self.n_gates, dtype=int)
         if isinstance(self.n_gates, (list, np.ndarray, tuple)):
@@ -302,6 +325,19 @@ class BenchmarkPipeline:
             raise ValueError(
                 f"space_type must be one of 'constant', 'linear', or '2_power'. Got {space_type}."
             )
+        
+    def gen_random_params(self, n_gates: int, variance_idx: int, pt_idx: int):
+        seed = variance_idx * pt_idx + pt_idx
+        if self._n_params_per_gate == mps.MatchgatePolarParams.N_PARAMS:
+            params = mps.MatchgatePolarParams.random_batch_numpy(n_gates, seed=seed)
+        elif self._n_params_per_gate == "wires":
+            rn_state = np.random.RandomState(seed)
+            params = rn_state.uniform(low=0, high=2 * np.pi, size=(n_gates, self.n_wires[pt_idx]))
+        else:
+            rn_state = np.random.RandomState(seed)
+            params = rn_state.uniform(low=0, high=2 * np.pi, size=(n_gates, self._n_params_per_gate))
+        params = self.push_params_to_interface(params)
+        return params
 
     def gen_data_point_(self, method_idx: Union[int, str], variance_idx: int, pt_idx: int):
         if isinstance(method_idx, str):
@@ -317,13 +353,12 @@ class BenchmarkPipeline:
             device_init_function = self.device_init_functions[self.methods[method_idx]]
             n_wires, n_gates, n_probs = self.n_wires[pt_idx], self.n_gates[pt_idx], self.n_probs[pt_idx]
             wires = self.get_wires(n_wires, n_gates)
-            params = mps.MatchgatePolarParams.random_batch_numpy(n_gates,  seed=variance_idx * pt_idx + pt_idx)
-            params = self.push_params_to_interface(params)
+            params = self.gen_random_params(n_gates, variance_idx, pt_idx)
             device = device_init_function(wires=n_wires)
 
-            start_time = time.time()
+            start_time = time.perf_counter()
             out = method_function(device, params, wires, n_probs)
-            self.time_data[method_idx, variance_idx, pt_idx] = time.time() - start_time
+            self.time_data[method_idx, variance_idx, pt_idx] = time.perf_counter() - start_time
             self.memory_data[method_idx, variance_idx, pt_idx] = get_device_memory_usage(device)
             self.result_data[method_idx, variance_idx, pt_idx] = out if np.isscalar(out) else np.NaN
         return dict(
@@ -382,7 +417,7 @@ class BenchmarkPipeline:
     ) -> Any:
         prob_wires = np.arange(n_probs)
         initial_binary_state = np.zeros(device.num_wires, dtype=int)
-        qnode = qml.QNode(specific_matchgate_circuit, device, interface=self.interface)
+        qnode = qml.QNode(self._circuit, device, interface=self.interface)
         if self._output_type == "probs":
             out_op = "state"
         elif self._output_type == "expval":
@@ -408,7 +443,7 @@ class BenchmarkPipeline:
     def execute_nif(self, device, params, wires, n_probs) -> Any:
         prob_wires = np.arange(n_probs)
         initial_binary_state = np.zeros(device.num_wires, dtype=int)
-        qnode = qml.QNode(specific_matchgate_circuit, device, interface=self.interface)
+        qnode = qml.QNode(self._circuit, device, interface=self.interface)
         out = qnode(
             list(zip(params, wires)),
             initial_binary_state,
