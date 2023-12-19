@@ -13,7 +13,7 @@ import pennylane as qml
 import pythonbasictools as pbt
 
 from ..devices.nif_device import NonInteractingFermionicDevice
-from ..operations import MAngleEmbedding
+from ..operations import MAngleEmbedding, MRot
 
 
 class MLKernel(BaseEstimator):
@@ -100,8 +100,13 @@ class NIFKernel(MLKernel):
         return self
     
     def circuit(self, x0, x1):
+        from msim.operations.m_rot import mrot_template
         MAngleEmbedding(x0, wires=range(self.size))
+        # qml.broadcast(unitary=mrot_template, pattern="pyramid", wires=range(self.size), parameters=x0)
+        # TODO: ajouter des MROT avec des paramètres aléatoires en forme de pyramids
+        # TODO: ajouter une fonction qui génère une séquence de wires en forme pyramidale.
         qml.adjoint(MAngleEmbedding)(x1, wires=range(self.size))
+        # qml.adjoint(qml.broadcast)(unitary=mrot_template, pattern="pyramid", wires=range(self.size), parameters=x1)
         projector: BasisStateProjector = qml.Projector(np.zeros(self.size), wires=range(self.size))
         return qml.expval(projector)
     
