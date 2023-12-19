@@ -16,4 +16,4 @@ if __name__ == '__main__':
     pipline.print()
     pipline.run()
     pipline.print()
-    pipline.show(n_points=128, show=False)
+    pipline.show(n_points=128, show=True)
