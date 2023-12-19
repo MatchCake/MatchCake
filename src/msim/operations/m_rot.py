@@ -42,3 +42,6 @@ class MatchgateRotation(MatchgateOperation):
 
 MRot = MatchgateRotation
 
+
+def mrot_template(param0, param1, wires):
+    MRot([param0, param1], wires=wires)
