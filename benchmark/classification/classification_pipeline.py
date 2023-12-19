@@ -15,7 +15,13 @@ from sklearn.preprocessing import MinMaxScaler
 import umap
 from tqdm import tqdm
 
-from kernels import ClassicalKernel, MPennylaneQuantumKernel, CPennylaneQuantumKernel, NIFKernel
+from kernels import (
+    ClassicalKernel,
+    MPennylaneQuantumKernel,
+    CPennylaneQuantumKernel,
+    NIFKernel,
+    MPQCKernel,
+)
 try:
     import msim
 except ImportError:
@@ -35,6 +41,7 @@ class ClassificationPipeline:
         "m_pennylane": MPennylaneQuantumKernel,
         "c_pennylane": CPennylaneQuantumKernel,
         "nif": NIFKernel,
+        "MPQC": MPQCKernel,
     }
 
     def __init__(
@@ -94,7 +101,7 @@ class ClassificationPipeline:
             self.y = self.dataset.target
         else:
             raise ValueError(f"Unknown dataset type: {type(self.dataset)}")
-        self.X = MinMaxScaler(feature_range=(0, 1)).fit_transform(self.X)
+        self.X = MinMaxScaler(feature_range=self.kwargs.get("feature_range", (0, 1))).fit_transform(self.X)
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
             self.X, self.y,
             test_size=self.kwargs.get("test_size", 0.1),
@@ -166,13 +173,10 @@ class ClassificationPipeline:
                 f"plot time: {self.plot_times.get(m_name, np.NaN):.5f} [s]"
             )
         
-        if "pennylane" in self.kernels:
-            pennylane_kernel = self.kernels["pennylane"]
-            print(f"pennylane_kernel: \n{qml.draw(pennylane_kernel.qnode)(self.X[0], self.X[-1])}\n")
-            
-        if "nif" in self.kernels:
-            nif_kernel = self.kernels["nif"]
-            print(f"nif_kernel: \n{qml.draw(nif_kernel.qnode)(self.X[0], self.X[-1])}\n")
+        for m_name, kernel in self.kernels.items():
+            if not hasattr(kernel, "qnode"):
+                continue
+            print(f"{m_name}: \n{qml.draw(kernel.qnode)(self.X[0], self.X[-1])}\n")
         
         for m_name in self.kernels:
             _print_times(m_name)

@@ -18,7 +18,7 @@ except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import msim
     
-from msim.ml.ml_kernel import MLKernel, NIFKernel
+from msim.ml.ml_kernel import MLKernel, NIFKernel, MPQCKernel
 
 
 class ClassicalKernel(MLKernel):
@@ -60,8 +60,8 @@ class CPennylaneQuantumKernel(MPennylaneQuantumKernel):
     
     def circuit(self, x0, x1):
         AngleEmbedding(x0, wires=range(self.size), rotation=self._embedding_rotation)
-        broadcast(unitary=qml.RX, pattern="pyramid", wires=range(self.size), parameters=x0)
+        # broadcast(unitary=qml.RX, pattern="pyramid", wires=range(self.size), parameters=x0)
         qml.adjoint(AngleEmbedding)(x1, wires=range(self.size))
-        qml.adjoint(broadcast)(unitary=qml.RX, pattern="pyramid", wires=range(self.size), parameters=x1)
+        # qml.adjoint(broadcast)(unitary=qml.RX, pattern="pyramid", wires=range(self.size), parameters=x1)
         projector: BasisStateProjector = qml.Projector(np.zeros(self.size), wires=range(self.size))
         return qml.expval(projector)

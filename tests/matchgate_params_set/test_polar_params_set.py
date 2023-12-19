@@ -55,3 +55,18 @@ def test_matchgate_polar_params_constructor(r0, r1, theta0, theta1, theta2, thet
         atol=ATOL_SCALAR_COMPARISON,
         rtol=RTOL_SCALAR_COMPARISON,
     )
+    
+
+@pytest.mark.parametrize(
+    "params, batch_size",
+    [
+        (np.random.rand(b, MatchgatePolarParams.N_PARAMS), b)
+        for b in [1, 16]
+    ]
+)
+def test_matchgate_polar_params_constructor_batch(params, batch_size):
+    matchgate_params = MatchgatePolarParams(params)
+    np.testing.assert_equal(
+        matchgate_params.to_numpy().shape, (batch_size, MatchgatePolarParams.N_PARAMS)
+    )
+

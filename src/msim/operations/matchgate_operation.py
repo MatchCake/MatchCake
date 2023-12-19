@@ -36,11 +36,13 @@ class MatchgateOperation(Matchgate, Operation):
             backend=pnp,
             **kwargs
     ):
+        # TODO: add support for batched params when available in MatchgateParameterSets
         in_param_type = kwargs.get("in_param_type", mps.MatchgatePolarParams)
         in_params = in_param_type.parse_from_any(params)
         Matchgate.__init__(self, in_params, backend=backend, **kwargs)
         np_params = self.polar_params.to_numpy()
         self.num_params = len(np_params)
+        self.draw_label_params = kwargs.get("draw_label_params", None)
         Operation.__init__(self, *np_params, wires=wires, id=id)
     
     def get_padded_single_transition_particle_matrix(self, wires=None):
@@ -98,4 +100,11 @@ class MatchgateOperation(Matchgate, Operation):
             backend=self.backend,
             in_param_type=mps.MatchgatePolarParams,
         )
+    
+    def label(self, decimals=None, base_label=None, cache=None):
+        if self.draw_label_params is None:
+            return super().label(decimals=decimals, base_label=base_label, cache=cache)
+
+        op_label = base_label or self.__class__.__name__
+        return f"{op_label}({self.draw_label_params})"
         

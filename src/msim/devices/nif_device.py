@@ -11,7 +11,9 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 from pennylane.ops.qubit.observables import BasisStateProjector
 from ..operations.matchgate_operation import MatchgateOperation
-from ..operations.m_rot import MRot
+from ..operations.m_rot_xx import MRotXX
+from ..operations.m_rot_yy import MRotYY
+from ..operations.m_rot_zz import MRotZZ
 from ..base.lookup_table import NonInteractingFermionicLookupTable
 from .. import utils
 
@@ -23,7 +25,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     version = "0.0.1"
     author = "Jérémie Gince"
 
-    operations = {MatchgateOperation.__name__, MRot.__name__, "BasisEmbedding", "StatePrep", "BasisState", "Snapshot"}
+    operations = {
+        MatchgateOperation.__name__,
+        MRotXX.__name__, MRotYY.__name__, MRotZZ.__name__,
+        "BasisEmbedding", "StatePrep", "BasisState", "Snapshot"
+    }
     observables = {"BasisStateProjector", "Projector", "Identity"}
 
     prob_strategies = {"lookup_table", "explicit_sum"}

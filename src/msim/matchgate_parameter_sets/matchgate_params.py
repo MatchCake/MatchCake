@@ -11,6 +11,7 @@ from .. import utils
 class MatchgateParams:
     r"""
     A matchgate can be represented by several set of parameters and there exists a mapping between them.
+    # TODO: add the possibility to batch the parameters.
     """
     N_PARAMS = None
     RANGE_OF_PARAMS = None
@@ -102,6 +103,10 @@ class MatchgateParams:
     @property
     def backend(self):
         return self._backend
+    
+    @property
+    def is_batched(self):
+        return qml.math.ndim(self.to_numpy()) > 1
 
     def to_numpy(self):
         raise NotImplementedError("This method must be implemented in the child class.")
