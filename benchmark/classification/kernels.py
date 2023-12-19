@@ -11,6 +11,7 @@ from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.metrics.pairwise import pairwise_kernels
 import pennylane as qml
 import pythonbasictools as pbt
+from pennylane import broadcast
 try:
     import msim
 except ImportError:
@@ -59,6 +60,8 @@ class CPennylaneQuantumKernel(MPennylaneQuantumKernel):
     
     def circuit(self, x0, x1):
         AngleEmbedding(x0, wires=range(self.size), rotation=self._embedding_rotation)
+        broadcast(unitary=qml.RX, pattern="pyramid", wires=range(self.size), parameters=x0)
         qml.adjoint(AngleEmbedding)(x1, wires=range(self.size))
+        qml.adjoint(broadcast)(unitary=qml.RX, pattern="pyramid", wires=range(self.size), parameters=x1)
         projector: BasisStateProjector = qml.Projector(np.zeros(self.size), wires=range(self.size))
         return qml.expval(projector)
