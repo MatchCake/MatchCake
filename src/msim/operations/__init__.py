@@ -5,17 +5,14 @@ from .matchgate_operation import (
 )
 
 
-from .m_rot_xx import (
-    MRotXX,
-    MatchgateRotationXX,
-)
-from .m_rot_yy import (
-    MRotYY,
-    MatchgateRotationYY,
-)
-from .m_rot_zz import (
-    MRotZZ,
-    MatchgateRotationZZ,
+from .fermionic_rotations import (
+    FermionicRotation,
+    FermionicRotationXX,
+    FermionicRotationYY,
+    FermionicRotationZZ,
+    fRXX,
+    fRYY,
+    fRZZ,
 )
 
 from .angle_embedding import (

@@ -13,14 +13,15 @@ from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.metrics.pairwise import pairwise_kernels
 import pennylane as qml
+from pennylane.wires import Wires
 import pythonbasictools as pbt
 
 from ..devices.nif_device import NonInteractingFermionicDevice
-from ..operations import MAngleEmbedding, MAngleEmbeddings, MRotZZ
+from ..operations import MAngleEmbedding, MAngleEmbeddings, fRZZ, fCNOT
 
 
 def mrot_zz_template(param0, param1, wires):
-    MRotZZ([param0, param1], wires=wires)
+    fRZZ([param0, param1], wires=wires)
 
 
 class MLKernel(BaseEstimator):
@@ -37,6 +38,12 @@ class MLKernel(BaseEstimator):
     
     def _compute_default_size(self):
         return self.X_.shape[-1]
+
+    def pre_initialize(self):
+        pass
+
+    def initialize_parameters(self):
+        pass
     
     def fit(self, X, y=None):
         X, y = check_X_y(X, y)
@@ -46,6 +53,8 @@ class MLKernel(BaseEstimator):
 
         if self._size is None:
             self._size = self._compute_default_size()
+        self.pre_initialize()
+        self.initialize_parameters()
         return self
     
     def transform(self, x):
@@ -104,7 +113,7 @@ class NIFKernel(MLKernel):
     
     @property
     def wires(self):
-        return list(range(self.size))
+        return Wires(list(range(self.size)))
     
     @property
     def parameters(self):
@@ -126,13 +135,15 @@ class NIFKernel(MLKernel):
         if self._parameters is None:
             n_parameters = self.kwargs.get("n_parameters", PATTERN_TO_NUM_PARAMS["pyramid"](self.wires))
             self._parameters = [pnp.random.uniform(0, 2 * np.pi, size=2) for _ in range(n_parameters)]
+
+    def pre_initialize(self):
+        self._device = NonInteractingFermionicDevice(wires=self.size)
+        self.qnode = qml.QNode(self.circuit, self._device, **self.kwargs.get("qnode_kwargs", {}))
     
     def fit(self, X, y=None):
         super().fit(X, y)
-        self._device = NonInteractingFermionicDevice(wires=self.size)
-        self.qnode = qml.QNode(self.circuit, self._device, **self.kwargs.get("qnode_kwargs", {}))
-        self.initialize_parameters()
         # TODO: optimize parameters with the given dataset
+        # TODO: add kernel alignment optimization
         return self
     
     def circuit(self, x0, x1):
@@ -151,19 +162,50 @@ class NIFKernel(MLKernel):
     def batch_distance(self, x0, x1):
         # return self.qnode(x0, x1)  TODO: implement batch_distance
         return super().batch_distance(x0, x1)
-    
-    def draw(
+
+    def draw(self, **kwargs):
+        logging_func = kwargs.pop("logging_func", print)
+        name = kwargs.pop("name", self.__class__.__name__)
+        _str = f"{name}: \n{qml.draw(self.qnode, **kwargs)(self.X_[0], self.X_[-1])}\n"
+        if logging_func is not None:
+            logging_func(_str)
+        return _str
+
+    def draw_mpl(
             self,
             fig: Optional[plt.Figure] = None,
             ax: Optional[plt.Axes] = None,
             **kwargs
     ):
-        logging_func = kwargs.get("logging_func", print)
-        
-        return self.qnode.draw()
+        _fig, _ax = qml.draw_mpl(self.qnode)(self.X_[0], self.X_[-1])
+        if fig is None or ax is None:
+            fig, ax = _fig, _ax
+        else:
+            ax_position = ax.get_position()
+            ax.remove()
+            fig.axes.append(_ax)
+            _ax.set_position(ax_position)
+            _ax.figure = fig
+            fig.add_axes(_ax)
+            ax = _ax
+
+        filepath = kwargs.get("filepath", None)
+        if filepath is not None:
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            fig.savefig(filepath)
+
+        if kwargs.get("show", False):
+            plt.show()
+
+        return fig, ax
 
 
-class MPQCKernel(NIFKernel):
+class FermionicPQCKernel(NIFKernel):
+    """
+
+    Inspired from: https://iopscience.iop.org/article/10.1088/2632-2153/acb0b4/meta#artAbst
+
+    """
     def __init__(
             self,
             size: Optional[int] = None,
@@ -171,6 +213,7 @@ class MPQCKernel(NIFKernel):
     ):
         super().__init__(size=size, **kwargs)
         self._data_scaling = kwargs.get("data_scaling", np.pi / 2)
+        self._parameter_scaling = kwargs.get("parameter_scaling", np.pi / 2)
         self._depth = kwargs.get("depth", None)
         self._rotations = kwargs.get("rotations", "Y,Z")
     
@@ -187,16 +230,27 @@ class MPQCKernel(NIFKernel):
         return self._rotations
     
     def _compute_default_size(self):
-        return int(np.ceil(np.log2(self.X_.shape[-1] + 2) - 1))
+        return max(2, int(np.ceil(np.log2(self.X_.shape[-1] + 2) - 1)))
     
     def initialize_parameters(self):
         self._depth = self.kwargs.get("depth", max(1, (self.X_.shape[-1]//self.size) - 1))
-        self.parameters = pnp.random.uniform(0, np.pi / 2, size=self.X_.shape[-1])
+        self.parameters = pnp.random.uniform(0.0, 1.0, size=self.X_.shape[-1])
+
+    def ansatz(self, x):
+        wires_double = PATTERN_TO_WIRES["double"](self.wires)
+        wires_double_odd = PATTERN_TO_WIRES["double_odd"](self.wires)
+        wires_patterns = [wires_double, wires_double_odd]
+        for layer in range(self.depth):
+            sub_x = x[..., layer * self.size: (layer + 1) * self.size]
+            MAngleEmbedding(sub_x, wires=self.wires, rotations=self.rotations)
+            fcnot_wires = wires_patterns[layer % len(wires_patterns)]
+            for wires in fcnot_wires:
+                fCNOT(wires=wires)
 
     def circuit(self, x0, x1):
-        theta_x0 = self.parameters + self.data_scaling * x0
-        theta_x1 = self.parameters + self.data_scaling * x1
-        MAngleEmbeddings(theta_x0, wires=self.wires, rotations=self.rotations)
-        qml.adjoint(MAngleEmbeddings)(theta_x1, wires=self.wires, rotations=self.rotations)
+        theta_x0 = self._parameter_scaling * self.parameters + self.data_scaling * x0
+        theta_x1 = self._parameter_scaling * self.parameters + self.data_scaling * x1
+        self.ansatz(theta_x0)
+        qml.adjoint(self.ansatz)(theta_x1)
         projector: BasisStateProjector = qml.Projector(np.zeros(self.size), wires=self.wires)
         return qml.expval(projector)

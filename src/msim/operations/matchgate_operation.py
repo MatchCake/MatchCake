@@ -19,12 +19,17 @@ class MatchgateOperation(Matchgate, Operation):
 
     @staticmethod
     def _matrix(*params):
+        # TODO: add support for batched params when available in MatchgateParameterSets
+        # TODO: if batched: output shape should be (batch_size, 2**n, 2**n)
+        # TODO: maybe remove this method to use only compute_matrix
         polar_params = mps.MatchgatePolarParams(*params, backend=pnp)
         std_params = mps.MatchgateStandardParams.parse_from_params(polar_params)
         return pnp.array(std_params.to_matrix())
     
     @staticmethod
     def compute_matrix(*params, **hyperparams):
+        # TODO: add support for batched params when available in MatchgateParameterSets
+        # TODO: if batched: output shape should be (batch_size, 2**n, 2**n)
         return MatchgateOperation._matrix(*params)
     
     def __init__(
@@ -107,4 +112,4 @@ class MatchgateOperation(Matchgate, Operation):
 
         op_label = base_label or self.__class__.__name__
         return f"{op_label}({self.draw_label_params})"
-        
+

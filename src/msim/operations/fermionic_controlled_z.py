@@ -12,6 +12,7 @@ from .. import utils
 from .matchgate_operation import MatchgateOperation
 from .fermionic_hadamard import fH
 from .fermionic_swap import fSWAP
+from .fermionic_paulis import fXX
 
 
 class FermionicControlledZ(Operation):
@@ -27,6 +28,9 @@ class FermionicControlledZ(Operation):
             fXX(wires=wires),
             fH(wires=wires),
         ]
+
+    def label(self, decimals=None, base_label=None, cache=None):
+        return base_label or self.name
 
 
 fCZ = FermionicControlledZ

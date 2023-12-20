@@ -457,3 +457,18 @@ def get_probabilities_from_state(state: np.ndarray, wires=None) -> np.ndarray:
         wires = all_wires.subset(wires)
     meas = qml.measurements.ProbabilityMP(wires=wires)
     return meas.process_state(state=state, wire_order=all_wires)
+
+
+def get_all_subclasses(__class) -> set:
+    r"""
+    Get all the subclasses of a class.
+
+    :param __class: Class
+    :return: Subclasses
+    :rtype: set
+    """
+    subclasses: set = set({})
+    for subclass in __class.__subclasses__():
+        subclasses.add(subclass)
+        subclasses |= get_all_subclasses(subclass)
+    return subclasses

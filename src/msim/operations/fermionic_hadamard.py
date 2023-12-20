@@ -28,6 +28,9 @@ class FermionicHadamard(MatchgateOperation):
         kwargs["in_param_type"] = mps.MatchgatePolarParams
         super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
 
+    def label(self, decimals=None, base_label=None, cache=None):
+        return base_label or self.name
+
 
 fH = FermionicHadamard
 fH.__name__ = "fH"

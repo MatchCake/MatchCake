@@ -1,13 +1,11 @@
 import pennylane as qml
 from pennylane.wires import Wires
 from pennylane.operation import Operation, AnyWires
-from .m_rot_xx import MRotXX
-from .m_rot_zz import MRotZZ
-from .m_rot_yy import MRotYY
+from .fermionic_rotations import fRXX, fRYY, fRZZ
 import numpy as np
 
 
-ROT = {"X": MRotXX, "Y": MRotYY, "Z": MRotZZ}
+ROT = {"X": fRXX, "Y": fRYY, "Z": fRZZ}
 
 
 class MAngleEmbedding(Operation):
@@ -23,9 +21,9 @@ class MAngleEmbedding(Operation):
         wires = Wires(wires)
         rotations = hyperparameters.get("rotations", [ROT["X"]])
         return [
-            rot([p0, p1], wires=[wires[i], wires[i + 1]])
-            for rot in rotations
+            rot([p0, p1], wires=[wires[2 * i], wires[2 * i + 1]])
             for i, (p0, p1) in enumerate(zip(params[0::2], params[1::2]))
+            for rot in rotations
         ]
     
     @staticmethod
