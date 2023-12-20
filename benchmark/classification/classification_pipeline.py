@@ -70,6 +70,8 @@ class ClassificationPipeline:
         self.train_accuracies = {}
         self.save_path = kwargs.get("save_path", None)
         self._has_run = False
+        self.train_gram_matrices = {}
+        self.test_gram_matrices = {}
 
     @property
     def n_features(self):
@@ -150,6 +152,25 @@ class ClassificationPipeline:
             self.kernels.pop(kernel_name)
         return self.kernels
 
+    def compute_gram_matrices(self):
+        if self.kernels is None:
+            self.make_kernels()
+        to_remove = []
+        for kernel_name, kernel in self.kernels.items():
+            try:
+                start_time = time.perf_counter()
+                self.train_gram_matrices[kernel_name] = kernel.pairwise_distances(self.x_train, self.x_train.T)
+                self.test_gram_matrices[kernel_name] = kernel.pairwise_distances(self.x_test, self.x_train.T)
+                self.fit_kernels_times[kernel_name] = time.perf_counter() - start_time
+            except Exception as e:
+                if self.kwargs.get("throw_errors", False):
+                    raise e
+                print(f"Failed to compute gram matrix for kernel {kernel_name}: {e}. \n Removing it from the list of kernels.")
+                to_remove.append(kernel_name)
+        for kernel_name in to_remove:
+            self.kernels.pop(kernel_name)
+        return self.kernels
+
     def make_classifiers(self):
         self.classifiers = {}
         for kernel_name, kernel in self.kernels.items():
@@ -164,7 +185,7 @@ class ClassificationPipeline:
         for kernel_name, classifier in self.classifiers.items():
             try:
                 start_time = time.perf_counter()
-                classifier.fit(self.x_train, self.y_train)
+                classifier.fit(self.train_gram_matrices[kernel_name], self.y_train)
                 self.fit_times[kernel_name] = time.perf_counter() - start_time
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
@@ -173,9 +194,8 @@ class ClassificationPipeline:
                 to_remove.append(kernel_name)
                 p_bar.update()
                 continue
-            self.test_accuracies[kernel_name] = classifier.score(self.x_test, self.y_test)
-            if self.kwargs.get("compute_train_accuracy", True):
-                self.train_accuracies[kernel_name] = classifier.score(self.x_train, self.y_train)
+            self.test_accuracies[kernel_name] = classifier.score(self.test_gram_matrices[kernel_name], self.y_test)
+            self.train_accuracies[kernel_name] = classifier.score(self.train_gram_matrices[kernel_name], self.y_train)
             p_bar.update()
             p_bar.set_postfix({
                 f"{kernel_name} fit time": f"{self.fit_times.get(kernel_name, np.NaN):.2f} [s]",
@@ -195,6 +215,7 @@ class ClassificationPipeline:
         self.preprocess_data()
         self.make_kernels()
         self.fit_kernels()
+        self.compute_gram_matrices()
         self.make_classifiers()
         self.fit_classifiers()
         self._has_run = True
