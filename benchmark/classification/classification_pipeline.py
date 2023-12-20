@@ -198,6 +198,7 @@ class ClassificationPipeline:
         self.make_classifiers()
         self.fit_classifiers()
         self._has_run = True
+        self.to_pickle()
         return self
 
     def print(self):
