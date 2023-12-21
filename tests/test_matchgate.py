@@ -34,17 +34,21 @@ def test_matchgate_det_constraint(matchgate_rn_init):
 @pytest.mark.parametrize(
     "params",
     [
-        tuple(np.random.rand(mps.MatchgatePolarParams.N_PARAMS))
+        mps.MatchgatePolarParams(
+            r0=np.random.rand(),
+            r1=np.random.rand(),
+            theta0=np.random.rand(),
+            theta1=np.random.rand(),
+            theta2=np.random.rand(),
+            theta3=np.random.rand(),
+        )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
 def test_matchgate_constructor_with_default_theta4(params):
-    from pennylane import numpy as pnp
     m = Matchgate(params)
-    # exp4 = np.exp(1j * np.mod(m.polar_params.theta4, 2 * np.pi))
-    # exp2 = np.exp(1j * np.mod(m.polar_params.theta2, 2 * np.pi))
-    exp4 = pnp.exp(1j * m.polar_params.theta4)
-    exp2 = pnp.exp(1j * m.polar_params.theta2)
+    exp4 = np.exp(1j * np.mod(m.polar_params.theta4, 2 * np.pi))
+    exp2 = np.exp(1j * np.mod(m.polar_params.theta2, 2 * np.pi))
     np.testing.assert_almost_equal(exp2 * exp4, 1.0 + 0j)
 
 
@@ -72,7 +76,7 @@ def test_matchgate_constructor_with_default_theta4(params):
 def test_matchgate_constructor_from_matrix(input_matrix):
     mg = Matchgate.from_matrix(input_matrix)
     np.testing.assert_allclose(
-        mg.gate_data, input_matrix,
+        mg.gate_data.squeeze(), input_matrix,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
