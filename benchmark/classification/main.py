@@ -4,20 +4,21 @@ from classification_pipeline import ClassificationPipeline
 
 if __name__ == '__main__':
     kwargs = dict(
-        dataset_name="breast_cancer",
-        # dataset_n_samples=32,
-        # dataset_n_features=2,
+        # dataset_name="breast_cancer",
+        dataset_name="synthetic",
+        dataset_n_samples=32,
+        dataset_n_features=2,
         methods=[
             "classical",
             # "nif",
-            "fPQC",
-            "PQC",
+            # "fPQC",
+            # "PQC",
         ],
         kernel_kwargs=dict(nb_workers=0),
         throw_errors=True,
     )
     save_path = os.path.join(
-        os.path.dirname(__file__), "results", f"{kwargs['dataset_name']}_{'-'.join(kwargs['methods'])}", f"cls.pkl"
+        os.path.dirname(__file__), "results", f"{kwargs['dataset_name']}", f"cls.pkl"
     )
     pipline = ClassificationPipeline.from_pickle_or_new(
         **kwargs,

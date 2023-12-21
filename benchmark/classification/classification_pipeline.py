@@ -13,6 +13,7 @@ from sklearn import datasets
 from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
+from functools import wraps
 import umap
 from tqdm import tqdm
 
@@ -32,6 +33,31 @@ except ImportError:
 from msim.ml import ClassificationVisualizer
 
 
+def save_on_exit(save_func_name="to_pickle", *save_args, **save_kwargs):
+    """
+    Decorator for a method that saves the object on exit.
+    
+    :param save_func_name: The name of the method that saves the object.
+    :type save_func_name: str
+    :param save_args: The arguments of the save method.
+    :type save_args: tuple
+    :param save_kwargs: The keyword arguments of the save method.
+    :return: The decorated method.
+    """
+    def decorator(method):
+        @wraps(method)
+        def wrapper(self, *args, **kwargs):
+            try:
+                return method(self, *args, **kwargs)
+            finally:
+                if not hasattr(self, save_func_name):
+                    raise AttributeError(
+                        f"The object {self.__class__.__name__} does not have a save method named {save_func_name}."
+                    )
+                getattr(self, save_func_name)(*save_args, **save_kwargs)
+        return wrapper
+
+
 class ClassificationPipeline:
     available_datasets = {
         "breast_cancer": datasets.load_breast_cancer,
@@ -46,7 +72,8 @@ class ClassificationPipeline:
         "fPQC": FermionicPQCKernel,
         "PQC": PQCKernel,
     }
-
+    UNPICKLABLE_ATTRIBUTES = ["dataset", ]
+    
     def __init__(
             self,
             dataset_name: str = "synthetic",
@@ -69,19 +96,25 @@ class ClassificationPipeline:
         self.test_accuracies = {}
         self.train_accuracies = {}
         self.save_path = kwargs.get("save_path", None)
-        self._has_run = False
         self.train_gram_matrices = {}
         self.test_gram_matrices = {}
+        self.train_gram_compute_times = {}
+        self.test_gram_compute_times = {}
+        self._use_gram_matrices = self.kwargs.get("use_gram_matrices", False)
 
     @property
     def n_features(self):
         if self.X is None:
             return None
         return self.X.shape[-1]
-
-    @property
-    def has_run(self):
-        return self._has_run
+    
+    def __getstate__(self):
+        state = {
+            k: v
+            for k, v in self.__dict__.items()
+            if k not in self.UNPICKLABLE_ATTRIBUTES
+        }
+        return state
 
     def load_dataset(self):
         if self.dataset_name == "synthetic":
@@ -120,10 +153,12 @@ class ClassificationPipeline:
             random_state=self.kwargs.get("test_split_random_state", 0),
         )
         return self.X, self.y
-
+    
+    @save_on_exit
     def make_kernels(self):
-        self.kernels = {}
         for kernel_name in self.methods:
+            if kernel_name in self.kernels:
+                continue
             try:
                 kernel_class = self.available_kernels[kernel_name]
                 self.kernels[kernel_name] = kernel_class(
@@ -133,12 +168,15 @@ class ClassificationPipeline:
             except Exception as e:
                 print(f"Failed to make kernel {kernel_name}: {e}")
         return self.kernels
-
+    
+    @save_on_exit
     def fit_kernels(self):
-        if self.kernels is None:
+        if not self.kernels:
             self.make_kernels()
         to_remove = []
         for kernel_name, kernel in self.kernels.items():
+            if kernel.is_fitted:
+                continue
             try:
                 start_time = time.perf_counter()
                 kernel.fit(self.x_train, self.y_train)
@@ -151,41 +189,86 @@ class ClassificationPipeline:
         for kernel_name in to_remove:
             self.kernels.pop(kernel_name)
         return self.kernels
-
-    def compute_gram_matrices(self):
-        if self.kernels is None:
+    
+    @save_on_exit
+    def compute_train_gram_matrices(self):
+        if not self.kernels:
             self.make_kernels()
         to_remove = []
+        verbose = self.kwargs.get("verbose_gram", True)
         for kernel_name, kernel in self.kernels.items():
+            if kernel_name in self.train_gram_matrices:
+                continue
             try:
                 start_time = time.perf_counter()
-                self.train_gram_matrices[kernel_name] = kernel.pairwise_distances(self.x_train, self.x_train.T)
-                self.test_gram_matrices[kernel_name] = kernel.pairwise_distances(self.x_test, self.x_train.T)
-                self.fit_kernels_times[kernel_name] = time.perf_counter() - start_time
+                self.train_gram_matrices[kernel_name] = kernel.compute_gram_matrix(self.x_train, verbose=verbose)
+                self.train_gram_compute_times[kernel_name] = time.perf_counter() - start_time
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
                     raise e
-                print(f"Failed to compute gram matrix for kernel {kernel_name}: {e}. \n Removing it from the list of kernels.")
+                print(f"Failed to compute gram matrix for kernel {kernel_name}: {e}. "
+                      f"\n Removing it from the list of kernels.")
                 to_remove.append(kernel_name)
         for kernel_name in to_remove:
             self.kernels.pop(kernel_name)
         return self.kernels
-
+    
+    @save_on_exit
+    def compute_test_gram_matrices(self):
+        if not self.kernels:
+            self.make_kernels()
+        to_remove = []
+        verbose = self.kwargs.get("verbose_gram", True)
+        for kernel_name, kernel in self.kernels.items():
+            if kernel_name in self.test_gram_matrices:
+                continue
+            try:
+                start_time = time.perf_counter()
+                self.test_gram_matrices[kernel_name] = kernel.compute_gram_matrix(self.x_test, verbose=verbose)
+                self.test_gram_compute_times[kernel_name] = time.perf_counter() - start_time
+            except Exception as e:
+                if self.kwargs.get("throw_errors", False):
+                    raise e
+                print(f"Failed to compute gram matrix for kernel {kernel_name}: {e}. "
+                      f"\n Removing it from the list of kernels.")
+                to_remove.append(kernel_name)
+        for kernel_name in to_remove:
+            self.kernels.pop(kernel_name)
+        return self.kernels
+    
+    @save_on_exit
+    def compute_gram_matrices(self):
+        self.compute_train_gram_matrices()
+        self.compute_test_gram_matrices()
+        return self.kernels
+    
+    @save_on_exit
     def make_classifiers(self):
         self.classifiers = {}
         for kernel_name, kernel in self.kernels.items():
-            self.classifiers[kernel_name] = svm.SVC(kernel=kernel.pairwise_distances, random_state=0)
+            if kernel_name in self.classifiers:
+                continue
+            if self._use_gram_matrices:
+                self.classifiers[kernel_name] = svm.SVC(kernel="precomputed", random_state=0)
+            else:
+                self.classifiers[kernel_name] = svm.SVC(kernel=kernel.pairwise_distances, random_state=0)
         return self.classifiers
-
+    
+    @save_on_exit
     def fit_classifiers(self):
         if self.classifiers is None:
             self.make_classifiers()
         p_bar = tqdm(self.classifiers.items(), desc="Fitting classifiers", unit="cls")
         to_remove = []
         for kernel_name, classifier in self.classifiers.items():
+            if kernel_name in self.fit_times:
+                continue
             try:
                 start_time = time.perf_counter()
-                classifier.fit(self.train_gram_matrices[kernel_name], self.y_train)
+                if classifier.kernel == "precomputed":
+                    classifier.fit(self.train_gram_matrices[kernel_name], self.y_train)
+                else:
+                    classifier.fit(self.x_train, self.y_train)
                 self.fit_times[kernel_name] = time.perf_counter() - start_time
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
@@ -194,8 +277,14 @@ class ClassificationPipeline:
                 to_remove.append(kernel_name)
                 p_bar.update()
                 continue
-            self.test_accuracies[kernel_name] = classifier.score(self.test_gram_matrices[kernel_name], self.y_test)
-            self.train_accuracies[kernel_name] = classifier.score(self.train_gram_matrices[kernel_name], self.y_train)
+            if classifier.kernel == "precomputed":
+                pred_test = classifier.predict(self.test_gram_matrices[kernel_name])
+                pred_train = classifier.predict(self.train_gram_matrices[kernel_name])
+                self.test_accuracies[kernel_name] = np.mean(np.isclose(pred_test, self.y_test))
+                self.train_accuracies[kernel_name] = np.mean(np.isclose(pred_train, self.y_train))
+            else:
+                self.test_accuracies[kernel_name] = classifier.score(self.x_test, self.y_test)
+                self.train_accuracies[kernel_name] = classifier.score(self.x_train, self.y_train)
             p_bar.update()
             p_bar.set_postfix({
                 f"{kernel_name} fit time": f"{self.fit_times.get(kernel_name, np.NaN):.2f} [s]",
@@ -207,21 +296,20 @@ class ClassificationPipeline:
             self.classifiers.pop(kernel_name)
             self.kernels.pop(kernel_name)
         return self.classifiers
-
+    
+    @save_on_exit
     def run(self):
-        if self._has_run:
-            return self
         self.load_dataset()
         self.preprocess_data()
         self.make_kernels()
         self.fit_kernels()
-        self.compute_gram_matrices()
+        if self._use_gram_matrices:
+            self.compute_gram_matrices()
         self.make_classifiers()
         self.fit_classifiers()
-        self._has_run = True
         self.to_pickle()
         return self
-
+    
     def print(self):
         print(f"(N Samples, N features): {self.X.shape}")
         print(f"Classes: {set(np.unique(self.y))}, labels: {getattr(self.dataset, 'target_names', set(np.unique(self.y)))}")
@@ -348,17 +436,20 @@ class ClassificationPipeline:
                 pickle.dump(self, f)
 
     @classmethod
-    def from_pickle(cls, pickle_path: str) -> "ClassificationPipeline":
+    def from_pickle(cls, pickle_path: str, new_attrs: Optional[dict] = None) -> "ClassificationPipeline":
         import pickle
         with open(pickle_path, "rb") as f:
-            return pickle.load(f)
-
+            loaded_obj = pickle.load(f)
+        if new_attrs is not None:
+            loaded_obj.__dict__.update(new_attrs)
+        return loaded_obj
+    
     @classmethod
     def from_pickle_or_new(cls, pickle_path: Optional[str] = None, **kwargs) -> "ClassificationPipeline":
         save_path = kwargs.get("save_path", None)
         if pickle_path is None:
             pickle_path = save_path
         if pickle_path is not None and os.path.exists(pickle_path):
-            return cls.from_pickle(pickle_path)
+            return cls.from_pickle(pickle_path, new_attrs=kwargs)
         else:
             return cls(**kwargs)

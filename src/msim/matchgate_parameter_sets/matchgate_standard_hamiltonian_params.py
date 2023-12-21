@@ -1,6 +1,6 @@
 from typing import Union
 
-import numpy as np
+from pennylane import numpy as pnp
 
 from .matchgate_params import MatchgateParams
 
@@ -36,29 +36,10 @@ class MatchgateStandardHamiltonianParams(MatchgateParams):
         (2, 1), (2, 2),  # u_4, u_5
         (3, 0), (3, 3),  # u_6, u_7
     ]
+    ATTRS = ["u0", "u1", "u2", "u3", "u4", "u5", "u6", "u7"]
 
-    def __init__(
-            self,
-            u0: float = 0.0,
-            u1: Union[float, complex] = 0.0,
-            u2: float = 0.0,
-            u3: Union[float, complex] = 0.0,
-            u4: Union[float, complex] = 0.0,
-            u5: float = 0.0,
-            u6: Union[float, complex] = 0.0,
-            u7: float = 0.0,
-            *,
-            backend='numpy',
-    ):
-        super().__init__(backend=backend)
-        self._u0 = u0
-        self._u1 = complex(u1)
-        self._u2 = u2
-        self._u3 = complex(u3)
-        self._u4 = complex(u4)
-        self._u5 = u5
-        self._u6 = complex(u6)
-        self._u7 = u7
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     @property
     def u0(self) -> Union[float, complex]:
@@ -98,18 +79,6 @@ class MatchgateStandardHamiltonianParams(MatchgateParams):
         u0, u1, u2, u3, u4, u5, u6, u7 = sp.symbols('u_0 u_1 u_2 u_3 u_4 u_5 u_6 u_7')
         return sp.Matrix([u0, u1, u2, u3, u4, u5, u6, u7])
 
-    def to_numpy(self):
-        return self.backend.asarray([
-            self.u0,
-            self.u1,
-            self.u2,
-            self.u3,
-            self.u4,
-            self.u5,
-            self.u6,
-            self.u7,
-        ])
-
     def to_matrix(self):
         return self.backend.asarray([
             [self.u0, 0, 0, self.u1],
@@ -125,24 +94,12 @@ class MatchgateStandardHamiltonianParams(MatchgateParams):
         :return: The adjoint parameters.
         """
         return MatchgateStandardHamiltonianParams(
-            u0=np.conjugate(self.u0),
-            u1=np.conjugate(self.u6),
-            u2=np.conjugate(self.u2),
-            u3=np.conjugate(self.u4),
-            u4=np.conjugate(self.u3),
-            u5=np.conjugate(self.u5),
-            u6=np.conjugate(self.u1),
-            u7=np.conjugate(self.u7),
-            backend=self.backend,
+            u0=pnp.conjugate(self.u0),
+            u1=pnp.conjugate(self.u6),
+            u2=pnp.conjugate(self.u2),
+            u3=pnp.conjugate(self.u4),
+            u4=pnp.conjugate(self.u3),
+            u5=pnp.conjugate(self.u5),
+            u6=pnp.conjugate(self.u1),
+            u7=pnp.conjugate(self.u7),
         )
-
-    def __repr__(self):
-        return (f"{self.__class__.__name__}("
-                f"u0={self.u0}, "
-                f"u1={self.u1}, "
-                f"u2={self.u2}, "
-                f"u3={self.u3}, "
-                f"u4={self.u4}, "
-                f"u5={self.u5}, "
-                f"u6={self.u6}, "
-                f"u7={self.u7})")

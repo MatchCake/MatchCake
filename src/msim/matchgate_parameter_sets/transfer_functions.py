@@ -2,6 +2,7 @@ from typing import Type, Dict, Callable, List
 
 import networkx as nx
 import numpy as np
+from pennylane import numpy as pnp
 
 from . import (
     MatchgateParams,
@@ -40,7 +41,7 @@ def polar_to_standard(params: MatchgatePolarParams, **kwargs) -> MatchgateStanda
     :return: The standard parameters
     :rtype: MatchgateStandardParams
     """
-    backend = MatchgateParams.load_backend_lib(kwargs.get("backend", "numpy"))
+    backend = MatchgateParams.load_backend_lib(kwargs.get("backend", pnp))
 
     r0_tilde = MatchgatePolarParams.compute_r_tilde(params.r0, backend=backend)
     r1_tilde = MatchgatePolarParams.compute_r_tilde(params.r1, backend=backend)
@@ -90,7 +91,7 @@ def standard_hamiltonian_to_hamiltonian_coefficients(
     :return: The hamiltonian coefficients parameters
     :rtype: MatchgateHamiltonianCoefficientsParams
     """
-    backend = MatchgateParams.load_backend_lib(kwargs.get("backend", "numpy"))
+    backend = MatchgateParams.load_backend_lib(kwargs.get("backend", pnp))
     epsilon = (params.u0 + params.u7) / 2
     return MatchgateHamiltonianCoefficientsParams(
         h0=0.25 * (params.u0 + params.u2 - 2 * epsilon),
@@ -130,7 +131,7 @@ def hamiltonian_coefficients_to_composed_hamiltonian(
     :return: The composed hamiltonian parameters
     :rtype: MatchgateComposedHamiltonianParams
     """
-    backend = MatchgateParams.load_backend_lib(kwargs.get("backend", "numpy"))
+    backend = MatchgateParams.load_backend_lib(kwargs.get("backend", pnp))
     return MatchgateComposedHamiltonianParams(
         n_x=2 * (params.h2 + params.h3),
         n_y=2 * (params.h1 + params.h4),
@@ -168,7 +169,7 @@ def composed_hamiltonian_to_hamiltonian_coefficients(
     :return: The hamiltonian coefficients parameters
     :rtype: MatchgateHamiltonianCoefficientsParams
     """
-    backend = MatchgateParams.load_backend_lib(kwargs.get("backend", "numpy"))
+    backend = MatchgateParams.load_backend_lib(kwargs.get("backend", pnp))
     return MatchgateHamiltonianCoefficientsParams(
         h0=0.25 * (params.n_z + params.m_z),
         h1=0.25 * (params.n_y + params.m_y),
@@ -208,7 +209,7 @@ def hamiltonian_coefficients_to_standard_hamiltonian(
     :return: The standard hamiltonian parameters
     :rtype: MatchgateStandardHamiltonianParams
     """
-    backend = MatchgateParams.load_backend_lib(kwargs.get("backend", "numpy"))
+    backend = MatchgateParams.load_backend_lib(kwargs.get("backend", pnp))
     # hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(params.to_matrix())
     # hamiltonian = params.compute_hamiltonian()
     # elements_indexes_as_array = backend.array(MatchgateStandardHamiltonianParams.ELEMENTS_INDEXES)
@@ -235,7 +236,7 @@ def standard_hamiltonian_to_standard(
 
 
 def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePolarParams:
-    backend = MatchgateParams.load_backend_lib(kwargs.pop("backend", "numpy"))
+    backend = MatchgateParams.load_backend_lib(kwargs.pop("backend", pnp))
     a, b, c, d, w, x, y, z = params.to_numpy().astype(complex)
     r0 = backend.sqrt(a * backend.conjugate(a))
     r0_tilde = MatchgatePolarParams.compute_r_tilde(r0, backend=backend)

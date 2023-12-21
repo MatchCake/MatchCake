@@ -34,14 +34,17 @@ def test_matchgate_det_constraint(matchgate_rn_init):
 @pytest.mark.parametrize(
     "params",
     [
-        tuple(np.random.rand(6))
+        tuple(np.random.rand(mps.MatchgatePolarParams.N_PARAMS))
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
 def test_matchgate_constructor_with_default_theta4(params):
+    from pennylane import numpy as pnp
     m = Matchgate(params)
-    exp4 = np.exp(1j * np.mod(m.polar_params.theta4, 2 * np.pi))
-    exp2 = np.exp(1j * np.mod(m.polar_params.theta2, 2 * np.pi))
+    # exp4 = np.exp(1j * np.mod(m.polar_params.theta4, 2 * np.pi))
+    # exp2 = np.exp(1j * np.mod(m.polar_params.theta2, 2 * np.pi))
+    exp4 = pnp.exp(1j * m.polar_params.theta4)
+    exp2 = pnp.exp(1j * m.polar_params.theta2)
     np.testing.assert_almost_equal(exp2 * exp4, 1.0 + 0j)
 
 

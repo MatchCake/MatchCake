@@ -61,7 +61,7 @@ def test_matchgate_polar_params_constructor(r0, r1, theta0, theta1, theta2, thet
     "params, batch_size",
     [
         (np.random.rand(b, MatchgatePolarParams.N_PARAMS), b)
-        for b in [1, 16]
+        for b in [1, 2, 16, ]
     ]
 )
 def test_matchgate_polar_params_constructor_batch(params, batch_size):

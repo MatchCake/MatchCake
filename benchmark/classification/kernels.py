@@ -117,5 +117,5 @@ class PQCKernel(MPennylaneQuantumKernel):
         projector: BasisStateProjector = qml.Projector(np.zeros(self.size), wires=self.wires)
         return qml.expval(projector)
 
-    def batch_distance(self, x0, x1):
-        return self.qnode(x0, x1)
+    # def batch_distance(self, x0, x1):
+    #     return self.qnode(x0, x1)

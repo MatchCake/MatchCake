@@ -1,6 +1,8 @@
 from typing import NamedTuple, Union, Optional
 from dataclasses import dataclass
 import numpy as np
+import pennylane as qml
+from pennylane import numpy as pnp
 
 from .. import utils
 from .. import matchgate_parameter_sets as mps
@@ -207,7 +209,7 @@ class Matchgate:
             self,
             params: Union[mps.MatchgateParams, np.ndarray, list, tuple],
             *,
-            backend='numpy',
+            backend=pnp,
             raise_errors_if_not_matchgate=True,
             **kwargs
     ):
@@ -290,6 +292,11 @@ class Matchgate:
         return self._gate_data
     
     @property
+    def batched_gate_data(self):
+        gate = self.gate_data
+        return qml.math.reshape(gate, (-1, *gate.shape[-2:]))
+    
+    @property
     def hamiltonian_matrix(self):
         if self._hamiltonian_matrix is None:
             self._make_hamiltonian_matrix_()
@@ -349,10 +356,7 @@ class Matchgate:
             
         :return: The outer gate data.
         """
-        return np.asarray([
-            [self.standard_params.a, self.standard_params.b],
-            [self.standard_params.c, self.standard_params.d],
-        ])
+        return self.standard_params.to_outer_matrix()
 
     @property
     def inner_gate_data(self):
@@ -378,10 +382,7 @@ class Matchgate:
         
         :return:
         """
-        return np.asarray([
-            [self.standard_params.w, self.standard_params.x],
-            [self.standard_params.y, self.standard_params.z],
-        ])
+        return self.standard_params.to_inner_matrix()
 
     @property
     def hamiltonian_coeffs_matrix(self) -> np.ndarray:
@@ -541,12 +542,7 @@ class Matchgate:
         )
 
     def _make_gate_data_(self) -> np.ndarray:
-        self._gate_data = np.asarray([
-            [self.standard_params.a, 0, 0, self.standard_params.b],
-            [0, self.standard_params.w, self.standard_params.x, 0],
-            [0, self.standard_params.y, self.standard_params.z, 0],
-            [self.standard_params.c, 0, 0, self.standard_params.d],
-        ])
+        self._gate_data = self.standard_params.to_matrix()
         return self._gate_data
     
     def _make_hamiltonian_matrix_(self) -> np.ndarray:
@@ -586,10 +582,22 @@ class Matchgate:
         return self._transition_matrix
 
     def compute_m_m_dagger(self):
-        return self.gate_data @ np.conjugate(self.gate_data.T)
+        return qml.math.stack(
+            [
+                qml.math.dot(gate, qml.math.conj(qml.math.transpose(gate)))
+                for gate in self.batched_gate_data
+            ],
+            axis=0
+        )
 
     def compute_m_dagger_m(self):
-        return np.conjugate(self.gate_data.T) @ self.gate_data
+        return qml.math.stack(
+            [
+                qml.math.dot(qml.math.conj(qml.math.transpose(gate)), gate)
+                for gate in self.batched_gate_data
+            ],
+            axis=0
+        )
 
     def get_outer_determinant(self) -> float:
         return np.linalg.det(self.outer_gate_data)
@@ -598,13 +606,13 @@ class Matchgate:
         return np.linalg.det(self.inner_gate_data)
 
     def check_m_m_dagger_constraint(self) -> bool:
-        return np.allclose(self.compute_m_m_dagger(), np.eye(4))
+        return qml.math.allclose(self.compute_m_m_dagger(), np.eye(4))
 
     def check_m_dagger_m_constraint(self) -> bool:
-        return np.allclose(self.compute_m_dagger_m(), np.eye(4))
+        return qml.math.allclose(self.compute_m_dagger_m(), np.eye(4))
 
     def check_det_constraint(self) -> bool:
-        return np.isclose(self.get_outer_determinant(), self.get_inner_determinant())
+        return qml.math.allclose(self.get_outer_determinant(), self.get_inner_determinant())
 
     def check_asserts(self):
         if not self.check_m_m_dagger_constraint():

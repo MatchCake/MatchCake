@@ -35,6 +35,17 @@ class MLKernel(BaseEstimator):
         self.kwargs = kwargs
         
         self.X_, self.y_, self.classes_ = None, None, None
+        
+    @property
+    def is_fitted(self):
+        attrs = ["X_", "y_", "classes_"]
+        attrs_values = [getattr(self, attr, None) for attr in attrs]
+        return all([attr is not None for attr in attrs_values])
+    
+    def check_is_fitted(self):
+        check_is_fitted(self)
+        if not self.is_fitted:
+            raise ValueError(f"{self.__class__.__name__} is not fitted.")
     
     def _compute_default_size(self):
         return self.X_.shape[-1]
@@ -81,17 +92,26 @@ class MLKernel(BaseEstimator):
     def pairwise_distances(self, x0, x1, **kwargs):
         x0 = check_array(x0)
         x1 = check_array(x1)
-        check_is_fitted(self)
+        self.check_is_fitted()
+        verbose = kwargs.pop("verbose", False)
+        desc = kwargs.pop(
+            "desc",
+            f"{self.__class__.__name__}: pairwise_distances(x0:{qml.math.shape(x0)}, x1:{qml.math.shape(x1)})"
+        )
         _list_results = pbt.apply_func_multiprocess(
             func=self.batch_distance,
             iterable_of_args=[(x0, b) for b in x1],
             iterable_of_kwargs=[kwargs for _ in range(len(x1))],
             nb_workers=self.nb_workers,
-            verbose=False,
+            verbose=verbose,
+            desc=desc,
         )
-        # _result = np.asarray(_list_results).reshape((len(x0), len(x1)))
         _result = np.stack(_list_results, axis=-1)
         return _result
+    
+    def compute_gram_matrix(self, x, **kwargs):
+        kwargs.setdefault("desc", f"{self.__class__.__name__}: compute_gram_matrix(x:{qml.math.shape(x)})")
+        return self.pairwise_distances(x, x, **kwargs)
 
 
 class NIFKernel(MLKernel):

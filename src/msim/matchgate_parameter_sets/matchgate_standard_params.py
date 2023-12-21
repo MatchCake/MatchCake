@@ -24,30 +24,11 @@ class MatchgateStandardParams(MatchgateParams):
         (1, 1), (1, 2),  # w, x
         (2, 1), (2, 2),  # y, z
     ]
+    ATTRS = ["a", "b", "c", "d", "w", "x", "y", "z"]
 
-    def __init__(
-            self,
-            a: Union[float, complex] = 0.0,
-            b: Union[float, complex] = 0.0,
-            c: Union[float, complex] = 0.0,
-            d: Union[float, complex] = 0.0,
-            w: Union[float, complex] = 0.0,
-            x: Union[float, complex] = 0.0,
-            y: Union[float, complex] = 0.0,
-            z: Union[float, complex] = 0.0,
-            *,
-            backend='numpy',
-    ):
-        super().__init__(backend=backend)
-        self._a = complex(a)
-        self._b = complex(b)
-        self._c = complex(c)
-        self._d = complex(d)
-        self._w = complex(w)
-        self._x = complex(x)
-        self._y = complex(y)
-        self._z = complex(z)
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
     @property
     def a(self) -> Union[float, complex]:
         return self._a
@@ -87,25 +68,29 @@ class MatchgateStandardParams(MatchgateParams):
         w, x, y, z = sp.symbols('w x y z')
         return sp.Matrix([a, b, c, d, w, x, y, z])
 
-    def to_numpy(self):
-        return np.asarray([
-            self.a,
-            self.b,
-            self.c,
-            self.d,
-            self.w,
-            self.x,
-            self.y,
-            self.z,
-        ])
-
-    def to_matrix(self):
-        return self.backend.asarray([
-            [self.a, 0, 0, self.b],
-            [0, self.w, self.x, 0],
-            [0, self.y, self.z, 0],
-            [self.c, 0, 0, self.d],
-        ])
+    def to_outer_matrix(self):
+        matrix = self.to_matrix()
+        batched_matrix = qml.math.reshape(matrix, (-1, *matrix.shape[-2:]))
+        outer_matrix = pnp.zeros((batched_matrix.shape[0], 2, 2), dtype=self.DEFAULT_PARAMS_TYPE)
+        outer_matrix[..., 0, 0] = batched_matrix[..., 0, 0]
+        outer_matrix[..., 0, 1] = batched_matrix[..., 0, 3]
+        outer_matrix[..., 1, 0] = batched_matrix[..., 3, 0]
+        outer_matrix[..., 1, 1] = batched_matrix[..., 3, 3]
+        if qml.math.ndim(matrix) == 2:
+            outer_matrix = outer_matrix[0]
+        return outer_matrix
+    
+    def to_inner_matrix(self):
+        matrix = self.to_matrix()
+        batched_matrix = qml.math.reshape(matrix, (-1, *matrix.shape[-2:]))
+        inner_matrix = pnp.zeros((batched_matrix.shape[0], 2, 2), dtype=self.DEFAULT_PARAMS_TYPE)
+        inner_matrix[..., 0, 0] = batched_matrix[..., 1, 1]
+        inner_matrix[..., 0, 1] = batched_matrix[..., 1, 2]
+        inner_matrix[..., 1, 0] = batched_matrix[..., 2, 1]
+        inner_matrix[..., 1, 1] = batched_matrix[..., 2, 2]
+        if qml.math.ndim(matrix) == 2:
+            inner_matrix = inner_matrix[0]
+        return inner_matrix
 
     @classmethod
     def from_sub_matrices(cls, outer_matrix: np.ndarray, inner_matrix: np.ndarray):
@@ -138,24 +123,12 @@ class MatchgateStandardParams(MatchgateParams):
         :return: The adjoint parameters.
         """
         return MatchgateStandardParams(
-            a=np.conjugate(self.a),
-            b=np.conjugate(self.c),
-            c=np.conjugate(self.b),
-            d=np.conjugate(self.d),
-            w=np.conjugate(self.w),
-            x=np.conjugate(self.y),
-            y=np.conjugate(self.x),
-            z=np.conjugate(self.z),
-            backend=self.backend,
+            a=pnp.conjugate(self.a),
+            b=pnp.conjugate(self.c),
+            c=pnp.conjugate(self.b),
+            d=pnp.conjugate(self.d),
+            w=pnp.conjugate(self.w),
+            x=pnp.conjugate(self.y),
+            y=pnp.conjugate(self.x),
+            z=pnp.conjugate(self.z),
         )
-
-    def __repr__(self):
-        return (f"{self.__class__.__name__}("
-                f"a={self.a}, "
-                f"b={self.b}, "
-                f"c={self.c}, "
-                f"d={self.d}, "
-                f"w={self.w}, "
-                f"x={self.x}, "
-                f"y={self.y}, "
-                f"z={self.z})")
