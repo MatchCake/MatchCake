@@ -21,7 +21,7 @@ from msim.utils import (
 )
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
+    TEST_SEED, ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON,
 )
 
 MatchgatePolarParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
@@ -486,6 +486,12 @@ def test_standard_to_standard_hamiltonian_back_and_forth(
 ):
     to_params = transfer_functions.standard_to_standard_hamiltonian(__from_params)
     _from_params = transfer_functions.standard_hamiltonian_to_standard(to_params)
+    np.testing.assert_allclose(
+        _from_params.to_numpy(),
+        __from_params.to_numpy(),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
     assert _from_params == __from_params
 
 

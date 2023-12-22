@@ -32,7 +32,7 @@ def logm(tensor, like=None):
         return tf.linalg.logm(tensor)
     from scipy.linalg import logm as scipy_logm
     
-    as_arr = qml.math.array(tensor)
+    as_arr = qml.math.array(tensor, dtype=complex)
     tensor_shape = qml.math.shape(as_arr)
     batched_tensor = qml.math.reshape(as_arr, (-1, *tensor_shape[-2:]))
     stacked_tensor = qml.math.stack([scipy_logm(m) for m in batched_tensor], axis=0)

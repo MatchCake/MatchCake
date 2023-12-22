@@ -123,12 +123,12 @@ class MatchgateStandardParams(MatchgateParams):
         :return: The adjoint parameters.
         """
         return MatchgateStandardParams(
-            a=pnp.conjugate(self.a),
-            b=pnp.conjugate(self.c),
-            c=pnp.conjugate(self.b),
-            d=pnp.conjugate(self.d),
-            w=pnp.conjugate(self.w),
-            x=pnp.conjugate(self.y),
-            y=pnp.conjugate(self.x),
-            z=pnp.conjugate(self.z),
+            a=qml.math.conjugate(self.a),
+            b=qml.math.conjugate(self.c),
+            c=qml.math.conjugate(self.b),
+            d=qml.math.conjugate(self.d),
+            w=qml.math.conjugate(self.w),
+            x=qml.math.conjugate(self.y),
+            y=qml.math.conjugate(self.x),
+            z=qml.math.conjugate(self.z),
         )

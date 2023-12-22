@@ -120,7 +120,9 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
         matrix[..., 1, 2] = self.h3
         matrix[..., 1, 3] = self.h4
         matrix[..., 2, 3] = self.h5
-        matrix[..., :, :] = matrix[..., :, :] - matrix[..., ::-1, ::-1] + eps * qml.math.eye(4, like=matrix)
+        matrix[..., :, :] = (
+                matrix[..., :, :] - qml.math.swapaxes(matrix, -2, -1) + eps * qml.math.eye(4, like=matrix)
+        )
         return matrix
 
     def compute_hamiltonian(self):

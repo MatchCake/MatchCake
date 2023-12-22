@@ -4,6 +4,7 @@ pythonpath = [
 ]
 addopts = [
     "--cov=src",
+    "--no-cov",
     "--durations=10",
 ]
 

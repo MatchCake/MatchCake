@@ -40,7 +40,7 @@ def test_single_matchgate_circuit_output_state(params, initial_binary_state, out
         out_op="state",
     )
     np.testing.assert_allclose(
-        qubit_state, output_state,
+        qubit_state.squeeze(), output_state.squeeze(),
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )

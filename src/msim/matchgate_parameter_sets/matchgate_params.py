@@ -70,8 +70,7 @@ class MatchgateParams:
 
     @classmethod
     def from_numpy(cls, params: np.ndarray) -> 'MatchgateParams':
-        tuple_params = tuple(params.flatten())
-        return cls(*tuple_params, backend='numpy')
+        return cls(params)
 
     @classmethod
     def from_matrix(cls, matrix: np.ndarray, **kwargs) -> 'MatchgateParams':
@@ -96,7 +95,7 @@ class MatchgateParams:
         elif isinstance(params, MatchgateParams):
             return cls.parse_from_params(params)
         else:
-            return cls.from_numpy(np.asarray(params))
+            return cls.from_numpy(qml.math.array(params))
 
     @staticmethod
     def load_backend_lib(backend):
@@ -104,9 +103,9 @@ class MatchgateParams:
     
     @classmethod
     def zeros_numpy(cls, batch_size: Optional[int] = None) -> pnp.ndarray:
-        if batch_size is None:
-            return pnp.zeros_like(cls.random_numpy())
-        return pnp.zeros_like(cls.random_batch_numpy(batch_size=batch_size))
+        if batch_size is None or batch_size == 0:
+            return pnp.zeros(cls.N_PARAMS, dtype=cls.DEFAULT_PARAMS_TYPE)
+        return pnp.zeros((batch_size, cls.N_PARAMS), dtype=cls.DEFAULT_PARAMS_TYPE)
     
     def __init__(self, *args, **kwargs):
         self._backend = self.load_backend_lib(kwargs.get("backend", pnp))
@@ -179,9 +178,9 @@ class MatchgateParams:
         return f"[{params_as_str}]"
 
     def __eq__(self, other):
-        return np.allclose(
-            self.to_numpy(),
-            other.to_numpy(),
+        return qml.math.allclose(
+            qml.math.array(self.to_numpy()),
+            qml.math.array(other.to_numpy()),
             atol=self.EQUALITY_ABSOLUTE_TOLERANCE,
             rtol=self.EQUALITY_RELATIVE_TOLERANCE,
         )
@@ -259,10 +258,11 @@ class MatchgateParams:
     
     def to_matrix(self) -> np.ndarray:
         params_arr = self.to_numpy()
+        dtype = qml.math.get_dtype_name(params_arr)
         if self.is_batched:
-            matrix = self.backend.zeros((self.batch_size, 4, 4), dtype=self.DEFAULT_PARAMS_TYPE)
+            matrix = self.backend.zeros((self.batch_size, 4, 4), dtype=dtype)
         else:
-            matrix = self.backend.zeros((4, 4), dtype=self.DEFAULT_PARAMS_TYPE)
+            matrix = self.backend.zeros((4, 4), dtype=dtype)
         elements_indexes_as_array = np.array(self.ELEMENTS_INDEXES)
         matrix[..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]] = params_arr
         return matrix

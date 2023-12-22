@@ -229,10 +229,21 @@ def test_action_matrix(params, expected):
                     ]
                 )
         ),
-        # TODO: add non-trivial examples
+        (
+                mps.fSWAP,
+                np.array(
+                    [
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1],
+                        [1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                    ]
+                )
+        )
     ]
 )
 def test_single_transition_matrix(params, expected):
+    expected = qml.math.array(expected)
     mg = Matchgate(params)
     np.testing.assert_allclose(
         mg.single_transition_particle_matrix.squeeze(), expected,
@@ -245,7 +256,7 @@ def test_single_transition_matrix(params, expected):
     "params",
     [
         mps.MatchgatePolarParams.random()
-        # for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
 def test_single_transition_matrix_equal_to_expm_hami_coeff_if_null_epsilon(params):
@@ -294,13 +305,13 @@ def test_mg_equal(params_type0, params_type1):
     ]
 )
 def test_single_transition_matrix_equal_to_expm_hami_coeff_if_epsilon(params):
-    from scipy.linalg import expm
-    
     params_with_epsilon_0 = mps.MatchgateHamiltonianCoefficientsParams.parse_from_any(params)
     params_with_epsilon_0.epsilon = 1e7
     
     mg = Matchgate(params_with_epsilon_0)
-    single_transition_particle_matrix = expm(-4 * mg.hamiltonian_coefficients_params.to_matrix(add_epsilon=False))
+    single_transition_particle_matrix = qml.math.expm(
+        -4 * mg.hamiltonian_coefficients_params.to_matrix(add_epsilon=False)
+    )
     np.testing.assert_allclose(
         mg.single_transition_particle_matrix, single_transition_particle_matrix,
         atol=ATOL_MATRIX_COMPARISON,
@@ -316,11 +327,9 @@ def test_single_transition_matrix_equal_to_expm_hami_coeff_if_epsilon(params):
     ]
 )
 def test_single_transition_matrix_equal_to_expm_hami_coeff(params):
-    from scipy.linalg import expm
-    
     mg = Matchgate(params)
     h = mg.hamiltonian_coefficients_params.to_matrix(add_epsilon=False)
-    single_transition_particle_matrix = expm(-4 * h)
+    single_transition_particle_matrix = qml.math.expm(-4 * h)
     
     np.testing.assert_allclose(
         mg.single_transition_particle_matrix, single_transition_particle_matrix,

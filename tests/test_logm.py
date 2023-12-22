@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
-from scipy.linalg import expm, logm
+from pennylane.math import expm
+from msim.utils.math import logm
 
 from .configs import (
     N_RANDOM_TESTS_PER_CASE,

@@ -39,6 +39,11 @@ class MatchgateStandardHamiltonianParams(MatchgateParams):
     ATTRS = ["u0", "u1", "u2", "u3", "u4", "u5", "u6", "u7"]
 
     def __init__(self, *args, **kwargs):
+        # real_attrs = [a for i, a in enumerate(self.ATTRS) if self.PARAMS_TYPES[i] == float]
+        complex_attrs = [a for i, a in enumerate(self.ATTRS) if self.PARAMS_TYPES[i] == complex]
+        real_kwargs = {k: kwargs[k] for k in kwargs if k not in complex_attrs}
+        args, real_kwargs = self._maybe_cast_inputs_to_real(args, real_kwargs)
+        kwargs.update(real_kwargs)
         super().__init__(*args, **kwargs)
 
     @property
@@ -78,14 +83,6 @@ class MatchgateStandardHamiltonianParams(MatchgateParams):
         import sympy as sp
         u0, u1, u2, u3, u4, u5, u6, u7 = sp.symbols('u_0 u_1 u_2 u_3 u_4 u_5 u_6 u_7')
         return sp.Matrix([u0, u1, u2, u3, u4, u5, u6, u7])
-
-    def to_matrix(self):
-        return self.backend.asarray([
-            [self.u0, 0, 0, self.u1],
-            [0, self.u2, self.u3, 0],
-            [0, self.u4, self.u5, 0],
-            [self.u6, 0, 0, self.u7],
-        ])
 
     def adjoint(self):
         r"""

@@ -2,6 +2,7 @@ from typing import Type, Dict, Callable, List
 
 import networkx as nx
 import numpy as np
+import pennylane as qml
 from pennylane import numpy as pnp
 
 from . import (
@@ -60,7 +61,7 @@ def polar_to_standard(params: MatchgatePolarParams, **kwargs) -> MatchgateStanda
 
 
 def standard_to_standard_hamiltonian(params: MatchgateStandardParams, **kwargs) -> MatchgateStandardHamiltonianParams:
-    gate = params.to_matrix().astype(complex)
+    gate = qml.math.cast(params.to_matrix(), dtype=complex)
     hamiltonian = -1j * math.logm(gate)
     return MatchgateStandardHamiltonianParams.from_matrix(hamiltonian, **kwargs)
 

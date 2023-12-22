@@ -414,7 +414,7 @@ class Matchgate:
         matrix[..., 1, 2] = coeffs[..., 3]
         matrix[..., 1, 3] = coeffs[..., 4]
         matrix[..., 2, 3] = coeffs[..., 5]
-        matrix = matrix[..., :, :] - matrix[..., ::-1, ::-1]
+        matrix = matrix[..., :, :] - qml.math.swapaxes(matrix, -2, -1)
         return matrix
 
     def _initialize_params_(
@@ -564,7 +564,7 @@ class Matchgate:
         # self._action_matrix = expm(-4 * self.hamiltonian_coeffs_matrix)
 
         u = self.gate_data
-        u_dagger = qml.math.conjugate(u[..., ::-1, ::-1])
+        u_dagger = qml.math.conjugate(qml.math.swapaxes(u, -2, -1))
         u_shape = qml.math.shape(u)
         u_ndim = qml.math.ndim(u)
         # n_states = u.shape[0]
@@ -577,7 +577,7 @@ class Matchgate:
         elif u_ndim == 3:
             u_c_u_dagger = qml.math.stack([u[i] @ majorana_tensor @ u_dagger[i] for i in range(u_shape[0])])
         else:
-            raise ValueError
+            raise ValueError(f"Invalid u_ndim: {u_ndim}")
         # _matrix = np.stack([
         #     np.trace(u_c_u_dagger[i] @ majorana_tensor.T) / n_states
         #     for i in range(2*self.majorana_getter.n)

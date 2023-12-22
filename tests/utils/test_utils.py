@@ -110,7 +110,7 @@ def test_get_hamming_weight(state, hamming_weight):
 def test_get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs, hamiltonian):
     out_hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs.to_matrix())
     np.testing.assert_allclose(
-        out_hamiltonian, hamiltonian,
+        out_hamiltonian.squeeze(), hamiltonian.squeeze(),
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )

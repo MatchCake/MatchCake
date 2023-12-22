@@ -34,8 +34,6 @@ from ._pfaffian import (
     pfaffian_ltl,
 )
 
-from . import math
-
 
 def binary_string_to_vector(binary_string: str, encoding: str = "ascii") -> np.ndarray:
     r"""
@@ -248,6 +246,7 @@ def decompose_matrix_into_majoranas(
     else:
         get_majorana_func = majorana_getter.__getitem__
     majorana_tensor = qml.math.stack([get_majorana_func(i) for i in range(2*n)])
+    # return np.trace(__matrix @ majorana_tensor.T) / n_states
     return qml.math.trace(__matrix @ majorana_tensor, axis1=-2, axis2=-1) / n_states
 
 
@@ -403,7 +402,7 @@ def get_unitary_from_hermitian_matrix(matrix: np.ndarray) -> np.ndarray:
     :return: Unitary matrix
     :rtype: np.ndarray
     """
-    return qml.math.expm(1j * matrix.astype(complex))
+    return qml.math.expm(1j * qml.math.cast(matrix, dtype=complex))
 
 
 def load_backend_lib(backend):
@@ -448,7 +447,7 @@ def get_probabilities_from_state(state: np.ndarray, wires=None) -> np.ndarray:
     :return: Probabilities
     :rtype: np.ndarray
     """
-    n_states = int(np.log2(len(state)))
+    n_states = int(np.log2(qml.math.shape(state)[-1]))
     all_wires = Wires(list(range(n_states)))
     if wires is None:
         wires = all_wires
