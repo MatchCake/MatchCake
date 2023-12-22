@@ -136,13 +136,14 @@ class Matchgate:
         :raises ValueError: If the matrix is not a 4x4 matrix.
         :raises ValueError: If the matrix is not a matchgate.
         """
-        if matrix.shape != (4, 4):
+        if matrix.shape[-2:] != (4, 4):
             raise ValueError("The matrix must be a 4x4 matrix.")
         if Matchgate.is_matchgate(matrix):
-            elements_indexes_as_array = np.asarray(mps.MatchgateStandardParams.ELEMENTS_INDEXES)
-            full_params_arr = matrix[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
-            full_params = mps.MatchgateStandardParams.parse_from_params(full_params_arr)
-            params = mps.MatchgatePolarParams.parse_from_params(full_params)
+            # elements_indexes_as_array = np.asarray(mps.MatchgateStandardParams.ELEMENTS_INDEXES)
+            # full_params_arr = matrix[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
+            # full_params = mps.MatchgateStandardParams.parse_from_params(full_params_arr)
+            # params = mps.MatchgatePolarParams.parse_from_params(full_params)
+            params = mps.MatchgateStandardParams.from_matrix(matrix)
             return Matchgate(params=params)
         raise ValueError("The matrix is not a matchgate.")
 
@@ -403,12 +404,18 @@ class Matchgate:
         :return: The Hamiltonian coefficients matrix.
         """
         coeffs = self.hamiltonian_coefficients_params.to_numpy()
-        return np.asarray([
-            [0, coeffs[0], coeffs[1], coeffs[2]],
-            [-coeffs[0], 0, coeffs[3], coeffs[4]],
-            [-coeffs[1], -coeffs[3], 0, coeffs[5]],
-            [-coeffs[2], -coeffs[4], -coeffs[5], 0],
-        ])
+        if self.hamiltonian_coefficients_params.is_batched:
+            matrix = pnp.zeros((self.hamiltonian_coefficients_params.batch_size, 4, 4))
+        else:
+            matrix = pnp.zeros((4, 4))
+        matrix[..., 0, 1] = coeffs[..., 0]
+        matrix[..., 0, 2] = coeffs[..., 1]
+        matrix[..., 0, 3] = coeffs[..., 2]
+        matrix[..., 1, 2] = coeffs[..., 3]
+        matrix[..., 1, 3] = coeffs[..., 4]
+        matrix[..., 2, 3] = coeffs[..., 5]
+        matrix = matrix[..., :, :] - matrix[..., ::-1, ::-1]
+        return matrix
 
     def _initialize_params_(
             self,
@@ -557,21 +564,37 @@ class Matchgate:
         # self._action_matrix = expm(-4 * self.hamiltonian_coeffs_matrix)
 
         u = self.gate_data
-        u_dagger = np.conjugate(self.gate_data.T)
-        n_states = u.shape[0]
+        u_dagger = qml.math.conjugate(u[..., ::-1, ::-1])
+        u_shape = qml.math.shape(u)
+        u_ndim = qml.math.ndim(u)
+        # n_states = u.shape[0]
 
-        majorana_tensor = np.stack([self.majorana_getter[i] for i in range(2*self.majorana_getter.n)])  # (2n, 2^n, 2^n)
-        u_c_u_dagger = u @ majorana_tensor @ u_dagger  # (2^n, 2^n) @ (2n, 2^n, 2^n) @ (2^n, 2^n) -> (2n, 2^n, 2^n)
+        majorana_tensor = qml.math.stack([self.majorana_getter[i] for i in range(2*self.majorana_getter.n)])  # (2n, 2^n, 2^n)
+        # u_c_u_dagger = u @ majorana_tensor @ u_dagger  # (B, 2^n, 2^n) @ (2n, 2^n, 2^n) @ (B, 2^n, 2^n) -> (B, 2n, 2^n, 2^n)
+        # u_c_u_dagger = qml.math.einsum("bij,kqp,bnm->bkim", u, majorana_tensor, u_dagger)
+        if u_ndim == 2:
+            u_c_u_dagger = u @ majorana_tensor @ u_dagger
+        elif u_ndim == 3:
+            u_c_u_dagger = qml.math.stack([u[i] @ majorana_tensor @ u_dagger[i] for i in range(u_shape[0])])
+        else:
+            raise ValueError
         # _matrix = np.stack([
         #     np.trace(u_c_u_dagger[i] @ majorana_tensor.T) / n_states
         #     for i in range(2*self.majorana_getter.n)
         # ])  # [2n, Tr{(2^n, 2^n) @ (2^n, 2^n, 2n)}] -> [2n, Tr{(2^n, 2^n, 2n)}] -> [2n, (2n, )]
+        u_c_u_dagger = qml.math.reshape(u_c_u_dagger, (-1, *qml.math.shape(u_c_u_dagger)[-2:]))
         matrix = np.stack([
             utils.decompose_matrix_into_majoranas(u_c_u_dagger[i], majorana_getter=self.majorana_getter)
-            for i in range(2*self.majorana_getter.n)
+            # for i in range(2*self.majorana_getter.n)
+            for i in range(qml.math.shape(u_c_u_dagger)[0])
         ])
+        matrix = qml.math.reshape(matrix, (-1, 2*self.majorana_getter.n, 2*self.majorana_getter.n))
+        if u_ndim > 2:
+            matrix = matrix.squeeze()
+        # matrix = qml.math.einsum("bkij,mqp->bmkp", u_c_u_dagger, majorana_tensor)
+        # matrix = qml.math.einsum("biij->bij", matrix)
         # TODO: use an einsum to compute the matrix without the for loop
-        # _matrix_with_einsum = np.einsum("bij,klj->bk", u_c_u_dagger, majorana_tensor) / n_states
+        # _matrix_with_einsum = np.einsum("bkij,qlj->bkq", u_c_u_dagger, majorana_tensor) / n_states
         self._single_transition_particle_matrix = matrix
         return self._single_transition_particle_matrix
     

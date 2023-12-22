@@ -13,6 +13,7 @@ from . import (
     MatchgateStandardHamiltonianParams,
 )
 from .. import utils
+from ..utils import math
 
 
 def polar_to_standard(params: MatchgatePolarParams, **kwargs) -> MatchgateStandardParams:
@@ -59,9 +60,8 @@ def polar_to_standard(params: MatchgatePolarParams, **kwargs) -> MatchgateStanda
 
 
 def standard_to_standard_hamiltonian(params: MatchgateStandardParams, **kwargs) -> MatchgateStandardHamiltonianParams:
-    from scipy.linalg import logm
     gate = params.to_matrix().astype(complex)
-    hamiltonian = -1j * logm(gate)
+    hamiltonian = -1j * math.logm(gate)
     return MatchgateStandardHamiltonianParams.from_matrix(hamiltonian, **kwargs)
 
 

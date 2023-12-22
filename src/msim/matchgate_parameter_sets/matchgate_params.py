@@ -76,7 +76,7 @@ class MatchgateParams:
     @classmethod
     def from_matrix(cls, matrix: np.ndarray, **kwargs) -> 'MatchgateParams':
         elements_indexes_as_array = np.array(cls.ELEMENTS_INDEXES)
-        params_arr = matrix[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
+        params_arr = matrix[..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
         return cls.from_numpy(params_arr)
 
     @classmethod
@@ -168,7 +168,7 @@ class MatchgateParams:
         return str(self)
 
     def __repr__(self):
-        self_np = self.to_numpy()
+        self_np = qml.math.reshape(self.to_numpy(), (-1, self.N_PARAMS)).T
         attrs_str = ", ".join([
             f"{attr}={np.array2string(v, precision=4, floatmode='maxprec')}" for attr, v in zip(self.ATTRS, self_np)
         ])

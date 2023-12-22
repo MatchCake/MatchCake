@@ -5,6 +5,7 @@ from typing import List, Union, Optional
 import numpy as np
 from scipy import sparse
 import pennylane as qml
+import pennylane.numpy as pnp
 from pennylane.wires import Wires
 
 from . import (
@@ -32,6 +33,8 @@ from ._pfaffian import (
     pfaffian,
     pfaffian_ltl,
 )
+
+from . import math
 
 
 def binary_string_to_vector(binary_string: str, encoding: str = "ascii") -> np.ndarray:
@@ -117,7 +120,7 @@ def state_to_binary_state(state: Union[int, np.ndarray, sparse.sparray], n: Opti
 def get_non_interacting_fermionic_hamiltonian_from_coeffs(
         hamiltonian_coefficients_matrix,
         energy_offset=0.0,
-        lib=np
+        lib=pnp,
 ):
     r"""
     Compute the non-interacting fermionic Hamiltonian from the coefficients of the Majorana operators.
@@ -143,14 +146,24 @@ def get_non_interacting_fermionic_hamiltonian_from_coeffs(
     :return: Non-interacting fermionic Hamiltonian
     """
     backend = load_backend_lib(lib)
-    n_particles = int(len(hamiltonian_coefficients_matrix) / 2)
-    hamiltonian = energy_offset * backend.eye(2 ** n_particles, dtype=complex)
+    shape = qml.math.shape(hamiltonian_coefficients_matrix)
+    ndim = qml.math.ndim(hamiltonian_coefficients_matrix)
+    n_particles = int(shape[-2] / 2)
+    if ndim == 3:
+        hamiltonian = qml.math.stack([
+            energy_offset * backend.eye(2 ** n_particles, dtype=complex)
+            for _ in range(shape[0])
+        ])
+    elif ndim == 2:
+        hamiltonian = energy_offset * backend.eye(2**n_particles, dtype=complex)
+    else:
+        raise ValueError(f"hamiltonian_coefficients_matrix must be of dimension 2 or 3. Got {ndim} dimension.")
 
     for mu in range(2 * n_particles):
         for nu in range(2 * n_particles):
             c_mu = get_majorana(mu, n_particles)
             c_nu = get_majorana(nu, n_particles)
-            hamiltonian += -1j * hamiltonian_coefficients_matrix[mu, nu] * (c_mu @ c_nu)
+            hamiltonian[..., :, :] += -1j * hamiltonian_coefficients_matrix[..., mu, nu] * (c_mu @ c_nu)
     return hamiltonian
 
 
@@ -224,17 +237,18 @@ def decompose_matrix_into_majoranas(
     :return: Coefficients of the Majorana operators
     :rtype: np.ndarray
     """
-    n_states = __matrix.shape[0]
+    shape = qml.math.shape(__matrix)
+    n_states = shape[-2]
     n = int(np.log2(n_states))
     assert n_states == 2 ** n, f"Invalid number of states: {n_states}, must be a power of 2."
     assert n == 2, f"Invalid number of particles: {n}, must be 2."
-    assert __matrix.shape == (n_states, n_states), f"Invalid shape for matrix: {__matrix.shape}, must be square."
+    assert shape[-2:] == (n_states, n_states), f"Invalid shape for matrix: {shape}, must be square or batched."
     if majorana_getter is None:
         get_majorana_func = partial(get_majorana, n=n)
     else:
         get_majorana_func = majorana_getter.__getitem__
-    majorana_tensor = np.stack([get_majorana_func(i) for i in range(2*n)])
-    return np.trace(__matrix @ majorana_tensor.T) / n_states
+    majorana_tensor = qml.math.stack([get_majorana_func(i) for i in range(2*n)])
+    return qml.math.trace(__matrix @ majorana_tensor, axis1=-2, axis2=-1) / n_states
 
 
 def decompose_state_into_majorana_indexes(
@@ -389,19 +403,7 @@ def get_unitary_from_hermitian_matrix(matrix: np.ndarray) -> np.ndarray:
     :return: Unitary matrix
     :rtype: np.ndarray
     """
-    from scipy.linalg import expm
-    return expm(1j * matrix.astype(complex))
-
-
-def cast_to_complex(__inputs):
-    r"""
-
-    Cast the inputs to complex numbers.
-
-    :param __inputs: Inputs to cast
-    :return: Inputs casted to complex numbers
-    """
-    return type(__inputs)(np.asarray(__inputs).astype(complex))
+    return qml.math.expm(1j * matrix.astype(complex))
 
 
 def load_backend_lib(backend):

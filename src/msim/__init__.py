@@ -27,6 +27,7 @@ from .devices import (
 )
 from . import utils
 from . import ml
+from .utils import math
 
 import warnings
 

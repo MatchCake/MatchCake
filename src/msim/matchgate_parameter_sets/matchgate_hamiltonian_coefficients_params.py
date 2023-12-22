@@ -68,7 +68,11 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
 
     @epsilon.setter
     def epsilon(self, value: float):
-        self._epsilon = value
+        if self.is_batched:
+            self._epsilon = value * pnp.ones_like(self.epsilon)
+        else:
+            assert qml.math.ndim(value) == 0
+            self._epsilon = qml.math.array(value).item()
 
     @property
     def h0_op(self):
@@ -105,14 +109,19 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
         return sp.Matrix([h0, h1, h2, h3, h4, h5, epsilon])
 
     def to_matrix(self, add_epsilon: bool = True):
-        # TODO: need to be batched
         eps = 1j * self.epsilon * int(add_epsilon)
-        return qml.math.array([
-            [eps, self.h0, self.h1, self.h2],
-            [-self.h0, eps, self.h3, self.h4],
-            [-self.h1, -self.h3, eps, self.h5],
-            [-self.h2, -self.h4, -self.h5, eps],
-        ])
+        if self.is_batched:
+            matrix = pnp.zeros((self.batch_size, 4, 4))
+        else:
+            matrix = pnp.zeros((4, 4))
+        matrix[..., 0, 1] = self.h0
+        matrix[..., 0, 2] = self.h1
+        matrix[..., 0, 3] = self.h2
+        matrix[..., 1, 2] = self.h3
+        matrix[..., 1, 3] = self.h4
+        matrix[..., 2, 3] = self.h5
+        matrix[..., :, :] = matrix[..., :, :] - matrix[..., ::-1, ::-1] + eps * qml.math.eye(4, like=matrix)
+        return matrix
 
     def compute_hamiltonian(self):
         # TODO: need to be batched

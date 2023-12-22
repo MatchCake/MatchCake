@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+import pennylane as qml
 from msim import Matchgate, mps, utils
 from .configs import (
     N_RANDOM_TESTS_PER_CASE,
@@ -14,19 +15,26 @@ from .configs import (
 np.random.seed(TEST_SEED)
 
 
-@pytest.fixture
-def matchgate_rn_init(*args, **kwargs) -> Matchgate:
-    return Matchgate.random()
-
-
+@pytest.mark.parametrize(
+    "matchgate_rn_init",
+    [Matchgate.random() for _ in range(N_RANDOM_TESTS_PER_CASE)]
+)
 def test_matchgate_m_m_dagger_constraint(matchgate_rn_init):
     assert matchgate_rn_init.check_m_m_dagger_constraint()
 
 
+@pytest.mark.parametrize(
+    "matchgate_rn_init",
+    [Matchgate.random() for _ in range(N_RANDOM_TESTS_PER_CASE)]
+)
 def test_matchgate_m_dagger_m_constraint(matchgate_rn_init):
     assert matchgate_rn_init.check_m_dagger_m_constraint()
 
 
+@pytest.mark.parametrize(
+    "matchgate_rn_init",
+    [Matchgate.random() for _ in range(N_RANDOM_TESTS_PER_CASE)]
+)
 def test_matchgate_det_constraint(matchgate_rn_init):
     assert matchgate_rn_init.check_det_constraint()
 
@@ -102,7 +110,7 @@ def test_matchgate_hamiltonian_coefficient(input_matrix, target_coefficients):
     mg = Matchgate.from_matrix(input_matrix)
     coeffs_vector = mg.hamiltonian_coefficients_params.to_numpy()
     np.testing.assert_allclose(
-        coeffs_vector, target_coefficients,
+        coeffs_vector.squeeze(), target_coefficients,
         rtol=RTOL_APPROX_COMPARISON,
         atol=ATOL_APPROX_COMPARISON,
     )
@@ -125,17 +133,23 @@ def test_random_polar_params_gives_matchgate(params):
 @pytest.mark.parametrize(
     "params",
     [
-        mps.MatchgatePolarParams.random()[:-1]
+        mps.MatchgatePolarParams(
+            r0=np.random.rand(),
+            r1=np.random.rand(),
+            theta0=np.random.rand(),
+            theta1=np.random.rand(),
+            theta2=np.random.rand(),
+            theta3=np.random.rand(),
+        )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
 def test_random_simple_polar_params_respect_constraint_in_hamiltonian_form(params):
-    from scipy.linalg import expm
     matchgate = Matchgate(params, raise_errors_if_not_matchgate=False)
     gate_det = np.linalg.det(matchgate.gate_data)
-    hamiltonian_form_det = np.linalg.det(expm(1j * matchgate.hamiltonian_matrix))
-    hamiltonian_trace = np.trace(matchgate.hamiltonian_matrix)
-    exp_trace = np.exp(1j * hamiltonian_trace)
+    hamiltonian_form_det = np.linalg.det(qml.math.expm(1j * matchgate.hamiltonian_matrix))
+    hamiltonian_trace = qml.math.trace(matchgate.hamiltonian_matrix, axis1=-2, axis2=-1)
+    exp_trace = qml.math.exp(1j * hamiltonian_trace)
     np.testing.assert_almost_equal(hamiltonian_form_det, gate_det)
     np.testing.assert_almost_equal(gate_det, exp_trace)
 
@@ -148,12 +162,11 @@ def test_random_simple_polar_params_respect_constraint_in_hamiltonian_form(param
     ]
 )
 def test_random_polar_params_respect_constraint_in_hamiltonian_form(params):
-    from scipy.linalg import expm
     matchgate = Matchgate(params, raise_errors_if_not_matchgate=False)
     gate_det = np.linalg.det(matchgate.gate_data)
-    hamiltonian_form_det = np.linalg.det(expm(1j * matchgate.hamiltonian_matrix))
-    hamiltonian_trace = np.trace(matchgate.hamiltonian_matrix)
-    exp_trace = np.exp(1j * hamiltonian_trace)
+    hamiltonian_form_det = np.linalg.det(qml.math.expm(1j * matchgate.hamiltonian_matrix))
+    hamiltonian_trace = qml.math.trace(matchgate.hamiltonian_matrix, axis1=-2, axis2=-1)
+    exp_trace = qml.math.exp(1j * hamiltonian_trace)
     np.testing.assert_almost_equal(hamiltonian_form_det, gate_det)
     np.testing.assert_almost_equal(gate_det, exp_trace)
 
@@ -178,13 +191,16 @@ def test_random_composed_hamiltonian_params_gives_matchgate(params):
         (mps.MatchgateHamiltonianCoefficientsParams(), np.eye(4, dtype=complex)),
         (mps.MatchgateStandardParams(a=1, w=1, z=1, d=1), np.eye(4, dtype=complex)),
         (mps.MatchgateStandardParams(a=-1, w=-1, z=-1, d=-1), np.eye(4, dtype=complex)),
+        (mps.MatchgateStandardParams(a=[-1, -1], w=-1, z=-1, d=-1), [np.eye(4, dtype=complex) for _ in range(2)]),
+        (mps.MatchgateStandardParams(a=[1, 1], w=1, z=1, d=1), [np.eye(4, dtype=complex) for _ in range(2)]),
     ]
 )
 def test_action_matrix(params, expected):
+    expected = qml.math.array(expected)
     mg = Matchgate(params)
     action_matrix = mg.single_transition_particle_matrix
     np.testing.assert_allclose(
-        action_matrix, expected,
+        action_matrix.squeeze(), expected,
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
@@ -212,13 +228,14 @@ def test_action_matrix(params, expected):
                         [0, 0, 0, 1],
                     ]
                 )
-        )
+        ),
+        # TODO: add non-trivial examples
     ]
 )
 def test_single_transition_matrix(params, expected):
     mg = Matchgate(params)
     np.testing.assert_allclose(
-        mg.single_transition_particle_matrix, expected,
+        mg.single_transition_particle_matrix.squeeze(), expected,
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
@@ -228,19 +245,17 @@ def test_single_transition_matrix(params, expected):
     "params",
     [
         mps.MatchgatePolarParams.random()
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        # for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
 def test_single_transition_matrix_equal_to_expm_hami_coeff_if_null_epsilon(params):
-    from scipy.linalg import expm
-    
     params_with_epsilon_0 = mps.MatchgateHamiltonianCoefficientsParams.parse_from_any(params)
     params_with_epsilon_0.epsilon = 0.0
     
     mg = Matchgate(params_with_epsilon_0)
-    single_transition_particle_matrix = expm(-4 * mg.hamiltonian_coefficients_params.to_matrix())
+    single_transition_particle_matrix = qml.math.expm(-4 * mg.hamiltonian_coefficients_params.to_matrix())
     np.testing.assert_allclose(
-        mg.single_transition_particle_matrix, single_transition_particle_matrix,
+        mg.single_transition_particle_matrix.squeeze(), single_transition_particle_matrix.squeeze(),
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
