@@ -127,3 +127,49 @@ def test_get_padded_single_transition_particle_matrix(wires, n_wires, padded_mat
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
+
+
+@pytest.mark.parametrize(
+    "params,expected",
+    [
+        (
+                mps.MatchgatePolarParams(r0=1, r1=1),
+                np.array(
+                    [
+                        [0.25 * np.trace(utils.get_majorana(i, 2) @ utils.get_majorana(j, 2)) for j in range(4)]
+                        for i in range(4)
+                    ]
+                )
+        ),
+        (
+                mps.MatchgatePolarParams(r0=1, r1=1),
+                np.array(
+                    [
+                        [1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1],
+                    ]
+                )
+        ),
+        (
+                mps.fSWAP,
+                np.array(
+                    [
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1],
+                        [1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                    ]
+                )
+        )
+    ]
+)
+def test_single_transition_matrix(params, expected):
+    expected = qml.math.array(expected)
+    mgo = MatchgateOperation(params, wires=[0, 1])
+    np.testing.assert_allclose(
+        mgo.single_transition_particle_matrix.squeeze(), expected,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )

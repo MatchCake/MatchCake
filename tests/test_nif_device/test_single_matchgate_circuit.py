@@ -9,7 +9,7 @@ from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
     TEST_SEED,
     ATOL_APPROX_COMPARISON,
-    RTOL_APPROX_COMPARISON,
+    RTOL_APPROX_COMPARISON, ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON,
 )
 
 np.random.seed(TEST_SEED)
@@ -117,4 +117,70 @@ def test_single_matchgate_probs_with_qbit_device(params, initial_binary_state):
         nif_probs, qubit_probs,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
+    "params,expected",
+    [
+        (
+                mps.MatchgatePolarParams(r0=1, r1=1),
+                np.array(
+                    [
+                        [0.25 * np.trace(utils.get_majorana(i, 2) @ utils.get_majorana(j, 2)) for j in range(4)]
+                        for i in range(4)
+                    ]
+                )
+        ),
+        (
+                mps.MatchgatePolarParams(r0=1, r1=1),
+                np.array(
+                    [
+                        [1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1],
+                    ]
+                )
+        ),
+        (
+                mps.fSWAP,
+                np.array(
+                    [
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1],
+                        [1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                    ]
+                )
+        )
+    ]
+)
+def test_single_gate_transition_matrix_on_specific_cases(params, expected):
+    expected = qml.math.array(expected)
+    nif_device = NonInteractingFermionicDevice(wires=2)
+    nif_device.apply(MatchgateOperation(params, wires=[0, 1]))
+    mgo = MatchgateOperation(params, wires=[0, 1])
+    np.testing.assert_allclose(
+        mgo.single_transition_particle_matrix.squeeze(), expected,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        mps.MatchgatePolarParams.random()
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_single_gate_transition_matrix_on_rn_params(params):
+    nif_device = NonInteractingFermionicDevice(wires=2)
+    nif_device.apply(MatchgateOperation(params, wires=[0, 1]))
+    mgo = MatchgateOperation(params, wires=[0, 1])
+    np.testing.assert_allclose(
+        nif_device.transition_matrix, mgo.transition_matrix,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
     )

@@ -2,7 +2,7 @@ import time
 import sys
 import os
 from copy import deepcopy
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,11 +11,14 @@ import psutil
 import pennylane as qml
 from sklearn import datasets
 from sklearn import svm
+from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
+from sklearn.utils.validation import check_is_fitted
 from sklearn.preprocessing import MinMaxScaler
-from functools import wraps
+import functools
 import umap
 from tqdm import tqdm
+import pythonbasictools as pbt
 
 from kernels import (
     ClassicalKernel,
@@ -24,19 +27,25 @@ from kernels import (
     NIFKernel,
     FermionicPQCKernel,
     PQCKernel,
+    LightningPQCKernel,
 )
+
 try:
     import msim
 except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import msim
 from msim.ml import ClassificationVisualizer
+from msim.ml.ml_kernel import MLKernel
+import warnings
 
 
-def save_on_exit(save_func_name="to_pickle", *save_args, **save_kwargs):
+def save_on_exit(_method=None, *, save_func_name="to_pickle", save_args=(), **save_kwargs):
     """
     Decorator for a method that saves the object on exit.
-    
+
+    :param _method: The method to decorate.
+    :type _method: Callable
     :param save_func_name: The name of the method that saves the object.
     :type save_func_name: str
     :param save_args: The arguments of the save method.
@@ -44,18 +53,43 @@ def save_on_exit(save_func_name="to_pickle", *save_args, **save_kwargs):
     :param save_kwargs: The keyword arguments of the save method.
     :return: The decorated method.
     """
+
     def decorator(method):
-        @wraps(method)
-        def wrapper(self, *args, **kwargs):
+        @functools.wraps(method)
+        def wrapper(*args, **kwargs):
             try:
-                return method(self, *args, **kwargs)
+                return method(*args, **kwargs)
+            except Exception as e:
+                warnings.warn(f"Failed to run method {method.__name__}: {e}", RuntimeWarning)
+                raise e
             finally:
+                self = args[0]
                 if not hasattr(self, save_func_name):
                     raise AttributeError(
                         f"The object {self.__class__.__name__} does not have a save method named {save_func_name}."
                     )
-                getattr(self, save_func_name)(*save_args, **save_kwargs)
+                try:
+                    getattr(self, save_func_name)(*save_args, **save_kwargs)
+                except Exception as e:
+                    warnings.warn(
+                        f"Failed to save object {self.__class__.__name__}: {e} with {save_func_name} method",
+                        RuntimeWarning
+                    )
+                    raise e
+
+        wrapper.__name__ = method.__name__ + "@save_on_exit"
         return wrapper
+
+    if _method is None:
+        return decorator
+    else:
+        return decorator(_method)
+
+
+def get_gram_predictor(cls, kernel, x_train, **kwargs):
+    def predictor(x_test):
+        return cls.predict(kernel.pairwise_distances(x_test, x_train, **kwargs))
+    return predictor
 
 
 class ClassificationPipeline:
@@ -63,6 +97,8 @@ class ClassificationPipeline:
         "breast_cancer": datasets.load_breast_cancer,
         "iris": datasets.load_iris,
         "synthetic": datasets.make_classification,
+        "mnist": datasets.load_digits,
+        "digits": datasets.load_digits,
     }
     available_kernels = {
         "classical": ClassicalKernel,
@@ -71,6 +107,7 @@ class ClassificationPipeline:
         "nif": NIFKernel,
         "fPQC": FermionicPQCKernel,
         "PQC": PQCKernel,
+        "lightning_PQC": LightningPQCKernel,
     }
     UNPICKLABLE_ATTRIBUTES = ["dataset", ]
     
@@ -100,7 +137,8 @@ class ClassificationPipeline:
         self.test_gram_matrices = {}
         self.train_gram_compute_times = {}
         self.test_gram_compute_times = {}
-        self._use_gram_matrices = self.kwargs.get("use_gram_matrices", False)
+        self.use_gram_matrices = self.kwargs.get("use_gram_matrices", False)
+        self._db_y_preds = {}
 
     @property
     def n_features(self):
@@ -131,6 +169,12 @@ class ClassificationPipeline:
             self.dataset = datasets.load_breast_cancer(as_frame=True)
         elif self.dataset_name == "iris":
             self.dataset = datasets.load_iris(as_frame=True)
+        elif self.dataset_name == "mnist":
+            self.dataset = fetch_openml(
+                "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
+            )
+        elif self.dataset_name == "digits":
+            self.dataset = self.available_datasets[self.dataset_name](as_frame=True)
         else:
             raise ValueError(f"Unknown dataset name: {self.dataset_name}")
         return self.dataset
@@ -224,7 +268,9 @@ class ClassificationPipeline:
                 continue
             try:
                 start_time = time.perf_counter()
-                self.test_gram_matrices[kernel_name] = kernel.compute_gram_matrix(self.x_test, verbose=verbose)
+                self.test_gram_matrices[kernel_name] = kernel.pairwise_distances(
+                    self.x_test, self.x_train, verbose=verbose
+                )
                 self.test_gram_compute_times[kernel_name] = time.perf_counter() - start_time
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
@@ -245,13 +291,15 @@ class ClassificationPipeline:
     @save_on_exit
     def make_classifiers(self):
         self.classifiers = {}
+        cache_size = self.kwargs.get("kernel_cache_size", 10_000)
         for kernel_name, kernel in self.kernels.items():
             if kernel_name in self.classifiers:
                 continue
-            if self._use_gram_matrices:
-                self.classifiers[kernel_name] = svm.SVC(kernel="precomputed", random_state=0)
+            if self.use_gram_matrices:
+                svc_kernel = "precomputed"
             else:
-                self.classifiers[kernel_name] = svm.SVC(kernel=kernel.pairwise_distances, random_state=0)
+                svc_kernel = kernel.pairwise_distances
+            self.classifiers[kernel_name] = svm.SVC(kernel=svc_kernel, random_state=0, cache_size=cache_size)
         return self.classifiers
     
     @save_on_exit
@@ -261,7 +309,12 @@ class ClassificationPipeline:
         p_bar = tqdm(self.classifiers.items(), desc="Fitting classifiers", unit="cls")
         to_remove = []
         for kernel_name, classifier in self.classifiers.items():
-            if kernel_name in self.fit_times:
+            is_fitted = True
+            try:
+                check_is_fitted(classifier)
+            except Exception as e:
+                is_fitted = False
+            if (kernel_name in self.fit_times) and is_fitted:
                 continue
             try:
                 start_time = time.perf_counter()
@@ -278,13 +331,11 @@ class ClassificationPipeline:
                 p_bar.update()
                 continue
             if classifier.kernel == "precomputed":
-                pred_test = classifier.predict(self.test_gram_matrices[kernel_name])
-                pred_train = classifier.predict(self.train_gram_matrices[kernel_name])
-                self.test_accuracies[kernel_name] = np.mean(np.isclose(pred_test, self.y_test))
-                self.train_accuracies[kernel_name] = np.mean(np.isclose(pred_train, self.y_train))
+                train_inputs, test_inputs = self.train_gram_matrices[kernel_name], self.test_gram_matrices[kernel_name]
             else:
-                self.test_accuracies[kernel_name] = classifier.score(self.x_test, self.y_test)
-                self.train_accuracies[kernel_name] = classifier.score(self.x_train, self.y_train)
+                train_inputs, test_inputs = self.x_train, self.x_test
+            self.train_accuracies[kernel_name] = classifier.score(train_inputs, self.y_train)
+            self.test_accuracies[kernel_name] = classifier.score(test_inputs, self.y_test)
             p_bar.update()
             p_bar.set_postfix({
                 f"{kernel_name} fit time": f"{self.fit_times.get(kernel_name, np.NaN):.2f} [s]",
@@ -296,21 +347,22 @@ class ClassificationPipeline:
             self.classifiers.pop(kernel_name)
             self.kernels.pop(kernel_name)
         return self.classifiers
-    
+
+    @pbt.decorators.log_func(logging_func=print)
     @save_on_exit
     def run(self):
         self.load_dataset()
         self.preprocess_data()
         self.make_kernels()
         self.fit_kernels()
-        if self._use_gram_matrices:
+        if self.use_gram_matrices:
             self.compute_gram_matrices()
         self.make_classifiers()
         self.fit_classifiers()
         self.to_pickle()
         return self
     
-    def print(self):
+    def print_summary(self):
         print(f"(N Samples, N features): {self.X.shape}")
         print(f"Classes: {set(np.unique(self.y))}, labels: {getattr(self.dataset, 'target_names', set(np.unique(self.y)))}")
         print(f"N train samples: {self.x_train.shape[0]}, N test samples: {self.x_test.shape[0]}")
@@ -320,6 +372,9 @@ class ClassificationPipeline:
                 f"{m_name} test accuracy: {self.test_accuracies.get(m_name, np.NaN) * 100 :.4f}%, "
                 f"train accuracy: {self.train_accuracies.get(m_name, np.NaN) * 100 :.4f}%, "
                 f"fit time: {self.fit_times.get(m_name, np.NaN):.5f} [s], "
+                f"fit kernel time: {self.fit_kernels_times.get(m_name, np.NaN):.5f} [s], "
+                f"train gram compute time: {self.train_gram_compute_times.get(m_name, np.NaN):.5f} [s], "
+                f"test gram compute time: {self.test_gram_compute_times.get(m_name, np.NaN):.5f} [s], "
                 f"plot time: {self.plot_times.get(m_name, np.NaN):.5f} [s]"
             )
         
@@ -333,6 +388,7 @@ class ClassificationPipeline:
 
     def draw_mpl_kernels_single(self, **kwargs):
         kernels = kwargs.pop("kernels", list(self.kernels.keys()))
+        kernels = [kernel for kernel in kernels if hasattr(self.kernels[kernel], "draw_mpl")]
         filepath = kwargs.pop("filepath", None)
         show = kwargs.pop("show", False)
         figs, axes = [], []
@@ -354,6 +410,7 @@ class ClassificationPipeline:
             return self.draw_mpl_kernels_single(**deepcopy(kwargs))
 
         kernels = kwargs.pop("kernels", list(self.kernels.keys()))
+        kernels = [kernel for kernel in kernels if hasattr(self.kernels[kernel], "draw_mpl")]
         n_plots = len(kernels)
         if fig is None or axes is None:
             fig, axes = plt.subplots(n_plots, 1, tight_layout=True, figsize=(14, 10), sharex="all", sharey="all")
@@ -361,14 +418,17 @@ class ClassificationPipeline:
         assert len(axes) >= n_plots, f"The number of axes ({len(axes)}) is less than the number of kernels ({kernels})."
         filepath = kwargs.get("filepath", None)
         for i, kernel_name in enumerate(kernels):
-            self.kernels[kernel_name].draw_mpl(fig=fig, ax=axes[i], **kwargs)
+            _fig, _axes = self.kernels[kernel_name].draw_mpl(fig=fig, ax=axes[i], **kwargs)
         if filepath is not None:
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
             fig.savefig(filepath)
         if kwargs.get("show", False):
             plt.show()
+        if kwargs.get("close", True):
+            plt.close(fig)
         return fig, axes
 
+    @save_on_exit
     def show(
             self,
             fig: Optional[plt.Figure] = None,
@@ -390,19 +450,26 @@ class ClassificationPipeline:
         axes = np.ravel(np.asarray([axes]))
         assert len(axes) >= n_plots, f"The number of axes ({len(axes)}) is less than the number of models ({models})."
         p_bar = tqdm(models.items(), desc="Plotting decision boundaries", unit="model")
+        viz = ClassificationVisualizer(x=self.X, **kwargs)
         for i, (m_name, model) in enumerate(models.items()):
+            if self.use_gram_matrices:
+                predict_func = get_gram_predictor(model, self.kernels[m_name], self.x_train)
+            else:
+                predict_func = getattr(model, "predict", None)
+            y_pred = self._db_y_preds.get(m_name, None)
             plot_start_time = time.perf_counter()
-            fig, ax = ClassificationVisualizer.plot_2d_decision_boundaries(
+            fig, ax, y_pred = viz.plot_2d_decision_boundaries(
                 model=model,
-                X=self.X, y=self.y,
-                # reducer=decomposition.PCA(n_components=2, random_state=0),
-                # reducer=umap.UMAP(n_components=2, transform_seed=0, n_jobs=max(0, psutil.cpu_count() - 2)),
+                y=self.y,
+                y_pred=y_pred,
+                predict_func=predict_func,
                 legend_labels=getattr(self.dataset, "target_names", None),
                 fig=fig, ax=axes[i],
                 show=False,
                 **kwargs
             )
             self.plot_times[m_name] = time.perf_counter() - plot_start_time
+            self._db_y_preds[m_name] = y_pred
             ax.set_title(f"{m_name} accuracy: {self.test_accuracies.get(m_name, np.NaN) * 100:.2f}%")
             p_bar.update()
             p_bar.set_postfix({
@@ -417,7 +484,6 @@ class ClassificationPipeline:
         if filepath is not None:
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
             fig.savefig(filepath)
-
         if show:
             plt.show()
         return fig, axes
@@ -425,6 +491,7 @@ class ClassificationPipeline:
     def plot(self, *args, **kwargs):
         return self.show(*args, **kwargs)
 
+    @pbt.decorators.log_func
     def to_pickle(self):
         if self.save_path is not None:
             import pickle
@@ -450,6 +517,13 @@ class ClassificationPipeline:
         if pickle_path is None:
             pickle_path = save_path
         if pickle_path is not None and os.path.exists(pickle_path):
-            return cls.from_pickle(pickle_path, new_attrs=kwargs)
-        else:
-            return cls(**kwargs)
+            try:
+                return cls.from_pickle(pickle_path, new_attrs=kwargs)
+            except EOFError:
+                warnings.warn(
+                    f"Failed to load object from pickle file {pickle_path}. Encountered EOFError. "
+                    f"Loading a new object instead.",
+                    RuntimeWarning
+                )
+
+        return cls(**kwargs)

@@ -111,15 +111,15 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
     def to_matrix(self, add_epsilon: bool = True):
         eps = 1j * self.epsilon * int(add_epsilon)
         if self.is_batched:
-            matrix = pnp.zeros((self.batch_size, 4, 4))
+            matrix = pnp.zeros((self.batch_size, 4, 4), dtype=self.DEFAULT_PARAMS_TYPE)
         else:
-            matrix = pnp.zeros((4, 4))
-        matrix[..., 0, 1] = self.h0
-        matrix[..., 0, 2] = self.h1
-        matrix[..., 0, 3] = self.h2
-        matrix[..., 1, 2] = self.h3
-        matrix[..., 1, 3] = self.h4
-        matrix[..., 2, 3] = self.h5
+            matrix = pnp.zeros((4, 4), dtype=self.DEFAULT_PARAMS_TYPE)
+        matrix[..., 0, 1] = qml.math.cast(self.h0, dtype=self.DEFAULT_PARAMS_TYPE)
+        matrix[..., 0, 2] = qml.math.cast(self.h1, dtype=self.DEFAULT_PARAMS_TYPE)
+        matrix[..., 0, 3] = qml.math.cast(self.h2, dtype=self.DEFAULT_PARAMS_TYPE)
+        matrix[..., 1, 2] = qml.math.cast(self.h3, dtype=self.DEFAULT_PARAMS_TYPE)
+        matrix[..., 1, 3] = qml.math.cast(self.h4, dtype=self.DEFAULT_PARAMS_TYPE)
+        matrix[..., 2, 3] = qml.math.cast(self.h5, dtype=self.DEFAULT_PARAMS_TYPE)
         matrix[..., :, :] = (
                 matrix[..., :, :] - qml.math.swapaxes(matrix, -2, -1) + eps * qml.math.eye(4, like=matrix)
         )

@@ -8,15 +8,15 @@ if __name__ == '__main__':
     from classification_pipeline import ClassificationPipeline
 
     kwargs = dict(
-        dataset_name="digits",
-        # dataset_name="synthetic",
-        # dataset_n_samples=32,
-        # dataset_n_features=2,
+        # dataset_name="breast_cancer",
+        dataset_name="synthetic",
+        dataset_n_samples=32,
+        dataset_n_features=2,
         methods=[
-            "classical",
+            # "classical",
             # "nif",
-            # "fPQC",
-            "PQC",
+            "fPQC",
+            # "PQC",
             # "lightning_PQC",
         ],
         kernel_kwargs=dict(nb_workers=0),
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     )
     pipline = ClassificationPipeline.from_pickle_or_new(
         **kwargs,
-        save_path=save_path,
+        # save_path=save_path,
         use_gram_matrices=True,
     )
     pipline.load_dataset()
@@ -38,4 +38,4 @@ if __name__ == '__main__':
     figures_folder = os.path.join(os.path.dirname(save_path), "figures")
     pipline.draw_mpl_kernels(show=False, filepath=os.path.join(figures_folder, "kernels.pdf"), draw_mth="single")
     plt.close("all")
-    pipline.show(n_pts=512, show=True, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
+    pipline.show(n_pts=128, show=True, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))

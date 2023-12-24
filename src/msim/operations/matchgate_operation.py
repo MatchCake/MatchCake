@@ -1,5 +1,6 @@
 from typing import Union
 
+import pennylane as qml
 from pennylane.operation import Operation
 from pennylane import numpy as pnp
 
@@ -61,7 +62,11 @@ class MatchgateOperation(Matchgate, Operation):
         if wires is None:
             wires = self.wires
         matrix = self.single_transition_particle_matrix
-        padded_matrix = pnp.eye(2*len(wires), dtype=matrix.dtype)
+        if qml.math.ndim(matrix) == 2:
+            padded_matrix = pnp.eye(2*len(wires), dtype=matrix.dtype)
+        elif qml.math.ndim(matrix) == 3:
+            padded_matrix = pnp.zeros((qml.math.shape(matrix)[0], 2*len(wires), 2*len(wires)), dtype=matrix.dtype)
+            padded_matrix[:, ...] = pnp.eye(2*len(wires), dtype=matrix.dtype)
         
         wire0_idx = wires.index(self.wires[0])
         # wire0_submatrix = matrix[:matrix.shape[0]//2, :matrix.shape[1]//2]
@@ -79,7 +84,7 @@ class MatchgateOperation(Matchgate, Operation):
         # padded_matrix[wire1_slice0, wire1_slice1] = wire1_submatrix
         slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[0])
         slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[1])
-        padded_matrix[slice_0, slice_1] = matrix
+        padded_matrix[..., slice_0, slice_1] = matrix
         return padded_matrix
     
     def adjoint(self):
@@ -112,4 +117,13 @@ class MatchgateOperation(Matchgate, Operation):
 
         op_label = base_label or self.__class__.__name__
         return f"{op_label}({self.draw_label_params})"
+
+    def __repr__(self):
+        return Operation.__repr__(self)
+
+    def __str__(self):
+        return Operation.__str__(self)
+
+    def __copy__(self):
+        return Operation.__copy__(self)
 

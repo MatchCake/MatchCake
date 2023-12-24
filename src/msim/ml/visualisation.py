@@ -17,56 +17,10 @@ class Visualizer:
 class ClassificationVisualizer(Visualizer):
     def __init__(
             self,
-    ):
-        pass
-    
-    @classmethod
-    def gather_transforms(
-            cls,
             *,
-            x: np.ndarray,
-            reducer: Optional[Any] = None,
-            transform: Optional[Callable] = None,
-            inverse_transform: Optional[Callable] = None,
-            seed: Optional[int] = 0,
-            **kwargs
-    ):
-        """
-        If a transform and an inverse_transform functions are given, they will be returned. Otherwise, the transform and
-        inverse_transform will be inferred from the given reducer. If the reducer is None, then it will be
-        initialized as a PCA with 2 components.
-        """
-        need_reducer = (transform is None) or (inverse_transform is None)
-        
-        if transform is not None:
-            assert inverse_transform is not None, "inverse_transform must be given if transform is given."
-        
-        if need_reducer:
-            if reducer is None:
-                reducer = "pca"
-            if isinstance(reducer, str):
-                n_jobs = kwargs.get("n_jobs", max(0, psutil.cpu_count() - 2))
-                if reducer.lower() == "pca":
-                    reducer = decomposition.PCA(n_components=2, random_state=seed)
-                elif reducer.lower() == "umap":
-                    import umap
-                    reducer = umap.UMAP(n_components=2, transform_seed=seed, n_jobs=n_jobs)
-                else:
-                    raise ValueError(f"Unknown reducer: {reducer}")
-            if kwargs.get("check_estimators", True):
-                check_estimator(reducer)
-            reducer.fit(x)
-            transform = reducer.transform
-            inverse_transform = reducer.inverse_transform
-        return transform, inverse_transform, need_reducer
-    
-    @classmethod
-    def plot_2d_decision_boundaries(
-            cls,
-            model: Any,
-            X: np.ndarray,
-            y: Optional[np.ndarray] = None,
-            *,
+            x: Optional[np.ndarray] = None,
+            x_reduced: Optional[np.ndarray] = None,
+            x_mesh: Optional[np.ndarray] = None,
             reducer: Optional[Any] = None,
             transform: Optional[Callable] = None,
             inverse_transform: Optional[Callable] = None,
@@ -74,47 +28,113 @@ class ClassificationVisualizer(Visualizer):
             seed: Optional[int] = 0,
             **kwargs
     ):
-        axis_label_cue = None
-        if reducer is None:
-            reducer = "pca"
-        if isinstance(reducer, str):
-            axis_label_cue = reducer.upper()
+        self.x = x
+        self.reducer = reducer
+        self.transform = transform
+        self.inverse_transform = inverse_transform
+        self.n_pts = n_pts
+        self.seed = seed
+        self.kwargs = kwargs
+
+        self.x_reduced = x_reduced
+        self.x_mesh = x_mesh
+    
+    def gather_transforms(self, **kwargs):
+        """
+        If a transform and an inverse_transform functions are given, they will be returned. Otherwise, the transform and
+        inverse_transform will be inferred from the given reducer. If the reducer is None, then it will be
+        initialized as a PCA with 2 components.
+        """
+        need_reducer = (self.transform is None) or (self.inverse_transform is None)
+        if not need_reducer:
+            return self.transform, self.inverse_transform
+        kwargs = {**self.kwargs, **kwargs}
+        if self.transform is not None:
+            assert self.inverse_transform is not None, "inverse_transform must be given if transform is given."
         
-        transform, inverse_transform, is_default = cls.gather_transforms(
-            x=X,
-            reducer=reducer,
-            transform=transform,
-            inverse_transform=inverse_transform,
-            seed=seed,
-            **kwargs
-        )
-        need_transform = (not is_default) or (X.shape[-1] != 2)
-        
-        if kwargs.get("check_estimators", True):
-            check_estimator(model)
-        
-        if need_transform:
-            x_reduced = transform(X)
+        if need_reducer:
+            if self.reducer is None:
+                self.reducer = "pca"
+            if isinstance(self.reducer, str):
+                n_jobs = kwargs.get("n_jobs", max(0, psutil.cpu_count() - 2))
+                if self.reducer.lower() == "pca":
+                    self.reducer = decomposition.PCA(n_components=2, random_state=self.seed)
+                elif self.reducer.lower() == "umap":
+                    import umap
+                    self.reducer = umap.UMAP(n_components=2, transform_seed=self.seed, n_jobs=n_jobs)
+                else:
+                    raise ValueError(f"Unknown reducer: {self.reducer}")
+            if kwargs.get("check_estimators", True):
+                check_estimator(self.reducer)
+            self.reducer.fit(self.x)
+            self.transform = self.reducer.transform
+            self.inverse_transform = self.reducer.inverse_transform
+        return self.transform, self.inverse_transform
+
+    def compute_x_reduced(self, **kwargs):
+        if self.x_reduced is not None:
+            return self.x_reduced
+
+        kwargs = {**self.kwargs, **kwargs}
+        if self.x.shape[-1] == 2:
+            self.x_reduced = self.x
         else:
-            x_reduced = X
-        
-        if x_reduced.ndim != 2:
-            raise ValueError(f"x_reduced.ndim = {x_reduced.ndim} != 2. The given reducer does not reduce to 2D.")
-        
-        x_min, x_max = x_reduced[:, 0].min() - 1, x_reduced[:, 0].max() + 1
-        y_min, y_max = x_reduced[:, 1].min() - 1, x_reduced[:, 1].max() + 1
+            self.gather_transforms(**kwargs)
+            self.x_reduced = self.transform(self.x)
+
+        if self.x_reduced.ndim != 2:
+            raise ValueError(f"x_reduced.ndim = {self.x_reduced.ndim} != 2. The given reducer does not reduce to 2D.")
+        return self.x_reduced
+
+    def compute_x_mesh(self, **kwargs):
+        if self.x_mesh is not None:
+            self.n_pts = self.x_mesh.shape[0]
+            return self.x_mesh
+        kwargs = {**self.kwargs, **kwargs}
+        x_min, x_max = self.x_reduced[:, 0].min() - 1, self.x_reduced[:, 0].max() + 1
+        y_min, y_max = self.x_reduced[:, 1].min() - 1, self.x_reduced[:, 1].max() + 1
         xx, yy = np.meshgrid(
-            np.linspace(x_min, x_max, num=int(np.sqrt(n_pts))),
-            np.linspace(y_min, y_max, num=int(np.sqrt(n_pts)))
+            np.linspace(x_min, x_max, num=int(np.sqrt(self.n_pts))),
+            np.linspace(y_min, y_max, num=int(np.sqrt(self.n_pts)))
         )
-        
-        x_reduced_mesh = np.c_[xx.ravel(), yy.ravel()]
-        if need_transform:
-            x_mesh = inverse_transform(x_reduced_mesh)
+
+        x_mesh_reduced = np.c_[xx.ravel(), yy.ravel()]
+        if self.inverse_transform is None:
+            self.x_mesh = x_mesh_reduced
         else:
-            x_mesh = x_reduced_mesh
-        y_pred = model.predict(x_mesh)
-        y_mesh = y_pred.reshape(xx.shape)
+            self.gather_transforms(**kwargs)
+            self.x_mesh = self.inverse_transform(x_mesh_reduced)
+        self.n_pts = self.x_mesh.shape[0]
+        return self.x_mesh
+
+    def plot_2d_decision_boundaries(
+            self,
+            *,
+            y: Optional[np.ndarray] = None,
+            model: Optional[Any] = None,
+            y_pred: Optional[np.ndarray] = None,
+            **kwargs
+    ):
+        kwargs = {**self.kwargs, **kwargs}
+        axis_label_cue = None
+        if self.reducer is None:
+            self.reducer = "pca"
+        if isinstance(self.reducer, str):
+            axis_label_cue = self.reducer.upper()
+
+        if self.x_reduced is None:
+            self.x_reduced = self.compute_x_reduced(**kwargs)
+        predict_func = kwargs.get("predict_func", getattr(model, "predict", None))
+        if y_pred is None and self.x_mesh is None:
+            self.x_mesh = self.compute_x_mesh(**kwargs)
+        if y_pred is None:
+            if predict_func is None:
+                raise ValueError("Either y_pred or predict_func must be given.")
+            y_pred = predict_func(self.x_mesh)
+        x_min, x_max = self.x_reduced[:, 0].min() - 1, self.x_reduced[:, 0].max() + 1
+        y_min, y_max = self.x_reduced[:, 1].min() - 1, self.x_reduced[:, 1].max() + 1
+        side_length = int(np.sqrt(y_pred.shape[0]))
+        y_mesh = y_pred.reshape((side_length, side_length))
         
         fig, ax = kwargs.get("fig", None), kwargs.get("ax", None)
         if fig is None or ax is None:
@@ -139,15 +159,15 @@ class ClassificationVisualizer(Visualizer):
         )
         if y is not None:
             scatter = ax.scatter(
-                x_reduced[:, 0],
-                x_reduced[:, 1],
+                self.x_reduced[:, 0],
+                self.x_reduced[:, 1],
                 c=[cmap(i) for i in y],
                 edgecolor='k',
                 linewidths=kwargs.get("linewidths", 1.5),
                 s=kwargs.get("s", 100),
             )
-        ax.set_xlim(xx.min(), xx.max())
-        ax.set_ylim(yy.min(), yy.max())
+        ax.set_xlim(x_min, x_max)
+        ax.set_ylim(y_min, y_max)
         
         # legend_labels = getattr(dataset, "target_names", list(range(N_labels)))
         legend_labels = kwargs.get("legend_labels", None)
@@ -181,13 +201,6 @@ class ClassificationVisualizer(Visualizer):
         ax.set_xlabel(x_label, fontsize=kwargs.get("fontsize", 18))
         ax.set_ylabel(y_label, fontsize=kwargs.get("fontsize", 18))
         
-        kwargs["output"] = dict(
-            x_reduced=x_reduced,
-            x_mesh=x_mesh,
-            y_mesh=y_mesh,
-            y_pred=y_pred,
-        )
-        
         if kwargs.get("show", False):
             plt.show()
-        return fig, ax
+        return fig, ax, y_pred

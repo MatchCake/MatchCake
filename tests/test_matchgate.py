@@ -313,7 +313,7 @@ def test_single_transition_matrix_equal_to_expm_hami_coeff_if_epsilon(params):
         -4 * mg.hamiltonian_coefficients_params.to_matrix(add_epsilon=False)
     )
     np.testing.assert_allclose(
-        mg.single_transition_particle_matrix, single_transition_particle_matrix,
+        mg.single_transition_particle_matrix.squeeze(), single_transition_particle_matrix.squeeze(),
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
@@ -332,7 +332,7 @@ def test_single_transition_matrix_equal_to_expm_hami_coeff(params):
     single_transition_particle_matrix = qml.math.expm(-4 * h)
     
     np.testing.assert_allclose(
-        mg.single_transition_particle_matrix, single_transition_particle_matrix,
+        mg.single_transition_particle_matrix.squeeze(), single_transition_particle_matrix.squeeze(),
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )

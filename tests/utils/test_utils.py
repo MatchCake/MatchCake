@@ -208,9 +208,9 @@ def test_binary_string_to_vector(binary_string, binary_vector):
 )
 def test_state_to_binary_state(inputs, out_state):
     if isinstance(inputs, tuple):
-        binary_state = utils.state_to_binary_state(*inputs)
+        binary_state = utils.state_to_binary_string(*inputs)
     else:
-        binary_state = utils.state_to_binary_state(inputs)
+        binary_state = utils.state_to_binary_string(inputs)
     assert binary_state == out_state, f"{binary_state} != {out_state}"
 
 

@@ -46,16 +46,17 @@ class MPennylaneQuantumKernel(NIFKernel):
     def __init__(self, size: Optional[int] = None, **kwargs):
         super().__init__(size=size, **kwargs)
         self._device_name = kwargs.get("device", "default.qubit")
+        self._device_kwargs = kwargs.get("device_kwargs", {})
 
     def pre_initialize(self):
-        self._device = qml.device(self._device_name, wires=self.size)
+        self._device = qml.device(self._device_name, wires=self.size, **self._device_kwargs)
         self.qnode = qml.QNode(self.circuit, self._device, **self.kwargs.get("qnode_kwargs", {}))
 
 
 class CPennylaneQuantumKernel(MPennylaneQuantumKernel):
     def __init__(self, size: Optional[int] = None, **kwargs):
         super().__init__(size=size, **kwargs)
-        self._device_name = kwargs.get("device", "default.qubit")
+        # self._device_name = kwargs.get("device", "lightning.qubit")
         self._embedding_rotation = kwargs.get("embedding_rotation", "X")
     
     def circuit(self, x0, x1):
@@ -117,5 +118,9 @@ class PQCKernel(MPennylaneQuantumKernel):
         projector: BasisStateProjector = qml.Projector(np.zeros(self.size), wires=self.wires)
         return qml.expval(projector)
 
-    # def batch_distance(self, x0, x1):
-    #     return self.qnode(x0, x1)
+
+class LightningPQCKernel(PQCKernel):
+    def __init__(self, size: Optional[int] = None, **kwargs):
+        super().__init__(size=size, **kwargs)
+        self._device_name = kwargs.get("device", "lightning.qubit")
+        self._device_kwargs = kwargs.get("device_kwargs", {"batch_obs": True})

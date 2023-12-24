@@ -21,7 +21,7 @@ class MAngleEmbedding(Operation):
         wires = Wires(wires)
         rotations = hyperparameters.get("rotations", [ROT["X"]])
         return [
-            rot([p0, p1], wires=[wires[2 * i], wires[2 * i + 1]])
+            rot(qml.math.stack([p0, p1], axis=-1), wires=[wires[2 * i], wires[2 * i + 1]])
             for i, (p0, p1) in enumerate(zip(params[0::2], params[1::2]))
             for rot in rotations
         ]

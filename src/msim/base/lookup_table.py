@@ -16,7 +16,7 @@ class NonInteractingFermionicLookupTable:
             **kwargs
     ):
         self._transition_matrix = transition_matrix
-        self._block_diagonal_matrix = utils.get_block_diagonal_matrix(transition_matrix.shape[0])
+        self._block_diagonal_matrix = utils.get_block_diagonal_matrix(self.n_particles)
         
         # Entries of the lookup table
         self._c_d_alpha__c_d_beta = None
@@ -55,7 +55,17 @@ class NonInteractingFermionicLookupTable:
     
     @property
     def n_particles(self):
-        return self.transition_matrix.shape[0]
+        return qml.math.shape(self.transition_matrix)[-2]
+
+    @property
+    def batch_size(self):
+        if qml.math.ndim(self.transition_matrix) < 3:
+            return 0
+        return qml.math.shape(self.transition_matrix)[0]
+
+    @property
+    def _batch_sub_script(self):
+        return "b" if self.batch_size > 0 else ""
     
     @property
     def block_diagonal_matrix(self):
@@ -122,34 +132,104 @@ class NonInteractingFermionicLookupTable:
         return self._c_2p_alpha_m1__c_2p_beta_m1
     
     def _compute_c_d_alpha__c_d_beta(self):
+        b = self._batch_sub_script
+        if b:
+            return qml.math.einsum(
+                f"{b}pi,ij,{b}kj->{b}pk",
+                self._transition_matrix,
+                self.block_diagonal_matrix,
+                self.transition_matrix
+            )
         b_t = qml.math.dot(self.block_diagonal_matrix, self._transition_matrix.T)
         return qml.math.dot(self._transition_matrix, b_t)
 
     def _compute_c_d_alpha__c_e_beta(self):
+        b = self._batch_sub_script
+        if b:
+            return qml.math.einsum(
+                f"{b}pi,ij,{b}kj->{b}pk",
+                self._transition_matrix,
+                self.block_diagonal_matrix,
+                qml.math.conjugate(self.transition_matrix)
+            )
         b_t = qml.math.dot(self.block_diagonal_matrix, pnp.conjugate(self.transition_matrix.T))
+        b_t = qml.math.einsum(
+            f"ij,{b}kj->{b}ik",
+            self.block_diagonal_matrix, qml.math.conjugate(self.transition_matrix)
+        )
         return qml.math.dot(self._transition_matrix, b_t)
     
     def _compute_c_d_alpha__c_2p_beta_m1(self):
+        b = self._batch_sub_script
+        if b:
+            return qml.math.einsum(
+                f"{b}pi,ij->{b}pj",
+                self._transition_matrix,
+                self.block_diagonal_matrix
+            )
         return qml.math.dot(self._transition_matrix, self.block_diagonal_matrix)
 
     def _compute_c_e_alpha__c_d_beta(self):
+        b = self._batch_sub_script
+        if b:
+            return qml.math.einsum(
+                f"{b}pi,ij,{b}kj->{b}pk",
+                qml.math.conjugate(self._transition_matrix),
+                self.block_diagonal_matrix,
+                self.transition_matrix
+            )
         b_t = qml.math.dot(self.block_diagonal_matrix, self.transition_matrix.T)
         return qml.math.dot(pnp.conjugate(self._transition_matrix), b_t)
     
     def _compute_c_e_alpha__c_e_beta(self):
+        b = self._batch_sub_script
+        if b:
+            return qml.math.einsum(
+                f"{b}pi,ij,{b}kj->{b}pk",
+                qml.math.conjugate(self._transition_matrix),
+                self.block_diagonal_matrix,
+                qml.math.conjugate(self.transition_matrix)
+            )
         b_t = qml.math.dot(self.block_diagonal_matrix, pnp.conjugate(self.transition_matrix.T))
         return qml.math.dot(pnp.conjugate(self._transition_matrix), b_t)
     
     def _compute_c_e_alpha__c_2p_beta_m1(self):
+        b = self._batch_sub_script
+        if b:
+            return qml.math.einsum(
+                f"{b}pi,ij->{b}pj",
+                qml.math.conjugate(self._transition_matrix),
+                self.block_diagonal_matrix
+            )
         return qml.math.dot(pnp.conjugate(self._transition_matrix), self.block_diagonal_matrix)
 
     def _compute_c_2p_alpha_m1__c_d_beta(self):
+        b = self._batch_sub_script
+        if b:
+            return qml.math.einsum(
+                f"ij,{b}kj->{b}ik",
+                self.block_diagonal_matrix,
+                self.transition_matrix
+            )
         return qml.math.dot(self.block_diagonal_matrix, self.transition_matrix.T)
 
     def _compute_c_2p_alpha_m1__c_e_beta(self):
+        b = self._batch_sub_script
+        if b:
+            return qml.math.einsum(
+                f"ij,{b}kj->{b}ik",
+                self.block_diagonal_matrix,
+                qml.math.conjugate(self.transition_matrix)
+            )
         return qml.math.dot(self.block_diagonal_matrix, pnp.conjugate(self.transition_matrix.T))
 
     def _compute_c_2p_alpha_m1__c_2p_beta_m1(self):
+        if self.batch_size > 0:
+            size = qml.math.shape(self.transition_matrix)[-1]
+            shape = ([self.batch_size] if self.batch_size else []) + [size, size]
+            matrix = pnp.zeros(shape, dtype=complex)
+            matrix[..., :, :] = qml.math.eye(size, dtype=complex)
+            return matrix
         return np.eye(self.transition_matrix.shape[-1])
 
     def __getitem__(self, item: Tuple[int, int]):
@@ -188,7 +268,7 @@ class NonInteractingFermionicLookupTable:
         :rtype: np.ndarray
         """
         warnings.warn("This method is deprecated. Use get_observable_of_target_state instead.", DeprecationWarning)
-        key = (k, utils.state_to_binary_state(system_state, n=self.n_particles))
+        key = (k, utils.state_to_binary_string(system_state, n=self.n_particles))
         if key not in self._observables:
             self._observables[key] = self._compute_observable(k, system_state)
         return self._observables[key]
@@ -212,7 +292,7 @@ class NonInteractingFermionicLookupTable:
         :rtype: np.ndarray
         """
         key = (
-            utils.state_to_binary_state(system_state, n=self.n_particles),
+            utils.state_to_binary_string(system_state, n=self.n_particles),
             ''.join([str(i) for i in target_binary_state]),
             ','.join([str(i) for i in indexes_of_target_state]),
         )
@@ -236,12 +316,13 @@ class NonInteractingFermionicLookupTable:
         majorana_indexes = list(bra_majorana_indexes) + measure_indexes + list(ket_majorana_indexes)
 
         obs_size = len(majorana_indexes)
-        obs = np.zeros((obs_size, obs_size), dtype=complex)
+        obs_shape = ([self.batch_size] if self.batch_size else []) + [obs_size, obs_size]
+        obs = np.zeros(obs_shape, dtype=complex)
         for (i, j) in zip(*np.triu_indices(obs_size, k=1)):
             i_k, j_k = majorana_indexes[i], majorana_indexes[j]
             row, col = lt_indexes[i], lt_indexes[j]
-            obs[i, j] = self[row, col][i_k, j_k]
-        obs = obs - obs.T
+            obs[..., i, j] = self[row, col][..., i_k, j_k]
+        obs = obs - qml.math.swapaxes(obs, -2, -1)
         return obs
     
     def compute_observable_of_target_state(
@@ -269,10 +350,11 @@ class NonInteractingFermionicLookupTable:
         majorana_indexes = list(bra_majorana_indexes) + measure_indexes + list(ket_majorana_indexes)
 
         obs_size = len(majorana_indexes)
-        obs = np.zeros((obs_size, obs_size), dtype=complex)
+        obs_shape = ([self.batch_size] if self.batch_size else []) + [obs_size, obs_size]
+        obs = pnp.zeros(obs_shape, dtype=complex)
         for (i, j) in zip(*np.triu_indices(obs_size, k=1)):
             i_k, j_k = majorana_indexes[i], majorana_indexes[j]
             row, col = lt_indexes[i], lt_indexes[j]
-            obs[i, j] = self[row, col][i_k, j_k]
-        obs = obs - obs.T
+            obs[..., i, j] = self[row, col][..., i_k, j_k]
+        obs = obs - qml.math.swapaxes(obs, -2, -1)
         return obs

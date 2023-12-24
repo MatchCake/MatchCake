@@ -1,3 +1,4 @@
+import warnings
 from typing import Optional
 import sys
 import os
@@ -79,17 +80,26 @@ class MLKernel(BaseEstimator):
     
     def single_distance(self, x0, x1):
         raise NotImplementedError(f"This method is not implemented for {self.__class__.__name__}.")
+
+    def batch_distance_in_sequence(self, x0, x1):
+        assert qml.math.ndim(x0) > 1, f"Expected x0 to be a batch of vectors, got {qml.math.shape(x0)}."
+        if qml.math.ndim(x1) == qml.math.ndim(x0):
+            distances = [self.single_distance(_x0, _x1) for _x0, _x1 in zip(x0, x1)]
+        else:
+            distances = [self.single_distance(x, x1) for x in x0]
+        return qml.math.asarray(distances)
     
     def batch_distance(self, x0, x1):
-        assert qml.math.ndim(x0) > 1, f"Expected x0 to be a batch of vectors, got {qml.math.shape(x0)}."
-        assert qml.math.ndim(x1) == 1, f"Expected x1 to be a single vector, got {qml.math.shape(x1)}."
-        distances = [
-            self.single_distance(x, x1)
-            for x in x0
-        ]
-        return qml.math.asarray(distances)
-        
-    def pairwise_distances(self, x0, x1, **kwargs):
+        return self.batch_distance_in_sequence(x0, x1)
+
+    def make_batch(self, x0, x1):
+        x0 = check_array(x0)
+        x1 = check_array(x1)
+        b_x0 = qml.math.repeat(x0, qml.math.shape(x1)[0], axis=0)
+        b_x1 = qml.math.tile(x1, (qml.math.shape(x0)[0], 1))
+        return b_x0, b_x1
+
+    def pairwise_distances_in_sequence(self, x0, x1, **kwargs):
         x0 = check_array(x0)
         x1 = check_array(x1)
         self.check_is_fitted()
@@ -108,6 +118,28 @@ class MLKernel(BaseEstimator):
         )
         _result = np.stack(_list_results, axis=-1)
         return _result
+
+    def pairwise_distances_in_batch(self, x0, x1, **kwargs):
+        x0 = check_array(x0)
+        x1 = check_array(x1)
+        self.check_is_fitted()
+        b_x0, b_x1 = self.make_batch(x0, x1)
+        distances = self.batch_distance(b_x0, b_x1)
+        return qml.math.reshape(distances, (qml.math.shape(x0)[0], qml.math.shape(x1)[0]))
+
+    def pairwise_distances(self, x0, x1, **kwargs):
+        x0 = check_array(x0)
+        x1 = check_array(x1)
+        self.check_is_fitted()
+        try:
+            return self.pairwise_distances_in_batch(x0, x1, **kwargs)
+        except Exception as e:
+            warnings.warn(
+                f"Failed to compute pairwise distances in batch: {e}."
+                f"Computing pairwise distances in sequence.",
+                RuntimeWarning
+            )
+            return self.pairwise_distances_in_sequence(x0, x1, **kwargs)
     
     def compute_gram_matrix(self, x, **kwargs):
         kwargs.setdefault("desc", f"{self.__class__.__name__}: compute_gram_matrix(x:{qml.math.shape(x)})")
@@ -180,8 +212,7 @@ class NIFKernel(MLKernel):
         return self.qnode(x0, x1)
     
     def batch_distance(self, x0, x1):
-        # return self.qnode(x0, x1)  TODO: implement batch_distance
-        return super().batch_distance(x0, x1)
+        return self.qnode(x0, x1)
 
     def draw(self, **kwargs):
         logging_func = kwargs.pop("logging_func", print)

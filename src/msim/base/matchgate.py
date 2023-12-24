@@ -663,8 +663,8 @@ class Matchgate:
     def __getitem__(self, item):
         return self.gate_data[item]
     
-    def __array__(self):
-        return self.standard_params.__array__()
+    # def __array__(self):
+    #     return self.standard_params.__array__()
 
     def find_hamiltonian_coefficients(self, order: int = 1, iterations: int = 100) -> np.ndarray:
         r"""

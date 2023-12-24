@@ -68,7 +68,7 @@ def binary_state_to_state(binary_state: Union[np.ndarray, List[Union[int, bool]]
     return state
 
 
-def state_to_binary_state(state: Union[int, np.ndarray, sparse.sparray], n: Optional[int] = None) -> str:
+def state_to_binary_string(state: Union[int, np.ndarray, sparse.sparray], n: Optional[int] = None) -> str:
     r"""
     Convert a state to a binary state. The binary state is binary string of length :math:`2^n` where :math:`n` is
     the number of particles. The state is a vector of length :math:`2^n` where :math:`n` is the number of particles.
@@ -84,23 +84,23 @@ def state_to_binary_state(state: Union[int, np.ndarray, sparse.sparray], n: Opti
     
     
     .. Example:
-    >>> state_to_binary_state(0, n=2)
+    >>> state_to_binary_string(0, n=2)
     '00'
-    >>> state_to_binary_state(1, n=2)
+    >>> state_to_binary_string(1, n=2)
     '01'
-    >>> state_to_binary_state(2, n=2)
+    >>> state_to_binary_string(2, n=2)
     '10'
-    >>> state_to_binary_state(3, n=2)
+    >>> state_to_binary_string(3, n=2)
     '11'
-    >>> state_to_binary_state(np.array([1, 0, 0, 0]))
+    >>> state_to_binary_string(np.array([1, 0, 0, 0]))
     '00'
-    >>> state_to_binary_state(np.array([0, 1, 0, 0]))
+    >>> state_to_binary_string(np.array([0, 1, 0, 0]))
     '01'
-    >>> state_to_binary_state(np.array([0, 0, 1, 0]))
+    >>> state_to_binary_string(np.array([0, 0, 1, 0]))
     '10'
-    >>> state_to_binary_state(np.array([0, 0, 0, 1]))
+    >>> state_to_binary_string(np.array([0, 0, 0, 1]))
     '11'
-    >>> state_to_binary_state(np.array([1, 0, 0, 0, 0, 0, 0, 0]))
+    >>> state_to_binary_string(np.array([1, 0, 0, 0, 0, 0, 0, 0]))
     '000'
     """
     if isinstance(state, int):
@@ -113,6 +113,57 @@ def state_to_binary_state(state: Union[int, np.ndarray, sparse.sparray], n: Opti
     state_number = np.asarray(state.reshape(-1, n_states).argmax(-1)).astype(int).item()
     binary_state = np.binary_repr(state_number, width=n)
     return binary_state
+
+
+def state_to_binary_state(state: Union[int, np.ndarray, sparse.sparray], n: Optional[int] = None) -> np.ndarray:
+    r"""
+    Convert a state to a binary state. The binary state is binary string of length :math:`2^n` where :math:`n` is
+    the number of particles. The state is a vector of length :math:`2^n` where :math:`n` is the number of particles.
+
+    :param state: State. If the state is an integer, the state is assumed to be a pure state in the computational
+        basis and the number of particles must be specified. If the state is a vector, the number of particles is
+        inferred from the shape of the vector as :math:`n = \log_2(\text{len}(\text{state}))`.
+    :type state: Union[np.ndarray, sparse.sparray]
+    :param n: Number of particles. Used only if the state is an integer.
+    :type n: Optional[int]
+    :return: Binary state as a binary string.
+    :rtype: np.ndarray
+
+
+    .. Example:
+    >>> state_to_binary_state(0, n=2)
+    array([0, 0])
+    >>> state_to_binary_state(1, n=2)
+    array([0, 1])
+    >>> state_to_binary_state(2, n=2)
+    array([1, 0])
+    >>> state_to_binary_state(3, n=2)
+    array([1, 1])
+    >>> state_to_binary_state(np.array([1, 0, 0, 0]))
+    array([0, 0])
+    >>> state_to_binary_state(np.array([0, 1, 0, 0]))
+    array([0, 1])
+    >>> state_to_binary_state(np.array([0, 0, 1, 0]))
+    array([1, 0])
+    >>> state_to_binary_state(np.array([0, 0, 0, 1]))
+    array([1, 1])
+    >>> state_to_binary_state(np.array([1, 0, 0, 0, 0, 0, 0, 0]))
+    array([0, 0, 0])
+    """
+    return binary_string_to_vector(state_to_binary_string(state, n=n))
+
+
+def binary_string_to_state_number(binary_string: str) -> int:
+    r"""
+    Convert a binary string to a state number. The binary string is a string of 0s and 1s. The state number is an
+    integer.
+
+    :param binary_string: Binary string
+    :type binary_string: str
+    :return: State number
+    :rtype: int
+    """
+    return int(binary_string, 2)
 
 
 def get_non_interacting_fermionic_hamiltonian_from_coeffs(
@@ -272,7 +323,7 @@ def decompose_state_into_majorana_indexes(
     :return: Indices of the Majorana operators
     :rtype: np.ndarray
     """
-    binary_state = state_to_binary_state(__state, n=n)
+    binary_state = state_to_binary_string(__state, n=n)
     return decompose_binary_state_into_majorana_indexes(binary_state)
 
 
@@ -318,8 +369,9 @@ def make_transition_matrix_from_action_matrix(action_matrix):
     :param action_matrix:
     :return:
     """
+    action_matrix_t = qml.math.swapaxes(action_matrix, axis1=-2, axis2=-1)
     transition_matrix = 0.5 * (
-            action_matrix.T[::2] + 1j * action_matrix.T[1::2]
+            action_matrix_t[..., ::2, :] + 1j * action_matrix_t[..., 1::2, :]
     )
     return transition_matrix
 

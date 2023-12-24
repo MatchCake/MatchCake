@@ -304,7 +304,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             raise NotImplementedError(
                 f"The contraction method {contraction_method} is not implemented."
             )
-        
+
     def do_neighbours_contraction(self, operations):
         if len(operations) <= 1:
             return operations
@@ -329,8 +329,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         rotations = rotations or []
         if not isinstance(operations, Iterable):
             operations = [operations]
-        global_single_transition_particle_matrix = pnp.eye(2 * self.num_wires)
-        
+        global_single_transition_particle_matrix = pnp.eye(2 * self.num_wires)[None, ...]
+        # global_single_transition_particle_matrix = pnp.eye(2 * self.num_wires)
+        batched = False
         operations = self.contract_operations(operations, self.contraction_method)
         
         # apply the circuit operations
@@ -357,11 +358,21 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             else:
                 assert op.name in self.operations, f"Operation {op.name} is not supported."
                 if isinstance(op, MatchgateOperation):
-                    global_single_transition_particle_matrix = qml.math.dot(
-                        global_single_transition_particle_matrix,
-                        op.get_padded_single_transition_particle_matrix(self.wires),
+                    # global_single_transition_particle_matrix = qml.math.dot(
+                    #     global_single_transition_particle_matrix,
+                    #     op.get_padded_single_transition_particle_matrix(self.wires),
+                    # )
+                    op_r = op.get_padded_single_transition_particle_matrix(self.wires)
+                    batched = batched or (qml.math.ndim(op_r) > 2)
+                    if qml.math.ndim(op_r) < 3:
+                        op_r = op_r[None, ...]
+                    global_single_transition_particle_matrix = qml.math.einsum(
+                        "bij,bjl->bil",
+                        global_single_transition_particle_matrix, op_r
                     )
 
+        if not batched:
+            global_single_transition_particle_matrix = global_single_transition_particle_matrix[0]
         # store the pre-rotated state
         self._pre_rotated_sparse_state = self._sparse_state
         self._pre_rotated_state = self._state
