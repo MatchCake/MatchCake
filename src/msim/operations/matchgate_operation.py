@@ -1,8 +1,9 @@
-from typing import Union
+from typing import Union, Iterable
 
 import pennylane as qml
 from pennylane.operation import Operation
 from pennylane import numpy as pnp
+from pennylane.wires import Wires
 
 from ..base.matchgate import Matchgate
 from .. import matchgate_parameter_sets as mps
@@ -127,3 +128,66 @@ class MatchgateOperation(Matchgate, Operation):
     def __copy__(self):
         return Operation.__copy__(self)
 
+
+class _SingleTransitionMatrix:
+
+    @classmethod
+    def from_operation(cls, op: MatchgateOperation):
+        return cls(op.single_transition_particle_matrix, op.wires)
+
+    @classmethod
+    def from_operations(cls, ops: Iterable[MatchgateOperation]):
+        if len(ops) == 0:
+            return None
+        if len(ops) == 1:
+            return cls.from_operation(next(iter(ops)))
+        all_wires = Wires(set([op.wires for op in ops]))
+        batch_sizes = filter(lambda x: x is not None, [op.batch_size for op in ops]) or [None]
+        batch_size = next(iter(batch_sizes))
+        if batch_size is None:
+            matrix = pnp.eye(2 * len(all_wires), dtype=complex)
+        else:
+            matrix = pnp.zeros((batch_size, 2 * len(all_wires), 2 * len(all_wires)), dtype=complex)
+            matrix[:, ...] = pnp.eye(2 * len(all_wires), dtype=matrix.dtype)
+
+        for op in ops:
+            wire0_idx = all_wires.index(op.wires[0])
+            slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + op.single_transition_particle_matrix.shape[0])
+            slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + op.single_transition_particle_matrix.shape[1])
+            matrix[..., slice_0, slice_1] = op.matrix
+        return cls(matrix, all_wires)
+
+    def __init__(self, matrix: pnp.ndarray, wires: Wires):
+        self.matrix = matrix
+        self.wires = wires
+
+    def __array__(self):
+        return self.matrix
+
+    def __matmul__(self, other):
+        if not isinstance(other, _SingleTransitionMatrix):
+            raise ValueError(f"Cannot multiply _SingleTransitionMatrix with {type(other)}")
+
+        if self.wires != other.wires:
+            raise NotImplementedError("Cannot multiply _SingleTransitionMatrix with different wires yet.")
+
+        return _SingleTransitionMatrix(self.matrix @ other.matrix, self.wires)
+
+    def pad(self, wires: Wires):
+        if self.wires == wires:
+            return self
+        matrix = self.matrix
+        if qml.math.ndim(matrix) == 2:
+            padded_matrix = pnp.eye(2 * len(wires), dtype=matrix.dtype)
+        elif qml.math.ndim(matrix) == 3:
+            padded_matrix = pnp.zeros((qml.math.shape(matrix)[0], 2 * len(wires), 2 * len(wires)), dtype=matrix.dtype)
+            padded_matrix[:, ...] = pnp.eye(2 * len(wires), dtype=matrix.dtype)
+        else:
+            raise NotImplementedError("This method is not implemented yet.")
+
+        wire0_idx = wires.index(self.wires[0])
+        # wire1_idx = wires.index(self.wires[1])
+        slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[0])
+        slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[1])
+        padded_matrix[..., slice_0, slice_1] = matrix
+        return _SingleTransitionMatrix(padded_matrix, wires)

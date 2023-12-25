@@ -1,6 +1,6 @@
 import itertools
 import warnings
-from typing import Iterable, Tuple, Union, Callable, Any
+from typing import Iterable, Tuple, Union, Callable, Any, Optional
 
 import numpy as np
 from scipy import sparse
@@ -10,9 +10,59 @@ from pennylane.pulse import ParametrizedEvolution
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 from pennylane.ops.qubit.observables import BasisStateProjector
-from ..operations.matchgate_operation import MatchgateOperation
+from ..operations.matchgate_operation import MatchgateOperation, _SingleTransitionMatrix
 from ..base.lookup_table import NonInteractingFermionicLookupTable
 from .. import utils
+
+
+class _VHMatchgatesContainer:
+    def __init__(self):
+        self.op_container = {}
+        self.wires_set = set({})
+
+    def __bool__(self):
+        return len(self) > 0
+
+    def __len__(self):
+        return len(self.op_container)
+
+    def add(self, op: MatchgateOperation):
+        if op.wires in self.op_container:
+            self.op_container[op.wires] = self.op_container[op.wires] @ op
+        else:
+            self.op_container[op.wires] = op
+        self.wires_set.update(op.wires.labels)
+
+    def try_add(self, op: MatchgateOperation) -> bool:
+        if op.wires in self.op_container:
+            self.add(op)
+            return True
+        is_wire_in_container = any([w in self.wires_set for w in op.wires.labels])
+        if not is_wire_in_container:
+            self.add(op)
+            return True
+        return False
+
+    def extend(self, ops: Iterable[MatchgateOperation]) -> None:
+        for op in ops:
+            self.add(op)
+
+    def try_extend(self, ops: Iterable[MatchgateOperation]) -> int:
+        for i, op in enumerate(ops):
+            if not self.try_add(op):
+                return i
+        return -1
+
+    def clear(self):
+        self.op_container.clear()
+        self.wires_set.clear()
+
+    def contract(self) -> Optional[Union[MatchgateOperation, _SingleTransitionMatrix]]:
+        if len(self) == 0:
+            return None
+        if len(self) == 1:
+            return next(iter(self.op_container.values()))
+        return _SingleTransitionMatrix.from_operations(self.op_container.values())
 
 
 class NonInteractingFermionicDevice(qml.QubitDevice):
@@ -310,19 +360,37 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             return operations
         queue = operations.copy()
         new_operations = []
-        while len(queue) > 1:
-            op1 = queue.pop(0)
-            if not isinstance(op1, MatchgateOperation):
-                new_operations.append(op1)
+        vh_container = _VHMatchgatesContainer()
+        # while len(queue) > 1:
+        #     op1 = queue.pop(0)
+        #     if not isinstance(op1, MatchgateOperation):
+        #         new_operations.append(op1)
+        #         continue
+        #     op2 = queue.pop(0)
+        #     if not isinstance(op2, MatchgateOperation):
+        #         new_operations.append(op1)
+        #         new_operations.append(op2)
+        #         continue
+        #     if op1.wires == op2.wires:
+        #         queue.insert(0, op1 @ op2)
+        # new_operations.extend(queue)
+
+        while len(queue) > 0:
+            op = queue.pop(0)
+            if not isinstance(op, MatchgateOperation):
+                new_operations.append(op)
+                if vh_container:
+                    new_operations.append(vh_container.contract())
+                    vh_container.clear()
                 continue
-            op2 = queue.pop(0)
-            if not isinstance(op2, MatchgateOperation):
-                new_operations.append(op1)
-                new_operations.append(op2)
-                continue
-            if op1.wires == op2.wires:
-                queue.insert(0, op1 @ op2)
-        new_operations.extend(queue)
+            if not vh_container.try_add(op):
+                new_operations.append(vh_container.contract())
+                vh_container.clear()
+                vh_container.add(op)
+        if vh_container:
+            new_operations.append(vh_container.contract())
+            vh_container.clear()
+
         return new_operations
 
     def apply(self, operations, rotations=None, **kwargs):
@@ -330,7 +398,6 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if not isinstance(operations, Iterable):
             operations = [operations]
         global_single_transition_particle_matrix = pnp.eye(2 * self.num_wires)[None, ...]
-        # global_single_transition_particle_matrix = pnp.eye(2 * self.num_wires)
         batched = False
         operations = self.contract_operations(operations, self.contraction_method)
         
@@ -355,6 +422,15 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                         self._debugger.snapshots[len(self._debugger.snapshots)] = state_vector
             elif isinstance(op, qml.pulse.ParametrizedEvolution):
                 self._state = self._apply_parametrized_evolution(self._state, op)
+            elif isinstance(op, _SingleTransitionMatrix):
+                op_r = op.pad(self.wires).matrix
+                batched = batched or (qml.math.ndim(op_r) > 2)
+                if qml.math.ndim(op_r) < 3:
+                    op_r = op_r[None, ...]
+                global_single_transition_particle_matrix = qml.math.einsum(
+                    "bij,bjl->bil",
+                    global_single_transition_particle_matrix, op_r
+                )
             else:
                 assert op.name in self.operations, f"Operation {op.name} is not supported."
                 if isinstance(op, MatchgateOperation):

@@ -237,6 +237,7 @@ def standard_hamiltonian_to_standard(
 
 
 def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePolarParams:
+    # TODO: add support for batched params
     backend = MatchgateParams.load_backend_lib(kwargs.pop("backend", pnp))
     a, b, c, d, w, x, y, z = params.to_numpy().reshape((-1, params.N_PARAMS)).T.astype(complex)
     r0 = backend.sqrt(a * backend.conjugate(a))

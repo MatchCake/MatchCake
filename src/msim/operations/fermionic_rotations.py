@@ -96,15 +96,17 @@ class FermionicRotation(MatchgateOperation):
             )
         self._given_params = params
         # TODO: add support for batched params when available in MatchgateParameterSets
-        if qml.math.ndim(params) > 1:
-            m_params = [
-                mps.MatchgateStandardParams.from_matrix(_make_complete_rot_matrix(p, self._directions))
-                for p in params
-            ]
-            in_params = [mps.MatchgatePolarParams.parse_from_params(p, force_cast_to_real=True) for p in m_params]
-        else:
-            m_params = mps.MatchgateStandardParams.from_matrix(_make_complete_rot_matrix(params, self._directions))
-            in_params = mps.MatchgatePolarParams.parse_from_params(m_params, force_cast_to_real=True)
+        # if qml.math.ndim(params) > 1:
+        #     m_params = [
+        #         mps.MatchgateStandardParams.from_matrix(_make_complete_rot_matrix(p, self._directions))
+        #         for p in params
+        #     ]
+        #     in_params = [mps.MatchgatePolarParams.parse_from_params(p, force_cast_to_real=True) for p in m_params]
+        # else:
+        #     m_params = mps.MatchgateStandardParams.from_matrix(_make_complete_rot_matrix(params, self._directions))
+        #     in_params = mps.MatchgatePolarParams.parse_from_params(m_params, force_cast_to_real=True)
+        m_params = mps.MatchgateStandardParams.from_matrix(_make_complete_rot_matrix(params, self._directions))
+        in_params = mps.MatchgatePolarParams.parse_from_params(m_params, force_cast_to_real=True)
         kwargs["in_param_type"] = mps.MatchgatePolarParams
         super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
 

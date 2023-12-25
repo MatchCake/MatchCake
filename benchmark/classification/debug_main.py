@@ -23,7 +23,7 @@ if __name__ == '__main__':
         throw_errors=True,
     )
     save_path = os.path.join(
-        os.path.dirname(__file__), "results", f"{kwargs['dataset_name']}", f"cls.pkl"
+        os.path.dirname(__file__), "debug_results", f"{kwargs['dataset_name']}", f"cls.pkl"
     )
     pipline = ClassificationPipeline.from_pickle_or_new(
         **kwargs,
@@ -38,4 +38,4 @@ if __name__ == '__main__':
     figures_folder = os.path.join(os.path.dirname(save_path), "figures")
     pipline.draw_mpl_kernels(show=False, filepath=os.path.join(figures_folder, "kernels.pdf"), draw_mth="single")
     plt.close("all")
-    pipline.show(n_pts=128, show=True, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
+    pipline.show(n_pts=128, show=False, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
