@@ -237,7 +237,6 @@ def standard_hamiltonian_to_standard(
 
 
 def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePolarParams:
-    # TODO: add support for batched params
     backend = MatchgateParams.load_backend_lib(kwargs.pop("backend", pnp))
     a, b, c, d, w, x, y, z = params.to_numpy().reshape((-1, params.N_PARAMS)).T.astype(complex)
     r0 = backend.sqrt(a * backend.conjugate(a))
@@ -245,58 +244,37 @@ def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePol
     r1 = backend.sqrt(w * backend.conjugate(w))
     r1_tilde = MatchgatePolarParams.compute_r_tilde(r1, backend=backend)
     eps = 1e-12
-    if backend.isclose(r0, 0) and backend.isclose(r1, 0):  # case 1
-        theta0 = 0
-        theta1 = -1j * backend.log(c + eps)
-        theta2 = -0.5j * backend.log(-b*c + eps)
-        theta3 = -1j * backend.log(y + eps)
-        theta4 = -0.5j * backend.log(-b*c + eps)
-    elif backend.isclose(r0, 0) and backend.isclose(r1, 1):  # case 2
-        theta0 = 0
-        theta1 = -1j * backend.log(c + eps)
-        theta2 = -1j * backend.log(w + eps)
-        theta3 = 0
-        theta4 = -1j * backend.log(z + eps)
-    elif backend.isclose(r0, 0) and not (backend.isclose(r1, 0) or backend.isclose(r1, 1)):  # case 3
-        theta0 = 0
-        theta1 = -1j * backend.log(c + eps)
-        theta2 = -1j * (backend.log(w + eps) - backend.log(r1 + eps))
-        theta3 = -1j * (backend.log(y + eps) - backend.log(r1_tilde + eps))
-        theta4 = -1j * (backend.log(z + eps) - backend.log(r1 + eps))
-    elif backend.isclose(r0, 1) and backend.isclose(r1, 0):  # case 4
-        theta0 = -1j * backend.log(a + eps)
-        theta1 = 0
-        theta2 = -0.5j * backend.log(d*a + eps)
-        theta3 = -1j * backend.log(y + eps)
-        theta4 = -0.5j * backend.log(d*a + eps)
-    elif backend.isclose(r0, 1) and backend.isclose(r1, 1):  # case 5
-        theta0 = -1j * backend.log(a + eps)
-        theta1 = 0
-        theta2 = -1j * backend.log(w + eps)
-        theta3 = 0
-        theta4 = -1j * backend.log(z + eps)
-    elif backend.isclose(r0, 1) and not (backend.isclose(r1, 0) or backend.isclose(r1, 1)):  # case 6
-        theta0 = -1j * backend.log(a + eps)
-        theta1 = 0
-        theta2 = -1j * (backend.log(w + eps) - backend.log(r1 + eps))
-        theta3 = -1j * (backend.log(y + eps) - backend.log(r1_tilde + eps))
-        theta4 = -1j * (backend.log(z + eps) - backend.log(r1 + eps))
-    elif (
-            not (backend.isclose(r0, 0) or backend.isclose(r0, 1))
-            and
-            not (backend.isclose(r1, 0) or backend.isclose(r1, 1))
-    ):
-        theta0 = -1j * (backend.log(a + eps) - backend.log(r0 + eps))
-        theta1 = -1j * (backend.log(c + eps) - backend.log(r0_tilde + eps))
-        theta2 = -1j * (backend.log(w + eps) - backend.log(r1 + eps))
-        theta3 = -1j * (backend.log(y + eps) - backend.log(r1_tilde + eps))
-        theta4 = -1j * (backend.log(z + eps) - backend.log(r1 + eps))
-    else:
-        theta0 = -1j * (backend.log(a + eps) - backend.log(r0 + eps))
-        theta1 = -1j * (backend.log(c + eps) - backend.log(r0_tilde + eps))
-        theta2 = -1j * (backend.log(w + eps) - backend.log(r1 + eps))
-        theta3 = -1j * (backend.log(y + eps) - backend.log(r1_tilde + eps))
-        theta4 = -1j * (backend.log(z + eps) - backend.log(r1 + eps))
+
+    theta0 = backend.where(backend.isclose(r0, 0), 0, -1j * (backend.log(a + eps) - backend.log(r0 + eps)))
+    theta0 = backend.where(backend.isclose(r0, 1), -1j * backend.log(a + eps), theta0)
+
+    theta1 = backend.where(
+        backend.isclose(r0, 0), -1j * backend.log(c + eps), -1j * (backend.log(c + eps) - backend.log(r0_tilde + eps))
+    )
+    theta1 = backend.where(backend.isclose(r0, 1), 0, theta1)
+
+    theta2 = backend.where(
+        backend.isclose(r1, 0),
+        -0.5j * backend.log(-b*c + eps),
+        -1j * (backend.log(w + eps) - backend.log(r1 + eps))
+    )
+    theta2 = backend.where(backend.isclose(r1, 1), -1j * backend.log(w + eps), theta2)
+    theta2 = backend.where(backend.isclose(r0, 1) & backend.isclose(r1, 0), -0.5j * backend.log(d*a + eps), theta2)
+
+    theta3 = backend.where(
+        backend.isclose(r1, 0),
+        -1j * backend.log(y + eps),
+        -1j * (backend.log(y + eps) - backend.log(r1_tilde + eps))
+    )
+    theta3 = backend.where(backend.isclose(r1, 1), 0, theta3)
+
+    theta4 = backend.where(
+        backend.isclose(r1, 0),
+        -0.5j * backend.log(-b*c + eps),
+        -1j * (backend.log(z + eps) - backend.log(r1 + eps))
+    )
+    theta4 = backend.where(backend.isclose(r1, 1), -1j * backend.log(z + eps), theta4)
+    theta4 = backend.where(backend.isclose(r0, 1) & backend.isclose(r1, 0), -0.5j * backend.log(d*a + eps), theta4)
 
     return MatchgatePolarParams(
         r0=r0,
