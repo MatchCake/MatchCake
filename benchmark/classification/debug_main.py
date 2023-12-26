@@ -9,6 +9,7 @@ if __name__ == '__main__':
 
     kwargs = dict(
         dataset_name="breast_cancer",
+        # dataset_name="digits",
         # dataset_name="synthetic",
         # dataset_n_samples=32,
         # dataset_n_features=2,
@@ -29,6 +30,7 @@ if __name__ == '__main__':
         **kwargs,
         # save_path=save_path,
         use_gram_matrices=True,
+        # debug_data_size=32,
     )
     pipline.load_dataset()
     pipline.preprocess_data()
