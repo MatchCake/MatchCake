@@ -21,8 +21,6 @@ class MatchgateOperation(Matchgate, Operation):
 
     @staticmethod
     def _matrix(*params):
-        # TODO: add support for batched params when available in MatchgateParameterSets
-        # TODO: if batched: output shape should be (batch_size, 2**n, 2**n)
         # TODO: maybe remove this method to use only compute_matrix
         polar_params = mps.MatchgatePolarParams(*params, backend=pnp)
         std_params = mps.MatchgateStandardParams.parse_from_params(polar_params)
@@ -30,8 +28,6 @@ class MatchgateOperation(Matchgate, Operation):
     
     @staticmethod
     def compute_matrix(*params, **hyperparams):
-        # TODO: add support for batched params when available in MatchgateParameterSets
-        # TODO: if batched: output shape should be (batch_size, 2**n, 2**n)
         return MatchgateOperation._matrix(*params)
     
     def __init__(
@@ -43,7 +39,6 @@ class MatchgateOperation(Matchgate, Operation):
             backend=pnp,
             **kwargs
     ):
-        # TODO: add support for batched params when available in MatchgateParameterSets
         in_param_type = kwargs.get("in_param_type", mps.MatchgatePolarParams)
         in_params = in_param_type.parse_from_any(params)
         Matchgate.__init__(self, in_params, backend=backend, **kwargs)
@@ -83,8 +78,8 @@ class MatchgateOperation(Matchgate, Operation):
         
         # padded_matrix[wire0_slice0, wire0_slice1] = wire0_submatrix
         # padded_matrix[wire1_slice0, wire1_slice1] = wire1_submatrix
-        slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[0])
-        slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[1])
+        slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-2])
+        slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-1])
         padded_matrix[..., slice_0, slice_1] = matrix
         return padded_matrix
     
@@ -152,8 +147,8 @@ class _SingleTransitionMatrix:
 
         for op in ops:
             wire0_idx = all_wires.index(op.wires[0])
-            slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + op.single_transition_particle_matrix.shape[0])
-            slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + op.single_transition_particle_matrix.shape[1])
+            slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + op.single_transition_particle_matrix.shape[-2])
+            slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + op.single_transition_particle_matrix.shape[-1])
             matrix[..., slice_0, slice_1] = op.matrix
         return cls(matrix, all_wires)
 
