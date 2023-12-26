@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from msim.matchgate_parameter_sets import transfer_functions
+from msim.matchgate_parameter_sets import transfer_functions, fSWAP
 from msim.matchgate_parameter_sets.transfer_functions import (
     _transfer_funcs_by_type,
     _NODE_ORDER,
@@ -788,4 +788,41 @@ def test_standard_hamiltonian_to_composed_hamiltonian(
         __to_params: MatchgateComposedHamiltonianParams
 ):
     to_params = transfer_functions.standard_hamiltonian_to_composed_hamiltonian(__from_params)
+    assert to_params == __to_params, f"Transfer function from {type(__from_params)} to {type(__to_params)} failed."
+
+
+@pytest.mark.parametrize(
+    "__from_params,__to_params",
+    [
+        (
+                MatchgateStandardParams(
+                    a=[1, fSWAP.a, 0, 0],
+                    b=[0, fSWAP.b, 1, 1],
+                    c=[0, fSWAP.c, 1, 1],
+                    d=[1, fSWAP.d, 1, 1],
+                    w=[1, fSWAP.w, 1, 0.5],
+                    x=[0, fSWAP.x, 1, 1],
+                    y=[0, fSWAP.y, 1, 1],
+                    z=[1, fSWAP.z, 1, 1],
+                ),
+                MatchgatePolarParams(
+                    r0=[1, 1, 0, 0],
+                    r1=[1, 0, 1, 0.5],
+                    theta0=[0, 0, 0, 0],
+                    theta1=[0, 0, 0, 0],
+                    theta2=[0, np.pi / 2, 0, 0],
+                    theta3=[0, 0, 0, -0.14387037j],
+                    theta4=[0, np.pi / 2, 0, -0.69314718j],
+                )
+        ),
+    ],
+)
+def test_standard_to_polar_in_batch(__from_params: MatchgateStandardParams, __to_params: MatchgatePolarParams):
+    for from_vector, to_vector in zip(__from_params.to_numpy(), __to_params.to_numpy()):
+        _v_from_params = MatchgateStandardParams(from_vector)
+        _v_to_params = MatchgatePolarParams(to_vector)
+        to_params = transfer_functions.standard_to_polar(_v_from_params)
+        assert _v_to_params == to_params, f"Transfer function from {type(__from_params)} to {type(__to_params)} failed."
+
+    to_params = transfer_functions.standard_to_polar(__from_params)
     assert to_params == __to_params, f"Transfer function from {type(__from_params)} to {type(__to_params)} failed."
