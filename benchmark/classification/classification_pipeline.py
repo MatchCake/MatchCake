@@ -139,6 +139,7 @@ class ClassificationPipeline:
         self.test_gram_compute_times = {}
         self.use_gram_matrices = self.kwargs.get("use_gram_matrices", False)
         self._db_y_preds = {}
+        self._debug_data_size = self.kwargs.get("debug_data_size", None)
 
     @property
     def n_features(self):
@@ -190,6 +191,9 @@ class ClassificationPipeline:
             self.y = self.dataset.target
         else:
             raise ValueError(f"Unknown dataset type: {type(self.dataset)}")
+        if self._debug_data_size is not None:
+            self.X = self.X[:self._debug_data_size]
+            self.y = self.y[:self._debug_data_size]
         self.X = MinMaxScaler(feature_range=self.kwargs.get("feature_range", (0, 1))).fit_transform(self.X)
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
             self.X, self.y,
