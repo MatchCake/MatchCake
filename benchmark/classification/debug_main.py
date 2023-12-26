@@ -8,10 +8,10 @@ if __name__ == '__main__':
     from classification_pipeline import ClassificationPipeline
 
     kwargs = dict(
-        # dataset_name="breast_cancer",
-        dataset_name="synthetic",
-        dataset_n_samples=32,
-        dataset_n_features=2,
+        dataset_name="breast_cancer",
+        # dataset_name="synthetic",
+        # dataset_n_samples=32,
+        # dataset_n_features=2,
         methods=[
             # "classical",
             # "nif",
@@ -38,4 +38,4 @@ if __name__ == '__main__':
     figures_folder = os.path.join(os.path.dirname(save_path), "figures")
     pipline.draw_mpl_kernels(show=False, filepath=os.path.join(figures_folder, "kernels.pdf"), draw_mth="single")
     plt.close("all")
-    pipline.show(n_pts=128, show=False, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
+    pipline.show(n_pts=128, show=True, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
