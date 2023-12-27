@@ -297,6 +297,7 @@ class FermionicPQCKernel(NIFKernel):
             fcnot_wires = wires_patterns[layer % len(wires_patterns)]
             for wires in fcnot_wires:
                 fCNOT(wires=wires)
+        return
 
     def circuit(self, x0, x1):
         theta_x0 = self._parameter_scaling * self.parameters + self.data_scaling * x0
@@ -305,3 +306,28 @@ class FermionicPQCKernel(NIFKernel):
         qml.adjoint(self.ansatz)(theta_x1)
         projector: BasisStateProjector = qml.Projector(np.zeros(self.size), wires=self.wires)
         return qml.expval(projector)
+
+
+class PennylaneFermionicPQCKernel(FermionicPQCKernel):
+    def __init__(self, size: Optional[int] = None, **kwargs):
+        super().__init__(size=size, **kwargs)
+        self._device_name = kwargs.get("device", "default.qubit")
+        self._device_kwargs = kwargs.get("device_kwargs", {})
+
+    def pre_initialize(self):
+        self._device = qml.device(self._device_name, wires=self.size, **self._device_kwargs)
+        self.qnode = qml.QNode(self.circuit, self._device, **self.kwargs.get("qnode_kwargs", {}))
+
+    # def ansatz(self, x):
+    #     wires_double = PATTERN_TO_WIRES["double"](self.wires)
+    #     wires_double_odd = PATTERN_TO_WIRES["double_odd"](self.wires)
+    #     wires_patterns = [wires_double, wires_double_odd]
+    #     for layer in range(self.depth):
+    #         sub_x = x[..., layer * self.size: (layer + 1) * self.size]
+    #         MAngleEmbedding(sub_x, wires=self.wires, rotations=self.rotations)
+    #         fcnot_wires = wires_patterns[layer % len(wires_patterns)]
+    #         for wires in fcnot_wires:
+    #             # qml.CNOT(wires=wires)
+    #             fCNOT(wires=wires)
+    #     return
+

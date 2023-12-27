@@ -20,7 +20,7 @@ except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import msim
     
-from msim.ml.ml_kernel import MLKernel, NIFKernel, FermionicPQCKernel
+from msim.ml.ml_kernel import MLKernel, NIFKernel, FermionicPQCKernel, PennylaneFermionicPQCKernel
 
 
 class ClassicalKernel(MLKernel):

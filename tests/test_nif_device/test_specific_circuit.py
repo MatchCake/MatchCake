@@ -2,6 +2,7 @@ from functools import partial
 
 import numpy as np
 import pennylane as qml
+from pennylane.ops.qubit.observables import BasisStateProjector
 import pytest
 
 from msim import MatchgateOperation, utils
@@ -32,6 +33,9 @@ def specific_matchgate_circuit(params_wires_list, initial_state=None, **kwargs):
         return qml.state()
     elif out_op == "probs":
         return qml.probs(wires=kwargs.get("out_wires", None))
+    elif out_op == "expval":
+        projector: BasisStateProjector = qml.Projector(initial_state, wires=all_wires)
+        return qml.expval(projector)
     else:
         raise ValueError(f"Unknown out_op: {out_op}.")
 
@@ -81,6 +85,53 @@ def test_multiples_matchgate_probs_with_qbit_device(initial_binary_string, param
 
     np.testing.assert_allclose(
         nif_probs, qubit_probs,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
+    "initial_binary_string,params_wires_list",
+    [
+        ("00", [(mps.fSWAP, [0, 1])]),
+        ("01", [(mps.fSWAP, [0, 1])]),
+        ("10", [(mps.fSWAP, [0, 1])]),
+        ("11", [(mps.fSWAP, [0, 1])]),
+        ("00", [(mps.HellParams, [0, 1])]),
+        ("01", [(mps.HellParams, [0, 1])]),
+        ("10", [(mps.HellParams, [0, 1])]),
+        ("11", [(mps.HellParams, [0, 1])]),
+        ("0000", [(mps.fSWAP, [0, 1]), (mps.fSWAP, [2, 3])]),
+        ("000000", [(mps.fSWAP, [0, 1]), (mps.fSWAP, [2, 3]), (mps.fSWAP, [4, 5])]),
+        ("0000", [(mps.fSWAP, [0, 1]), (mps.fSWAP, [1, 2]), (mps.fSWAP, [2, 3])]),
+        ("0000", [(mps.fSWAP, [0, 1]), (mps.HellParams, [2, 3])]),
+        ("000000", [(mps.fSWAP, [0, 1]), (mps.HellParams, [2, 3]), (mps.fSWAP, [4, 5])]),
+        ("0000", [(mps.fSWAP, [0, 1]), (mps.fSWAP, [1, 2]), (mps.HellParams, [2, 3])]),
+    ]
+)
+def test_multiples_matchgate_expval_with_qbit_device(initial_binary_string, params_wires_list):
+    initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
+    nif_device, qubit_device = devices_init(wires=len(initial_binary_state))
+
+    nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
+    qubit_qnode = qml.QNode(specific_matchgate_circuit, qubit_device)
+
+    qubit_expval = qubit_qnode(
+        params_wires_list,
+        initial_binary_state,
+        all_wires=qubit_device.wires,
+        in_param_type=mps.MatchgatePolarParams,
+        out_op="expval",
+    )
+    nif_expval = nif_qnode(
+        params_wires_list,
+        initial_binary_state,
+        all_wires=nif_device.wires,
+        in_param_type=mps.MatchgatePolarParams,
+        out_op="expval",
+    )
+    np.testing.assert_allclose(
+        nif_expval, qubit_expval,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

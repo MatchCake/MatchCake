@@ -28,6 +28,7 @@ from kernels import (
     FermionicPQCKernel,
     PQCKernel,
     LightningPQCKernel,
+    PennylaneFermionicPQCKernel,
 )
 
 try:
@@ -97,7 +98,7 @@ class ClassificationPipeline:
         "breast_cancer": datasets.load_breast_cancer,
         "iris": datasets.load_iris,
         "synthetic": datasets.make_classification,
-        "mnist": datasets.load_digits,
+        "mnist": fetch_openml,
         "digits": datasets.load_digits,
     }
     available_kernels = {
@@ -108,6 +109,7 @@ class ClassificationPipeline:
         "fPQC": FermionicPQCKernel,
         "PQC": PQCKernel,
         "lightning_PQC": LightningPQCKernel,
+        "PennylaneFermionicPQCKernel": PennylaneFermionicPQCKernel,
     }
     UNPICKLABLE_ATTRIBUTES = ["dataset", ]
     
@@ -140,6 +142,7 @@ class ClassificationPipeline:
         self.use_gram_matrices = self.kwargs.get("use_gram_matrices", False)
         self._db_y_preds = {}
         self._debug_data_size = self.kwargs.get("debug_data_size", None)
+        self._n_class = self.kwargs.get("n_class", None)
 
     @property
     def n_features(self):
@@ -175,7 +178,8 @@ class ClassificationPipeline:
                 "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
             )
         elif self.dataset_name == "digits":
-            self.dataset = self.available_datasets[self.dataset_name](as_frame=True)
+            n_class = self._n_class or 10
+            self.dataset = self.available_datasets[self.dataset_name](as_frame=True, n_class=n_class)
         else:
             raise ValueError(f"Unknown dataset name: {self.dataset_name}")
         return self.dataset
@@ -531,3 +535,34 @@ class ClassificationPipeline:
                 )
 
         return cls(**kwargs)
+
+    def get_results_table(self, **kwargs):
+        kernel_names = list(self.classifiers.keys())
+        df = pd.DataFrame({
+            "Kernel": kernel_names,
+            "Train accuracy [-]": [self.train_accuracies.get(kernel_name, np.NaN) for kernel_name in kernel_names],
+            "Test accuracy [-]": [self.test_accuracies.get(kernel_name, np.NaN) for kernel_name in kernel_names],
+            "Fit time [s]": [self.fit_times.get(kernel_name, np.NaN) for kernel_name in kernel_names],
+            "Fit kernel time [s]": [self.fit_kernels_times.get(kernel_name, np.NaN) for kernel_name in kernel_names],
+            "Train gram compute time [s]": [
+                self.train_gram_compute_times.get(kernel_name, np.NaN) for kernel_name in kernel_names
+            ],
+            "Test gram compute time [s]": [
+                self.test_gram_compute_times.get(kernel_name, np.NaN) for kernel_name in kernel_names
+            ],
+            "Plot time [s]": [self.plot_times.get(kernel_name, np.NaN) for kernel_name in kernel_names],
+        }).set_index("Kernel")
+        if kwargs.get("sort", False):
+            df = df.sort_values(by="Test accuracy [-]", ascending=False)
+        filepath: Optional[str] = kwargs.get("filepath", None)
+        if filepath is not None:
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            df.to_csv(filepath)
+        if kwargs.get("show", False):
+            print(df.to_markdown())
+        return df
+
+
+class KFoldClassificationPipelines:
+    def __init__(self):
+        pass
