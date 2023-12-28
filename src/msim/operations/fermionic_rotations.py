@@ -234,6 +234,13 @@ class FermionicRotationYY(FermionicRotation):
     ):
         super().__init__(params, wires=wires, directions="YY", id=id, backend=backend, **kwargs)
 
+    def adjoint(self):
+        return FermionicRotationYY(
+            -qml.math.array(self._given_params),
+            wires=self.wires,
+            backend=self.backend,
+        )
+
 
 class FermionicRotationZZ(FermionicRotation):
     def __init__(

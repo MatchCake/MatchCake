@@ -90,4 +90,3 @@ class MatchgatePolarParams(MatchgateParams):
             theta3=-self.theta3,
             theta4=-self.theta4,
         )
-    

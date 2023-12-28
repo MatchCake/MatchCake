@@ -13,10 +13,10 @@ if __name__ == '__main__':
         # dataset_n_samples=32,
         # dataset_n_features=2,
         methods=[
-            "classical",
+            # "classical",
             # "nif",
-            # "fPQC",
-            "PQC",
+            "fPQC",
+            # "PQC",
             # "lightning_PQC",
         ],
         kernel_kwargs=dict(nb_workers=0),

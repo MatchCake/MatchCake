@@ -182,7 +182,7 @@ class _SingleTransitionMatrix:
 
         wire0_idx = wires.index(self.wires[0])
         # wire1_idx = wires.index(self.wires[1])
-        slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[0])
-        slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[1])
+        slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-2])
+        slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-1])
         padded_matrix[..., slice_0, slice_1] = matrix
         return _SingleTransitionMatrix(padded_matrix, wires)

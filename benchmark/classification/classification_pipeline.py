@@ -551,7 +551,7 @@ class ClassificationPipeline:
                 self.test_gram_compute_times.get(kernel_name, np.NaN) for kernel_name in kernel_names
             ],
             "Plot time [s]": [self.plot_times.get(kernel_name, np.NaN) for kernel_name in kernel_names],
-        }).set_index("Kernel")
+        })
         if kwargs.get("sort", False):
             df = df.sort_values(by="Test accuracy [-]", ascending=False)
         filepath: Optional[str] = kwargs.get("filepath", None)
