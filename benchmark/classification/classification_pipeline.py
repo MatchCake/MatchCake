@@ -66,8 +66,9 @@ def save_on_exit(_method=None, *, save_func_name="to_pickle", save_args=(), **sa
             finally:
                 self = args[0]
                 if not hasattr(self, save_func_name):
-                    raise AttributeError(
-                        f"The object {self.__class__.__name__} does not have a save method named {save_func_name}."
+                    warnings.warn(
+                        f"The object {self.__class__.__name__} does not have a save method named {save_func_name}.",
+                        RuntimeWarning
                     )
                 try:
                     getattr(self, save_func_name)(*save_args, **save_kwargs)
@@ -76,7 +77,7 @@ def save_on_exit(_method=None, *, save_func_name="to_pickle", save_args=(), **sa
                         f"Failed to save object {self.__class__.__name__}: {e} with {save_func_name} method",
                         RuntimeWarning
                     )
-                    raise e
+                    # raise e
 
         wrapper.__name__ = method.__name__ + "@save_on_exit"
         return wrapper
@@ -112,6 +113,16 @@ class ClassificationPipeline:
         "PennylaneFermionicPQCKernel": PennylaneFermionicPQCKernel,
     }
     UNPICKLABLE_ATTRIBUTES = ["dataset", ]
+
+    KERNEL_KEY = "Kernel"
+    CLASSIFIER_KEY = "Classifier"
+    FIT_TIME_KEY = "Fit Time [s]"
+    TEST_ACCURACY_KEY = "Test Accuracy [-]"
+    TRAIN_ACCURACY_KEY = "Train Accuracy [-]"
+    PLOT_TIME_KEY = "Plot Time [s]"
+    TRAIN_GRAM_COMPUTE_TIME_KEY = "Train Gram Compute Time [s]"
+    TEST_GRAM_COMPUTE_TIME_KEY = "Test Gram Compute Time [s]"
+    FIT_KERNEL_TIME_KEY = "Fit Kernel Time [s]"
     
     def __init__(
             self,
@@ -143,6 +154,11 @@ class ClassificationPipeline:
         self._db_y_preds = {}
         self._debug_data_size = self.kwargs.get("debug_data_size", None)
         self._n_class = self.kwargs.get("n_class", None)
+        self.dataframe = pd.DataFrame(columns=[
+            self.KERNEL_KEY, self.CLASSIFIER_KEY, self.FIT_TIME_KEY, self.TEST_ACCURACY_KEY, self.TRAIN_ACCURACY_KEY,
+            self.PLOT_TIME_KEY, self.TRAIN_GRAM_COMPUTE_TIME_KEY, self.TEST_GRAM_COMPUTE_TIME_KEY,
+            self.FIT_KERNEL_TIME_KEY,
+        ])
 
     @property
     def n_features(self):
@@ -232,7 +248,9 @@ class ClassificationPipeline:
             try:
                 start_time = time.perf_counter()
                 kernel.fit(self.x_train, self.y_train)
-                self.fit_kernels_times[kernel_name] = time.perf_counter() - start_time
+                elapsed_time = time.perf_counter() - start_time
+                self.fit_kernels_times[kernel_name] = elapsed_time
+                self.dataframe[self.dataframe[self.KERNEL_KEY == kernel_name]][self.FIT_KERNEL_TIME_KEY] = elapsed_time
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
                     raise e
@@ -536,24 +554,31 @@ class ClassificationPipeline:
 
         return cls(**kwargs)
 
+    def to_npz(self):
+        if self.save_path is not None:
+            import pickle
+            save_path = self.save_path
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            np.savez(save_path, **self.__dict__)
+
     def get_results_table(self, **kwargs):
         kernel_names = list(self.classifiers.keys())
         df = pd.DataFrame({
-            "Kernel": kernel_names,
-            "Train accuracy [-]": [self.train_accuracies.get(kernel_name, np.NaN) for kernel_name in kernel_names],
-            "Test accuracy [-]": [self.test_accuracies.get(kernel_name, np.NaN) for kernel_name in kernel_names],
-            "Fit time [s]": [self.fit_times.get(kernel_name, np.NaN) for kernel_name in kernel_names],
-            "Fit kernel time [s]": [self.fit_kernels_times.get(kernel_name, np.NaN) for kernel_name in kernel_names],
-            "Train gram compute time [s]": [
+            self.KERNEL_KEY: kernel_names,
+            self.TRAIN_ACCURACY_KEY: [self.train_accuracies.get(kernel_name, np.NaN) for kernel_name in kernel_names],
+            self.TEST_ACCURACY_KEY: [self.test_accuracies.get(kernel_name, np.NaN) for kernel_name in kernel_names],
+            self.FIT_TIME_KEY: [self.fit_times.get(kernel_name, np.NaN) for kernel_name in kernel_names],
+            self.FIT_KERNEL_TIME_KEY: [self.fit_kernels_times.get(kernel_name, np.NaN) for kernel_name in kernel_names],
+            self.TRAIN_GRAM_COMPUTE_TIME_KEY: [
                 self.train_gram_compute_times.get(kernel_name, np.NaN) for kernel_name in kernel_names
             ],
-            "Test gram compute time [s]": [
+            self.TEST_GRAM_COMPUTE_TIME_KEY: [
                 self.test_gram_compute_times.get(kernel_name, np.NaN) for kernel_name in kernel_names
             ],
-            "Plot time [s]": [self.plot_times.get(kernel_name, np.NaN) for kernel_name in kernel_names],
+            self.PLOT_TIME_KEY: [self.plot_times.get(kernel_name, np.NaN) for kernel_name in kernel_names],
         })
         if kwargs.get("sort", False):
-            df = df.sort_values(by="Test accuracy [-]", ascending=False)
+            df = df.sort_values(by=self.TEST_ACCURACY_KEY, ascending=False)
         filepath: Optional[str] = kwargs.get("filepath", None)
         if filepath is not None:
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
