@@ -31,7 +31,7 @@ def main(**in_kwargs):
     )
     pipline = ClassificationPipeline.from_pickle_or_new(
         **kwargs,
-        # save_path=save_path,
+        save_path=save_path,
         use_gram_matrices=True,
     )
     pipline.load_dataset()
@@ -66,3 +66,4 @@ def time_vs_n_data():
 
 if __name__ == '__main__':
     time_vs_n_data()
+    # main(debug_data_size=32, show=True, plot=True)
