@@ -21,6 +21,7 @@ def main(**in_kwargs):
             "PQC",
             "PennylaneFermionicPQCKernel",
             # "lightning_PQC",
+            "NeighboursFermionicPQCKernel",
         ],
         kernel_kwargs=dict(nb_workers=0),
         throw_errors=True,
@@ -51,7 +52,7 @@ def main(**in_kwargs):
 
 def time_vs_n_data():
     df_data = []
-    for n_data in [2**i for i in range(2, 10)]:
+    for n_data in [2**i for i in range(2, 6)]:
         results: pd.DataFrame = main(debug_data_size=n_data, show=False)
         results["n_data"] = n_data
         df_data.append(results)
