@@ -32,7 +32,7 @@ def main(**in_kwargs):
     )
     pipline = ClassificationPipeline.from_pickle_or_new(
         **kwargs,
-        save_path=save_path,
+        # save_path=save_path,
         use_gram_matrices=True,
     )
     pipline.load_dataset()
@@ -60,7 +60,7 @@ def time_vs_n_data():
     plt.figure()
     for kernel in df["Kernel"].unique():
         df_kernel = df[df["Kernel"] == kernel]
-        plt.plot(df_kernel["n_data"], df_kernel["Train gram compute time [s]"], label=kernel)
+        plt.plot(df_kernel["n_data"], df_kernel[ClassificationPipeline.TRAIN_GRAM_COMPUTE_TIME_KEY], label=kernel)
     plt.legend()
     plt.show()
 
