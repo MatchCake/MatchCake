@@ -417,6 +417,17 @@ class Matchgate:
         matrix = matrix[..., :, :] - qml.math.swapaxes(matrix, -2, -1)
         return matrix
 
+    @property
+    def batch_size(self):
+        not_none_params = [
+            p for p in
+            self.get_all_params_set(make_params=False)
+            if p is not None
+        ]
+        if len(not_none_params) == 0:
+            raise ValueError("No params set. Cannot make standard params.")
+        return not_none_params[0].batch_size
+
     def _initialize_params_(
             self,
             given_params: Union[mps.MatchgateParams, np.ndarray, list, tuple]
