@@ -29,6 +29,7 @@ from kernels import (
     PQCKernel,
     LightningPQCKernel,
     PennylaneFermionicPQCKernel,
+    NeighboursFermionicPQCKernel,
 )
 
 try:
@@ -110,6 +111,7 @@ class ClassificationPipeline:
         "PQC": PQCKernel,
         "lightning_PQC": LightningPQCKernel,
         "PennylaneFermionicPQCKernel": PennylaneFermionicPQCKernel,
+        "NeighboursFermionicPQCKernel": NeighboursFermionicPQCKernel,
     }
     UNPICKLABLE_ATTRIBUTES = ["dataset", ]
     
