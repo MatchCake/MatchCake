@@ -252,7 +252,7 @@ class ClassificationPipeline:
                 kernel.fit(self.x_train, self.y_train)
                 elapsed_time = time.perf_counter() - start_time
                 self.fit_kernels_times[kernel_name] = elapsed_time
-                self.dataframe[self.dataframe[self.KERNEL_KEY == kernel_name]][self.FIT_KERNEL_TIME_KEY] = elapsed_time
+                # self.dataframe[self.dataframe[self.KERNEL_KEY == kernel_name]][self.FIT_KERNEL_TIME_KEY] = elapsed_time
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
                     raise e
