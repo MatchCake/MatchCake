@@ -218,7 +218,10 @@ class NIFKernel(MLKernel):
     def draw(self, **kwargs):
         logging_func = kwargs.pop("logging_func", print)
         name = kwargs.pop("name", self.__class__.__name__)
-        _str = f"{name}: \n{qml.draw(self.qnode, **kwargs)(self.X_[0], self.X_[-1])}\n"
+        if self.is_fitted:
+            _str = f"{name}: \n{qml.draw(self.qnode, **kwargs)(self.X_[0], self.X_[-1])}\n"
+        else:
+            _str = f"{name}: None"
         if logging_func is not None:
             logging_func(_str)
         return _str
