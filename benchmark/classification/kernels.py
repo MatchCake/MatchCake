@@ -124,3 +124,10 @@ class LightningPQCKernel(PQCKernel):
         super().__init__(size=size, **kwargs)
         self._device_name = kwargs.get("device", "lightning.qubit")
         self._device_kwargs = kwargs.get("device_kwargs", {"batch_obs": True})
+
+
+class NeighboursFermionicPQCKernel(FermionicPQCKernel):
+    def pre_initialize(self):
+        self._device = msim.NonInteractingFermionicDevice(wires=self.size, contraction_method="neighbours")
+        self.qnode = qml.QNode(self.circuit, self._device, **self.kwargs.get("qnode_kwargs", {}))
+
