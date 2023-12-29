@@ -126,6 +126,12 @@ class MatchgateOperation(Matchgate, Operation):
 
 class _SingleTransitionMatrix:
 
+    @staticmethod
+    def make_wires_continuous(wires: Wires):
+        wires_array = wires.tolist()
+        min_wire, max_wire = min(wires_array), max(wires_array)
+        return Wires(range(min_wire, max_wire + 1))
+
     @classmethod
     def from_operation(cls, op: MatchgateOperation):
         return cls(op.single_transition_particle_matrix, op.wires)
@@ -136,9 +142,10 @@ class _SingleTransitionMatrix:
             return None
         if len(ops) == 1:
             return cls.from_operation(next(iter(ops)))
-        all_wires = Wires(set([op.wires for op in ops]))
-        batch_sizes = filter(lambda x: x is not None, [op.batch_size for op in ops]) or [None]
-        batch_size = next(iter(batch_sizes))
+        all_wires = Wires.all_wires([op.wires for op in ops], sort=True)
+        all_wires = cls.make_wires_continuous(all_wires)
+        batch_sizes = [op.batch_size for op in ops if op.batch_size is not None] + [None]
+        batch_size = batch_sizes[0]
         if batch_size is None:
             matrix = pnp.eye(2 * len(all_wires), dtype=complex)
         else:
@@ -149,7 +156,7 @@ class _SingleTransitionMatrix:
             wire0_idx = all_wires.index(op.wires[0])
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + op.single_transition_particle_matrix.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + op.single_transition_particle_matrix.shape[-1])
-            matrix[..., slice_0, slice_1] = op.matrix
+            matrix[..., slice_0, slice_1] = op.single_transition_particle_matrix
         return cls(matrix, all_wires)
 
     def __init__(self, matrix: pnp.ndarray, wires: Wires):
