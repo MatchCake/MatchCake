@@ -85,6 +85,8 @@ class Matchgate:
 
 
     """
+    UNPICKEABLE_ATTRS = []
+    DEFAULT_USE_H_FOR_TRANSITION_MATRIX = False
 
     @staticmethod
     def random() -> 'Matchgate':
@@ -210,7 +212,6 @@ class Matchgate:
             self,
             params: Union[mps.MatchgateParams, np.ndarray, list, tuple],
             *,
-            backend=pnp,
             raise_errors_if_not_matchgate=True,
             **kwargs
     ):
@@ -226,8 +227,6 @@ class Matchgate:
         :param backend: The backend to use for the computations. Can be 'numpy', 'sympy' or 'torch'.
         :type backend: str
         """
-        self._backend = backend
-        self._backend_name = str(backend).lower()
 
         # Parameters sets
         self._polar_params = None
@@ -249,6 +248,9 @@ class Matchgate:
         self.majorana_getter = kwargs.get("majorana_getter", utils.MajoranaGetter(n=2))
         
         # Interaction properties
+        self.use_h_for_transition_matrix = kwargs.get(
+            "use_h_for_transition_matrix", self.DEFAULT_USE_H_FOR_TRANSITION_MATRIX
+        )
         self._single_transition_particle_matrix = None
         self._transition_matrix = None
 
@@ -281,10 +283,6 @@ class Matchgate:
         if self._composed_hamiltonian_params is None:
             self._make_composed_hamiltonian_params_()
         return self._composed_hamiltonian_params
-
-    @property
-    def backend(self):
-        return self._backend
 
     @property
     def gate_data(self):
@@ -403,19 +401,7 @@ class Matchgate:
 
         :return: The Hamiltonian coefficients matrix.
         """
-        coeffs = self.hamiltonian_coefficients_params.to_numpy()
-        if self.hamiltonian_coefficients_params.is_batched:
-            matrix = pnp.zeros((self.hamiltonian_coefficients_params.batch_size, 4, 4))
-        else:
-            matrix = pnp.zeros((4, 4))
-        matrix[..., 0, 1] = coeffs[..., 0]
-        matrix[..., 0, 2] = coeffs[..., 1]
-        matrix[..., 0, 3] = coeffs[..., 2]
-        matrix[..., 1, 2] = coeffs[..., 3]
-        matrix[..., 1, 3] = coeffs[..., 4]
-        matrix[..., 2, 3] = coeffs[..., 5]
-        matrix = matrix[..., :, :] - qml.math.swapaxes(matrix, -2, -1)
-        return matrix
+        return self.hamiltonian_coefficients_params.to_matrix()
 
     @property
     def batch_size(self):
@@ -427,6 +413,14 @@ class Matchgate:
         if len(not_none_params) == 0:
             raise ValueError("No params set. Cannot make standard params.")
         return not_none_params[0].batch_size
+
+    def __getstate__(self):
+        state = {
+            k: v
+            for k, v in self.__dict__.items()
+            if k not in self.UNPICKEABLE_ATTRS
+        }
+        return state
 
     def _initialize_params_(
             self,
@@ -571,9 +565,13 @@ class Matchgate:
         return self._hamiltonian_matrix
     
     def _make_single_transition_particle_matrix_(self) -> np.ndarray:
-        # from scipy.linalg import expm
-        # self._action_matrix = expm(-4 * self.hamiltonian_coeffs_matrix)
-
+        if self.use_h_for_transition_matrix:
+            h_matrix = self.hamiltonian_coefficients_params.to_matrix()
+            matrix = qml.math.expm(-4 * h_matrix)
+            self._single_transition_particle_matrix = matrix
+            print(f"{self.__class__.__name__}._make_single_transition_particle_matrix_(): using h_matrix")
+            return self._single_transition_particle_matrix
+        print(f"{self.__class__.__name__}._make_single_transition_particle_matrix_(): using gate_data")
         u = self.gate_data
         u_dagger = qml.math.conjugate(qml.math.swapaxes(u, -2, -1))
         u_shape = qml.math.shape(u)

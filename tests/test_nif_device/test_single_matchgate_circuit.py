@@ -114,7 +114,7 @@ def test_single_matchgate_probs_with_qbit_device(params, initial_binary_state):
     )
     
     np.testing.assert_allclose(
-        nif_probs, qubit_probs,
+        nif_probs.squeeze(), qubit_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

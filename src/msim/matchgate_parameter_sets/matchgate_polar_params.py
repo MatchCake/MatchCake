@@ -58,7 +58,7 @@ class MatchgatePolarParams(MatchgateParams):
         return sp.Matrix([r0, r1, theta0, theta1, theta2, theta3, theta4])
 
     @staticmethod
-    def compute_r_tilde(r, backend=pnp) -> complex:
+    def compute_r_tilde(r, backend="pennylane.numpy") -> complex:
         _pkg = MatchgateParams.load_backend_lib(backend)
         return _pkg.sqrt(1 - qml.math.cast(r, dtype=complex) ** 2)
     
@@ -69,7 +69,7 @@ class MatchgatePolarParams(MatchgateParams):
 
         :return: :math:`\\Tilde{r}_0`
         """
-        return self.compute_r_tilde(self.r0, backend=self.backend)
+        return self.compute_r_tilde(self.r0)
 
     @property
     def r1_tilde(self) -> complex:
@@ -78,7 +78,7 @@ class MatchgatePolarParams(MatchgateParams):
 
         :return: :math:`\\Tilde{r}_1`
         """
-        return self.compute_r_tilde(self.r1, backend=self.backend)
+        return self.compute_r_tilde(self.r1)
     
     def adjoint(self):
         return MatchgatePolarParams(

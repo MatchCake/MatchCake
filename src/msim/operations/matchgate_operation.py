@@ -35,18 +35,30 @@ class MatchgateOperation(Matchgate, Operation):
             params: Union[mps.MatchgateParams, pnp.ndarray, list, tuple],
             wires=None,
             id=None,
-            *,
-            backend=pnp,
             **kwargs
     ):
         in_param_type = kwargs.get("in_param_type", mps.MatchgatePolarParams)
         in_params = in_param_type.parse_from_any(params)
-        Matchgate.__init__(self, in_params, backend=backend, **kwargs)
+        Matchgate.__init__(self, in_params, **kwargs)
         np_params = self.polar_params.to_numpy()
         self.num_params = len(np_params)
         self.draw_label_params = kwargs.get("draw_label_params", None)
         Operation.__init__(self, *np_params, wires=wires, id=id)
-    
+
+    @property
+    def batch_size(self):
+        not_none_params = [
+            p for p in
+            self.get_all_params_set(make_params=False)
+            if p is not None
+        ]
+        if len(not_none_params) == 0:
+            raise ValueError("No params set. Cannot make standard params.")
+        batch_size = not_none_params[0].batch_size
+        if batch_size in [0, 1]:
+            return None
+        return batch_size
+
     def get_padded_single_transition_particle_matrix(self, wires=None):
         r"""
         Return the padded single transition particle matrix in order to have the block diagonal form where
@@ -87,7 +99,6 @@ class MatchgateOperation(Matchgate, Operation):
         return MatchgateOperation(
             self.polar_params.adjoint(),
             wires=self.wires,
-            backend=self.backend,
             in_param_type=mps.MatchgatePolarParams,
         )
     

@@ -82,6 +82,23 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     prob_strategies = {"lookup_table", "explicit_sum"}
     contraction_methods = {None, "neighbours"}
 
+    @classmethod
+    def capabilities(cls):
+        capabilities = super().capabilities().copy()
+        capabilities.update(
+            supports_broadcasting=True,
+            returns_state=False,
+            supports_finite_shots=False,
+            supports_tensor_observables=False,
+            passthru_devices={
+                "tf": "default.qubit.tf",
+                "torch": "default.qubit.torch",
+                "autograd": "default.qubit.autograd",
+                "jax": "default.qubit.jax",
+            },
+        )
+        return capabilities
+
     def __init__(self, wires=2, **kwargs):
         if np.isscalar(wires):
             assert wires > 1, "At least two wires are required for this device."
@@ -182,16 +199,6 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if self._lookup_table is None:
             self._lookup_table = NonInteractingFermionicLookupTable(self.transition_matrix)
         return self._lookup_table
-
-    @classmethod
-    def capabilities(cls):
-        capabilities = super().capabilities().copy()
-        capabilities.update(
-            returns_state=False,
-            supports_finite_shots=False,
-            supports_tensor_observables=False
-        )
-        return capabilities
     
     @property
     def memory_usage(self):

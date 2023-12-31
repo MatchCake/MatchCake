@@ -38,7 +38,7 @@ def test_single_gate_circuit_probability_single_vs_target_specific_cases(initial
         device.compute_probability_of_target_using_explicit_sum(wire, target_binary_state="1"),
     ])
     np.testing.assert_allclose(
-        es_m_probs, es_probs,
+        es_m_probs.squeeze(), es_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -65,7 +65,7 @@ def test_single_gate_circuit_probability_single_vs_target_random_cases(initial_b
         device.compute_probability_of_target_using_explicit_sum(wire, target_binary_state=1),
     ])
     np.testing.assert_allclose(
-        es_m_probs, es_probs,
+        es_m_probs.squeeze(), es_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -89,7 +89,7 @@ def test_single_gate_circuit_probability_target_state_specific_cases(
     device.apply(operations)
     es_m_prob = device.compute_probability_of_target_using_explicit_sum(wires, target_binary_state=target_binary_state)
     np.testing.assert_allclose(
-        es_m_prob, prob,
+        es_m_prob.squeeze(), prob,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -141,7 +141,7 @@ def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_
         out_wires=prob_wires,
     )
     np.testing.assert_allclose(
-        nif_probs, qubit_probs,
+        nif_probs.squeeze(), qubit_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -191,7 +191,7 @@ def test_multiples_matchgate_probs_with_qbit_device_lookup_table(params_list, n_
         out_wires=prob_wires,
     )
     np.testing.assert_allclose(
-        nif_probs, qubit_probs,
+        nif_probs.squeeze(), qubit_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

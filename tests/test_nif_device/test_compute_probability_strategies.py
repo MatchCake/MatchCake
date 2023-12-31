@@ -34,7 +34,7 @@ def test_single_gate_circuit_analytic_probability_lt_vs_es(initial_binary_state,
     lt_probs = device.compute_probability_using_lookup_table(wire)
     es_probs = device.compute_probability_using_explicit_sum(wire)
     np.testing.assert_allclose(
-        lt_probs, es_probs,
+        lt_probs.squeeze(), es_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -83,7 +83,7 @@ def test_single_gate_circuit_analytic_probability_explicit_sum(initial_binary_st
     device.apply(operations)
     es_probs = device.compute_probability_using_explicit_sum(wire)
     np.testing.assert_allclose(
-        prob, es_probs,
+        prob.squeeze(), es_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

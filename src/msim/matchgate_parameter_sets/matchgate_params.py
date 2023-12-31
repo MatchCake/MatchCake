@@ -27,6 +27,7 @@ class MatchgateParams:
     ATTRS = []
     _ATTR_FORMAT = "_{}"
     ATTRS_DEFAULT_VALUES = {}
+    UNPICKEABLE_ATTRS = []
     
     @classmethod
     def get_short_name(cls):
@@ -108,12 +109,7 @@ class MatchgateParams:
         return pnp.zeros((batch_size, cls.N_PARAMS), dtype=cls.DEFAULT_PARAMS_TYPE)
     
     def __init__(self, *args, **kwargs):
-        self._backend = self.load_backend_lib(kwargs.get("backend", pnp))
         self._set_attrs(args, **kwargs)
-
-    @property
-    def backend(self):
-        return self._backend
     
     @property
     def batch_size(self) -> Optional[int]:
@@ -124,6 +120,14 @@ class MatchgateParams:
     @property
     def is_batched(self):
         return qml.math.ndim(self.to_numpy()) > 1
+
+    def __getstate__(self):
+        state = {
+            attr: value
+            for attr, value in self.__dict__.copy().items()
+            if attr not in self.UNPICKEABLE_ATTRS
+        }
+        return state
     
     def _maybe_cast_inputs_to_real(self, args, kwargs):
         # TODO: cast args as well.
@@ -260,9 +264,9 @@ class MatchgateParams:
         params_arr = self.to_numpy()
         dtype = qml.math.get_dtype_name(params_arr)
         if self.is_batched:
-            matrix = self.backend.zeros((self.batch_size, 4, 4), dtype=dtype)
+            matrix = pnp.zeros((self.batch_size, 4, 4), dtype=dtype)
         else:
-            matrix = self.backend.zeros((4, 4), dtype=dtype)
+            matrix = pnp.zeros((4, 4), dtype=dtype)
         elements_indexes_as_array = np.array(self.ELEMENTS_INDEXES)
         matrix[..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]] = params_arr
         return matrix

@@ -134,6 +134,8 @@ class MLKernel(BaseEstimator):
         try:
             return self.pairwise_distances_in_batch(x0, x1, **kwargs)
         except Exception as e:
+            if kwargs.get("throw_errors", False):
+                raise e
             warnings.warn(
                 f"Failed to compute pairwise distances in batch."
                 f" Got err: ({e})."

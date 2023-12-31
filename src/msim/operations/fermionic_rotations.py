@@ -238,7 +238,6 @@ class FermionicRotationYY(FermionicRotation):
         return FermionicRotationYY(
             -qml.math.array(self._given_params),
             wires=self.wires,
-            backend=self.backend,
         )
 
 

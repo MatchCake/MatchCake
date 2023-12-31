@@ -52,19 +52,21 @@ def main(**in_kwargs):
 
 def time_vs_n_data():
     df_data = []
-    for n_data in [2**i for i in range(2, 6)]:
+    for n_data in [2**i for i in range(2, 12)]:
         results: pd.DataFrame = main(debug_data_size=n_data, show=False)
         results["n_data"] = n_data
         df_data.append(results)
     df = pd.concat(df_data)
     plt.figure()
-    for kernel in df["Kernel"].unique():
-        df_kernel = df[df["Kernel"] == kernel]
+    for kernel in df[ClassificationPipeline.KERNEL_KEY].unique():
+        df_kernel = df[df[ClassificationPipeline.KERNEL_KEY] == kernel]
         plt.plot(df_kernel["n_data"], df_kernel[ClassificationPipeline.TRAIN_GRAM_COMPUTE_TIME_KEY], label=kernel)
     plt.legend()
     plt.show()
 
 
 if __name__ == '__main__':
-    time_vs_n_data()
-    # main(debug_data_size=32, show=True, plot=True)
+    # time_vs_n_data()
+    from msim import MatchgateOperation
+    MatchgateOperation.DEFAULT_USE_H_FOR_TRANSITION_MATRIX = True
+    main(debug_data_size=4, show=True, plot=True)

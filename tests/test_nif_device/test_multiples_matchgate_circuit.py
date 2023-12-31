@@ -89,7 +89,7 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_w
     )
     
     np.testing.assert_allclose(
-        nif_probs, qubit_probs,
+        nif_probs.squeeze(), qubit_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

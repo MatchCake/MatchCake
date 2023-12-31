@@ -268,15 +268,18 @@ class ClassificationPipeline:
             self.make_kernels()
         to_remove = []
         verbose = self.kwargs.get("verbose_gram", True)
+        throw_errors = self.kwargs.get("throw_errors", False)
         for kernel_name, kernel in self.kernels.items():
             if kernel_name in self.train_gram_matrices:
                 continue
             try:
                 start_time = time.perf_counter()
-                self.train_gram_matrices[kernel_name] = kernel.compute_gram_matrix(self.x_train, verbose=verbose)
+                self.train_gram_matrices[kernel_name] = kernel.compute_gram_matrix(
+                    self.x_train, verbose=verbose, throw_errors=throw_errors
+                )
                 self.train_gram_compute_times[kernel_name] = time.perf_counter() - start_time
             except Exception as e:
-                if self.kwargs.get("throw_errors", False):
+                if throw_errors:
                     raise e
                 print(f"Failed to compute gram matrix for kernel {kernel_name}: {e}. "
                       f"\n Removing it from the list of kernels.")
@@ -291,17 +294,18 @@ class ClassificationPipeline:
             self.make_kernels()
         to_remove = []
         verbose = self.kwargs.get("verbose_gram", True)
+        throw_errors = self.kwargs.get("throw_errors", False)
         for kernel_name, kernel in self.kernels.items():
             if kernel_name in self.test_gram_matrices:
                 continue
             try:
                 start_time = time.perf_counter()
                 self.test_gram_matrices[kernel_name] = kernel.pairwise_distances(
-                    self.x_test, self.x_train, verbose=verbose
+                    self.x_test, self.x_train, verbose=verbose, throw_errors=throw_errors
                 )
                 self.test_gram_compute_times[kernel_name] = time.perf_counter() - start_time
             except Exception as e:
-                if self.kwargs.get("throw_errors", False):
+                if throw_errors:
                     raise e
                 print(f"Failed to compute gram matrix for kernel {kernel_name}: {e}. "
                       f"\n Removing it from the list of kernels.")

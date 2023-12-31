@@ -100,7 +100,7 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
 
     @property
     def epsilon_op(self):
-        return self.backend.eye(4)
+        return pnp.eye(4)
 
     @classmethod
     def to_sympy(cls):
