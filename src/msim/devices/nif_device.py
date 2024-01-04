@@ -90,12 +90,12 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             returns_state=False,
             supports_finite_shots=False,
             supports_tensor_observables=False,
-            passthru_devices={
-                "tf": "default.qubit.tf",
-                "torch": "default.qubit.torch",
-                "autograd": "default.qubit.autograd",
-                "jax": "default.qubit.jax",
-            },
+            # passthru_devices={
+            #     "tf": "default.qubit.tf",
+            #     "torch": "default.qubit.torch",
+            #     "autograd": "default.qubit.autograd",
+            #     "jax": "default.qubit.jax",
+            # },
         )
         return capabilities
 
@@ -671,6 +671,5 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self._pre_rotated_sparse_state = self._sparse_state
         self._state = None
         self._pre_rotated_state = self._state
-        self.single_transition_particle_matrices = []
         self._transition_matrix = None
         self._lookup_table = None

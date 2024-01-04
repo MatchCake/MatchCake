@@ -112,7 +112,7 @@ class ClassificationPipeline:
         "PQC": PQCKernel,
         "lightning_PQC": LightningPQCKernel,
         "PennylaneFermionicPQCKernel": PennylaneFermionicPQCKernel,
-        "NeighboursFermionicPQCKernel": NeighboursFermionicPQCKernel,
+        "nfPQC": NeighboursFermionicPQCKernel,
     }
     UNPICKLABLE_ATTRIBUTES = ["dataset", ]
 
@@ -176,6 +176,11 @@ class ClassificationPipeline:
         }
         return state
 
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.load_dataset()
+        self.preprocess_data()
+
     def load_dataset(self):
         if self.dataset_name == "synthetic":
             self.dataset = datasets.make_classification(
@@ -219,13 +224,14 @@ class ClassificationPipeline:
         self.X = MinMaxScaler(feature_range=self.kwargs.get("feature_range", (0, 1))).fit_transform(self.X)
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
             self.X, self.y,
-            test_size=self.kwargs.get("test_size", 0.1),
+            test_size=self.kwargs.get("test_size", 0.2),
             random_state=self.kwargs.get("test_split_random_state", 0),
         )
         return self.X, self.y
     
     @save_on_exit
     def make_kernels(self):
+        self.kernels = getattr(self, "kernels", {})
         for kernel_name in self.methods:
             if kernel_name in self.kernels:
                 continue
@@ -382,7 +388,9 @@ class ClassificationPipeline:
 
     @pbt.decorators.log_func(logging_func=print)
     @save_on_exit
-    def run(self):
+    def run(self, **kwargs):
+        results_table_path = kwargs.pop("results_table_path", None)
+        show_results_table = kwargs.pop("show_results_table", False)
         self.load_dataset()
         self.preprocess_data()
         self.make_kernels()
@@ -391,6 +399,8 @@ class ClassificationPipeline:
             self.compute_gram_matrices()
         self.make_classifiers()
         self.fit_classifiers()
+        if results_table_path is not None:
+            self.get_results_table(show=show_results_table, filepath=results_table_path)
         self.to_pickle()
         return self
     
@@ -472,7 +482,7 @@ class ClassificationPipeline:
         kwargs.setdefault("interpolation", "nearest")
         kwargs.setdefault("title", f"Decision boundaries in the reduced space.")
         
-        show = kwargs.pop("show", True)
+        _show = kwargs.pop("show", True)
         models = kwargs.pop("models", self.classifiers)
         n_plots = len(models)
         n_rows = int(np.ceil(np.sqrt(n_plots)))
@@ -516,7 +526,7 @@ class ClassificationPipeline:
         if filepath is not None:
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
             fig.savefig(filepath)
-        if show:
+        if _show:
             plt.show()
         return fig, axes
 
@@ -562,10 +572,9 @@ class ClassificationPipeline:
 
     def to_npz(self):
         if self.save_path is not None:
-            import pickle
             save_path = self.save_path
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            np.savez(save_path, **self.__dict__)
+            np.savez(save_path, **self.__getstate__())
 
     def get_results_table(self, **kwargs):
         kernel_names = list(self.classifiers.keys())

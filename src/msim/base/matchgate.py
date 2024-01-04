@@ -569,9 +569,7 @@ class Matchgate:
             h_matrix = self.hamiltonian_coefficients_params.to_matrix()
             matrix = qml.math.expm(-4 * h_matrix)
             self._single_transition_particle_matrix = matrix
-            print(f"{self.__class__.__name__}._make_single_transition_particle_matrix_(): using h_matrix")
             return self._single_transition_particle_matrix
-        print(f"{self.__class__.__name__}._make_single_transition_particle_matrix_(): using gate_data")
         u = self.gate_data
         u_dagger = qml.math.conjugate(qml.math.swapaxes(u, -2, -1))
         u_shape = qml.math.shape(u)

@@ -18,35 +18,38 @@ def main(**in_kwargs):
             # "classical",
             # "nif",
             "fPQC",
-            "PQC",
-            "PennylaneFermionicPQCKernel",
+            # "PQC",
+            # "PennylaneFermionicPQCKernel",
             # "lightning_PQC",
-            "NeighboursFermionicPQCKernel",
+            # "nfPQC",
         ],
         kernel_kwargs=dict(nb_workers=0),
         throw_errors=True,
     )
     kwargs.update(in_kwargs)
+    _show = kwargs.pop("show", False)
+    _plot = kwargs.pop("plot", False)
     save_path = os.path.join(
         os.path.dirname(__file__), "debug_results", f"{kwargs['dataset_name']}", f"cls.pkl"
     )
     pipline = ClassificationPipeline.from_pickle_or_new(
         **kwargs,
-        # save_path=save_path,
+        save_path=save_path,
         use_gram_matrices=True,
     )
     pipline.load_dataset()
     pipline.preprocess_data()
+    pipline.make_kernels()
+    pipline.fit_kernels()
     pipline.print_summary()
     pipline.run()
     pipline.print_summary()
     figures_folder = os.path.join(os.path.dirname(save_path), "figures")
     pipline.draw_mpl_kernels(show=False, filepath=os.path.join(figures_folder, "kernels.pdf"), draw_mth="single")
     plt.close("all")
-    show = kwargs.get("show", False)
-    results = pipline.get_results_table(show=show, filepath=os.path.join(figures_folder, "results_table.csv"))
-    if kwargs.get("plot", False):
-        pipline.show(n_pts=128, show=show, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
+    results = pipline.get_results_table(show=_show, filepath=os.path.join(figures_folder, "results_table.csv"))
+    if _plot:
+        pipline.show(n_pts=128, show=_show, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
     return results
 
 
@@ -68,5 +71,5 @@ def time_vs_n_data():
 if __name__ == '__main__':
     # time_vs_n_data()
     from msim import MatchgateOperation
-    MatchgateOperation.DEFAULT_USE_H_FOR_TRANSITION_MATRIX = True
-    main(debug_data_size=4, show=True, plot=True)
+    # MatchgateOperation.DEFAULT_USE_H_FOR_TRANSITION_MATRIX = True
+    main(debug_data_size=10, show=True, plot=True)

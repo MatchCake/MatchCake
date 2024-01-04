@@ -109,20 +109,19 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
         return sp.Matrix([h0, h1, h2, h3, h4, h5, epsilon])
 
     def to_matrix(self, add_epsilon: bool = True):
-        eps = 1j * self.epsilon * int(add_epsilon)
+        eps = qml.math.array(1j * self.epsilon * int(add_epsilon))[..., np.newaxis, np.newaxis]
         if self.is_batched:
-            matrix = pnp.zeros((self.batch_size, 4, 4), dtype=self.DEFAULT_PARAMS_TYPE)
+            matrix = pnp.zeros((self.batch_size, 4, 4), dtype=complex)
         else:
-            matrix = pnp.zeros((4, 4), dtype=self.DEFAULT_PARAMS_TYPE)
-        matrix[..., 0, 1] = qml.math.cast(self.h0, dtype=self.DEFAULT_PARAMS_TYPE)
-        matrix[..., 0, 2] = qml.math.cast(self.h1, dtype=self.DEFAULT_PARAMS_TYPE)
-        matrix[..., 0, 3] = qml.math.cast(self.h2, dtype=self.DEFAULT_PARAMS_TYPE)
-        matrix[..., 1, 2] = qml.math.cast(self.h3, dtype=self.DEFAULT_PARAMS_TYPE)
-        matrix[..., 1, 3] = qml.math.cast(self.h4, dtype=self.DEFAULT_PARAMS_TYPE)
-        matrix[..., 2, 3] = qml.math.cast(self.h5, dtype=self.DEFAULT_PARAMS_TYPE)
-        matrix[..., :, :] = (
-                matrix[..., :, :] - qml.math.swapaxes(matrix, -2, -1) + eps * qml.math.eye(4, like=matrix)
-        )
+            matrix = pnp.zeros((4, 4), dtype=complex)
+        matrix[..., 0, 1] = qml.math.cast(self.h0, dtype=complex)
+        matrix[..., 0, 2] = qml.math.cast(self.h1, dtype=complex)
+        matrix[..., 0, 3] = qml.math.cast(self.h2, dtype=complex)
+        matrix[..., 1, 2] = qml.math.cast(self.h3, dtype=complex)
+        matrix[..., 1, 3] = qml.math.cast(self.h4, dtype=complex)
+        matrix[..., 2, 3] = qml.math.cast(self.h5, dtype=complex)
+        matrix[..., :, :] = matrix[..., :, :] - qml.math.swapaxes(matrix, -2, -1)
+        matrix[..., :, :] = matrix[..., :, :] + eps * qml.math.eye(4, like=matrix)[np.newaxis, ...]
         return matrix
 
     def compute_hamiltonian(self):

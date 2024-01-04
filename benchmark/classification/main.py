@@ -13,14 +13,14 @@ if __name__ == '__main__':
         # dataset_n_samples=32,
         # dataset_n_features=2,
         methods=[
-            # "classical",
+            "classical",
             # "nif",
             "fPQC",
-            # "PQC",
+            "PQC",
             # "lightning_PQC",
         ],
         kernel_kwargs=dict(nb_workers=0),
-        throw_errors=True,
+        throw_errors=False,
     )
     save_path = os.path.join(
         os.path.dirname(__file__), "results", f"{kwargs['dataset_name']}", f"cls.pkl"
@@ -30,12 +30,14 @@ if __name__ == '__main__':
         save_path=save_path,
         use_gram_matrices=True,
     )
+    figures_folder = os.path.join(os.path.dirname(save_path), "figures")
     pipline.load_dataset()
     pipline.preprocess_data()
     pipline.print_summary()
-    pipline.run()
+    pipline.run(results_table_path=os.path.join(figures_folder, "results_table.csv"))
     pipline.print_summary()
-    figures_folder = os.path.join(os.path.dirname(save_path), "figures")
     pipline.draw_mpl_kernels(show=False, filepath=os.path.join(figures_folder, "kernels.pdf"), draw_mth="single")
     plt.close("all")
     pipline.show(n_pts=512, show=True, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
+    plt.close("all")
+    results = pipline.get_results_table(show=True, filepath=os.path.join(figures_folder, "results_table.csv"))

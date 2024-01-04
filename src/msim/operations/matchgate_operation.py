@@ -114,7 +114,6 @@ class MatchgateOperation(Matchgate, Operation):
         return MatchgateOperation(
             polar_params,
             wires=self.wires,
-            backend=self.backend,
             in_param_type=mps.MatchgatePolarParams,
         )
     

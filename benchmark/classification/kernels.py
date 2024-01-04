@@ -32,10 +32,10 @@ class ClassicalKernel(MLKernel):
         super().__init__(size=size, **kwargs)
         self._metric = kwargs.get("metric", "linear")
         
-    def single_distance(self, x0, x1):
+    def single_distance(self, x0, x1, **kwargs):
         return pairwise_kernels(x0, x1, metric=self._metric)
     
-    def batch_distance(self, x0, x1):
+    def batch_distance(self, x0, x1, **kwargs):
         return pairwise_kernels(x0, x1, metric=self._metric)
 
     def pairwise_distances(self, x0, x1, **kwargs):
@@ -131,3 +131,6 @@ class NeighboursFermionicPQCKernel(FermionicPQCKernel):
         self._device = msim.NonInteractingFermionicDevice(wires=self.size, contraction_method="neighbours")
         self.qnode = qml.QNode(self.circuit, self._device, **self.kwargs.get("qnode_kwargs", {}))
 
+
+class HFermionicPQCKernel(FermionicPQCKernel):
+    pass

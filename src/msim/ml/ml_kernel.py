@@ -78,19 +78,19 @@ class MLKernel(BaseEstimator):
         self.fit(X, y)
         return self.transform(X)
     
-    def single_distance(self, x0, x1):
+    def single_distance(self, x0, x1, **kwargs):
         raise NotImplementedError(f"This method is not implemented for {self.__class__.__name__}.")
 
-    def batch_distance_in_sequence(self, x0, x1):
+    def batch_distance_in_sequence(self, x0, x1, **kwargs):
         assert qml.math.ndim(x0) > 1, f"Expected x0 to be a batch of vectors, got {qml.math.shape(x0)}."
         if qml.math.ndim(x1) == qml.math.ndim(x0):
-            distances = [self.single_distance(_x0, _x1) for _x0, _x1 in zip(x0, x1)]
+            distances = [self.single_distance(_x0, _x1, **kwargs) for _x0, _x1 in zip(x0, x1)]
         else:
-            distances = [self.single_distance(x, x1) for x in x0]
+            distances = [self.single_distance(x, x1, **kwargs) for x in x0]
         return qml.math.asarray(distances)
     
-    def batch_distance(self, x0, x1):
-        return self.batch_distance_in_sequence(x0, x1)
+    def batch_distance(self, x0, x1, **kwargs):
+        return self.batch_distance_in_sequence(x0, x1, **kwargs)
 
     def make_batch(self, x0, x1):
         x0 = check_array(x0)
@@ -131,6 +131,13 @@ class MLKernel(BaseEstimator):
         x0 = check_array(x0)
         x1 = check_array(x1)
         self.check_is_fitted()
+        if (qml.math.shape(x0)[0] + qml.math.shape(x1)[0]) > 1000:
+            warnings.warn(
+                f"Computing pairwise distances between two large datasets."
+                f" This may take a while.",
+                RuntimeWarning
+            )
+            return self.pairwise_distances_in_sequence(x0, x1, **kwargs)
         try:
             return self.pairwise_distances_in_batch(x0, x1, **kwargs)
         except Exception as e:
@@ -150,7 +157,7 @@ class MLKernel(BaseEstimator):
 
 
 class NIFKernel(MLKernel):
-    UNPICKLABLE_ATTRIBUTES = ['_device', ]
+    UNPICKLABLE_ATTRIBUTES = ['_device', "qnode"]
     
     def __init__(
             self,
@@ -185,6 +192,10 @@ class NIFKernel(MLKernel):
             if k not in self.UNPICKLABLE_ATTRIBUTES
         }
         return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.pre_initialize()
     
     def initialize_parameters(self):
         if self._parameters is None:
@@ -211,19 +222,25 @@ class NIFKernel(MLKernel):
         projector: BasisStateProjector = qml.Projector(np.zeros(self.size), wires=self.wires)
         return qml.expval(projector)
     
-    def single_distance(self, x0, x1):
+    def single_distance(self, x0, x1, **kwargs):
         return self.qnode(x0, x1)
     
-    def batch_distance(self, x0, x1):
+    def batch_distance(self, x0, x1, **kwargs):
         return self.qnode(x0, x1)
 
     def draw(self, **kwargs):
         logging_func = kwargs.pop("logging_func", print)
         name = kwargs.pop("name", self.__class__.__name__)
-        if self.is_fitted:
-            _str = f"{name}: \n{qml.draw(self.qnode, **kwargs)(self.X_[0], self.X_[-1])}\n"
+        if getattr(self, "qnode", None) is None or getattr(self.qnode, "tape", None) is None:
+            _str = f"{name}: "
         else:
-            _str = f"{name}: None"
+            n_ops = len(self.qnode.tape.operations)
+            n_params = len(self.qnode.tape.get_parameters())
+            _str = f"{name} ({n_ops} ops, {n_params} params): "
+        if self.is_fitted:
+            _str += f"\n{qml.draw(self.qnode, **kwargs)(self.X_[0], self.X_[-1])}\n"
+        else:
+            _str += f"None"
         if logging_func is not None:
             logging_func(_str)
         return _str
