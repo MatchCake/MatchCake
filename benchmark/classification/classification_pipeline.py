@@ -2,6 +2,7 @@ import time
 import sys
 import os
 from copy import deepcopy
+from collections import defaultdict
 from typing import Optional, Union, List, Callable
 
 import matplotlib.pyplot as plt
@@ -95,6 +96,76 @@ def get_gram_predictor(cls, kernel, x_train, **kwargs):
     return predictor
 
 
+class KPredictorContainer:
+    def __init__(self, name: str = ""):
+        self.name = name
+        self.container = defaultdict(dict)
+
+    def get(self, key, inner_key, default_value=None):
+        return self.container.get(key, {}).get(inner_key, default_value)
+
+    def set(self, key, inner_key, value):
+        self.container[key][inner_key] = value
+
+    def get_inner(self, key):
+        return self.container[key]
+
+    def get_outer(self, inner_key, default_value=None):
+        outer_dict = {key: default_value for key in self.container}
+        for key, inner_dict in self.container.items():
+            for _inner_key, value in inner_dict.items():
+                if _inner_key == inner_key:
+                    outer_dict[key] = value
+        return outer_dict
+
+    def __setitem__(self, key, value):
+        if isinstance(key, tuple):
+            return self.set(key[0], key[1], value)
+        else:
+            raise ValueError("Key in __setitem__ must be a tuple")
+
+    def __getitem__(self, item):
+        if isinstance(item, tuple):
+            return self.get(item[0], item[1])
+        else:
+            return self.get_inner(item)
+
+    def items(self, default_value=None):
+        for key in self.keys():
+            yield key, self.get(*key, default_value=default_value)
+
+    def keys(self):
+        for key, inner_dict in self.container.items():
+            for inner_key in inner_dict:
+                yield key, inner_key
+
+    def to_dataframe(
+            self,
+            *,
+            outer_column: str = "outer",
+            inner_column: str = "inner",
+            value_column: str = "value",
+            default_value=None,
+    ) -> pd.DataFrame:
+        all_keys = list(self.keys())
+        all_outer_keys = list(set(k[0] for k in all_keys))
+        all_inner_keys = list(set(k[1] for k in all_keys))
+        df_dict = {
+            outer_column: [],
+            inner_column: [],
+            value_column: [],
+        }
+        for ok in all_outer_keys:
+            for ik in all_inner_keys:
+                df_dict[outer_column].append(ok)
+                df_dict[inner_column].append(ik)
+                df_dict[value_column].append(self.get(ok, ik, default_value))
+        return pd.DataFrame(df_dict)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(name={self.name},outer_keys={list(self.container.keys())})"
+
+
 class ClassificationPipeline:
     available_datasets = {
         "breast_cancer": datasets.load_breast_cancer,
@@ -125,6 +196,7 @@ class ClassificationPipeline:
     TRAIN_GRAM_COMPUTE_TIME_KEY = "Train Gram Compute Time [s]"
     TEST_GRAM_COMPUTE_TIME_KEY = "Test Gram Compute Time [s]"
     FIT_KERNEL_TIME_KEY = "Fit Kernel Time [s]"
+    FOLD_IDX_KEY = "Fold Idx [-]"
     
     def __init__(
             self,
@@ -132,8 +204,8 @@ class ClassificationPipeline:
             methods: Optional[Union[str, List[str]]] = None,
             **kwargs
     ):
-        self.classifiers = {}
-        self.kernels = {}
+        self.classifiers = KPredictorContainer("classifiers")
+        self.kernels = KPredictorContainer("kernels")
         self.dataset_name = dataset_name
         self.methods = methods or list(self.available_kernels.keys())
         if isinstance(self.methods, str):
@@ -142,18 +214,18 @@ class ClassificationPipeline:
         self.dataset = None
         self.X, self.y = None, None
         self.x_train, self.x_test, self.y_train, self.y_test = None, None, None, None
-        self.fit_times = {}
-        self.fit_kernels_times = {}
-        self.plot_times = {}
-        self.test_accuracies = {}
-        self.train_accuracies = {}
+        self.fit_times = KPredictorContainer(self.FIT_TIME_KEY)
+        self.fit_kernels_times = KPredictorContainer(self.FIT_KERNEL_TIME_KEY)
+        self.plot_times = KPredictorContainer(self.PLOT_TIME_KEY)
+        self.test_accuracies = KPredictorContainer(self.TEST_ACCURACY_KEY)
+        self.train_accuracies = KPredictorContainer(self.TRAIN_ACCURACY_KEY)
         self.save_path = kwargs.get("save_path", None)
-        self.train_gram_matrices = {}
-        self.test_gram_matrices = {}
-        self.train_gram_compute_times = {}
-        self.test_gram_compute_times = {}
+        self.train_gram_matrices = KPredictorContainer("train_gram_matrices")
+        self.test_gram_matrices = KPredictorContainer("test_gram_matrices")
+        self.train_gram_compute_times = KPredictorContainer(self.TRAIN_GRAM_COMPUTE_TIME_KEY)
+        self.test_gram_compute_times = KPredictorContainer(self.TEST_GRAM_COMPUTE_TIME_KEY)
         self.use_gram_matrices = self.kwargs.get("use_gram_matrices", False)
-        self._db_y_preds = {}
+        self._db_y_preds = KPredictorContainer("_db_y_preds")
         self._debug_data_size = self.kwargs.get("debug_data_size", None)
         self._n_class = self.kwargs.get("n_class", None)
         self.dataframe = pd.DataFrame(columns=[
@@ -161,6 +233,9 @@ class ClassificationPipeline:
             self.PLOT_TIME_KEY, self.TRAIN_GRAM_COMPUTE_TIME_KEY, self.TEST_GRAM_COMPUTE_TIME_KEY,
             self.FIT_KERNEL_TIME_KEY,
         ])
+        self._n_kfold_splits = self.kwargs.get("n_kfold_splits", 5)
+        self._kfold_random_state = self.kwargs.get("kfold_random_state", 0)
+        self._kfold_shuffle = self.kwargs.get("kfold_shuffle", True)
 
     @property
     def n_features(self):
@@ -222,22 +297,33 @@ class ClassificationPipeline:
             self.X = self.X[:self._debug_data_size]
             self.y = self.y[:self._debug_data_size]
         self.X = MinMaxScaler(feature_range=self.kwargs.get("feature_range", (0, 1))).fit_transform(self.X)
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
-            self.X, self.y,
-            test_size=self.kwargs.get("test_size", 0.2),
-            random_state=self.kwargs.get("test_split_random_state", 0),
-        )
+        # self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
+        #     self.X, self.y,
+        #     test_size=self.kwargs.get("test_size", 0.2),
+        #     random_state=self.kwargs.get("test_split_random_state", 0),
+        # )
         return self.X, self.y
+
+    def get_train_test_fold(self, fold_idx: int):
+        from sklearn.model_selection import KFold
+        kf = KFold(
+            n_splits=self._n_kfold_splits,
+            shuffle=self._kfold_shuffle,
+            random_state=self._kfold_random_state,
+        )
+        train_indexes, test_indexes = list(kf.split(self.X, self.y))[fold_idx]
+        x_train, x_test = self.X[train_indexes], self.X[test_indexes]
+        y_train, y_test = self.y[train_indexes], self.y[test_indexes]
+        return x_train, x_test, y_train, y_test
     
     @save_on_exit
-    def make_kernels(self):
-        self.kernels = getattr(self, "kernels", {})
+    def make_kernels(self, fold_idx: int = 0):
         for kernel_name in self.methods:
-            if kernel_name in self.kernels:
+            if self.kernels.get(kernel_name, fold_idx, None) is not None:
                 continue
             try:
                 kernel_class = self.available_kernels[kernel_name]
-                self.kernels[kernel_name] = kernel_class(
+                self.kernels[kernel_name, fold_idx] = kernel_class(
                     seed=self.kwargs.get("kernel_seed", 0),
                     **self.kwargs.get("kernel_kwargs", {})
                 )
@@ -246,18 +332,19 @@ class ClassificationPipeline:
         return self.kernels
     
     @save_on_exit
-    def fit_kernels(self):
+    def fit_kernels(self, fold_idx: int = 0):
         if not self.kernels:
             self.make_kernels()
         to_remove = []
-        for kernel_name, kernel in self.kernels.items():
+        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
+        for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
             if kernel.is_fitted:
                 continue
             try:
                 start_time = time.perf_counter()
-                kernel.fit(self.x_train, self.y_train)
+                kernel.fit(x_train, y_train)
                 elapsed_time = time.perf_counter() - start_time
-                self.fit_kernels_times[kernel_name] = elapsed_time
+                self.fit_kernels_times[kernel_name, fold_idx] = elapsed_time
                 # self.dataframe[self.dataframe[self.KERNEL_KEY == kernel_name]][self.FIT_KERNEL_TIME_KEY] = elapsed_time
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
@@ -265,25 +352,56 @@ class ClassificationPipeline:
                 print(f"Failed to fit kernel {kernel_name}: {e}. \n Removing it from the list of kernels.")
                 to_remove.append(kernel_name)
         for kernel_name in to_remove:
-            self.kernels.pop(kernel_name)
+            self.kernels[kernel_name].pop(fold_idx)
         return self.kernels
     
     @save_on_exit
-    def compute_train_gram_matrices(self):
+    def compute_train_gram_matrices(self, fold_idx: int = 0):
         if not self.kernels:
             self.make_kernels()
+        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         to_remove = []
         verbose = self.kwargs.get("verbose_gram", True)
         throw_errors = self.kwargs.get("throw_errors", False)
-        for kernel_name, kernel in self.kernels.items():
-            if kernel_name in self.train_gram_matrices:
+        for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
+            if self.train_gram_matrices.get(kernel_name, fold_idx, None) is not None:
                 continue
             try:
                 start_time = time.perf_counter()
-                self.train_gram_matrices[kernel_name] = kernel.compute_gram_matrix(
-                    self.x_train, verbose=verbose, throw_errors=throw_errors
+                self.train_gram_matrices[kernel_name, fold_idx] = kernel.compute_gram_matrix(
+                    x_train, verbose=verbose, throw_errors=throw_errors
                 )
-                self.train_gram_compute_times[kernel_name] = time.perf_counter() - start_time
+                self.train_gram_compute_times[kernel_name, fold_idx] = time.perf_counter() - start_time
+            except Exception as e:
+                if throw_errors:
+                    raise e
+                warnings.warn(
+                    f"Failed to compute gram matrix for kernel {kernel_name}: {e}. "
+                    f"\n Removing it from the list of kernels.",
+                    RuntimeWarning
+                )
+                to_remove.append(kernel_name)
+        for kernel_name in to_remove:
+            self.kernels[kernel_name].pop(fold_idx)
+        return self.kernels
+    
+    @save_on_exit
+    def compute_test_gram_matrices(self, fold_idx: int = 0):
+        if not self.kernels:
+            self.make_kernels()
+        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
+        to_remove = []
+        verbose = self.kwargs.get("verbose_gram", True)
+        throw_errors = self.kwargs.get("throw_errors", False)
+        for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
+            if self.test_gram_matrices.get(kernel_name, fold_idx, None) is not None:
+                continue
+            try:
+                start_time = time.perf_counter()
+                self.test_gram_matrices[kernel_name, fold_idx] = kernel.pairwise_distances(
+                    x_test, x_train, verbose=verbose, throw_errors=throw_errors
+                )
+                self.test_gram_compute_times[kernel_name, fold_idx] = time.perf_counter() - start_time
             except Exception as e:
                 if throw_errors:
                     raise e
@@ -291,76 +409,50 @@ class ClassificationPipeline:
                       f"\n Removing it from the list of kernels.")
                 to_remove.append(kernel_name)
         for kernel_name in to_remove:
-            self.kernels.pop(kernel_name)
+            self.kernels[kernel_name].pop(fold_idx)
         return self.kernels
     
     @save_on_exit
-    def compute_test_gram_matrices(self):
-        if not self.kernels:
-            self.make_kernels()
-        to_remove = []
-        verbose = self.kwargs.get("verbose_gram", True)
-        throw_errors = self.kwargs.get("throw_errors", False)
-        for kernel_name, kernel in self.kernels.items():
-            if kernel_name in self.test_gram_matrices:
-                continue
-            try:
-                start_time = time.perf_counter()
-                self.test_gram_matrices[kernel_name] = kernel.pairwise_distances(
-                    self.x_test, self.x_train, verbose=verbose, throw_errors=throw_errors
-                )
-                self.test_gram_compute_times[kernel_name] = time.perf_counter() - start_time
-            except Exception as e:
-                if throw_errors:
-                    raise e
-                print(f"Failed to compute gram matrix for kernel {kernel_name}: {e}. "
-                      f"\n Removing it from the list of kernels.")
-                to_remove.append(kernel_name)
-        for kernel_name in to_remove:
-            self.kernels.pop(kernel_name)
+    def compute_gram_matrices(self, fold_idx: int = 0):
+        self.compute_train_gram_matrices(fold_idx)
+        self.compute_test_gram_matrices(fold_idx)
         return self.kernels
     
     @save_on_exit
-    def compute_gram_matrices(self):
-        self.compute_train_gram_matrices()
-        self.compute_test_gram_matrices()
-        return self.kernels
-    
-    @save_on_exit
-    def make_classifiers(self):
-        self.classifiers = {}
+    def make_classifiers(self, fold_idx: int = 0):
         cache_size = self.kwargs.get("kernel_cache_size", 10_000)
-        for kernel_name, kernel in self.kernels.items():
-            if kernel_name in self.classifiers:
+        for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
+            if self.classifiers.get(kernel_name, fold_idx, None) is not None:
                 continue
             if self.use_gram_matrices:
                 svc_kernel = "precomputed"
             else:
                 svc_kernel = kernel.pairwise_distances
-            self.classifiers[kernel_name] = svm.SVC(kernel=svc_kernel, random_state=0, cache_size=cache_size)
+            self.classifiers[kernel_name, fold_idx] = svm.SVC(kernel=svc_kernel, random_state=0, cache_size=cache_size)
         return self.classifiers
     
     @save_on_exit
-    def fit_classifiers(self):
+    def fit_classifiers(self, fold_idx: int = 0):
         if self.classifiers is None:
             self.make_classifiers()
-        p_bar = tqdm(self.classifiers.items(), desc="Fitting classifiers", unit="cls")
+        p_bar = tqdm(self.classifiers.get_outer(fold_idx).items(), desc="Fitting classifiers", unit="cls")
+        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         to_remove = []
-        for kernel_name, classifier in self.classifiers.items():
+        for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
             is_fitted = True
             try:
                 check_is_fitted(classifier)
             except Exception as e:
                 is_fitted = False
-            if (kernel_name in self.fit_times) and is_fitted:
+            if (self.fit_times.get(kernel_name, fold_idx, None) is not None) and is_fitted:
                 continue
             try:
                 start_time = time.perf_counter()
                 if classifier.kernel == "precomputed":
-                    classifier.fit(self.train_gram_matrices[kernel_name], self.y_train)
+                    classifier.fit(self.train_gram_matrices[kernel_name, fold_idx], y_train)
                 else:
-                    classifier.fit(self.x_train, self.y_train)
-                self.fit_times[kernel_name] = time.perf_counter() - start_time
+                    classifier.fit(x_train, y_train)
+                self.fit_times[kernel_name, fold_idx] = time.perf_counter() - start_time
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
                     raise e
@@ -369,21 +461,26 @@ class ClassificationPipeline:
                 p_bar.update()
                 continue
             if classifier.kernel == "precomputed":
-                train_inputs, test_inputs = self.train_gram_matrices[kernel_name], self.test_gram_matrices[kernel_name]
+                train_inputs, test_inputs = (
+                    self.train_gram_matrices[kernel_name, fold_idx],
+                    self.test_gram_matrices[kernel_name, fold_idx]
+                )
             else:
-                train_inputs, test_inputs = self.x_train, self.x_test
-            self.train_accuracies[kernel_name] = classifier.score(train_inputs, self.y_train)
-            self.test_accuracies[kernel_name] = classifier.score(test_inputs, self.y_test)
+                train_inputs, test_inputs = x_train, x_test
+            self.train_accuracies[kernel_name, fold_idx] = classifier.score(train_inputs, y_train)
+            self.test_accuracies[kernel_name, fold_idx] = classifier.score(test_inputs, y_test)
             p_bar.update()
             p_bar.set_postfix({
-                f"{kernel_name} fit time": f"{self.fit_times.get(kernel_name, np.NaN):.2f} [s]",
-                f"{kernel_name} test accuracy": f"{self.test_accuracies.get(kernel_name, np.NaN) * 100:.2f} %",
-                f"{kernel_name} train accuracy": f"{self.train_accuracies.get(kernel_name, np.NaN) * 100:.2f} %",
+                f"{kernel_name} fit time": f"{self.fit_times.get(kernel_name, fold_idx, np.NaN):.2f} [s]",
+                f"{kernel_name} test accuracy":
+                    f"{self.test_accuracies.get(kernel_name, fold_idx, np.NaN) * 100:.2f} %",
+                f"{kernel_name} train accuracy":
+                    f"{self.train_accuracies.get(kernel_name, fold_idx, np.NaN) * 100:.2f} %",
             })
         p_bar.close()
         for kernel_name in to_remove:
-            self.classifiers.pop(kernel_name)
-            self.kernels.pop(kernel_name)
+            self.classifiers[kernel_name].pop(fold_idx)
+            self.kernels[kernel_name].pop(fold_idx)
         return self.classifiers
 
     @pbt.decorators.log_func(logging_func=print)
@@ -393,31 +490,36 @@ class ClassificationPipeline:
         show_results_table = kwargs.pop("show_results_table", False)
         self.load_dataset()
         self.preprocess_data()
-        self.make_kernels()
-        self.fit_kernels()
-        if self.use_gram_matrices:
-            self.compute_gram_matrices()
-        self.make_classifiers()
-        self.fit_classifiers()
+        for fold_idx in range(self._n_kfold_splits):
+            self.run_fold(fold_idx)
         if results_table_path is not None:
             self.get_results_table(show=show_results_table, filepath=results_table_path)
         self.to_pickle()
         return self
+
+    @save_on_exit
+    def run_fold(self, fold_idx: int):
+        self.make_kernels(fold_idx)
+        self.fit_kernels(fold_idx)
+        if self.use_gram_matrices:
+            self.compute_gram_matrices(fold_idx)
+        self.make_classifiers(fold_idx)
+        self.fit_classifiers(fold_idx)
     
     def print_summary(self):
         print(f"(N Samples, N features): {self.X.shape}")
         print(f"Classes: {set(np.unique(self.y))}, labels: {getattr(self.dataset, 'target_names', set(np.unique(self.y)))}")
-        print(f"N train samples: {self.x_train.shape[0]}, N test samples: {self.x_test.shape[0]}")
+        # print(f"N train samples: {self.X.shape[0]}, N test samples: {self.x_test.shape[0]}")
 
         def _print_times(m_name):
             print(
-                f"{m_name} test accuracy: {self.test_accuracies.get(m_name, np.NaN) * 100 :.4f}%, "
-                f"train accuracy: {self.train_accuracies.get(m_name, np.NaN) * 100 :.4f}%, "
-                f"fit time: {self.fit_times.get(m_name, np.NaN):.5f} [s], "
-                f"fit kernel time: {self.fit_kernels_times.get(m_name, np.NaN):.5f} [s], "
-                f"train gram compute time: {self.train_gram_compute_times.get(m_name, np.NaN):.5f} [s], "
-                f"test gram compute time: {self.test_gram_compute_times.get(m_name, np.NaN):.5f} [s], "
-                f"plot time: {self.plot_times.get(m_name, np.NaN):.5f} [s]"
+                f"{m_name} test accuracy: {self.test_accuracies.get(*m_name, np.NaN) * 100 :.4f}%, "
+                f"train accuracy: {self.train_accuracies.get(*m_name, np.NaN) * 100 :.4f}%, "
+                f"fit time: {self.fit_times.get(*m_name, np.NaN):.5f} [s], "
+                f"fit kernel time: {self.fit_kernels_times.get(*m_name, np.NaN):.5f} [s], "
+                f"train gram compute time: {self.train_gram_compute_times.get(*m_name, np.NaN):.5f} [s], "
+                f"test gram compute time: {self.test_gram_compute_times.get(*m_name, np.NaN):.5f} [s], "
+                f"plot time: {self.plot_times.get(*m_name, np.NaN):.5f} [s]"
             )
         
         for m_name, kernel in self.kernels.items():
@@ -425,12 +527,13 @@ class ClassificationPipeline:
                 continue
             kernel.draw(name=m_name, logging_func=print)
         
-        for m_name in self.kernels:
+        for m_name in self.kernels.keys():
             _print_times(m_name)
 
     def draw_mpl_kernels_single(self, **kwargs):
-        kernels = kwargs.pop("kernels", list(self.kernels.keys()))
-        kernels = [kernel for kernel in kernels if hasattr(self.kernels[kernel], "draw_mpl")]
+        fold_idx = kwargs.get("fold_idx", 0)
+        kernels = kwargs.pop("kernels", list(self.kernels.get_outer(fold_idx).keys()))
+        kernels = [kernel for kernel in kernels if hasattr(self.kernels[kernel, fold_idx], "draw_mpl")]
         filepath = kwargs.pop("filepath", None)
         show = kwargs.pop("show", False)
         figs, axes = [], []
@@ -438,7 +541,7 @@ class ClassificationPipeline:
             if filepath is not None:
                 filepath = filepath.replace(".", f"_{kernel_name}.")
                 kwargs["filepath"] = filepath
-            fig, ax = self.kernels[kernel_name].draw_mpl(**kwargs)
+            fig, ax = self.kernels[kernel_name, fold_idx].draw_mpl(**kwargs)
             ax.set_title(kernel_name)
             figs.append(fig)
             axes.append(ax)
@@ -475,6 +578,8 @@ class ClassificationPipeline:
             self,
             fig: Optional[plt.Figure] = None,
             axes: Optional[np.ndarray] = None,
+            *,
+            fold_idx: int = 0,
             **kwargs
     ):
         kwargs.setdefault("check_estimators", False)
@@ -483,7 +588,7 @@ class ClassificationPipeline:
         kwargs.setdefault("title", f"Decision boundaries in the reduced space.")
         
         _show = kwargs.pop("show", True)
-        models = kwargs.pop("models", self.classifiers)
+        models = kwargs.pop("models", self.classifiers.get_outer(fold_idx))
         n_plots = len(models)
         n_rows = int(np.ceil(np.sqrt(n_plots)))
         n_cols = int(np.ceil(n_plots / n_rows))
@@ -495,10 +600,10 @@ class ClassificationPipeline:
         viz = ClassificationVisualizer(x=self.X, **kwargs)
         for i, (m_name, model) in enumerate(models.items()):
             if self.use_gram_matrices:
-                predict_func = get_gram_predictor(model, self.kernels[m_name], self.x_train)
+                predict_func = get_gram_predictor(model, self.kernels[m_name, fold_idx], self.x_train)
             else:
                 predict_func = getattr(model, "predict", None)
-            y_pred = self._db_y_preds.get(m_name, None)
+            y_pred = self._db_y_preds.get(m_name, fold_idx, None)
             plot_start_time = time.perf_counter()
             fig, ax, y_pred = viz.plot_2d_decision_boundaries(
                 model=model,
@@ -510,15 +615,15 @@ class ClassificationPipeline:
                 show=False,
                 **kwargs
             )
-            self.plot_times[m_name] = time.perf_counter() - plot_start_time
-            self._db_y_preds[m_name] = y_pred
-            ax.set_title(f"{m_name} accuracy: {self.test_accuracies.get(m_name, np.NaN) * 100:.2f}%")
+            self.plot_times[m_name, fold_idx] = time.perf_counter() - plot_start_time
+            self._db_y_preds[m_name, fold_idx] = y_pred
+            ax.set_title(f"{m_name} accuracy: {self.test_accuracies.get(m_name, fold_idx, np.NaN) * 100:.2f}%")
             p_bar.update()
             p_bar.set_postfix({
-                f"{m_name} plot time": f"{self.plot_times.get(m_name, np.NaN):.2f} [s]",
-                f"{m_name} fit time": f"{self.fit_times.get(m_name, np.NaN):.2f} [s]",
-                f"{m_name} test accuracy": f"{self.test_accuracies.get(m_name, np.NaN) * 100:.2f} %",
-                f"{m_name} train accuracy": f"{self.train_accuracies.get(m_name, np.NaN) * 100:.2f} %",
+                f"{m_name} plot time": f"{self.plot_times.get(m_name, fold_idx, np.NaN):.2f} [s]",
+                f"{m_name} fit time": f"{self.fit_times.get(m_name, fold_idx, np.NaN):.2f} [s]",
+                f"{m_name} test accuracy": f"{self.test_accuracies.get(m_name, fold_idx, np.NaN) * 100:.2f} %",
+                f"{m_name} train accuracy": f"{self.train_accuracies.get(m_name, fold_idx, np.NaN) * 100:.2f} %",
             })
         p_bar.close()
 
@@ -577,22 +682,45 @@ class ClassificationPipeline:
             np.savez(save_path, **self.__getstate__())
 
     def get_results_table(self, **kwargs):
-        kernel_names = list(self.classifiers.keys())
-        df = pd.DataFrame({
-            self.KERNEL_KEY: kernel_names,
-            self.TRAIN_ACCURACY_KEY: [self.train_accuracies.get(kernel_name, np.NaN) for kernel_name in kernel_names],
-            self.TEST_ACCURACY_KEY: [self.test_accuracies.get(kernel_name, np.NaN) for kernel_name in kernel_names],
-            self.FIT_TIME_KEY: [self.fit_times.get(kernel_name, np.NaN) for kernel_name in kernel_names],
-            self.FIT_KERNEL_TIME_KEY: [self.fit_kernels_times.get(kernel_name, np.NaN) for kernel_name in kernel_names],
-            self.TRAIN_GRAM_COMPUTE_TIME_KEY: [
-                self.train_gram_compute_times.get(kernel_name, np.NaN) for kernel_name in kernel_names
-            ],
-            self.TEST_GRAM_COMPUTE_TIME_KEY: [
-                self.test_gram_compute_times.get(kernel_name, np.NaN) for kernel_name in kernel_names
-            ],
-            self.PLOT_TIME_KEY: [self.plot_times.get(kernel_name, np.NaN) for kernel_name in kernel_names],
-        })
-        if kwargs.get("sort", False):
+        containers = [
+            self.train_accuracies,
+            self.test_accuracies,
+            self.fit_times,
+            self.fit_kernels_times,
+            self.train_gram_compute_times,
+            self.test_gram_compute_times,
+            self.plot_times,
+        ]
+        numerics_columns = [c.name for c in containers]
+        df_list = [
+            c.to_dataframe(
+                outer_column=self.KERNEL_KEY,
+                inner_column=self.FOLD_IDX_KEY,
+                value_column=c.name,
+                default_value=np.NaN
+            )
+            for c in containers
+        ]
+        df = functools.reduce(
+            lambda df1, df2: pd.merge(df1, df2, on=[self.KERNEL_KEY, self.FOLD_IDX_KEY], how="outer"),
+            df_list
+        )
+        sort = kwargs.get("sort", False)
+        is_sorted = False
+        mean_df = kwargs.get("mean", False)
+        mean_on = kwargs.get("mean_on", self.KERNEL_KEY)
+        drop_on_mean = kwargs.get("drop_on_mean", self.FOLD_IDX_KEY)
+        if mean_df:
+            df_mean = df.groupby(by=mean_on, as_index=False).mean().drop(drop_on_mean, axis=1)
+            # if sort:
+            #     df_mean = df_mean.sort_values(by=self.TEST_ACCURACY_KEY, ascending=False)
+            #     is_sorted = True
+            df_std = df.groupby(by=mean_on, as_index=False).std().drop(drop_on_mean, axis=1)
+            map_func = lambda x: f"{x:.4f}"
+            df_wo_numerics = df_mean[numerics_columns].map(map_func) + u"\u00B1" + df_std[numerics_columns].map(map_func)
+            df = pd.concat([df_mean[[mean_on]], df_wo_numerics], axis=1)
+
+        if sort:
             df = df.sort_values(by=self.TEST_ACCURACY_KEY, ascending=False)
         filepath: Optional[str] = kwargs.get("filepath", None)
         if filepath is not None:
@@ -601,8 +729,3 @@ class ClassificationPipeline:
         if kwargs.get("show", False):
             print(df.to_markdown())
         return df
-
-
-class KFoldClassificationPipelines:
-    def __init__(self):
-        pass
