@@ -87,6 +87,7 @@ class Matchgate:
     """
     UNPICKEABLE_ATTRS = []
     DEFAULT_USE_H_FOR_TRANSITION_MATRIX = False
+    DEFAULT_USE_LESS_EINSUM_FOR_TRANSITION_MATRIX = False
 
     @staticmethod
     def random() -> 'Matchgate':
@@ -250,6 +251,9 @@ class Matchgate:
         # Interaction properties
         self.use_h_for_transition_matrix = kwargs.get(
             "use_h_for_transition_matrix", self.DEFAULT_USE_H_FOR_TRANSITION_MATRIX
+        )
+        self.use_less_einsum_for_transition_matrix = kwargs.get(
+            "use_less_einsum_for_transition_matrix", self.DEFAULT_USE_LESS_EINSUM_FOR_TRANSITION_MATRIX
         )
         self._single_transition_particle_matrix = None
         self._transition_matrix = None
@@ -584,13 +588,28 @@ class Matchgate:
 
         # majorana_tensor.shape: (2n, 2^n, 2^n)
         majorana_tensor = qml.math.stack([self.majorana_getter[i] for i in range(2*self.majorana_getter.n)])
-        matrix = qml.math.trace(
-            qml.math.einsum(
-                "...ij,mjq,...kq,lko->...mlio",
-                u, majorana_tensor, qml.math.conjugate(u), majorana_tensor
-            ),
-            axis1=-2, axis2=-1
-        ) / qml.math.shape(majorana_tensor)[-1]
+        if self.use_less_einsum_for_transition_matrix:
+            matrix = qml.math.trace(
+                qml.math.einsum(
+                    "...ij,mjq,...kq,lko->...mlio",
+                    u, majorana_tensor, qml.math.conjugate(u), majorana_tensor,
+                    optimize="optimal",
+                ),
+                axis1=-2, axis2=-1
+            ) / qml.math.shape(majorana_tensor)[-1]
+        else:
+            u_c_u_dagger = qml.math.einsum(
+                "...ij,mjq,...kq->...mik", u, majorana_tensor, qml.math.conjugate(u),
+                optimize="optimal",
+            )
+            matrix = qml.math.trace(
+                qml.math.einsum(
+                    "...kij,mjq->...kmiq",
+                    u_c_u_dagger, majorana_tensor,
+                    optimize="optimal"
+                ),
+                axis1=-2, axis2=-1
+            ) / qml.math.shape(majorana_tensor)[-1]
 
         if qml.math.ndim(u) > 2:
             matrix = matrix.squeeze()
