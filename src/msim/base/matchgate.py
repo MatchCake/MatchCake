@@ -592,7 +592,6 @@ class Matchgate:
         u_c_u_dagger = qml.math.reshape(u_c_u_dagger, (-1, *qml.math.shape(u_c_u_dagger)[-2:]))
         matrix = np.stack([
             utils.decompose_matrix_into_majoranas(u_c_u_dagger[i], majorana_getter=self.majorana_getter)
-            # for i in range(2*self.majorana_getter.n)
             for i in range(qml.math.shape(u_c_u_dagger)[0])
         ])
         matrix = qml.math.reshape(matrix, (-1, 2*self.majorana_getter.n, 2*self.majorana_getter.n))
