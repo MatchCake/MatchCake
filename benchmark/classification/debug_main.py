@@ -24,7 +24,7 @@ def main(**in_kwargs):
             # "nfPQC",
         ],
         n_kfold_splits=5,
-        kernel_kwargs=dict(nb_workers=0, batch_size=int(2**14)),
+        kernel_kwargs=dict(nb_workers=0, batch_size=int(2**15)),
         # kernel_kwargs=dict(nb_workers=0, batch_size="sqrt"),
         throw_errors=True,
     )
