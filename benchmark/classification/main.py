@@ -19,7 +19,7 @@ if __name__ == '__main__':
             "PQC",
             # "lightning_PQC",
         ],
-        kernel_kwargs=dict(nb_workers=0),
+        kernel_kwargs=dict(nb_workers=0, batch_size=int(2**15)),
         throw_errors=False,
     )
     save_path = os.path.join(
