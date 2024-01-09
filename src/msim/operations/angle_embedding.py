@@ -1,7 +1,11 @@
+import warnings
+from functools import partial
+
 import pennylane as qml
 from pennylane.wires import Wires
 from pennylane.operation import Operation, AnyWires
 from .fermionic_rotations import fRXX, fRYY, fRZZ
+from ..utils import recursive_2in_operator
 import numpy as np
 
 
@@ -20,6 +24,19 @@ class MAngleEmbedding(Operation):
         params = qml.math.T(params) if batched else params
         wires = Wires(wires)
         rotations = hyperparameters.get("rotations", [ROT["X"]])
+        contract_rots = hyperparameters.get("contract_rots", False)
+        if contract_rots:
+            warnings.warn("This method is not tested. Use at your own risk.", DeprecationWarning)
+            op = partial(qml.math.einsum, "...ij,...jk->...ik")
+            list_of_rots = [
+                [
+                    rot(qml.math.stack([p0, p1], axis=-1), wires=[wires[2 * i], wires[2 * i + 1]])
+                    for rot in rotations
+                ]
+                for i, (p0, p1) in enumerate(zip(params[0::2], params[1::2]))
+            ]
+            return [recursive_2in_operator(op, rots) for rots in list_of_rots]
+
         return [
             rot(qml.math.stack([p0, p1], axis=-1), wires=[wires[2 * i], wires[2 * i + 1]])
             for i, (p0, p1) in enumerate(zip(params[0::2], params[1::2]))
@@ -42,7 +59,7 @@ class MAngleEmbedding(Operation):
     def __repr__(self):
         return f"{self.__class__.__name__}({self.data}, wires={self.wires.tolist()})"
 
-    def __init__(self, features, wires, rotations="X", id=None):
+    def __init__(self, features, wires, rotations="X", id=None, **kwargs):
         r"""
         Construct a new Matchgate AngleEmbedding operation.
 
@@ -51,6 +68,8 @@ class MAngleEmbedding(Operation):
         :param features: The features to embed.
         :param wires: The wires to embed the features on.
         :param id: The id of the operation.
+
+        :keyword contract_rots: If True, contract the rotations. Default is False.
         """
         features = self.pad_params(features)
         shape = qml.math.shape(features)[-1:]
@@ -60,7 +79,10 @@ class MAngleEmbedding(Operation):
                 f"Features must be of length {len(wires)} or less; got length {n_features}."
             )
         self._rotations = rotations.split(",")
-        self._hyperparameters = {"rotations": [ROT[r] for r in self._rotations]}
+        self._hyperparameters = {
+            "rotations": [ROT[r] for r in self._rotations],
+            "contract_rots": kwargs.get("contract_rots", False),
+        }
         wires = wires[:n_features]
         super().__init__(features, wires=wires, id=id)
 
