@@ -41,3 +41,8 @@ if __name__ == '__main__':
     pipline.show(n_pts=512, show=True, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
     plt.close("all")
     results = pipline.get_results_table(show=True, filepath=os.path.join(figures_folder, "results_table.csv"))
+    mean_results = pipline.get_results_table(
+        show=True,
+        mean=True,
+        filepath=os.path.join(figures_folder, "results_table_mean.csv")
+    )
