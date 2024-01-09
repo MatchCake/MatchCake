@@ -16,6 +16,7 @@ from sklearn.metrics.pairwise import pairwise_kernels
 import pennylane as qml
 from pennylane.wires import Wires
 import pythonbasictools as pbt
+from tqdm import tqdm
 
 from ..devices.nif_device import NonInteractingFermionicDevice
 from ..operations import MAngleEmbedding, MAngleEmbeddings, fRZZ, fCNOT
@@ -33,6 +34,8 @@ class MLKernel(BaseEstimator):
     ):
         self._size = size
         self.nb_workers = kwargs.get("nb_workers", 0)
+        self.batch_size = kwargs.get("batch_size", 32)
+        self._batch_size_try_counter = 0
         self.kwargs = kwargs
         
         self.X_, self.y_, self.classes_ = None, None, None
@@ -99,6 +102,47 @@ class MLKernel(BaseEstimator):
         b_x1 = qml.math.tile(x1, (qml.math.shape(x0)[0], 1))
         return b_x0, b_x1
 
+    def get_batch_size_for(self, length: int):
+        if self.batch_size == 0:
+            return 1
+        elif self.batch_size < 0:
+            return length
+        elif self.batch_size > length:
+            return length
+        elif self.batch_size == "try":
+            return length // 2 ** self._batch_size_try_counter
+        return self.batch_size
+
+    def make_batches_generator(self, x0, x1, **kwargs):
+        x0 = check_array(x0)
+        x1 = check_array(x1)
+        x0_indexes = np.arange(qml.math.shape(x0)[0])
+        x1_indexes = np.arange(qml.math.shape(x1)[0])
+        b_x0_indexes = qml.math.repeat(x0_indexes, qml.math.shape(x1_indexes)[0], axis=0)
+        b_x1_indexes = qml.math.tile(x1_indexes, (qml.math.shape(x0_indexes)[0], ))
+        batch_size = self.get_batch_size_for(qml.math.shape(b_x0_indexes)[0])
+        n_batches = int(np.ceil(b_x0_indexes.shape[0] / batch_size))
+
+        verbose = kwargs.pop("verbose", False)
+        desc = kwargs.pop(
+            "desc",
+            f"{self.__class__.__name__}: "
+            f"pairwise_distances_in_batch("
+            f"x0:{qml.math.shape(x0)}, "
+            f"x1:{qml.math.shape(x1)}, "
+            f"batch_size={self.batch_size})"
+        )
+        p_bar = tqdm(total=n_batches, desc=desc, disable=not verbose)
+
+        for i in range(n_batches):
+            start_idx = i * self.batch_size
+            end_idx = (i + 1) * self.batch_size
+            ib_x0_indexes = b_x0_indexes[start_idx:end_idx]
+            ib_x1_indexes = b_x1_indexes[start_idx:end_idx]
+            yield x0[ib_x0_indexes], x1[ib_x1_indexes]
+            p_bar.update(1)
+        p_bar.close()
+
     def pairwise_distances_in_sequence(self, x0, x1, **kwargs):
         x0 = check_array(x0)
         x1 = check_array(x1)
@@ -123,36 +167,43 @@ class MLKernel(BaseEstimator):
         x0 = check_array(x0)
         x1 = check_array(x1)
         self.check_is_fitted()
-        b_x0, b_x1 = self.make_batch(x0, x1)
-        distances = self.batch_distance(b_x0, b_x1)
+        # b_x0, b_x1 = self.make_batch(x0, x1)
+        # distances = self.batch_distance(b_x0, b_x1)
+        batched_distances = [
+            self.batch_distance(b_x0, b_x1, **kwargs)
+            for b_x0, b_x1 in self.make_batches_generator(x0, x1, **kwargs)
+        ]
+        distances = qml.math.concatenate(batched_distances, axis=0)
         return qml.math.reshape(distances, (qml.math.shape(x0)[0], qml.math.shape(x1)[0]))
 
     def pairwise_distances(self, x0, x1, **kwargs):
         x0 = check_array(x0)
         x1 = check_array(x1)
         self.check_is_fitted()
-        if (qml.math.shape(x0)[0] + qml.math.shape(x1)[0]) > 1000:
-            warnings.warn(
-                f"Computing pairwise distances between two large datasets."
-                f" This may take a while.",
-                RuntimeWarning
-            )
+        if self.batch_size == 0:
             return self.pairwise_distances_in_sequence(x0, x1, **kwargs)
+        # TODO: add support for batch_size = try
         try:
             return self.pairwise_distances_in_batch(x0, x1, **kwargs)
         except Exception as e:
-            if kwargs.get("throw_errors", False):
-                raise e
             warnings.warn(
-                f"Failed to compute pairwise distances in batch."
+                f"Failed to compute pairwise distances in batch of size {self.batch_size}."
                 f" Got err: ({e})."
                 f"Computing pairwise distances in sequence.",
                 RuntimeWarning
             )
+            if kwargs.get("throw_errors", False):
+                raise e
             return self.pairwise_distances_in_sequence(x0, x1, **kwargs)
     
     def compute_gram_matrix(self, x, **kwargs):
-        kwargs.setdefault("desc", f"{self.__class__.__name__}: compute_gram_matrix(x:{qml.math.shape(x)})")
+        kwargs.setdefault(
+            "desc", f"{self.__class__.__name__}: "
+                    f"compute_gram_matrix("
+                    f"x:{qml.math.shape(x)}"
+                    f", batch_size={self.batch_size}"
+                    f")"
+        )
         return self.pairwise_distances(x, x, **kwargs)
 
 
