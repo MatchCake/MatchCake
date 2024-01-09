@@ -530,11 +530,13 @@ class ClassificationPipeline:
                 f"test gram compute time: {self.test_gram_compute_times.get(*m_name, np.NaN):.5f} [s], "
                 f"plot time: {self.plot_times.get(*m_name, np.NaN):.5f} [s]"
             )
-        
-        for m_name, kernel in self.kernels.items():
-            if not hasattr(kernel, "draw"):
-                continue
-            kernel.draw(name=m_name, logging_func=print)
+        try:
+            for m_name, kernel in self.kernels.items():
+                if not hasattr(kernel, "draw"):
+                    continue
+                kernel.draw(name=m_name, logging_func=print)
+        except Exception as e:
+            warnings.warn(f"Failed to draw kernels: {e}", RuntimeWarning)
         
         for m_name in self.kernels.keys():
             _print_times(m_name)
