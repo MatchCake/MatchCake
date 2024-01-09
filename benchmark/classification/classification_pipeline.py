@@ -390,10 +390,11 @@ class ClassificationPipeline:
         if not self.kernels:
             self.make_kernels()
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
+        p_bar = tqdm(self.kernels.get_outer(fold_idx).items(), desc=f"Compute Gram Matrices k={fold_idx}", unit="cls")
         to_remove = []
         verbose = self.kwargs.get("verbose_gram", True)
         throw_errors = self.kwargs.get("throw_errors", False)
-        for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
+        for kernel_name, kernel in p_bar:
             if self.test_gram_matrices.get(kernel_name, fold_idx, None) is not None:
                 continue
             try:
@@ -408,6 +409,8 @@ class ClassificationPipeline:
                 print(f"Failed to compute gram matrix for kernel {kernel_name}: {e}. "
                       f"\n Removing it from the list of kernels.")
                 to_remove.append(kernel_name)
+                p_bar.update()
+        p_bar.close()
         for kernel_name in to_remove:
             self.kernels[kernel_name].pop(fold_idx)
         return self.kernels
@@ -435,7 +438,7 @@ class ClassificationPipeline:
     def fit_classifiers(self, fold_idx: int = 0):
         if self.classifiers is None:
             self.make_classifiers()
-        p_bar = tqdm(self.classifiers.get_outer(fold_idx).items(), desc="Fitting classifiers", unit="cls")
+        p_bar = tqdm(self.classifiers.get_outer(fold_idx).items(), desc=f"Fitting classifiers k={fold_idx}", unit="cls")
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         to_remove = []
         for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
