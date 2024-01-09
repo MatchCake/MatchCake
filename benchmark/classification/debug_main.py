@@ -23,8 +23,9 @@ def main(**in_kwargs):
             # "lightning_PQC",
             # "nfPQC",
         ],
-        n_kfold_splits=1,
-        kernel_kwargs=dict(nb_workers=0, batch_size=int(2**12)),
+        n_kfold_splits=5,
+        kernel_kwargs=dict(nb_workers=0, batch_size=int(2**14)),
+        # kernel_kwargs=dict(nb_workers=0, batch_size="sqrt"),
         throw_errors=True,
     )
     kwargs.update(in_kwargs)
@@ -78,7 +79,7 @@ if __name__ == '__main__':
     from msim import MatchgateOperation
     # MatchgateOperation.DEFAULT_USE_H_FOR_TRANSITION_MATRIX = True
     main(
-        debug_data_size=100,
+        # debug_data_size=100,
         show=True,
         plot=False
     )
