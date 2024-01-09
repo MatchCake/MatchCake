@@ -212,7 +212,7 @@ class Matchgate:
             self,
             params: Union[mps.MatchgateParams, np.ndarray, list, tuple],
             *,
-            raise_errors_if_not_matchgate=True,
+            raise_errors_if_not_matchgate=False,
             **kwargs
     ):
         r"""
