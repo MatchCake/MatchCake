@@ -76,7 +76,7 @@ def time_vs_n_data():
 if __name__ == '__main__':
     # time_vs_n_data()
     from msim import MatchgateOperation
-    MatchgateOperation.DEFAULT_USE_H_FOR_TRANSITION_MATRIX = True
+    # MatchgateOperation.DEFAULT_USE_H_FOR_TRANSITION_MATRIX = True
     main(
         debug_data_size=100,
         show=True,
