@@ -103,14 +103,16 @@ class MLKernel(BaseEstimator):
         return b_x0, b_x1
 
     def get_batch_size_for(self, length: int):
-        if self.batch_size == 0:
+        if self.batch_size == "try":
+            return length // 2 ** self._batch_size_try_counter
+        elif self.batch_size == "sqrt":
+            return int(np.sqrt(length))
+        elif self.batch_size == 0:
             return 1
         elif self.batch_size < 0:
             return length
         elif self.batch_size > length:
             return length
-        elif self.batch_size == "try":
-            return length // 2 ** self._batch_size_try_counter
         return self.batch_size
 
     def make_batches_generator(self, x0, x1, **kwargs):
@@ -135,8 +137,8 @@ class MLKernel(BaseEstimator):
         p_bar = tqdm(total=n_batches, desc=desc, disable=not verbose)
 
         for i in range(n_batches):
-            start_idx = i * self.batch_size
-            end_idx = (i + 1) * self.batch_size
+            start_idx = i * batch_size
+            end_idx = (i + 1) * batch_size
             ib_x0_indexes = b_x0_indexes[start_idx:end_idx]
             ib_x1_indexes = b_x1_indexes[start_idx:end_idx]
             yield x0[ib_x0_indexes], x1[ib_x1_indexes]
