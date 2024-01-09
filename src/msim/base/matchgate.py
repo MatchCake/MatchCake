@@ -565,42 +565,35 @@ class Matchgate:
         return self._hamiltonian_matrix
     
     def _make_single_transition_particle_matrix_(self) -> np.ndarray:
+        r"""
+        Compute the single transition particle matrix. This matrix is the matrix :math:`R` such that
+
+        .. math::
+            R_{\mu\nu} &= \frac{1}{4} \text{Tr}{\left(U c_\mu U^\dagger\right)c_\nu}
+
+        where :math:`U` is the matchgate and :math:`c_\mu` is the :math:`\mu`-th Majorana operator.
+
+        :return: The single transition particle matrix.
+        """
         if self.use_h_for_transition_matrix:
             h_matrix = self.hamiltonian_coefficients_params.to_matrix()
             matrix = qml.math.expm(-4 * h_matrix)
             self._single_transition_particle_matrix = matrix
             return self._single_transition_particle_matrix
         u = self.gate_data
-        u_dagger = qml.math.conjugate(qml.math.swapaxes(u, -2, -1))
-        u_shape = qml.math.shape(u)
-        u_ndim = qml.math.ndim(u)
-        # n_states = u.shape[0]
 
-        majorana_tensor = qml.math.stack([self.majorana_getter[i] for i in range(2*self.majorana_getter.n)])  # (2n, 2^n, 2^n)
-        # u_c_u_dagger = u @ majorana_tensor @ u_dagger  # (B, 2^n, 2^n) @ (2n, 2^n, 2^n) @ (B, 2^n, 2^n) -> (B, 2n, 2^n, 2^n)
-        # u_c_u_dagger = qml.math.einsum("bij,kqp,bnm->bkim", u, majorana_tensor, u_dagger)
-        if u_ndim == 2:
-            u_c_u_dagger = u @ majorana_tensor @ u_dagger
-        elif u_ndim == 3:
-            u_c_u_dagger = qml.math.stack([u[i] @ majorana_tensor @ u_dagger[i] for i in range(u_shape[0])])
-        else:
-            raise ValueError(f"Invalid u_ndim: {u_ndim}")
-        # _matrix = np.stack([
-        #     np.trace(u_c_u_dagger[i] @ majorana_tensor.T) / n_states
-        #     for i in range(2*self.majorana_getter.n)
-        # ])  # [2n, Tr{(2^n, 2^n) @ (2^n, 2^n, 2n)}] -> [2n, Tr{(2^n, 2^n, 2n)}] -> [2n, (2n, )]
-        u_c_u_dagger = qml.math.reshape(u_c_u_dagger, (-1, *qml.math.shape(u_c_u_dagger)[-2:]))
-        matrix = np.stack([
-            utils.decompose_matrix_into_majoranas(u_c_u_dagger[i], majorana_getter=self.majorana_getter)
-            for i in range(qml.math.shape(u_c_u_dagger)[0])
-        ])
-        matrix = qml.math.reshape(matrix, (-1, 2*self.majorana_getter.n, 2*self.majorana_getter.n))
-        if u_ndim > 2:
+        # majorana_tensor.shape: (2n, 2^n, 2^n)
+        majorana_tensor = qml.math.stack([self.majorana_getter[i] for i in range(2*self.majorana_getter.n)])
+        matrix = qml.math.trace(
+            qml.math.einsum(
+                "...ij,mjq,...kq,lko->...mlio",
+                u, majorana_tensor, qml.math.conjugate(u), majorana_tensor
+            ),
+            axis1=-2, axis2=-1
+        ) / qml.math.shape(majorana_tensor)[-1]
+
+        if qml.math.ndim(u) > 2:
             matrix = matrix.squeeze()
-        # matrix = qml.math.einsum("bkij,mqp->bmkp", u_c_u_dagger, majorana_tensor)
-        # matrix = qml.math.einsum("biij->bij", matrix)
-        # TODO: use an einsum to compute the matrix without the for loop
-        # _matrix_with_einsum = np.einsum("bkij,qlj->bkq", u_c_u_dagger, majorana_tensor) / n_states
         self._single_transition_particle_matrix = matrix
         return self._single_transition_particle_matrix
     
