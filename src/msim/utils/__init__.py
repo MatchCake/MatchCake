@@ -297,7 +297,6 @@ def decompose_matrix_into_majoranas(
     else:
         get_majorana_func = majorana_getter.__getitem__
     majorana_tensor = qml.math.stack([get_majorana_func(i) for i in range(2*n)])
-    # return np.trace(__matrix @ majorana_tensor.T) / n_states
     return qml.math.trace(__matrix @ majorana_tensor, axis1=-2, axis2=-1) / n_states
 
 
