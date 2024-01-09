@@ -19,21 +19,21 @@ def _make_rot_matrix(param, direction):
         raise ValueError(f"Invalid number of dimensions {len(param_shape)}.")
     batch_size = param_shape[0] if ndim == 1 else 1
     param = qml.math.reshape(param, (batch_size, ))
-    matrix = pnp.zeros((batch_size, 2, 2), dtype=pnp.complex128)
+    matrix = qml.math.convert_like(pnp.zeros((batch_size, 2, 2), dtype=pnp.complex128), param)
 
     if direction == "X":
-        matrix[:, 0, 0] = pnp.cos(param / 2)
-        matrix[:, 0, 1] = -1j * pnp.sin(param / 2)
-        matrix[:, 1, 0] = -1j * pnp.sin(param / 2)
-        matrix[:, 1, 1] = pnp.cos(param / 2)
+        matrix[:, 0, 0] = qml.math.cos(param / 2)
+        matrix[:, 0, 1] = -1j * qml.math.sin(param / 2)
+        matrix[:, 1, 0] = -1j * qml.math.sin(param / 2)
+        matrix[:, 1, 1] = qml.math.cos(param / 2)
     elif direction == "Y":
-        matrix[:, 0, 0] = pnp.cos(param / 2)
-        matrix[:, 0, 1] = -pnp.sin(param / 2)
-        matrix[:, 1, 0] = pnp.sin(param / 2)
-        matrix[:, 1, 1] = pnp.cos(param / 2)
+        matrix[:, 0, 0] = qml.math.cos(param / 2)
+        matrix[:, 0, 1] = -qml.math.sin(param / 2)
+        matrix[:, 1, 0] = qml.math.sin(param / 2)
+        matrix[:, 1, 1] = qml.math.cos(param / 2)
     elif direction == "Z":
-        matrix[:, 0, 0] = pnp.exp(-1j * param / 2)
-        matrix[:, 1, 1] = pnp.exp(1j * param / 2)
+        matrix[:, 0, 0] = qml.math.exp(-1j * param / 2)
+        matrix[:, 1, 1] = qml.math.exp(1j * param / 2)
     else:
         raise ValueError(f"Invalid direction {direction}.")
     if ndim == 0:
@@ -50,7 +50,7 @@ def _make_complete_rot_matrix(params, directions):
     if params_shape[-1] != len(directions) and params_shape[-1] != 2:
         raise ValueError(f"Number of parameters ({params_shape[-1]}) and directions ({len(directions)}) must be equal.")
     batch_size = params_shape[0] if ndim == 2 else 1
-    matrix = pnp.zeros((batch_size, 4, 4), dtype=pnp.complex128)
+    matrix = qml.math.convert_like(pnp.zeros((batch_size, 4, 4), dtype=pnp.complex128), params)
     inner_matrices = _make_rot_matrix(params[..., 0], directions[0])
     inner_matrices = qml.math.reshape(inner_matrices, (batch_size, 2, 2))
     outer_matrices = _make_rot_matrix(params[..., 1], directions[1])
