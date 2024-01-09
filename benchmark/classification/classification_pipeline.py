@@ -305,6 +305,12 @@ class ClassificationPipeline:
         return self.X, self.y
 
     def get_train_test_fold(self, fold_idx: int):
+        if self._n_kfold_splits <= 1:
+            return train_test_split(
+                self.X, self.y,
+                test_size=self.kwargs.get("test_size", 0.2),
+                random_state=self.kwargs.get("test_split_random_state", 0),
+            )
         from sklearn.model_selection import KFold
         kf = KFold(
             n_splits=self._n_kfold_splits,
