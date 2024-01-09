@@ -221,6 +221,13 @@ class NIFKernel(MLKernel):
         self.qnode = None
         self._device = None
         self._parameters = self.kwargs.get("parameters", None)
+        self.qnode_kwargs = self.kwargs.get(
+            "qnode_kwargs", dict(
+                interface="auto",
+                diff_method=None,
+                cache=False,
+            )
+        )
     
     @property
     def size(self):
@@ -257,7 +264,7 @@ class NIFKernel(MLKernel):
 
     def pre_initialize(self):
         self._device = NonInteractingFermionicDevice(wires=self.size)
-        self.qnode = qml.QNode(self.circuit, self._device, **self.kwargs.get("qnode_kwargs", {}))
+        self.qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
     
     def fit(self, X, y=None):
         super().fit(X, y)
