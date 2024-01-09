@@ -15,16 +15,16 @@ def main(**in_kwargs):
         # dataset_n_samples=32,
         # dataset_n_features=2,
         methods=[
-            "classical",
+            # "classical",
             # "nif",
             "fPQC",
-            "PQC",
+            # "PQC",
             # "PennylaneFermionicPQCKernel",
             # "lightning_PQC",
             # "nfPQC",
         ],
-        n_kfold_splits=5,
-        kernel_kwargs=dict(nb_workers=0),
+        n_kfold_splits=1,
+        kernel_kwargs=dict(nb_workers=0, batch_size=int(2**12)),
         throw_errors=True,
     )
     kwargs.update(in_kwargs)
@@ -76,5 +76,9 @@ def time_vs_n_data():
 if __name__ == '__main__':
     # time_vs_n_data()
     from msim import MatchgateOperation
-    # MatchgateOperation.DEFAULT_USE_H_FOR_TRANSITION_MATRIX = True
-    main(debug_data_size=20, show=True, plot=False)
+    MatchgateOperation.DEFAULT_USE_H_FOR_TRANSITION_MATRIX = True
+    main(
+        debug_data_size=100,
+        show=True,
+        plot=False
+    )
