@@ -171,6 +171,7 @@ def test_random_polar_params_respect_constraint_in_hamiltonian_form(params):
     exp_trace = qml.math.exp(1j * hamiltonian_trace)
     np.testing.assert_allclose(hamiltonian_form_det, gate_det, atol=ATOL_SCALAR_COMPARISON, rtol=RTOL_SCALAR_COMPARISON)
     np.testing.assert_allclose(gate_det, exp_trace, atol=ATOL_SCALAR_COMPARISON, rtol=RTOL_SCALAR_COMPARISON)
+    np.testing.assert_allclose(hamiltonian_form_det, exp_trace, atol=ATOL_SCALAR_COMPARISON, rtol=RTOL_SCALAR_COMPARISON)
 
 
 @pytest.mark.parametrize(
