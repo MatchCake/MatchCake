@@ -244,7 +244,7 @@ class NIFKernel(MLKernel):
     
     @property
     def parameters(self):
-        if self.use_cuda:
+        if getattr(self, "use_cuda", False):
             return self.cast_tensor_to_interface(self._parameters)
         return self._parameters
     
