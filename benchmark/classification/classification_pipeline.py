@@ -497,12 +497,17 @@ class ClassificationPipeline:
     def run(self, **kwargs):
         results_table_path = kwargs.pop("results_table_path", None)
         show_results_table = kwargs.pop("show_results_table", False)
+        mean_results_table = kwargs.pop("mean_results_table", False)
         self.load_dataset()
         self.preprocess_data()
         for fold_idx in range(self._n_kfold_splits):
             self.run_fold(fold_idx)
-        if results_table_path is not None:
-            self.get_results_table(show=show_results_table, filepath=results_table_path)
+            if results_table_path is not None:
+                self.get_results_table(
+                    mean=mean_results_table,
+                    show=show_results_table,
+                    filepath=results_table_path
+                )
         self.to_pickle()
         return self
 
