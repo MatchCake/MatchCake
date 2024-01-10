@@ -228,6 +228,11 @@ class NIFKernel(MLKernel):
                 cache=False,
             )
         )
+        self.use_cuda = self.kwargs.get("use_cuda", False)
+        if self.use_cuda:
+            import torch
+            # torch.set_default_tensor_type(torch.cuda.FloatTensor)
+            print(f"Using CUDA: {torch.cuda.is_available()}")
     
     @property
     def size(self):
@@ -239,6 +244,8 @@ class NIFKernel(MLKernel):
     
     @property
     def parameters(self):
+        if self.use_cuda:
+            return self.cast_tensor_to_interface(self._parameters)
         return self._parameters
     
     @parameters.setter
@@ -256,7 +263,13 @@ class NIFKernel(MLKernel):
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.pre_initialize()
-    
+
+    def cast_tensor_to_interface(self, tensor):
+        if self.use_cuda:
+            import torch
+            return torch.tensor(tensor).cuda()
+        return tensor
+
     def initialize_parameters(self):
         if self._parameters is None:
             n_parameters = self.kwargs.get("n_parameters", PATTERN_TO_NUM_PARAMS["pyramid"](self.wires))
@@ -283,9 +296,11 @@ class NIFKernel(MLKernel):
         return qml.expval(projector)
     
     def single_distance(self, x0, x1, **kwargs):
+        x0, x1 = self.cast_tensor_to_interface(x0), self.cast_tensor_to_interface(x1)
         return self.qnode(x0, x1)
     
     def batch_distance(self, x0, x1, **kwargs):
+        x0, x1 = self.cast_tensor_to_interface(x0), self.cast_tensor_to_interface(x1)
         return self.qnode(x0, x1)
 
     def draw(self, **kwargs):
@@ -364,7 +379,10 @@ class FermionicPQCKernel(NIFKernel):
         return self._rotations
     
     def _compute_default_size(self):
-        return max(2, int(np.ceil(np.log2(self.X_.shape[-1] + 2) - 1)))
+        _size = max(2, int(np.ceil(np.log2(self.X_.shape[-1] + 2) - 1)))
+        if _size % 2 != 0:
+            _size += 1
+        return _size
     
     def initialize_parameters(self):
         self._depth = self.kwargs.get("depth", max(1, (self.X_.shape[-1]//self.size) - 1))

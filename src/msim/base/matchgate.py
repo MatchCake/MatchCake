@@ -598,8 +598,12 @@ class Matchgate:
                 axis1=-2, axis2=-1
             ) / qml.math.shape(majorana_tensor)[-1]
         else:
+            u_c = qml.math.einsum(
+                "...ij,mjq->...miq", u, majorana_tensor,
+                optimize="optimal",
+            )
             u_c_u_dagger = qml.math.einsum(
-                "...ij,mjq,...kq->...mik", u, majorana_tensor, qml.math.conjugate(u),
+                "...miq,...kq->...mik", u_c, qml.math.conjugate(u),
                 optimize="optimal",
             )
             matrix = qml.math.trace(
@@ -623,6 +627,7 @@ class Matchgate:
         return self._transition_matrix
 
     def compute_m_m_dagger(self):
+        # TODO: optimize with einsum or else
         return qml.math.stack(
             [
                 qml.math.dot(gate, qml.math.conj(qml.math.transpose(gate)))
@@ -632,6 +637,7 @@ class Matchgate:
         )
 
     def compute_m_dagger_m(self):
+        # TODO: optimize with einsum or else
         return qml.math.stack(
             [
                 qml.math.dot(qml.math.conj(qml.math.transpose(gate)), gate)
