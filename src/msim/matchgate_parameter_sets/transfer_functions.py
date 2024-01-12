@@ -220,52 +220,80 @@ def standard_hamiltonian_to_standard(
     return MatchgateStandardParams.from_matrix(gate, **kwargs)
 
 
-def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePolarParams:
-    backend = MatchgateParams.load_backend_lib(kwargs.pop("backend", qml.math))
-    params_arr = params.to_numpy()
-    a, b, c, d, w, x, y, z = qml.math.cast(
-        qml.math.transpose(qml.math.reshape(params_arr, (-1, params.N_PARAMS))),
-        dtype=complex
-    )
-    r0 = backend.sqrt(a * backend.conjugate(a))
-    r0_tilde = MatchgatePolarParams.compute_r_tilde(r0, backend=backend)
-    r1 = backend.sqrt(w * backend.conjugate(w))
-    r1_tilde = MatchgatePolarParams.compute_r_tilde(r1, backend=backend)
-    eps = 1e-12
-    zero_like, one_like = utils.math.convert_and_cast_like(0, r0), utils.math.convert_and_cast_like(1, r0)
-    r0_is_zero, r0_is_one = backend.isclose(r0, zero_like), backend.isclose(r0, one_like)
-    r1_is_zero, r1_is_one = backend.isclose(r1, zero_like), backend.isclose(r1, one_like)
+def _compute_r0_from_standard(a, backend):
+    return backend.sqrt(a * backend.conjugate(a))
+
+
+def _compute_r1_from_standard(w, backend):
+    return backend.sqrt(w * backend.conjugate(w))
+
+
+def _compute_theta0_from_standard(a, r0, r0_is_zero, r0_is_one, zero_like, backend, eps=1e-12):
     theta0 = backend.where(r0_is_zero, zero_like, -1j * (backend.log(a + eps) - backend.log(r0 + eps)))
     theta0 = backend.where(r0_is_one, -1j * backend.log(a + eps), theta0)
+    return theta0
 
+
+def _compute_theta1_from_standard(c, r0_tilde, r0_is_zero, r0_is_one, zero_like, backend, eps=1e-12):
     theta1 = backend.where(
         r0_is_zero, -1j * backend.log(c + eps), -1j * (backend.log(c + eps) - backend.log(r0_tilde + eps))
     )
     theta1 = backend.where(r0_is_one, 0, theta1)
+    return theta1
 
+
+def _compute_theta2_from_standard(a, b, c, d, w, r1, r1_is_zero, r1_is_one, r0_is_one, backend, eps=1e-12):
     theta2 = backend.where(
-        r1_is_zero,
-        -0.5j * backend.log(-b*c + eps),
-        -1j * (backend.log(w + eps) - backend.log(r1 + eps))
+        r1_is_zero, -0.5j * backend.log(-b * c + eps), -1j * (backend.log(w + eps) - backend.log(r1 + eps))
     )
     theta2 = backend.where(r1_is_one, -1j * backend.log(w + eps), theta2)
-    theta2 = backend.where(r0_is_one & r1_is_zero, -0.5j * backend.log(d*a + eps), theta2)
+    theta2 = backend.where(r0_is_one & r1_is_zero, -0.5j * backend.log(d * a + eps), theta2)
+    return theta2
 
+
+def _compute_theta3_from_standard(y, r1_is_zero, r1_is_one, r1_tilde, backend, eps=1e-12):
     theta3 = backend.where(
         r1_is_zero,
         -1j * backend.log(y + eps),
         -1j * (backend.log(y + eps) - backend.log(r1_tilde + eps))
     )
     theta3 = backend.where(r1_is_one, 0, theta3)
+    return theta3
 
+
+def _compute_theta4_from_standard(a, b, c, d, z, r1, r1_is_zero, r1_is_one, r0_is_one, backend, eps=1e-12):
     theta4 = backend.where(
         r1_is_zero,
-        -0.5j * backend.log(-b*c + eps),
+        -0.5j * backend.log(-b * c + eps),
         -1j * (backend.log(z + eps) - backend.log(r1 + eps))
     )
     theta4 = backend.where(r1_is_one, -1j * backend.log(z + eps), theta4)
-    theta4 = backend.where(r0_is_one & r1_is_zero, -0.5j * backend.log(d*a + eps), theta4)
+    theta4 = backend.where(r0_is_one & r1_is_zero, -0.5j * backend.log(d * a + eps), theta4)
+    return theta4
 
+
+def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePolarParams:
+    backend = MatchgateParams.load_backend_lib(kwargs.pop("backend", qml.math))
+    eps = kwargs.pop("eps", 1e-12)
+    params_arr = params.to_numpy()
+    a, b, c, d, w, x, y, z = qml.math.cast(
+        qml.math.transpose(qml.math.reshape(params_arr, (-1, params.N_PARAMS))),
+        dtype=complex
+    )
+    r0 = _compute_r0_from_standard(a, backend=backend)
+    r1 = _compute_r1_from_standard(w, backend=backend)
+    r0_tilde = MatchgatePolarParams.compute_r_tilde(r0, backend=backend)
+    r1_tilde = MatchgatePolarParams.compute_r_tilde(r1, backend=backend)
+
+    zero_like, one_like = utils.math.convert_and_cast_like(0, r0), utils.math.convert_and_cast_like(1, r0)
+    r0_is_zero, r0_is_one = backend.isclose(r0, zero_like), backend.isclose(r0, one_like)
+    r1_is_zero, r1_is_one = backend.isclose(r1, zero_like), backend.isclose(r1, one_like)
+
+    theta0 = _compute_theta0_from_standard(a, r0, r0_is_zero, r0_is_one, zero_like, backend, eps=eps)
+    theta1 = _compute_theta1_from_standard(c, r0_tilde, r0_is_zero, r0_is_one, zero_like, backend, eps=eps)
+    theta2 = _compute_theta2_from_standard(a, b, c, d, w, r1, r1_is_zero, r1_is_one, r0_is_one, backend, eps=eps)
+    theta3 = _compute_theta3_from_standard(y, r1_is_zero, r1_is_one, r1_tilde, backend, eps=eps)
+    theta4 = _compute_theta4_from_standard(a, b, c, d, z, r1, r1_is_zero, r1_is_one, r0_is_one, backend, eps=eps)
     return MatchgatePolarParams(
         r0=r0,
         r1=r1,

@@ -12,7 +12,7 @@ if __name__ == '__main__':
         print(f"Using cuda: {use_cuda}")
     except ImportError:
         use_cuda = False
-
+    trial = "cuda_det"
     kwargs = dict(
         dataset_name="digits",
         # dataset_name="synthetic",
@@ -29,7 +29,7 @@ if __name__ == '__main__':
         throw_errors=False,
     )
     save_path = os.path.join(
-        os.path.dirname(__file__), "results", f"{kwargs['dataset_name']}", f"cls.pkl"
+        os.path.dirname(__file__), "results", trial, f"{kwargs['dataset_name']}", f"cls.pkl"
     )
     pipline = ClassificationPipeline.from_pickle_or_new(
         **kwargs,

@@ -44,20 +44,20 @@ def main(**in_kwargs):
     pipline.preprocess_data()
     pipline.make_kernels()
     pipline.fit_kernels()
-    pipline.print_summary()
+    # pipline.print_summary()
     pipline.run()
     figures_folder = os.path.join(os.path.dirname(save_path), "figures")
-    results = pipline.get_results_table(
-        show=_show,
-        mean=True,
-        filepath=os.path.join(figures_folder, "results_table.csv")
-    )
+    # results = pipline.get_results_table(
+    #     show=_show,
+    #     mean=True,
+    #     filepath=os.path.join(figures_folder, "results_table.csv")
+    # )
     if _plot:
         pipline.draw_mpl_kernels(show=False, filepath=os.path.join(figures_folder, "kernels.pdf"), draw_mth="single")
         plt.close("all")
         pipline.show(n_pts=128, show=_show, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
         plt.close("all")
-    return results
+    # return results
 
 
 def time_vs_n_data():
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     from msim import MatchgateOperation
     # MatchgateOperation.DEFAULT_USE_H_FOR_TRANSITION_MATRIX = True
     main(
-        debug_data_size=10,
-        show=True,
-        plot=False
+        debug_data_size=100,
+        show=False,
+        plot=False,
     )

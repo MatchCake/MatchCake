@@ -33,7 +33,7 @@ def pfaffian_ltl(__matrix, overwrite_input=False) -> Union[float, complex]:
     # Check if it's skew-symmetric
     matrix_t = qml.math.einsum("...ij->...ji", matrix)
     assert qml.math.allclose(matrix, -matrix_t)
-    
+
     n, m = shape[-2:]
     # Quick return if possible
     if n % 2 == 1:
@@ -48,7 +48,7 @@ def pfaffian_ltl(__matrix, overwrite_input=False) -> Union[float, complex]:
         kp = k + 1 + qml.math.abs(matrix[..., k + 1:, k]).argmax(axis=-1)
         
         # Check if we need to pivot
-        if kp != k + 1:  # TODO: need to add batched support
+        if kp != k + 1:  # TODO: need to add batch support
             # interchange rows k+1 and kp
             temp = qml.math.ones_like(matrix[..., k + 1, k:]) * matrix[..., k + 1, k:]
             matrix[..., k + 1, k:] = matrix[..., kp, k:]
@@ -71,11 +71,6 @@ def pfaffian_ltl(__matrix, overwrite_input=False) -> Union[float, complex]:
             zero_mask = qml.math.isclose(matrix[..., k, k + 1], zero_like)
             tau = tau / matrix[..., k, k + 1]
             tau = qml.math.where(zero_mask, zero_like, tau)
-            # tau = qml.math.divide(
-            #     tau, matrix[..., k, k + 1],
-            #     out=qml.math.zeros_like(tau),
-            #     where=not qml.math.isclose(matrix[..., k, k + 1], zero_like)
-            # )
             pfaffian_val *= matrix[..., k, k + 1]
             
             if k + 2 < n:
@@ -95,7 +90,7 @@ def batch_pfaffian_ltl(__matrix, overwrite_input=False) -> Union[float, complex]
     if ndim == 2:
         return pfaffian_ltl(__matrix, overwrite_input)
     elif ndim == 3:
-        # TODO: need to add batched support
+        # TODO: need to add batch support
         return qml.math.stack([
             pfaffian_ltl(__matrix[i], overwrite_input)
             for i in range(qml.math.shape(__matrix)[0])
@@ -133,10 +128,12 @@ def pfaffian(__matrix, overwrite_input=False, method="P") -> Union[float, comple
     elif method == "H":
         from pfapack.pfaffian import pfaffian_householder
         warnings.warn(
-            "The method 'H' is not implemented in PennyLane. "
+            "The method 'H' is not implemented yet. "
             "It is recommended to use the method 'P' instead.",
             UserWarning,
         )
         return pfaffian_householder(__matrix, overwrite_input)
+    elif method == "det":
+        return qml.math.sqrt(qml.math.abs(qml.math.det(__matrix)))
     else:
         raise ValueError(f"Invalid method. Got {method}, must be 'P' or 'H'.")

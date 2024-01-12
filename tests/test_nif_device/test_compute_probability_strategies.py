@@ -25,7 +25,7 @@ np.random.seed(TEST_SEED)
     ]
 )
 def test_single_gate_circuit_analytic_probability_lt_vs_es(initial_binary_state, params, wire):
-    device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
+    device = NonInteractingFermionicDevice(wires=len(initial_binary_state), pfaffian_method="P")
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
         MatchgateOperation(params, wires=[0, 1])

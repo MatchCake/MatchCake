@@ -82,6 +82,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
     prob_strategies = {"lookup_table", "explicit_sum"}
     contraction_methods = {None, "neighbours"}
+    pfaffian_methods = {"det", "P"}
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
 
@@ -171,6 +172,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         assert self.contraction_method in self.contraction_methods, (
             f"The contraction method must be one of {self.contraction_methods}. "
             f"Got {self.contraction_method} instead."
+        )
+        self.pfaffian_method = kwargs.get("pfaffian_method", "det")
+        assert self.pfaffian_method in self.pfaffian_methods, (
+            f"The pfaffian method must be one of {self.pfaffian_methods}. "
+            f"Got {self.pfaffian_method} instead."
         )
     
     @property
@@ -466,30 +472,10 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 self._state = self._apply_parametrized_evolution(self._state, op)
             elif isinstance(op, _SingleTransitionMatrix):
                 op_r = op.pad(self.wires).matrix
-                # global_single_transition_particle_matrix = utils.math.convert_and_cast_like(
-                #     global_single_transition_particle_matrix, op_r
-                # )
-                # batched = batched or (qml.math.ndim(op_r) > 2)
-                # if qml.math.ndim(op_r) < 3:
-                #     op_r = op_r[None, ...]
-                # global_single_transition_particle_matrix = qml.math.einsum(
-                #     "bij,bjl->bil",
-                #     global_single_transition_particle_matrix, op_r
-                # )
             else:
                 assert op.name in self.operations, f"Operation {op.name} is not supported."
                 if isinstance(op, MatchgateOperation):
                     op_r = op.get_padded_single_transition_particle_matrix(self.wires)
-                    # global_single_transition_particle_matrix = utils.math.convert_and_cast_like(
-                    #     global_single_transition_particle_matrix, op_r
-                    # )
-                    # batched = batched or (qml.math.ndim(op_r) > 2)
-                    # if qml.math.ndim(op_r) < 3:
-                    #     op_r = op_r[None, ...]
-                    # global_single_transition_particle_matrix = qml.math.einsum(
-                    #     "bij,bjl->bil",
-                    #     global_single_transition_particle_matrix, op_r
-                    # )
             if op_r is not None:
                 batched = batched or (qml.math.ndim(op_r) > 2)
                 global_single_transition_particle_matrix = self.update_single_transition_particle_matrix(
@@ -562,7 +548,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         probs = pnp.zeros((num_wires, 2))
         for wire in wires:
             obs = self.lookup_table.get_observable(wire, self.get_sparse_or_dense_state())
-            prob1 = pnp.real(utils.pfaffian(obs))
+            prob1 = pnp.real(utils.pfaffian(obs, method=self.pfaffian_method))
             prob0 = 1.0 - prob1
             probs[wire] = pnp.array([prob0, prob1])
         return probs.flatten()
@@ -578,7 +564,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         obs = self.lookup_table.get_observable_of_target_state(
             self.get_sparse_or_dense_state(), target_binary_state, wires
         )
-        return pnp.real(utils.pfaffian(obs))
+        return pnp.real(utils.pfaffian(obs, method=self.pfaffian_method))
 
     def compute_probability_using_explicit_sum(self, wires=None):
         warnings.warn(
