@@ -589,14 +589,11 @@ class Matchgate:
         # majorana_tensor.shape: (2n, 2^n, 2^n)
         majorana_tensor = qml.math.stack([self.majorana_getter[i] for i in range(2*self.majorana_getter.n)])
         if self.use_less_einsum_for_transition_matrix:
-            matrix = qml.math.trace(
-                qml.math.einsum(
-                    "...ij,mjq,...kq,lko->...mlio",
-                    u, majorana_tensor, qml.math.conjugate(u), majorana_tensor,
-                    optimize="optimal",
-                ),
-                axis1=-2, axis2=-1
-            ) / qml.math.shape(majorana_tensor)[-1]
+            matrix = qml.math.einsum(
+                "...ij,mjq,...kq,lko->...mlio",
+                u, majorana_tensor, qml.math.conjugate(u), majorana_tensor,
+                optimize="optimal",
+            )
         else:
             u_c = qml.math.einsum(
                 "...ij,mjq->...miq", u, majorana_tensor,
@@ -606,15 +603,12 @@ class Matchgate:
                 "...miq,...kq->...mik", u_c, qml.math.conjugate(u),
                 optimize="optimal",
             )
-            matrix = qml.math.trace(
-                qml.math.einsum(
-                    "...kij,mjq->...kmiq",
-                    u_c_u_dagger, majorana_tensor,
-                    optimize="optimal"
-                ),
-                axis1=-2, axis2=-1
-            ) / qml.math.shape(majorana_tensor)[-1]
-
+            matrix = qml.math.einsum(
+                "...kij,mjq->...kmiq",
+                u_c_u_dagger, majorana_tensor,
+                optimize="optimal"
+            )
+        matrix = qml.math.einsum("...ii", matrix, optimize="optimal") / qml.math.shape(majorana_tensor)[-1]
         if qml.math.ndim(u) > 2:
             matrix = matrix.squeeze()
         self._single_transition_particle_matrix = matrix

@@ -1,6 +1,6 @@
 from typing import Union
 
-from pennylane import numpy as pnp
+import pennylane as qml
 
 from .matchgate_params import MatchgateParams
 
@@ -91,12 +91,12 @@ class MatchgateStandardHamiltonianParams(MatchgateParams):
         :return: The adjoint parameters.
         """
         return MatchgateStandardHamiltonianParams(
-            u0=pnp.conjugate(self.u0),
-            u1=pnp.conjugate(self.u6),
-            u2=pnp.conjugate(self.u2),
-            u3=pnp.conjugate(self.u4),
-            u4=pnp.conjugate(self.u3),
-            u5=pnp.conjugate(self.u5),
-            u6=pnp.conjugate(self.u1),
-            u7=pnp.conjugate(self.u7),
+            u0=qml.math.conjugate(self.u0),
+            u1=qml.math.conjugate(self.u6),
+            u2=qml.math.conjugate(self.u2),
+            u3=qml.math.conjugate(self.u4),
+            u4=qml.math.conjugate(self.u3),
+            u5=qml.math.conjugate(self.u5),
+            u6=qml.math.conjugate(self.u1),
+            u7=qml.math.conjugate(self.u7),
         )

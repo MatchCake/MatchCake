@@ -3,6 +3,7 @@ import pennylane as qml
 import pennylane.numpy as pnp
 import numpy as np
 import warnings
+from .math import convert_and_cast_like
 
 
 def pfaffian_ltl(__matrix, overwrite_input=False) -> Union[float, complex]:
@@ -25,20 +26,21 @@ def pfaffian_ltl(__matrix, overwrite_input=False) -> Union[float, complex]:
     if overwrite_input:
         matrix = __matrix
     else:
-        matrix = __matrix.copy()
+        matrix = qml.math.ones_like(__matrix) * __matrix
     shape = qml.math.shape(matrix)
     # Check if matrix is square
     assert shape[-2] == shape[-1] > 0
     # Check if it's skew-symmetric
-    matrix_t = qml.math.swapaxes(matrix, -2, -1)
+    matrix_t = qml.math.einsum("...ij->...ji", matrix)
     assert qml.math.allclose(matrix, -matrix_t)
     
     n, m = shape[-2:]
     # Quick return if possible
     if n % 2 == 1:
         return 0.0
-    matrix = matrix.astype(np.complex128)
-    pfaffian_val = pnp.ones(shape[:-2], dtype=complex)
+    matrix = qml.math.cast(matrix, dtype=complex)
+    zero_like = convert_and_cast_like(0, matrix)
+    pfaffian_val = qml.math.convert_like(pnp.ones(shape[:-2], dtype=complex), matrix)
     
     for k in range(0, n - 1, 2):
         # First, find the largest entry in A[k+1:,k] and
@@ -48,37 +50,40 @@ def pfaffian_ltl(__matrix, overwrite_input=False) -> Union[float, complex]:
         # Check if we need to pivot
         if kp != k + 1:  # TODO: need to add batched support
             # interchange rows k+1 and kp
-            temp = matrix[..., k + 1, k:].copy()
+            temp = qml.math.ones_like(matrix[..., k + 1, k:]) * matrix[..., k + 1, k:]
             matrix[..., k + 1, k:] = matrix[..., kp, k:]
             matrix[..., kp, k:] = temp
             
             # Then interchange columns k+1 and kp
-            temp = matrix[..., k:, k + 1].copy()
+            temp = qml.math.ones_like(matrix[..., k:, k + 1]) * matrix[..., k:, k + 1]
             matrix[..., k:, k + 1] = matrix[..., k:, kp]
             matrix[..., k:, kp] = temp
             
             # every interchange corresponds to a "-" in det(P)
             pfaffian_val *= -1
         
-        if np.isclose(matrix[..., k + 1, k], 0.0):
+        if qml.math.isclose(matrix[..., k + 1, k], zero_like):
             # if we encounter a zero on the super/subdiagonal, the Pfaffian is 0
-            return 0.0
+            return zero_like
         else:
             # Now form the Gauss vector
-            tau = matrix[..., k, k + 2:].copy()
-            tau = pnp.divide(
-                tau, matrix[..., k, k + 1],
-                out=pnp.zeros_like(tau),
-                where=not np.isclose(matrix[..., k, k + 1], 0.0)
-            )
+            tau = qml.math.ones_like(matrix[..., k, k + 2:]) * matrix[..., k, k + 2:]
+            zero_mask = qml.math.isclose(matrix[..., k, k + 1], zero_like)
+            tau = tau / matrix[..., k, k + 1]
+            tau = qml.math.where(zero_mask, zero_like, tau)
+            # tau = qml.math.divide(
+            #     tau, matrix[..., k, k + 1],
+            #     out=qml.math.zeros_like(tau),
+            #     where=not qml.math.isclose(matrix[..., k, k + 1], zero_like)
+            # )
             pfaffian_val *= matrix[..., k, k + 1]
             
             if k + 2 < n:
                 # Update the matrix block A(k+2:,k+2)
-                matrix[..., k + 2:, k + 2:] = matrix[..., k + 2:, k + 2:] + np.outer(
+                matrix[..., k + 2:, k + 2:] = matrix[..., k + 2:, k + 2:] + qml.math.outer(
                     tau, matrix[..., k + 2:, k + 1]
                 )
-                matrix[..., k + 2:, k + 2:] = matrix[..., k + 2:, k + 2:] - np.outer(
+                matrix[..., k + 2:, k + 2:] = matrix[..., k + 2:, k + 2:] - qml.math.outer(
                     matrix[..., k + 2:, k + 1], tau
                 )
     
@@ -90,9 +95,11 @@ def batch_pfaffian_ltl(__matrix, overwrite_input=False) -> Union[float, complex]
     if ndim == 2:
         return pfaffian_ltl(__matrix, overwrite_input)
     elif ndim == 3:
-        return qml.math.stack(
-            [pfaffian_ltl(__matrix[i], overwrite_input) for i in range(__matrix.shape[0])]
-        )
+        # TODO: need to add batched support
+        return qml.math.stack([
+            pfaffian_ltl(__matrix[i], overwrite_input)
+            for i in range(qml.math.shape(__matrix)[0])
+        ])
     else:
         raise ValueError(f"Invalid ndim. Got {ndim}, must be 2 or 3.")
 

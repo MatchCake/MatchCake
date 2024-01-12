@@ -351,10 +351,10 @@ class NonInteractingFermionicLookupTable:
 
         obs_size = len(majorana_indexes)
         obs_shape = ([self.batch_size] if self.batch_size else []) + [obs_size, obs_size]
-        obs = pnp.zeros(obs_shape, dtype=complex)
+        obs = qml.math.convert_like(pnp.zeros(obs_shape, dtype=complex), self.transition_matrix)
         for (i, j) in zip(*np.triu_indices(obs_size, k=1)):
             i_k, j_k = majorana_indexes[i], majorana_indexes[j]
             row, col = lt_indexes[i], lt_indexes[j]
             obs[..., i, j] = self[row, col][..., i_k, j_k]
-        obs = obs - qml.math.swapaxes(obs, -2, -1)
+        obs = obs - qml.math.einsum("...ij->...ji", obs)
         return obs

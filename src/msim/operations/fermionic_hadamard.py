@@ -13,8 +13,6 @@ class FermionicHadamard(MatchgateOperation):
             self,
             wires=None,
             id=None,
-            *,
-            backend=pnp,
             **kwargs
     ):
         inv_sqrt_2 = 1 / np.sqrt(2)
@@ -26,7 +24,7 @@ class FermionicHadamard(MatchgateOperation):
         )
         in_params = mps.MatchgatePolarParams.parse_from_params(m_params, force_cast_to_real=True)
         kwargs["in_param_type"] = mps.MatchgatePolarParams
-        super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
+        super().__init__(in_params, wires=wires, id=id, **kwargs)
 
     def label(self, decimals=None, base_label=None, cache=None):
         return base_label or self.name

@@ -100,6 +100,17 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         )
         return capabilities
 
+    @staticmethod
+    def update_single_transition_particle_matrix(single_transition_particle_matrix, other):
+        single_transition_particle_matrix = utils.math.convert_and_cast_like(
+            single_transition_particle_matrix, other
+        )
+        single_transition_particle_matrix = qml.math.einsum(
+            "...ij,...jl->...il",
+            single_transition_particle_matrix, other
+        )
+        return single_transition_particle_matrix
+
     def __init__(self, wires=2, **kwargs):
         if np.isscalar(wires):
             assert wires > 1, "At least two wires are required for this device."
@@ -411,6 +422,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         
         # apply the circuit operations
         for i, op in enumerate(operations):
+            op_r = None
             if i > 0 and isinstance(op, (qml.StatePrep, qml.BasisState)):
                 raise qml.DeviceError(
                     f"Operation {op.name} cannot be used after other Operations have already been applied "
@@ -432,28 +444,35 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 self._state = self._apply_parametrized_evolution(self._state, op)
             elif isinstance(op, _SingleTransitionMatrix):
                 op_r = op.pad(self.wires).matrix
-                batched = batched or (qml.math.ndim(op_r) > 2)
-                if qml.math.ndim(op_r) < 3:
-                    op_r = op_r[None, ...]
-                global_single_transition_particle_matrix = qml.math.einsum(
-                    "bij,bjl->bil",
-                    global_single_transition_particle_matrix, op_r
-                )
+                # global_single_transition_particle_matrix = utils.math.convert_and_cast_like(
+                #     global_single_transition_particle_matrix, op_r
+                # )
+                # batched = batched or (qml.math.ndim(op_r) > 2)
+                # if qml.math.ndim(op_r) < 3:
+                #     op_r = op_r[None, ...]
+                # global_single_transition_particle_matrix = qml.math.einsum(
+                #     "bij,bjl->bil",
+                #     global_single_transition_particle_matrix, op_r
+                # )
             else:
                 assert op.name in self.operations, f"Operation {op.name} is not supported."
                 if isinstance(op, MatchgateOperation):
-                    # global_single_transition_particle_matrix = qml.math.dot(
-                    #     global_single_transition_particle_matrix,
-                    #     op.get_padded_single_transition_particle_matrix(self.wires),
-                    # )
                     op_r = op.get_padded_single_transition_particle_matrix(self.wires)
-                    batched = batched or (qml.math.ndim(op_r) > 2)
-                    if qml.math.ndim(op_r) < 3:
-                        op_r = op_r[None, ...]
-                    global_single_transition_particle_matrix = qml.math.einsum(
-                        "bij,bjl->bil",
-                        global_single_transition_particle_matrix, op_r
-                    )
+                    # global_single_transition_particle_matrix = utils.math.convert_and_cast_like(
+                    #     global_single_transition_particle_matrix, op_r
+                    # )
+                    # batched = batched or (qml.math.ndim(op_r) > 2)
+                    # if qml.math.ndim(op_r) < 3:
+                    #     op_r = op_r[None, ...]
+                    # global_single_transition_particle_matrix = qml.math.einsum(
+                    #     "bij,bjl->bil",
+                    #     global_single_transition_particle_matrix, op_r
+                    # )
+            if op_r is not None:
+                batched = batched or (qml.math.ndim(op_r) > 2)
+                global_single_transition_particle_matrix = self.update_single_transition_particle_matrix(
+                    global_single_transition_particle_matrix, op_r
+                )
 
         if not batched:
             global_single_transition_particle_matrix = global_single_transition_particle_matrix[0]
@@ -664,6 +683,24 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         t_wire_n = qml.math.prod(pnp.conjugate(self.transition_matrix[wires, m_n_vector[1::2]]))
         product_coeff = t_wire_m * t_wire_n
         return product_coeff * inner_product
+
+    def _asarray(self, x, dtype=None):
+        r"""
+        Convert the input to an array of type ``dtype``.
+
+        :Note: If the input is on cuda, it will be copied to cpu.
+
+        :param x: input to be converted
+        :param dtype: type of the output array
+        :return: array of type ``dtype``
+        """
+        try:
+            import torch
+            if isinstance(x, torch.Tensor):
+                x = x.cpu().numpy()
+        except ImportError:
+            pass
+        return qml.math.array(x, dtype=dtype)
 
     def reset(self):
         """Reset the device"""

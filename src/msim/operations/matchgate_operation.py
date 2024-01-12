@@ -6,7 +6,7 @@ from pennylane import numpy as pnp
 from pennylane.wires import Wires
 
 from ..base.matchgate import Matchgate
-from .. import matchgate_parameter_sets as mps
+from .. import matchgate_parameter_sets as mps, utils
 
 
 class MatchgateOperation(Matchgate, Operation):
@@ -71,11 +71,13 @@ class MatchgateOperation(Matchgate, Operation):
             wires = self.wires
         matrix = self.single_transition_particle_matrix
         if qml.math.ndim(matrix) == 2:
-            padded_matrix = pnp.eye(2*len(wires), dtype=matrix.dtype)
+            padded_matrix = pnp.eye(2*len(wires))
         elif qml.math.ndim(matrix) == 3:
-            padded_matrix = pnp.zeros((qml.math.shape(matrix)[0], 2*len(wires), 2*len(wires)), dtype=matrix.dtype)
-            padded_matrix[:, ...] = pnp.eye(2*len(wires), dtype=matrix.dtype)
-        
+            padded_matrix = pnp.zeros((qml.math.shape(matrix)[0], 2*len(wires), 2*len(wires)))
+            padded_matrix[:, ...] = pnp.eye(2*len(wires))
+        else:
+            raise ValueError(f"Cannot pad matrix of ndim {qml.math.ndim(matrix)}.")
+        padded_matrix = utils.math.convert_and_cast_like(padded_matrix, matrix)
         wire0_idx = wires.index(self.wires[0])
         # wire0_submatrix = matrix[:matrix.shape[0]//2, :matrix.shape[1]//2]
         # wire0_shape = wire0_submatrix.shape

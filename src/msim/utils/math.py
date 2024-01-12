@@ -37,3 +37,41 @@ def logm(tensor, like=None):
     batched_tensor = qml.math.reshape(as_arr, (-1, *tensor_shape[-2:]))
     stacked_tensor = qml.math.stack([scipy_logm(m) for m in batched_tensor], axis=0)
     return qml.math.reshape(stacked_tensor, tensor_shape)
+
+
+def shape(tensor):
+    """Get the shape of a tensor.
+
+    :param tensor: The tensor.
+    :type tensor: Any
+    :return: The shape of the tensor.
+    :rtype: tuple
+    """
+    _shape = []
+    if isinstance(tensor, (list, tuple)) and len(tensor) > 0:
+        _shape.append(len(tensor))
+        _shape.extend(qml.math.shape(tensor[0]))
+    else:
+        _shape.extend(qml.math.shape(tensor))
+    return tuple(_shape)
+
+
+def convert_and_cast_like(tensor1, tensor2):
+    return qml.math.cast_like(qml.math.convert_like(tensor1, tensor2), tensor2)
+
+
+def astensor(tensor, like=None, **kwargs):
+    """Convert input to a tensor.
+
+    :param tensor: Input tensor.
+    :type tensor: Any
+    :param like: The desired tensor framework to use.
+    :type like: str, optional
+    :param kwargs: Additional keyword arguments that are passed to the tensor framework.
+    :return: The tensor.
+    :rtype: Any
+    """
+    from ..templates.tensor_like import TensorLike
+    if isinstance(tensor, TensorLike):
+        return tensor
+    return qml.math.array(tensor, like=like, **kwargs)

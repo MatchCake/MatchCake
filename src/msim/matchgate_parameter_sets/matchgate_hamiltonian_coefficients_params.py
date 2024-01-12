@@ -69,7 +69,7 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
     @epsilon.setter
     def epsilon(self, value: float):
         if self.is_batched:
-            self._epsilon = value * pnp.ones_like(self.epsilon)
+            self._epsilon = value * qml.math.ones_like(self.epsilon)
         else:
             assert qml.math.ndim(value) == 0
             self._epsilon = qml.math.array(value).item()

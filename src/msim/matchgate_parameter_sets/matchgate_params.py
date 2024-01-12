@@ -48,9 +48,9 @@ class MatchgateParams:
     def _maybe_cast_to_real(cls, *params, **kwargs):
         list_params = list(params)
         for i, p in enumerate(params):
-            np_params = qml.math.array(p)
-            is_real = utils.check_if_imag_is_zero(qml.math.array(np_params))
-            real_params = pnp.real(qml.math.array(np_params))
+            np_params = utils.math.astensor(p)
+            is_real = utils.check_if_imag_is_zero(np_params)
+            real_params = qml.math.real(np_params)
             if is_real:
                 list_params[i] = real_params
             elif kwargs.get("force_cast_to_real", False):
@@ -121,6 +121,17 @@ class MatchgateParams:
     def is_batched(self):
         return qml.math.ndim(self.to_numpy()) > 1
 
+    @property
+    def is_cuda(self):
+        try:
+            import torch
+        except ImportError:
+            return False
+        self_arr = self.to_numpy()
+        if isinstance(self_arr, torch.Tensor):
+            return self_arr.is_cuda
+        return False
+
     def __getstate__(self):
         state = {
             attr: value
@@ -152,6 +163,8 @@ class MatchgateParams:
         return batch_size
     
     def _set_attrs(self, values, **kwargs):
+        if len(values) > 0:
+            values = qml.math.stack(values, axis=0)
         values_size = qml.math.prod(qml.math.shape(values))
         batch_size = self._infer_batch_size_from_input(values, **kwargs)
         if values_size == 0:
@@ -159,7 +172,11 @@ class MatchgateParams:
         else:
             values = qml.math.reshape(values, (-1, self.N_PARAMS))
         for i, attr in enumerate(self.ATTRS):
-            value = kwargs.get(attr, values[..., i]) * pnp.ones_like(values[..., i])
+            attr_values = kwargs.get(attr, values[..., i])
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=np.ComplexWarning)
+                ones = utils.math.convert_and_cast_like(qml.math.ones_like(values[..., i]), attr_values)
+            value = attr_values * ones
             attr_str = self._ATTR_FORMAT.format(attr)
             setattr(self, attr_str, value)
         return self
@@ -267,6 +284,7 @@ class MatchgateParams:
             matrix = pnp.zeros((self.batch_size, 4, 4), dtype=dtype)
         else:
             matrix = pnp.zeros((4, 4), dtype=dtype)
+        matrix = qml.math.convert_like(matrix, params_arr)
         elements_indexes_as_array = np.array(self.ELEMENTS_INDEXES)
         matrix[..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]] = params_arr
         return matrix

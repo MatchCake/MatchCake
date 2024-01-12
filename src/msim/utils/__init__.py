@@ -33,6 +33,7 @@ from ._pfaffian import (
     pfaffian,
     pfaffian_ltl,
 )
+from . import math
 
 
 def binary_string_to_vector(binary_string: str, encoding: str = "ascii") -> np.ndarray:
@@ -263,7 +264,9 @@ def check_if_imag_is_zero(__matrix: np.ndarray, eps: float = 1e-5) -> bool:
     :param eps: Tolerance for the imaginary part
     :return: True if the imaginary part is zero, False otherwise
     """
-    return np.allclose(__matrix.imag, 0.0, atol=eps)
+    imag_matrix = qml.math.imag(__matrix)
+    zero_like = math.convert_and_cast_like(0.0, imag_matrix)
+    return qml.math.allclose(imag_matrix, zero_like, atol=eps)
 
 
 def decompose_matrix_into_majoranas(
@@ -368,7 +371,7 @@ def make_transition_matrix_from_action_matrix(action_matrix):
     :param action_matrix:
     :return:
     """
-    action_matrix_t = qml.math.swapaxes(action_matrix, axis1=-2, axis2=-1)
+    action_matrix_t = qml.math.einsum("...ij->...ji", action_matrix)
     transition_matrix = 0.5 * (
             action_matrix_t[..., ::2, :] + 1j * action_matrix_t[..., 1::2, :]
     )

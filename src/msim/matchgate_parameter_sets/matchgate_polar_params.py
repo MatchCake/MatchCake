@@ -1,9 +1,7 @@
-from typing import Optional
-
 import numpy as np
-import pennylane.numpy as pnp
 import pennylane as qml
 from .matchgate_params import MatchgateParams
+from .. import utils
 
 
 class MatchgatePolarParams(MatchgateParams):
@@ -14,7 +12,7 @@ class MatchgatePolarParams(MatchgateParams):
 
     def __init__(self, *args, **kwargs):
         if "theta2" in kwargs:
-            kwargs.setdefault("theta4", -qml.math.array(kwargs["theta2"]))
+            kwargs.setdefault("theta4", -utils.math.astensor(kwargs["theta2"]))
         args, kwargs = self._maybe_cast_inputs_to_real(args, kwargs)
         super().__init__(*args, **kwargs)
 

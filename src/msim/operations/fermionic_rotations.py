@@ -19,7 +19,7 @@ def _make_rot_matrix(param, direction):
         raise ValueError(f"Invalid number of dimensions {len(param_shape)}.")
     batch_size = param_shape[0] if ndim == 1 else 1
     param = qml.math.reshape(param, (batch_size, ))
-    matrix = qml.math.convert_like(pnp.zeros((batch_size, 2, 2), dtype=pnp.complex128), param)
+    matrix = utils.math.convert_and_cast_like(pnp.zeros((batch_size, 2, 2)), param)
 
     if direction == "X":
         matrix[:, 0, 0] = qml.math.cos(param / 2)
@@ -42,7 +42,6 @@ def _make_rot_matrix(param, direction):
 
 
 def _make_complete_rot_matrix(params, directions):
-    params = qml.math.array(params)
     params_shape = qml.math.shape(params)
     ndim = len(params_shape)
     if ndim not in [1, 2]:
@@ -50,7 +49,7 @@ def _make_complete_rot_matrix(params, directions):
     if params_shape[-1] != len(directions) and params_shape[-1] != 2:
         raise ValueError(f"Number of parameters ({params_shape[-1]}) and directions ({len(directions)}) must be equal.")
     batch_size = params_shape[0] if ndim == 2 else 1
-    matrix = qml.math.convert_like(pnp.zeros((batch_size, 4, 4), dtype=pnp.complex128), params)
+    matrix = utils.math.convert_and_cast_like(pnp.zeros((batch_size, 4, 4)), params)
     inner_matrices = _make_rot_matrix(params[..., 0], directions[0])
     inner_matrices = qml.math.reshape(inner_matrices, (batch_size, 2, 2))
     outer_matrices = _make_rot_matrix(params[..., 1], directions[1])
@@ -236,7 +235,7 @@ class FermionicRotationYY(FermionicRotation):
 
     def adjoint(self):
         return FermionicRotationYY(
-            -qml.math.array(self._given_params),
+            -utils.math.astensor(self._given_params),
             wires=self.wires,
         )
 
