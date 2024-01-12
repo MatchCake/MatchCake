@@ -35,14 +35,13 @@ if __name__ == '__main__':
     pipline.preprocess_data()
     pipline.print_summary()
     pipline.run(results_table_path=os.path.join(figures_folder, "results_table.csv"))
-    pipline.print_summary()
-    pipline.draw_mpl_kernels(show=False, filepath=os.path.join(figures_folder, "kernels.pdf"), draw_mth="single")
-    plt.close("all")
-    pipline.show(n_pts=512, show=True, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
-    plt.close("all")
     results = pipline.get_results_table(show=True, filepath=os.path.join(figures_folder, "results_table.csv"))
     mean_results = pipline.get_results_table(
         show=True,
         mean=True,
         filepath=os.path.join(figures_folder, "results_table_mean.csv")
     )
+    pipline.draw_mpl_kernels(show=False, filepath=os.path.join(figures_folder, "kernels.pdf"), draw_mth="single")
+    plt.close("all")
+    pipline.show(n_pts=512, show=True, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
+    plt.close("all")
