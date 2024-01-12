@@ -268,6 +268,11 @@ class ClassificationPipeline:
             return
         self.p_bar.set_postfix(kwargs)
 
+    def set_p_bar_postfix_str(self, postfix: str):
+        if self.p_bar is None:
+            return
+        self.p_bar.set_postfix_str(postfix)
+
     def set_p_bar_desc(self, desc: str):
         if self.p_bar is None:
             return
@@ -357,7 +362,7 @@ class ClassificationPipeline:
     @save_on_exit
     def make_kernels(self, fold_idx: int = 0):
         for kernel_name in self.methods:
-            self.set_p_bar_desc(f"Making kernel {kernel_name} for fold {fold_idx}")
+            self.set_p_bar_postfix_str(f"Making kernel {kernel_name} for fold {fold_idx}")
             if self.kernels.get(kernel_name, fold_idx, None) is not None:
                 continue
             try:
@@ -377,7 +382,7 @@ class ClassificationPipeline:
         to_remove = []
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
-            self.set_p_bar_desc(f"Fitting kernel {kernel_name} for fold {fold_idx}")
+            self.set_p_bar_postfix_str(f"Fitting kernel {kernel_name} for fold {fold_idx}")
             if kernel.is_fitted:
                 continue
             try:
@@ -401,10 +406,10 @@ class ClassificationPipeline:
             self.make_kernels()
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         to_remove = []
-        verbose = self.kwargs.get("verbose_gram", True)
+        verbose = self.kwargs.get("verbose_gram", False)
         throw_errors = self.kwargs.get("throw_errors", False)
         for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
-            self.set_p_bar_desc(f"Computing train gram matrix for kernel {kernel_name} for fold {fold_idx}")
+            self.set_p_bar_postfix_str(f"Computing train gram matrix for kernel {kernel_name} for fold {fold_idx}")
             if self.train_gram_matrices.get(kernel_name, fold_idx, None) is not None:
                 continue
             try:
@@ -432,10 +437,10 @@ class ClassificationPipeline:
             self.make_kernels()
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         to_remove = []
-        verbose = self.kwargs.get("verbose_gram", True)
+        verbose = self.kwargs.get("verbose_gram", False)
         throw_errors = self.kwargs.get("throw_errors", False)
         for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
-            self.set_p_bar_desc(f"Computing test gram matrix for kernel {kernel_name} for fold {fold_idx}")
+            self.set_p_bar_postfix_str(f"Computing test gram matrix for kernel {kernel_name} for fold {fold_idx}")
             if self.test_gram_matrices.get(kernel_name, fold_idx, None) is not None:
                 continue
             try:
@@ -467,7 +472,7 @@ class ClassificationPipeline:
     def make_classifiers(self, fold_idx: int = 0):
         cache_size = self.kwargs.get("kernel_cache_size", 10_000)
         for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
-            self.set_p_bar_desc(f"Making classifier {kernel_name} for fold {fold_idx}")
+            self.set_p_bar_postfix_str(f"Making classifier {kernel_name} for fold {fold_idx}")
             if self.classifiers.get(kernel_name, fold_idx, None) is not None:
                 continue
             if self.use_gram_matrices:
@@ -484,7 +489,7 @@ class ClassificationPipeline:
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         to_remove = []
         for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
-            self.set_p_bar_desc(f"Fitting classifier {kernel_name} for fold {fold_idx}")
+            self.set_p_bar_postfix_str(f"Fitting classifier {kernel_name} for fold {fold_idx}")
             is_fitted = True
             try:
                 check_is_fitted(classifier)
@@ -517,7 +522,7 @@ class ClassificationPipeline:
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         to_remove = []
         for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
-            self.set_p_bar_desc(f"Computing train accuracy for classifier {kernel_name} for fold {fold_idx}")
+            self.set_p_bar_postfix_str(f"Computing train accuracy for classifier {kernel_name} for fold {fold_idx}")
             if self.train_accuracies.get(kernel_name, fold_idx, None) is not None:
                 continue
             if classifier.kernel == "precomputed":
@@ -538,7 +543,7 @@ class ClassificationPipeline:
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         to_remove = []
         for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
-            self.set_p_bar_desc(f"Computing test accuracy for classifier {kernel_name} for fold {fold_idx}")
+            self.set_p_bar_postfix_str(f"Computing test accuracy for classifier {kernel_name} for fold {fold_idx}")
             if self.test_accuracies.get(kernel_name, fold_idx, None) is not None:
                 self.update_p_bar()
                 continue
@@ -590,7 +595,7 @@ class ClassificationPipeline:
                     show=show_results_table,
                     filepath=results_table_path
                 )
-        self.set_p_bar_desc("Done. Saving results.")
+        self.set_p_bar_postfix_str("Done. Saving results.")
         self.to_pickle()
         self.p_bar.close()
         return self
@@ -605,7 +610,7 @@ class ClassificationPipeline:
         self.fit_classifiers(fold_idx)
         self.compute_accuracies(fold_idx)
         self.set_p_bar_postfix_with_results_table()
-        self.set_p_bar_desc(f"Done with fold {fold_idx}")
+        self.set_p_bar_postfix_str(f"Done with fold {fold_idx}")
         return self
     
     def print_summary(self):

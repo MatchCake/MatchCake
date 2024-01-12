@@ -44,6 +44,7 @@ class ClassicalKernel(MLKernel):
 
 class MPennylaneQuantumKernel(NIFKernel):
     def __init__(self, size: Optional[int] = None, **kwargs):
+        kwargs["use_cuda"] = False
         super().__init__(size=size, **kwargs)
         self._device_name = kwargs.get("device", "default.qubit")
         self._device_kwargs = kwargs.get("device_kwargs", {})

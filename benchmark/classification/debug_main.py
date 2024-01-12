@@ -24,7 +24,7 @@ def main(**in_kwargs):
             # "lightning_PQC",
             # "nfPQC",
         ],
-        n_kfold_splits=5,
+        n_kfold_splits=3,
         kernel_kwargs=dict(nb_workers=0, batch_size=int(2**15), use_cuda=True),
         # kernel_kwargs=dict(nb_workers=0, batch_size="sqrt"),
         throw_errors=True,
@@ -46,17 +46,17 @@ def main(**in_kwargs):
     pipline.fit_kernels()
     pipline.print_summary()
     pipline.run()
-    pipline.print_summary()
     figures_folder = os.path.join(os.path.dirname(save_path), "figures")
-    pipline.draw_mpl_kernels(show=False, filepath=os.path.join(figures_folder, "kernels.pdf"), draw_mth="single")
-    plt.close("all")
     results = pipline.get_results_table(
         show=_show,
         mean=True,
         filepath=os.path.join(figures_folder, "results_table.csv")
     )
     if _plot:
+        pipline.draw_mpl_kernels(show=False, filepath=os.path.join(figures_folder, "kernels.pdf"), draw_mth="single")
+        plt.close("all")
         pipline.show(n_pts=128, show=_show, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
+        plt.close("all")
     return results
 
 

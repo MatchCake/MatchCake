@@ -222,9 +222,9 @@ class NIFKernel(MLKernel):
         self._device = None
         self._parameters = self.kwargs.get("parameters", None)
         self.use_cuda = self.kwargs.get("use_cuda", False)
-        if self.use_cuda:
-            import torch
-            print(f"Using CUDA: {torch.cuda.is_available()}")
+        # if self.use_cuda:
+        #     import torch
+        #     print(f"Using CUDA: {torch.cuda.is_available()}")
         self.qnode_kwargs = self.kwargs.get(
             "qnode_kwargs", dict(
                 interface="torch" if self.use_cuda else "auto",

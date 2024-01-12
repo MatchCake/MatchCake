@@ -83,6 +83,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     prob_strategies = {"lookup_table", "explicit_sum"}
     contraction_methods = {None, "neighbours"}
 
+    casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
+
     @classmethod
     def capabilities(cls):
         capabilities = super().capabilities().copy()
@@ -100,23 +102,43 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         )
         return capabilities
 
-    @staticmethod
-    def update_single_transition_particle_matrix(single_transition_particle_matrix, other):
-        single_transition_particle_matrix = utils.math.convert_and_cast_like(
-            single_transition_particle_matrix, other
-        )
+    @classmethod
+    def update_single_transition_particle_matrix(cls, single_transition_particle_matrix, other):
+        l_interface = qml.math.get_interface(single_transition_particle_matrix)
+        other_interface = qml.math.get_interface(other)
+        l_priority = cls.casting_priorities.index(l_interface)
+        other_priority = cls.casting_priorities.index(other_interface)
+        if l_priority < other_priority:
+            single_transition_particle_matrix = utils.math.convert_and_cast_like(
+                single_transition_particle_matrix, other
+            )
+        elif l_priority > other_priority:
+            other = utils.math.convert_and_cast_like(
+                other, single_transition_particle_matrix
+            )
+        # single_transition_particle_matrix = utils.math.convert_and_cast_like(
+        #     single_transition_particle_matrix, other
+        # )
         single_transition_particle_matrix = qml.math.einsum(
             "...ij,...jl->...il",
             single_transition_particle_matrix, other
         )
         return single_transition_particle_matrix
 
-    def __init__(self, wires=2, **kwargs):
+    def __init__(
+            self,
+            wires=2,
+            *,
+            r_dtype=np.float64,
+            c_dtype=np.complex128,
+            analytic=None,
+            **kwargs
+    ):
         if np.isscalar(wires):
             assert wires > 1, "At least two wires are required for this device."
         else:
             assert len(wires) > 1, "At least two wires are required for this device."
-        super().__init__(wires=wires, shots=None)
+        super().__init__(wires=wires, shots=None, r_dtype=r_dtype, c_dtype=c_dtype, analytic=analytic)
 
         self.prob_strategy = kwargs.get("prob_strategy", "lookup_table").lower()
         assert self.prob_strategy in self.prob_strategies, (

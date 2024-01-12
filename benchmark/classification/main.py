@@ -6,6 +6,12 @@ os.environ["OMP_NUM_THREADS"] = str(psutil.cpu_count(logical=False))
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
     from classification_pipeline import ClassificationPipeline
+    try:
+        import torch
+        use_cuda = torch.cuda.is_available()
+        print(f"Using cuda: {use_cuda}")
+    except ImportError:
+        use_cuda = False
 
     kwargs = dict(
         dataset_name="digits",
@@ -19,7 +25,7 @@ if __name__ == '__main__':
             "PQC",
             # "lightning_PQC",
         ],
-        kernel_kwargs=dict(nb_workers=0, batch_size=int(2**15)),
+        kernel_kwargs=dict(nb_workers=0, batch_size=int(2**15), use_cuda=use_cuda),
         throw_errors=False,
     )
     save_path = os.path.join(
