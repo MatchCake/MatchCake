@@ -1,6 +1,7 @@
 import warnings
 from typing import Optional
-import sys
+import time
+import datetime
 import os
 import numpy as np
 from matplotlib import pyplot as plt
@@ -171,10 +172,26 @@ class MLKernel(BaseEstimator):
         self.check_is_fitted()
         # b_x0, b_x1 = self.make_batch(x0, x1)
         # distances = self.batch_distance(b_x0, b_x1)
-        batched_distances = [
-            self.batch_distance(b_x0, b_x1, **kwargs)
-            for b_x0, b_x1 in self.make_batches_generator(x0, x1, **kwargs)
-        ]
+        p_bar: Optional[tqdm] = kwargs.pop("p_bar", None)
+        p_bar_postfix_str = p_bar.postfix if p_bar is not None else ""
+        if p_bar is not None:
+            p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: ?, ?/?)")
+        # batched_distances = [
+        #     self.batch_distance(b_x0, b_x1, **kwargs)
+        #     for b_x0, b_x1 in self.make_batches_generator(x0, x1, **kwargs)
+        # ]
+        batched_distances = []
+        start_time = time.perf_counter()
+        n_data = qml.math.shape(x0)[0] * qml.math.shape(x1)[0]
+        n_done = 0
+        for i, (b_x0, b_x1) in enumerate(self.make_batches_generator(x0, x1, **kwargs)):
+            batched_distances.append(self.batch_distance(b_x0, b_x1, **kwargs))
+            if p_bar is not None:
+                n_done += qml.math.shape(b_x0)[0]
+                curr_time = time.perf_counter()
+                eta = (curr_time - start_time) / n_done * (n_data - n_done)
+                eta_fmt = datetime.timedelta(seconds=eta)
+                p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: {eta_fmt}, {n_done}/{n_data})")
         distances = qml.math.concatenate(batched_distances, axis=0)
         return qml.math.reshape(distances, (qml.math.shape(x0)[0], qml.math.shape(x1)[0]))
 
