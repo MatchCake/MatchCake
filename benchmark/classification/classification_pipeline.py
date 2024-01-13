@@ -584,7 +584,7 @@ class ClassificationPipeline:
         self.preprocess_data()
         self.p_bar = tqdm(
             total=self._n_kfold_splits*len(self.methods),
-            desc=f"Running classifiers with {self._n_kfold_splits} folds",
+            desc=f"Classification of {self.dataset_name} with {self._n_kfold_splits} folds",
             unit="cls",
         )
         for fold_idx in range(self._n_kfold_splits):
