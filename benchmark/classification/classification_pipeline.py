@@ -415,7 +415,7 @@ class ClassificationPipeline:
             try:
                 start_time = time.perf_counter()
                 self.train_gram_matrices[kernel_name, fold_idx] = kernel.compute_gram_matrix(
-                    x_train, verbose=verbose, throw_errors=throw_errors
+                    x_train, verbose=verbose, throw_errors=throw_errors, p_bar=self.p_bar
                 )
                 self.train_gram_compute_times[kernel_name, fold_idx] = time.perf_counter() - start_time
             except Exception as e:
@@ -446,7 +446,7 @@ class ClassificationPipeline:
             try:
                 start_time = time.perf_counter()
                 self.test_gram_matrices[kernel_name, fold_idx] = kernel.pairwise_distances(
-                    x_test, x_train, verbose=verbose, throw_errors=throw_errors
+                    x_test, x_train, verbose=verbose, throw_errors=throw_errors, p_bar=self.p_bar
                 )
                 self.test_gram_compute_times[kernel_name, fold_idx] = time.perf_counter() - start_time
             except Exception as e:
