@@ -75,6 +75,7 @@ def main():
 
 if __name__ == '__main__':
     # example of command line:
-    # python benchmark/classification/main.py --dataset_name digits --methods classical fPQC PQC --n_kfold_splits 5
-    # --throw_errors False --show True --plot True --save_dir results --trial cuda_det --show_n_pts 512
+    # python benchmark/classification/main.py --dataset_name digits --methods classical fPQC PQC --trial cuda_det
+    #  --batch_size 32768 --n_kfold_splits 5 --throw_errors False --show True --plot True --save_dir results
+    #  --show_n_pts 512
     sys.exit(main())
