@@ -293,6 +293,11 @@ class ClassificationPipeline:
 
         self.p_bar.set_postfix(postfix)
 
+    def refresh_p_bar(self):
+        if self.p_bar is None:
+            return
+        self.p_bar.refresh()
+
     def load_dataset(self):
         if self.dataset_name == "synthetic":
             self.dataset = datasets.make_classification(
@@ -409,7 +414,7 @@ class ClassificationPipeline:
         verbose = self.kwargs.get("verbose_gram", False)
         throw_errors = self.kwargs.get("throw_errors", False)
         for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"Computing train gram matrix for kernel {kernel_name} for fold {fold_idx}")
+            self.set_p_bar_postfix_str(f"{kernel_name}: train gram matrix {fold_idx+1}/{self._n_kfold_splits}")
             if self.train_gram_matrices.get(kernel_name, fold_idx, None) is not None:
                 continue
             try:
@@ -440,7 +445,7 @@ class ClassificationPipeline:
         verbose = self.kwargs.get("verbose_gram", False)
         throw_errors = self.kwargs.get("throw_errors", False)
         for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"Computing test gram matrix for kernel {kernel_name} for fold {fold_idx}")
+            self.set_p_bar_postfix_str(f"{kernel_name}: test gram matrix {fold_idx+1}/{self._n_kfold_splits}")
             if self.test_gram_matrices.get(kernel_name, fold_idx, None) is not None:
                 continue
             try:
