@@ -1,5 +1,5 @@
 import warnings
-from typing import Optional
+from typing import Optional, Tuple
 import time
 import datetime
 import os
@@ -36,6 +36,8 @@ class MLKernel(BaseEstimator):
         self._size = size
         self.nb_workers = kwargs.get("nb_workers", 0)
         self.batch_size = kwargs.get("batch_size", 32)
+        self._assume_symmetric = kwargs.get("assume_symmetric", True)
+        self._assume_diag_one = kwargs.get("assume_diag_one", True)
         self._batch_size_try_counter = 0
         self.kwargs = kwargs
         
@@ -116,7 +118,7 @@ class MLKernel(BaseEstimator):
             return length
         return self.batch_size
 
-    def make_batches_generator(self, x0, x1, **kwargs):
+    def make_batches_generator_(self, x0, x1, **kwargs):
         x0 = check_array(x0)
         x1 = check_array(x1)
         x0_indexes = np.arange(qml.math.shape(x0)[0])
@@ -136,7 +138,6 @@ class MLKernel(BaseEstimator):
             f"batch_size={self.batch_size})"
         )
         p_bar = tqdm(total=n_batches, desc=desc, disable=not verbose)
-
         for i in range(n_batches):
             start_idx = i * batch_size
             end_idx = (i + 1) * batch_size
@@ -145,6 +146,19 @@ class MLKernel(BaseEstimator):
             yield x0[ib_x0_indexes], x1[ib_x1_indexes]
             p_bar.update(1)
         p_bar.close()
+
+    def make_batches_generator(self, x, **kwargs) -> Tuple[iter, int]:
+        length = qml.math.shape(x)[0]
+        batch_size = self.get_batch_size_for(length)
+        n_batches = int(np.ceil(length / batch_size))
+
+        def _gen():
+            for i in range(n_batches):
+                start_idx = i * batch_size
+                end_idx = (i + 1) * batch_size
+                yield x[start_idx:end_idx]
+
+        return _gen(), n_batches
 
     def pairwise_distances_in_sequence(self, x0, x1, **kwargs):
         x0 = check_array(x0)
@@ -166,7 +180,7 @@ class MLKernel(BaseEstimator):
         _result = np.stack(_list_results, axis=-1)
         return _result
 
-    def pairwise_distances_in_batch(self, x0, x1, **kwargs):
+    def pairwise_distances_in_batch_(self, x0, x1, **kwargs):
         x0 = check_array(x0)
         x1 = check_array(x1)
         self.check_is_fitted()
@@ -188,6 +202,34 @@ class MLKernel(BaseEstimator):
                 p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: {eta_fmt}, {n_done}/{n_data})")
         distances = qml.math.concatenate(batched_distances, axis=0)
         return qml.math.reshape(distances, (qml.math.shape(x0)[0], qml.math.shape(x1)[0]))
+
+    def pairwise_distances_in_batch(self, x0, x1, **kwargs):
+        x0 = check_array(x0)
+        x1 = check_array(x1)
+        self.check_is_fitted()
+        p_bar: Optional[tqdm] = kwargs.pop("p_bar", None)
+        p_bar_postfix_str = p_bar.postfix if p_bar is not None else ""
+        if p_bar is not None:
+            p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: ?, ?%)")
+        gram = np.zeros((qml.math.shape(x0)[0], qml.math.shape(x1)[0]))
+        triu_indices = np.stack(np.triu_indices(n=gram.shape[0], m=gram.shape[1], k=1), axis=-1)
+        start_time = time.perf_counter()
+        n_data = qml.math.shape(triu_indices)[0]
+        n_done = 0
+        batch_gen, n_batches = self.make_batches_generator(triu_indices, **kwargs)
+        for i, b_idx in enumerate(batch_gen):
+            b_x0, b_x1 = x0[b_idx[:, 0]], x1[b_idx[:, 1]]
+            batched_distances = self.batch_distance(b_x0, b_x1, **kwargs)
+            gram[b_idx[:, 0], b_idx[:, 1]] = batched_distances
+            if p_bar is not None:
+                n_done += qml.math.shape(b_x0)[0]
+                curr_time = time.perf_counter()
+                eta = (curr_time - start_time) / n_done * (n_data - n_done)
+                eta_fmt = datetime.timedelta(seconds=eta)
+                p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: {eta_fmt}, {100*n_done/n_data:.2f}%)")
+        gram = gram + gram.T
+        np.fill_diagonal(gram, 1.0)
+        return qml.math.array(gram)
 
     def pairwise_distances(self, x0, x1, **kwargs):
         x0 = check_array(x0)
