@@ -1,7 +1,9 @@
 import warnings
+from collections import defaultdict
 from functools import partial
 
 import pennylane as qml
+import torch
 from pennylane.wires import Wires
 from pennylane.operation import Operation, AnyWires
 from .fermionic_rotations import fRXX, fRYY, fRZZ
@@ -10,6 +12,19 @@ import numpy as np
 
 
 ROT = {"X": fRXX, "Y": fRYY, "Z": fRZZ}
+rotations_map = {  # TODO: to verify
+    "XX": "I",
+    "YY": "I",
+    "ZZ": "I",
+    "XY": "Z",
+    "XZ": "Y",
+    "YX": "Z",
+    "YZ": "X",
+    "ZX": "Y",
+    "ZY": "X",
+}
+rotations_sign_map = defaultdict(lambda: 1j)
+rotations_sign_map.update({"XY": 1j, "YX": -1j, "XZ": -1j, "ZX": 1j, "YZ": 1j, "ZY": -1j})
 
 
 class MAngleEmbedding(Operation):
@@ -25,6 +40,7 @@ class MAngleEmbedding(Operation):
         wires = Wires(wires)
         rotations = hyperparameters.get("rotations", [ROT["X"]])
         contract_rots = hyperparameters.get("contract_rots", False)
+
         if contract_rots:
             warnings.warn("This method is not tested. Use at your own risk.", DeprecationWarning)
             op = partial(qml.math.einsum, "...ij,...jk->...ik")
@@ -93,6 +109,26 @@ class MAngleEmbedding(Operation):
     @property
     def ndim_params(self):
         return (1,)
+
+    def simplify(self) -> "Operation":
+        # TODO: to be tested
+        # TODO: verify the correctness of the simplification
+        # TODO: take a look at https://docs.pennylane.ai/en/stable/_modules/pennylane/transforms/optimization/merge_rotations.html
+        rotations = self._rotations
+        while len(rotations) > 1:
+            new_rotations = []
+            for i in range(0, len(rotations), 2):
+                if i == len(rotations) - 1:
+                    new_rotations.append(rotations[i])
+                else:
+                    new_rotations.append(rotations_map[rotations[i] + rotations[i + 1]])
+            rotations = new_rotations
+        if rotations[0] == "I":
+            return qml.Identity(wires=self.wires)
+        sign = rotations_sign_map[rotations[0]]
+        # import torch
+        # torch.allclose((self.decomposition()[0].gate_data @ self.decomposition()[1].gate_data, self.__class__(1j * self.data[0], wires=self.wires).decomposition()[0].gate_data))
+        return self.__class__(sign * self.data[0], wires=self.wires)
 
 
 class MAngleEmbeddings(Operation):

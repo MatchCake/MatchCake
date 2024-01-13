@@ -278,6 +278,7 @@ class NIFKernel(MLKernel):
         # if self.use_cuda:
         #     import torch
         #     print(f"Using CUDA: {torch.cuda.is_available()}")
+        self.simpify_qnode = self.kwargs.get("simplify_qnode", True)
         self.qnode_kwargs = self.kwargs.get(
             "qnode_kwargs", dict(
                 interface="torch" if self.use_cuda else "auto",
@@ -330,6 +331,8 @@ class NIFKernel(MLKernel):
     def pre_initialize(self):
         self._device = NonInteractingFermionicDevice(wires=self.size)
         self.qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
+        if self.simpify_qnode:
+            self.qnode = qml.simplify(self.qnode)
     
     def fit(self, X, y=None):
         super().fit(X, y)

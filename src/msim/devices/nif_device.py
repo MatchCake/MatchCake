@@ -440,6 +440,39 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
         return new_operations
 
+    def batch_execute(self, circuits):
+        """Execute a batch of quantum circuits on the device.
+
+        The circuits are represented by tapes, and they are executed one-by-one using the
+        device's ``execute`` method. The results are collected in a list.
+
+        For plugin developers: This function should be overwritten if the device can efficiently run multiple
+        circuits on a backend, for example using parallel and/or asynchronous executions.
+
+        Args:
+            circuits (list[~.tape.QuantumTape]): circuits to execute on the device
+
+        Returns:
+            list[array[float]]: list of measured value(s)
+        """
+        if not qml.active_return():
+            return self._batch_execute_legacy(circuits=circuits)
+
+        results = []
+        for circuit in circuits:
+            # we need to reset the device here, else it will
+            # not start the next computation in the zero state
+            self.reset()
+
+            res = self.execute(circuit)
+            results.append(res)
+
+        if self.tracker.active:
+            self.tracker.update(batches=1, batch_len=len(circuits))
+            self.tracker.record()
+
+        return results
+
     def apply(self, operations, rotations=None, **kwargs):
         rotations = rotations or []
         if not isinstance(operations, Iterable):
@@ -456,6 +489,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                     f"Operation {op.name} cannot be used after other Operations have already been applied "
                     f"on a {self.short_name} device."
                 )
+
+            if isinstance(op, qml.Identity):
+                continue
 
             if isinstance(op, qml.StatePrep):
                 self._apply_state_vector(op.parameters[0], op.wires)
