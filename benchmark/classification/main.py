@@ -1,35 +1,55 @@
 import os
+import sys
 import psutil
+import argparse
 os.environ["OMP_NUM_THREADS"] = str(psutil.cpu_count(logical=False))
 
 
-if __name__ == '__main__':
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset_name", type=str, default="digits")
+    parser.add_argument("--methods", type=str, nargs="+", default=["classical", "fPQC", "PQC"])
+    parser.add_argument("--n_kfold_splits", type=int, default=5)
+    parser.add_argument("--throw_errors", type=bool, default=False)
+    parser.add_argument("--show", type=bool, default=False)
+    parser.add_argument("--plot", type=bool, default=False)
+    parser.add_argument("--save_dir", type=str, default=os.path.join(os.path.dirname(__file__), "results"))
+    parser.add_argument("--batch_size", type=int, default=int(2**15))
+    parser.add_argument("--trial", type=str, default="cuda_det")
+    parser.add_argument("--show_n_pts", type=int, default=512)
+    return parser.parse_args()
+
+
+def main():
     from matplotlib import pyplot as plt
     from classification_pipeline import ClassificationPipeline
+
+    args = parse_args()
     try:
         import torch
         use_cuda = torch.cuda.is_available()
         print(f"Using cuda: {use_cuda}")
     except ImportError:
         use_cuda = False
-    trial = "cuda_det"
     kwargs = dict(
-        dataset_name="digits",
+        dataset_name=args.dataset_name,
         # dataset_name="synthetic",
         # dataset_n_samples=32,
         # dataset_n_features=2,
-        methods=[
-            "classical",
-            # "nif",
-            "fPQC",
-            "PQC",
-            # "lightning_PQC",
-        ],
-        kernel_kwargs=dict(nb_workers=0, batch_size=int(2**15), use_cuda=use_cuda),
-        throw_errors=False,
+        # methods=[
+        #     "classical",
+        #     # "nif",
+        #     "fPQC",
+        #     "PQC",
+        #     # "lightning_PQC",
+        # ],
+        methods=args.methods,
+        n_kfold_splits=args.n_kfold_splits,
+        kernel_kwargs=dict(nb_workers=0, batch_size=args.batch_size, use_cuda=use_cuda),
+        throw_errors=args.throw_errors,
     )
     save_path = os.path.join(
-        os.path.dirname(__file__), "results", trial, f"{kwargs['dataset_name']}", f"cls.pkl"
+        args.save_dir, args.trial, f"{kwargs['dataset_name']}", f"cls.pkl"
     )
     pipline = ClassificationPipeline.from_pickle_or_new(
         **kwargs,
@@ -49,5 +69,12 @@ if __name__ == '__main__':
     )
     pipline.draw_mpl_kernels(show=False, filepath=os.path.join(figures_folder, "kernels.pdf"), draw_mth="single")
     plt.close("all")
-    pipline.show(n_pts=512, show=True, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
+    pipline.show(n_pts=args.show_n_pts, show=True, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
     plt.close("all")
+
+
+if __name__ == '__main__':
+    # example of command line:
+    # python benchmark/classification/main.py --dataset_name digits --methods classical fPQC PQC --n_kfold_splits 5
+    # --throw_errors False --show True --plot True --save_dir results --trial cuda_det --show_n_pts 512
+    sys.exit(main())
