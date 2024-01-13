@@ -170,16 +170,10 @@ class MLKernel(BaseEstimator):
         x0 = check_array(x0)
         x1 = check_array(x1)
         self.check_is_fitted()
-        # b_x0, b_x1 = self.make_batch(x0, x1)
-        # distances = self.batch_distance(b_x0, b_x1)
         p_bar: Optional[tqdm] = kwargs.pop("p_bar", None)
         p_bar_postfix_str = p_bar.postfix if p_bar is not None else ""
         if p_bar is not None:
             p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: ?, ?/?)")
-        # batched_distances = [
-        #     self.batch_distance(b_x0, b_x1, **kwargs)
-        #     for b_x0, b_x1 in self.make_batches_generator(x0, x1, **kwargs)
-        # ]
         batched_distances = []
         start_time = time.perf_counter()
         n_data = qml.math.shape(x0)[0] * qml.math.shape(x1)[0]
