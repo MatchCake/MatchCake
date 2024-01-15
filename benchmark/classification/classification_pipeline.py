@@ -877,7 +877,7 @@ class SyntheticGrowthPipeline:
         self.n_samples = n_samples
         self.dataset_name = dataset_name
         self.classification_pipeline_kwargs = classification_pipeline_kwargs or {}
-        self.classification_pipelines = KPredictorContainer("classification_pipelines")
+        self.classification_pipelines = {}
         self.results_table = None
         self.save_dir = save_dir
 
