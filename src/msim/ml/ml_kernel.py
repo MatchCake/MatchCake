@@ -227,8 +227,8 @@ class MLKernel(BaseEstimator):
                 eta = (curr_time - start_time) / n_done * (n_data - n_done)
                 eta_fmt = datetime.timedelta(seconds=eta)
                 p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: {eta_fmt}, {100*n_done/n_data:.2f}%)")
-        tril_indices = np.stack(np.tril_indices(n=gram.shape[0], m=gram.shape[1], k=1), axis=-1)
-        gram[tril_indices[:, 0], tril_indices[:, 1]] = gram[triu_indices[:, 1], triu_indices[:, 0]]
+        tril_indices = np.stack(np.tril_indices(n=gram.shape[0], m=gram.shape[1], k=-1), axis=-1)
+        gram[tril_indices[:, 0], tril_indices[:, 1]] = gram[tril_indices[:, 1], tril_indices[:, 0]]
         np.fill_diagonal(gram, 1.0)
         return qml.math.array(gram)
 
@@ -276,10 +276,7 @@ class NIFKernel(MLKernel):
         self._device = None
         self._parameters = self.kwargs.get("parameters", None)
         self.use_cuda = self.kwargs.get("use_cuda", False)
-        # if self.use_cuda:
-        #     import torch
-        #     print(f"Using CUDA: {torch.cuda.is_available()}")
-        self.simpify_qnode = self.kwargs.get("simplify_qnode", True)
+        self.simpify_qnode = self.kwargs.get("simplify_qnode", False)
         self.qnode_kwargs = dict(
             interface="torch" if self.use_cuda else "auto",
             diff_method=None,
@@ -472,18 +469,6 @@ class PennylaneFermionicPQCKernel(FermionicPQCKernel):
 
     def pre_initialize(self):
         self._device = qml.device(self._device_name, wires=self.size, **self._device_kwargs)
-        self.qnode = qml.QNode(self.circuit, self._device, **self.kwargs.get("qnode_kwargs", {}))
-
-    # def ansatz(self, x):
-    #     wires_double = PATTERN_TO_WIRES["double"](self.wires)
-    #     wires_double_odd = PATTERN_TO_WIRES["double_odd"](self.wires)
-    #     wires_patterns = [wires_double, wires_double_odd]
-    #     for layer in range(self.depth):
-    #         sub_x = x[..., layer * self.size: (layer + 1) * self.size]
-    #         MAngleEmbedding(sub_x, wires=self.wires, rotations=self.rotations)
-    #         fcnot_wires = wires_patterns[layer % len(wires_patterns)]
-    #         for wires in fcnot_wires:
-    #             # qml.CNOT(wires=wires)
-    #             fCNOT(wires=wires)
-    #     return
-
+        self.qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
+        if self.simpify_qnode:
+            self.qnode = qml.simplify(self.qnode)
