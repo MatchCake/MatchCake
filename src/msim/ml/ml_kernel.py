@@ -301,6 +301,14 @@ class NIFKernel(MLKernel):
     @parameters.setter
     def parameters(self, parameters):
         self._parameters = pnp.asarray(parameters)
+
+    @property
+    def n_ops(self):
+        return self.get_n_ops()
+
+    @property
+    def n_params(self):
+        return self.get_n_params()
     
     def __getstate__(self):
         state = {
@@ -354,6 +362,16 @@ class NIFKernel(MLKernel):
     def batch_distance(self, x0, x1, **kwargs):
         x0, x1 = self.cast_tensor_to_interface(x0), self.cast_tensor_to_interface(x1)
         return self.qnode(x0, x1)
+
+    def get_n_ops(self):
+        if getattr(self, "qnode", None) is None or getattr(self.qnode, "tape", None) is None:
+            return None
+        return len(self.qnode.tape.operations)
+
+    def get_n_params(self):
+        if getattr(self, "qnode", None) is None or getattr(self.qnode, "tape", None) is None:
+            return None
+        return len(self.qnode.tape.get_parameters())
 
     def draw(self, **kwargs):
         logging_func = kwargs.pop("logging_func", print)
