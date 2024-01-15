@@ -227,7 +227,8 @@ class MLKernel(BaseEstimator):
                 eta = (curr_time - start_time) / n_done * (n_data - n_done)
                 eta_fmt = datetime.timedelta(seconds=eta)
                 p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: {eta_fmt}, {100*n_done/n_data:.2f}%)")
-        gram = gram + gram.T
+        tril_indices = np.stack(np.tril_indices(n=gram.shape[0], m=gram.shape[1], k=1), axis=-1)
+        gram[tril_indices[:, 0], tril_indices[:, 1]] = gram[triu_indices[:, 1], triu_indices[:, 0]]
         np.fill_diagonal(gram, 1.0)
         return qml.math.array(gram)
 
@@ -279,13 +280,12 @@ class NIFKernel(MLKernel):
         #     import torch
         #     print(f"Using CUDA: {torch.cuda.is_available()}")
         self.simpify_qnode = self.kwargs.get("simplify_qnode", True)
-        self.qnode_kwargs = self.kwargs.get(
-            "qnode_kwargs", dict(
-                interface="torch" if self.use_cuda else "auto",
-                diff_method=None,
-                cache=False,
-            )
+        self.qnode_kwargs = dict(
+            interface="torch" if self.use_cuda else "auto",
+            diff_method=None,
+            cache=False,
         )
+        self.qnode_kwargs.update(self.kwargs.get("qnode_kwargs", {}))
     
     @property
     def size(self):
