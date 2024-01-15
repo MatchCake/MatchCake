@@ -17,7 +17,8 @@ def parse_args():
     parser.add_argument("--batch_size", type=int, default=4096)
     parser.add_argument("--trial", type=str, default="000")
     parser.add_argument("--show_n_pts", type=int, default=512)
-    parser.add_argument("--debug_data_size", type=int, default=None)
+    parser.add_argument("--dataset_n_samples", type=int, default=None)
+    parser.add_argument("--dataset_n_features", type=int, default=None)
     parser.add_argument("--overwrite", type=bool, default=False)
     parser.add_argument("--simplify_qnode", type=bool, default=False)
     return parser.parse_args()
@@ -55,7 +56,8 @@ def main():
             simplify_qnode=args.simplify_qnode
         ),
         throw_errors=args.throw_errors,
-        debug_data_size=args.debug_data_size,
+        dataset_n_samples=args.dataset_n_samples,
+        dataset_n_features=args.dataset_n_features,
         use_gram_matrices=True,
     )
     save_path = os.path.join(
