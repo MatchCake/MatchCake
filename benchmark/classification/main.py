@@ -19,6 +19,7 @@ def parse_args():
     parser.add_argument("--show_n_pts", type=int, default=512)
     parser.add_argument("--debug_data_size", type=int, default=None)
     parser.add_argument("--overwrite", type=bool, default=False)
+    parser.add_argument("--simplify_qnode", type=bool, default=False)
     return parser.parse_args()
 
 
@@ -47,7 +48,12 @@ def main():
         # ],
         methods=args.methods,
         n_kfold_splits=args.n_kfold_splits,
-        kernel_kwargs=dict(nb_workers=0, batch_size=args.batch_size, use_cuda=use_cuda),
+        kernel_kwargs=dict(
+            nb_workers=0,
+            batch_size=args.batch_size,
+            use_cuda=use_cuda,
+            simplify_qnode=args.simplify_qnode
+        ),
         throw_errors=args.throw_errors,
         use_gram_matrices=True,
     )
