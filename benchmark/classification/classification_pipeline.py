@@ -338,6 +338,9 @@ class ClassificationPipeline:
         if self._debug_data_size is not None:
             self.X = self.X[:self._debug_data_size]
             self.y = self.y[:self._debug_data_size]
+        if self.kwargs.get("dataset_n_samples", None) is not None:
+            self.X = self.X[:self.kwargs["dataset_n_samples"]]
+            self.y = self.y[:self.kwargs["dataset_n_samples"]]
         self.X = MinMaxScaler(feature_range=self.kwargs.get("feature_range", (0, 1))).fit_transform(self.X)
         # self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
         #     self.X, self.y,
@@ -843,3 +846,65 @@ class ClassificationPipeline:
         if kwargs.get("show", False):
             print(df.to_markdown())
         return df
+
+    def get_properties_table(self, **kwargs):
+        properties = ["size", "n_ops", "n_params"]
+        df_dict = defaultdict(list)
+        for kernel_name, kernel in self.kernels.get_outer(0).items():
+            for prop in properties:
+                df_dict[prop].append(getattr(kernel, prop, np.NaN))
+                df_dict[self.KERNEL_KEY].append(kernel_name)
+        df = pd.DataFrame(df_dict)
+        filepath: Optional[str] = kwargs.get("filepath", None)
+        if filepath is not None:
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            df.to_csv(filepath)
+        if kwargs.get("show", False):
+            print(df.to_markdown())
+        return df
+
+
+class SyntheticGrowthPipeline:
+    def __init__(
+            self,
+            n_features_list: Optional[List[int]] = None,
+            n_samples: int = 300,
+            dataset_name: str = "synthetic",
+            classification_pipeline_kwargs: Optional[dict] = None,
+            save_dir: Optional[str] = None,
+    ):
+        self.n_features_list = n_features_list or [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+        self.n_samples = n_samples
+        self.dataset_name = dataset_name
+        self.classification_pipeline_kwargs = classification_pipeline_kwargs or {}
+        self.classification_pipelines = KPredictorContainer("classification_pipelines")
+        self.results_table = None
+        self.save_dir = save_dir
+
+    def run(self, **kwargs):
+        save_dir = kwargs.get("save_dir", self.save_dir)
+        for n_features in self.n_features_list:
+            cp_kwargs = deepcopy(self.classification_pipeline_kwargs)
+            cp_kwargs["dataset_n_features"] = n_features
+            cp_kwargs["dataset_n_samples"] = self.n_samples
+            if save_dir is not None:
+                cp_kwargs["save_path"] = os.path.join(
+                    save_dir, f"{self.dataset_name}_{n_features}feat.pkl"
+                )
+            self.classification_pipelines[n_features] = ClassificationPipeline.from_pickle_or_new(
+                pickle_path=cp_kwargs.get("save_path", None), **cp_kwargs
+            ).run(**kwargs)
+        return self
+
+    def get_results_table(self, **kwargs):
+        df_list = []
+        for n_features, pipeline in self.classification_pipelines.items():
+            df_results = pipeline.get_results_table(**kwargs)
+            df_properties = pipeline.get_properties_table(**kwargs)
+            # df["n_features"] = n_features
+            # df_list.append(df)
+        df = pd.concat(df_list)
+        self.results_table = df
+        return df
+
+
