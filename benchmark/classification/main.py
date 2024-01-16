@@ -14,7 +14,7 @@ def parse_args():
     parser.add_argument("--show", type=bool, default=False)
     parser.add_argument("--plot", type=bool, default=False)
     parser.add_argument("--save_dir", type=str, default=os.path.join(os.path.dirname(__file__), "results"))
-    parser.add_argument("--batch_size", type=int, default=4096)
+    parser.add_argument("--batch_size", type=int, default=32768)
     parser.add_argument("--trial", type=str, default="000")
     parser.add_argument("--show_n_pts", type=int, default=512)
     parser.add_argument("--dataset_n_samples", type=int, default=None)
