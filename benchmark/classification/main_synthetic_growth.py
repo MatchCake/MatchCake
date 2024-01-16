@@ -54,6 +54,7 @@ def main():
     )
     pipeline = SyntheticGrowthPipeline(
         n_features_list=args.n_features_list,
+        save_dir=args.save_dir,
         classification_pipeline_kwargs=classification_pipeline_kwargs
     )
     pipeline.run()
