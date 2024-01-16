@@ -4,6 +4,11 @@ import warnings
 
 import psutil
 import argparse
+try:
+    import msim
+except ImportError:
+    sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+    import msim
 os.environ["OMP_NUM_THREADS"] = str(psutil.cpu_count(logical=False))
 
 
@@ -16,7 +21,7 @@ def parse_args():
     parser.add_argument("--show", type=bool, default=False)
     parser.add_argument("--plot", type=bool, default=False)
     parser.add_argument("--save_dir", type=str, default=os.path.join(os.path.dirname(__file__), "results"))
-    parser.add_argument("--batch_size", type=int, default=32768)
+    parser.add_argument("--batch_size", type=int, default=16384)
     parser.add_argument("--trial", type=str, default="000")
     parser.add_argument("--show_n_pts", type=int, default=512)
     parser.add_argument("--dataset_n_samples", type=int, default=None)
@@ -32,17 +37,7 @@ def main():
     from classification_pipeline import ClassificationPipeline
 
     args = parse_args()
-    use_cuda = False
-    if args.use_cuda:
-        try:
-            import torch
-            use_cuda = torch.cuda.is_available()
-            if use_cuda:
-                print(f"Using cuda: {use_cuda}")
-            else:
-                warnings.warn("Cuda not available, using cpu.", ImportWarning)
-        except ImportError:
-            warnings.warn("Pytorch not installed, using cpu.", ImportWarning)
+    use_cuda = args.use_cuda and msim.utils.cuda.is_cuda_available(enable_warnings=args.use_cuda)
     kwargs = dict(
         dataset_name=args.dataset_name,
         # dataset_name="synthetic",
