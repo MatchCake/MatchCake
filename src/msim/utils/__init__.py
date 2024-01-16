@@ -34,6 +34,7 @@ from ._pfaffian import (
     pfaffian_ltl,
 )
 from . import math
+from . import cuda
 
 
 def binary_string_to_vector(binary_string: str, encoding: str = "ascii") -> np.ndarray:
