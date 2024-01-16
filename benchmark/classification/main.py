@@ -1,5 +1,7 @@
 import os
 import sys
+import warnings
+
 import psutil
 import argparse
 os.environ["OMP_NUM_THREADS"] = str(psutil.cpu_count(logical=False))
@@ -21,6 +23,7 @@ def parse_args():
     parser.add_argument("--dataset_n_features", type=int, default=None)
     parser.add_argument("--overwrite", type=bool, default=False)
     parser.add_argument("--simplify_qnode", type=bool, default=False)
+    parser.add_argument("--use_cuda", type=bool, default=True)
     return parser.parse_args()
 
 
@@ -29,12 +32,17 @@ def main():
     from classification_pipeline import ClassificationPipeline
 
     args = parse_args()
-    try:
-        import torch
-        use_cuda = torch.cuda.is_available()
-        print(f"Using cuda: {use_cuda}")
-    except ImportError:
-        use_cuda = False
+    use_cuda = False
+    if args.use_cuda:
+        try:
+            import torch
+            use_cuda = torch.cuda.is_available()
+            if use_cuda:
+                print(f"Using cuda: {use_cuda}")
+            else:
+                warnings.warn("Cuda not available, using cpu.", ImportWarning)
+        except ImportError:
+            warnings.warn("Pytorch not installed, using cpu.", ImportWarning)
     kwargs = dict(
         dataset_name=args.dataset_name,
         # dataset_name="synthetic",
