@@ -16,6 +16,7 @@ from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import check_is_fitted
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import f1_score
 import functools
 import umap
 from tqdm import tqdm
@@ -173,6 +174,9 @@ class ClassificationPipeline:
         "synthetic": datasets.make_classification,
         "mnist": fetch_openml,
         "digits": datasets.load_digits,
+        "Fashion-MNIST": fetch_openml,
+        "SignMNIST": fetch_openml,
+        "Olivetti_faces": datasets.fetch_olivetti_faces,
     }
     available_kernels = {
         "classical": ClassicalKernel,
@@ -191,6 +195,7 @@ class ClassificationPipeline:
     CLASSIFIER_KEY = "Classifier"
     FIT_TIME_KEY = "Fit Time [s]"
     TEST_ACCURACY_KEY = "Test Accuracy [-]"
+    TEST_F1_KEY = "Test F1 Score [-]"
     TRAIN_ACCURACY_KEY = "Train Accuracy [-]"
     PLOT_TIME_KEY = "Plot Time [s]"
     TRAIN_GRAM_COMPUTE_TIME_KEY = "Train Gram Compute Time [s]"
@@ -218,6 +223,7 @@ class ClassificationPipeline:
         self.fit_kernels_times = KPredictorContainer(self.FIT_KERNEL_TIME_KEY)
         self.plot_times = KPredictorContainer(self.PLOT_TIME_KEY)
         self.test_accuracies = KPredictorContainer(self.TEST_ACCURACY_KEY)
+        self.test_f1_scores = KPredictorContainer(self.TEST_F1_KEY)
         self.train_accuracies = KPredictorContainer(self.TRAIN_ACCURACY_KEY)
         self.save_path = kwargs.get("save_path", None)
         self.train_gram_matrices = KPredictorContainer("train_gram_matrices")
@@ -299,6 +305,7 @@ class ClassificationPipeline:
         self.p_bar.refresh()
 
     def load_dataset(self):
+        # self.dataset_name = self.dataset_name.lower()
         if self.dataset_name == "synthetic":
             self.dataset = datasets.make_classification(
                 n_samples=self.kwargs.get("dataset_n_samples", 100),
@@ -317,9 +324,19 @@ class ClassificationPipeline:
             self.dataset = fetch_openml(
                 "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
             )
+        elif self.dataset_name == "Fashion-MNIST":
+            self.dataset = fetch_openml(
+                "Fashion-MNIST", version=1, return_X_y=True, as_frame=False, parser="pandas"
+            )
+        elif self.dataset_name == "SignMNIST":
+            self.dataset = fetch_openml(
+                "SignMNIST", version=1, return_X_y=True, as_frame=False, parser="pandas"
+            )
         elif self.dataset_name == "digits":
             n_class = self._n_class or 10
             self.dataset = self.available_datasets[self.dataset_name](as_frame=True, n_class=n_class)
+        elif self.dataset_name == "Olivetti_faces":
+            self.dataset = self.available_datasets[self.dataset_name](return_X_y=True)
         else:
             raise ValueError(f"Unknown dataset name: {self.dataset_name}")
         return self.dataset
@@ -578,9 +595,46 @@ class ClassificationPipeline:
             self.test_accuracies[kernel_name].pop(fold_idx)
         return self.classifiers
 
+    @save_on_exit
+    def compute_test_f1_scores(self, fold_idx: int = 0):
+        if self.classifiers is None:
+            self.make_classifiers()
+        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
+        to_remove = []
+        for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
+            self.set_p_bar_postfix_str(f"Computing test f1 for classifier {kernel_name} for fold {fold_idx}")
+            if self.test_f1_scores.get(kernel_name, fold_idx, None) is not None:
+                self.update_p_bar()
+                continue
+            if classifier.kernel == "precomputed":
+                test_inputs = self.test_gram_matrices[kernel_name, fold_idx]
+            else:
+                test_inputs = x_test
+            try:
+                self.test_f1_scores[kernel_name, fold_idx] = f1_score(
+                    y_test, classifier.predict(test_inputs), average="weighted"
+                )
+            except Exception as e:
+                if self.kwargs.get("throw_errors", False):
+                    raise e
+                warnings.warn(
+                    f"Failed to compute test f1 score for classifier {kernel_name}: {e}. \n "
+                    f"Removing it from the list of classifiers.",
+                    RuntimeWarning
+                )
+                to_remove.append(kernel_name)
+                continue
+            self.update_p_bar()
+        for kernel_name in to_remove:
+            self.classifiers[kernel_name].pop(fold_idx)
+            self.kernels[kernel_name].pop(fold_idx)
+            self.test_f1_scores[kernel_name].pop(fold_idx)
+        return self.classifiers
+
     def compute_accuracies(self, fold_idx: int = 0):
         self.compute_train_accuracies(fold_idx)
         self.compute_test_accuracies(fold_idx)
+        self.compute_test_f1_scores(fold_idx)
 
     @pbt.decorators.log_func(logging_func=print)
     @save_on_exit
@@ -802,6 +856,7 @@ class ClassificationPipeline:
         containers = [
             self.train_accuracies,
             self.test_accuracies,
+            self.test_f1_scores,
             self.fit_times,
             self.fit_kernels_times,
             self.train_gram_compute_times,
