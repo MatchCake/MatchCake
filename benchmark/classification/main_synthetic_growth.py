@@ -4,6 +4,11 @@ import sys
 import pandas as pd
 import psutil
 from matplotlib import pyplot as plt
+try:
+    import msim
+except ImportError:
+    sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+    import msim
 os.environ["OMP_NUM_THREADS"] = str(psutil.cpu_count(logical=False))
 
 
@@ -36,12 +41,7 @@ def main():
     from classification_pipeline import SyntheticGrowthPipeline
 
     args = parse_args()
-    try:
-        import torch
-        use_cuda = torch.cuda.is_available()
-        print(f"Using cuda: {use_cuda}")
-    except ImportError:
-        use_cuda = False
+    use_cuda = args.use_cuda and msim.utils.cuda.is_cuda_available(enable_warnings=args.use_cuda)
 
     classification_pipeline_kwargs = dict(
         methods=args.methods,
