@@ -132,6 +132,7 @@ class NonInteractingFermionicLookupTable:
         return self._c_2p_alpha_m1__c_2p_beta_m1
     
     def _compute_c_d_alpha__c_d_beta(self):
+        # TODO: return only the einsum with the batch sub script as ...
         b = self._batch_sub_script
         if b:
             return qml.math.einsum(
@@ -152,7 +153,7 @@ class NonInteractingFermionicLookupTable:
                 self.block_diagonal_matrix,
                 qml.math.conjugate(self.transition_matrix)
             )
-        b_t = qml.math.dot(self.block_diagonal_matrix, pnp.conjugate(self.transition_matrix.T))
+        # b_t = qml.math.dot(self.block_diagonal_matrix, qml.math.conjugate(self.transition_matrix.T))
         b_t = qml.math.einsum(
             f"ij,{b}kj->{b}ik",
             self.block_diagonal_matrix, qml.math.conjugate(self.transition_matrix)

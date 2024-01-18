@@ -600,7 +600,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         obs = self.lookup_table.get_observable_of_target_state(
             self.get_sparse_or_dense_state(), target_binary_state, wires
         )
-        return pnp.real(utils.pfaffian(obs, method=self.pfaffian_method))
+        return qml.math.real(utils.pfaffian(obs, method=self.pfaffian_method))
 
     def compute_probability_using_explicit_sum(self, wires=None):
         warnings.warn(

@@ -1,4 +1,5 @@
 import warnings
+from collections import defaultdict
 from typing import Optional, Tuple, Type, Union
 import time
 import datetime
@@ -46,7 +47,7 @@ class StdEstimator(BaseEstimator):
         if not self.is_fitted:
             raise ValueError(f"{self.__class__.__name__} is not fitted.")
         
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **kwargs):
         X, y = check_X_y(X, y)
         self.classes_ = unique_labels(y)
         self.X_ = X
@@ -77,7 +78,7 @@ class MLKernel(StdEstimator):
     def initialize_parameters(self):
         pass
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **kwargs):
         super().fit(X, y)
 
         if self._size is None:
@@ -241,6 +242,8 @@ class MLKernel(StdEstimator):
         tril_indices = np.stack(np.tril_indices(n=gram.shape[0], m=gram.shape[1], k=-1), axis=-1)
         gram[tril_indices[:, 0], tril_indices[:, 1]] = gram[tril_indices[:, 1], tril_indices[:, 0]]
         np.fill_diagonal(gram, 1.0)
+        if p_bar is not None:
+            p_bar.set_postfix_str(p_bar_postfix_str)
         return qml.math.array(gram)
 
     def pairwise_distances(self, x0, x1, **kwargs):
@@ -250,6 +253,7 @@ class MLKernel(StdEstimator):
         if self.batch_size == 0:
             return self.pairwise_distances_in_sequence(x0, x1, **kwargs)
         # TODO: add support for batch_size = try
+        return self.pairwise_distances_in_batch(x0, x1, **kwargs)
         try:
             return self.pairwise_distances_in_batch(x0, x1, **kwargs)
         except Exception as e:
@@ -350,7 +354,7 @@ class NIFKernel(MLKernel):
         if self.simpify_qnode:
             self.qnode = qml.simplify(self.qnode)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **kwargs):
         super().fit(X, y)
         # TODO: optimize parameters with the given dataset
         # TODO: add kernel alignment optimization
@@ -522,66 +526,90 @@ class FixedSizeSVC(StdEstimator):
         self.cache_size = cache_size
         self.random_state = random_state
         self.kernels = None
-        self.n_kernels = None
-        self.classifier = None
         self.estimators_ = None
         self.train_gram_matrices = None
+
+    @property
+    def kernel(self):
+        return self.kernel_cls
+
+    @property
+    def n_kernels(self):
+        return len(self.kernels)
 
     def split_data(self, x, y=None):
         x_shape = qml.math.shape(x)
         if x_shape[0] <= self.max_gram_size:
             return [x], [y]
-        self.n_kernels = int(np.ceil(x_shape[0] / self.max_gram_size))
-        x_splits = np.array_split(x, self.n_kernels)
+        n_splits = int(np.ceil(x_shape[0] / self.max_gram_size))
+        x_splits = np.array_split(x, n_splits)
         if y is not None:
-            y_splits = np.array_split(y, self.n_kernels)
+            y_splits = np.array_split(y, n_splits)
         else:
-            y_splits = [None for _ in range(self.n_kernels)]
+            y_splits = [None for _ in range(n_splits)]
         return x_splits, y_splits
 
-    def get_gram_matrices(self, X):
+    def get_gram_matrices(self, X, **kwargs):
+        p_bar: Optional[tqdm] = kwargs.pop("p_bar", None)
+        p_bar_postfix_str = p_bar.postfix if p_bar is not None else ""
         x_splits, _ = self.split_data(X)
         gram_matrices = []
         for i, sub_x in enumerate(x_splits):
-            gram_matrices.append(self.kernels[i].compute_gram_matrix(sub_x))
+            if p_bar is not None:
+                p_bar.set_postfix_str(f"{p_bar_postfix_str}:[{i+1}/{len(x_splits)}]")
+            gram_matrices.append(self.kernels[i].compute_gram_matrix(sub_x, **kwargs))
+        if p_bar is not None:
+            p_bar.set_postfix_str(p_bar_postfix_str)
         return gram_matrices
 
     def get_gram_matrix(self, X):
         gram_matrices = self.get_gram_matrices(X)
         return qml.math.block_diag(gram_matrices)
 
-    def get_pairwise_distances_matrices(self, x0, x1):
+    def get_pairwise_distances_matrices(self, x0, x1, **kwargs):
         x0_splits, _ = self.split_data(x0)
         x1_splits, _ = self.split_data(x1)
         pairwise_distances = []
         for i, (sub_x0, sub_x1) in enumerate(zip(x0_splits, x1_splits)):
-            pairwise_distances.append(self.kernels[i].pairwise_distances(sub_x0, sub_x1))
+            pairwise_distances.append(self.kernels[i].pairwise_distances(sub_x0, sub_x1, **kwargs))
         return pairwise_distances
 
     def get_pairwise_distances(self, x0, x1):
         pairwise_distances = self.get_pairwise_distances_matrices(x0, x1)
         return qml.math.block_diag(pairwise_distances)
     
-    def fit(self, X, y=None):
-        super().fit(X, y)
+    def fit(self, X, y=None, **kwargs):
+        super().fit(X, y, **kwargs)
         x_splits, y_splits = self.split_data(X, y)
         self.kernels = [
-            self.kernel_cls(**self.kernel_kwargs).fit(sub_x, sub_y)
+            self.kernel_cls(**self.kernel_kwargs).fit(sub_x, sub_y, **kwargs)
             for i, (sub_x, sub_y) in enumerate(zip(x_splits, y_splits))
         ]
-        self.train_gram_matrices = self.get_gram_matrices(X)
+        self.train_gram_matrices = self.get_gram_matrices(X, **kwargs)
         self.estimators_ = [
             svm.SVC(kernel="precomputed", random_state=self.random_state, cache_size=self.cache_size)
             for _ in range(self.n_kernels)
         ]
         for i, (gram_matrix, sub_y) in enumerate(zip(self.train_gram_matrices, y_splits)):
             self.estimators_[i].fit(gram_matrix, sub_y)
-        return self 
+        return self
     
-    def predict(self, X):
+    def predict(self, X, **kwargs):
         self.check_is_fitted()
-        gram_matrices = self.get_pairwise_distances_matrices(X, self.X_)
-        return self.classifier.predict(gram_matrix)
+        if qml.math.shape(X) == qml.math.shape(self.X_) and qml.math.allclose(self.X_, X):
+            gram_matrices = self.train_gram_matrices
+        else:
+            gram_matrices = self.get_pairwise_distances_matrices(X, self.X_, **kwargs)
+        votes = np.zeros((qml.math.shape(X)[0], len(self.classes_)), dtype=int)
+        predictions_stack = []
+        for i, gram_matrix in enumerate(gram_matrices):
+            predictions = self.estimators_[i].predict(gram_matrix)
+            predictions_stack.append(predictions)
+        predictions_stack = np.concatenate(predictions_stack, axis=0)
+        votes[np.arange(qml.math.shape(X)[0]), predictions_stack] += 1
+        return self.classes_[np.argmax(votes, axis=-1)]
 
-
-
+    def score(self, X, y):
+        self.check_is_fitted()
+        pred = self.predict(X)
+        return np.mean(np.isclose(pred, y).astype(float))

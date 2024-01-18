@@ -29,6 +29,7 @@ def parse_args():
     parser.add_argument("--overwrite", type=bool, default=False)
     parser.add_argument("--simplify_qnode", type=bool, default=False)
     parser.add_argument("--use_cuda", type=bool, default=True)
+    parser.add_argument("--max_gram_size", type=int, default=256)
     return parser.parse_args()
 
 
@@ -62,6 +63,7 @@ def main():
         dataset_n_samples=args.dataset_n_samples,
         dataset_n_features=args.dataset_n_features,
         use_gram_matrices=True,
+        max_gram_size=args.max_gram_size,
     )
     save_path = os.path.join(
         args.save_dir, args.trial, f"{kwargs['dataset_name']}", f"cls.pkl"

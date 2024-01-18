@@ -40,7 +40,7 @@ except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import msim
 from msim.ml import ClassificationVisualizer
-from msim.ml.ml_kernel import MLKernel
+from msim.ml.ml_kernel import MLKernel, FixedSizeSVC
 import warnings
 
 
@@ -496,15 +496,23 @@ class ClassificationPipeline:
     @save_on_exit
     def make_classifiers(self, fold_idx: int = 0):
         cache_size = self.kwargs.get("kernel_cache_size", 10_000)
-        for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
+        for kernel_name in self.methods:
+        # for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
             self.set_p_bar_postfix_str(f"Making classifier {kernel_name} for fold {fold_idx}")
             if self.classifiers.get(kernel_name, fold_idx, None) is not None:
                 continue
-            if self.use_gram_matrices:
-                svc_kernel = "precomputed"
-            else:
-                svc_kernel = kernel.pairwise_distances
-            self.classifiers[kernel_name, fold_idx] = svm.SVC(kernel=svc_kernel, random_state=0, cache_size=cache_size)
+            # if self.use_gram_matrices:
+            #     svc_kernel = "precomputed"
+            # else:
+            #     svc_kernel = kernel.pairwise_distances
+            # self.classifiers[kernel_name, fold_idx] = svm.SVC(kernel=svc_kernel, random_state=0, cache_size=cache_size)
+            self.classifiers[kernel_name, fold_idx] = FixedSizeSVC(
+                kernel_cls=self.available_kernels[kernel_name],
+                kernel_kwargs=self.kwargs.get("kernel_kwargs", {}),
+                random_state=self.kwargs.get("kernel_seed", 0),
+                cache_size=cache_size,
+                max_gram_size=self.kwargs.get("max_gram_size", 1024),
+            )
         return self.classifiers
     
     @save_on_exit
@@ -527,7 +535,7 @@ class ClassificationPipeline:
                 if classifier.kernel == "precomputed":
                     classifier.fit(self.train_gram_matrices[kernel_name, fold_idx], y_train)
                 else:
-                    classifier.fit(x_train, y_train)
+                    classifier.fit(x_train, y_train, p_bar=self.p_bar)
                 self.fit_times[kernel_name, fold_idx] = time.perf_counter() - start_time
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
@@ -554,7 +562,7 @@ class ClassificationPipeline:
                 train_inputs = self.train_gram_matrices[kernel_name, fold_idx]
             else:
                 train_inputs = x_train
-            self.train_accuracies[kernel_name, fold_idx] = classifier.score(train_inputs, y_train)
+            self.train_accuracies[kernel_name, fold_idx] = classifier.score(train_inputs, y_train, p_bar=self.p_bar)
         for kernel_name in to_remove:
             self.classifiers[kernel_name].pop(fold_idx)
             self.kernels[kernel_name].pop(fold_idx)
@@ -577,7 +585,7 @@ class ClassificationPipeline:
             else:
                 test_inputs = x_test
             try:
-                self.test_accuracies[kernel_name, fold_idx] = classifier.score(test_inputs, y_test)
+                self.test_accuracies[kernel_name, fold_idx] = classifier.score(test_inputs, y_test, p_bar=self.p_bar)
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
                     raise e
@@ -664,10 +672,10 @@ class ClassificationPipeline:
 
     @save_on_exit
     def run_fold(self, fold_idx: int):
-        self.make_kernels(fold_idx)
-        self.fit_kernels(fold_idx)
-        if self.use_gram_matrices:
-            self.compute_gram_matrices(fold_idx)
+        # self.make_kernels(fold_idx)
+        # self.fit_kernels(fold_idx)
+        # if self.use_gram_matrices:
+        #     self.compute_gram_matrices(fold_idx)
         self.make_classifiers(fold_idx)
         self.fit_classifiers(fold_idx)
         self.compute_accuracies(fold_idx)
