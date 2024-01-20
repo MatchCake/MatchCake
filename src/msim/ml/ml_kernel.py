@@ -609,7 +609,7 @@ class FixedSizeSVC(StdEstimator):
         votes[np.arange(qml.math.shape(X)[0]), predictions_stack] += 1
         return self.classes_[np.argmax(votes, axis=-1)]
 
-    def score(self, X, y):
+    def score(self, X, y, **kwargs):
         self.check_is_fitted()
-        pred = self.predict(X)
+        pred = self.predict(X, **kwargs)
         return np.mean(np.isclose(pred, y).astype(float))
