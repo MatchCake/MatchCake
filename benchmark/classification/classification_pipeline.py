@@ -177,6 +177,7 @@ class ClassificationPipeline:
         "Fashion-MNIST": fetch_openml,
         "SignMNIST": fetch_openml,
         "Olivetti_faces": datasets.fetch_olivetti_faces,
+        "binary_mnist": fetch_openml,
     }
     available_kernels = {
         "classical": ClassicalKernel,
@@ -337,6 +338,17 @@ class ClassificationPipeline:
             self.dataset = self.available_datasets[self.dataset_name](as_frame=True, n_class=n_class)
         elif self.dataset_name == "Olivetti_faces":
             self.dataset = self.available_datasets[self.dataset_name](return_X_y=True)
+        elif self.dataset_name == "binary_mnist":
+            self.dataset = fetch_openml(
+                "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
+            )
+            classes = self.kwargs.get("binary_mnist_classes", (0, 1))
+            assert len(classes) == 2, f"Binary MNIST must have 2 classes, got {len(classes)}"
+            x, y = self.dataset
+            y = y.astype(int)
+            x = x[np.logical_or(y == classes[0], y == classes[1])]
+            y = y[np.logical_or(y == classes[0], y == classes[1])]
+            self.dataset = x, y
         else:
             raise ValueError(f"Unknown dataset name: {self.dataset_name}")
         return self.dataset
