@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument("--overwrite", type=bool, default=False)
     parser.add_argument("--simplify_qnode", type=bool, default=False)
     parser.add_argument("--use_cuda", type=bool, default=True)
-    parser.add_argument("--max_gram_size", type=int, default=256)
+    parser.add_argument("--max_gram_size", type=int, default=2048)
     return parser.parse_args()
 
 
