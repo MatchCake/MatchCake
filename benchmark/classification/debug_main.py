@@ -11,7 +11,7 @@ def main(**in_kwargs):
     kwargs = dict(
         # dataset_name="breast_cancer",
         # dataset_name="digits",
-        dataset_name="digits",
+        dataset_name="binary_mnist",
         # dataset_name="synthetic",
         # dataset_n_samples=32,
         # dataset_n_features=2,
