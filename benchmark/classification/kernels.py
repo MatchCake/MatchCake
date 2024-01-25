@@ -51,7 +51,7 @@ class MPennylaneQuantumKernel(NIFKernel):
 
     def pre_initialize(self):
         self._device = qml.device(self._device_name, wires=self.size, **self._device_kwargs)
-        self.qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
+        self._qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
 
 
 class CPennylaneQuantumKernel(MPennylaneQuantumKernel):
@@ -130,7 +130,7 @@ class LightningPQCKernel(PQCKernel):
 class NeighboursFermionicPQCKernel(FermionicPQCKernel):
     def pre_initialize(self):
         self._device = msim.NonInteractingFermionicDevice(wires=self.size, contraction_method="neighbours")
-        self.qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
+        self._qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
 
 
 class HFermionicPQCKernel(FermionicPQCKernel):

@@ -279,7 +279,7 @@ class MLKernel(StdEstimator):
 
 
 class NIFKernel(MLKernel):
-    UNPICKLABLE_ATTRIBUTES = ['_device', "qnode"]
+    UNPICKLABLE_ATTRIBUTES = ['_device', "_qnode"]
 
     def __init__(
             self,
@@ -287,7 +287,7 @@ class NIFKernel(MLKernel):
             **kwargs
     ):
         super().__init__(size=size, **kwargs)
-        self.qnode = None
+        self._qnode = None
         self._device = None
         self._parameters = self.kwargs.get("parameters", None)
         self.use_cuda = self.kwargs.get("use_cuda", False)
@@ -325,6 +325,25 @@ class NIFKernel(MLKernel):
     def n_params(self):
         return self.get_n_params()
 
+    @property
+    def qnode(self):
+        if self._qnode is None and self.is_fitted:
+            self.pre_initialize()
+        return self._qnode
+
+    @qnode.setter
+    def qnode(self, qnode):
+        self._qnode = qnode
+
+    @property
+    def tape(self):
+        qnode = self.qnode
+        if qnode is None:
+            return None
+        if getattr(qnode, "tape", None) is None and self.is_fitted:
+            self.compile_qnode()
+        return getattr(qnode, "tape", None)
+
     def __getstate__(self):
         state = {
             k: v
@@ -350,9 +369,12 @@ class NIFKernel(MLKernel):
 
     def pre_initialize(self):
         self._device = NonInteractingFermionicDevice(wires=self.size)
-        self.qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
+        self._qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
         if self.simpify_qnode:
-            self.qnode = qml.simplify(self.qnode)
+            self._qnode = qml.simplify(self.qnode)
+
+    def compile_qnode(self):
+        self.batch_distance(self.X_[:2], self.X_[:2])
 
     def fit(self, X, y=None, **kwargs):
         super().fit(X, y)
@@ -380,14 +402,14 @@ class NIFKernel(MLKernel):
         return self.qnode(x0, x1)
 
     def get_n_ops(self):
-        if getattr(self, "qnode", None) is None or getattr(self.qnode, "tape", None) is None:
+        if self.tape is None:
             return None
-        return len(self.qnode.tape.operations)
+        return len(self.tape.operations)
 
     def get_n_params(self):
-        if getattr(self, "qnode", None) is None or getattr(self.qnode, "tape", None) is None:
+        if self.tape is None:
             return None
-        return len(self.qnode.tape.get_parameters())
+        return len(self.tape.get_parameters())
 
     def draw(self, **kwargs):
         logging_func = kwargs.pop("logging_func", print)
@@ -504,9 +526,9 @@ class PennylaneFermionicPQCKernel(FermionicPQCKernel):
 
     def pre_initialize(self):
         self._device = qml.device(self._device_name, wires=self.size, **self._device_kwargs)
-        self.qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
+        self._qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
         if self.simpify_qnode:
-            self.qnode = qml.simplify(self.qnode)
+            self._qnode = qml.simplify(self.qnode)
 
 
 class FixedSizeSVC(StdEstimator):
@@ -536,6 +558,22 @@ class FixedSizeSVC(StdEstimator):
     @property
     def n_kernels(self):
         return len(self.kernels)
+
+    @property
+    def kernel_size(self):
+        return getattr(self.kernels[0], "size", None)
+
+    @property
+    def kernel_n_ops(self):
+        return getattr(self.kernels[0], "n_ops", None)
+
+    @property
+    def kernel_n_params(self):
+        return getattr(self.kernels[0], "n_params", None)
+
+    @property
+    def n_features(self):
+        return qml.math.shape(self.X_)[-1]
 
     def split_data(self, x, y=None):
         x_shape = qml.math.shape(x)

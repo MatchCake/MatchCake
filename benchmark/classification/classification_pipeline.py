@@ -657,7 +657,7 @@ class ClassificationPipeline:
         self.compute_test_f1_scores(fold_idx)
 
     @pbt.decorators.log_func(logging_func=print)
-    @save_on_exit
+    # @save_on_exit
     def run(self, **kwargs):
         results_table_path = kwargs.pop("results_table_path", None)
         show_results_table = kwargs.pop("show_results_table", False)
@@ -923,12 +923,12 @@ class ClassificationPipeline:
         return df
 
     def get_properties_table(self, **kwargs):
-        properties = ["size", "n_ops", "n_params"]
+        properties = kwargs.get("properties", ["kernel_size", "kernel_n_ops", "kernel_n_params", "n_features"])
         df_dict = defaultdict(list)
-        for kernel_name, kernel in self.kernels.get_outer(0).items():
+        for kernel_name, classifier in self.classifiers.get_outer(0).items():
             for prop in properties:
-                df_dict[prop].append(getattr(kernel, prop, np.NaN))
-                df_dict[self.KERNEL_KEY].append(kernel_name)
+                df_dict[prop].append(getattr(classifier, prop, np.NaN))
+            df_dict[self.KERNEL_KEY].append(kernel_name)
         df = pd.DataFrame(df_dict)
         filepath: Optional[str] = kwargs.get("filepath", None)
         if filepath is not None:
@@ -948,13 +948,26 @@ class SyntheticGrowthPipeline:
             classification_pipeline_kwargs: Optional[dict] = None,
             save_dir: Optional[str] = None,
     ):
-        self.n_features_list = n_features_list or [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+        self.n_features_list = n_features_list or [
+            2, 4, 8,
+            # 16, 32, 64, 128, 256, 512, 1024
+        ]
         self.n_samples = n_samples
         self.dataset_name = dataset_name
         self.classification_pipeline_kwargs = classification_pipeline_kwargs or {}
         self.classification_pipelines = {}
-        self.results_table = None
+        self._results_table = None
         self.save_dir = save_dir
+
+    @property
+    def results_table(self):
+        if self._results_table is None:
+            self.get_results_table()
+        return self._results_table
+
+    @results_table.setter
+    def results_table(self, value):
+        self._results_table = value
 
     def run(self, **kwargs):
         save_dir = kwargs.get("save_dir", self.save_dir)
@@ -976,10 +989,35 @@ class SyntheticGrowthPipeline:
         for n_features, pipeline in self.classification_pipelines.items():
             df_results = pipeline.get_results_table(**kwargs)
             df_properties = pipeline.get_properties_table(**kwargs)
-            # df["n_features"] = n_features
-            # df_list.append(df)
+            df = df_results.set_index(pipeline.KERNEL_KEY).join(
+                df_properties.set_index(pipeline.KERNEL_KEY), on=pipeline.KERNEL_KEY
+            )
+            df = df.reset_index().rename(columns={"index": pipeline.KERNEL_KEY})
+            df_list.append(df)
         df = pd.concat(df_list)
         self.results_table = df
+        filepath: Optional[str] = kwargs.get("filepath", None)
+        if filepath is not None:
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            df.to_csv(filepath)
+        if kwargs.get("show", False):
+            print(df.to_markdown())
         return df
+
+    def plot_results(self, **kwargs):
+        x_axis_key = kwargs.get("x_axis_key", "n_features")
+        y_axis_key = kwargs.get("y_axis_key", ClassificationPipeline.FIT_TIME_KEY)
+        df = self.results_table
+        fig, ax = kwargs.get("fig", None), kwargs.get("ax", None)
+        if fig is None or ax is None:
+            fig, ax = plt.subplots(figsize=(14, 10))
+        for kernel_name, kernel_df in df.groupby(ClassificationPipeline.KERNEL_KEY):
+            ax.plot(kernel_df[x_axis_key], kernel_df[y_axis_key], label=kernel_name)
+        ax.set_xlabel(x_axis_key)
+        ax.set_ylabel(y_axis_key)
+        ax.legend()
+        if kwargs.get("show", False):
+            plt.show()
+        return fig, ax
 
 
