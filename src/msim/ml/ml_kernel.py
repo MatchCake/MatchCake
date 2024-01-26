@@ -1,3 +1,4 @@
+import numbers
 import warnings
 from collections import defaultdict
 from typing import Optional, Tuple, Type, Union
@@ -536,7 +537,7 @@ class FixedSizeSVC(StdEstimator):
             self,
             kernel_cls: Union[Type[MLKernel], str],
             kernel_kwargs: Optional[dict] = None,
-            max_gram_size: int = 1024,
+            max_gram_size: Optional[int] = np.inf,
             cache_size: int = 1024,
             random_state: int = 0,
             **kwargs
@@ -544,7 +545,7 @@ class FixedSizeSVC(StdEstimator):
         super().__init__(**kwargs)
         self.kernel_cls = kernel_cls
         self.kernel_kwargs = kernel_kwargs or {}
-        self.max_gram_size = max_gram_size
+        self.max_gram_size = max_gram_size or np.inf
         self.cache_size = cache_size
         self.random_state = random_state
         self.kernels = None
