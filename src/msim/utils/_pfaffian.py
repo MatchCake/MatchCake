@@ -134,6 +134,9 @@ def pfaffian(__matrix, overwrite_input=False, method="P") -> Union[float, comple
         )
         return pfaffian_householder(__matrix, overwrite_input)
     elif method == "det":
+        backend = qml.math.get_interface(__matrix)
+        if backend in ["autograd", "numpy"]:
+            return qml.math.sqrt(qml.math.abs(qml.math.linalg.det(__matrix)))
         return qml.math.sqrt(qml.math.abs(qml.math.det(__matrix)))
     else:
         raise ValueError(f"Invalid method. Got {method}, must be 'P' or 'H'.")

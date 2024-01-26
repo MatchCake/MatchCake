@@ -135,3 +135,23 @@ class NeighboursFermionicPQCKernel(FermionicPQCKernel):
 
 class HFermionicPQCKernel(FermionicPQCKernel):
     pass
+
+
+class CudaFermionicPQCKernel(FermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["use_cuda"] = True
+        super().__init__(size=size, **kwargs)
+
+
+class CpuFermionicPQCKernel(FermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["use_cuda"] = False
+        super().__init__(size=size, **kwargs)

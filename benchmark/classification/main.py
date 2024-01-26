@@ -4,6 +4,7 @@ import warnings
 
 import psutil
 import argparse
+
 try:
     import msim
 except ImportError:
@@ -11,11 +12,21 @@ except ImportError:
     import msim
 os.environ["OMP_NUM_THREADS"] = str(psutil.cpu_count(logical=False))
 
+from classification_pipeline import ClassificationPipeline
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset_name", type=str, default="digits")
-    parser.add_argument("--methods", type=str, nargs="+", default=["classical", "fPQC", "PQC"])
+    parser.add_argument(
+        "--dataset_name", type=str, default="digits",
+        help=f"The dataset to be used for the classification."
+             f"Available datasets: {ClassificationPipeline.available_datasets}."
+    )
+    parser.add_argument(
+        "--methods", type=str, nargs="+", default=["classical", "fPQC-cpu", "PQC"],
+        help=f"The methods to be used for the classification."
+             f"Available methods: {ClassificationPipeline.available_kernels}."
+    )
     parser.add_argument("--n_kfold_splits", type=int, default=5)
     parser.add_argument("--throw_errors", type=bool, default=False)
     parser.add_argument("--show", type=bool, default=False)
@@ -28,17 +39,16 @@ def parse_args():
     parser.add_argument("--dataset_n_features", type=int, default=None)
     parser.add_argument("--overwrite", type=bool, default=False)
     parser.add_argument("--simplify_qnode", type=bool, default=False)
-    parser.add_argument("--use_cuda", type=bool, default=True)
     parser.add_argument("--max_gram_size", type=int, default=2048)
     return parser.parse_args()
 
 
 def main():
     from matplotlib import pyplot as plt
-    from classification_pipeline import ClassificationPipeline
 
     args = parse_args()
-    use_cuda = args.use_cuda and msim.utils.cuda.is_cuda_available(enable_warnings=args.use_cuda)
+    if any(["cuda" in m for m in args.methods]):
+        msim.utils.cuda.is_cuda_available(throw_error=True, enable_warnings=True)
     kwargs = dict(
         dataset_name=args.dataset_name,
         # dataset_name="synthetic",
@@ -56,7 +66,6 @@ def main():
         kernel_kwargs=dict(
             nb_workers=0,
             batch_size=args.batch_size,
-            use_cuda=use_cuda,
             simplify_qnode=args.simplify_qnode
         ),
         throw_errors=args.throw_errors,

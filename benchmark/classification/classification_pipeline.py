@@ -32,6 +32,8 @@ from kernels import (
     LightningPQCKernel,
     PennylaneFermionicPQCKernel,
     NeighboursFermionicPQCKernel,
+    CudaFermionicPQCKernel,
+    CpuFermionicPQCKernel,
 )
 
 try:
@@ -185,6 +187,8 @@ class ClassificationPipeline:
         "c_pennylane": CPennylaneQuantumKernel,
         "nif": NIFKernel,
         "fPQC": FermionicPQCKernel,
+        "fPQC-cuda": CudaFermionicPQCKernel,
+        "fPQC-cpu": CpuFermionicPQCKernel,
         "PQC": PQCKernel,
         "lightning_PQC": LightningPQCKernel,
         "PennylaneFermionicPQCKernel": PennylaneFermionicPQCKernel,
@@ -948,8 +952,8 @@ class SyntheticGrowthPipeline:
             save_dir: Optional[str] = None,
     ):
         self.n_features_list = n_features_list or [
-            2, 4, 8, 16, 32, 64, 128, 256,
-            # 512, 1024
+            2, 4, 8, 16, 32, 64, 128, 256, 512,
+            # 1024
         ]
         self.n_samples = n_samples
         self.dataset_name = dataset_name
@@ -985,6 +989,8 @@ class SyntheticGrowthPipeline:
 
     def get_results_table(self, **kwargs):
         df_list = []
+        show = kwargs.pop("show", False)
+        filepath: Optional[str] = kwargs.pop("filepath", None)
         for n_features, pipeline in self.classification_pipelines.items():
             df_results = pipeline.get_results_table(**kwargs)
             df_properties = pipeline.get_properties_table(**kwargs)
@@ -995,11 +1001,11 @@ class SyntheticGrowthPipeline:
             df_list.append(df)
         df = pd.concat(df_list)
         self.results_table = df
-        filepath: Optional[str] = kwargs.get("filepath", None)
+
         if filepath is not None:
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
             df.to_csv(filepath)
-        if kwargs.get("show", False):
+        if show:
             print(df.to_markdown())
         return df
 
