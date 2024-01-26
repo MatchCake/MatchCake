@@ -21,7 +21,11 @@ def parse_args():
         "--methods", type=str, nargs="+", default=[
             # "classical",
             "fPQC-cpu",
-            "PQC"
+            # "fPQC",
+            "fPQC-cuda",
+            "PQC",
+            "wfPQC-cuda",
+            "wfPQC-cpu",
         ],
         help=f"The methods to be used for the classification."
              f"Example: --methods fPQC PQC."
@@ -36,7 +40,8 @@ def parse_args():
         help="The batch size to be used for the classification."
     )
     parser.add_argument(
-        "--save_dir", type=str, default=os.path.join(os.path.dirname(__file__), "results_sg"),
+        "--save_dir", type=str,
+        default=os.path.join(os.path.dirname(__file__), "results_sg/results_sg_1024"),
         help="The directory where the results will be saved."
     )
     parser.add_argument(
@@ -71,18 +76,27 @@ def main():
     )
     pipeline.run()
     pipeline.get_results_table(show=True)
-    y_keys = [ClassificationPipeline.FIT_TIME_KEY, "kernel_size", "kernel_n_ops", "kernel_n_params"]
-    n_rows = int(np.sqrt(len(y_keys)))
-    n_cols = int(np.ceil(len(y_keys) / n_rows))
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 4 * n_rows))
-    axes = np.ravel(np.asarray([axes]))
-    for i, y_key in enumerate(y_keys):
-        pipeline.plot_results(y_axis_key=y_key, fig=fig, ax=axes[i], show=False)
-        axes[i].set_title(y_key)
-    plt.tight_layout()
-    if args.save_dir is not None:
-        fig.savefig(os.path.join(args.save_dir, "results.pdf"), bbox_inches="tight", dpi=900)
-    plt.show()
+
+    x_keys = ["kernel_size", "n_features"]
+    for x_key in x_keys:
+        y_keys = [
+            ClassificationPipeline.FIT_TIME_KEY,
+            "kernel_n_ops",
+            # ClassificationPipeline.TEST_ACCURACY_KEY,
+            "kernel_depth",
+        ] + [x for x in x_keys if x != x_key]
+        n_rows = int(np.sqrt(len(y_keys)))
+        n_cols = int(np.ceil(len(y_keys) / n_rows))
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 4 * n_rows))
+        axes = np.ravel(np.asarray([axes]))
+        for i, y_key in enumerate(y_keys):
+            pipeline.plot_results(x_axis_key=x_key, y_axis_key=y_key, fig=fig, ax=axes[i], show=False)
+            axes[i].set_title(y_key)
+        plt.tight_layout()
+        if args.save_dir is not None:
+            fig.savefig(os.path.join(args.save_dir, f"results_{x_key}.pdf"), bbox_inches="tight", dpi=900)
+        plt.show()
+        plt.close("all")
 
 
 if __name__ == '__main__':

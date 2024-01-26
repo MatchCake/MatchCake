@@ -1,6 +1,5 @@
 import os
 import sys
-import warnings
 
 import psutil
 import argparse
@@ -12,10 +11,10 @@ except ImportError:
     import msim
 os.environ["OMP_NUM_THREADS"] = str(psutil.cpu_count(logical=False))
 
-from classification_pipeline import ClassificationPipeline
-
 
 def parse_args():
+    from classification_pipeline import ClassificationPipeline
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset_name", type=str, default="digits",
@@ -45,22 +44,13 @@ def parse_args():
 
 def main():
     from matplotlib import pyplot as plt
+    from classification_pipeline import ClassificationPipeline
 
     args = parse_args()
     if any(["cuda" in m for m in args.methods]):
         msim.utils.cuda.is_cuda_available(throw_error=True, enable_warnings=True)
     kwargs = dict(
         dataset_name=args.dataset_name,
-        # dataset_name="synthetic",
-        # dataset_n_samples=32,
-        # dataset_n_features=2,
-        # methods=[
-        #     "classical",
-        #     # "nif",
-        #     "fPQC",
-        #     "PQC",
-        #     # "lightning_PQC",
-        # ],
         methods=args.methods,
         n_kfold_splits=args.n_kfold_splits,
         kernel_kwargs=dict(

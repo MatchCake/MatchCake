@@ -519,6 +519,14 @@ class FermionicPQCKernel(NIFKernel):
         return qml.expval(projector)
 
 
+class WideFermionicPQCKernel(FermionicPQCKernel):
+    def _compute_default_size(self):
+        _size = max(2, int(np.ceil(np.sqrt(self.X_.shape[-1] + 2))))
+        if _size % 2 != 0:
+            _size += 1
+        return _size
+
+
 class PennylaneFermionicPQCKernel(FermionicPQCKernel):
     def __init__(self, size: Optional[int] = None, **kwargs):
         super().__init__(size=size, **kwargs)
@@ -575,6 +583,13 @@ class FixedSizeSVC(StdEstimator):
     @property
     def n_features(self):
         return qml.math.shape(self.X_)[-1]
+
+    def __getattr__(self, item):
+        if item in self.__dict__:
+            return self.__dict__[item]
+        if item.startswith("kernel_"):
+            return getattr(self.kernels[0], item[7:])
+        raise AttributeError(f"{self.__class__.__name__} has no attribute {item}.")
 
     def split_data(self, x, y=None):
         x_shape = qml.math.shape(x)

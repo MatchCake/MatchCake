@@ -20,7 +20,13 @@ except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import msim
     
-from msim.ml.ml_kernel import MLKernel, NIFKernel, FermionicPQCKernel, PennylaneFermionicPQCKernel
+from msim.ml.ml_kernel import (
+    MLKernel,
+    NIFKernel,
+    FermionicPQCKernel,
+    PennylaneFermionicPQCKernel,
+    WideFermionicPQCKernel,
+)
 
 
 class ClassicalKernel(MLKernel):
@@ -148,6 +154,36 @@ class CudaFermionicPQCKernel(FermionicPQCKernel):
 
 
 class CpuFermionicPQCKernel(FermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["use_cuda"] = False
+        super().__init__(size=size, **kwargs)
+
+
+class CudaFermionicPQCKernel(FermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["use_cuda"] = True
+        super().__init__(size=size, **kwargs)
+
+
+class CudaWideFermionicPQCKernel(WideFermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["use_cuda"] = True
+        super().__init__(size=size, **kwargs)
+
+
+class CpuWideFermionicPQCKernel(WideFermionicPQCKernel):
     def __init__(
             self,
             size: Optional[int] = None,

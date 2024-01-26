@@ -34,6 +34,9 @@ from kernels import (
     NeighboursFermionicPQCKernel,
     CudaFermionicPQCKernel,
     CpuFermionicPQCKernel,
+    WideFermionicPQCKernel,
+    CpuWideFermionicPQCKernel,
+    CudaWideFermionicPQCKernel,
 )
 
 try:
@@ -193,6 +196,9 @@ class ClassificationPipeline:
         "lightning_PQC": LightningPQCKernel,
         "PennylaneFermionicPQCKernel": PennylaneFermionicPQCKernel,
         "nfPQC": NeighboursFermionicPQCKernel,
+        "wfPQC": WideFermionicPQCKernel,
+        "wfPQC-cuda": CudaWideFermionicPQCKernel,
+        "wfPQC-cpu": CpuWideFermionicPQCKernel,
     }
     UNPICKLABLE_ATTRIBUTES = ["dataset", "p_bar"]
 
@@ -926,7 +932,9 @@ class ClassificationPipeline:
         return df
 
     def get_properties_table(self, **kwargs):
-        properties = kwargs.get("properties", ["kernel_size", "kernel_n_ops", "kernel_n_params", "n_features"])
+        properties = kwargs.get(
+            "properties", ["kernel_size", "kernel_n_ops", "kernel_n_params", "n_features", "kernel_depth"]
+        )
         df_dict = defaultdict(list)
         for kernel_name, classifier in self.classifiers.get_outer(0).items():
             for prop in properties:
@@ -952,8 +960,7 @@ class SyntheticGrowthPipeline:
             save_dir: Optional[str] = None,
     ):
         self.n_features_list = n_features_list or [
-            2, 4, 8, 16, 32, 64, 128, 256, 512,
-            # 1024
+            2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
         ]
         self.n_samples = n_samples
         self.dataset_name = dataset_name
