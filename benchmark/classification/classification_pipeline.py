@@ -523,7 +523,7 @@ class ClassificationPipeline:
                 kernel_kwargs=self.kwargs.get("kernel_kwargs", {}),
                 random_state=self.kwargs.get("kernel_seed", 0),
                 cache_size=cache_size,
-                max_gram_size=self.kwargs.get("max_gram_size", 1024),
+                max_gram_size=self.kwargs.get("max_gram_size", None),
             )
         return self.classifiers
     
@@ -608,7 +608,6 @@ class ClassificationPipeline:
                 )
                 to_remove.append(kernel_name)
                 continue
-            self.update_p_bar()
         for kernel_name in to_remove:
             self.classifiers[kernel_name].pop(fold_idx)
             self.kernels[kernel_name].pop(fold_idx)
@@ -949,8 +948,8 @@ class SyntheticGrowthPipeline:
             save_dir: Optional[str] = None,
     ):
         self.n_features_list = n_features_list or [
-            2, 4, 8,
-            # 16, 32, 64, 128, 256, 512, 1024
+            2, 4, 8, 16, 32, 64, 128, 256,
+            # 512, 1024
         ]
         self.n_samples = n_samples
         self.dataset_name = dataset_name
@@ -1011,8 +1010,15 @@ class SyntheticGrowthPipeline:
         fig, ax = kwargs.get("fig", None), kwargs.get("ax", None)
         if fig is None or ax is None:
             fig, ax = plt.subplots(figsize=(14, 10))
-        for kernel_name, kernel_df in df.groupby(ClassificationPipeline.KERNEL_KEY):
-            ax.plot(kernel_df[x_axis_key], kernel_df[y_axis_key], label=kernel_name)
+        colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        for i, (kernel_name, kernel_df) in enumerate(df.groupby(ClassificationPipeline.KERNEL_KEY)):
+            x_sorted_unique = np.sort(kernel_df[x_axis_key].unique())
+            y_series = kernel_df.groupby(x_axis_key)[y_axis_key]
+            y_mean = y_series.mean().values
+            y_std = y_series.std().values
+            ax.plot(x_sorted_unique, y_mean, label=kernel_name, color=colors[i])
+            if y_series.count().min() > 1:
+                ax.fill_between(x_sorted_unique, y_mean - y_std, y_mean + y_std, alpha=0.2, color=colors[i])
         ax.set_xlabel(x_axis_key)
         ax.set_ylabel(y_axis_key)
         ax.legend()
