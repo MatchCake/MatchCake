@@ -544,7 +544,7 @@ class ClassificationPipeline:
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         to_remove = []
         for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"Fitting classifier {kernel_name} for fold {fold_idx}")
+            self.set_p_bar_postfix_str(f"Fitting {kernel_name} [fold {fold_idx}]")
             is_fitted = True
             try:
                 check_is_fitted(classifier)
@@ -577,7 +577,7 @@ class ClassificationPipeline:
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         to_remove = []
         for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"Computing train accuracy for classifier {kernel_name} for fold {fold_idx}")
+            self.set_p_bar_postfix_str(f"Computing train accuracy:{kernel_name} [fold {fold_idx}]")
             if self.train_accuracies.get(kernel_name, fold_idx, None) is not None:
                 continue
             if classifier.kernel == "precomputed":
@@ -598,7 +598,7 @@ class ClassificationPipeline:
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         to_remove = []
         for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"Computing test accuracy for classifier {kernel_name} for fold {fold_idx}")
+            self.set_p_bar_postfix_str(f"Computing test accuracy:{kernel_name} [fold {fold_idx}]")
             if self.test_accuracies.get(kernel_name, fold_idx, None) is not None:
                 self.update_p_bar()
                 continue
@@ -631,7 +631,7 @@ class ClassificationPipeline:
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         to_remove = []
         for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"Computing test f1 for classifier {kernel_name} for fold {fold_idx}")
+            self.set_p_bar_postfix_str(f"Computing test f1:{kernel_name} [fold {fold_idx}]")
             if self.test_f1_scores.get(kernel_name, fold_idx, None) is not None:
                 self.update_p_bar()
                 continue
@@ -666,26 +666,22 @@ class ClassificationPipeline:
         self.compute_test_f1_scores(fold_idx)
 
     @pbt.decorators.log_func(logging_func=print)
-    # @save_on_exit
+    @save_on_exit
     def run(self, **kwargs):
-        results_table_path = kwargs.pop("results_table_path", None)
-        show_results_table = kwargs.pop("show_results_table", False)
+        table_path = kwargs.pop("table_path", None)
+        show_tables = kwargs.pop("show_table", False)
         mean_results_table = kwargs.pop("mean_results_table", False)
         self.load_dataset()
         self.preprocess_data()
         self.p_bar = tqdm(
             total=self._n_kfold_splits*len(self.methods),
-            desc=f"Classification of {self.dataset_name} with {self._n_kfold_splits} folds",
+            desc=f"Classification of {self.dataset_name} [{self._n_kfold_splits} folds]",
             unit="cls",
         )
         for fold_idx in range(self._n_kfold_splits):
             self.run_fold(fold_idx)
-            if results_table_path is not None:
-                self.get_results_table(
-                    mean=mean_results_table,
-                    show=show_results_table,
-                    filepath=results_table_path
-                )
+            if table_path is not None:
+                self.get_results_properties_table(mean=mean_results_table, show=show_tables, filepath=table_path)
         self.set_p_bar_postfix_str("Done. Saving results.")
         self.to_pickle()
         self.p_bar.close()
@@ -732,16 +728,15 @@ class ClassificationPipeline:
 
     def draw_mpl_kernels_single(self, **kwargs):
         fold_idx = kwargs.get("fold_idx", 0)
-        kernels = kwargs.pop("kernels", list(self.kernels.get_outer(fold_idx).keys()))
-        kernels = [kernel for kernel in kernels if hasattr(self.kernels[kernel, fold_idx], "draw_mpl")]
-        filepath = kwargs.pop("filepath", None)
+        kernels = kwargs.pop("kernels", list(self.classifiers.get_outer(fold_idx).keys()))
+        kernels = [kernel for kernel in kernels if hasattr(self.classifiers[kernel, fold_idx].kernels[0], "draw_mpl")]
+        filepath: Optional[str] = kwargs.pop("filepath", None)
         show = kwargs.pop("show", False)
         figs, axes = [], []
         for i, kernel_name in enumerate(kernels):
             if filepath is not None:
-                filepath = filepath.replace(".", f"_{kernel_name}.")
-                kwargs["filepath"] = filepath
-            fig, ax = self.kernels[kernel_name, fold_idx].draw_mpl(**kwargs)
+                kwargs["filepath"] = filepath.replace(".", f"_{kernel_name}.")
+            fig, ax = self.classifiers[kernel_name, fold_idx].kernels[0].draw_mpl(**kwargs)
             ax.set_title(kernel_name)
             figs.append(fig)
             axes.append(ax)
@@ -761,7 +756,7 @@ class ClassificationPipeline:
             fig, axes = plt.subplots(n_plots, 1, tight_layout=True, figsize=(14, 10), sharex="all", sharey="all")
         axes = np.ravel(np.asarray([axes]))
         assert len(axes) >= n_plots, f"The number of axes ({len(axes)}) is less than the number of kernels ({kernels})."
-        filepath = kwargs.get("filepath", None)
+        filepath: Optional[str] = kwargs.get("filepath", None)
         for i, kernel_name in enumerate(kernels):
             _fig, _axes = self.kernels[kernel_name].draw_mpl(fig=fig, ax=axes[i], **kwargs)
         if filepath is not None:
@@ -799,10 +794,11 @@ class ClassificationPipeline:
         p_bar = tqdm(models.items(), desc="Plotting decision boundaries", unit="model")
         viz = ClassificationVisualizer(x=self.X, **kwargs)
         for i, (m_name, model) in enumerate(models.items()):
-            if self.use_gram_matrices:
-                predict_func = get_gram_predictor(model, self.kernels[m_name, fold_idx], self.x_train)
-            else:
-                predict_func = getattr(model, "predict", None)
+            # if self.use_gram_matrices:
+            #     predict_func = get_gram_predictor(model, self.classifiers[m_name, fold_idx], self.x_train)
+            # else:
+            #     predict_func = getattr(model, "predict", None)
+            predict_func = getattr(model, "predict", None)
             y_pred = self._db_y_preds.get(m_name, fold_idx, None)
             plot_start_time = time.perf_counter()
             fig, ax, y_pred = viz.plot_2d_decision_boundaries(
@@ -949,6 +945,22 @@ class ClassificationPipeline:
             print(df.to_markdown())
         return df
 
+    def get_results_properties_table(self, **kwargs):
+        filepath: Optional[str] = kwargs.pop("filepath", None)
+        show = kwargs.pop("show", False)
+        df_results = self.get_results_table(**kwargs)
+        df_properties = self.get_properties_table(**kwargs)
+        df = df_results.set_index(self.KERNEL_KEY).join(
+            df_properties.set_index(self.KERNEL_KEY), on=self.KERNEL_KEY
+        )
+        df = df.reset_index().rename(columns={"index": self.KERNEL_KEY})
+        if filepath is not None:
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            df.to_csv(filepath)
+        if show:
+            print(df.to_markdown())
+        return df
+
 
 class SyntheticGrowthPipeline:
     def __init__(
@@ -999,13 +1011,7 @@ class SyntheticGrowthPipeline:
         show = kwargs.pop("show", False)
         filepath: Optional[str] = kwargs.pop("filepath", None)
         for n_features, pipeline in self.classification_pipelines.items():
-            df_results = pipeline.get_results_table(**kwargs)
-            df_properties = pipeline.get_properties_table(**kwargs)
-            df = df_results.set_index(pipeline.KERNEL_KEY).join(
-                df_properties.set_index(pipeline.KERNEL_KEY), on=pipeline.KERNEL_KEY
-            )
-            df = df.reset_index().rename(columns={"index": pipeline.KERNEL_KEY})
-            df_list.append(df)
+            df_list.append(pipeline.get_results_properties_table(**kwargs))
         df = pd.concat(df_list)
         self.results_table = df
 

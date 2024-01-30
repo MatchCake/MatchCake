@@ -435,7 +435,8 @@ class NIFKernel(MLKernel):
             ax: Optional[plt.Axes] = None,
             **kwargs
     ):
-        _fig, _ax = qml.draw_mpl(self.qnode)(self.X_[0], self.X_[-1])
+        x0, x1 = self.cast_tensor_to_interface(self.X_[:2]), self.cast_tensor_to_interface(self.X_[-2:])
+        _fig, _ax = qml.draw_mpl(self.qnode, expansion_strategy=kwargs.get("expansion_strategy", "device"))(x0, x1)
         if fig is None or ax is None:
             fig, ax = _fig, _ax
         else:
@@ -447,7 +448,7 @@ class NIFKernel(MLKernel):
             fig.add_axes(_ax)
             ax = _ax
 
-        filepath = kwargs.get("filepath", None)
+        filepath: Optional[str] = kwargs.get("filepath", None)
         if filepath is not None:
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
             fig.savefig(filepath)

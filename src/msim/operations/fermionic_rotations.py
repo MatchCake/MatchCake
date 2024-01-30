@@ -101,7 +101,7 @@ class FermionicRotation(MatchgateOperation):
 
     def get_implicite_parameters(self):
         params = self._given_params
-        is_real = utils.check_if_imag_is_zero(np.array(params))
+        is_real = utils.check_if_imag_is_zero(params)
         if is_real:
             params = qml.math.cast(params, dtype=float)
         return params

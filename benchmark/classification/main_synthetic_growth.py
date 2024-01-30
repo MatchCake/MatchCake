@@ -20,12 +20,12 @@ def parse_args():
     parser.add_argument(
         "--methods", type=str, nargs="+", default=[
             # "classical",
-            "fPQC-cpu",
-            # "fPQC",
-            "fPQC-cuda",
+            # "fPQC-cpu",
+            "fPQC",
+            # "fPQC-cuda",
             "PQC",
-            "wfPQC-cuda",
-            "wfPQC-cpu",
+            # "wfPQC-cuda",
+            # "wfPQC-cpu",
         ],
         help=f"The methods to be used for the classification."
              f"Example: --methods fPQC PQC."
@@ -41,7 +41,7 @@ def parse_args():
     )
     parser.add_argument(
         "--save_dir", type=str,
-        default=os.path.join(os.path.dirname(__file__), "results_sg/results_sg_1024"),
+        default=os.path.join(os.path.dirname(__file__), "results_sg/1024"),
         help="The directory where the results will be saved."
     )
     parser.add_argument(

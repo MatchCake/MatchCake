@@ -3,6 +3,7 @@ import sys
 
 import psutil
 import argparse
+import numpy as np
 
 try:
     import msim
@@ -17,12 +18,16 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--dataset_name", type=str, default="digits",
+        "--dataset_name", type=str,
+        default="digits",
+        # default="breast_cancer",
         help=f"The dataset to be used for the classification."
              f"Available datasets: {ClassificationPipeline.available_datasets}."
     )
     parser.add_argument(
-        "--methods", type=str, nargs="+", default=["classical", "fPQC-cpu", "PQC"],
+        "--methods", type=str, nargs="+",
+        # default=["classical", "fPQC-cpu", "PQC", "wfPQC-cpu"],
+        default=["classical", "fPQC-cuda", "PQC", "wfPQC-cuda"],
         help=f"The methods to be used for the classification."
              f"Available methods: {ClassificationPipeline.available_kernels}."
     )
@@ -32,13 +37,13 @@ def parse_args():
     parser.add_argument("--plot", type=bool, default=False)
     parser.add_argument("--save_dir", type=str, default=os.path.join(os.path.dirname(__file__), "results"))
     parser.add_argument("--batch_size", type=int, default=16384)
-    parser.add_argument("--trial", type=str, default="000")
+    parser.add_argument("--trial", type=str, default="cls_k5")
     parser.add_argument("--show_n_pts", type=int, default=512)
     parser.add_argument("--dataset_n_samples", type=int, default=None)
     parser.add_argument("--dataset_n_features", type=int, default=None)
-    parser.add_argument("--overwrite", type=bool, default=False)
+    parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--simplify_qnode", type=bool, default=False)
-    parser.add_argument("--max_gram_size", type=int, default=2048)
+    parser.add_argument("--max_gram_size", type=int, default=np.inf)
     return parser.parse_args()
 
 
@@ -68,19 +73,23 @@ def main():
         args.save_dir, args.trial, f"{kwargs['dataset_name']}", f"cls.pkl"
     )
     if args.overwrite:
-        pipeline = ClassificationPipeline(**kwargs)
+        pipeline = ClassificationPipeline(save_path=save_path, **kwargs)
     else:
         pipeline = ClassificationPipeline.from_pickle_or_new(save_path=save_path, **kwargs)
     figures_folder = os.path.join(os.path.dirname(save_path), "figures")
     pipeline.load_dataset()
     pipeline.preprocess_data()
     pipeline.print_summary()
-    pipeline.run(results_table_path=os.path.join(figures_folder, "results_table.csv"))
+    pipeline.run(table_path=os.path.join(figures_folder, "table.csv"))
+    properties = pipeline.get_properties_table(show=True, filepath=os.path.join(figures_folder, "properties.csv"))
     results = pipeline.get_results_table(show=True, filepath=os.path.join(figures_folder, "results_table.csv"))
     mean_results = pipeline.get_results_table(
         show=True,
         mean=True,
-        filepath=os.path.join(figures_folder, "results_table_mean.csv")
+        filepath=os.path.join(figures_folder, "mean_results_table.csv")
+    )
+    mean_results_properties = pipeline.get_results_properties_table(
+        show=True, mean=True, filepath=os.path.join(figures_folder, "mean_results_and_properties_table.csv")
     )
     pipeline.draw_mpl_kernels(show=False, filepath=os.path.join(figures_folder, "kernels.pdf"), draw_mth="single")
     plt.close("all")
