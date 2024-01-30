@@ -605,7 +605,7 @@ class FixedSizeSVC(StdEstimator):
         return x_splits, y_splits
 
     def get_gram_matrices(self, X, **kwargs):
-        p_bar: Optional[tqdm] = kwargs.pop("p_bar", None)
+        p_bar: Optional[tqdm] = kwargs.get("p_bar", None)
         p_bar_postfix_str = p_bar.postfix if p_bar is not None else ""
         x_splits, _ = self.split_data(X)
         gram_matrices = []
