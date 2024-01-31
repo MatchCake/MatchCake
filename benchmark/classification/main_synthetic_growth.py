@@ -21,10 +21,10 @@ def parse_args():
         "--methods", type=str, nargs="+", default=[
             # "classical",
             # "fPQC-cpu",
-            "fPQC",
-            # "fPQC-cuda",
+            # "fPQC",
+            "fPQC-cuda",
             "PQC",
-            # "wfPQC-cuda",
+            "wfPQC-cuda",
             # "wfPQC-cpu",
         ],
         help=f"The methods to be used for the classification."
