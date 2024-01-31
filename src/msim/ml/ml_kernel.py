@@ -460,9 +460,20 @@ class NIFKernel(MLKernel):
 
 
 class FermionicPQCKernel(NIFKernel):
-    """
+    r"""
 
     Inspired from: https://iopscience.iop.org/article/10.1088/2632-2153/acb0b4/meta#artAbst
+
+
+    The size of the kernel is computed as
+
+    .. math::
+        \text{size} = \max\left(2, \lceil\log_2(\text{n features} + 2)\rceil\right)
+
+    and the depth is computed as
+
+    .. math::
+        \text{depth} = \max\left(1, \left(\frac{\text{n features}}{\text{size}} - 1\right)\right)
 
     """
 
