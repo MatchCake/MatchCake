@@ -183,6 +183,7 @@ class ClassificationPipeline:
         "SignMNIST": fetch_openml,
         "Olivetti_faces": datasets.fetch_olivetti_faces,
         "binary_mnist": fetch_openml,
+        "binary_mnist_1800": fetch_openml,
     }
     available_kernels = {
         "classical": ClassicalKernel,
@@ -316,7 +317,7 @@ class ClassificationPipeline:
         self.p_bar.refresh()
 
     def load_dataset(self):
-        # self.dataset_name = self.dataset_name.lower()
+        # TODO: split this method into smaller methods
         if self.dataset_name == "synthetic":
             self.dataset = datasets.make_classification(
                 n_samples=self.kwargs.get("dataset_n_samples", 100),
@@ -359,6 +360,17 @@ class ClassificationPipeline:
             x = x[np.logical_or(y == classes[0], y == classes[1])]
             y = y[np.logical_or(y == classes[0], y == classes[1])]
             self.dataset = x, y
+        elif self.dataset_name == "binary_mnist_1800":
+            self.dataset = fetch_openml(
+                "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
+            )
+            classes = self.kwargs.get("binary_mnist_classes", (0, 1))
+            assert len(classes) == 2, f"Binary MNIST must have 2 classes, got {len(classes)}"
+            x, y = self.dataset
+            y = y.astype(int)
+            x = x[np.logical_or(y == classes[0], y == classes[1])]
+            y = y[np.logical_or(y == classes[0], y == classes[1])]
+            self.dataset = x[:1800], y[:1800]
         else:
             raise ValueError(f"Unknown dataset name: {self.dataset_name}")
         return self.dataset
