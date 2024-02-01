@@ -40,12 +40,12 @@ from kernels import (
 )
 
 try:
-    import msim
+    import matchcake
 except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
-    import msim
-from msim.ml import ClassificationVisualizer
-from msim.ml.ml_kernel import MLKernel, FixedSizeSVC
+    import matchcake
+from matchcake.ml import ClassificationVisualizer
+from matchcake.ml.ml_kernel import MLKernel, FixedSizeSVC
 import warnings
 
 

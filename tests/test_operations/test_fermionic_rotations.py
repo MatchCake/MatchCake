@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from msim import utils
-from msim.operations import fRXX, fRYY, fRZZ
+from matchcake import utils
+from matchcake.operations import fRXX, fRYY, fRZZ
 import pennylane as qml
 
 from ..configs import (

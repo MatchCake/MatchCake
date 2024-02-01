@@ -3,12 +3,12 @@ import sys
 import numpy as np
 import os
 try:
-    import msim
+    import matchcake
 except ImportError:
     import sys
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
-    import msim
-from msim import NonInteractingFermionicDevice, MatchgateOperation, utils
+    import matchcake
+from matchcake import NonInteractingFermionicDevice, MatchgateOperation, utils
 
 
 MPL_RC_DEFAULT_PARAMS = {

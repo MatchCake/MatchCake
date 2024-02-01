@@ -1,6 +1,6 @@
-from msim import utils, MatchgateStandardHamiltonianParams, MatchgateHamiltonianCoefficientsParams, \
+from matchcake import utils, MatchgateStandardHamiltonianParams, MatchgateHamiltonianCoefficientsParams, \
     MatchgateStandardParams
-from msim import matchgate_parameter_sets as mps
+from matchcake import matchgate_parameter_sets as mps
 import numpy as np
 import pennylane as qml
 from pennylane import utils as qml_utils

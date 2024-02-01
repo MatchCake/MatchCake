@@ -11,14 +11,14 @@ import matplotlib.pyplot as plt
 import pythonbasictools as pbt
 
 try:
-    import msim
+    import matchcake
 except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
-    import msim
+    import matchcake
 from utils import MPL_RC_DEFAULT_PARAMS
 from utils import get_device_memory_usage
 from utils import init_nif_device, init_qubit_device
-from msim import MatchgateOperation, mps
+from matchcake import MatchgateOperation, mps
 
 
 matplotlib.rcParams.update(MPL_RC_DEFAULT_PARAMS)
@@ -33,7 +33,7 @@ def angle_embedding_circuit(params_wires_list, initial_state=None, **kwargs):
         initial_state = np.zeros(len(all_wires), dtype=int)
     qml.BasisState(initial_state, wires=all_wires)
     for params, wires in params_wires_list:
-        msim.operations.MAngleEmbedding(params, wires=all_wires)
+        matchcake.operations.MAngleEmbedding(params, wires=all_wires)
     projector: BasisStateProjector = qml.Projector(initial_state, wires=all_wires)
     return qml.expval(projector)
 
@@ -433,7 +433,7 @@ class BenchmarkPipeline:
             out_wires=prob_wires,
         )
         if self._output_type == "probs":
-            out = msim.utils.get_probabilities_from_state(qubit_out, wires=prob_wires)
+            out = matchcake.utils.get_probabilities_from_state(qubit_out, wires=prob_wires)
         elif self._output_type == "expval":
             out = qubit_out
         else:

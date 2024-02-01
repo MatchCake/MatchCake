@@ -17,7 +17,7 @@ from .matchgate_parameter_sets import (
     MatchgateComposedHamiltonianParams,
     MatchgateStandardHamiltonianParams,
 )
-from msim import matchgate_parameter_sets as mps  # Alias
+from matchcake import matchgate_parameter_sets as mps  # Alias
 from .operations import (
     MatchgateOperation,
 )

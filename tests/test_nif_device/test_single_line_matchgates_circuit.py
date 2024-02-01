@@ -2,8 +2,8 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from msim import MatchgateOperation, utils
-from msim import matchgate_parameter_sets as mps
+from matchcake import MatchgateOperation, utils
+from matchcake import matchgate_parameter_sets as mps
 from . import devices_init
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,

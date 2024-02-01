@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from msim import (
+from matchcake import (
     MatchgateHamiltonianCoefficientsParams,
     MatchgateComposedHamiltonianParams,
     MatchgateStandardHamiltonianParams,

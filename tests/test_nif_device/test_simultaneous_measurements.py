@@ -2,9 +2,9 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from msim import MatchgateOperation, NonInteractingFermionicDevice
-from msim import matchgate_parameter_sets as mps
-from msim import utils
+from matchcake import MatchgateOperation, NonInteractingFermionicDevice
+from matchcake import matchgate_parameter_sets as mps
+from matchcake import utils
 from . import devices_init
 from .test_specific_circuit import specific_matchgate_circuit
 from .. import get_slow_test_mark

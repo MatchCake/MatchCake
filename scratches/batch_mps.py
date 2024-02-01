@@ -1,5 +1,5 @@
-import msim
-from msim import matchgate_parameter_sets as mps
+import matchcake
+from matchcake import matchgate_parameter_sets as mps
 import numpy as np
 import pennylane as qml
 import faulthandler
@@ -29,7 +29,7 @@ matchgate_params = mps.MatchgatePolarParams(
     theta3=np.random.rand(),
 )
 print(matchgate_params)
-matchgate = msim.Matchgate(matchgate_params)
+matchgate = matchcake.Matchgate(matchgate_params)
 print(matchgate)
 
 print(matchgate.hamiltonian_coefficients_params.to_matrix())
@@ -41,6 +41,6 @@ exp_trace = qml.math.exp(1j * hamiltonian_trace)
 np.testing.assert_almost_equal(hamiltonian_form_det, gate_det)
 np.testing.assert_almost_equal(gate_det, exp_trace)
 
-mg = msim.Matchgate(mps.MatchgateStandardParams(a=[1, 1], w=1, z=1, d=1))
+mg = matchcake.Matchgate(mps.MatchgateStandardParams(a=[1, 1], w=1, z=1, d=1))
 print(mg.single_transition_particle_matrix)
 np.testing.assert_allclose(mg.single_transition_particle_matrix, qml.math.stack([np.eye(4) for _ in range(2)]))

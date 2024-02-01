@@ -2,7 +2,7 @@ from setuptools import setup
 import setuptools
 
 setup(
-    name='MSim',
+    name='MatchCake',
     long_description='file: README.md',
     long_description_content_type="text/markdown",
     package_dir={"": "src"},

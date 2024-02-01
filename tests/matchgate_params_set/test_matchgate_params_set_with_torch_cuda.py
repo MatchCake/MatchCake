@@ -1,6 +1,6 @@
 import pytest
 
-from msim import mps
+from matchcake import mps
 
 
 def test_matchgate_params_constructor_with_torch_wo_cuda():

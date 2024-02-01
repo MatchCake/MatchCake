@@ -5,8 +5,8 @@ import pennylane as qml
 from pennylane.ops.qubit.observables import BasisStateProjector
 import pytest
 
-from msim import MatchgateOperation, utils
-from msim import matchgate_parameter_sets as mps
+from matchcake import MatchgateOperation, utils
+from matchcake import matchgate_parameter_sets as mps
 from . import devices_init
 from ..configs import (
     TEST_SEED,

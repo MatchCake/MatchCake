@@ -2,9 +2,9 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from msim import MatchgateOperation, NonInteractingFermionicDevice
-from msim import matchgate_parameter_sets as mps
-from msim import utils
+from matchcake import MatchgateOperation, NonInteractingFermionicDevice
+from matchcake import matchgate_parameter_sets as mps
+from matchcake import utils
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
     TEST_SEED,

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from pennylane.math import expm
-from msim.utils.math import logm
+from matchcake.utils.math import logm
 
 from .configs import (
     N_RANDOM_TESTS_PER_CASE,

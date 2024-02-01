@@ -6,10 +6,10 @@ import argparse
 import numpy as np
 
 try:
-    import msim
+    import matchcake
 except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
-    import msim
+    import matchcake
 os.environ["OMP_NUM_THREADS"] = str(psutil.cpu_count(logical=False))
 
 
@@ -53,7 +53,7 @@ def main():
 
     args = parse_args()
     if any(["cuda" in m for m in args.methods]):
-        msim.utils.cuda.is_cuda_available(throw_error=True, enable_warnings=True)
+        matchcake.utils.cuda.is_cuda_available(throw_error=True, enable_warnings=True)
     kwargs = dict(
         dataset_name=args.dataset_name,
         methods=args.methods,

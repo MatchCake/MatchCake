@@ -1,5 +1,5 @@
-from msim import utils
-from msim import mps
+from matchcake import utils
+from matchcake import mps
 import sympy as sp
 import pennylane as qml
 

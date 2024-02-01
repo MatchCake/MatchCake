@@ -4,8 +4,8 @@ import numpy as np
 import pennylane as qml
 from pennylane import numpy as pnp
 
-from msim import MatchgateOperation, NonInteractingFermionicDevice
-from msim import matchgate_parameter_sets as mps
+from matchcake import MatchgateOperation, NonInteractingFermionicDevice
+from matchcake import matchgate_parameter_sets as mps
 
 
 def devices_init(*args, **kwargs) -> Tuple[NonInteractingFermionicDevice, qml.Device]:

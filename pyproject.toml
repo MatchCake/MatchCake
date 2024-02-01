@@ -22,7 +22,7 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "MSim"
+name = "MatchCake"
 dynamic = ["version", ]
 description = ""
 authors = [

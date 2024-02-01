@@ -3,9 +3,9 @@ import pennylane as qml
 import pytest
 from pfapack import pfaffian
 
-from msim import MatchgateOperation, NonInteractingFermionicDevice, Matchgate
-from msim import matchgate_parameter_sets as mps
-from msim import utils
+from matchcake import MatchgateOperation, NonInteractingFermionicDevice, Matchgate
+from matchcake import matchgate_parameter_sets as mps
+from matchcake import utils
 from .configs import ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON, TEST_SEED
 from .test_nif_device import single_matchgate_circuit
 

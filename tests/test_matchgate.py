@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import pennylane as qml
-from msim import Matchgate, mps, utils
+from matchcake import Matchgate, mps, utils
 from .configs import (
     N_RANDOM_TESTS_PER_CASE,
     TEST_SEED,

@@ -1,29 +1,29 @@
-msim package
+matchcake package
 ============
 
 Submodules
 ----------
 
-msim.matchgate module
+matchcake.matchgate module
 ---------------------
 
-.. automodule:: msim.matchgate
+.. automodule:: matchcake.matchgate
    :members:
    :undoc-members:
    :show-inheritance:
 
-msim.qs\_device module
+matchcake.qs\_device module
 ----------------------
 
-.. automodule:: msim.qs_device
+.. automodule:: matchcake.qs_device
    :members:
    :undoc-members:
    :show-inheritance:
 
-msim.utils module
+matchcake.utils module
 -----------------
 
-.. automodule:: msim.utils
+.. automodule:: matchcake.utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -31,7 +31,7 @@ msim.utils module
 Module contents
 ---------------
 
-.. automodule:: msim
+.. automodule:: matchcake
    :members:
    :undoc-members:
    :show-inheritance:

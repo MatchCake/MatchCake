@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
-from msim import utils
-from msim import matchgate_parameter_sets as mps
+from matchcake import utils
+from matchcake import matchgate_parameter_sets as mps
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
     TEST_SEED,

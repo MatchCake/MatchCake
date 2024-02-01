@@ -15,12 +15,12 @@ from pennylane import broadcast
 from pennylane.templates.broadcast import wires_pyramid, PATTERN_TO_NUM_PARAMS, PATTERN_TO_WIRES
 from pennylane import numpy as pnp
 try:
-    import msim
+    import matchcake
 except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
-    import msim
+    import matchcake
     
-from msim.ml.ml_kernel import (
+from matchcake.ml.ml_kernel import (
     MLKernel,
     NIFKernel,
     FermionicPQCKernel,
@@ -135,7 +135,7 @@ class LightningPQCKernel(PQCKernel):
 
 class NeighboursFermionicPQCKernel(FermionicPQCKernel):
     def pre_initialize(self):
-        self._device = msim.NonInteractingFermionicDevice(wires=self.size, contraction_method="neighbours")
+        self._device = matchcake.NonInteractingFermionicDevice(wires=self.size, contraction_method="neighbours")
         self._qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
 
 

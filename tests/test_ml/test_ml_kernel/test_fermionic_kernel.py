@@ -1,8 +1,8 @@
 import pytest
-from msim import ml
+from matchcake import ml
 import numpy as np
 import pennylane as qml
-from msim.ml.ml_kernel import FermionicPQCKernel, PennylaneFermionicPQCKernel
+from matchcake.ml.ml_kernel import FermionicPQCKernel, PennylaneFermionicPQCKernel
 from ...configs import (
     N_RANDOM_TESTS_PER_CASE,
     ATOL_MATRIX_COMPARISON,

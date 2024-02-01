@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from msim import (
+from matchcake import (
     MatchgateStandardParams
 )
 from ..configs import N_RANDOM_TESTS_PER_CASE, TEST_SEED, ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON

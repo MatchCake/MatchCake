@@ -1,4 +1,4 @@
-# Matchgate Circuits using Non-Interacting Fermionic Simulation
+# MatchCake
 
 <div style="text-align:center"><img src="images/logo/Logo.svg" width="40%" /></div>
 
@@ -17,7 +17,7 @@
 
 | Method     | Commands                                                                                                                                                                                  |
 |------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **PyPi**   | `pip install msim`                                                                                                                                                                        |
+| **PyPi**   | `pip install matchcake`                                                                                                                                                                   |
 | **source** | `pip install git+https://github.com/JeremieGince/FermionicSimulation`                                                                                                                     |
 | **wheel**  | 1.Download the .whl file [here](https://github.com/JeremieGince/FermionicSimulation/tree/main/dist);<br> 2. Copy the path of this file on your computer; <br> 3. `pip install [path].whl` |
 
@@ -47,7 +47,7 @@ and following the instructions above.
 
 # Citation
 ```
-@misc{msim_Gince2023,
+@misc{matchcake_Gince2023,
   title={Matchgate Circuits using Non-Interacting Fermionic Simulation},
   author={Jérémie Gince},
   year={2023},
