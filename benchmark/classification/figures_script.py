@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from classification_pipeline import ClassificationPipeline
 
 
@@ -46,13 +45,14 @@ def make_results_table(trial="cls_k5"):
         "mnist": "MNIST",
         "Fashion-MNIST": "Fashion-MNIST",
     }
+    DATASET_KEY = "Dataset"
     for dataset, dataset_fmt_name in datasets_fmt_names.items():
         table_file = get_table_path(dataset, trial=trial)
         if not os.path.isfile(table_file):
             continue
         df = pd.read_csv(table_file)
         df = df[df[ClassificationPipeline.KERNEL_KEY] != "classical"]
-        df["Dataset"] = dataset_fmt_name
+        df[DATASET_KEY] = dataset_fmt_name
         full_df = pd.concat([full_df, df])
 
     # use pm_string_to_floats to convert the accuracies and f1 to floats, multiply by 100,
@@ -73,7 +73,7 @@ def make_results_table(trial="cls_k5"):
         caption=(
             f"Classification test accuracies for the kernels "
             f"{', '.join(full_df[ClassificationPipeline.KERNEL_KEY].unique())}"
-            f" on the datasets {', '.join(list(datasets_fmt_names.values()))}."
+            f" on the datasets {', '.join(full_df[DATASET_KEY].unique())}."
             f" The columns D and N denote the depth and the number of qubits of the kernels, respectively.",
             f"Classification test accuracies.",
         ),
