@@ -68,9 +68,11 @@ class BenchmarkPipeline:
         "nif.explicit_sum",
         "default.qubit",
         # "lightning.qubit",
+        "nif.cuda",
     }
     max_wires_methods = {
         "nif.lookup_table": np.inf,
+        "nif.cuda": np.inf,
         "nif.explicit_sum": 10,
         "default.qubit": 20,
     }
@@ -136,12 +138,14 @@ class BenchmarkPipeline:
         self.methods = methods
         self.methods_functions = {
             "nif.lookup_table": self.execute_nif,
+            "nif.cuda": self.execute_nif_cuda,
             "nif.explicit_sum": self.execute_nif,
             "default.qubit": self.execute_pennylane_qubit,
             "lightning.qubit": self.execute_pennylane_qubit,
         }
         self.device_init_functions = {
             "nif.lookup_table": self.init_nif_lookup_table,
+            "nif.cuda": self.init_nif_lookup_table,
             "nif.explicit_sum": self.init_nif_explicit_sum,
             "default.qubit": self.init_pennylane_default_qubit,
             "lightning.qubit": self.init_pennylane_lightning_qubit,
@@ -325,7 +329,7 @@ class BenchmarkPipeline:
             raise ValueError(
                 f"space_type must be one of 'constant', 'linear', or '2_power'. Got {space_type}."
             )
-        
+
     def gen_random_params(self, n_gates: int, variance_idx: int, pt_idx: int):
         seed = variance_idx * pt_idx + pt_idx
         if self._n_params_per_gate == mps.MatchgatePolarParams.N_PARAMS:
@@ -444,6 +448,23 @@ class BenchmarkPipeline:
         prob_wires = np.arange(n_probs)
         initial_binary_state = np.zeros(device.num_wires, dtype=int)
         qnode = qml.QNode(self._circuit, device, interface=self.interface)
+        out = qnode(
+            list(zip(params, wires)),
+            initial_binary_state,
+            all_wires=device.wires,
+            in_param_type=mps.MatchgatePolarParams,
+            out_op=self._output_type,
+            out_wires=prob_wires,
+        )
+        return out
+
+    def execute_nif_cuda(self, device, params, wires, n_probs) -> Any:
+        import torch
+
+        prob_wires = np.arange(n_probs)
+        initial_binary_state = np.zeros(device.num_wires, dtype=int)
+        qnode = qml.QNode(self._circuit, device, interface="torch")
+        params = torch.tensor(params).cuda()
         out = qnode(
             list(zip(params, wires)),
             initial_binary_state,
