@@ -30,7 +30,9 @@ def main(kwargs):
     n_wires_str = n_wires if isinstance(n_wires, str) else "-".join(map(str, n_wires_range))
     n_gates = kwargs.get("n_gates", 10 * max(n_wires))
     n_gates = 1
-    folder = kwargs.get("folder", f"data/results_{n_wires_str}-qubits_{n_gates}_expval_angle")
+    n_gates = "linear"
+    n_wires = "quadratic"
+    folder = kwargs.get("folder", f"data/results_{n_wires_str}-qubits_{n_gates}_expval")
     std_coeff = kwargs.get("std_coeff", 3)
     fig, axes = plt.subplots(1, 2, figsize=(20, 10))
     benchmark_pipeline = BenchmarkPipeline.from_pickle_or_new(
@@ -39,13 +41,13 @@ def main(kwargs):
         n_wires=n_wires,
         n_gates=n_gates,
         # methods=kwargs.get("methods", ["nif.lookup_table", "default.qubit", "nif.explicit_sum"]),
-        methods=kwargs.get("methods", ["nif.lookup_table", "default.qubit"]),
+        methods=kwargs.get("methods", ["nif.lookup_table", "default.qubit", "nif.cuda"]),
         save_path=f"{folder}/objects",
-        circuit=angle_embedding_circuit,
-        n_params_per_gate=kwargs.get("n_params_per_gate", "wires"),
+        # circuit=angle_embedding_circuit,
+        # n_params_per_gate=kwargs.get("n_params_per_gate", "wires"),
     )
     benchmark_pipeline.run(
-        nb_workers=-2,
+        # nb_workers=-2,
         overwrite=kwargs.get("overwrite", False),
     )
     benchmark_pipeline.show(
