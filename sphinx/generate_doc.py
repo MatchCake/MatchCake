@@ -3,7 +3,7 @@ import os, sys
 
 def generate_doc(path_to_root_dir: str = '.'):
 	commands = [
-		rf"sphinx-apidoc -f -o {path_to_root_dir}/sphinx/source {path_to_root_dir}/src/neurotorch",
+		rf"sphinx-apidoc -f -o {path_to_root_dir}/sphinx/source {path_to_root_dir}/src/matchcake",
 		rf"{path_to_root_dir}\sphinx\make clean html",
 		rf"{path_to_root_dir}\sphinx\make html",
 	]

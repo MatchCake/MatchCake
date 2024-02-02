@@ -50,6 +50,16 @@ dependencies = [
 ]
 
 
+[tool.setuptools.dynamic]
+version = {attr = "matchgate.__version__"}
+readme = {file = ["README.md"]}
+
+[project.urls]
+homepage = "https://github.com/JeremieGince/MatchCake"
+Documentation = "https://github.com/JeremieGince/MatchCake"
+Source = "https://JeremieGince.github.io/MatchCake"
+
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 

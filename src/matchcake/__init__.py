@@ -1,12 +1,12 @@
 """
-MSim is a Python library for simulating non-interacting fermionic systems using Matchgate Circuits.
+MatchCake is a Python library for simulating non-interacting systems of fermions using Matchgate Circuits.
 """
 
 __author__ = "Jérémie Gince"
 __email__ = "gincejeremie@gmail.com"
 __copyright__ = "Copyright 2023, Jérémie Gince"
 __license__ = "Apache 2.0"
-__url__ = "https://github.com/JeremieGince/FermionicSimulation"
+__url__ = "https://github.com/JeremieGince/MatchCake"
 __version__ = "0.0.1-beta0"
 
 from .base import Matchgate

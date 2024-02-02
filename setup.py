@@ -20,9 +20,9 @@ setup(
         "Operating System :: OS Independent",
     ],
     project_urls={
-        'Homepage': 'https://github.com/JeremieGince/FermionicSimulation',
-        'Source': 'https://github.com/JeremieGince/FermionicSimulation',
-        'Documentation': 'https://JeremieGince.github.io/FermionicSimulation',
+        'Homepage': 'https://github.com/JeremieGince/MatchCake',
+        'Source': 'https://github.com/JeremieGince/MatchCake',
+        'Documentation': 'https://JeremieGince.github.io/MatchCake',
     },
 )
 
