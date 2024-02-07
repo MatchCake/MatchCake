@@ -27,7 +27,10 @@ def parse_args():
     parser.add_argument(
         "--methods", type=str, nargs="+",
         # default=["classical", "fPQC-cpu", "PQC", "wfPQC-cpu"],
-        default=["classical", "fPQC-cuda", "PQC", "wfPQC-cuda"],
+        default=[
+            "classical", "fPQC-cuda", "PQC", "wfPQC-cuda",
+            "fcPQC", "fcwfPQC",
+        ],
         help=f"The methods to be used for the classification."
              f"Available methods: {ClassificationPipeline.available_kernels}."
     )

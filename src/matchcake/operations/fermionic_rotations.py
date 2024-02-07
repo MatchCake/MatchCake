@@ -99,7 +99,7 @@ class FermionicRotation(MatchgateOperation):
         kwargs["in_param_type"] = mps.MatchgatePolarParams
         super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
 
-    def get_implicite_parameters(self):
+    def get_implicit_parameters(self):
         params = self._given_params
         is_real = utils.check_if_imag_is_zero(params)
         if is_real:
@@ -109,7 +109,7 @@ class FermionicRotation(MatchgateOperation):
     def __repr__(self):
         """Constructor-call-like representation."""
         if self.parameters:
-            params = ", ".join([repr(p) for p in self.get_implicite_parameters()])
+            params = ", ".join([repr(p) for p in self.get_implicit_parameters()])
             return f"{self.name}({params}, wires={self.wires.tolist()})"
         return f"{self.name}(wires={self.wires.tolist()})"
 
@@ -169,7 +169,7 @@ class FermionicRotation(MatchgateOperation):
         if self.num_params == 0:
             return op_label
 
-        params = self.get_implicite_parameters()
+        params = self.get_implicit_parameters()
 
         if len(qml.math.shape(params[0])) != 0:
             # assume that if the first parameter is matrix-valued, there is only a single parameter

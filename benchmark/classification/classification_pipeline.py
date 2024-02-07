@@ -37,6 +37,8 @@ from kernels import (
     WideFermionicPQCKernel,
     CpuWideFermionicPQCKernel,
     CudaWideFermionicPQCKernel,
+    FastCudaFermionicPQCKernel,
+    FastCudaWideFermionicPQCKernel,
 )
 
 try:
@@ -200,6 +202,8 @@ class ClassificationPipeline:
         "wfPQC": WideFermionicPQCKernel,
         "wfPQC-cuda": CudaWideFermionicPQCKernel,
         "wfPQC-cpu": CpuWideFermionicPQCKernel,
+        "fcPQC": FastCudaFermionicPQCKernel,
+        "fcwfPQC": FastCudaWideFermionicPQCKernel,
     }
     UNPICKLABLE_ATTRIBUTES = ["dataset", "p_bar"]
 

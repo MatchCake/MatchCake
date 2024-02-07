@@ -25,6 +25,7 @@ from tqdm import tqdm
 
 from ..devices.nif_device import NonInteractingFermionicDevice
 from ..operations import MAngleEmbedding, MAngleEmbeddings, fRZZ, fCNOT
+from ..operations.fermionic_controlled_not import FastfCNOT
 
 
 def mrot_zz_template(param0, param1, wires):
@@ -487,6 +488,7 @@ class FermionicPQCKernel(NIFKernel):
         self._parameter_scaling = kwargs.get("parameter_scaling", np.pi / 2)
         self._depth = kwargs.get("depth", None)
         self._rotations = kwargs.get("rotations", "Y,Z")
+        self._use_fast_cnot = kwargs.get("use_fast_cnot", False)
 
     @property
     def depth(self):
@@ -519,7 +521,10 @@ class FermionicPQCKernel(NIFKernel):
             MAngleEmbedding(sub_x, wires=self.wires, rotations=self.rotations)
             fcnot_wires = wires_patterns[layer % len(wires_patterns)]
             for wires in fcnot_wires:
-                fCNOT(wires=wires)
+                if self._use_fast_cnot:
+                    FastfCNOT(wires=wires)
+                else:
+                    fCNOT(wires=wires)
         return
 
     def circuit(self, x0, x1):

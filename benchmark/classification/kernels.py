@@ -191,3 +191,23 @@ class CpuWideFermionicPQCKernel(WideFermionicPQCKernel):
     ):
         kwargs["use_cuda"] = False
         super().__init__(size=size, **kwargs)
+
+
+class FastCudaWideFermionicPQCKernel(CudaWideFermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["use_fast_cnot"] = True
+        super().__init__(size=size, **kwargs)
+
+
+class FastCudaFermionicPQCKernel(CudaFermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["use_fast_cnot"] = True
+        super().__init__(size=size, **kwargs)

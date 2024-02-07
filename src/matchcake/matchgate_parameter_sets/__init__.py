@@ -19,3 +19,14 @@ fSWAP = MatchgateStandardParams(
 HellParams = MatchgatePolarParams(
     r0=0.5, r1=0.1, theta0=np.pi, theta1=np.pi / 2, theta2=np.pi / 3, theta3=np.pi / 4, theta4=np.pi / 5
 )
+fCNOT = MatchgateStandardParams(
+    a=0, b=1, c=-1, d=0,
+    w=1, x=0, y=0, z=1,
+)
+_inv_sqrt_2 = 1 / np.sqrt(2)
+fHH = MatchgateStandardParams(
+    a=_inv_sqrt_2, b=_inv_sqrt_2,
+    c=_inv_sqrt_2, d=-_inv_sqrt_2,
+    w=_inv_sqrt_2, x=_inv_sqrt_2,
+    y=_inv_sqrt_2, z=-_inv_sqrt_2,
+)

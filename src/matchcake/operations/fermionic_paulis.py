@@ -32,10 +32,13 @@ class FermionicPauli(MatchgateOperation):
         kwargs["in_param_type"] = mps.MatchgatePolarParams
         super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
 
+    def get_implicit_parameters(self):
+        return self._paulis
+
     def __repr__(self):
         """Constructor-call-like representation."""
         if self.parameters:
-            params = ", ".join([repr(p) for p in self.get_implicite_parameters()])
+            params = ", ".join([repr(p) for p in self.get_implicit_parameters()])
             return f"{self.name}({params}, wires={self.wires.tolist()})"
         return f"{self.name}(wires={self.wires.tolist()})"
 

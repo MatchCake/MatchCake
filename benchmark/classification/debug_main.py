@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pandas as pd
 import psutil
 from matplotlib import pyplot as plt
@@ -18,16 +19,19 @@ def main(**in_kwargs):
         methods=[
             # "classical",
             # "nif",
-            "fPQC",
+            "fcPQC",
+            "fcwfPQC",
+            "wfPQC-cuda",
+            "fPQC-cuda",
             # "PQC",
             # "PennylaneFermionicPQCKernel",
             # "lightning_PQC",
             # "nfPQC",
         ],
-        n_kfold_splits=1,
+        n_kfold_splits=2,
         kernel_kwargs=dict(nb_workers=0, batch_size=4096, use_cuda=False),
         # kernel_kwargs=dict(nb_workers=0, batch_size="sqrt"),
-        max_gram_size=2048,
+        max_gram_size=np.inf,
         throw_errors=True,
     )
     kwargs.update(in_kwargs)
@@ -38,7 +42,7 @@ def main(**in_kwargs):
     )
     pipline = ClassificationPipeline.from_pickle_or_new(
         **kwargs,
-        # save_path=save_path,
+        save_path=save_path,
         use_gram_matrices=True,
     )
     pipline.load_dataset()
@@ -81,7 +85,7 @@ if __name__ == '__main__':
     from matchcake import MatchgateOperation
     # MatchgateOperation.DEFAULT_USE_H_FOR_TRANSITION_MATRIX = True
     main(
-        debug_data_size=100,
+        debug_data_size=300,
         show=True,
         plot=False,
     )
