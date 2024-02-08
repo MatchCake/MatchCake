@@ -259,7 +259,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             mem += self._pre_rotated_sparse_state.indices.size * self._pre_rotated_sparse_state.indices.dtype.itemsize
             mem += self._pre_rotated_sparse_state.indptr.size * self._pre_rotated_sparse_state.indptr.dtype.itemsize
         if self._transition_matrix is not None:
-            mem += self._transition_matrix.size * self._transition_matrix.dtype.itemsize
+            size = qml.math.prod(qml.math.shape(self._transition_matrix))
+            mem += size * self._transition_matrix.dtype.itemsize
         if self._lookup_table is not None:
             mem += self._lookup_table.memory_usage
         return mem

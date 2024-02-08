@@ -33,7 +33,8 @@ class NonInteractingFermionicLookupTable:
     
     @property
     def memory_usage(self):
-        mem = self.transition_matrix.size * self.transition_matrix.dtype.itemsize
+        size = qml.math.prod(qml.math.shape(self.transition_matrix))
+        mem = size * self.transition_matrix.dtype.itemsize
         tensors = [
             self._c_d_alpha__c_d_beta,
             self._c_d_alpha__c_e_beta,
@@ -46,7 +47,7 @@ class NonInteractingFermionicLookupTable:
             self._c_2p_alpha_m1__c_2p_beta_m1,
         ]
         tensors = [t for t in tensors if t is not None]
-        mem += sum([t.size * t.dtype.itemsize for t in tensors])
+        mem += sum([qml.math.prod(qml.math.shape(t)) * t.dtype.itemsize for t in tensors])
         return mem
     
     @property

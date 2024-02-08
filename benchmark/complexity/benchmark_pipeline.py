@@ -74,7 +74,7 @@ class BenchmarkPipeline:
         "nif.lookup_table": np.inf,
         "nif.cuda": np.inf,
         "nif.explicit_sum": 10,
-        "default.qubit": 20,
+        "default.qubit": 25,
     }
     DEFAULT_N_WIRES = "linear"
     DEFAULT_N_GATES = "quadratic"
