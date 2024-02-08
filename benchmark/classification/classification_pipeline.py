@@ -39,6 +39,10 @@ from kernels import (
     CudaWideFermionicPQCKernel,
     FastCudaFermionicPQCKernel,
     FastCudaWideFermionicPQCKernel,
+    SwapCudaFermionicPQCKernel,
+    SwapCudaWideFermionicPQCKernel,
+    IdentityCudaFermionicPQCKernel,
+    IdentityCudaWideFermionicPQCKernel,
 )
 
 try:
@@ -48,6 +52,7 @@ except ImportError:
     import matchcake
 from matchcake.ml import ClassificationVisualizer
 from matchcake.ml.ml_kernel import MLKernel, FixedSizeSVC
+msim = matchcake  # Keep for compatibility with the old code
 import warnings
 
 
@@ -204,6 +209,10 @@ class ClassificationPipeline:
         "wfPQC-cpu": CpuWideFermionicPQCKernel,
         "fcPQC": FastCudaFermionicPQCKernel,
         "fcwfPQC": FastCudaWideFermionicPQCKernel,
+        "sfPQC-cuda": SwapCudaFermionicPQCKernel,
+        "swfPQC-cuda": SwapCudaWideFermionicPQCKernel,
+        "ifPQC-cuda": IdentityCudaFermionicPQCKernel,
+        "iwfPQC-cuda": IdentityCudaWideFermionicPQCKernel,
     }
     UNPICKLABLE_ATTRIBUTES = ["dataset", "p_bar"]
 

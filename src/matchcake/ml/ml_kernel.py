@@ -24,7 +24,7 @@ import pythonbasictools as pbt
 from tqdm import tqdm
 
 from ..devices.nif_device import NonInteractingFermionicDevice
-from ..operations import MAngleEmbedding, MAngleEmbeddings, fRZZ, fCNOT
+from ..operations import MAngleEmbedding, MAngleEmbeddings, fRZZ, fCNOT, fSWAP
 from ..operations.fermionic_controlled_not import FastfCNOT
 
 
@@ -478,6 +478,8 @@ class FermionicPQCKernel(NIFKernel):
 
     """
 
+    available_entangling_mth = {"fcnot", "fast_fcnot", "fswap", "identity"}
+
     def __init__(
             self,
             size: Optional[int] = None,
@@ -488,7 +490,9 @@ class FermionicPQCKernel(NIFKernel):
         self._parameter_scaling = kwargs.get("parameter_scaling", np.pi / 2)
         self._depth = kwargs.get("depth", None)
         self._rotations = kwargs.get("rotations", "Y,Z")
-        self._use_fast_cnot = kwargs.get("use_fast_cnot", False)
+        self._entangling_mth = kwargs.get("entangling_mth", "fcnot")
+        if self._entangling_mth not in self.available_entangling_mth:
+            raise ValueError(f"Unknown entangling method: {self._entangling_mth}.")
 
     @property
     def depth(self):
@@ -521,10 +525,16 @@ class FermionicPQCKernel(NIFKernel):
             MAngleEmbedding(sub_x, wires=self.wires, rotations=self.rotations)
             fcnot_wires = wires_patterns[layer % len(wires_patterns)]
             for wires in fcnot_wires:
-                if self._use_fast_cnot:
+                if self._entangling_mth == "fast_fcnot":
                     FastfCNOT(wires=wires)
-                else:
+                elif self._entangling_mth == "fswap":
+                    fSWAP(wires=wires)
+                elif self._entangling_mth == "fcnot":
                     fCNOT(wires=wires)
+                elif self._entangling_mth == "identity":
+                    pass
+                else:
+                    raise ValueError(f"Unknown entangling method: {self._entangling_mth}")
         return
 
     def circuit(self, x0, x1):

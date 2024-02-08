@@ -11,6 +11,7 @@ except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import matchcake
 os.environ["OMP_NUM_THREADS"] = str(psutil.cpu_count(logical=False))
+msim = matchcake  # Keep for compatibility with the old code
 
 
 def parse_args():
@@ -30,6 +31,8 @@ def parse_args():
         default=[
             "classical", "fPQC-cuda", "PQC", "wfPQC-cuda",
             "fcPQC", "fcwfPQC",
+            "sfPQC-cuda", "swfPQC-cuda",
+            "ifPQC-cuda", "iwfPQC-cuda",
         ],
         help=f"The methods to be used for the classification."
              f"Available methods: {ClassificationPipeline.available_kernels}."
