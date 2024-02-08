@@ -36,6 +36,7 @@ def make_results_table(trial="cls_k5"):
         ClassificationPipeline.TEST_ACCURACY_KEY: r"Accuracy [\%]",
         ClassificationPipeline.TEST_F1_KEY: r"F1 score [\%]",
     }
+    integer_columns = ["kernel_depth", "kernel_size"]
     datasets_fmt_names = {
         "iris": "Iris",
         "breast_cancer": "Breast cancer",
@@ -62,6 +63,10 @@ def make_results_table(trial="cls_k5"):
         full_df[key] *= 100
         full_df[key] = full_df[key].apply(floats_to_pm_string)
 
+    # cast the integer_columns to int
+    for c in integer_columns:
+        full_df[c] = full_df[c].astype(int)
+
     full_df = full_df.rename(columns=columns_fmt_names)
     columns_to_keep = [columns_fmt_names[c] for c in columns_to_keep]
 
@@ -82,4 +87,4 @@ def make_results_table(trial="cls_k5"):
 
 
 if __name__ == '__main__':
-    make_results_table(trial="cls_k5")
+    make_results_table(trial="k5")

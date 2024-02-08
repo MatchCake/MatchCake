@@ -20,7 +20,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset_name", type=str,
-        default="digits",
+        default="iris",
+        # default="digits",
         # default="breast_cancer",
         help=f"The dataset to be used for the classification."
              f"Available datasets: {ClassificationPipeline.available_datasets}."
@@ -29,9 +30,10 @@ def parse_args():
         "--methods", type=str, nargs="+",
         # default=["classical", "fPQC-cpu", "PQC", "wfPQC-cpu"],
         default=[
-            "classical", "fPQC-cuda", "PQC", "wfPQC-cuda",
-            "fcPQC", "fcwfPQC",
-            "sfPQC-cuda", "swfPQC-cuda",
+            "classical",
+            "PQC",
+            "fPQC-cuda", "wfPQC-cuda",
+            "hfPQC-cuda", "hwfPQC-cuda",
             "ifPQC-cuda", "iwfPQC-cuda",
         ],
         help=f"The methods to be used for the classification."
@@ -43,7 +45,7 @@ def parse_args():
     parser.add_argument("--plot", type=bool, default=False)
     parser.add_argument("--save_dir", type=str, default=os.path.join(os.path.dirname(__file__), "results"))
     parser.add_argument("--batch_size", type=int, default=16384)
-    parser.add_argument("--trial", type=str, default="cls_k5")
+    parser.add_argument("--trial", type=str, default="k5")
     parser.add_argument("--show_n_pts", type=int, default=512)
     parser.add_argument("--dataset_n_samples", type=int, default=None)
     parser.add_argument("--dataset_n_features", type=int, default=None)
@@ -56,7 +58,9 @@ def parse_args():
 def main():
     from matplotlib import pyplot as plt
     from classification_pipeline import ClassificationPipeline
+    from utils import MPL_RC_DEFAULT_PARAMS
 
+    plt.rcParams.update(MPL_RC_DEFAULT_PARAMS)
     args = parse_args()
     if any(["cuda" in m for m in args.methods]):
         matchcake.utils.cuda.is_cuda_available(throw_error=True, enable_warnings=True)
@@ -99,8 +103,15 @@ def main():
     )
     pipeline.draw_mpl_kernels(show=False, filepath=os.path.join(figures_folder, "kernels.pdf"), draw_mth="single")
     plt.close("all")
-    pipeline.show(n_pts=args.show_n_pts, show=True, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
+    pipeline.bar_plot(
+        show=True,
+        bar_label=False,
+        kernels_to_remove=["classical"],
+        filepath=os.path.join(figures_folder, "bar_plot.pdf"),
+    )
     plt.close("all")
+    # pipeline.show(n_pts=args.show_n_pts, show=False, filepath=os.path.join(figures_folder, "decision_boundaries.pdf"))
+    # plt.close("all")
 
 
 if __name__ == '__main__':

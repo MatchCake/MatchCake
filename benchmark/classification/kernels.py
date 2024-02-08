@@ -253,3 +253,21 @@ class IdentityCudaFermionicPQCKernel(CudaFermionicPQCKernel):
         super().__init__(size=size, **kwargs)
 
 
+class HadamardCudaFermionicPQCKernel(CudaFermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["entangling_mth"] = "hadamard"
+        super().__init__(size=size, **kwargs)
+
+
+class HadamardCudaWideFermionicPQCKernel(CudaWideFermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["entangling_mth"] = "hadamard"
+        super().__init__(size=size, **kwargs)

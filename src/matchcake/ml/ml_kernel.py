@@ -24,7 +24,7 @@ import pythonbasictools as pbt
 from tqdm import tqdm
 
 from ..devices.nif_device import NonInteractingFermionicDevice
-from ..operations import MAngleEmbedding, MAngleEmbeddings, fRZZ, fCNOT, fSWAP
+from ..operations import MAngleEmbedding, MAngleEmbeddings, fRZZ, fCNOT, fSWAP, fH
 from ..operations.fermionic_controlled_not import FastfCNOT
 
 
@@ -478,7 +478,7 @@ class FermionicPQCKernel(NIFKernel):
 
     """
 
-    available_entangling_mth = {"fcnot", "fast_fcnot", "fswap", "identity"}
+    available_entangling_mth = {"fcnot", "fast_fcnot", "fswap", "identity", "hadamard"}
 
     def __init__(
             self,
@@ -490,7 +490,7 @@ class FermionicPQCKernel(NIFKernel):
         self._parameter_scaling = kwargs.get("parameter_scaling", np.pi / 2)
         self._depth = kwargs.get("depth", None)
         self._rotations = kwargs.get("rotations", "Y,Z")
-        self._entangling_mth = kwargs.get("entangling_mth", "fcnot")
+        self._entangling_mth = kwargs.get("entangling_mth", "fswap")
         if self._entangling_mth not in self.available_entangling_mth:
             raise ValueError(f"Unknown entangling method: {self._entangling_mth}.")
 
@@ -531,6 +531,8 @@ class FermionicPQCKernel(NIFKernel):
                     fSWAP(wires=wires)
                 elif self._entangling_mth == "fcnot":
                     fCNOT(wires=wires)
+                elif self._entangling_mth == "hadamard":
+                    fH(wires=wires)
                 elif self._entangling_mth == "identity":
                     pass
                 else:

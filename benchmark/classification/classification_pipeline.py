@@ -4,6 +4,7 @@ import os
 from copy import deepcopy
 from collections import defaultdict
 from typing import Optional, Union, List, Callable
+from functools import partial
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,7 +17,7 @@ from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import check_is_fitted
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
 import functools
 import umap
 from tqdm import tqdm
@@ -43,6 +44,8 @@ from kernels import (
     SwapCudaWideFermionicPQCKernel,
     IdentityCudaFermionicPQCKernel,
     IdentityCudaWideFermionicPQCKernel,
+    HadamardCudaWideFermionicPQCKernel,
+    HadamardCudaFermionicPQCKernel,
 )
 
 try:
@@ -179,6 +182,64 @@ class KPredictorContainer:
         return f"{self.__class__.__name__}(name={self.name},outer_keys={list(self.container.keys())})"
 
 
+class MetricsContainer:
+    ACCURACY_KEY = "Accuracy"
+    F1_KEY = "F1-Score"
+    PRECISION_KEY = "Precision"
+    RECALL_KEY = "Recall"
+    available_metrics = {
+        ACCURACY_KEY: accuracy_score,
+        F1_KEY: partial(f1_score, average="weighted"),
+        PRECISION_KEY: partial(precision_score, average="weighted"),
+        RECALL_KEY: partial(recall_score, average="weighted"),
+    }
+
+    def __init__(
+            self,
+            metrics: Optional[List[str]] = None,
+            *,
+            pre_name: str = "",
+            post_name: str = "",
+            name_separator: str = "_",
+    ):
+        self.metrics = metrics or list(self.available_metrics.keys())
+        self.pre_name = pre_name
+        self.post_name = post_name
+        self.name_separator = name_separator
+        if pre_name:
+            pre_name += name_separator
+        if post_name:
+            post_name = name_separator + post_name
+        self.metrics_names = [
+            f"{pre_name}{name}{post_name}" for name in self.metrics
+        ]
+        self.containers = {
+            metric: KPredictorContainer(metric_name)
+            for metric, metric_name in zip(self.metrics, self.metrics_names)
+        }
+
+    @property
+    def containers_list(self):
+        return list(self.containers.values())
+
+    def get_is_metrics_all_computed(self, key, inner_key):
+        return all(self.get(metric, key, inner_key, None) is not None for metric in self.metrics)
+
+    def get(self, metric: str, key, inner_key, default_value=None):
+        return self.containers[metric].get(key, inner_key, default_value=default_value)
+
+    def set(self, metric: str, key, inner_key, value):
+        self.containers[metric].set(key, inner_key, value)
+
+    def get_metric(self, metric: str):
+        return self.containers[metric]
+
+    def compute_metrics(self, y_true, y_pred, key, inner_key, **kwargs):
+        for metric in self.metrics:
+            self.set(metric, key, inner_key, self.available_metrics[metric](y_true, y_pred))
+        return self.containers
+
+
 class ClassificationPipeline:
     available_datasets = {
         "breast_cancer": datasets.load_breast_cancer,
@@ -213,6 +274,8 @@ class ClassificationPipeline:
         "swfPQC-cuda": SwapCudaWideFermionicPQCKernel,
         "ifPQC-cuda": IdentityCudaFermionicPQCKernel,
         "iwfPQC-cuda": IdentityCudaWideFermionicPQCKernel,
+        "hfPQC-cuda": HadamardCudaFermionicPQCKernel,
+        "hwfPQC-cuda": HadamardCudaWideFermionicPQCKernel,
     }
     UNPICKLABLE_ATTRIBUTES = ["dataset", "p_bar"]
 
@@ -220,7 +283,7 @@ class ClassificationPipeline:
     CLASSIFIER_KEY = "Classifier"
     FIT_TIME_KEY = "Fit Time [s]"
     TEST_ACCURACY_KEY = "Test Accuracy [-]"
-    TEST_F1_KEY = "Test F1 Score [-]"
+    TEST_F1_KEY = "Test F1-Score [-]"
     TRAIN_ACCURACY_KEY = "Train Accuracy [-]"
     PLOT_TIME_KEY = "Plot Time [s]"
     TRAIN_GRAM_COMPUTE_TIME_KEY = "Train Gram Compute Time [s]"
@@ -250,6 +313,8 @@ class ClassificationPipeline:
         self.test_accuracies = KPredictorContainer(self.TEST_ACCURACY_KEY)
         self.test_f1_scores = KPredictorContainer(self.TEST_F1_KEY)
         self.train_accuracies = KPredictorContainer(self.TRAIN_ACCURACY_KEY)
+        self.train_metrics = MetricsContainer(pre_name="Train", name_separator=' ', post_name="[-]")
+        self.test_metrics = MetricsContainer(pre_name="Test", name_separator=' ', post_name="[-]")
         self.save_path = kwargs.get("save_path", None)
         self.train_gram_matrices = KPredictorContainer("train_gram_matrices")
         self.test_gram_matrices = KPredictorContainer("test_gram_matrices")
@@ -685,6 +750,43 @@ class ClassificationPipeline:
             self.test_f1_scores[kernel_name].pop(fold_idx)
         return self.classifiers
 
+    @save_on_exit
+    def compute_metrics(self, fold_idx: int = 0):
+        if self.classifiers is None:
+            self.make_classifiers()
+        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
+        to_remove = []
+        for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
+            self.set_p_bar_postfix_str(f"Computing metrics:{kernel_name} [fold {fold_idx}]")
+            if self.train_metrics.get_is_metrics_all_computed(kernel_name, fold_idx) and \
+                    self.test_metrics.get_is_metrics_all_computed(kernel_name, fold_idx):
+                self.update_p_bar()
+                continue
+            if classifier.kernel == "precomputed":
+                train_inputs = self.train_gram_matrices[kernel_name, fold_idx]
+                test_inputs = self.test_gram_matrices[kernel_name, fold_idx]
+            else:
+                train_inputs, test_inputs = x_train, x_test
+            try:
+                self.train_metrics.compute_metrics(y_train, classifier.predict(train_inputs), kernel_name, fold_idx)
+                self.test_metrics.compute_metrics(y_test, classifier.predict(test_inputs), kernel_name, fold_idx)
+            except Exception as e:
+                if self.kwargs.get("throw_errors", False):
+                    raise e
+                warnings.warn(
+                    f"Failed to compute metrics for classifier {kernel_name}: {e}. \n "
+                    f"Removing it from the list of classifiers.",
+                    RuntimeWarning
+                )
+                to_remove.append(kernel_name)
+                continue
+            self.update_p_bar()
+        for kernel_name in to_remove:
+            self.classifiers[kernel_name].pop(fold_idx)
+            self.kernels[kernel_name].pop(fold_idx)
+            self.test_f1_scores[kernel_name].pop(fold_idx)
+        return self.classifiers
+
     def compute_accuracies(self, fold_idx: int = 0):
         self.compute_train_accuracies(fold_idx)
         self.compute_test_accuracies(fold_idx)
@@ -720,7 +822,8 @@ class ClassificationPipeline:
         #     self.compute_gram_matrices(fold_idx)
         self.make_classifiers(fold_idx)
         self.fit_classifiers(fold_idx)
-        self.compute_accuracies(fold_idx)
+        # self.compute_accuracies(fold_idx)
+        self.compute_metrics(fold_idx)
         self.set_p_bar_postfix_with_results_table()
         self.set_p_bar_postfix_str(f"Done with fold {fold_idx}")
         return self
@@ -877,7 +980,9 @@ class ClassificationPipeline:
             loaded_obj = pickle.load(f)
         if new_attrs is not None:
             loaded_obj.__dict__.update(new_attrs)
-        return loaded_obj
+        new_obj = cls(**new_attrs)
+        new_obj.__setstate__(loaded_obj.__getstate__())
+        return new_obj
     
     @classmethod
     def from_pickle_or_new(cls, pickle_path: Optional[str] = None, **kwargs) -> "ClassificationPipeline":
@@ -904,15 +1009,15 @@ class ClassificationPipeline:
 
     def get_results_table(self, **kwargs):
         containers = [
-            self.train_accuracies,
-            self.test_accuracies,
-            self.test_f1_scores,
+            # self.train_accuracies,
+            # self.test_accuracies,
+            # self.test_f1_scores,
             self.fit_times,
-            self.fit_kernels_times,
-            self.train_gram_compute_times,
-            self.test_gram_compute_times,
-            self.plot_times,
-        ]
+            # self.fit_kernels_times,
+            # self.train_gram_compute_times,
+            # self.test_gram_compute_times,
+            # self.plot_times,
+        ] + self.train_metrics.containers_list + self.test_metrics.containers_list
         numerics_columns = [c.name for c in containers]
         df_list = [
             c.to_dataframe(
@@ -932,6 +1037,7 @@ class ClassificationPipeline:
         mean_df = kwargs.get("mean", False)
         mean_on = kwargs.get("mean_on", self.KERNEL_KEY)
         drop_on_mean = kwargs.get("drop_on_mean", self.FOLD_IDX_KEY)
+        df_mean, df_std = None, None
         if mean_df:
             df_mean = df.groupby(by=mean_on, as_index=False).mean().drop(drop_on_mean, axis=1)
             # if sort:
@@ -950,6 +1056,8 @@ class ClassificationPipeline:
             df.to_csv(filepath)
         if kwargs.get("show", False):
             print(df.to_markdown())
+        if kwargs.get("return_mean_std", False):
+            return df, df_mean, df_std
         return df
 
     def get_properties_table(self, **kwargs):
@@ -985,6 +1093,48 @@ class ClassificationPipeline:
         if show:
             print(df.to_markdown())
         return df
+
+    def bar_plot(
+            self,
+            fig: Optional[plt.Figure] = None,
+            ax: Optional[np.ndarray] = None,
+            **kwargs
+    ):
+        _, df_mean, df_std = self.get_results_table(mean=True, return_mean_std=True, **kwargs)
+        kernels = kwargs.get("kernels", df_mean[self.KERNEL_KEY].unique())
+        kernels_to_remove = kwargs.get("kernels_to_remove", [])
+        df_mean = df_mean[~df_mean[self.KERNEL_KEY].isin(kernels_to_remove)]
+        df_std = df_std[~df_std[self.KERNEL_KEY].isin(kernels_to_remove)]
+        kernels_fmt_names = kwargs.get("kernels_fmt_names", {k: k for k in kernels})
+        df_mean[self.KERNEL_KEY] = df_mean[self.KERNEL_KEY].map(kernels_fmt_names)
+        df_std[self.KERNEL_KEY] = df_std[self.KERNEL_KEY].map(kernels_fmt_names)
+        if fig is None or ax is None:
+            fig, ax = plt.subplots(figsize=kwargs.get("figsize", (18, 14)))
+        x = np.arange(len(df_mean))
+        keys = self.test_metrics.metrics_names
+        x_width = 0.85
+        k_width = x_width / len(keys)
+        fig_ppi = 72
+        for i, key in enumerate(keys):
+            inner_pos = (i - len(keys) / 2.0) * k_width + k_width / 2.0
+            bar = ax.bar(
+                x + inner_pos,
+                df_mean[key], k_width,
+                yerr=df_std[key], label=key,
+                capsize=(k_width * 0.5) * fig_ppi,
+            )
+            if kwargs.get("bar_label", True):
+                plt.bar_label(bar, padding=3, fmt="%.2f", label_type="edge")
+        ax.set_xticks(x)
+        ax.set_xticklabels(df_mean[self.KERNEL_KEY], rotation=kwargs.get("xticklabels_rotation", 15))
+        ax.legend()
+        filepath = kwargs.get("filepath", None)
+        if filepath is not None:
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            fig.savefig(filepath)
+        if kwargs.get("show", False):
+            plt.show()
+        return fig, ax
 
 
 class SyntheticGrowthPipeline:

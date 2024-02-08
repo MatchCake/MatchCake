@@ -68,7 +68,11 @@ def main(kwargs):
         xaxis="n_wires",
         yaxis="memory",
         std_coeff=std_coeff,
-        methods_names={"nif.lookup_table": "NIF", "default.qubit": "Pennylane", "nif.explicit_sum": "NIF.es"},
+        methods_names={
+            "nif.lookup_table": "NIF",
+            "default.qubit": "Pennylane",
+            # "nif.explicit_sum": "NIF.es",
+        },
         # pt_indexes=[0, 1, 2],
         n_ticks=kwargs.get("n_ticks", 3),
         # pt_indexes_ticks=[0, -3, -2, -1],

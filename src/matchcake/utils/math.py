@@ -57,7 +57,11 @@ def shape(tensor):
 
 
 def convert_and_cast_like(tensor1, tensor2):
-    return qml.math.cast_like(qml.math.convert_like(tensor1, tensor2), tensor2)
+    import warnings
+    import numpy as np
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=np.ComplexWarning)
+        return qml.math.cast_like(qml.math.convert_like(tensor1, tensor2), tensor2)
 
 
 def astensor(tensor, like=None, **kwargs):
