@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import psutil
 import pennylane as qml
+import sklearn
 from sklearn import datasets
 from sklearn import svm
 from sklearn.datasets import fetch_openml
@@ -290,6 +291,8 @@ class ClassificationPipeline:
     TEST_GRAM_COMPUTE_TIME_KEY = "Test Gram Compute Time [s]"
     FIT_KERNEL_TIME_KEY = "Fit Kernel Time [s]"
     FOLD_IDX_KEY = "Fold Idx [-]"
+
+    DEFAULT_N_KFOLD_SPLITS = 5
     
     def __init__(
             self,
@@ -329,7 +332,7 @@ class ClassificationPipeline:
             self.PLOT_TIME_KEY, self.TRAIN_GRAM_COMPUTE_TIME_KEY, self.TEST_GRAM_COMPUTE_TIME_KEY,
             self.FIT_KERNEL_TIME_KEY,
         ])
-        self._n_kfold_splits = self.kwargs.get("n_kfold_splits", 5)
+        self._n_kfold_splits = self.kwargs.get("n_kfold_splits", self.DEFAULT_N_KFOLD_SPLITS)
         self._kfold_random_state = self.kwargs.get("kfold_random_state", 0)
         self._kfold_shuffle = self.kwargs.get("kfold_shuffle", True)
         self.p_bar = None
@@ -407,9 +410,9 @@ class ClassificationPipeline:
                 random_state=self.kwargs.get("dataset_random_state", 0),
             )
         elif self.dataset_name == "breast_cancer":
-            self.dataset = datasets.load_breast_cancer(as_frame=True)
+            self.dataset = datasets.load_breast_cancer(return_X_y=True)
         elif self.dataset_name == "iris":
-            self.dataset = datasets.load_iris(as_frame=True)
+            self.dataset = datasets.load_iris(return_X_y=True)
         elif self.dataset_name == "mnist":
             self.dataset = fetch_openml(
                 "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
@@ -424,7 +427,7 @@ class ClassificationPipeline:
             )
         elif self.dataset_name == "digits":
             n_class = self._n_class or 10
-            self.dataset = self.available_datasets[self.dataset_name](as_frame=True, n_class=n_class)
+            self.dataset = self.available_datasets[self.dataset_name](return_X_y=True, n_class=n_class)
         elif self.dataset_name == "Olivetti_faces":
             self.dataset = self.available_datasets[self.dataset_name](return_X_y=True)
         elif self.dataset_name == "binary_mnist":
@@ -464,6 +467,10 @@ class ClassificationPipeline:
             self.y = self.dataset.target
         else:
             raise ValueError(f"Unknown dataset type: {type(self.dataset)}")
+        if self.kwargs.get("shuffle_data", True):
+            self.X, self.y = sklearn.utils.shuffle(
+                self.X, self.y, random_state=self.kwargs.get("shuffle_random_state", 0)
+            )
         if self._debug_data_size is not None:
             self.X = self.X[:self._debug_data_size]
             self.y = self.y[:self._debug_data_size]
@@ -792,7 +799,7 @@ class ClassificationPipeline:
         self.compute_test_accuracies(fold_idx)
         self.compute_test_f1_scores(fold_idx)
 
-    @pbt.decorators.log_func(logging_func=print)
+    @pbt.decorators.log_func
     @save_on_exit
     def run(self, **kwargs):
         table_path = kwargs.pop("table_path", None)
@@ -800,18 +807,22 @@ class ClassificationPipeline:
         mean_results_table = kwargs.pop("mean_results_table", False)
         self.load_dataset()
         self.preprocess_data()
-        self.p_bar = tqdm(
-            total=self._n_kfold_splits*len(self.methods),
-            desc=f"Classification of {self.dataset_name} [{self._n_kfold_splits} folds]",
-            unit="cls",
-        )
+        desc = kwargs.pop("desc", f"Classification of {self.dataset_name} [{self._n_kfold_splits} folds]")
+        self.p_bar = kwargs.get("p_bar", None)
+        if self.p_bar is None:
+            self.p_bar = tqdm(
+                total=self._n_kfold_splits*len(self.methods),
+                desc=desc,
+                unit="cls",
+            )
         for fold_idx in range(self._n_kfold_splits):
             self.run_fold(fold_idx)
             if table_path is not None:
                 self.get_results_properties_table(mean=mean_results_table, show=show_tables, filepath=table_path)
         self.set_p_bar_postfix_str("Done. Saving results.")
         self.to_pickle()
-        self.p_bar.close()
+        if kwargs.get("close_p_bar", True):
+            self.p_bar.close()
         return self
 
     @save_on_exit
