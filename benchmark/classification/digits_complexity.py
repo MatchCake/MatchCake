@@ -156,7 +156,7 @@ class DigitsComplexityPipeline:
         return df
 
     def plot_results(self, **kwargs):
-        x_axis_key = kwargs.get("x_axis_key", "n_features")
+        x_axis_key = kwargs.get("x_axis_key", "kernel_size")
         y_axis_key = kwargs.get("y_axis_key", ClassificationPipeline.FIT_TIME_KEY)
         df = self.results_table
         fig, ax = kwargs.get("fig", None), kwargs.get("ax", None)
