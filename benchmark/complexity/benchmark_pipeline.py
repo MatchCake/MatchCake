@@ -502,7 +502,7 @@ class BenchmarkPipeline:
         std_coeff = kwargs.get("std_coeff", 1)
         methods = kwargs.get("methods", self.methods)
         methods_names = kwargs.get("methods_names", {k: k for k in methods})
-        fit_complexity = kwargs.get("fit_complexity", True)
+        fit_complexity = kwargs.get("fit_complexity", False)
         pt_indexes = kwargs.get("pt_indexes", np.arange(self.n_pts))
         for i, method in enumerate(methods):
             method_idx = self.methods.index(method)
