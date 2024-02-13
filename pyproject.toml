@@ -4,7 +4,7 @@ pythonpath = [
 ]
 addopts = [
     "--cov=src",
-    "--no-cov",
+#    "--no-cov",
     "--durations=10",
 ]
 
@@ -23,7 +23,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MatchCake"
-dynamic = ["version", ]
+dynamic = ["version", "readme"]
 description = ""
 authors = [
   { name="Jérémie Gince", email="gincejeremie@gmail.com" },
@@ -51,7 +51,7 @@ dependencies = [
 
 
 [tool.setuptools.dynamic]
-version = {attr = "matchgate.__version__"}
+version = {attr = "matchcake.__version__"}
 readme = {file = ["README.md"]}
 
 [project.urls]
