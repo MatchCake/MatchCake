@@ -17,4 +17,3 @@ scikit-learn
 pandas
 psutil
 umap-learn
-Pyarrow
