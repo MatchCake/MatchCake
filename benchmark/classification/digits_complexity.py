@@ -58,6 +58,7 @@ from matchcake.ml import ClassificationVisualizer
 from matchcake.ml.ml_kernel import MLKernel, FixedSizeSVC
 import warnings
 from classification_pipeline import ClassificationPipeline
+from utils import MPL_RC_DEFAULT_PARAMS
 
 
 class DatasetComplexityPipeline:
@@ -186,20 +187,72 @@ class DatasetComplexityPipeline:
         if fig is None or ax is None:
             fig, ax = plt.subplots(figsize=(14, 10))
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        y_scale_factor = kwargs.get("y_scale_factor", 1)
         for i, (kernel_name, kernel_df) in enumerate(df.groupby(ClassificationPipeline.KERNEL_KEY)):
             x_sorted_unique = np.sort(kernel_df[x_axis_key].unique())
             y_series = kernel_df.groupby(x_axis_key)[y_axis_key]
-            y_mean = y_series.mean().values
-            y_std = y_series.std().values
-            ax.plot(x_sorted_unique, y_mean, label=kernel_name, color=colors[i])
+            y_mean = y_scale_factor * y_series.mean().values
+            y_std = y_scale_factor * y_series.std().values
+            pre_lbl, post_lbl = kwargs.get("pre_lbl", ""), kwargs.get("post_lbl", "")
+            lbl = f"{pre_lbl}{kernel_name}{post_lbl}"
+            ax.plot(x_sorted_unique, y_mean, label=lbl, color=colors[i], linestyle=kwargs.get("linestyle", "-"))
             if y_series.count().min() > 1:
                 ax.fill_between(x_sorted_unique, y_mean - y_std, y_mean + y_std, alpha=0.2, color=colors[i])
-        ax.set_xlabel(x_axis_key)
-        ax.set_ylabel(y_axis_key)
+        ax.set_xlabel(kwargs.get("x_axis_label", x_axis_key))
+        ax.set_ylabel(kwargs.get("y_axis_label", y_axis_key))
         ax.legend()
         if kwargs.get("show", False):
             plt.show()
         return fig, ax
+
+    def plot_formatted_complexity_results(self, **kwargs):
+        if kwargs.get("use_default_rc_params", True):
+            plt.rcParams.update(MPL_RC_DEFAULT_PARAMS)
+        x_keys = {
+            "Kernel size [-]": "kernel_size",
+            # "n_features": "Number of features [-]",
+        }
+        linestyles = ["-", "--", "-.", ":"]
+        y_lbl_to_keys = {
+            ClassificationPipeline.FIT_TIME_KEY: ClassificationPipeline.FIT_TIME_KEY,
+            # "kernel_n_ops",
+            "Accuracies [%]": [ClassificationPipeline.TRAIN_ACCURACY_KEY, ClassificationPipeline.TEST_ACCURACY_KEY],
+            # "kernel_depth",
+        }
+        y_lbl_to_pre_post_lbl = {
+            "Accuracies [%]": ("Train ", "Test "),
+        }
+        y_lbl_to_scale_factor = {
+            ClassificationPipeline.FIT_TIME_KEY: 1,
+            "Accuracies [%]": 100,
+        }
+        for x_lbl, x_key in x_keys.items():
+            n_rows = int(np.sqrt(len(y_lbl_to_keys)))
+            n_cols = int(np.ceil(len(y_lbl_to_keys) / n_rows))
+            fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 6 * n_rows))
+            axes = np.ravel(np.asarray([axes]))
+            for i, (y_lbl, y_key) in enumerate(y_lbl_to_keys.items()):
+                if not isinstance(y_key, list):
+                    y_key = [y_key]
+                for j, y_k in enumerate(y_key):
+                    self.plot_results(
+                        x_axis_key=x_key, x_axis_label=x_lbl,
+                        y_axis_key=y_k, y_axis_label=y_lbl,
+                        pre_lbl=y_lbl_to_pre_post_lbl.get(y_lbl, [""] * (j + 1))[j],
+                        y_scale_factor=y_lbl_to_scale_factor.get(y_lbl, 1),
+                        linestyle=linestyles[j],
+                        fig=fig, ax=axes[i],
+                        show=False
+                    )
+            plt.tight_layout()
+            if self.save_dir is not None:
+                fig_save_path = os.path.join(self.save_dir, self.dataset_name, "figures", f"results_{x_key}.pdf")
+                os.makedirs(os.path.dirname(fig_save_path), exist_ok=True)
+                fig.savefig(fig_save_path, bbox_inches="tight", dpi=900)
+            if kwargs.get("show", False):
+                plt.show()
+            plt.close("all")
+        return
 
 
 def parse_args():
@@ -217,7 +270,7 @@ def parse_args():
             "fPQC-cuda",
             "hfPQC-cuda",
             "ifPQC-cuda",
-            # "PQC",
+            "PQC",
         ],
         help=f"The methods to be used for the classification."
              f"Example: --methods fPQC PQC."
@@ -238,8 +291,8 @@ def parse_args():
     )
     parser.add_argument(
         "--kernel_size_list", type=int, nargs="+",
-        default=None,
-        # default=[2, 4, 6, 8, 10, 12, 14,],
+        # default=None,
+        default=[2, 4, 6, 8, 10, 12, 14,],
         help=f"The list of number of qubits to be used for the classification."
              f"Example: --kernel_size_list 2 4 8 16."
     )
@@ -273,31 +326,8 @@ def main():
     plt.close("all")
     pipeline.get_results_table(show=True)
     plt.close("all")
-    x_keys = [
-        "kernel_size",
-        # "n_features"
-    ]
-    for x_key in x_keys:
-        y_keys = [
-            ClassificationPipeline.FIT_TIME_KEY,
-            # "kernel_n_ops",
-            ClassificationPipeline.TEST_ACCURACY_KEY,
-            # "kernel_depth",
-        ] + [x for x in x_keys if x != x_key]
-        n_rows = int(np.sqrt(len(y_keys)))
-        n_cols = int(np.ceil(len(y_keys) / n_rows))
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 6 * n_rows))
-        axes = np.ravel(np.asarray([axes]))
-        for i, y_key in enumerate(y_keys):
-            pipeline.plot_results(x_axis_key=x_key, y_axis_key=y_key, fig=fig, ax=axes[i], show=False)
-            axes[i].set_title(y_key)
-        plt.tight_layout()
-        if args.save_dir is not None:
-            fig_save_path = os.path.join(args.save_dir, pipeline.dataset_name, "figures", f"results_{x_key}.pdf")
-            os.makedirs(os.path.dirname(fig_save_path), exist_ok=True)
-            fig.savefig(fig_save_path, bbox_inches="tight", dpi=900)
-        plt.show()
-        plt.close("all")
+    pipeline.plot_formatted_complexity_results(show=True)
+    plt.close("all")
 
 
 if __name__ == '__main__':
