@@ -291,8 +291,8 @@ def parse_args():
     )
     parser.add_argument(
         "--kernel_size_list", type=int, nargs="+",
-        # default=None,
-        default=[2, 4, 6, 8, 10, 12, 14,],
+        default=None,
+        # default=[2, 4, 6, 8, 10, 12, 14,],
         help=f"The list of number of qubits to be used for the classification."
              f"Example: --kernel_size_list 2 4 8 16."
     )
