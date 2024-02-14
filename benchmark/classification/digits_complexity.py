@@ -143,6 +143,7 @@ class DatasetComplexityPipeline:
         kwargs["p_bar"] = p_bar
         kwargs["close_p_bar"] = False
         for size in self.kernel_size_list:
+            p_bar.set_postfix(size=size)
             cp_kwargs = deepcopy(self.classification_pipeline_kwargs)
             cp_kwargs["dataset_name"] = self.dataset_name
             cp_kwargs["kernel_kwargs"] = cp_kwargs.get("kernel_kwargs", {})
