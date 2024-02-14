@@ -296,7 +296,7 @@ def parse_args():
         help=f"The list of number of qubits to be used for the classification."
              f"Example: --kernel_size_list 2 4 8 16."
     )
-    parser.add_argument("--throw_errors", type=bool, default=True)
+    parser.add_argument("--throw_errors", type=bool, default=False)
     parser.add_argument("--n_samples", type=int, default=None)
     return parser.parse_args()
 
