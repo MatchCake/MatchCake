@@ -17,3 +17,7 @@ scikit-learn
 pandas
 psutil
 umap-learn
+torch
+torchvision
+torchaudio
+tabulate
