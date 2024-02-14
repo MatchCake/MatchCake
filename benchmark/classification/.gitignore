@@ -5,3 +5,5 @@ results_no_kfolds
 results_w_kfold
 results_sg
 jobs
+results_dc
+test_digits_dc
