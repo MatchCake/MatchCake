@@ -61,21 +61,42 @@ from classification_pipeline import ClassificationPipeline
 
 
 class DatasetComplexityPipeline:
+    DATASET_MIN_SIZE_MAP = {
+        "digits": 2,
+        "iris": 2,
+        "breast_cancer": 2,
+    }
     DATASET_MAX_SIZE_MAP = {
         "digits": 64,
         "iris": 4,
         "breast_cancer": 30,
     }
-    DEFAULT_SIZE_LISTS = {
-        "digits": np.arange(2, DATASET_MAX_SIZE_MAP["digits"], 2).tolist(),
-        "iris": np.arange(2, DATASET_MAX_SIZE_MAP["iris"], 2).tolist(),
-        "breast_cancer": np.arange(2, DATASET_MAX_SIZE_MAP["breast_cancer"], 2).tolist(),
+    DATASET_STEP_SIZE_MAP = {
+        "digits": 4,
+        "iris": 2,
+        "breast_cancer": 2,
     }
+    # DEFAULT_SIZE_LISTS = {
+    #     d_name: np.arange(
+    #         DATASET_MIN_SIZE_MAP[d_name], DATASET_MAX_SIZE_MAP[d_name], DATASET_STEP_SIZE_MAP[d_name]
+    #     ).tolist()
+    #     for d_name in DATASET_MAX_SIZE_MAP.keys()
+    # }
     MTH_MAX_SIZE_MAP = {
         "fPQC-cuda": np.inf,
         "fPQC-cpu": np.inf,
         "PQC": 30,
     }
+
+    @classmethod
+    @property
+    def default_size_lists(cls):
+        return {
+            d_name: np.arange(
+                cls.DATASET_MIN_SIZE_MAP[d_name], cls.DATASET_MAX_SIZE_MAP[d_name], cls.DATASET_STEP_SIZE_MAP[d_name]
+            ).tolist()
+            for d_name in cls.DATASET_MAX_SIZE_MAP.keys()
+        }
 
     def __init__(
             self,
@@ -86,7 +107,7 @@ class DatasetComplexityPipeline:
             save_dir: Optional[str] = None,
     ):
         if kernel_size_list is None:
-            kernel_size_list = self.DEFAULT_SIZE_LISTS.get(dataset_name, [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024])
+            kernel_size_list = self.default_size_lists.get(dataset_name, [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024])
         self.kernel_size_list = kernel_size_list
         self.n_samples = n_samples
         self.dataset_name = dataset_name
@@ -131,11 +152,12 @@ class DatasetComplexityPipeline:
             cp_kwargs["dataset_n_samples"] = self.n_samples
             if save_dir is not None:
                 cp_kwargs["save_path"] = os.path.join(
-                    save_dir, f"{self.dataset_name}_size{size}.pkl"
+                    save_dir, f"{self.dataset_name}", f"size{size}.pkl"
                 )
             self.classification_pipelines[size] = ClassificationPipeline.from_pickle_or_new(
                 pickle_path=cp_kwargs.get("save_path", None), **cp_kwargs
             ).run(**kwargs)
+            self.classification_pipelines[size].save_all_results()
         p_bar.close()
         return self
 
@@ -192,8 +214,8 @@ def parse_args():
         default=[
             # "fPQC-cpu",
             "fPQC-cuda",
-            # "hfPQC-cuda",
-            # "ifPQC-cuda",
+            "hfPQC-cuda",
+            "ifPQC-cuda",
             # "PQC",
         ],
         help=f"The methods to be used for the classification."
@@ -214,7 +236,9 @@ def parse_args():
         help="The directory where the results will be saved."
     )
     parser.add_argument(
-        "--kernel_size_list", type=int, nargs="+", default=None,
+        "--kernel_size_list", type=int, nargs="+",
+        default=None,
+        # default=[2, 4, 6, 8, 10, 12, 14,],
         help=f"The list of number of qubits to be used for the classification."
              f"Example: --kernel_size_list 2 4 8 16."
     )
@@ -244,8 +268,9 @@ def main():
         n_samples=args.n_samples,
     )
     pipeline.run()
+    plt.close("all")
     pipeline.get_results_table(show=True)
-
+    plt.close("all")
     x_keys = [
         "kernel_size",
         # "n_features"
@@ -259,14 +284,16 @@ def main():
         ] + [x for x in x_keys if x != x_key]
         n_rows = int(np.sqrt(len(y_keys)))
         n_cols = int(np.ceil(len(y_keys) / n_rows))
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 4 * n_rows))
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 6 * n_rows))
         axes = np.ravel(np.asarray([axes]))
         for i, y_key in enumerate(y_keys):
             pipeline.plot_results(x_axis_key=x_key, y_axis_key=y_key, fig=fig, ax=axes[i], show=False)
             axes[i].set_title(y_key)
         plt.tight_layout()
         if args.save_dir is not None:
-            fig.savefig(os.path.join(args.save_dir, f"results_{x_key}.pdf"), bbox_inches="tight", dpi=900)
+            fig_save_path = os.path.join(args.save_dir, pipeline.dataset_name, "figures", f"results_{x_key}.pdf")
+            os.makedirs(os.path.dirname(fig_save_path), exist_ok=True)
+            fig.savefig(fig_save_path, bbox_inches="tight", dpi=900)
         plt.show()
         plt.close("all")
 
