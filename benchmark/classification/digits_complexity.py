@@ -263,6 +263,7 @@ def main():
     )
     pipeline = DatasetComplexityPipeline(
         kernel_size_list=args.kernel_size_list,
+        dataset_name=args.dataset_name,
         save_dir=args.save_dir,
         classification_pipeline_kwargs=classification_pipeline_kwargs,
         n_samples=args.n_samples,
