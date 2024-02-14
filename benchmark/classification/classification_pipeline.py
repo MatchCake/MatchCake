@@ -1147,6 +1147,22 @@ class ClassificationPipeline:
             plt.show()
         return fig, ax
 
+    def save_all_results(self, **kwargs):
+        save_dir = kwargs.pop("save_dir", None)
+        if save_dir is None:
+            save_dir = os.path.join(os.path.dirname(self.save_path), "figures")
+        if save_dir is None:
+            raise ValueError("No save_dir or save_path provided.")
+        os.makedirs(save_dir, exist_ok=True)
+        self.get_results_properties_table(filepath=os.path.join(save_dir, "properties.csv"), show=False, **kwargs)
+        self.get_results_table(filepath=os.path.join(save_dir, "results.csv"), show=False, **kwargs)
+        self.get_results_table(filepath=os.path.join(save_dir, "mean_results.csv"), mean=True, show=False, **kwargs)
+        self.get_results_properties_table(
+            filepath=os.path.join(save_dir, "mean_results_and_properties.csv"), show=False, **kwargs
+        )
+        self.bar_plot(filepath=os.path.join(save_dir, "bar_plot.png"), show=False, **kwargs)
+        return self
+
 
 class SyntheticGrowthPipeline:
     def __init__(
