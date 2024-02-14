@@ -154,7 +154,7 @@ class DatasetComplexityPipeline:
             cp_kwargs["dataset_n_samples"] = self.n_samples
             if save_dir is not None:
                 cp_kwargs["save_path"] = os.path.join(
-                    save_dir, f"{self.dataset_name}", f"size{size}.pkl"
+                    save_dir, f"{self.dataset_name}", f"size{size}", "cls.pkl"
                 )
             self.classification_pipelines[size] = ClassificationPipeline.from_pickle_or_new(
                 pickle_path=cp_kwargs.get("save_path", None), **cp_kwargs
@@ -259,7 +259,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset_name", type=str,
-        default="digits",
+        # default="digits",
+        default="breast_cancer",
         help=f"The name of the dataset to be used for the classification. "
              f"Available datasets: {DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP.keys()}."
     )
@@ -296,7 +297,12 @@ def parse_args():
         help=f"The list of number of qubits to be used for the classification."
              f"Example: --kernel_size_list 2 4 8 16."
     )
-    parser.add_argument("--throw_errors", type=bool, default=False)
+    parser.add_argument(
+        "--throw_errors", type=bool,
+        # default=False,
+        default=True,
+        help="Whether to throw errors or not."
+    )
     parser.add_argument("--n_samples", type=int, default=None)
     return parser.parse_args()
 
@@ -331,4 +337,5 @@ def main():
 
 
 if __name__ == '__main__':
+    DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP["breast_cancer"] = 18
     sys.exit(main())
