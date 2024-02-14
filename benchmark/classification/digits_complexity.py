@@ -60,7 +60,7 @@ import warnings
 from classification_pipeline import ClassificationPipeline
 
 
-class DigitsComplexityPipeline:
+class DatasetComplexityPipeline:
     DATASET_MAX_SIZE_MAP = {
         "digits": 64,
         "iris": 4,
@@ -182,9 +182,18 @@ class DigitsComplexityPipeline:
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--methods", type=str, nargs="+", default=[
+        "--dataset_name", type=str,
+        default="digits",
+        help=f"The name of the dataset to be used for the classification. "
+             f"Available datasets: {DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP.keys()}."
+    )
+    parser.add_argument(
+        "--methods", type=str, nargs="+",
+        default=[
             # "fPQC-cpu",
             "fPQC-cuda",
+            # "hfPQC-cuda",
+            # "ifPQC-cuda",
             # "PQC",
         ],
         help=f"The methods to be used for the classification."
@@ -228,7 +237,7 @@ def main():
         ),
         throw_errors=args.throw_errors,
     )
-    pipeline = DigitsComplexityPipeline(
+    pipeline = DatasetComplexityPipeline(
         kernel_size_list=args.kernel_size_list,
         save_dir=args.save_dir,
         classification_pipeline_kwargs=classification_pipeline_kwargs,
