@@ -104,7 +104,7 @@ def main():
     pipeline.draw_mpl_kernels(show=False, filepath=os.path.join(figures_folder, "kernels.pdf"), draw_mth="single")
     plt.close("all")
     pipeline.bar_plot(
-        show=True,
+        show=args.show,
         bar_label=False,
         kernels_to_remove=["classical"],
         filepath=os.path.join(figures_folder, "bar_plot.pdf"),
