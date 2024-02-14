@@ -701,3 +701,4 @@ FodyWeavers.xsd
 user/
 tests/tmp
 .report.json
+jobs_venv
