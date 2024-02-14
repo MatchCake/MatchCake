@@ -196,7 +196,7 @@ def parse_args():
         help="The number of kfold splits to be used for the classification."
     )
     parser.add_argument(
-        "--batch_size", type=int, default=16384,
+        "--batch_size", type=int, default=16384,  # 32768
         help="The batch size to be used for the classification."
     )
     parser.add_argument(
