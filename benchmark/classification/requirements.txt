@@ -1,7 +1,6 @@
 matplotlib
 networkx
 numpy
-PennyLane==0.32.0
 pfapack
 pytest
 pytest_cov
@@ -21,3 +20,5 @@ torch
 torchvision
 torchaudio
 tabulate
+
+https://github.com/JeremieGince/pennylane.git:debug_qbit_device_batched_expval
