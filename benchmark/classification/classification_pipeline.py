@@ -47,6 +47,12 @@ from kernels import (
     IdentityCudaWideFermionicPQCKernel,
     HadamardCudaWideFermionicPQCKernel,
     HadamardCudaFermionicPQCKernel,
+    SwapCpuFermionicPQCKernel,
+    SwapCpuWideFermionicPQCKernel,
+    IdentityCpuFermionicPQCKernel,
+    IdentityCpuWideFermionicPQCKernel,
+    HadamardCpuWideFermionicPQCKernel,
+    HadamardCpuFermionicPQCKernel,
 )
 
 try:
@@ -277,6 +283,12 @@ class ClassificationPipeline:
         "iwfPQC-cuda": IdentityCudaWideFermionicPQCKernel,
         "hfPQC-cuda": HadamardCudaFermionicPQCKernel,
         "hwfPQC-cuda": HadamardCudaWideFermionicPQCKernel,
+        "sfPQC-cpu": SwapCpuFermionicPQCKernel,
+        "swfPQC-cpu": SwapCpuWideFermionicPQCKernel,
+        "ifPQC-cpu": IdentityCpuFermionicPQCKernel,
+        "iwfPQC-cpu": IdentityCpuWideFermionicPQCKernel,
+        "hfPQC-cpu": HadamardCpuFermionicPQCKernel,
+        "hwfPQC-cpu": HadamardCpuWideFermionicPQCKernel,
     }
     UNPICKLABLE_ATTRIBUTES = ["dataset", "p_bar"]
 
