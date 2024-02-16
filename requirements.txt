@@ -1,7 +1,7 @@
 matplotlib==3.8.0
 networkx==3.1
 numpy==1.23.5
-PennyLane==0.32.0
+git+https://github.com/JeremieGince/pennylane.git@v0_32_0-dev1
 pfapack==0.3.1
 pytest==7.4.2
 pytest_cov==4.1.0
