@@ -21,4 +21,4 @@ torchvision
 torchaudio
 tabulate
 
-https://github.com/JeremieGince/pennylane.git:debug_qbit_device_batched_expval
+git+https://github.com/JeremieGince/pennylane.git@v0_32_0-dev1
