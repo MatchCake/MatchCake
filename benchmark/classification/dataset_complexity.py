@@ -339,5 +339,5 @@ def main():
 
 
 if __name__ == '__main__':
-    DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP["breast_cancer"] = 18
+    # DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP["breast_cancer"] = 18
     sys.exit(main())
