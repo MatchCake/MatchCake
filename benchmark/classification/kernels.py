@@ -271,3 +271,63 @@ class HadamardCudaWideFermionicPQCKernel(CudaWideFermionicPQCKernel):
     ):
         kwargs["entangling_mth"] = "hadamard"
         super().__init__(size=size, **kwargs)
+
+
+class SwapCpuFermionicPQCKernel(CpuFermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["entangling_mth"] = "fswap"
+        super().__init__(size=size, **kwargs)
+
+
+class SwapCpuWideFermionicPQCKernel(CpuWideFermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["entangling_mth"] = "fswap"
+        super().__init__(size=size, **kwargs)
+
+
+class IdentityCpuWideFermionicPQCKernel(CpuWideFermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["entangling_mth"] = "identity"
+        super().__init__(size=size, **kwargs)
+
+
+class IdentityCpuFermionicPQCKernel(CpuFermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["entangling_mth"] = "identity"
+        super().__init__(size=size, **kwargs)
+
+
+class HadamardCpuFermionicPQCKernel(CpuFermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["entangling_mth"] = "hadamard"
+        super().__init__(size=size, **kwargs)
+
+
+class HadamardCpuWideFermionicPQCKernel(CpuWideFermionicPQCKernel):
+    def __init__(
+            self,
+            size: Optional[int] = None,
+            **kwargs
+    ):
+        kwargs["entangling_mth"] = "hadamard"
+        super().__init__(size=size, **kwargs)
