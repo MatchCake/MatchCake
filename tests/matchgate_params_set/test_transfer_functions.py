@@ -796,14 +796,14 @@ def test_standard_hamiltonian_to_composed_hamiltonian(
     [
         (
                 MatchgateStandardParams(
-                    a=[1, fSWAP.a, 0, 0],
-                    b=[0, fSWAP.b, 1, 1],
-                    c=[0, fSWAP.c, 1, 1],
-                    d=[1, fSWAP.d, 1, 1],
-                    w=[1, fSWAP.w, 1, 0.5],
-                    x=[0, fSWAP.x, 1, 1],
-                    y=[0, fSWAP.y, 1, 1],
-                    z=[1, fSWAP.z, 1, 1],
+                    a=[1, np.squeeze(fSWAP.a), 0, 0],
+                    b=[0, np.squeeze(fSWAP.b), 1, 1],
+                    c=[0, np.squeeze(fSWAP.c), 1, 1],
+                    d=[1, np.squeeze(fSWAP.d), 1, 1],
+                    w=[1, np.squeeze(fSWAP.w), 1, 0.5],
+                    x=[0, np.squeeze(fSWAP.x), 1, 1],
+                    y=[0, np.squeeze(fSWAP.y), 1, 1],
+                    z=[1, np.squeeze(fSWAP.z), 1, 1],
                 ),
                 MatchgatePolarParams(
                     r0=[1, 1, 0, 0],
