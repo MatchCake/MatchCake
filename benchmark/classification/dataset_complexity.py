@@ -267,7 +267,9 @@ def parse_args():
     parser.add_argument(
         "--methods", type=str, nargs="+",
         default=[
-            # "fPQC-cpu",
+            "fPQC-cpu",
+            "hfPQC-cpu",
+            "ifPQC-cpu",
             "fPQC-cuda",
             "hfPQC-cuda",
             "ifPQC-cuda",
