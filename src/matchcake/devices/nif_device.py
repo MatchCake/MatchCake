@@ -68,8 +68,7 @@ class _VHMatchgatesContainer:
 class NonInteractingFermionicDevice(qml.QubitDevice):
     name = 'Non-Interacting Fermionic Simulator'
     short_name = "nif.qubit"
-    pennylane_requires = ">=0.34"
-    # pennylane_requires = ">=0.32"
+    pennylane_requires = "==0.32"
     version = "0.0.1"
     author = "Jérémie Gince"
 
