@@ -84,8 +84,12 @@ class DatasetComplexityPipeline:
     #     for d_name in DATASET_MAX_SIZE_MAP.keys()
     # }
     MTH_MAX_SIZE_MAP = {
-        "fPQC-cuda": np.inf,
+        "fPQC-cuda": 16,
+        "ifPQC-cuda": 16,
+        "hfPQC-cuda": 16,
         "fPQC-cpu": np.inf,
+        "ifPQC-cpu": np.inf,
+        "hfPQC-cpu": np.inf,
         "PQC": 30,
     }
 
@@ -166,7 +170,9 @@ class DatasetComplexityPipeline:
     def get_results_table(self, **kwargs):
         df_list = []
         show = kwargs.pop("show", False)
-        filepath: Optional[str] = kwargs.pop("filepath", None)
+        filepath: Optional[str] = kwargs.pop(
+            "filepath", os.path.join(self.save_dir, self.dataset_name, "figures", f"results.csv")
+        )
         for n_features, pipeline in self.classification_pipelines.items():
             df_list.append(pipeline.get_results_properties_table(**kwargs))
         df = pd.concat(df_list)
@@ -187,20 +193,40 @@ class DatasetComplexityPipeline:
         if fig is None or ax is None:
             fig, ax = plt.subplots(figsize=(14, 10))
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        kernels = kwargs.get("kernels", df[ClassificationPipeline.KERNEL_KEY].unique())
         y_scale_factor = kwargs.get("y_scale_factor", 1)
+        kernel_to_color = kwargs.get("kernel_to_color", None)
+        if kernel_to_color is None:
+            kernel_to_color = {k: colors[i] for i, k in enumerate(kernels)}
+        kernel_to_linestyle = kwargs.get("kernel_to_linestyle", None)
+        base_linestyle = kwargs.get("linestyle", "-")
+        if kernel_to_linestyle is None:
+            kernel_to_linestyle = {k: base_linestyle for k in kernels}
+        kernel_to_lbl = kwargs.get("kernel_to_lbl", None)
+        if kernel_to_lbl is None:
+            kernel_to_lbl = {k: k for k in kernels}
+        x_min, x_max = df[x_axis_key].min(), df[x_axis_key].max()
+        y_min, y_max = df[y_axis_key].min(), df[y_axis_key].max()
         for i, (kernel_name, kernel_df) in enumerate(df.groupby(ClassificationPipeline.KERNEL_KEY)):
+            if kernel_name not in kernels:
+                continue
             x_sorted_unique = np.sort(kernel_df[x_axis_key].unique())
             y_series = kernel_df.groupby(x_axis_key)[y_axis_key]
             y_mean = y_scale_factor * y_series.mean().values
             y_std = y_scale_factor * y_series.std().values
             pre_lbl, post_lbl = kwargs.get("pre_lbl", ""), kwargs.get("post_lbl", "")
-            lbl = f"{pre_lbl}{kernel_name}{post_lbl}"
-            ax.plot(x_sorted_unique, y_mean, label=lbl, color=colors[i], linestyle=kwargs.get("linestyle", "-"))
+            lbl = f"{pre_lbl}{kernel_to_lbl.get(kernel_name, kernel_name)}{post_lbl}"
+            k_color = kernel_to_color.get(kernel_name, colors[i])
+            k_linestyle = kernel_to_linestyle.get(kernel_name, base_linestyle)
+            ax.plot(x_sorted_unique, y_mean, label=lbl, color=k_color, linestyle=k_linestyle)
             if y_series.count().min() > 1:
-                ax.fill_between(x_sorted_unique, y_mean - y_std, y_mean + y_std, alpha=0.2, color=colors[i])
+                ax.fill_between(x_sorted_unique, y_mean - y_std, y_mean + y_std, alpha=0.2, color=k_color)
         ax.set_xlabel(kwargs.get("x_axis_label", x_axis_key))
         ax.set_ylabel(kwargs.get("y_axis_label", y_axis_key))
-        ax.legend()
+        # ax.set_xlim(x_min, x_max)
+        # ax.set_ylim(y_min, y_max)
+        if kwargs.get("legend", True):
+            ax.legend()
         if kwargs.get("show", False):
             plt.show()
         return fig, ax
@@ -226,24 +252,71 @@ class DatasetComplexityPipeline:
             ClassificationPipeline.FIT_TIME_KEY: 1,
             "Accuracies [%]": 100,
         }
+        df = self.results_table
+        kernels = df[ClassificationPipeline.KERNEL_KEY].unique()
+        gpu_methods = [m for m in kernels if "cuda" in m]
+        cpu_methods = [m for m in kernels if m not in gpu_methods]
+        set_methods = cpu_methods + [m for m in gpu_methods if m.replace("-cuda", "-cpu") not in cpu_methods]
+        kernels_list = [kernels, set_methods]
+        gpu_linestyle, cpu_linestyle = "--", "-"
+        train_linestyle, test_linestyle = "-", "-."
+        kernel_to_linestyle = {
+            m: gpu_linestyle if m in gpu_methods else cpu_linestyle
+            for m in kernels
+        }
+        kernel_to_linestyle_list = [
+            [kernel_to_linestyle, kernel_to_linestyle],
+            [{m: train_linestyle for m in kernels}, {m: test_linestyle for m in kernels}],
+        ]
+        kernel_to_lbl = {m: m.replace("-cuda", "").replace("-cpu", "") for m in kernels}
+        colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        kernel_lbl_to_color = {lbl: colors[i] for i, lbl in enumerate(set(kernel_to_lbl.values()))}
+        kernel_to_color = {k: kernel_lbl_to_color[lbl] for k, lbl in kernel_to_lbl.items()}
         for x_lbl, x_key in x_keys.items():
             n_rows = int(np.sqrt(len(y_lbl_to_keys)))
             n_cols = int(np.ceil(len(y_lbl_to_keys) / n_rows))
-            fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 6 * n_rows))
+            fig, axes = plt.subplots(n_rows, n_cols, figsize=(10 * n_cols, 10 * n_rows))
             axes = np.ravel(np.asarray([axes]))
             for i, (y_lbl, y_key) in enumerate(y_lbl_to_keys.items()):
                 if not isinstance(y_key, list):
                     y_key = [y_key]
                 for j, y_k in enumerate(y_key):
                     self.plot_results(
-                        x_axis_key=x_key, x_axis_label=x_lbl,
+                        x_axis_key=x_key, x_axis_label="",
                         y_axis_key=y_k, y_axis_label=y_lbl,
+                        kernels=kernels_list[i],
                         pre_lbl=y_lbl_to_pre_post_lbl.get(y_lbl, [""] * (j + 1))[j],
+                        kernel_to_lbl=kernel_to_lbl,
+                        kernel_to_color=kernel_to_color,
                         y_scale_factor=y_lbl_to_scale_factor.get(y_lbl, 1),
                         linestyle=linestyles[j],
+                        kernel_to_linestyle=kernel_to_linestyle_list[i][j],
                         fig=fig, ax=axes[i],
-                        show=False
+                        legend=False,
+                        show=False,
                     )
+                x_min, x_max = df[x_key].values.min(), df[x_key].values.max()
+                y_min, y_max = df[y_key].values.min(), df[y_key].values.max()
+                y_min, y_max = y_lbl_to_scale_factor.get(y_lbl, 1) * y_min, y_lbl_to_scale_factor.get(y_lbl, 1) * y_max
+                axes[i].set_xlim(x_min, x_max)
+                axes[i].set_ylim(y_min, y_max)
+            fig.supxlabel(x_lbl)
+            # create a legend with custom patches using the kernel_to_linestyle and kernel_to_color
+            patches = [
+                plt.Line2D([0], [0], color=c, label=lbl)
+                for lbl, c in kernel_lbl_to_color.items()
+            ]
+            patches += [
+                plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
+                for lbl, ls in [("GPU", gpu_linestyle), ("CPU", cpu_linestyle)]
+            ]
+            axes[0].legend(handles=patches, loc='upper left')
+            patches = [
+                plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
+                for lbl, ls in [("Train", train_linestyle), ("Test", test_linestyle)]
+            ]
+            axes[-1].legend(handles=patches, loc='lower right')
+            fig.tight_layout()
             plt.tight_layout()
             if self.save_dir is not None:
                 fig_save_path = os.path.join(self.save_dir, self.dataset_name, "figures", f"results_{x_key}.pdf")
@@ -339,5 +412,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP["breast_cancer"] = 18
+    # DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP["breast_cancer"] = 16
     sys.exit(main())
