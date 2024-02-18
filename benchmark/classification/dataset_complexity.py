@@ -136,6 +136,7 @@ class DatasetComplexityPipeline:
 
     def run(self, **kwargs):
         save_dir = kwargs.get("save_dir", self.save_dir)
+        should_run_pipelines = kwargs.pop("run_pipelines", True)
         n_mth = len(self.classification_pipeline_kwargs.get("methods", ClassificationPipeline.available_kernels))
         n_kfold_splits = self.classification_pipeline_kwargs.get(
             "n_kfold_splits", ClassificationPipeline.DEFAULT_N_KFOLD_SPLITS
@@ -162,7 +163,9 @@ class DatasetComplexityPipeline:
                 )
             self.classification_pipelines[size] = ClassificationPipeline.from_pickle_or_new(
                 pickle_path=cp_kwargs.get("save_path", None), **cp_kwargs
-            ).run(**kwargs)
+            )
+            if should_run_pipelines:
+                self.classification_pipelines[size].run(**kwargs)
             self.classification_pipelines[size].save_all_results()
         p_bar.close()
         return self
@@ -175,6 +178,28 @@ class DatasetComplexityPipeline:
         )
         for n_features, pipeline in self.classification_pipelines.items():
             df_list.append(pipeline.get_results_properties_table(**kwargs))
+        df = pd.concat(df_list)
+        self.results_table = df
+
+        if filepath is not None:
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            df.to_csv(filepath)
+        if show:
+            print(df.to_markdown())
+        return df
+
+    def get_results_table_from_csvs(self, **kwargs):
+        filepath: Optional[str] = kwargs.pop(
+            "filepath", os.path.join(self.save_dir, self.dataset_name, "figures", f"results.csv")
+        )
+        root_folder = kwargs.get("folder", os.path.join(self.save_dir, self.dataset_name))
+        csv_filename = kwargs.get("csv_filename", "mean_results_and_properties.csv")
+        show = kwargs.pop("show", False)
+        df_list = []
+        for root, dirs, files in os.walk(root_folder):
+            if csv_filename in files:
+                csv_path = os.path.join(root, csv_filename)
+                df_list.append(pd.read_csv(csv_path))
         df = pd.concat(df_list)
         self.results_table = df
 
@@ -205,8 +230,6 @@ class DatasetComplexityPipeline:
         kernel_to_lbl = kwargs.get("kernel_to_lbl", None)
         if kernel_to_lbl is None:
             kernel_to_lbl = {k: k for k in kernels}
-        x_min, x_max = df[x_axis_key].min(), df[x_axis_key].max()
-        y_min, y_max = df[y_axis_key].min(), df[y_axis_key].max()
         for i, (kernel_name, kernel_df) in enumerate(df.groupby(ClassificationPipeline.KERNEL_KEY)):
             if kernel_name not in kernels:
                 continue
@@ -269,8 +292,9 @@ class DatasetComplexityPipeline:
             [{m: train_linestyle for m in kernels}, {m: test_linestyle for m in kernels}],
         ]
         kernel_to_lbl = {m: m.replace("-cuda", "").replace("-cpu", "") for m in kernels}
+        sorted_lbls = sorted(set(kernel_to_lbl.values()))
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-        kernel_lbl_to_color = {lbl: colors[i] for i, lbl in enumerate(set(kernel_to_lbl.values()))}
+        kernel_lbl_to_color = {lbl: colors[i] for i, lbl in enumerate(sorted_lbls)}
         kernel_to_color = {k: kernel_lbl_to_color[lbl] for k, lbl in kernel_to_lbl.items()}
         for x_lbl, x_key in x_keys.items():
             n_rows = int(np.sqrt(len(y_lbl_to_keys)))
@@ -295,8 +319,8 @@ class DatasetComplexityPipeline:
                         legend=False,
                         show=False,
                     )
-                x_min, x_max = df[x_key].values.min(), df[x_key].values.max()
-                y_min, y_max = df[y_key].values.min(), df[y_key].values.max()
+                x_min, x_max = np.nanmin(df[x_key].values), np.nanmax(df[x_key].values)
+                y_min, y_max = np.nanmin(df[y_key].values), np.nanmax(df[y_key].values)
                 y_min, y_max = y_lbl_to_scale_factor.get(y_lbl, 1) * y_min, y_lbl_to_scale_factor.get(y_lbl, 1) * y_max
                 axes[i].set_xlim(x_min, x_max)
                 axes[i].set_ylim(y_min, y_max)
@@ -362,7 +386,7 @@ def parse_args():
     )
     parser.add_argument(
         "--save_dir", type=str,
-        default=os.path.join(os.path.dirname(__file__), "results_dc"),
+        default=os.path.join(os.path.dirname(__file__), "results_dc_cluster"),
         help="The directory where the results will be saved."
     )
     parser.add_argument(
@@ -379,6 +403,7 @@ def parse_args():
         help="Whether to throw errors or not."
     )
     parser.add_argument("--n_samples", type=int, default=None)
+    parser.add_argument("--run_pipelines", action=argparse.BooleanOptionalAction, default=True)
     return parser.parse_args()
 
 
@@ -386,7 +411,7 @@ def main():
     args = parse_args()
     if any(["cuda" in m for m in args.methods]):
         matchcake.utils.cuda.is_cuda_available(throw_error=True, enable_warnings=True)
-
+    print(f"{args.run_pipelines = }")
     classification_pipeline_kwargs = dict(
         methods=args.methods,
         n_kfold_splits=args.n_kfold_splits,
@@ -403,9 +428,12 @@ def main():
         classification_pipeline_kwargs=classification_pipeline_kwargs,
         n_samples=args.n_samples,
     )
-    pipeline.run()
-    plt.close("all")
-    pipeline.get_results_table(show=True)
+    if args.run_pipelines:
+        pipeline.run(run_pipelines=args.run_pipelines)
+        plt.close("all")
+        pipeline.get_results_table(show=True)
+    else:
+        pipeline.get_results_table_from_csvs(show=True)
     plt.close("all")
     pipeline.plot_formatted_complexity_results(show=True)
     plt.close("all")
