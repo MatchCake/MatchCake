@@ -52,6 +52,7 @@ def parse_args():
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--simplify_qnode", type=bool, default=False)
     parser.add_argument("--max_gram_size", type=int, default=np.inf)
+    parser.add_argument("--kernel_size", type=int, default=None)
     return parser.parse_args()
 
 
@@ -71,7 +72,8 @@ def main():
         kernel_kwargs=dict(
             nb_workers=0,
             batch_size=args.batch_size,
-            simplify_qnode=args.simplify_qnode
+            simplify_qnode=args.simplify_qnode,
+            size=args.kernel_size,
         ),
         throw_errors=args.throw_errors,
         dataset_n_samples=args.dataset_n_samples,
