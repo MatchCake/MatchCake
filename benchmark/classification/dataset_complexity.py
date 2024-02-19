@@ -99,7 +99,9 @@ class DatasetComplexityPipeline:
     def default_size_lists(cls):
         return {
             d_name: np.arange(
-                cls.DATASET_MIN_SIZE_MAP[d_name], cls.DATASET_MAX_SIZE_MAP[d_name], cls.DATASET_STEP_SIZE_MAP[d_name]
+                start=cls.DATASET_MIN_SIZE_MAP[d_name],
+                stop=cls.DATASET_MAX_SIZE_MAP[d_name] + cls.DATASET_STEP_SIZE_MAP[d_name],
+                step=cls.DATASET_STEP_SIZE_MAP[d_name],
             ).tolist()
             for d_name in cls.DATASET_MAX_SIZE_MAP.keys()
         }
@@ -214,7 +216,7 @@ class DatasetComplexityPipeline:
     def plot_results(self, **kwargs):
         x_axis_key = kwargs.get("x_axis_key", "kernel_size")
         y_axis_key = kwargs.get("y_axis_key", ClassificationPipeline.FIT_TIME_KEY)
-        confidence_interval = kwargs.get("confidence_interval", 0.95)
+        confidence_interval = kwargs.get("confidence_interval", 0.10)
         df = self.results_table
         fig, ax = kwargs.get("fig", None), kwargs.get("ax", None)
         if fig is None or ax is None:
@@ -232,6 +234,7 @@ class DatasetComplexityPipeline:
         kernel_to_lbl = kwargs.get("kernel_to_lbl", None)
         if kernel_to_lbl is None:
             kernel_to_lbl = {k: k for k in kernels}
+        y_min, y_max = np.inf, -np.inf
         for i, (kernel_name, kernel_df) in enumerate(df.groupby(ClassificationPipeline.KERNEL_KEY)):
             if kernel_name not in kernels:
                 continue
@@ -250,6 +253,7 @@ class DatasetComplexityPipeline:
                 scale=y_std / np.sqrt(kernel_df.groupby(x_axis_key).size().values)
             )
             ax.fill_between(x_sorted_unique, conf_int_a, conf_int_b, alpha=0.2, color=k_color)
+            y_min, y_max = min(y_min, np.nanmin(conf_int_a)), max(y_max, np.nanmax(conf_int_b))
         ax.set_xlabel(kwargs.get("x_axis_label", x_axis_key))
         ax.set_ylabel(kwargs.get("y_axis_label", y_axis_key))
         # ax.set_xlim(x_min, x_max)
@@ -258,6 +262,8 @@ class DatasetComplexityPipeline:
             ax.legend()
         if kwargs.get("show", False):
             plt.show()
+        if kwargs.get("return_y_min_max", False):
+            return fig, ax, y_min, y_max
         return fig, ax
 
     def plot_formatted_complexity_results(self, **kwargs):
@@ -314,8 +320,9 @@ class DatasetComplexityPipeline:
             for i, (y_lbl, y_key) in enumerate(y_lbl_to_keys.items()):
                 if not isinstance(y_key, list):
                     y_key = [y_key]
+                y_min, y_max = np.inf, -np.inf
                 for j, y_k in enumerate(y_key):
-                    self.plot_results(
+                    *_, j_y_min, j_y_max = self.plot_results(
                         x_axis_key=x_key, x_axis_label="",
                         y_axis_key=y_k, y_axis_label=y_lbl,
                         kernels=y_lbl_to_kernels_list[y_lbl],
@@ -328,10 +335,10 @@ class DatasetComplexityPipeline:
                         fig=fig, ax=axes[i],
                         legend=False,
                         show=False,
+                        return_y_min_max=True,
                     )
+                    y_min, y_max = min(y_min, j_y_min), max(y_max, j_y_max)
                 x_min, x_max = np.nanmin(df[x_key].values), np.nanmax(df[x_key].values)
-                y_min, y_max = np.nanmin(df[y_key].values), np.nanmax(df[y_key].values)
-                y_min, y_max = y_lbl_to_scale_factor.get(y_lbl, 1) * y_min, y_lbl_to_scale_factor.get(y_lbl, 1) * y_max
                 axes[i].set_xlim(x_min, x_max)
                 axes[i].set_ylim(y_min, y_max)
             fig.supxlabel(x_lbl)
@@ -450,5 +457,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP["breast_cancer"] = 16
+    # DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP["breast_cancer"] = 14
     sys.exit(main())
