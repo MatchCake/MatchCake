@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import psutil
 import pennylane as qml
+from scipy import stats
 from sklearn import datasets
 from sklearn import svm
 from sklearn.datasets import fetch_openml
@@ -213,6 +214,7 @@ class DatasetComplexityPipeline:
     def plot_results(self, **kwargs):
         x_axis_key = kwargs.get("x_axis_key", "kernel_size")
         y_axis_key = kwargs.get("y_axis_key", ClassificationPipeline.FIT_TIME_KEY)
+        confidence_interval = kwargs.get("confidence_interval", 0.95)
         df = self.results_table
         fig, ax = kwargs.get("fig", None), kwargs.get("ax", None)
         if fig is None or ax is None:
@@ -242,8 +244,12 @@ class DatasetComplexityPipeline:
             k_color = kernel_to_color.get(kernel_name, colors[i])
             k_linestyle = kernel_to_linestyle.get(kernel_name, base_linestyle)
             ax.plot(x_sorted_unique, y_mean, label=lbl, color=k_color, linestyle=k_linestyle)
-            if y_series.count().min() > 1:
-                ax.fill_between(x_sorted_unique, y_mean - y_std, y_mean + y_std, alpha=0.2, color=k_color)
+
+            conf_int_a, conf_int_b = stats.norm.interval(
+                confidence_interval, loc=y_mean,
+                scale=y_std / np.sqrt(kernel_df.groupby(x_axis_key).size().values)
+            )
+            ax.fill_between(x_sorted_unique, conf_int_a, conf_int_b, alpha=0.2, color=k_color)
         ax.set_xlabel(kwargs.get("x_axis_label", x_axis_key))
         ax.set_ylabel(kwargs.get("y_axis_label", y_axis_key))
         # ax.set_xlim(x_min, x_max)
@@ -261,36 +267,40 @@ class DatasetComplexityPipeline:
             "Kernel size [-]": "kernel_size",
             # "n_features": "Number of features [-]",
         }
+        accuracies_lbl = "Accuracies [%]"
         linestyles = ["-", "--", "-.", ":"]
         y_lbl_to_keys = {
             ClassificationPipeline.FIT_TIME_KEY: ClassificationPipeline.FIT_TIME_KEY,
             # "kernel_n_ops",
-            "Accuracies [%]": [ClassificationPipeline.TRAIN_ACCURACY_KEY, ClassificationPipeline.TEST_ACCURACY_KEY],
+            accuracies_lbl: [ClassificationPipeline.TRAIN_ACCURACY_KEY, ClassificationPipeline.TEST_ACCURACY_KEY],
             # "kernel_depth",
         }
         y_lbl_to_pre_post_lbl = {
-            "Accuracies [%]": ("Train ", "Test "),
+            accuracies_lbl: ("Train ", "Test "),
         }
         y_lbl_to_scale_factor = {
             ClassificationPipeline.FIT_TIME_KEY: 1,
-            "Accuracies [%]": 100,
+            accuracies_lbl: 100,
         }
         df = self.results_table
         kernels = df[ClassificationPipeline.KERNEL_KEY].unique()
         gpu_methods = [m for m in kernels if "cuda" in m]
         cpu_methods = [m for m in kernels if m not in gpu_methods]
         set_methods = cpu_methods + [m for m in gpu_methods if m.replace("-cuda", "-cpu") not in cpu_methods]
-        kernels_list = [kernels, set_methods]
+        y_lbl_to_kernels_list = {
+            ClassificationPipeline.FIT_TIME_KEY: kernels,
+            accuracies_lbl: set_methods
+        }
         gpu_linestyle, cpu_linestyle = "--", "-"
         train_linestyle, test_linestyle = "-", "-."
         kernel_to_linestyle = {
             m: gpu_linestyle if m in gpu_methods else cpu_linestyle
             for m in kernels
         }
-        kernel_to_linestyle_list = [
-            [kernel_to_linestyle, kernel_to_linestyle],
-            [{m: train_linestyle for m in kernels}, {m: test_linestyle for m in kernels}],
-        ]
+        y_lbl_to_linestyle_list = {
+            ClassificationPipeline.FIT_TIME_KEY: [kernel_to_linestyle, kernel_to_linestyle],
+            accuracies_lbl: [{m: train_linestyle for m in kernels}, {m: test_linestyle for m in kernels}],
+        }
         kernel_to_lbl = {m: m.replace("-cuda", "").replace("-cpu", "") for m in kernels}
         sorted_lbls = sorted(set(kernel_to_lbl.values()))
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -308,13 +318,13 @@ class DatasetComplexityPipeline:
                     self.plot_results(
                         x_axis_key=x_key, x_axis_label="",
                         y_axis_key=y_k, y_axis_label=y_lbl,
-                        kernels=kernels_list[i],
+                        kernels=y_lbl_to_kernels_list[y_lbl],
                         pre_lbl=y_lbl_to_pre_post_lbl.get(y_lbl, [""] * (j + 1))[j],
                         kernel_to_lbl=kernel_to_lbl,
                         kernel_to_color=kernel_to_color,
                         y_scale_factor=y_lbl_to_scale_factor.get(y_lbl, 1),
                         linestyle=linestyles[j],
-                        kernel_to_linestyle=kernel_to_linestyle_list[i][j],
+                        kernel_to_linestyle=y_lbl_to_linestyle_list[y_lbl][j],
                         fig=fig, ax=axes[i],
                         legend=False,
                         show=False,
@@ -398,8 +408,8 @@ def parse_args():
     )
     parser.add_argument(
         "--throw_errors", type=bool,
-        # default=False,
-        default=True,
+        default=False,
+        # default=True,
         help="Whether to throw errors or not."
     )
     parser.add_argument("--n_samples", type=int, default=None)
