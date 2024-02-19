@@ -32,9 +32,12 @@ def parse_args():
         default=[
             "classical",
             "PQC",
-            "fPQC-cuda", "wfPQC-cuda",
-            "hfPQC-cuda", "hwfPQC-cuda",
-            "ifPQC-cuda", "iwfPQC-cuda",
+            "fPQC-cuda",
+            "wfPQC-cuda",
+            "hfPQC-cuda",
+            "hwfPQC-cuda",
+            "ifPQC-cuda",
+            "iwfPQC-cuda",
         ],
         help=f"The methods to be used for the classification."
              f"Available methods: {ClassificationPipeline.available_kernels}."
@@ -108,7 +111,11 @@ def main():
     pipeline.bar_plot(
         show=args.show,
         bar_label=False,
-        kernels_to_remove=["classical"],
+        kernels_to_remove=["classical", ] + (
+            ["wfPQC-cuda", "hwfPQC-cuda", "iwfPQC-cuda"]
+            if args.dataset_name in ["digits", "mnist"]
+            else []
+        ),
         filepath=os.path.join(figures_folder, "bar_plot.pdf"),
     )
     plt.close("all")
