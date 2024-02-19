@@ -56,9 +56,27 @@ def make_results_table(trial="cls_k5"):
         df[DATASET_KEY] = dataset_fmt_name
         full_df = pd.concat([full_df, df])
 
+    all_kernels = full_df[ClassificationPipeline.KERNEL_KEY].unique()
+    gpu_kernels = [m for m in all_kernels if "cuda" in m]
+    cpu_kernels = [m for m in all_kernels if m not in gpu_kernels]
+    all_kernels_set = cpu_kernels + [m for m in gpu_kernels if m.replace("-cuda", "-cpu") not in cpu_kernels]
+    kernels_to_keep = ["PQC", "fPQC", "ifPQC", "hfPQC"]
+    all_kernels_set = [
+        m for m in all_kernels_set
+        if any([
+            k.replace("-cuda", "").replace("-cpu", "") == m.replace("-cuda", "").replace("-cpu", "")
+            for k in kernels_to_keep
+        ])
+    ]
+    # filter the kernels
+    full_df = full_df[full_df[ClassificationPipeline.KERNEL_KEY].isin(all_kernels_set)]
     # use pm_string_to_floats to convert the accuracies and f1 to floats, multiply by 100,
     # find the max by dataset and convert back to string and bold the max
-    for key in [ClassificationPipeline.TEST_ACCURACY_KEY, ClassificationPipeline.TEST_F1_KEY]:
+    for key in [
+        ClassificationPipeline.TEST_ACCURACY_KEY,
+        ClassificationPipeline.TRAIN_ACCURACY_KEY,
+        ClassificationPipeline.TEST_F1_KEY,
+    ]:
         full_df[key] = full_df[key].apply(pm_string_to_floats)
         full_df[key] *= 100
         full_df[key] = full_df[key].apply(floats_to_pm_string)
