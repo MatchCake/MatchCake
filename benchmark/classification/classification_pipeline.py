@@ -1134,7 +1134,7 @@ class ClassificationPipeline:
         if fig is None or ax is None:
             fig, ax = plt.subplots(figsize=kwargs.get("figsize", (18, 14)))
         x = np.arange(len(df_mean))
-        keys = self.test_metrics.metrics_names
+        keys = self.train_metrics.metrics_names + self.test_metrics.metrics_names
         x_width = 0.85
         k_width = x_width / len(keys)
         fig_ppi = 72
@@ -1150,7 +1150,7 @@ class ClassificationPipeline:
                 plt.bar_label(bar, padding=3, fmt="%.2f", label_type="edge")
         ax.set_xticks(x)
         ax.set_xticklabels(df_mean[self.KERNEL_KEY], rotation=kwargs.get("xticklabels_rotation", 15))
-        ax.legend()
+        ax.legend(loc=kwargs.get("legend_loc", "lower left"))
         filepath = kwargs.get("filepath", None)
         if filepath is not None:
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -1166,11 +1166,14 @@ class ClassificationPipeline:
         if save_dir is None:
             raise ValueError("No save_dir or save_path provided.")
         os.makedirs(save_dir, exist_ok=True)
-        self.get_results_properties_table(filepath=os.path.join(save_dir, "properties.csv"), show=False, **kwargs)
+        self.get_properties_table(filepath=os.path.join(save_dir, "properties.csv"), show=False, **kwargs)
         self.get_results_table(filepath=os.path.join(save_dir, "results.csv"), show=False, **kwargs)
         self.get_results_table(filepath=os.path.join(save_dir, "mean_results.csv"), mean=True, show=False, **kwargs)
         self.get_results_properties_table(
-            filepath=os.path.join(save_dir, "mean_results_and_properties.csv"), show=False, **kwargs
+            filepath=os.path.join(save_dir, "results_and_properties.csv"), show=False, **kwargs
+        )
+        self.get_results_properties_table(
+            filepath=os.path.join(save_dir, "mean_results_and_properties.csv"), mean=True, show=False, **kwargs
         )
         self.bar_plot(filepath=os.path.join(save_dir, "bar_plot.png"), show=False, **kwargs)
         return self
