@@ -91,7 +91,7 @@ class DatasetComplexityPipeline:
         "fPQC-cpu": np.inf,
         "ifPQC-cpu": np.inf,
         "hfPQC-cpu": np.inf,
-        "PQC": 30,
+        "PQC": 16,
     }
 
     @classmethod
