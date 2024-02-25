@@ -387,7 +387,7 @@ def parse_args():
             "fPQC-cuda",
             "hfPQC-cuda",
             "ifPQC-cuda",
-            "PQC",
+            # "PQC",
         ],
         help=f"The methods to be used for the classification."
              f"Example: --methods fPQC PQC."
