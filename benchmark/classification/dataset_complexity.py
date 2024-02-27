@@ -445,17 +445,20 @@ def main():
         classification_pipeline_kwargs=classification_pipeline_kwargs,
         n_samples=args.n_samples,
     )
-    if args.run_pipelines:
-        pipeline.run(run_pipelines=args.run_pipelines)
-        plt.close("all")
-        pipeline.get_results_table(show=True)
-    else:
-        pipeline.get_results_table_from_csvs(show=True)
+    pipeline.run(run_pipelines=args.run_pipelines)
+    plt.close("all")
+    pipeline.get_results_table(show=True)
+    # if args.run_pipelines:
+    #     pipeline.run(run_pipelines=args.run_pipelines)
+    #     plt.close("all")
+    #     pipeline.get_results_table(show=True)
+    # else:
+    #     pipeline.get_results_table_from_csvs(show=True)
     plt.close("all")
     pipeline.plot_formatted_complexity_results(show=True)
     plt.close("all")
 
 
 if __name__ == '__main__':
-    # DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP["breast_cancer"] = 14
+    # DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP["breast_cancer"] = 18
     sys.exit(main())
