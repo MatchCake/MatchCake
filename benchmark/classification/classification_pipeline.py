@@ -1067,7 +1067,7 @@ class ClassificationPipeline:
             #     df_mean = df_mean.sort_values(by=self.TEST_ACCURACY_KEY, ascending=False)
             #     is_sorted = True
             df_std = df.groupby(by=mean_on, as_index=False).std().drop(drop_on_mean, axis=1)
-            map_func = lambda x: f"{x:.4f}"
+            map_func = lambda x: f"{x:.4f}" if not np.isnan(x) else "nan"
             df_wo_numerics = df_mean[numerics_columns].map(map_func) + u"\u00B1" + df_std[numerics_columns].map(map_func)
             df = pd.concat([df_mean[[mean_on]], df_wo_numerics], axis=1)
 
