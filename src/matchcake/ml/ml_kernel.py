@@ -599,24 +599,34 @@ class FixedSizeSVC(StdEstimator):
 
     @property
     def kernel_size(self):
+        if self.kernels is None:
+            return None
         return getattr(self.kernels[0], "size", None)
 
     @property
     def kernel_n_ops(self):
+        if self.kernels is None:
+            return None
         return getattr(self.kernels[0], "n_ops", None)
 
     @property
     def kernel_n_params(self):
+        if self.kernels is None:
+            return None
         return getattr(self.kernels[0], "n_params", None)
 
     @property
     def n_features(self):
+        if self.X_ is None:
+            return None
         return qml.math.shape(self.X_)[-1]
 
     def __getattr__(self, item):
         if item in self.__dict__:
             return self.__dict__[item]
         if item.startswith("kernel_"):
+            if self.kernels is None:
+                return None
             return getattr(self.kernels[0], item[7:])
         raise AttributeError(f"{self.__class__.__name__} has no attribute {item}.")
 
