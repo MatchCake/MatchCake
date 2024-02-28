@@ -3,6 +3,7 @@ import sys
 import os
 from copy import deepcopy
 from collections import defaultdict
+from fractions import Fraction
 from typing import Optional, Union, List, Callable
 from functools import partial
 import argparse
@@ -60,7 +61,7 @@ from matchcake.ml import ClassificationVisualizer
 from matchcake.ml.ml_kernel import MLKernel, FixedSizeSVC
 import warnings
 from classification_pipeline import ClassificationPipeline
-from utils import MPL_RC_BIG_FONT_PARAMS, mStyles, find_complexity, ten_exp_fit, poly_fit
+from utils import MPL_RC_BIG_FONT_PARAMS, mStyles, find_complexity, exp_fit, poly_fit, lin_fit
 
 
 class DatasetComplexityPipeline:
@@ -219,6 +220,9 @@ class DatasetComplexityPipeline:
         y_axis_key = kwargs.get("y_axis_key", ClassificationPipeline.FIT_TIME_KEY)
         confidence_interval = kwargs.get("confidence_interval", 0.10)
         y_scale = kwargs.get("y_scale", "linear")
+        y_scale_base = kwargs.get("y_scale_base", 2)
+        x_scale = kwargs.get("x_scale", "linear")
+        x_scale_base = kwargs.get("x_scale_base", 2)
         df = self.results_table
         fig, ax = kwargs.get("fig", None), kwargs.get("ax", None)
         if fig is None or ax is None:
@@ -267,6 +271,11 @@ class DatasetComplexityPipeline:
                     alpha=0.5,
                     linestyle=":",
                     complexity=kernel_to_complexity.get(kernel_name, "exponential"),
+                    base=y_scale_base,
+                    y_scale=y_scale,
+                    y_scale_base=y_scale_base,
+                    x_scale=x_scale,
+                    x_scale_base=x_scale_base,
                 )
                 comp_lbl = comp_out["label"]
             else:
@@ -282,9 +291,13 @@ class DatasetComplexityPipeline:
             )
             ax.fill_between(x_sorted_unique, conf_int_a, conf_int_b, alpha=0.2, color=k_color)
             if y_scale in ["log", "symlog"]:
-                ax.set_yscale(y_scale, base=kwargs.get("y_scale_base", 10))
+                ax.set_yscale(y_scale, base=y_scale_base)
             else:
                 ax.set_yscale(y_scale)
+            if x_scale in ["log", "symlog"]:
+                ax.set_xscale(x_scale, base=x_scale_base)
+            else:
+                ax.set_xscale(x_scale)
             ax.minorticks_on()
             y_min, y_max = min(y_min, np.nanmin(conf_int_a)), max(y_max, np.nanmax(conf_int_b))
             data_dict[kernel_name] = {
@@ -316,7 +329,7 @@ class DatasetComplexityPipeline:
     def plot_formatted_complexity_results(self, **kwargs):
         if kwargs.get("use_default_rc_params", True):
             plt.rcParams.update(MPL_RC_BIG_FONT_PARAMS)
-            plt.rcParams["legend.fontsize"] = 14
+            plt.rcParams["legend.fontsize"] = 16
         x_keys = {
             "N [-]": "kernel_size",
             # "n_features": "Number of features [-]",
@@ -340,13 +353,26 @@ class DatasetComplexityPipeline:
             ClassificationPipeline.FIT_TIME_KEY: "log",
             accuracies_lbl: "linear",
         }
+        y_lbl_to_y_scale_base = {
+            ClassificationPipeline.FIT_TIME_KEY: 2,
+            accuracies_lbl: None,
+        }
+        y_lbl_to_x_scale = {
+            ClassificationPipeline.FIT_TIME_KEY: "linear",
+            accuracies_lbl: "linear",
+        }
+        y_lbl_to_x_scale_base = {
+            ClassificationPipeline.FIT_TIME_KEY: 2,
+            accuracies_lbl: None,
+        }
         df = self.results_table
         kernels = df[ClassificationPipeline.KERNEL_KEY].unique()
         gpu_methods = [m for m in kernels if "cuda" in m]
         cpu_methods = [m for m in kernels if m not in gpu_methods]
         set_methods = cpu_methods + [m for m in gpu_methods if m.replace("-cuda", "-cpu") not in cpu_methods]
         kernel_to_complexity = {
-            m: "exponential" if m == "PQC" else "polynomial"
+            m: "exponential"
+            if m == "PQC" else "polynomial"
             for m in kernels
         }
         y_lbl_to_polyfit = {
@@ -354,7 +380,7 @@ class DatasetComplexityPipeline:
             accuracies_lbl: {m: False for m in kernels},
         }
         y_lbl_to_kernels_list = {
-            ClassificationPipeline.FIT_TIME_KEY: kernels,
+            ClassificationPipeline.FIT_TIME_KEY: cpu_methods,
             accuracies_lbl: set_methods
         }
         gpu_linestyle, cpu_linestyle = "--", "-"
@@ -399,6 +425,9 @@ class DatasetComplexityPipeline:
                         kernel_to_linestyle=y_lbl_to_linestyle_list[y_lbl][j],
                         polyfit=y_lbl_to_polyfit.get(y_lbl, {}),
                         y_scale=y_lbl_to_y_scale.get(y_lbl, "linear"),
+                        y_scale_base=y_lbl_to_y_scale_base.get(y_lbl, 2),
+                        x_scale=y_lbl_to_x_scale.get(y_lbl, "linear"),
+                        x_scale_base=y_lbl_to_x_scale_base.get(y_lbl, 2),
                         kernel_to_complexity=kernel_to_complexity,
                         fig=fig, ax=axes[i],
                         legend=False,
@@ -413,14 +442,6 @@ class DatasetComplexityPipeline:
                 axes[i].set_xlim(x_min, x_max)
                 axes[i].set_ylim(y_min, y_max)
 
-            # poly_y = np.mean([data_dict[ClassificationPipeline.FIT_TIME_KEY][m]["y"] for m in poly_methods], axis=0)
-            # self.add_polyfit(
-            #     fig=fig, ax=axes[0],
-            #     x=data_dict[ClassificationPipeline.FIT_TIME_KEY][poly_methods[0]]["x"],
-            #     y=poly_y,
-            #     color="gray",
-            #     linestyle="-.",
-            # )
             fig.supxlabel(x_lbl)
             # create a legend with custom patches using the kernel_to_linestyle and kernel_to_color
             lbl_to_kernel = {
@@ -439,7 +460,10 @@ class DatasetComplexityPipeline:
             ]
             patches += [
                 plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
-                for lbl, ls in [("GPU", gpu_linestyle), ("CPU", cpu_linestyle), ("Complexity Fit", ":")]
+                for lbl, ls in [
+                    # ("GPU", gpu_linestyle), ("CPU", cpu_linestyle),
+                    ("Complexity Fit", ":")
+                ]
             ]
             # axes[0].legend(handles=patches, loc='upper left')
             axes[0].legend(handles=patches, loc='lower right')
@@ -447,6 +471,10 @@ class DatasetComplexityPipeline:
                 plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
                 for lbl, ls in [("Train", train_linestyle), ("Test", test_linestyle)]
             ]
+            # patches += [
+            #     plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
+            #     for lbl, ls in [("GPU", gpu_linestyle), ("CPU", cpu_linestyle)]
+            # ]
             axes[-1].legend(handles=patches, loc='lower right')
             fig.tight_layout()
             plt.tight_layout()
@@ -504,27 +532,57 @@ class DatasetComplexityPipeline:
         nan_mask = np.isnan(x) | np.isnan(y)
         x = x[~nan_mask]
         y = y[~nan_mask]
-
+        n_points = kwargs.get("n_points", max(2, int(0.5*len(x))))
+        x = x[-n_points:]
+        y = y[-n_points:]
         all_x = kwargs.get("all_x", x)
         color = kwargs.get("color", "gray")
         alpha = kwargs.get("alpha", 0.5)
         linestyle = kwargs.get("linestyle", ":")
         complexity = kwargs.get("complexity", "exponential")
         # complexity_out = find_complexity(x, y, x_lbl="N")
-        if complexity == "exponential":
-            complexity_out = ten_exp_fit(x, y, x_lbl="N")
-        elif complexity == "polynomial":
-            complexity_out = poly_fit(x, y, x_lbl="N")
+        y_scale = kwargs.get("y_scale", "linear")
+        y_scale_base = kwargs.get("y_scale_base", 2)
+        x_scale = kwargs.get("x_scale", "linear")
+        x_scale_base = kwargs.get("x_scale_base", 2)
+        scale = y_scale + x_scale
+        if x_scale == "log":
+            x = np.log(x) / np.log(x_scale_base)
+            all_x = np.log(all_x) / np.log(x_scale_base)
+        if y_scale == "log":
+            y = np.log(y) / np.log(y_scale_base)
+        if complexity == "exponential" and scale == "loglog":
+            complexity_out = exp_fit(x, y, x_lbl="N", **kwargs)
+        elif complexity == "exponential" and scale == "loglinear":
+            complexity_out = lin_fit(x, y, x_lbl="N", **kwargs)
+        elif complexity == "exponential" and scale == "linearlog":
+            complexity_out = lin_fit(x, y, x_lbl="N", **kwargs)
+        elif complexity == "exponential" and scale == "linearlinear":
+            complexity_out = exp_fit(x, y, x_lbl="N", **kwargs)
+        elif complexity == "polynomial" and scale == "loglog":
+            complexity_out = lin_fit(x, y, x_lbl="N", **kwargs)
+        elif complexity == "polynomial" and scale == "loglinear":
+            complexity_out = poly_fit(x, y, x_lbl="N", **kwargs)
         else:
             raise ValueError(f"Invalid complexity type: {complexity}")
+        popt = complexity_out["popt"]
         complexity_func = complexity_out["func"]
-        complexity_lbl = complexity_out["label"]
+        if complexity == "exponential":
+            complexity_out["label"] = f"~$O({y_scale_base}^{{ {popt[0]:.2f}N }})$"
+        elif complexity == "polynomial":
+            power_str = f"{popt[0]:.2f}"
+            if abs(popt[0]) < 1:
+                power_str = str(Fraction(popt[0]).limit_denominator(max_denominator=10))
+            complexity_out["label"] = f"~$O(N^{{ {power_str} }})$"
         x_fit = np.linspace(all_x[0], all_x[-1], 1_000)
         y_fit = complexity_func(x_fit, *complexity_out["popt"])
-        r2 = complexity_out["r_squared"]
+
+        if x_scale == "log":
+            x_fit = x_scale_base**x_fit
+        if y_scale == "log":
+            y_fit = y_scale_base**y_fit
         ax.plot(x_fit, y_fit, color=color, linestyle=linestyle, alpha=alpha)
         return fig, ax, complexity_out
-
 
 
 def parse_args():
@@ -578,7 +636,7 @@ def parse_args():
         help="Whether to throw errors or not."
     )
     parser.add_argument("--n_samples", type=int, default=None)
-    parser.add_argument("--run_pipelines", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--run_pipelines", action=argparse.BooleanOptionalAction, default=False)
     return parser.parse_args()
 
 
