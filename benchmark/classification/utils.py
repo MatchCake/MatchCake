@@ -34,6 +34,7 @@ mStyles = [
     "|", "_", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
 ]
 
+BIG_O_STR = r"\mathcal{O}"
 
 def constant(x, c):
     return np.full_like(x, c)
@@ -117,11 +118,11 @@ def aexp(x, a, b):
     return b + a ** x
 
 
-def ten_exp(x, a):
-    return 10 ** (a * x)
+def ten_exp(x, a, b, c):
+    return b + 10 ** (a * x + c)
 
 
-def ten_exp_fit(x, y, **kwargs):
+def exp_fit(x, y, **kwargs):
     """
     Fit data to an exponential function of the form y = c + a * 2^(b * x)
 
@@ -130,12 +131,14 @@ def ten_exp_fit(x, y, **kwargs):
     :param kwargs:
     :return:
     """
-    func = ten_exp
+    base = kwargs.pop('base', 2)
+    func = lambda _x, a: base ** (a * _x)
     x_lbl = kwargs.pop('x_lbl', 'x')
-    popt, pcov = curve_fit(func, x, y, **kwargs)
+    # p0 = [1.0, y[0], 0.0]
+    popt, pcov = curve_fit(func, x, y)
     r2 = r2_score(y, func(x, *popt))
     # label = f"~$O({popt[0]*2:.2f}^{{ {popt[1]:.2f}{x_lbl} }})$: $R^2={r2:.2f}$"
-    label = f"~$O(10^{{ {popt[0]:.2f}{x_lbl} }})$: $R^2={r2:.2f}$"
+    label = f"~${BIG_O_STR}({base}^{{ {popt[0]:.2f}{x_lbl} }})$: $R^2={r2:.2f}$"
     # label = f"~$O({popt[1]:.2f}{x_lbl}^{{ {popt[0]:.2f} }})$: $R^2={r2:.2f}$"
     # label = f"~$O({popt[0]*2:.2f}^{{ {x_lbl} }})$: $R^2={r2:.2f}$"
     return {
@@ -148,8 +151,8 @@ def ten_exp_fit(x, y, **kwargs):
     }
 
 
-def poly(x, a, b):
-    return b * x ** a
+def poly(x, a, b, c):
+    return c + b * x ** a
 
 
 def poly_fit(x, y, **kwargs):
@@ -163,11 +166,12 @@ def poly_fit(x, y, **kwargs):
     """
     func = poly
     x_lbl = kwargs.pop('x_lbl', 'x')
-    popt, pcov = curve_fit(func, x, y, **kwargs)
+    p0 = [1.0, 1.0, y[0]]
+    popt, pcov = curve_fit(func, x, y, p0=p0)
     r2 = r2_score(y, func(x, *popt))
     # label = f"~$O({popt[0]*2:.2f}^{{ {popt[1]:.2f}{x_lbl} }})$: $R^2={r2:.2f}$"
     # label = f"~$O(10^{{ {popt[0]:.2f}{x_lbl} }})$: $R^2={r2:.2f}$"
-    label = f"~$O({popt[1]:.2f}{x_lbl}^{{ {popt[0]:.2f} }})$: $R^2={r2:.2f}$"
+    label = f"~${BIG_O_STR}({popt[1]:.2f}{x_lbl}^{{ {popt[0]:.2f} }})$: $R^2={r2:.2f}$"
     # label = f"~$O({popt[0]*2:.2f}^{{ {x_lbl} }})$: $R^2={r2:.2f}$"
     return {
         'popt': popt,
@@ -178,6 +182,25 @@ def poly_fit(x, y, **kwargs):
         "func": func,
     }
 
+
+def lin_fit(x, y, **kwargs):
+    func = lambda _x, m, b: m * _x + b
+    x_lbl = kwargs.pop('x_lbl', 'x')
+    popt, pcov = curve_fit(func, x, y)
+    r2 = r2_score(y, func(x, *popt))
+    # label = f"~$O({popt[0]*2:.2f}^{{ {popt[1]:.2f}{x_lbl} }})$: $R^2={r2:.2f}$"
+    # label = f"~$O(10^{{ {popt[0]:.2f}{x_lbl} }})$: $R^2={r2:.2f}$"
+    # label = f"~${BIG_O_STR}({popt[1]:.2f}{x_lbl}^{{ {popt[0]:.2f} }})$: $R^2={r2:.2f}$"
+    label = f"~${BIG_O_STR}({popt[0]:.2f}{x_lbl})$: $R^2={r2:.2f}$"
+    # label = f"~$O({popt[0]*2:.2f}^{{ {x_lbl} }})$: $R^2={r2:.2f}$"
+    return {
+        'popt': popt,
+        'pcov': pcov,
+        'r_squared': r2,
+        "r2": r2,
+        'label': label,
+        "func": func,
+    }
 
 def loglin_fit(x, y, **kwargs):
     """
