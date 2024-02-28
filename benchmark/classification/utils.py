@@ -108,3 +108,24 @@ def find_complexity(x, y, **kwargs):
         'label': labels[best_fit],
     }
 
+
+def exponential2_fit(x, y, **kwargs):
+    """
+    Fit data to an exponential function of the form y = c + a * 2^(b * x)
+
+    :param x:
+    :param y:
+    :param kwargs:
+    :return:
+    """
+    x_lbl = kwargs.pop('x_lbl', 'x')
+    popt, pcov = curve_fit(exponential2, x, y, **kwargs)
+    label = f"~$O({popt[0]*2:.4f}^{{ {popt[1]:.4f}{x_lbl} }})$"
+    r2 = r2_score(y, exponential2(x, *popt))
+    return {
+        'popt': popt,
+        'pcov': pcov,
+        'r_squared': r2,
+        'label': label,
+    }
+
