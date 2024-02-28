@@ -109,7 +109,19 @@ def find_complexity(x, y, **kwargs):
     }
 
 
-def exponential2_fit(x, y, **kwargs):
+def cexp(x, a, b, c):
+    return c + a ** (b * x)
+
+
+def aexp(x, a, b):
+    return b + a ** x
+
+
+def ten_exp(x, a):
+    return 10 ** (a * x)
+
+
+def ten_exp_fit(x, y, **kwargs):
     """
     Fit data to an exponential function of the form y = c + a * 2^(b * x)
 
@@ -118,14 +130,77 @@ def exponential2_fit(x, y, **kwargs):
     :param kwargs:
     :return:
     """
+    func = ten_exp
     x_lbl = kwargs.pop('x_lbl', 'x')
-    popt, pcov = curve_fit(exponential2, x, y, **kwargs)
-    label = f"~$O({popt[0]*2:.4f}^{{ {popt[1]:.4f}{x_lbl} }})$"
-    r2 = r2_score(y, exponential2(x, *popt))
+    popt, pcov = curve_fit(func, x, y, **kwargs)
+    r2 = r2_score(y, func(x, *popt))
+    # label = f"~$O({popt[0]*2:.2f}^{{ {popt[1]:.2f}{x_lbl} }})$: $R^2={r2:.2f}$"
+    label = f"~$O(10^{{ {popt[0]:.2f}{x_lbl} }})$: $R^2={r2:.2f}$"
+    # label = f"~$O({popt[1]:.2f}{x_lbl}^{{ {popt[0]:.2f} }})$: $R^2={r2:.2f}$"
+    # label = f"~$O({popt[0]*2:.2f}^{{ {x_lbl} }})$: $R^2={r2:.2f}$"
     return {
         'popt': popt,
         'pcov': pcov,
         'r_squared': r2,
+        "r2": r2,
         'label': label,
+        "func": func,
     }
 
+
+def poly(x, a, b):
+    return b * x ** a
+
+
+def poly_fit(x, y, **kwargs):
+    """
+    Fit data to an exponential function of the form y = c + a * 2^(b * x)
+
+    :param x:
+    :param y:
+    :param kwargs:
+    :return:
+    """
+    func = poly
+    x_lbl = kwargs.pop('x_lbl', 'x')
+    popt, pcov = curve_fit(func, x, y, **kwargs)
+    r2 = r2_score(y, func(x, *popt))
+    # label = f"~$O({popt[0]*2:.2f}^{{ {popt[1]:.2f}{x_lbl} }})$: $R^2={r2:.2f}$"
+    # label = f"~$O(10^{{ {popt[0]:.2f}{x_lbl} }})$: $R^2={r2:.2f}$"
+    label = f"~$O({popt[1]:.2f}{x_lbl}^{{ {popt[0]:.2f} }})$: $R^2={r2:.2f}$"
+    # label = f"~$O({popt[0]*2:.2f}^{{ {x_lbl} }})$: $R^2={r2:.2f}$"
+    return {
+        'popt': popt,
+        'pcov': pcov,
+        'r_squared': r2,
+        "r2": r2,
+        'label': label,
+        "func": func,
+    }
+
+
+def loglin_fit(x, y, **kwargs):
+    """
+    Fit data to an
+
+    :param x:
+    :param y:
+    :param kwargs:
+    :return:
+    """
+    base = kwargs.pop('base', 2)
+    np_log_func = lambda _x: np.log(_x) / np.log(base)
+    func = linear
+    log_func = lambda _x, m, c: np_log_func(m * _x + c)
+    x_lbl = kwargs.pop('x_lbl', 'x')
+    popt, pcov = curve_fit(func, x, np_log_func(y), **kwargs)
+    r2 = r2_score(y, func(x, *popt))
+    label = f"~$O({popt[0]:.2f}{x_lbl})$: $R^2={r2:.2f}$"
+    return {
+        'popt': popt,
+        'pcov': pcov,
+        'r_squared': r2,
+        "r2": r2,
+        'label': label,
+        "func": log_func,
+    }
