@@ -61,7 +61,7 @@ from matchcake.ml import ClassificationVisualizer
 from matchcake.ml.ml_kernel import MLKernel, FixedSizeSVC
 import warnings
 from classification_pipeline import ClassificationPipeline
-from utils import MPL_RC_BIG_FONT_PARAMS, mStyles, find_complexity, exp_fit, poly_fit, lin_fit
+from utils import MPL_RC_BIG_FONT_PARAMS, mStyles, find_complexity, exp_fit, poly_fit, lin_fit, BIG_O_STR
 
 
 class DatasetComplexityPipeline:
@@ -568,12 +568,12 @@ class DatasetComplexityPipeline:
         popt = complexity_out["popt"]
         complexity_func = complexity_out["func"]
         if complexity == "exponential":
-            complexity_out["label"] = f"~$O({y_scale_base}^{{ {popt[0]:.2f}N }})$"
+            complexity_out["label"] = f"~${BIG_O_STR}({y_scale_base}^{{ {popt[0]:.2f}N }})$"
         elif complexity == "polynomial":
             power_str = f"{popt[0]:.2f}"
             if abs(popt[0]) < 1:
                 power_str = str(Fraction(popt[0]).limit_denominator(max_denominator=10))
-            complexity_out["label"] = f"~$O(N^{{ {power_str} }})$"
+            complexity_out["label"] = f"~${BIG_O_STR}(N^{{ {power_str} }})$"
         x_fit = np.linspace(all_x[0], all_x[-1], 1_000)
         y_fit = complexity_func(x_fit, *complexity_out["popt"])
 
