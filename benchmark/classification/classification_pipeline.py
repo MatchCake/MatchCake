@@ -1068,7 +1068,11 @@ class ClassificationPipeline:
             #     is_sorted = True
             df_std = df.groupby(by=mean_on, as_index=False).std().drop(drop_on_mean, axis=1)
             map_func = lambda x: f"{x:.4f}" if not np.isnan(x) else "nan"
-            df_wo_numerics = df_mean[numerics_columns].map(map_func) + u"\u00B1" + df_std[numerics_columns].map(map_func)
+            df_wo_numerics = (
+                    df_mean[numerics_columns].map(map_func).astype(str)
+                    + u"\u00B1"
+                    + df_std[numerics_columns].map(map_func).astype(str)
+            )
             df = pd.concat([df_mean[[mean_on]], df_wo_numerics], axis=1)
 
         if sort:
@@ -1106,9 +1110,12 @@ class ClassificationPipeline:
         show = kwargs.pop("show", False)
         df_results = self.get_results_table(**kwargs)
         df_properties = self.get_properties_table(**kwargs)
-        df = df_results.set_index(self.KERNEL_KEY).join(
-            df_properties.set_index(self.KERNEL_KEY), on=self.KERNEL_KEY
-        )
+        if df_properties.size > 0:
+            df = df_results.set_index(self.KERNEL_KEY).join(
+                df_properties.set_index(self.KERNEL_KEY), on=self.KERNEL_KEY
+            )
+        else:
+            df = df_results.set_index(self.KERNEL_KEY)
         df = df.reset_index().rename(columns={"index": self.KERNEL_KEY})
         if filepath is not None:
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
