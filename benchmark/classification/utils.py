@@ -23,6 +23,7 @@ MPL_RC_DEFAULT_PARAMS = {
 MPL_RC_BIG_FONT_PARAMS = {**MPL_RC_DEFAULT_PARAMS, **{
     "font.size": 22,
     "legend.fontsize": 20,
+    "lines.markersize": 12,
 }}
 
 MPL_RC_SMALL_FONT_PARAMS = {**MPL_RC_DEFAULT_PARAMS, **{
@@ -30,7 +31,7 @@ MPL_RC_SMALL_FONT_PARAMS = {**MPL_RC_DEFAULT_PARAMS, **{
     "legend.fontsize": 10,
 }}
 mStyles = [
-    ".", ",", "o", "v", "^", "<", ">", "1", "2", "3", "4", "8", "s", "p", "P", "*", "h", "H", "+", "x", "X", "D", "d",
+    "o", "v", "*", "X", "^", "<", ">", " .", ",", "1", "2", "3", "4", "8", "s", "p", "P", "h", "H", "+", "x", "D", "d",
     "|", "_", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
 ]
 
@@ -132,7 +133,7 @@ def exp_fit(x, y, **kwargs):
     :return:
     """
     base = kwargs.pop('base', 2)
-    func = lambda _x, a: base ** (a * _x)
+    func = lambda _x, a, c: c * base ** (a * _x)
     x_lbl = kwargs.pop('x_lbl', 'x')
     # p0 = [1.0, y[0], 0.0]
     popt, pcov = curve_fit(func, x, y)
@@ -152,7 +153,7 @@ def exp_fit(x, y, **kwargs):
 
 
 def poly(x, a, b, c):
-    return c + b * x ** a
+    return c + b * (x ** a)
 
 
 def poly_fit(x, y, **kwargs):
@@ -164,10 +165,13 @@ def poly_fit(x, y, **kwargs):
     :param kwargs:
     :return:
     """
-    func = poly
+    if kwargs.get("add_bias", False):
+        func = poly
+    else:
+        func = lambda _x, a, b: b * (_x ** a)
     x_lbl = kwargs.pop('x_lbl', 'x')
-    p0 = [1.0, 1.0, y[0]]
-    popt, pcov = curve_fit(func, x, y, p0=p0)
+    # p0 = [1.0, 1.0, y[0]]
+    popt, pcov = curve_fit(func, x, y)
     r2 = r2_score(y, func(x, *popt))
     # label = f"~$O({popt[0]*2:.2f}^{{ {popt[1]:.2f}{x_lbl} }})$: $R^2={r2:.2f}$"
     # label = f"~$O(10^{{ {popt[0]:.2f}{x_lbl} }})$: $R^2={r2:.2f}$"
@@ -226,4 +230,32 @@ def loglin_fit(x, y, **kwargs):
         "r2": r2,
         'label': label,
         "func": log_func,
+    }
+
+
+def log_fit(x, y, **kwargs):
+    """
+    Fit data to an exponential function of the form y = c + a * 2^(b * x)
+
+    :param x:
+    :param y:
+    :param kwargs:
+    :return:
+    """
+    base = kwargs.pop('base', 2)
+    if kwargs.get("add_bias", True):
+        func = lambda _x, a, c: c + a * (np.log(_x) / np.log(base))
+    else:
+        func = lambda _x, a: a * (np.log(_x) / np.log(base))
+    x_lbl = kwargs.pop('x_lbl', 'x')
+    popt, pcov = curve_fit(func, x, y)
+    r2 = r2_score(y, func(x, *popt))
+    label = f"~${BIG_O_STR}({popt[0]:.2f}log_{{{base}}}({x_lbl}))$: $R^2={r2:.2f}$"
+    return {
+        'popt': popt,
+        'pcov': pcov,
+        'r_squared': r2,
+        "r2": r2,
+        'label': label,
+        "func": func,
     }
