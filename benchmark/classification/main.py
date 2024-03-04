@@ -20,9 +20,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset_name", type=str,
-        default="iris",
+        # default="iris",
+        default="breast_cancer",
         # default="digits",
-        # default="breast_cancer",
         help=f"The dataset to be used for the classification."
              f"Available datasets: {ClassificationPipeline.available_datasets}."
     )
@@ -62,9 +62,9 @@ def parse_args():
 def main():
     from matplotlib import pyplot as plt
     from classification_pipeline import ClassificationPipeline
-    from utils import MPL_RC_DEFAULT_PARAMS
+    from utils import MPL_RC_BIG_FONT_PARAMS
 
-    plt.rcParams.update(MPL_RC_DEFAULT_PARAMS)
+    plt.rcParams.update(MPL_RC_BIG_FONT_PARAMS)
     args = parse_args()
     if any(["cuda" in m for m in args.methods]):
         matchcake.utils.cuda.is_cuda_available(throw_error=True, enable_warnings=True)
@@ -113,9 +113,19 @@ def main():
         bar_label=False,
         kernels_to_remove=["classical", ] + (
             ["wfPQC-cuda", "hwfPQC-cuda", "iwfPQC-cuda"]
-            if args.dataset_name in ["digits", "mnist"]
+            if args.dataset_name in ["digits", "mnist", "breast_cancer"]
             else []
         ),
+        kernels_fmt_names={
+            "classical": "Classical",
+            "PQC": "PQC",
+            "fPQC-cuda": "fPQC",
+            "wfPQC-cuda": "wfPQC",
+            "hfPQC-cuda": "hfPQC",
+            "hwfPQC-cuda": "hwfPQC",
+            "ifPQC-cuda": "ifPQC",
+            "iwfPQC-cuda": "iwfPQC",
+        },
         filepath=os.path.join(figures_folder, "bar_plot.pdf"),
     )
     plt.close("all")
