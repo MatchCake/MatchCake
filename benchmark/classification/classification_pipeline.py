@@ -24,6 +24,7 @@ import umap
 from tqdm import tqdm
 import pythonbasictools as pbt
 
+from utils import MPL_RC_BIG_FONT_PARAMS
 from kernels import (
     ClassicalKernel,
     MPennylaneQuantumKernel,
@@ -1130,6 +1131,12 @@ class ClassificationPipeline:
             ax: Optional[np.ndarray] = None,
             **kwargs
     ):
+        if kwargs.get("use_default_rc_params", True):
+            plt.rcParams.update(MPL_RC_BIG_FONT_PARAMS)
+            plt.rcParams["legend.fontsize"] = 22
+            plt.rcParams["lines.linewidth"] = 4.0
+            plt.rcParams["font.size"] = 24
+
         _, df_mean, df_std = self.get_results_table(mean=True, return_mean_std=True, **kwargs)
         kernels = kwargs.get("kernels", df_mean[self.KERNEL_KEY].unique())
         kernels_to_remove = kwargs.get("kernels_to_remove", [])
@@ -1156,7 +1163,7 @@ class ClassificationPipeline:
             if kwargs.get("bar_label", True):
                 plt.bar_label(bar, padding=3, fmt="%.2f", label_type="edge")
         ax.set_xticks(x)
-        ax.set_xticklabels(df_mean[self.KERNEL_KEY], rotation=kwargs.get("xticklabels_rotation", 15))
+        ax.set_xticklabels(df_mean[self.KERNEL_KEY], rotation=kwargs.get("xticklabels_rotation", 0))
         ax.legend(loc=kwargs.get("legend_loc", "lower left"))
         filepath = kwargs.get("filepath", None)
         if filepath is not None:
