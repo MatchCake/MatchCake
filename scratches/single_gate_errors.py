@@ -4,7 +4,7 @@ import os
 import numpy as np
 import pennylane as qml
 from tests.test_nif_device import devices_init, single_matchgate_circuit
-from msim import mps, utils
+from matchcake import mps, utils
 import matplotlib.pyplot as plt
 import tqdm
 

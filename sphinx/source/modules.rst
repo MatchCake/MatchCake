@@ -1,7 +1,7 @@
-msim
+MatchCake
 ====
 
 .. toctree::
    :maxdepth: 4
 
-   msim
+   matchcake

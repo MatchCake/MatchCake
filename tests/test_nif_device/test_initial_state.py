@@ -3,12 +3,12 @@ from typing import Tuple
 import numpy as np
 import pytest
 import pennylane as qml
-from msim import MatchgateOperator, NonInteractingFermionicDevice, Matchgate
-from msim import matchgate_parameter_sets as mps
-from msim import utils
+from matchcake import MatchgateOperation, NonInteractingFermionicDevice, Matchgate
+from matchcake import matchgate_parameter_sets as mps
+from matchcake import utils
 from functools import partial
 
-from msim.utils import PAULI_Z, PAULI_X
+from matchcake.utils import PAULI_Z, PAULI_X
 from . import devices_init
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,

@@ -2,8 +2,8 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from msim import MatchgateOperator, utils
-from msim import matchgate_parameter_sets as mps
+from matchcake import MatchgateOperation, utils
+from matchcake import matchgate_parameter_sets as mps
 from . import devices_init
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
@@ -23,7 +23,7 @@ def single_line_matchgates_circuit(params_list, initial_state=None, **kwargs):
     qml.BasisState(initial_state, wires=all_wires)
     for params in params_list:
         mg_params = mps.MatchgatePolarParams.parse_from_any(params)
-        MatchgateOperator(mg_params, wires=all_wires)
+        MatchgateOperation(mg_params, wires=all_wires)
     out_op = kwargs.get("out_op", "state")
     if out_op == "state":
         return qml.state()
@@ -69,7 +69,7 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, prob_wires):
     )
     
     np.testing.assert_allclose(
-        nif_probs, qubit_probs,
+        nif_probs.squeeze(), qubit_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

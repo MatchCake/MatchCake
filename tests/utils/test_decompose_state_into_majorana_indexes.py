@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from msim import utils
+from matchcake import utils
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
     ATOL_MATRIX_COMPARISON,

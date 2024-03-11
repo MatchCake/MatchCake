@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from msim import utils
+from matchcake import utils
 from ..configs import (
     ATOL_MATRIX_COMPARISON,
     RTOL_MATRIX_COMPARISON,

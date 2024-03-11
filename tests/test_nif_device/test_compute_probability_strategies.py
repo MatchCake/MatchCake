@@ -2,9 +2,9 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from msim import MatchgateOperator, NonInteractingFermionicDevice
-from msim import matchgate_parameter_sets as mps
-from msim import utils
+from matchcake import MatchgateOperation, NonInteractingFermionicDevice
+from matchcake import matchgate_parameter_sets as mps
+from matchcake import utils
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
     TEST_SEED,
@@ -25,16 +25,16 @@ np.random.seed(TEST_SEED)
     ]
 )
 def test_single_gate_circuit_analytic_probability_lt_vs_es(initial_binary_state, params, wire):
-    device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
+    device = NonInteractingFermionicDevice(wires=len(initial_binary_state), pfaffian_method="P")
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
-        MatchgateOperator(params, wires=[0, 1])
+        MatchgateOperation(params, wires=[0, 1])
     ]
     device.apply(operations)
     lt_probs = device.compute_probability_using_lookup_table(wire)
     es_probs = device.compute_probability_using_explicit_sum(wire)
     np.testing.assert_allclose(
-        lt_probs, es_probs,
+        lt_probs.squeeze(), es_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -78,12 +78,12 @@ def test_single_gate_circuit_analytic_probability_explicit_sum(initial_binary_st
     device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
-        MatchgateOperator(params, wires=[0, 1])
+        MatchgateOperation(params, wires=[0, 1])
     ]
     device.apply(operations)
     es_probs = device.compute_probability_using_explicit_sum(wire)
     np.testing.assert_allclose(
-        prob, es_probs,
+        prob.squeeze(), es_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -108,7 +108,7 @@ def test_single_gate_circuit_probability_lt_vs_es(
     device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
-        MatchgateOperator(params, wires=[0, 1])
+        MatchgateOperation(params, wires=[0, 1])
     ]
     device.apply(operations)
     lt_probs = device.compute_probability_of_target_using_lookup_table(wires, target_binary_state)

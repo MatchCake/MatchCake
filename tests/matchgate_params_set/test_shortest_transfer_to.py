@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from msim.matchgate_parameter_sets import transfer_functions
-from msim.matchgate_parameter_sets.transfer_functions import (
+from matchcake.matchgate_parameter_sets import transfer_functions
+from matchcake.matchgate_parameter_sets.transfer_functions import (
     MatchgatePolarParams,
     MatchgateStandardParams,
     MatchgateHamiltonianCoefficientsParams,

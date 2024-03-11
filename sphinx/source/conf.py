@@ -9,7 +9,7 @@ import sys
 import shutil
 basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 sys.path.insert(0, basedir)
-import msim
+import matchcake
 
 
 _html_folders_formatted = {}
@@ -61,10 +61,10 @@ def move_private_folders(app, e):
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'MSim'
-copyright = msim.__copyright__.replace("Copyright ", "")
-author = msim.__author__
-version = msim.__version__
+project = 'MatchCake'
+copyright = matchcake.__copyright__.replace("Copyright ", "")
+author = matchcake.__author__
+version = matchcake.__version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

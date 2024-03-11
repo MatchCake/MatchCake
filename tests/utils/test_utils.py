@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
-from msim import utils
-from msim import matchgate_parameter_sets as mps
+from matchcake import utils
+from matchcake import matchgate_parameter_sets as mps
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
     TEST_SEED,
@@ -110,7 +110,7 @@ def test_get_hamming_weight(state, hamming_weight):
 def test_get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs, hamiltonian):
     out_hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs.to_matrix())
     np.testing.assert_allclose(
-        out_hamiltonian, hamiltonian,
+        out_hamiltonian.squeeze(), hamiltonian.squeeze(),
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
@@ -173,3 +173,45 @@ def test_binary_string_to_vector(binary_string, binary_vector):
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
+
+
+@pytest.mark.parametrize(
+    "inputs,out_state",
+    [
+        ((0, 2), "00"),
+        ((1, 2), "01"),
+        ((2, 2), "10"),
+        ((3, 2), "11"),
+        ((0, 3), "000"),
+        ((1, 3), "001"),
+        ((2, 3), "010"),
+        ((3, 3), "011"),
+        ((4, 3), "100"),
+        ((5, 3), "101"),
+        ((6, 3), "110"),
+        ((7, 3), "111"),
+        (np.array([1, 0]), "0"),
+        (np.array([0, 1]), "1"),
+        (np.array([1, 0, 0, 0]), "00"),
+        (np.array([0, 1, 0, 0]), "01"),
+        (np.array([0, 0, 1, 0]), "10"),
+        (np.array([0, 0, 0, 1]), "11"),
+        (np.array([1, 0, 0, 0, 0, 0, 0, 0]), "000"),
+        (np.array([0, 1, 0, 0, 0, 0, 0, 0]), "001"),
+        (np.array([0, 0, 1, 0, 0, 0, 0, 0]), "010"),
+        (np.array([0, 0, 0, 1, 0, 0, 0, 0]), "011"),
+        (np.array([0, 0, 0, 0, 1, 0, 0, 0]), "100"),
+        (np.array([0, 0, 0, 0, 0, 1, 0, 0]), "101"),
+        (np.array([0, 0, 0, 0, 0, 0, 1, 0]), "110"),
+        (np.array([0, 0, 0, 0, 0, 0, 0, 1]), "111"),
+    ]
+)
+def test_state_to_binary_state(inputs, out_state):
+    if isinstance(inputs, tuple):
+        binary_state = utils.state_to_binary_string(*inputs)
+    else:
+        binary_state = utils.state_to_binary_string(inputs)
+    assert binary_state == out_state, f"{binary_state} != {out_state}"
+
+
+

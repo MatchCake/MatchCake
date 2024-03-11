@@ -2,9 +2,9 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from msim import MatchgateOperator, NonInteractingFermionicDevice
-from msim import matchgate_parameter_sets as mps
-from msim import utils
+from matchcake import MatchgateOperation, NonInteractingFermionicDevice
+from matchcake import matchgate_parameter_sets as mps
+from matchcake import utils
 from . import devices_init
 from .test_specific_circuit import specific_matchgate_circuit
 from .. import get_slow_test_mark
@@ -29,7 +29,7 @@ def test_single_gate_circuit_probability_single_vs_target_specific_cases(initial
     device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
-        MatchgateOperator(params, wires=[0, 1])
+        MatchgateOperation(params, wires=[0, 1])
     ]
     device.apply(operations)
     es_probs = device.compute_probability_using_explicit_sum(wire)
@@ -38,7 +38,7 @@ def test_single_gate_circuit_probability_single_vs_target_specific_cases(initial
         device.compute_probability_of_target_using_explicit_sum(wire, target_binary_state="1"),
     ])
     np.testing.assert_allclose(
-        es_m_probs, es_probs,
+        es_m_probs.squeeze(), es_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -56,7 +56,7 @@ def test_single_gate_circuit_probability_single_vs_target_random_cases(initial_b
     device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
-        MatchgateOperator(params, wires=[0, 1])
+        MatchgateOperation(params, wires=[0, 1])
     ]
     device.apply(operations)
     es_probs = device.compute_probability_using_explicit_sum(wire)
@@ -65,7 +65,7 @@ def test_single_gate_circuit_probability_single_vs_target_random_cases(initial_b
         device.compute_probability_of_target_using_explicit_sum(wire, target_binary_state=1),
     ])
     np.testing.assert_allclose(
-        es_m_probs, es_probs,
+        es_m_probs.squeeze(), es_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -84,12 +84,12 @@ def test_single_gate_circuit_probability_target_state_specific_cases(
     device = NonInteractingFermionicDevice(wires=wires)
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
-        MatchgateOperator(params, wires=wires)
+        MatchgateOperation(params, wires=wires)
     ]
     device.apply(operations)
     es_m_prob = device.compute_probability_of_target_using_explicit_sum(wires, target_binary_state=target_binary_state)
     np.testing.assert_allclose(
-        es_m_prob, prob,
+        es_m_prob.squeeze(), prob,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -141,7 +141,7 @@ def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_
         out_wires=prob_wires,
     )
     np.testing.assert_allclose(
-        nif_probs, qubit_probs,
+        nif_probs.squeeze(), qubit_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -191,7 +191,7 @@ def test_multiples_matchgate_probs_with_qbit_device_lookup_table(params_list, n_
         out_wires=prob_wires,
     )
     np.testing.assert_allclose(
-        nif_probs, qubit_probs,
+        nif_probs.squeeze(), qubit_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

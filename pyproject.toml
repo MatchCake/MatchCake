@@ -4,6 +4,7 @@ pythonpath = [
 ]
 addopts = [
     "--cov=src",
+#    "--no-cov",
     "--durations=10",
 ]
 
@@ -21,8 +22,8 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "MSim"
-dynamic = ["version", ]
+name = "MatchCake"
+dynamic = ["version", "readme"]
 description = ""
 authors = [
   { name="Jérémie Gince", email="gincejeremie@gmail.com" },
@@ -35,7 +36,6 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Operating System :: OS Independent",
 ]
@@ -47,6 +47,16 @@ dependencies = [
     "pytest-cov>=4.1.0",
     "scipy>=1.8.0",
 ]
+
+
+[tool.setuptools.dynamic]
+version = {attr = "matchcake.__version__"}
+readme = {file = ["README.md"]}
+
+[project.urls]
+homepage = "https://github.com/JeremieGince/MatchCake"
+Documentation = "https://github.com/JeremieGince/MatchCake"
+Source = "https://JeremieGince.github.io/MatchCake"
 
 
 [tool.setuptools]

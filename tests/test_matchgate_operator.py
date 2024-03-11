@@ -3,9 +3,9 @@ import pennylane as qml
 import pytest
 from pfapack import pfaffian
 
-from msim import MatchgateOperator, NonInteractingFermionicDevice, Matchgate
-from msim import matchgate_parameter_sets as mps
-from msim import utils
+from matchcake import MatchgateOperation, NonInteractingFermionicDevice, Matchgate
+from matchcake import matchgate_parameter_sets as mps
+from matchcake import utils
 from .configs import ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON, TEST_SEED
 from .test_nif_device import single_matchgate_circuit
 
@@ -40,7 +40,7 @@ def test_single_matchgate_circuit_output_state(params, initial_binary_state, out
         out_op="state",
     )
     np.testing.assert_allclose(
-        qubit_state, output_state,
+        qubit_state.squeeze(), output_state.squeeze(),
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
@@ -97,7 +97,7 @@ def test_single_matchgate_circuit_output_probs(params, initial_binary_state, out
 )
 def test_single_matchgate_obs_on_specific_cases(params, k, binary_state, observable):
     nif_device = NonInteractingFermionicDevice(wires=2)
-    nif_device.apply(MatchgateOperator(params, wires=[0, 1]))
+    nif_device.apply(MatchgateOperation(params, wires=[0, 1]))
     state = utils.binary_state_to_state(binary_state)
     pred_obs = nif_device.lookup_table.get_observable(k, state)
     pred_pf = pfaffian.pfaffian(pred_obs)
@@ -119,11 +119,57 @@ def test_single_matchgate_obs_on_specific_cases(params, k, binary_state, observa
     ]
 )
 def test_get_padded_single_transition_particle_matrix(wires, n_wires, padded_matrix):
-    mgo = MatchgateOperator(mps.fSWAP, wires=wires)
+    mgo = MatchgateOperation(mps.fSWAP, wires=wires)
     all_wires = list(range(n_wires))
     pred_padded_matrix = mgo.get_padded_single_transition_particle_matrix(wires=all_wires)
     np.testing.assert_allclose(
         pred_padded_matrix, padded_matrix,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
+    "params,expected",
+    [
+        (
+                mps.MatchgatePolarParams(r0=1, r1=1),
+                np.array(
+                    [
+                        [0.25 * np.trace(utils.get_majorana(i, 2) @ utils.get_majorana(j, 2)) for j in range(4)]
+                        for i in range(4)
+                    ]
+                )
+        ),
+        (
+                mps.MatchgatePolarParams(r0=1, r1=1),
+                np.array(
+                    [
+                        [1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1],
+                    ]
+                )
+        ),
+        (
+                mps.fSWAP,
+                np.array(
+                    [
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1],
+                        [1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                    ]
+                )
+        )
+    ]
+)
+def test_single_transition_matrix(params, expected):
+    expected = qml.math.array(expected)
+    mgo = MatchgateOperation(params, wires=[0, 1])
+    np.testing.assert_allclose(
+        mgo.single_transition_particle_matrix.squeeze(), expected,
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
