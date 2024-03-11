@@ -13,18 +13,15 @@
 
 # Description
 
-MatchCake is a python package that provide a new [PennyLane](https://pennylane.ai/) device to simulate a particular 
-type of quantum circuits 
-called Matchgate circuits or matchcircuits. Those circuits are made with Matchgates, a specific group of 
-parity-preserving gates and nearest-neighbor unitary gates that can be simulated classically in polynomial time.
+MatchCake is a Python package that provides a new PennyLane device for simulating a particular type of quantum 
+circuit called Matchgate circuits or matchcircuits. These circuits are made with Matchgates, a specific group 
+of parity-preserving gates and nearest-neighbor unitary gates that can be simulated classically in polynomial time.
 
-Additionally, MatchCake provides quantum kernels made with [scikit-learn](https://scikit-learn.org/stable/) 
-API to use matchcircuits as a kernel in
-quantum machine learning algorithms. Those kernels can be used in a Support Vector Machine (SVM) for example.
-In the [benchmark/classification](benchmark/classification/README.md) folder, you can find some scripts that use SVM with
-matchcircuits as a kernel to classify the Iris dataset, the Breast Cancer dataset and the Digits dataset in 
-polynomial time with a high accuracy.
-
+Additionally, MatchCake provides quantum kernels made with [scikit-learn](https://scikit-learn.org/stable/) API to 
+use matchcircuits as a kernel in quantum machine learning algorithms. These kernels can be used in a Support Vector 
+Machine (SVM), for example. In the [benchmark/classification](benchmark/classification/README.md) folder, you can 
+find some scripts that use SVM with matchcircuits as a kernel to classify the Iris dataset, the Breast Cancer dataset, 
+and the Digits dataset in polynomial time with high accuracy.
 
 
 
@@ -37,8 +34,7 @@ polynomial time with a high accuracy.
 
 
 ### Last unstable version
-To install the last unstable version, you can install it by downloading the last version of the .whl file
-and following the instructions above.
+To install the latest unstable version, download the latest version of the .whl file and follow the instructions above.
 
 
 
@@ -129,8 +125,8 @@ Fund.
 
 
 # Important Links
-  - Documentation at [https://JeremieGince.github.io/MatchCake/](https://JeremieGince.github.io/MatchCake/).
-  - Github at [https://github.com/JeremieGince/MatchCake/](https://github.com/JeremieGince/MatchCake/).
+- Documentation at [https://JeremieGince.github.io/MatchCake/](https://JeremieGince.github.io/MatchCake/).
+- Github at [https://github.com/JeremieGince/MatchCake/](https://github.com/JeremieGince/MatchCake/).
 
 
 
