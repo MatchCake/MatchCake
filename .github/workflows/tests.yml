@@ -38,7 +38,17 @@ jobs:
     - name: Test with pytest
       run: |
         python run_pytests.py tests --N_RANDOM_TESTS_PER_CASE=10 --run_slow=False
-        coverage-lcov
+    - name: Setup LCOV
+      uses: hrishikesh-kadam/setup-lcov@v1
+    - name: Report code coverage
+      uses: zgosalvez/github-actions-report-lcov@v3
+      with:
+        coverage-files: coverage/lcov.*.info
+        minimum-coverage: 70
+        artifact-name: code-coverage-report
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: apps/my-first-app
+        update-comment: true
 
   Run-tests-on-Windows:
     name: Run tests on Windows-latest
