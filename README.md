@@ -18,7 +18,7 @@ type of quantum circuits
 called Matchgate circuits or matchcircuits. Those circuits are made with Matchgates, a specific group of 
 parity-preserving gates and nearest-neighbor unitary gates that can be simulated classically in polynomial time.
 
-Additionnaly, MatchCake provides quantum kernels made with [scikit-learn](https://scikit-learn.org/stable/) 
+Additionally, MatchCake provides quantum kernels made with [scikit-learn](https://scikit-learn.org/stable/) 
 API to use matchcircuits as a kernel in
 quantum machine learning algorithms. Those kernels can be used in a Support Vector Machine (SVM) for example.
 In the [benchmark/classification](benchmark/classification/README.md) folder, you can find some scripts that use SVM with
@@ -106,10 +106,20 @@ viz.plot_2d_decision_boundaries(model=model, y=y, show=True)
 
 ```
 
-# Tutorials
 
+# Tutorials
 - [MatchCake Basics](tutorials/matchcake_basics.ipynb)
 - [Iris Classification with MatchCake](tutorials/iris_classification.ipynb)
+
+
+
+# Notes
+- This package is still in development and some features may not be available yet.
+- The documentation is still in development and may not be complete yet.
+- The package works only with the forked version of PennyLane available 
+[here](https://github.com/JeremieGince/pennylane.git@v0_32_0-dev1). In the future, the package will be compatible with
+the official version of PennyLane.
+
 
 
 # About
