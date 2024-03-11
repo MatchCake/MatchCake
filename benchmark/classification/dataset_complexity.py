@@ -372,7 +372,7 @@ class DatasetComplexityPipeline:
             for m in kernels
         }
         y_lbl_to_polyfit = {
-            ClassificationPipeline.FIT_TIME_KEY: {**{m: True for m in cpu_methods}, **{m: True for m in gpu_methods}},
+            ClassificationPipeline.FIT_TIME_KEY: {m: False for m in kernels},
             accuracies_lbl: {m: False for m in kernels},
         }
         y_lbl_to_kernels_list = {
@@ -462,6 +462,7 @@ class DatasetComplexityPipeline:
                     # ("GPU", gpu_linestyle), ("CPU", cpu_linestyle),
                     ("Complexity Fit", ":")
                 ]
+                if any(y_lbl_to_polyfit.get(ClassificationPipeline.FIT_TIME_KEY, {"": False}).values())
             ]
             if ClassificationPipeline.FIT_TIME_KEY in y_lbl_to_ax:
                 y_lbl_to_ax[ClassificationPipeline.FIT_TIME_KEY].legend(handles=patches, loc='lower right')
