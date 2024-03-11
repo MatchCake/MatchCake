@@ -438,7 +438,7 @@ class DatasetComplexityPipeline:
 
                 x_min, x_max = np.nanmin(df[x_key].values), np.nanmax(df[x_key].values)
                 axes[i].set_xlim(x_min, x_max)
-                axes[i].set_ylim(y_min, y_max)
+                axes[i].set_ylim(y_min*0.99, y_max*1.01)
 
             fig.supxlabel(x_lbl, y=np.sqrt(height) / 100 * 2.2)
             lbl_to_kernel = {
