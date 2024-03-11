@@ -144,11 +144,11 @@ Fund.
 # Citation
 ```
 @misc{matchcake_Gince2023,
-  title={Matchgate Circuits using Non-Interacting Fermionic Simulation},
+  title={Fermionic Machine learning},
   author={Jérémie Gince},
   year={2023},
   publisher={Université de Sherbrooke},
-  url={https://github.com/JeremieGince/FermionicSimulation},
+  url={https://github.com/JeremieGince/MatchCake},
 }
 ```
 
