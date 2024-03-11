@@ -16,9 +16,9 @@ def circuit(x, y):
 if __name__ == '__main__':
     device = DefaultQubit(wires=2)
     qnode = qml.QNode(circuit, device)
-    batch_size = device.num_wires * 3 + 1
-    x = np.random.uniform(0, 2 * np.pi, size=(batch_size, device.num_wires))
-    y = np.random.uniform(0, 2 * np.pi, size=(batch_size, device.num_wires))
+    batch_size = len(device.wires) * 3 + 1
+    x = np.random.uniform(0, 2 * np.pi, size=(batch_size, len(device.wires)))
+    y = np.random.uniform(0, 2 * np.pi, size=(batch_size, len(device.wires)))
     out = qnode(x, y)
     np.testing.assert_allclose(qml.math.shape(out), (batch_size,))
 
