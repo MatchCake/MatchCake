@@ -226,11 +226,18 @@ class MLKernel(StdEstimator):
         if p_bar is not None:
             p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: ?, ?%)")
         gram = np.zeros((qml.math.shape(x0)[0], qml.math.shape(x1)[0]))
+        is_square = gram.shape[0] == gram.shape[1]
         triu_indices = np.stack(np.triu_indices(n=gram.shape[0], m=gram.shape[1], k=1), axis=-1)
+        tril_indices = np.stack(np.tril_indices(n=gram.shape[0], m=gram.shape[1], k=-1), axis=-1)
+        non_diag_indices = np.concatenate([triu_indices, tril_indices], axis=0)
+        if is_square:
+            indices = triu_indices
+        else:
+            indices = non_diag_indices
         start_time = time.perf_counter()
-        n_data = qml.math.shape(triu_indices)[0]
+        n_data = qml.math.shape(indices)[0]
         n_done = 0
-        batch_gen, n_batches = self.make_batches_generator(triu_indices, **kwargs)
+        batch_gen, n_batches = self.make_batches_generator(indices, **kwargs)
         for i, b_idx in enumerate(batch_gen):
             b_x0, b_x1 = x0[b_idx[:, 0]], x1[b_idx[:, 1]]
             batched_distances = self.batch_distance(b_x0, b_x1, **kwargs)
@@ -241,8 +248,8 @@ class MLKernel(StdEstimator):
                 eta = (curr_time - start_time) / n_done * (n_data - n_done)
                 eta_fmt = datetime.timedelta(seconds=eta)
                 p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: {eta_fmt}, {100 * n_done / n_data:.2f}%)")
-        tril_indices = np.stack(np.tril_indices(n=gram.shape[0], m=gram.shape[1], k=-1), axis=-1)
-        gram[tril_indices[:, 0], tril_indices[:, 1]] = gram[tril_indices[:, 1], tril_indices[:, 0]]
+        if is_square:
+            gram[tril_indices[:, 0], tril_indices[:, 1]] = gram[tril_indices[:, 1], tril_indices[:, 0]]
         np.fill_diagonal(gram, 1.0)
         if p_bar is not None:
             p_bar.set_postfix_str(p_bar_postfix_str)
