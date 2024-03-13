@@ -6,7 +6,7 @@ __author__ = "Jérémie Gince"
 __email__ = "gincejeremie@gmail.com"
 __copyright__ = "Copyright 2023, Jérémie Gince"
 __license__ = "Apache 2.0"
-__url__ = "https://github.com/JeremieGince/MatchCake"
+__url__ = "https://github.com/MatchCake/MatchCake"
 __version__ = "0.0.1-beta0"
 
 from .base import Matchgate

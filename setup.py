@@ -20,9 +20,9 @@ setup(
         "Operating System :: OS Independent",
     ],
     project_urls={
-        'Homepage': 'https://github.com/JeremieGince/MatchCake',
-        'Source': 'https://github.com/JeremieGince/MatchCake',
-        'Documentation': 'https://JeremieGince.github.io/MatchCake',
+        'Homepage': 'https://github.com/MatchCake/MatchCake',
+        'Source': 'https://github.com/MatchCake/MatchCake',
+        'Documentation': 'https://MatchCake.github.io/MatchCake',
     },
 )
 
