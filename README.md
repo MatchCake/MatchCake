@@ -2,13 +2,13 @@
 
 <div style="text-align:center"><img src="images/logo/Logo.svg" width="40%" /></div>
 
-[![Star on GitHub](https://img.shields.io/github/stars/JeremieGince/MatchCake.svg?style=social)](https://github.com/JeremieGince/MatchCake/stargazers)
+[![Star on GitHub](https://img.shields.io/github/stars/MatchCake/MatchCake.svg?style=social)](https://github.com/MatchCake/MatchCake/stargazers)
 [![Python 3.6](https://img.shields.io/badge/python-3.9-blue.svg)](https://www.python.org/downloads/release/python-390/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-![Tests Workflow](https://github.com/JeremieGince/MatchCake/actions/workflows/tests.yml/badge.svg)
-![Dist Workflow](https://github.com/JeremieGince/MatchCake/actions/workflows/build_dist.yml/badge.svg)
-![Code coverage](https://raw.githubusercontent.com/JeremieGince/MatchCake/coverage-badge/coverage.svg?raw=true)
+![Tests Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/tests.yml/badge.svg)
+![Dist Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/build_dist.yml/badge.svg)
+![Code coverage](https://raw.githubusercontent.com/MatchCake/MatchCake/coverage-badge/coverage.svg?raw=true)
 
 
 # Description
@@ -27,10 +27,10 @@ and the Digits dataset in polynomial time with high accuracy.
 
 # Installation
 
-| Method     | Commands                                                                                                                                                                        |
-|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **source** | `pip install git+https://github.com/JeremieGince/MatchCake`                                                                                                                     |
-| **wheel**  | 1.Download the .whl file [here](https://github.com/JeremieGince/MatchCake/tree/main/dist);<br> 2. Copy the path of this file on your computer; <br> 3. `pip install [path].whl` |
+| Method     | Commands                                                                                                                                                                     |
+|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **source** | `pip install git+https://github.com/MatchCake/MatchCake`                                                                                                                     |
+| **wheel**  | 1.Download the .whl file [here](https://github.com/MatchCake/MatchCake/tree/main/dist);<br> 2. Copy the path of this file on your computer; <br> 3. `pip install [path].whl` |
 
 
 ### Last unstable version
@@ -125,14 +125,14 @@ Fund.
 
 
 # Important Links
-- Documentation at [https://JeremieGince.github.io/MatchCake/](https://JeremieGince.github.io/MatchCake/).
-- Github at [https://github.com/JeremieGince/MatchCake/](https://github.com/JeremieGince/MatchCake/).
+- Documentation at [https://MatchCake.github.io/MatchCake/](https://MatchCake.github.io/MatchCake/).
+- Github at [https://github.com/MatchCake/MatchCake/](https://github.com/MatchCake/MatchCake/).
 
 
 
 
 # Found a bug or have a feature request?
-- [Click here to create a new issue.](https://github.com/JeremieGince/MatchCake/issues/new)
+- [Click here to create a new issue.](https://github.com/MatchCake/MatchCake/issues/new)
 
 
 
@@ -148,7 +148,7 @@ Fund.
   author={Jérémie Gince},
   year={2023},
   publisher={Université de Sherbrooke},
-  url={https://github.com/JeremieGince/MatchCake},
+  url={https://github.com/MatchCake/MatchCake},
 }
 ```
 

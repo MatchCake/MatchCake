@@ -54,9 +54,9 @@ version = {attr = "matchcake.__version__"}
 readme = {file = ["README.md"]}
 
 [project.urls]
-homepage = "https://github.com/JeremieGince/MatchCake"
-Documentation = "https://github.com/JeremieGince/MatchCake"
-Source = "https://JeremieGince.github.io/MatchCake"
+homepage = "https://github.com/MatchCake/MatchCake"
+Documentation = "https://github.com/MatchCake/MatchCake"
+Source = "https://MatchCake.github.io/MatchCake"
 
 
 [tool.setuptools]

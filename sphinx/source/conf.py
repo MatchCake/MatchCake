@@ -47,7 +47,7 @@ def change_pathto(app, pagename, templatename, context, doctree):
 
 def move_private_folders(app, e):
     """
-    Remove leading underscore from folders in in the output folder.
+    Remove leading underscore from folders in the output folder.
     """
     
     def join(dir):
