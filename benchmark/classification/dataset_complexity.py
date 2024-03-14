@@ -564,10 +564,10 @@ def parse_args():
             "fPQC-cpu",
             "hfPQC-cpu",
             "ifPQC-cpu",
-            "fPQC-cuda",
-            "hfPQC-cuda",
-            "ifPQC-cuda",
-            # "PQC",
+            # "fPQC-cuda",
+            # "hfPQC-cuda",
+            # "ifPQC-cuda",
+            "PQC",
         ],
         help=f"The methods to be used for the classification."
              f"Example: --methods fPQC PQC."
