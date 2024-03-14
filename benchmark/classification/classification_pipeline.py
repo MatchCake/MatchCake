@@ -517,115 +517,6 @@ class ClassificationPipeline:
         return x_train, x_test, y_train, y_test
     
     @save_on_exit
-    def make_kernels(self, fold_idx: int = 0):
-        for kernel_name in self.methods:
-            self.set_p_bar_postfix_str(f"Making kernel {kernel_name} for fold {fold_idx}")
-            if self.kernels.get(kernel_name, fold_idx, None) is not None:
-                continue
-            try:
-                kernel_class = self.available_kernels[kernel_name]
-                self.kernels[kernel_name, fold_idx] = kernel_class(
-                    seed=self.kwargs.get("kernel_seed", 0),
-                    **self.kwargs.get("kernel_kwargs", {})
-                )
-            except Exception as e:
-                print(f"Failed to make kernel {kernel_name}: {e}")
-        return self.kernels
-    
-    @save_on_exit
-    def fit_kernels(self, fold_idx: int = 0):
-        if not self.kernels:
-            self.make_kernels()
-        to_remove = []
-        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"Fitting kernel {kernel_name} for fold {fold_idx}")
-            if kernel.is_fitted:
-                continue
-            try:
-                start_time = time.perf_counter()
-                kernel.fit(x_train, y_train)
-                elapsed_time = time.perf_counter() - start_time
-                self.fit_kernels_times[kernel_name, fold_idx] = elapsed_time
-                # self.dataframe[self.dataframe[self.KERNEL_KEY == kernel_name]][self.FIT_KERNEL_TIME_KEY] = elapsed_time
-            except Exception as e:
-                if self.kwargs.get("throw_errors", False):
-                    raise e
-                print(f"Failed to fit kernel {kernel_name}: {e}. \n Removing it from the list of kernels.")
-                to_remove.append(kernel_name)
-        for kernel_name in to_remove:
-            self.kernels[kernel_name].pop(fold_idx)
-        return self.kernels
-    
-    @save_on_exit
-    def compute_train_gram_matrices(self, fold_idx: int = 0):
-        if not self.kernels:
-            self.make_kernels()
-        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        to_remove = []
-        verbose = self.kwargs.get("verbose_gram", False)
-        throw_errors = self.kwargs.get("throw_errors", False)
-        for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"{kernel_name}: train gram matrix {fold_idx+1}/{self._n_kfold_splits}")
-            if self.train_gram_matrices.get(kernel_name, fold_idx, None) is not None:
-                continue
-            try:
-                start_time = time.perf_counter()
-                self.train_gram_matrices[kernel_name, fold_idx] = kernel.compute_gram_matrix(
-                    x_train, verbose=verbose, throw_errors=throw_errors, p_bar=self.p_bar
-                )
-                self.train_gram_compute_times[kernel_name, fold_idx] = time.perf_counter() - start_time
-            except Exception as e:
-                if throw_errors:
-                    raise e
-                warnings.warn(
-                    f"Failed to compute gram matrix for kernel {kernel_name}: {e}. "
-                    f"\n Removing it from the list of kernels.",
-                    RuntimeWarning
-                )
-                to_remove.append(kernel_name)
-        for kernel_name in to_remove:
-            self.kernels[kernel_name].pop(fold_idx)
-        return self.kernels
-    
-    @save_on_exit
-    def compute_test_gram_matrices(self, fold_idx: int = 0):
-        if not self.kernels:
-            self.make_kernels()
-        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        to_remove = []
-        verbose = self.kwargs.get("verbose_gram", False)
-        throw_errors = self.kwargs.get("throw_errors", False)
-        for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"{kernel_name}: test gram matrix {fold_idx+1}/{self._n_kfold_splits}")
-            if self.test_gram_matrices.get(kernel_name, fold_idx, None) is not None:
-                continue
-            try:
-                start_time = time.perf_counter()
-                self.test_gram_matrices[kernel_name, fold_idx] = kernel.pairwise_distances(
-                    x_test, x_train, verbose=verbose, throw_errors=throw_errors, p_bar=self.p_bar
-                )
-                self.test_gram_compute_times[kernel_name, fold_idx] = time.perf_counter() - start_time
-            except Exception as e:
-                if throw_errors:
-                    raise e
-                warnings.warn(
-                    f"Failed to compute gram matrix for kernel {kernel_name}: {e}. "
-                    f"\n Removing it from the list of kernels.",
-                    RuntimeWarning
-                )
-                to_remove.append(kernel_name)
-        for kernel_name in to_remove:
-            self.kernels[kernel_name].pop(fold_idx)
-        return self.kernels
-    
-    @save_on_exit
-    def compute_gram_matrices(self, fold_idx: int = 0):
-        self.compute_train_gram_matrices(fold_idx)
-        self.compute_test_gram_matrices(fold_idx)
-        return self.kernels
-    
-    @save_on_exit
     def make_classifiers(self, fold_idx: int = 0):
         cache_size = self.kwargs.get("kernel_cache_size", 10_000)
         for kernel_name in self.methods:
@@ -654,6 +545,8 @@ class ClassificationPipeline:
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         to_remove = []
         for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
+            if kernel_name not in self.methods:
+                continue
             self.set_p_bar_postfix_str(f"Fitting {kernel_name} [fold {fold_idx}]")
             is_fitted = True
             try:
@@ -681,102 +574,14 @@ class ClassificationPipeline:
         return self.classifiers
 
     @save_on_exit
-    def compute_train_accuracies(self, fold_idx: int = 0):
-        if self.classifiers is None:
-            self.make_classifiers()
-        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        to_remove = []
-        for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"Computing train accuracy:{kernel_name} [fold {fold_idx}]")
-            if self.train_accuracies.get(kernel_name, fold_idx, None) is not None:
-                continue
-            if classifier.kernel == "precomputed":
-                train_inputs = self.train_gram_matrices[kernel_name, fold_idx]
-            else:
-                train_inputs = x_train
-            self.train_accuracies[kernel_name, fold_idx] = classifier.score(train_inputs, y_train, p_bar=self.p_bar)
-        for kernel_name in to_remove:
-            self.classifiers[kernel_name].pop(fold_idx)
-            self.kernels[kernel_name].pop(fold_idx)
-            self.train_accuracies[kernel_name].pop(fold_idx)
-        return self.classifiers
-
-    @save_on_exit
-    def compute_test_accuracies(self, fold_idx: int = 0):
-        if self.classifiers is None:
-            self.make_classifiers()
-        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        to_remove = []
-        for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"Computing test accuracy:{kernel_name} [fold {fold_idx}]")
-            if self.test_accuracies.get(kernel_name, fold_idx, None) is not None:
-                self.update_p_bar()
-                continue
-            if classifier.kernel == "precomputed":
-                test_inputs = self.test_gram_matrices[kernel_name, fold_idx]
-            else:
-                test_inputs = x_test
-            try:
-                self.test_accuracies[kernel_name, fold_idx] = classifier.score(test_inputs, y_test, p_bar=self.p_bar)
-            except Exception as e:
-                if self.kwargs.get("throw_errors", False):
-                    raise e
-                warnings.warn(
-                    f"Failed to compute test accuracy for classifier {kernel_name}: {e}. \n "
-                    f"Removing it from the list of classifiers.",
-                    RuntimeWarning
-                )
-                to_remove.append(kernel_name)
-                continue
-        for kernel_name in to_remove:
-            self.classifiers[kernel_name].pop(fold_idx)
-            self.kernels[kernel_name].pop(fold_idx)
-            self.test_accuracies[kernel_name].pop(fold_idx)
-        return self.classifiers
-
-    @save_on_exit
-    def compute_test_f1_scores(self, fold_idx: int = 0):
-        if self.classifiers is None:
-            self.make_classifiers()
-        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        to_remove = []
-        for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"Computing test f1:{kernel_name} [fold {fold_idx}]")
-            if self.test_f1_scores.get(kernel_name, fold_idx, None) is not None:
-                self.update_p_bar()
-                continue
-            if classifier.kernel == "precomputed":
-                test_inputs = self.test_gram_matrices[kernel_name, fold_idx]
-            else:
-                test_inputs = x_test
-            try:
-                self.test_f1_scores[kernel_name, fold_idx] = f1_score(
-                    y_test, classifier.predict(test_inputs), average="weighted"
-                )
-            except Exception as e:
-                if self.kwargs.get("throw_errors", False):
-                    raise e
-                warnings.warn(
-                    f"Failed to compute test f1 score for classifier {kernel_name}: {e}. \n "
-                    f"Removing it from the list of classifiers.",
-                    RuntimeWarning
-                )
-                to_remove.append(kernel_name)
-                continue
-            self.update_p_bar()
-        for kernel_name in to_remove:
-            self.classifiers[kernel_name].pop(fold_idx)
-            self.kernels[kernel_name].pop(fold_idx)
-            self.test_f1_scores[kernel_name].pop(fold_idx)
-        return self.classifiers
-
-    @save_on_exit
     def compute_metrics(self, fold_idx: int = 0):
         if self.classifiers is None:
             self.make_classifiers()
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
         to_remove = []
         for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
+            if kernel_name not in self.methods:
+                continue
             self.set_p_bar_postfix_str(f"Computing metrics:{kernel_name} [fold {fold_idx}]")
             if self.train_metrics.get_is_metrics_all_computed(kernel_name, fold_idx) and \
                     self.test_metrics.get_is_metrics_all_computed(kernel_name, fold_idx):
@@ -807,11 +612,6 @@ class ClassificationPipeline:
             self.test_f1_scores[kernel_name].pop(fold_idx)
         return self.classifiers
 
-    def compute_accuracies(self, fold_idx: int = 0):
-        self.compute_train_accuracies(fold_idx)
-        self.compute_test_accuracies(fold_idx)
-        self.compute_test_f1_scores(fold_idx)
-
     @pbt.decorators.log_func
     @save_on_exit
     def run(self, **kwargs):
@@ -840,13 +640,8 @@ class ClassificationPipeline:
 
     @save_on_exit
     def run_fold(self, fold_idx: int):
-        # self.make_kernels(fold_idx)
-        # self.fit_kernels(fold_idx)
-        # if self.use_gram_matrices:
-        #     self.compute_gram_matrices(fold_idx)
         self.make_classifiers(fold_idx)
         self.fit_classifiers(fold_idx)
-        # self.compute_accuracies(fold_idx)
         self.compute_metrics(fold_idx)
         self.set_p_bar_postfix_with_results_table()
         self.set_p_bar_postfix_str(f"Done with fold {fold_idx}")
