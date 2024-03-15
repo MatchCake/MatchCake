@@ -60,7 +60,7 @@ def make_results_table(trial="cls_k5"):
     gpu_kernels = [m for m in all_kernels if "cuda" in m]
     cpu_kernels = [m for m in all_kernels if m not in gpu_kernels]
     all_kernels_set = cpu_kernels + [m for m in gpu_kernels if m.replace("-cuda", "-cpu") not in cpu_kernels]
-    kernels_to_keep = ["PQC", "fPQC", "ifPQC", "hfPQC"]
+    kernels_to_keep = ["PQC", "iPQC", "fPQC", "ifPQC", "hfPQC"]
     all_kernels_set = [
         m for m in all_kernels_set
         if any([
@@ -96,7 +96,7 @@ def make_results_table(trial="cls_k5"):
 
     # rename the kernels
     full_df[ClassificationPipeline.KERNEL_KEY] = full_df[ClassificationPipeline.KERNEL_KEY].apply(
-        lambda x: kernels_to_fmt_names[x]
+        lambda x: kernels_to_fmt_names.get(x, x)
     )
     # rename the columns
     full_df = full_df.rename(columns=columns_fmt_names)
