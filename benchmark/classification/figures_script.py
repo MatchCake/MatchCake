@@ -68,6 +68,15 @@ def make_results_table(trial="cls_k5"):
             for k in kernels_to_keep
         ])
     ]
+    kernels_to_fmt_names = {
+        "PQC": "PQC",
+        "fPQC": "fPQC",
+        "ifPQC": r"$\otimes$fPQC",
+        "hfPQC": "hfPQC",
+        "wfPQC": "wfPQC",
+        "hwfPQC": "hwfPQC",
+        "iwfPQC": r"$\otimes$wfPQC",
+    }
     # filter the kernels
     full_df = full_df[full_df[ClassificationPipeline.KERNEL_KEY].isin(all_kernels_set)]
     # use pm_string_to_floats to convert the accuracies and f1 to floats, multiply by 100,
@@ -85,6 +94,11 @@ def make_results_table(trial="cls_k5"):
     for c in integer_columns:
         full_df[c] = full_df[c].astype(int)
 
+    # rename the kernels
+    full_df[ClassificationPipeline.KERNEL_KEY] = full_df[ClassificationPipeline.KERNEL_KEY].apply(
+        lambda x: kernels_to_fmt_names[x]
+    )
+    # rename the columns
     full_df = full_df.rename(columns=columns_fmt_names)
     columns_to_keep = [columns_fmt_names[c] for c in columns_to_keep]
 
