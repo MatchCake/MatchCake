@@ -545,7 +545,6 @@ class ClassificationPipeline:
         if self.classifiers is None:
             self.make_classifiers()
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        to_remove = []
         for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
             if kernel_name not in self.methods:
                 continue
@@ -567,12 +566,8 @@ class ClassificationPipeline:
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
                     raise e
-                print(f"Failed to fit classifier {kernel_name}: {e}. \n Removing it from the list of classifiers.")
-                to_remove.append(kernel_name)
+                warnings.warn(F"Failed to fit classifier {kernel_name}: {e}.", RuntimeWarning)
                 continue
-        for kernel_name in to_remove:
-            self.classifiers[kernel_name].pop(fold_idx)
-            self.kernels[kernel_name].pop(fold_idx)
         return self.classifiers
 
     @save_on_exit
@@ -580,7 +575,6 @@ class ClassificationPipeline:
         if self.classifiers is None:
             self.make_classifiers()
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        to_remove = []
         for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
             if kernel_name not in self.methods:
                 continue
@@ -601,17 +595,10 @@ class ClassificationPipeline:
                 if self.kwargs.get("throw_errors", False):
                     raise e
                 warnings.warn(
-                    f"Failed to compute metrics for classifier {kernel_name}: {e}. \n "
-                    f"Removing it from the list of classifiers.",
-                    RuntimeWarning
+                    f"Failed to compute metrics for classifier {kernel_name}: {e}. \n ", RuntimeWarning
                 )
-                to_remove.append(kernel_name)
                 continue
             self.update_p_bar()
-        for kernel_name in to_remove:
-            self.classifiers[kernel_name].pop(fold_idx)
-            self.kernels[kernel_name].pop(fold_idx)
-            self.test_f1_scores[kernel_name].pop(fold_idx)
         return self.classifiers
 
     @pbt.decorators.log_func
