@@ -20,8 +20,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset_name", type=str,
-        # default="iris",
-        default="breast_cancer",
+        default="iris",
+        # default="breast_cancer",
         # default="digits",
         help=f"The dataset to be used for the classification."
              f"Available datasets: {ClassificationPipeline.available_datasets}."
@@ -32,6 +32,7 @@ def parse_args():
         default=[
             "classical",
             "PQC",
+            "iPQC",
             "fPQC-cuda",
             "wfPQC-cuda",
             "hfPQC-cuda",
@@ -119,12 +120,13 @@ def main():
         kernels_fmt_names={
             "classical": "Classical",
             "PQC": "PQC",
+            "iPQC": r"$\otimes$PQC",
             "fPQC-cuda": "fPQC",
             "wfPQC-cuda": "wfPQC",
             "hfPQC-cuda": "hfPQC",
             "hwfPQC-cuda": "hwfPQC",
-            "ifPQC-cuda": "ifPQC",
-            "iwfPQC-cuda": "iwfPQC",
+            "ifPQC-cuda": r"$\otimes$fPQC",
+            "iwfPQC-cuda": r"$\otimes$wfPQC",
         },
         filepath=os.path.join(figures_folder, "bar_plot.pdf"),
     )
