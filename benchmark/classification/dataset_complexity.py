@@ -390,6 +390,9 @@ class DatasetComplexityPipeline:
             accuracies_lbl: [{m: train_linestyle for m in kernels}, {m: test_linestyle for m in kernels}],
         }
         kernel_to_lbl = {m: m.replace("-cuda", "").replace("-cpu", "") for m in kernels}
+        kernel_to_lbl["ifPQC"] = r"$\otimes$fPQC"
+        kernel_to_lbl["ifPQC-cpu"] = r"$\otimes$fPQC"
+        kernel_to_lbl["iPQC"] = r"$\otimes$PQC"
         sorted_lbls = sorted(set(kernel_to_lbl.values()))
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         kernel_lbl_to_color = {lbl: colors[i] for i, lbl in enumerate(sorted_lbls)}
@@ -553,8 +556,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset_name", type=str,
-        default="digits",
-        # default="breast_cancer",
+        # default="digits",
+        default="breast_cancer",
         help=f"The name of the dataset to be used for the classification. "
              f"Available datasets: {DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP.keys()}."
     )
