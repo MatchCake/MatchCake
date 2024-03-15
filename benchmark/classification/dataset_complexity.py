@@ -94,6 +94,7 @@ class DatasetComplexityPipeline:
         "ifPQC-cpu": np.inf,
         "hfPQC-cpu": np.inf,
         "PQC": 16,
+        "iPQC": 16,
     }
 
     @classmethod
@@ -605,6 +606,12 @@ def parse_args():
     )
     parser.add_argument("--n_samples", type=int, default=None)
     parser.add_argument("--run_pipelines", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--max_PQC_size", type=int, default=DatasetComplexityPipeline.MTH_MAX_SIZE_MAP["PQC"]
+    )
+    parser.add_argument(
+        "--max_iPQC_size", type=int, default=DatasetComplexityPipeline.MTH_MAX_SIZE_MAP["iPQC"]
+    )
     return parser.parse_args()
 
 
@@ -613,6 +620,8 @@ def main():
     if any(["cuda" in m for m in args.methods]):
         matchcake.utils.cuda.is_cuda_available(throw_error=True, enable_warnings=True)
     print(f"{args.run_pipelines = }")
+    DatasetComplexityPipeline.MTH_MAX_SIZE_MAP["PQC"] = args.max_PQC_size
+    DatasetComplexityPipeline.MTH_MAX_SIZE_MAP["iPQC"] = args.max_iPQC_size
     classification_pipeline_kwargs = dict(
         methods=args.methods,
         n_kfold_splits=args.n_kfold_splits,
