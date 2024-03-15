@@ -85,7 +85,7 @@ class PQCKernel(MPennylaneQuantumKernel):
         self._parameter_scaling = kwargs.get("parameter_scaling", np.pi / 2)
         self._depth = kwargs.get("depth", None)
         self._rotations = kwargs.get("rotations", "Y,Z").split(",")
-        self._entangling_mth = kwargs.get("entangling_mth", "fswap")
+        self._entangling_mth = kwargs.get("entangling_mth", "cnot")
         if self._entangling_mth not in self.available_entangling_mth:
             raise ValueError(f"Unknown entangling method: {self._entangling_mth}.")
 
@@ -100,6 +100,10 @@ class PQCKernel(MPennylaneQuantumKernel):
     @property
     def rotations(self):
         return self._rotations
+
+    @property
+    def entangling_mth(self):
+        return getattr(self, "_entangling_mth", "cnot")
 
     def _compute_default_size(self):
         return max(2, int(np.ceil(np.log2(self.X_.shape[-1] + 2) - 1)))
@@ -118,12 +122,12 @@ class PQCKernel(MPennylaneQuantumKernel):
             qml.AngleEmbedding(sub_x, wires=self.wires, rotation=self._rotations[1])
             cnot_wires = wires_patterns[layer % len(wires_patterns)]
             for wires in cnot_wires:
-                if self._entangling_mth == "cnot":
+                if self.entangling_mth == "cnot":
                     qml.CNOT(wires=wires)
-                elif self._entangling_mth == "identity":
+                elif self.entangling_mth == "identity":
                     pass
                 else:
-                    raise ValueError(f"Unknown entangling method: {self._entangling_mth}.")
+                    raise ValueError(f"Unknown entangling method: {self.entangling_mth}.")
 
     def circuit(self, x0, x1):
         theta_x0 = self._parameter_scaling * self.parameters + self.data_scaling * x0
