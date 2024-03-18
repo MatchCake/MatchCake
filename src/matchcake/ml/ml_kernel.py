@@ -22,10 +22,146 @@ import pennylane as qml
 from pennylane.wires import Wires
 import pythonbasictools as pbt
 from tqdm import tqdm
+import tables as tb
 
 from ..devices.nif_device import NonInteractingFermionicDevice
 from ..operations import MAngleEmbedding, MAngleEmbeddings, fRZZ, fCNOT, fSWAP, fH
 from ..operations.fermionic_controlled_not import FastfCNOT
+
+
+class GramMatrixKernel:
+    def __init__(
+            self,
+            shape: Tuple[int, int],
+            dtype: Optional[Union[str, np.dtype]] = np.float64,
+            array_type: str = "table",
+            **kwargs
+    ):
+        self._shape = shape
+        self._dtype = dtype
+        self._array_type = array_type
+        self.kwargs = kwargs
+        self.h5file = None
+        self.data = None
+        self._initiate_data_()
+
+    @property
+    def shape(self):
+        return self._shape
+
+    @property
+    def dtype(self):
+        return self._dtype
+
+    @property
+    def is_square(self):
+        return self.shape[0] == self.shape[1]
+
+    @property
+    def size(self):
+        return self.shape[0] * self.shape[1]
+
+    def _initiate_data_(self):
+        if self._array_type == "table":
+            self.h5file = tb.open_file("gram_matrix.h5", mode="w")
+            self.data = self.h5file.create_carray(
+                self.h5file.root,
+                "data",
+                tb.Float64Atom(),
+                shape=self.shape,
+            )
+        else:
+            self.data = np.zeros(self.shape, dtype=self.dtype)
+
+    def __array__(self):
+        return self.data[:]
+
+    def __getitem__(self, item):
+        return self.data[item]
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
+
+    def symmetrize(self):
+        if not self.is_square:
+            warnings.warn("Cannot symmetrize a non-square matrix.")
+            return
+        if self._array_type == "table":
+            self.data[:] = (self.data + self.data.T) / 2
+        elif self._array_type == "ndarray":
+            self.data = (self.data + self.data.T) / 2
+        else:
+            raise ValueError(f"Unknown array type: {self._array_type}.")
+
+    def mirror(self):
+        if not self.is_square:
+            warnings.warn("Cannot mirror a non-square matrix.")
+            return
+        if self._array_type == "table":
+            self.data[:] = self.data.T
+        elif self._array_type == "ndarray":
+            self.data = self.data.T
+        else:
+            raise ValueError(f"Unknown array type: {self._array_type}.")
+
+    def triu_reflect(self):
+        if not self.is_square:
+            warnings.warn("Cannot triu_reflect a non-square matrix.")
+            return
+        if self._array_type == "table":
+            self.data[:] = self.data + self.data.T
+        elif self._array_type == "ndarray":
+            self.data = self.data + self.data.T
+        else:
+            raise ValueError(f"Unknown array type: {self._array_type}.")
+
+    def tril_reflect(self):
+        if not self.is_square:
+            warnings.warn("Cannot tril_reflect a non-square matrix.")
+            return
+        if self._array_type == "table":
+            self.data[:] = self.data + self.data.T
+        elif self._array_type == "ndarray":
+            self.data = self.data + self.data.T
+        else:
+            raise ValueError(f"Unknown array type: {self._array_type}.")
+
+    def fill_diagonal(self, value: float):
+        if not self.is_square:
+            warnings.warn("Cannot fill_diagonal a non-square matrix.")
+            return
+        if self._array_type == "table":
+            self.data[np.diag_indices(self.shape[0])] = value
+        elif self._array_type == "ndarray":
+            np.fill_diagonal(self.data, value)
+        else:
+            raise ValueError(f"Unknown array type: {self._array_type}.")
+
+    def close(self):
+        if self.h5file is not None:
+            self.h5file.close()
+            self.h5file = None
+            self.data = None
+
+    def make_batches_indexes_generator(self, batch_size: int) -> Tuple[iter, int]:
+        if self.is_square:
+            # number of elements in the upper triangle without the diagonal elements
+            length = self.size * (self.size - 1) // 2
+        else:
+            length = self.size - self.shape[0]
+        n_batches = int(np.ceil(length / batch_size))
+
+        def _gen():
+            for i in range(n_batches):
+                b_start_idx = i * batch_size
+                b_end_idx = (i + 1) * batch_size
+                # generate the coordinates of the matrix elements in that batch
+                yield np.unravel_index(
+                    np.arange(b_start_idx, b_end_idx),
+                    self.shape
+                )
+
+        return _gen(), n_batches
 
 
 def mrot_zz_template(param0, param1, wires):
@@ -69,6 +205,9 @@ class MLKernel(StdEstimator):
         self._assume_symmetric = kwargs.get("assume_symmetric", True)
         self._assume_diag_one = kwargs.get("assume_diag_one", True)
         self._batch_size_try_counter = 0
+        self._gram_type = kwargs.get("gram_type", "ndarray")
+        if self._gram_type not in {"ndarray", "hdf5"}:
+            raise ValueError(f"Unknown gram type: {self._gram_type}.")
         super().__init__(**kwargs)
 
     def _compute_default_size(self):
@@ -228,12 +367,11 @@ class MLKernel(StdEstimator):
         gram = np.zeros((qml.math.shape(x0)[0], qml.math.shape(x1)[0]))
         is_square = gram.shape[0] == gram.shape[1]
         triu_indices = np.stack(np.triu_indices(n=gram.shape[0], m=gram.shape[1], k=1), axis=-1)
-        tril_indices = np.stack(np.tril_indices(n=gram.shape[0], m=gram.shape[1], k=-1), axis=-1)
-        non_diag_indices = np.concatenate([triu_indices, tril_indices], axis=0)
         if is_square:
             indices = triu_indices
         else:
-            indices = non_diag_indices
+            tril_indices = np.stack(np.tril_indices(n=gram.shape[0], m=gram.shape[1], k=-1), axis=-1)
+            indices = np.concatenate([triu_indices, tril_indices], axis=0)
         start_time = time.perf_counter()
         n_data = qml.math.shape(indices)[0]
         n_done = 0
@@ -249,7 +387,8 @@ class MLKernel(StdEstimator):
                 eta_fmt = datetime.timedelta(seconds=eta)
                 p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: {eta_fmt}, {100 * n_done / n_data:.2f}%)")
         if is_square:
-            gram[tril_indices[:, 0], tril_indices[:, 1]] = gram[tril_indices[:, 1], tril_indices[:, 0]]
+            # gram[tril_indices[:, 0], tril_indices[:, 1]] = gram[tril_indices[:, 1], tril_indices[:, 0]]
+            gram = gram + gram.T
         np.fill_diagonal(gram, 1.0)
         if p_bar is not None:
             p_bar.set_postfix_str(p_bar_postfix_str)
