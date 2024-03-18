@@ -333,14 +333,17 @@ class DatasetComplexityPipeline:
             plt.rcParams.update(MPL_RC_BIG_FONT_PARAMS)
             plt.rcParams["legend.fontsize"] = 22
             plt.rcParams["lines.linewidth"] = 4.0
-            plt.rcParams["font.size"] = 24
-        x_keys = {"N [-]": "kernel_size"}
+            plt.rcParams["font.size"] = 26
+        x_keys = {"$N$ [-]": "kernel_size"}
         accuracies_lbl = "Accuracies [%]"
         linestyles = ["-", "--", "-.", ":"]
-        y_lbl_to_keys = {
-            ClassificationPipeline.FIT_TIME_KEY: ClassificationPipeline.FIT_TIME_KEY,
-            accuracies_lbl: [ClassificationPipeline.TRAIN_ACCURACY_KEY, ClassificationPipeline.TEST_ACCURACY_KEY],
-        }
+        y_lbl_to_keys = {}
+        if kwargs.get("add_fit_time", True):
+            y_lbl_to_keys[ClassificationPipeline.FIT_TIME_KEY] = ClassificationPipeline.FIT_TIME_KEY
+        if kwargs.get("add_accuracies", True):
+            y_lbl_to_keys[accuracies_lbl] = [
+                ClassificationPipeline.TRAIN_ACCURACY_KEY, ClassificationPipeline.TEST_ACCURACY_KEY
+            ]
         y_lbl_to_pre_post_lbl = {accuracies_lbl: ("Train ", "Test ")}
         y_lbl_to_scale_factor = {
             ClassificationPipeline.FIT_TIME_KEY: 1,
@@ -445,41 +448,45 @@ class DatasetComplexityPipeline:
                 axes[i].set_ylim(y_min*0.99, y_max*1.01)
 
             fig.supxlabel(x_lbl, y=np.sqrt(height) / 100 * 2.2)
-            lbl_to_kernel = {
-                d.get("kernel_lbl", kernel_to_lbl[k]): k
-                for k, d in data_dict[ClassificationPipeline.FIT_TIME_KEY].items()
-                if k in set_methods
-            }
-            lbl_to_color_marker = {
-                f"{lbl}{data_dict[ClassificationPipeline.FIT_TIME_KEY][lbl_to_kernel[lbl]]['complexity_lbl']}":
-                    (c, kernel_to_marker[lbl_to_kernel[lbl]])
-                for lbl, c in kernel_lbl_to_color.items()
-                if lbl in lbl_to_kernel
-            }
-            patches = [
-                plt.Line2D([0], [0], color=c, label=lbl, marker=mk)
-                for lbl, (c, mk) in lbl_to_color_marker.items()
-            ]
-            patches += [
-                plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
-                for lbl, ls in [
-                    # ("GPU", gpu_linestyle), ("CPU", cpu_linestyle),
-                    ("Complexity Fit", ":")
-                ]
-                if any(y_lbl_to_polyfit.get(ClassificationPipeline.FIT_TIME_KEY, {"": False}).values())
-            ]
             if ClassificationPipeline.FIT_TIME_KEY in y_lbl_to_ax:
+                lbl_to_kernel = {
+                    d.get("kernel_lbl", kernel_to_lbl[k]): k
+                    for k, d in data_dict[ClassificationPipeline.FIT_TIME_KEY].items()
+                    if k in set_methods
+                }
+                lbl_to_color_marker = {
+                    f"{lbl}{data_dict[ClassificationPipeline.FIT_TIME_KEY][lbl_to_kernel[lbl]]['complexity_lbl']}":
+                        (c, kernel_to_marker[lbl_to_kernel[lbl]])
+                    for lbl, c in kernel_lbl_to_color.items()
+                    if lbl in lbl_to_kernel
+                }
+                patches = [
+                    plt.Line2D([0], [0], color=c, label=lbl, marker=mk)
+                    for lbl, (c, mk) in lbl_to_color_marker.items()
+                ]
+                patches += [
+                    plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
+                    for lbl, ls in [
+                        # ("GPU", gpu_linestyle), ("CPU", cpu_linestyle),
+                        ("Complexity Fit", ":")
+                    ]
+                    if any(y_lbl_to_polyfit.get(ClassificationPipeline.FIT_TIME_KEY, {"": False}).values())
+                ]
                 y_lbl_to_ax[ClassificationPipeline.FIT_TIME_KEY].legend(handles=patches, loc='lower right')
-            patches = [
-                plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
-                for lbl, ls in [("Train", train_linestyle), ("Test", test_linestyle)]
-            ]
+
             if accuracies_lbl in y_lbl_to_ax:
+                patches = [
+                    plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
+                    for lbl, ls in [("Train", train_linestyle), ("Test", test_linestyle)]
+                ]
                 y_lbl_to_ax[accuracies_lbl].legend(handles=patches, loc='lower right')
             fig.tight_layout()
             plt.tight_layout()
             if self.save_dir is not None:
-                fig_save_path = os.path.join(self.save_dir, self.dataset_name, "figures", f"results_{x_key}.pdf")
+                pre_filename = kwargs.get("pre_filename", "")
+                fig_save_path = os.path.join(
+                    self.save_dir, self.dataset_name, "figures", f"{pre_filename}results_{x_key}.pdf"
+                )
                 os.makedirs(os.path.dirname(fig_save_path), exist_ok=True)
                 fig.savefig(fig_save_path, bbox_inches="tight", dpi=900)
             if kwargs.get("show", False):
@@ -557,8 +564,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset_name", type=str,
-        # default="digits",
-        default="breast_cancer",
+        default="digits",
+        # default="breast_cancer",
         help=f"The name of the dataset to be used for the classification. "
              f"Available datasets: {DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP.keys()}."
     )
@@ -612,6 +619,7 @@ def parse_args():
     parser.add_argument(
         "--max_iPQC_size", type=int, default=DatasetComplexityPipeline.MTH_MAX_SIZE_MAP["iPQC"]
     )
+    parser.add_argument("--max_size", type=int, default=None)
     return parser.parse_args()
 
 
@@ -622,6 +630,8 @@ def main():
     print(f"{args.run_pipelines = }")
     DatasetComplexityPipeline.MTH_MAX_SIZE_MAP["PQC"] = args.max_PQC_size
     DatasetComplexityPipeline.MTH_MAX_SIZE_MAP["iPQC"] = args.max_iPQC_size
+    if args.max_size is not None:
+        DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP[args.dataset_name] = args.max_size
     classification_pipeline_kwargs = dict(
         methods=args.methods,
         n_kfold_splits=args.n_kfold_splits,
@@ -648,7 +658,11 @@ def main():
     # else:
     #     pipeline.get_results_table_from_csvs(show=True)
     plt.close("all")
-    pipeline.plot_formatted_complexity_results(show=True)
+    pipeline.plot_formatted_complexity_results(show=True, add_fit_time=True, add_accuracies=True, pre_filename="full_")
+    plt.close("all")
+    pipeline.plot_formatted_complexity_results(show=True, add_fit_time=False, add_accuracies=True, pre_filename="acc_")
+    plt.close("all")
+    pipeline.plot_formatted_complexity_results(show=True, add_fit_time=True, add_accuracies=False, pre_filename="time_")
     plt.close("all")
 
 
