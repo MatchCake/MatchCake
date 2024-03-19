@@ -76,7 +76,7 @@ class DatasetComplexityPipeline:
         "breast_cancer": 30,
     }
     DATASET_STEP_SIZE_MAP = {
-        "digits": 4,
+        "digits": 2,
         "iris": 2,
         "breast_cancer": 2,
     }
@@ -667,4 +667,7 @@ def main():
 
 
 if __name__ == '__main__':
+    # python benchmark/classification/dataset_complexity.py --dataset_name digits
+    # --methods PQC iPQC fPQC-cpu hfPQC-cpu ifPQC-cpu --batch_size 32768
+    # --save_dir benchmark/classification/results_dc_cluster --no-run_pipelines --max_size 30
     sys.exit(main())
