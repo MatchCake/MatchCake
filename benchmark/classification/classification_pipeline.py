@@ -809,6 +809,22 @@ class ClassificationPipeline:
 
         return cls(**kwargs)
 
+    @pbt.decorators.log_func
+    def to_dot_class_pipeline(self):
+        raise NotImplementedError("This method is not implemented yet.")
+
+    @classmethod
+    def from_dot_class_pipeline(cls, dot_class_pipeline: str, **kwargs) -> "ClassificationPipeline":
+        raise NotImplementedError("This method is not implemented yet.")
+
+    @classmethod
+    def from_dot_class_pipeline_pkl_or_new(
+            cls,
+            dot_class_pipeline: Optional[str] = None,
+            **kwargs
+    ) -> "ClassificationPipeline":
+        raise NotImplementedError("This method is not implemented yet.")
+
     def to_npz(self):
         if self.save_path is not None:
             save_path = self.save_path
