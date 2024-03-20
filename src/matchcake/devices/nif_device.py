@@ -685,7 +685,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         )
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
         zero_state = self._create_basis_state(0).flatten()
-
+        # TODO: Dont compute the zero explicitly and only take the 00 element of the operator
         bra = utils.recursive_2in_operator(
             qml.math.dot, [zero_state.T.conj(), *[self.majorana_getter(i) for i in bra_majorana_indexes]]
         )
