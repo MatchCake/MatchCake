@@ -20,9 +20,10 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset_name", type=str,
-        default="iris",
+        # default="iris",
         # default="breast_cancer",
-        # default="digits",
+        default="digits",
+        # default="mnist",
         help=f"The dataset to be used for the classification."
              f"Available datasets: {ClassificationPipeline.available_datasets}."
     )
@@ -30,21 +31,22 @@ def parse_args():
         "--methods", type=str, nargs="+",
         # default=["classical", "fPQC-cpu", "PQC", "wfPQC-cpu"],
         default=[
-            "classical",
-            "PQC",
-            "iPQC",
-            "fPQC-cuda",
-            "wfPQC-cuda",
-            "hfPQC-cuda",
-            "hwfPQC-cuda",
-            "ifPQC-cuda",
-            "iwfPQC-cuda",
+            # "classical",
+            # "PQC",
+            # "iPQC",
+            "fPQC-cpu",
+            # "fPQC-cuda",
+            # "wfPQC-cuda",
+            # "hfPQC-cuda",
+            # "hwfPQC-cuda",
+            # "ifPQC-cuda",
+            # "iwfPQC-cuda",
         ],
         help=f"The methods to be used for the classification."
              f"Available methods: {ClassificationPipeline.available_kernels}."
     )
     parser.add_argument("--n_kfold_splits", type=int, default=5)
-    parser.add_argument("--throw_errors", type=bool, default=False)
+    parser.add_argument("--throw_errors", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--show", type=bool, default=False)
     parser.add_argument("--plot", type=bool, default=False)
     parser.add_argument("--save_dir", type=str, default=os.path.join(os.path.dirname(__file__), "results"))
@@ -86,17 +88,18 @@ def main():
         max_gram_size=args.max_gram_size,
     )
     save_path = os.path.join(
-        args.save_dir, args.trial, f"{kwargs['dataset_name']}", f"cls.pkl"
+        args.save_dir, args.trial, f"{kwargs['dataset_name']}", f".class_pipeline"
     )
     if args.overwrite:
         pipeline = ClassificationPipeline(save_path=save_path, **kwargs)
     else:
-        pipeline = ClassificationPipeline.from_pickle_or_new(save_path=save_path, **kwargs)
+        pipeline = ClassificationPipeline.from_dot_class_pipeline_pkl_or_new(save_path=save_path, **kwargs)
     figures_folder = os.path.join(os.path.dirname(save_path), "figures")
     pipeline.load_dataset()
     pipeline.preprocess_data()
     pipeline.print_summary()
     pipeline.run(table_path=os.path.join(figures_folder, "table.csv"))
+    pipeline.to_dot_class_pipeline()
     properties = pipeline.get_properties_table(show=True, filepath=os.path.join(figures_folder, "properties.csv"))
     results = pipeline.get_results_table(show=True, filepath=os.path.join(figures_folder, "results_table.csv"))
     mean_results = pipeline.get_results_table(
