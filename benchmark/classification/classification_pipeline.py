@@ -146,6 +146,8 @@ class KPredictorContainer:
     def __setitem__(self, key, value):
         if isinstance(key, tuple):
             return self.set(key[0], key[1], value)
+        elif isinstance(value, dict):
+            self.container[key] = value
         else:
             raise ValueError("Key in __setitem__ must be a tuple")
 
@@ -189,6 +191,37 @@ class KPredictorContainer:
 
     def __repr__(self):
         return f"{self.__class__.__name__}(name={self.name},outer_keys={list(self.container.keys())})"
+
+    def save_item(self, filepath: str, *key):
+        import pickle
+
+        item = self.__getitem__(key)
+        if item is None:
+            return
+        if not filepath.endswith(".pkl"):
+            filepath += ".pkl"
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, "wb") as f:
+            pickle.dump(item, f)
+        return self
+
+    def load_item(self, filepath, *key):
+        import pickle
+
+        if not filepath.endswith(".pkl"):
+            filepath += ".pkl"
+        if not os.path.isfile(filepath):
+            return self
+        with open(filepath, "rb") as f:
+            item = pickle.load(f)
+        self.__setitem__(key, item)
+        return self
+
+    def __contains__(self, item):
+        if isinstance(item, tuple):
+            return self.get(item[0], item[1]) is not None
+        else:
+            return item in self.container
 
 
 class MetricsContainer:
@@ -247,6 +280,37 @@ class MetricsContainer:
         for metric in self.metrics:
             self.set(metric, key, inner_key, self.available_metrics[metric](y_true, y_pred))
         return self.containers
+
+    def get_item_metrics(self, *key, default_value=None):
+        return {
+            metric: self.containers[metric].__getitem__(key)
+            if self.containers[metric].__contains__(key) else default_value
+            for metric in self.metrics
+        }
+
+    def save_item_metrics(self, filepath: str, *key):
+        import pickle
+
+        to_save = self.get_item_metrics(*key)
+        if not filepath.endswith(".pkl"):
+            filepath += ".pkl"
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, "wb") as f:
+            pickle.dump(to_save, f)
+        return self
+
+    def load_item_metrics(self, filepath: str, *key):
+        import pickle
+
+        if not filepath.endswith(".pkl"):
+            filepath += ".pkl"
+        if not os.path.isfile(filepath):
+            return self
+        with open(filepath, "rb") as f:
+            item = pickle.load(f)
+        for metric, value in item.items():
+            self.set(metric, *key, value)
+        return self
 
 
 class ClassificationPipeline:
@@ -518,7 +582,7 @@ class ClassificationPipeline:
         y_train, y_test = self.y[train_indexes], self.y[test_indexes]
         return x_train, x_test, y_train, y_test
     
-    @save_on_exit
+    @save_on_exit(save_func_name="to_dot_class_pipeline")
     def make_classifiers(self, fold_idx: int = 0):
         cache_size = self.kwargs.get("kernel_cache_size", 10_000)
         for kernel_name in self.methods:
@@ -540,7 +604,7 @@ class ClassificationPipeline:
             )
         return self.classifiers
     
-    @save_on_exit
+    @save_on_exit(save_func_name="to_dot_class_pipeline")
     def fit_classifiers(self, fold_idx: int = 0):
         if self.classifiers is None:
             self.make_classifiers()
@@ -570,7 +634,7 @@ class ClassificationPipeline:
                 continue
         return self.classifiers
 
-    @save_on_exit
+    @save_on_exit(save_func_name="to_dot_class_pipeline")
     def compute_metrics(self, fold_idx: int = 0):
         if self.classifiers is None:
             self.make_classifiers()
@@ -602,7 +666,7 @@ class ClassificationPipeline:
         return self.classifiers
 
     @pbt.decorators.log_func
-    @save_on_exit
+    @save_on_exit(save_func_name="to_dot_class_pipeline")
     def run(self, **kwargs):
         table_path = kwargs.pop("table_path", None)
         show_tables = kwargs.pop("show_table", False)
@@ -622,12 +686,12 @@ class ClassificationPipeline:
             if table_path is not None:
                 self.get_results_properties_table(mean=mean_results_table, show=show_tables, filepath=table_path)
         self.set_p_bar_postfix_str("Done. Saving results.")
-        self.to_pickle()
+        self.to_dot_class_pipeline()
         if kwargs.get("close_p_bar", True):
             self.p_bar.close()
         return self
 
-    @save_on_exit
+    @save_on_exit(save_func_name="to_dot_class_pipeline")
     def run_fold(self, fold_idx: int):
         self.make_classifiers(fold_idx)
         self.fit_classifiers(fold_idx)
@@ -784,10 +848,11 @@ class ClassificationPipeline:
     @classmethod
     def from_pickle(cls, pickle_path: str, new_attrs: Optional[dict] = None) -> "ClassificationPipeline":
         import pickle
+        if new_attrs is None:
+            new_attrs = {}
         with open(pickle_path, "rb") as f:
             loaded_obj = pickle.load(f)
-        if new_attrs is not None:
-            loaded_obj.__dict__.update(new_attrs)
+        loaded_obj.__dict__.update(new_attrs)
         new_obj = cls(**new_attrs)
         new_obj.__setstate__(loaded_obj.__getstate__())
         return new_obj
@@ -809,13 +874,81 @@ class ClassificationPipeline:
 
         return cls(**kwargs)
 
+    def save_fold(self, kernel_name: str, fold_idx: int):
+        if self.save_path is None:
+            return self
+        save_path = self.save_path
+        if not save_path.endswith(".class_pipeline"):
+            save_path += ".class_pipeline"
+        os.makedirs(save_path, exist_ok=True)
+        fold_save_dir: str = os.path.join(save_path, kernel_name, str(fold_idx))
+        self.classifiers.save_item(os.path.join(fold_save_dir, "classifier.pkl"), kernel_name, fold_idx)
+        self.fit_times.save_item(os.path.join(fold_save_dir, "fit_time.pkl"), kernel_name, fold_idx)
+        self.train_metrics.save_item_metrics(
+            os.path.join(fold_save_dir, "train_metrics.pkl"), kernel_name, fold_idx
+        )
+        self.test_metrics.save_item_metrics(
+            os.path.join(fold_save_dir, "test_metrics.pkl"), kernel_name, fold_idx
+        )
+        return self
+
     @pbt.decorators.log_func
     def to_dot_class_pipeline(self):
-        raise NotImplementedError("This method is not implemented yet.")
+        """
+        The method is used to save the pipeline to a ".class_pipeline" file.
+
+        In this file, you can find the following information:
+            - a sub-folder for each classifier containing the following:
+                - a sub-folder for each fold containing the following:
+                    - a .pkl file containing the classifier
+                    - a .csv file containing the results metrics
+                    - a .csv file containing the properties of the classifier
+            - a .csv file containing the results metrics for all classifiers
+            - a .csv file containing the properties of all classifiers
+            - a .pkl file containing the pipeline itself
+
+        :return: A reference to the pipeline itself.
+        """
+        if self.save_path is not None:
+            save_path = self.save_path
+            if not save_path.endswith(".class_pipeline"):
+                save_path += ".class_pipeline"
+            os.makedirs(save_path, exist_ok=True)
+            for (kernel_name, fold_idx), classifier in self.classifiers.items():
+                self.save_fold(kernel_name, fold_idx)
+            self.to_pickle()
+        return self
+
+    def load_fold(self, kernel_name: str, fold_idx: int):
+        if self.save_path is None:
+            return self
+        save_path = self.save_path
+        if not save_path.endswith(".class_pipeline"):
+            save_path += ".class_pipeline"
+        fold_save_dir: str = os.path.join(save_path, kernel_name, str(fold_idx))
+        self.classifiers.load_item(os.path.join(fold_save_dir, "classifier.pkl"), kernel_name, fold_idx)
+        self.fit_times.load_item(os.path.join(fold_save_dir, "fit_time.pkl"), kernel_name, fold_idx)
+        self.train_metrics.load_item_metrics(
+            os.path.join(fold_save_dir, "train_metrics.pkl"), kernel_name, fold_idx
+        )
+        self.test_metrics.load_item_metrics(
+            os.path.join(fold_save_dir, "test_metrics.pkl"), kernel_name, fold_idx
+        )
+        return self
 
     @classmethod
-    def from_dot_class_pipeline(cls, dot_class_pipeline: str, **kwargs) -> "ClassificationPipeline":
-        raise NotImplementedError("This method is not implemented yet.")
+    def from_dot_class_pipeline(
+            cls,
+            dot_class_pipeline: str,
+            new_attrs: Optional[dict] = None
+    ) -> "ClassificationPipeline":
+        new_obj = cls(**new_attrs)
+        for root, dirs, files in os.walk(dot_class_pipeline):
+            if any([f.endswith(".pkl") for f in files]):
+                kernel_name = os.path.basename(os.path.dirname(root))
+                fold_idx = int(os.path.basename(root))
+                new_obj.load_fold(kernel_name, fold_idx)
+        return new_obj
 
     @classmethod
     def from_dot_class_pipeline_pkl_or_new(
@@ -823,7 +956,38 @@ class ClassificationPipeline:
             dot_class_pipeline: Optional[str] = None,
             **kwargs
     ) -> "ClassificationPipeline":
-        raise NotImplementedError("This method is not implemented yet.")
+        """
+        Looks for a .class_pipeline file and loads it if it exists, otherwise looks
+        for a 'cls.pkl' file and loads it if it exists, otherwise creates a new object.
+
+        :param dot_class_pipeline:
+        :param kwargs:
+        :return:
+        """
+        save_path = kwargs.get("save_path", None)
+        if dot_class_pipeline is None:
+            dot_class_pipeline = save_path
+        if os.path.exists(dot_class_pipeline):
+            try:
+                return cls.from_dot_class_pipeline(dot_class_pipeline, new_attrs=kwargs)
+            except EOFError:
+                warnings.warn(
+                    f"Failed to load object from pickle file {dot_class_pipeline}. Encountered EOFError. "
+                    f"Loading a new object instead.",
+                    RuntimeWarning
+                )
+        elif os.path.exists(os.path.join(os.path.dirname(dot_class_pipeline), "cls.pkl")):
+            try:
+                return cls.from_pickle(os.path.join(os.path.dirname(dot_class_pipeline), "cls.pkl"), new_attrs=kwargs)
+            except EOFError:
+                warnings.warn(
+                    f"Failed to load object from pickle file "
+                    f"{os.path.join(os.path.dirname(dot_class_pipeline), 'cls.pkl')}. "
+                    f"Encountered EOFError. "
+                    f"Loading a new object instead.",
+                    RuntimeWarning
+                )
+        return cls(**kwargs)
 
     def to_npz(self):
         if self.save_path is not None:
