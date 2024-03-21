@@ -852,3 +852,18 @@ class FixedSizeSVC(StdEstimator):
         self.check_is_fitted()
         pred = self.predict(X, **kwargs)
         return np.mean(np.isclose(pred, y).astype(float))
+
+    def save(self, filepath):
+        import pickle
+
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, "wb") as f:
+            pickle.dump(self, f)
+        return self
+
+    @classmethod
+    def load(cls, filepath):
+        import pickle
+
+        with open(filepath, "rb") as f:
+            return pickle.load(f)
