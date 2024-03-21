@@ -223,6 +223,14 @@ class KPredictorContainer:
         else:
             return item in self.container
 
+    def save_item_to_txt(self, filepath: str, *key):
+        if not filepath.endswith(".txt"):
+            filepath += ".txt"
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        item = self.__getitem__(key)
+        with open(filepath, "w") as f:
+            f.write(str(item))
+
 
 class MetricsContainer:
     ACCURACY_KEY = "Accuracy"
@@ -311,6 +319,14 @@ class MetricsContainer:
         for metric, value in item.items():
             self.set(metric, *key, value)
         return self
+
+    def save_item_metrics_to_txt(self, filepath: str, *key):
+        if not filepath.endswith(".txt"):
+            filepath += ".txt"
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        item = self.get_item_metrics(*key)
+        with open(filepath, "w") as f:
+            f.write(str(item))
 
 
 class ClassificationPipeline:
@@ -890,6 +906,28 @@ class ClassificationPipeline:
         self.test_metrics.save_item_metrics(
             os.path.join(fold_save_dir, "test_metrics.pkl"), kernel_name, fold_idx
         )
+        try:
+            self.save_fold_to_txt(kernel_name, fold_idx)
+        except Exception as e:
+            warnings.warn(f"Failed to save fold to txt: {e}", RuntimeWarning)
+        return self
+
+    def save_fold_to_txt(self, kernel_name: str, fold_idx: int):
+        if self.save_path is None:
+            return self
+        save_path = self.save_path
+        if not save_path.endswith(".class_pipeline"):
+            save_path += ".class_pipeline"
+        os.makedirs(save_path, exist_ok=True)
+        fold_save_dir: str = os.path.join(save_path, kernel_name, str(fold_idx))
+        self.classifiers.save_item_to_txt(os.path.join(fold_save_dir, "classifier.txt"), kernel_name, fold_idx)
+        self.fit_times.save_item_to_txt(os.path.join(fold_save_dir, "fit_time.txt"), kernel_name, fold_idx)
+        self.train_metrics.save_item_metrics_to_txt(
+            os.path.join(fold_save_dir, "train_metrics.txt"), kernel_name, fold_idx
+        )
+        self.test_metrics.save_item_metrics_to_txt(
+            os.path.join(fold_save_dir, "test_metrics.txt"), kernel_name, fold_idx
+        )
         return self
 
     @pbt.decorators.log_func
@@ -1020,6 +1058,8 @@ class ClassificationPipeline:
             lambda df1, df2: pd.merge(df1, df2, on=[self.KERNEL_KEY, self.FOLD_IDX_KEY], how="outer"),
             df_list
         )
+        df = df.fillna(np.nan)
+
         sort = kwargs.get("sort", False)
         is_sorted = False
         mean_df = kwargs.get("mean", False)
@@ -1062,6 +1102,7 @@ class ClassificationPipeline:
                 df_dict[prop].append(getattr(classifier, prop, np.NaN))
             df_dict[self.KERNEL_KEY].append(kernel_name)
         df = pd.DataFrame(df_dict)
+        df = df.fillna(np.nan)
         filepath: Optional[str] = kwargs.get("filepath", None)
         if filepath is not None:
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
