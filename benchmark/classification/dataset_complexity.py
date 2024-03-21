@@ -154,7 +154,7 @@ class DatasetComplexityPipeline:
         )
         kwargs["p_bar"] = p_bar
         kwargs["close_p_bar"] = False
-        for size in self.kernel_size_list:
+        for i, size in enumerate(self.kernel_size_list):
             p_bar.set_description(f"Complexity run on {self.dataset_name}, size={size}")
             cp_kwargs = deepcopy(self.classification_pipeline_kwargs)
             cp_kwargs["dataset_name"] = self.dataset_name
@@ -174,6 +174,7 @@ class DatasetComplexityPipeline:
                 self.classification_pipelines[size].run(**kwargs)
             self.classification_pipelines[size].to_dot_class_pipeline()
             self.classification_pipelines[size].save_all_results()
+            p_bar.n = (i + 1) * n_mth * n_kfold_splits
         p_bar.close()
         return self
 
@@ -254,10 +255,9 @@ class DatasetComplexityPipeline:
         for i, (kernel_name, kernel_df) in enumerate(df.groupby(ClassificationPipeline.KERNEL_KEY)):
             if kernel_name not in kernels:
                 continue
-            x_sorted_unique = np.sort(kernel_df[x_axis_key].unique())
-            y_series = kernel_df.groupby(x_axis_key)[y_axis_key]
-            y_mean = y_scale_factor * y_series.mean().values
-            y_std = y_scale_factor * y_series.std().values
+            x, y_series = list(zip(*[(x, group[y_axis_key]) for x, group in kernel_df.groupby(x_axis_key)]))
+            y_mean = y_scale_factor * np.array([y.mean() for y in y_series])
+            y_std = y_scale_factor * np.array([y.std() for y in y_series])
 
             k_color = kernel_to_color.get(kernel_name, colors[i])
             k_marker = kernel_to_marker.get(kernel_name, mStyles[i])
@@ -266,7 +266,7 @@ class DatasetComplexityPipeline:
             if kernel_to_polyfit.get(kernel_name, False):
                 *_, comp_out = self.add_complexity(
                     fig=fig, ax=ax,
-                    x=x_sorted_unique,
+                    x=x,
                     all_x=np.sort(df[x_axis_key].unique()),
                     y=y_mean,
                     color=k_color,
@@ -285,13 +285,13 @@ class DatasetComplexityPipeline:
             pre_lbl, post_lbl = kwargs.get("pre_lbl", ""), kwargs.get("post_lbl", "")
             kernel_lbl = kernel_to_lbl.get(kernel_name, kernel_name)
             lbl = f"{pre_lbl}{kernel_lbl}{post_lbl}{comp_lbl}"
-            ax.plot(x_sorted_unique, y_mean, label=lbl, color=k_color, marker=k_marker, linestyle=k_linestyle)
+            ax.plot(x, y_mean, label=lbl, color=k_color, marker=k_marker, linestyle=k_linestyle)
 
             conf_int_a, conf_int_b = stats.norm.interval(
                 confidence_interval, loc=y_mean,
                 scale=y_std / np.sqrt(kernel_df.groupby(x_axis_key).size().values)
             )
-            ax.fill_between(x_sorted_unique, conf_int_a, conf_int_b, alpha=0.2, color=k_color)
+            ax.fill_between(x, conf_int_a, conf_int_b, alpha=0.2, color=k_color)
             if y_scale in ["log", "symlog"]:
                 ax.set_yscale(y_scale, base=10)
             else:
@@ -304,7 +304,7 @@ class DatasetComplexityPipeline:
             y_min = min(y_min, np.nanmin(conf_int_a), np.nanmin(y_mean))
             y_max = max(y_max, np.nanmax(conf_int_b), np.nanmax(y_mean))
             data_dict[kernel_name] = {
-                "x": x_sorted_unique,
+                "x": x,
                 "y": y_mean,
                 "y_std": y_std,
                 "y_min": y_min,
