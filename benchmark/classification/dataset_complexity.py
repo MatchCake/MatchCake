@@ -165,13 +165,14 @@ class DatasetComplexityPipeline:
             cp_kwargs["dataset_n_samples"] = self.n_samples
             if save_dir is not None:
                 cp_kwargs["save_path"] = os.path.join(
-                    save_dir, f"{self.dataset_name}", f"size{size}", "cls.pkl"
+                    save_dir, f"{self.dataset_name}", f"size{size}", ".class_pipeline"
                 )
-            self.classification_pipelines[size] = ClassificationPipeline.from_pickle_or_new(
+            self.classification_pipelines[size] = ClassificationPipeline.from_dot_class_pipeline_pkl_or_new(
                 pickle_path=cp_kwargs.get("save_path", None), **cp_kwargs
             )
             if should_run_pipelines:
                 self.classification_pipelines[size].run(**kwargs)
+            self.classification_pipelines[size].to_dot_class_pipeline()
             self.classification_pipelines[size].save_all_results()
         p_bar.close()
         return self
