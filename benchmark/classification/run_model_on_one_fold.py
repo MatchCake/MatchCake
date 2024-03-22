@@ -4,6 +4,7 @@ import sys
 import psutil
 import argparse
 import numpy as np
+from tqdm import tqdm
 
 try:
     import matchcake
@@ -85,7 +86,17 @@ def main():
         pipeline = ClassificationPipeline.from_dot_class_pipeline_pkl_or_new(save_path=save_path, **kwargs)
     pipeline.load_dataset()
     pipeline.preprocess_data()
+    p_bar = tqdm(
+        total=1,
+        desc=f"Running one fold on {args.dataset_name} with "
+             f"{args.method}, "
+             f"fold={args.fold_idx}, "
+             f"size={args.kernel_size}",
+        unit="cls"
+    )
+    pipeline.p_bar = p_bar
     pipeline.run_fold(args.fold_idx)
+    p_bar.close()
     pipeline.to_dot_class_pipeline()
 
 
