@@ -669,8 +669,12 @@ class ClassificationPipeline:
             else:
                 train_inputs, test_inputs = x_train, x_test
             try:
-                self.train_metrics.compute_metrics(y_train, classifier.predict(train_inputs), kernel_name, fold_idx)
-                self.test_metrics.compute_metrics(y_test, classifier.predict(test_inputs), kernel_name, fold_idx)
+                self.train_metrics.compute_metrics(
+                    y_train, classifier.predict(train_inputs, p_bar=self.p_bar), kernel_name, fold_idx
+                )
+                self.test_metrics.compute_metrics(
+                    y_test, classifier.predict(test_inputs, p_bar=self.p_bar), kernel_name, fold_idx
+                )
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
                     raise e
