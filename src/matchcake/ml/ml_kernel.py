@@ -734,6 +734,7 @@ class FixedSizeSVC(StdEstimator):
         self.kernels = None
         self.estimators_ = None
         self.train_gram_matrices = None
+        self.memory = []
 
     @property
     def kernel(self):
@@ -832,13 +833,46 @@ class FixedSizeSVC(StdEstimator):
         for i, (gram_matrix, sub_y) in enumerate(zip(self.train_gram_matrices, y_splits)):
             self.estimators_[i].fit(gram_matrix, sub_y)
         return self
+
+    def get_gram_matrices_from_memory(self, X, **kwargs):
+        if qml.math.shape(X) == qml.math.shape(self.X_) and qml.math.allclose(self.X_, X):
+            return self.train_gram_matrices
+        if getattr(self, "memory", None) is None:
+            return None
+        for i, (x, gram_matrices) in enumerate(self.memory):
+            if qml.math.shape(X) == qml.math.shape(x) and qml.math.allclose(x, X):
+                return gram_matrices
+        return None
+
+    def get_is_in_memory(self, X):
+        return self.get_gram_matrices_from_memory(X) is not None
+
+    def push_to_memory(self, X, gram_matrices):
+        if getattr(self, "memory", None) is None:
+            self.memory = []
+        if not self.get_is_in_memory(X):
+            self.memory.append((X, gram_matrices))
+        return self
     
     def predict(self, X, **kwargs):
+        """
+        Predict the labels of the input data of shape (n_samples, n_features).
+
+        :param X: The input data of shape (n_samples, n_features).
+        :type X: np.ndarray or array-like
+        :param kwargs: Additional keyword arguments.
+
+        :keyword cache: If True, the computed gram matrices will be stored in memory. Default is False.
+
+        :return: The predicted labels of the input data.
+        :rtype: np.ndarray of shape (n_samples,)
+        """
         self.check_is_fitted()
-        if qml.math.shape(X) == qml.math.shape(self.X_) and qml.math.allclose(self.X_, X):
-            gram_matrices = self.train_gram_matrices
-        else:
+        gram_matrices = self.get_gram_matrices_from_memory(X, **kwargs)
+        if gram_matrices is None:
             gram_matrices = self.get_pairwise_distances_matrices(X, self.X_, **kwargs)
+        if kwargs.get("cache", False):
+            self.push_to_memory(X, gram_matrices)
         votes = np.zeros((qml.math.shape(X)[0], len(self.classes_)), dtype=int)
         predictions_stack = []
         for i, gram_matrix in enumerate(gram_matrices):
