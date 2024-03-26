@@ -408,7 +408,7 @@ class DatasetComplexityPipeline:
         for x_lbl, x_key in x_keys.items():
             n_rows = int(np.sqrt(len(y_lbl_to_keys)))
             n_cols = int(np.ceil(len(y_lbl_to_keys) / n_rows))
-            width, height = 8 * n_cols, 8 * n_rows
+            width, height = 8 * max(2, n_cols), 8 * n_rows
             fig, axes = plt.subplots(n_rows, n_cols, figsize=(width, height))
             axes = np.ravel(np.asarray([axes]))
             y_lbl_to_ax = {y_lbl: ax for y_lbl, ax in zip(y_lbl_to_keys.keys(), axes)}
@@ -448,23 +448,27 @@ class DatasetComplexityPipeline:
                 axes[i].set_xlim(x_min, x_max)
                 axes[i].set_ylim(y_min*0.99, y_max*1.01)
 
-            fig.supxlabel(x_lbl, y=np.sqrt(height) / 100 * 2.2)
+            if len(y_lbl_to_keys) > 1:
+                fig.supxlabel(x_lbl, y=np.sqrt(height) / 100 * 2.2)
+            else:
+                axes[0].set_xlabel(x_lbl)
+            key_to_get_lbl = list(data_dict.keys())[0]
+            lbl_to_kernel = {
+                d.get("kernel_lbl", kernel_to_lbl[k]): k
+                for k, d in data_dict[key_to_get_lbl].items()
+                if k in set_methods
+            }
+            lbl_to_color_marker = {
+                f"{lbl}{data_dict[key_to_get_lbl][lbl_to_kernel[lbl]]['complexity_lbl']}":
+                    (c, kernel_to_marker[lbl_to_kernel[lbl]])
+                for lbl, c in kernel_lbl_to_color.items()
+                if lbl in lbl_to_kernel
+            }
+            patches = [
+                plt.Line2D([0], [0], color=c, label=lbl, marker=mk)
+                for lbl, (c, mk) in lbl_to_color_marker.items()
+            ]
             if ClassificationPipeline.FIT_TIME_KEY in y_lbl_to_ax:
-                lbl_to_kernel = {
-                    d.get("kernel_lbl", kernel_to_lbl[k]): k
-                    for k, d in data_dict[ClassificationPipeline.FIT_TIME_KEY].items()
-                    if k in set_methods
-                }
-                lbl_to_color_marker = {
-                    f"{lbl}{data_dict[ClassificationPipeline.FIT_TIME_KEY][lbl_to_kernel[lbl]]['complexity_lbl']}":
-                        (c, kernel_to_marker[lbl_to_kernel[lbl]])
-                    for lbl, c in kernel_lbl_to_color.items()
-                    if lbl in lbl_to_kernel
-                }
-                patches = [
-                    plt.Line2D([0], [0], color=c, label=lbl, marker=mk)
-                    for lbl, (c, mk) in lbl_to_color_marker.items()
-                ]
                 patches += [
                     plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
                     for lbl, ls in [
@@ -476,7 +480,9 @@ class DatasetComplexityPipeline:
                 y_lbl_to_ax[ClassificationPipeline.FIT_TIME_KEY].legend(handles=patches, loc='lower right')
 
             if accuracies_lbl in y_lbl_to_ax:
-                patches = [
+                if len(y_lbl_to_keys) > 1:
+                    patches = []
+                patches += [
                     plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
                     for lbl, ls in [("Train", train_linestyle), ("Test", test_linestyle)]
                 ]
