@@ -991,7 +991,10 @@ class ClassificationPipeline:
             if any([f.endswith(".pkl") for f in files]):
                 kernel_name = os.path.basename(os.path.dirname(root))
                 fold_idx = int(os.path.basename(root))
-                new_obj.load_fold(kernel_name, fold_idx)
+                try:
+                    new_obj.load_fold(kernel_name, fold_idx)
+                except Exception as e:
+                    raise RuntimeError(f"Failed to load fold {kernel_name} - {fold_idx}: {e}")
         return new_obj
 
     @classmethod
