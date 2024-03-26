@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import Literal
 
 import psutil
 import argparse
@@ -15,31 +16,41 @@ os.environ["OMP_NUM_THREADS"] = str(psutil.cpu_count(logical=False))
 msim = matchcake  # Keep for compatibility with the old code
 
 
+def get_memory_usage(fmt: Literal["MiB", "GiB"] = "MiB"):
+    mib = psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2
+    if fmt == "MiB":
+        return mib
+    elif fmt == "GiB":
+        return mib / 1024
+    else:
+        raise ValueError(f"Unknown format {fmt}")
+
+
 def parse_args():
     from classification_pipeline import ClassificationPipeline
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset_name", type=str,
-        default="iris",
+        # default="iris",
         # default="breast_cancer",
-        # default="digits",
+        default="digits",
         # default="mnist",
         help=f"The dataset to be used for the classification."
              f"Available datasets: {ClassificationPipeline.available_datasets}."
     )
     parser.add_argument(
         "--method", type=str,
-        default="fPQC-cpu",
+        default="hfPQC-cpu",
         help=f"The method to be used for the classification."
              f"Available methods: {ClassificationPipeline.available_kernels}."
     )
-    parser.add_argument("--n_kfold_splits", type=int, default=1)
-    parser.add_argument("--fold_idx", type=int, default=0)
+    parser.add_argument("--n_kfold_splits", type=int, default=5)
+    parser.add_argument("--fold_idx", type=int, default=2)
     parser.add_argument("--throw_errors", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--show", type=bool, default=False)
     parser.add_argument("--plot", type=bool, default=False)
-    parser.add_argument("--save_dir", type=str, default=os.path.join(os.path.dirname(__file__), "debug"))
+    parser.add_argument("--save_dir", type=str, default=os.path.join(os.path.dirname(__file__), "results_dc_cluster"))
     parser.add_argument("--batch_size", type=int, default=16384)
     parser.add_argument("--show_n_pts", type=int, default=512)
     parser.add_argument("--dataset_n_samples", type=int, default=None)
@@ -47,7 +58,7 @@ def parse_args():
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--simplify_qnode", type=bool, default=False)
     parser.add_argument("--max_gram_size", type=int, default=np.inf)
-    parser.add_argument("--kernel_size", type=int, default=2)
+    parser.add_argument("--kernel_size", type=int, default=28)
     return parser.parse_args()
 
 
@@ -58,6 +69,7 @@ def main():
 
     plt.rcParams.update(MPL_RC_BIG_FONT_PARAMS)
     args = parse_args()
+
     if "cuda" in args.method:
         matchcake.utils.cuda.is_cuda_available(throw_error=True, enable_warnings=True)
     kwargs = dict(
@@ -99,10 +111,16 @@ def main():
     p_bar.close()
     pipeline.to_dot_class_pipeline()
 
+    print(f"Memory usage: {get_memory_usage('MiB'):.2f} MiB, {get_memory_usage('GiB'):.2f} GiB")
+
 
 if __name__ == '__main__':
     # example of command line:
     # python benchmark/classification/main.py --dataset_name digits --methods classical fPQC PQC --trial cuda_det
     #  --batch_size 32768 --n_kfold_splits 5 --throw_errors False --show True --plot True --save_dir results
     #  --show_n_pts 512
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception as e:
+        print(f"Memory usage: {get_memory_usage('MiB'):.2f} MiB, {get_memory_usage('GiB'):.2f} GiB")
+        raise e
