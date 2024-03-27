@@ -3,28 +3,24 @@ import sys
 import os
 from copy import deepcopy
 from collections import defaultdict
-from typing import Optional, Union, List, Callable
+from typing import Optional, Union, List
 from functools import partial
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import psutil
-import pennylane as qml
 import sklearn
 from sklearn import datasets
-from sklearn import svm
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import check_is_fitted
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
 import functools
-import umap
 from tqdm import tqdm
 import pythonbasictools as pbt
 
-from utils import MPL_RC_BIG_FONT_PARAMS
+from utils import MPL_RC_BIG_FONT_PARAMS, load_mnist1d
 from kernels import (
     ClassicalKernel,
     MPennylaneQuantumKernel,
@@ -63,7 +59,7 @@ except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import matchcake
 from matchcake.ml import ClassificationVisualizer
-from matchcake.ml.ml_kernel import MLKernel, FixedSizeSVC
+from matchcake.ml.ml_kernel import FixedSizeSVC
 msim = matchcake  # Keep for compatibility with the old code
 import warnings
 
@@ -341,6 +337,7 @@ class ClassificationPipeline:
         "Olivetti_faces": datasets.fetch_olivetti_faces,
         "binary_mnist": fetch_openml,
         "binary_mnist_1800": fetch_openml,
+        "mnist1d": load_mnist1d,
     }
     available_kernels = {
         "classical": ClassicalKernel,
@@ -547,6 +544,8 @@ class ClassificationPipeline:
             x = x[np.logical_or(y == classes[0], y == classes[1])]
             y = y[np.logical_or(y == classes[0], y == classes[1])]
             self.dataset = x[:1800], y[:1800]
+        elif self.dataset_name == "mnist1d":
+            self.dataset = load_mnist1d()
         else:
             raise ValueError(f"Unknown dataset name: {self.dataset_name}")
         return self.dataset
