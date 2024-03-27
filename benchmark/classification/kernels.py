@@ -141,6 +141,7 @@ class PQCKernel(MPennylaneQuantumKernel):
 
 
 class IdentityPQCKernel(PQCKernel):
+    # TODO: Use MPS simulator
     def __init__(self, size: Optional[int] = None, **kwargs):
         kwargs["entangling_mth"] = "identity"
         super().__init__(size=size, **kwargs)
@@ -324,6 +325,7 @@ class IdentityCpuWideFermionicPQCKernel(CpuWideFermionicPQCKernel):
 
 
 class IdentityCpuFermionicPQCKernel(CpuFermionicPQCKernel):
+    # TODO: Use MPS simulator
     def __init__(
             self,
             size: Optional[int] = None,
