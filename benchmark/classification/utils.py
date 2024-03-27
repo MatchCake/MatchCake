@@ -269,3 +269,17 @@ def log_fit(x, y, **kwargs):
         'label': label,
         "func": func,
     }
+
+
+def load_mnist1d():
+    import requests, pickle
+
+    url = 'https://github.com/greydanus/mnist1d/raw/master/mnist1d_data.pkl'
+    r = requests.get(url, allow_redirects=True)
+    open('./mnist1d_data.pkl', 'wb').write(r.content)
+
+    with open('./mnist1d_data.pkl', 'rb') as handle:
+        data = pickle.load(handle)
+    data["data"] = np.concatenate([data["x"], data["x_test"]], axis=0)
+    data["target"] = np.concatenate([data["y"], data["y_test"]], axis=0)
+    return data
