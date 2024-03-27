@@ -192,6 +192,7 @@ class DatasetComplexityPipeline:
         if filepath is not None:
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
             df.to_csv(filepath)
+            print(f"Results saved to {filepath}")
         if show:
             print(df.to_markdown())
         return df
@@ -658,12 +659,6 @@ def main():
     pipeline.run(run_pipelines=args.run_pipelines)
     plt.close("all")
     pipeline.get_results_table(show=True)
-    # if args.run_pipelines:
-    #     pipeline.run(run_pipelines=args.run_pipelines)
-    #     plt.close("all")
-    #     pipeline.get_results_table(show=True)
-    # else:
-    #     pipeline.get_results_table_from_csvs(show=True)
     plt.close("all")
     pipeline.plot_formatted_complexity_results(show=True, add_fit_time=True, add_accuracies=True, pre_filename="full_")
     plt.close("all")
