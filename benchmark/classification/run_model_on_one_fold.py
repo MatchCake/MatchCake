@@ -109,9 +109,18 @@ def main():
     pipeline.p_bar = p_bar
     pipeline.run_fold(args.fold_idx)
     p_bar.close()
-    pipeline.to_dot_class_pipeline()
+    pipeline.to_dot_class_pipeline(save_path=save_path)
 
     print(f"Memory usage: {get_memory_usage('MiB'):.2f} MiB, {get_memory_usage('GiB'):.2f} GiB")
+    return 0
+
+
+def try_main():
+    try:
+        return main()
+    except Exception as e:
+        print(f"Memory usage: {get_memory_usage('MiB'):.2f} MiB, {get_memory_usage('GiB'):.2f} GiB")
+        raise e
 
 
 if __name__ == '__main__':
@@ -119,8 +128,4 @@ if __name__ == '__main__':
     # python benchmark/classification/main.py --dataset_name digits --methods classical fPQC PQC --trial cuda_det
     #  --batch_size 32768 --n_kfold_splits 5 --throw_errors False --show True --plot True --save_dir results
     #  --show_n_pts 512
-    try:
-        sys.exit(main())
-    except Exception as e:
-        print(f"Memory usage: {get_memory_usage('MiB'):.2f} MiB, {get_memory_usage('GiB'):.2f} GiB")
-        raise e
+    sys.exit(try_main())
