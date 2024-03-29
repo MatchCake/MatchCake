@@ -94,7 +94,7 @@ class DatasetComplexityPipeline:
         "ifPQC-cpu": np.inf,
         "hfPQC-cpu": np.inf,
         "PQC": 16,
-        "iPQC": 16,
+        "iPQC": np.inf,
     }
 
     @classmethod
@@ -154,6 +154,7 @@ class DatasetComplexityPipeline:
         )
         kwargs["p_bar"] = p_bar
         kwargs["close_p_bar"] = False
+        kwargs["nb_workers"] = kwargs.get("nb_workers", 0)
         for i, size in enumerate(self.kernel_size_list):
             p_bar.set_description(f"Complexity run on {self.dataset_name}, size={size}")
             cp_kwargs = deepcopy(self.classification_pipeline_kwargs)
@@ -336,54 +337,60 @@ class DatasetComplexityPipeline:
             plt.rcParams["legend.fontsize"] = 22
             plt.rcParams["lines.linewidth"] = 4.0
             plt.rcParams["font.size"] = 26
+            plt.rcParams["font.family"] = "serif"
+            plt.rcParams["font.serif"] = "Times New Roman"
+            plt.rcParams["mathtext.fontset"] = "stix"
+
         x_keys = {"$N$ [-]": "kernel_size"}
         accuracies_lbl = "Accuracies [%]"
+        fit_time_lbl = "Fit Time [$s$]"
         linestyles = ["-", "--", "-.", ":"]
         y_lbl_to_keys = {}
         if kwargs.get("add_fit_time", True):
-            y_lbl_to_keys[ClassificationPipeline.FIT_TIME_KEY] = ClassificationPipeline.FIT_TIME_KEY
+            y_lbl_to_keys[fit_time_lbl] = ClassificationPipeline.FIT_TIME_KEY
         if kwargs.get("add_accuracies", True):
             y_lbl_to_keys[accuracies_lbl] = [
                 ClassificationPipeline.TRAIN_ACCURACY_KEY, ClassificationPipeline.TEST_ACCURACY_KEY
             ]
         y_lbl_to_pre_post_lbl = {accuracies_lbl: ("Train ", "Test ")}
         y_lbl_to_scale_factor = {
-            ClassificationPipeline.FIT_TIME_KEY: 1,
+            fit_time_lbl: 1,
             accuracies_lbl: 100,
         }
         y_lbl_to_y_scale = {
-            ClassificationPipeline.FIT_TIME_KEY: "log",
+            fit_time_lbl: "log",
             accuracies_lbl: "linear",
         }
         y_lbl_to_y_scale_base = {
-            ClassificationPipeline.FIT_TIME_KEY: 2,
+            fit_time_lbl: 2,
             accuracies_lbl: None,
         }
         y_lbl_to_x_scale = {
-            ClassificationPipeline.FIT_TIME_KEY: "linear",
+            fit_time_lbl: "linear",
             accuracies_lbl: "linear",
         }
         y_lbl_to_x_scale_base = {
-            ClassificationPipeline.FIT_TIME_KEY: 2,
+            fit_time_lbl: 2,
             accuracies_lbl: None,
         }
         df = self.results_table
         kernels = df[ClassificationPipeline.KERNEL_KEY].unique()
         gpu_methods = [m for m in kernels if "cuda" in m]
         cpu_methods = [m for m in kernels if m not in gpu_methods]
-        set_methods = cpu_methods + [m for m in gpu_methods if m.replace("-cuda", "-cpu") not in cpu_methods]
+        complexity_methods = [m for m in cpu_methods if "i" not in m]
+        acc_methods = cpu_methods + [m for m in gpu_methods if m.replace("-cuda", "-cpu") not in cpu_methods]
         kernel_to_complexity = {
             m: "exponential"
             if m == "PQC" else "polynomial"
             for m in kernels
         }
         y_lbl_to_polyfit = {
-            ClassificationPipeline.FIT_TIME_KEY: {m: False for m in kernels},
+            fit_time_lbl: {m: False for m in kernels},
             accuracies_lbl: {m: False for m in kernels},
         }
         y_lbl_to_kernels_list = {
-            ClassificationPipeline.FIT_TIME_KEY: cpu_methods,
-            accuracies_lbl: set_methods
+            fit_time_lbl: complexity_methods,
+            accuracies_lbl: acc_methods
         }
         gpu_linestyle, cpu_linestyle = "--", "-"
         train_linestyle, test_linestyle = "-", "-."
@@ -392,7 +399,7 @@ class DatasetComplexityPipeline:
             for m in kernels
         }
         y_lbl_to_linestyle_list = {
-            ClassificationPipeline.FIT_TIME_KEY: [kernel_to_linestyle, kernel_to_linestyle],
+            fit_time_lbl: [kernel_to_linestyle, kernel_to_linestyle],
             accuracies_lbl: [{m: train_linestyle for m in kernels}, {m: test_linestyle for m in kernels}],
         }
         kernel_to_lbl = {m: m.replace("-cuda", "").replace("-cpu", "") for m in kernels}
@@ -454,35 +461,42 @@ class DatasetComplexityPipeline:
             else:
                 axes[0].set_xlabel(x_lbl)
             key_to_get_lbl = list(data_dict.keys())[0]
-            lbl_to_kernel = {
-                d.get("kernel_lbl", kernel_to_lbl[k]): k
-                for k, d in data_dict[key_to_get_lbl].items()
-                if k in set_methods
-            }
+            lbl_to_kernel = {}
+            for key_to_get_lbl in data_dict.keys():
+                for k, d in data_dict[key_to_get_lbl].items():
+                    if k in complexity_methods + acc_methods:
+                        lbl_to_kernel[d.get("kernel_lbl", kernel_to_lbl[k])] = k
             lbl_to_color_marker = {
                 f"{lbl}{data_dict[key_to_get_lbl][lbl_to_kernel[lbl]]['complexity_lbl']}":
                     (c, kernel_to_marker[lbl_to_kernel[lbl]])
                 for lbl, c in kernel_lbl_to_color.items()
                 if lbl in lbl_to_kernel
             }
-            patches = [
-                plt.Line2D([0], [0], color=c, label=lbl, marker=mk)
-                for lbl, (c, mk) in lbl_to_color_marker.items()
-            ]
-            if ClassificationPipeline.FIT_TIME_KEY in y_lbl_to_ax:
+            lbl_in_patches = []
+            if fit_time_lbl in y_lbl_to_ax:
+                patches = [
+                    plt.Line2D([0], [0], color=c, label=lbl, marker=mk)
+                    for lbl, (c, mk) in lbl_to_color_marker.items()
+                    if lbl_to_kernel[lbl] in complexity_methods
+                ]
+                lbl_in_patches += [lbl for lbl, k in lbl_to_kernel.items() if k in complexity_methods]
                 patches += [
                     plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
                     for lbl, ls in [
                         # ("GPU", gpu_linestyle), ("CPU", cpu_linestyle),
                         ("Complexity Fit", ":")
                     ]
-                    if any(y_lbl_to_polyfit.get(ClassificationPipeline.FIT_TIME_KEY, {"": False}).values())
+                    if any(y_lbl_to_polyfit.get(fit_time_lbl, {"": False}).values())
                 ]
-                y_lbl_to_ax[ClassificationPipeline.FIT_TIME_KEY].legend(handles=patches, loc='lower right')
+                y_lbl_to_ax[fit_time_lbl].legend(handles=patches, loc='lower right')
 
             if accuracies_lbl in y_lbl_to_ax:
-                if len(y_lbl_to_keys) > 1:
-                    patches = []
+                patches = [
+                    plt.Line2D([0], [0], color=c, label=lbl, marker=mk)
+                    for lbl, (c, mk) in lbl_to_color_marker.items()
+                    if lbl_to_kernel[lbl] in acc_methods and lbl not in lbl_in_patches
+                ]
+                lbl_in_patches += [lbl for lbl, k in lbl_to_kernel.items() if k in acc_methods]
                 patches += [
                     plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
                     for lbl, ls in [("Train", train_linestyle), ("Test", test_linestyle)]
@@ -628,6 +642,7 @@ def parse_args():
         "--max_iPQC_size", type=int, default=DatasetComplexityPipeline.MTH_MAX_SIZE_MAP["iPQC"]
     )
     parser.add_argument("--max_size", type=int, default=None)
+    parser.add_argument("--nb_workers", type=int, default=0)
     return parser.parse_args()
 
 
@@ -656,7 +671,7 @@ def main():
         classification_pipeline_kwargs=classification_pipeline_kwargs,
         n_samples=args.n_samples,
     )
-    pipeline.run(run_pipelines=args.run_pipelines)
+    pipeline.run(run_pipelines=args.run_pipelines, nb_workers=args.nb_workers)
     plt.close("all")
     pipeline.get_results_table(show=True)
     plt.close("all")
