@@ -102,7 +102,8 @@ def save_on_exit(_method=None, *, save_func_name="to_pickle", save_args=(), **sa
                     )
                     # raise e
 
-        wrapper.__name__ = method.__name__ + "@save_on_exit"
+        # wrapper.__name__ = method.__name__ + "@save_on_exit"
+        wrapper.__name__ = method.__name__
         return wrapper
 
     if _method is None:
@@ -449,28 +450,28 @@ class ClassificationPipeline:
         self.preprocess_data()
 
     def update_p_bar(self, **kwargs):
-        if self.p_bar is None:
+        if getattr(self, "p_bar", None) is None:
             return
         self.p_bar.update()
         self.set_p_bar_postfix(**kwargs)
 
     def set_p_bar_postfix(self, **kwargs):
-        if self.p_bar is None:
+        if getattr(self, "p_bar", None) is None:
             return
         self.p_bar.set_postfix(kwargs)
 
     def set_p_bar_postfix_str(self, postfix: str):
-        if self.p_bar is None:
+        if getattr(self, "p_bar", None) is None:
             return
         self.p_bar.set_postfix_str(postfix)
 
     def set_p_bar_desc(self, desc: str):
-        if self.p_bar is None:
+        if getattr(self, "p_bar", None) is None:
             return
         self.p_bar.set_description(desc)
 
     def set_p_bar_postfix_with_results_table(self):
-        if self.p_bar is None:
+        if getattr(self, "p_bar", None) is None:
             return
         # df = self.get_results_table(mean=True, mean_on=self.KERNEL_KEY, show=False, filepath=None)
         postfix = {}
@@ -485,7 +486,7 @@ class ClassificationPipeline:
         self.p_bar.set_postfix(postfix)
 
     def refresh_p_bar(self):
-        if self.p_bar is None:
+        if getattr(self, "p_bar", None) is None:
             return
         self.p_bar.refresh()
 
@@ -640,7 +641,7 @@ class ClassificationPipeline:
                 if classifier.kernel == "precomputed":
                     classifier.fit(self.train_gram_matrices[kernel_name, fold_idx], y_train)
                 else:
-                    classifier.fit(x_train, y_train, p_bar=self.p_bar)
+                    classifier.fit(x_train, y_train, p_bar=getattr(self, "p_bar", None))
                 self.fit_times[kernel_name, fold_idx] = time.perf_counter() - start_time
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
@@ -670,11 +671,13 @@ class ClassificationPipeline:
             try:
                 self.set_p_bar_postfix_str(f"Computing train metrics:{kernel_name} [fold {fold_idx}]")
                 self.train_metrics.compute_metrics(
-                    y_train, classifier.predict(train_inputs, p_bar=self.p_bar), kernel_name, fold_idx
+                    y_train, classifier.predict(train_inputs, p_bar=getattr(self, "p_bar", None)),
+                    kernel_name, fold_idx
                 )
                 self.set_p_bar_postfix_str(f"Computing test metrics:{kernel_name} [fold {fold_idx}]")
                 self.test_metrics.compute_metrics(
-                    y_test, classifier.predict(test_inputs, p_bar=self.p_bar, cache=True), kernel_name, fold_idx
+                    y_test, classifier.predict(test_inputs, p_bar=getattr(self, "p_bar", None), cache=True),
+                    kernel_name, fold_idx
                 )
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
@@ -702,10 +705,20 @@ class ClassificationPipeline:
                 desc=desc,
                 unit="cls",
             )
-        for fold_idx in range(self._n_kfold_splits):
-            self.run_fold(fold_idx)
+
+        def p_bar_update_callback(*args, **kwds):
+            self.update_p_bar()
             if table_path is not None:
                 self.get_results_properties_table(mean=mean_results_table, show=show_tables, filepath=table_path)
+            return
+
+        pbt.multiprocessing_tools.apply_func_multiprocess(
+            func=self.run_fold,
+            iterable_of_args=[(fold_idx,) for fold_idx in range(self._n_kfold_splits)],
+            nb_workers=kwargs.get("nb_workers", 0),
+            callbacks=[p_bar_update_callback],
+            verbose=False,
+        )
         self.set_p_bar_postfix_str("Done. Saving results.")
         self.to_dot_class_pipeline()
         if kwargs.get("close_p_bar", True):
@@ -855,7 +868,7 @@ class ClassificationPipeline:
     def plot(self, *args, **kwargs):
         return self.show(*args, **kwargs)
 
-    @pbt.decorators.log_func
+    # @pbt.decorators.log_func
     def to_pickle(self):
         if self.save_path is not None:
             import pickle
@@ -895,10 +908,10 @@ class ClassificationPipeline:
 
         return cls(**kwargs)
 
-    def save_fold(self, kernel_name: str, fold_idx: int):
-        if self.save_path is None:
+    def save_fold(self, kernel_name: str, fold_idx: int, save_path: Optional[str] = None):
+        save_path = save_path or self.save_path
+        if save_path is None:
             return self
-        save_path = self.save_path
         if not save_path.endswith(".class_pipeline"):
             save_path += ".class_pipeline"
         os.makedirs(save_path, exist_ok=True)
@@ -912,15 +925,15 @@ class ClassificationPipeline:
             os.path.join(fold_save_dir, "test_metrics.pkl"), kernel_name, fold_idx
         )
         try:
-            self.save_fold_to_txt(kernel_name, fold_idx)
+            self.save_fold_to_txt(kernel_name, fold_idx, save_path)
         except Exception as e:
             warnings.warn(f"Failed to save fold to txt: {e}", RuntimeWarning)
         return self
 
-    def save_fold_to_txt(self, kernel_name: str, fold_idx: int):
-        if self.save_path is None:
+    def save_fold_to_txt(self, kernel_name: str, fold_idx: int, save_path: Optional[str] = None):
+        save_path = save_path or self.save_path
+        if save_path is None:
             return self
-        save_path = self.save_path
         if not save_path.endswith(".class_pipeline"):
             save_path += ".class_pipeline"
         os.makedirs(save_path, exist_ok=True)
@@ -935,8 +948,8 @@ class ClassificationPipeline:
         )
         return self
 
-    @pbt.decorators.log_func
-    def to_dot_class_pipeline(self):
+    # @pbt.decorators.log_func
+    def to_dot_class_pipeline(self, save_path: Optional[str] = None):
         """
         The method is used to save the pipeline to a ".class_pipeline" file.
 
@@ -952,20 +965,21 @@ class ClassificationPipeline:
 
         :return: A reference to the pipeline itself.
         """
-        if self.save_path is not None:
-            save_path = self.save_path
+        save_path = save_path or self.save_path
+        if save_path is not None:
+            save_path = save_path
             if not save_path.endswith(".class_pipeline"):
                 save_path += ".class_pipeline"
             os.makedirs(save_path, exist_ok=True)
             for (kernel_name, fold_idx), classifier in self.classifiers.items():
-                self.save_fold(kernel_name, fold_idx)
+                self.save_fold(kernel_name, fold_idx, save_path)
             self.to_pickle()
         return self
 
-    def load_fold(self, kernel_name: str, fold_idx: int):
-        if self.save_path is None:
+    def load_fold(self, kernel_name: str, fold_idx: int, save_path: Optional[str] = None):
+        save_path = save_path or self.save_path
+        if save_path is None:
             return self
-        save_path = self.save_path
         if not save_path.endswith(".class_pipeline"):
             save_path += ".class_pipeline"
         fold_save_dir: str = os.path.join(save_path, kernel_name, str(fold_idx))
@@ -991,7 +1005,7 @@ class ClassificationPipeline:
                 kernel_name = os.path.basename(os.path.dirname(root))
                 fold_idx = int(os.path.basename(root))
                 try:
-                    new_obj.load_fold(kernel_name, fold_idx)
+                    new_obj.load_fold(kernel_name, fold_idx, dot_class_pipeline)
                 except Exception as e:
                     raise RuntimeError(f"Failed to load fold {kernel_name} - {fold_idx}: {e}")
         return new_obj
