@@ -673,13 +673,16 @@ def main():
     )
     pipeline.run(run_pipelines=args.run_pipelines, nb_workers=args.nb_workers)
     plt.close("all")
-    pipeline.get_results_table(show=True)
+    pipeline.get_results_table(
+        show=True, mean=True, filepath=os.path.join(args.save_dir, args.dataset_name, "figures", "mean_results.csv")
+    )
+    pipeline.results_table = pipeline.get_results_table(show=True)
     plt.close("all")
     pipeline.plot_formatted_complexity_results(show=True, add_fit_time=True, add_accuracies=True, pre_filename="full_")
     plt.close("all")
-    pipeline.plot_formatted_complexity_results(show=True, add_fit_time=False, add_accuracies=True, pre_filename="acc_")
+    pipeline.plot_formatted_complexity_results(show=False, add_fit_time=False, add_accuracies=True, pre_filename="acc_")
     plt.close("all")
-    pipeline.plot_formatted_complexity_results(show=True, add_fit_time=True, add_accuracies=False, pre_filename="time_")
+    pipeline.plot_formatted_complexity_results(show=False, add_fit_time=True, add_accuracies=False, pre_filename="time_")
     plt.close("all")
 
 
