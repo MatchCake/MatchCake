@@ -125,7 +125,6 @@ def try_main():
 
 if __name__ == '__main__':
     # example of command line:
-    # python benchmark/classification/main.py --dataset_name digits --methods classical fPQC PQC --trial cuda_det
-    #  --batch_size 32768 --n_kfold_splits 5 --throw_errors False --show True --plot True --save_dir results
-    #  --show_n_pts 512
+    # python benchmark/classification/run_model_on_one_fold.py --dataset_name digits --method fPQC --batch_size 32768
+    # --n_kfold_splits 5 --kernel_size 4096 --fold_idx 0 --save_dir benchmark/classification/results_dc_cluster
     sys.exit(try_main())
