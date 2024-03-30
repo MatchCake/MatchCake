@@ -61,7 +61,8 @@ from matchcake.ml import ClassificationVisualizer
 from matchcake.ml.ml_kernel import MLKernel, FixedSizeSVC
 import warnings
 from classification_pipeline import ClassificationPipeline
-from utils import MPL_RC_BIG_FONT_PARAMS, mStyles, find_complexity, exp_fit, poly_fit, lin_fit, BIG_O_STR, log_fit
+from utils import MPL_RC_BIG_FONT_PARAMS, mStyles, find_complexity, exp_fit, poly_fit, lin_fit, BIG_O_STR, log_fit, \
+    number_axes
 
 
 class DatasetComplexityPipeline:
@@ -69,16 +70,19 @@ class DatasetComplexityPipeline:
         "digits": 2,
         "iris": 2,
         "breast_cancer": 2,
+        "mnist1d": 2,
     }
     DATASET_MAX_SIZE_MAP = {
         "digits": 64,
         "iris": 4,
         "breast_cancer": 30,
+        "mnist1d": 40,
     }
     DATASET_STEP_SIZE_MAP = {
         "digits": 2,
         "iris": 2,
         "breast_cancer": 2,
+        "mnist1d": 2,
     }
     # DEFAULT_SIZE_LISTS = {
     #     d_name: np.arange(
@@ -287,13 +291,18 @@ class DatasetComplexityPipeline:
             pre_lbl, post_lbl = kwargs.get("pre_lbl", ""), kwargs.get("post_lbl", "")
             kernel_lbl = kernel_to_lbl.get(kernel_name, kernel_name)
             lbl = f"{pre_lbl}{kernel_lbl}{post_lbl}{comp_lbl}"
-            ax.plot(x, y_mean, label=lbl, color=k_color, marker=k_marker, linestyle=k_linestyle)
-
             conf_int_a, conf_int_b = stats.norm.interval(
                 confidence_interval, loc=y_mean,
                 scale=y_std / np.sqrt(kernel_df.groupby(x_axis_key).size().values)
             )
-            ax.fill_between(x, conf_int_a, conf_int_b, alpha=0.2, color=k_color)
+            if kwargs.get("fill_between", True):
+                ax.plot(x, y_mean, label=lbl, color=k_color, marker=k_marker, linestyle=k_linestyle)
+                ax.fill_between(x, conf_int_a, conf_int_b, alpha=0.2, color=k_color)
+            else:
+                ax.errorbar(
+                    x, y_mean, yerr=np.stack([y_mean - conf_int_a, conf_int_b - y_mean], axis=0),
+                    marker=k_marker, color=k_color, linestyle=k_linestyle, fillstyle='full', label=lbl
+                )
             if y_scale in ["log", "symlog"]:
                 ax.set_yscale(y_scale, base=10)
             else:
@@ -336,14 +345,15 @@ class DatasetComplexityPipeline:
             plt.rcParams.update(MPL_RC_BIG_FONT_PARAMS)
             plt.rcParams["legend.fontsize"] = 22
             plt.rcParams["lines.linewidth"] = 4.0
-            plt.rcParams["font.size"] = 26
-            plt.rcParams["font.family"] = "serif"
-            plt.rcParams["font.serif"] = "Times New Roman"
+            plt.rcParams["font.size"] = 36
+            # plt.rcParams["font.family"] = "serif"
+            # plt.rcParams["font.serif"] = "Times New Roman"
             plt.rcParams["mathtext.fontset"] = "stix"
+            plt.rc('text', usetex=True)
 
-        x_keys = {"$N$ [-]": "kernel_size"}
-        accuracies_lbl = "Accuracies [%]"
-        fit_time_lbl = "Fit Time [$s$]"
+        x_keys = {r"$N$ $[-]$": "kernel_size"}
+        accuracies_lbl = r"Accuracies $[\%]$"
+        fit_time_lbl = "Fit Time $[s]$"
         linestyles = ["-", "--", "-.", ":"]
         y_lbl_to_keys = {}
         if kwargs.get("add_fit_time", True):
@@ -456,10 +466,12 @@ class DatasetComplexityPipeline:
                 axes[i].set_xlim(x_min, x_max)
                 axes[i].set_ylim(y_min*0.99, y_max*1.01)
 
-            if len(y_lbl_to_keys) > 1:
-                fig.supxlabel(x_lbl, y=np.sqrt(height) / 100 * 2.2)
-            else:
-                axes[0].set_xlabel(x_lbl)
+            # if len(y_lbl_to_keys) > 1:
+            #     fig.supxlabel(x_lbl, y=np.sqrt(height) / 100 * 2.2)
+            # else:
+            #     axes[0].set_xlabel(x_lbl)
+            for ax in axes:
+                ax.set_xlabel(x_lbl)
             key_to_get_lbl = list(data_dict.keys())[0]
             lbl_to_kernel = {}
             for key_to_get_lbl in data_dict.keys():
@@ -502,8 +514,9 @@ class DatasetComplexityPipeline:
                     for lbl, ls in [("Train", train_linestyle), ("Test", test_linestyle)]
                 ]
                 y_lbl_to_ax[accuracies_lbl].legend(handles=patches, loc='lower right')
-            fig.tight_layout()
-            plt.tight_layout()
+            if len(axes) > 1:
+                number_axes(axes, fontsize=plt.rcParams["font.size"], y=1.1, x=0.0)
+            fig.tight_layout(pad=0)
             if self.save_dir is not None:
                 pre_filename = kwargs.get("pre_filename", "")
                 fig_save_path = os.path.join(
@@ -586,7 +599,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset_name", type=str,
-        default="digits",
+        # default="digits",
+        default="mnist1d",
         # default="breast_cancer",
         help=f"The name of the dataset to be used for the classification. "
              f"Available datasets: {DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP.keys()}."
@@ -596,12 +610,12 @@ def parse_args():
         default=[
             "fPQC-cpu",
             "hfPQC-cpu",
-            "ifPQC-cpu",
+            # "ifPQC-cpu",
             # "fPQC-cuda",
             # "hfPQC-cuda",
             # "ifPQC-cuda",
             "PQC",
-            "iPQC",
+            # "iPQC",
         ],
         help=f"The methods to be used for the classification."
              f"Example: --methods fPQC PQC."
