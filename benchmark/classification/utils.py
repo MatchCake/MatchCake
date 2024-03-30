@@ -1,4 +1,7 @@
+from typing import Sequence
+
 import numpy as np
+from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 from sklearn.metrics import r2_score
 
@@ -8,16 +11,16 @@ MPL_RC_DEFAULT_PARAMS = {
     "lines.linewidth": 3.0,
     "lines.markersize": 10,
     "xtick.direction": "in",
-    "xtick.major.size": 6,
+    "xtick.major.size": 12,
     "xtick.major.width": 3,
     'xtick.minor.visible': True,
-    'xtick.minor.size': 3.0,
+    'xtick.minor.size': 6.0,
     'xtick.minor.width': 2.0,
     "ytick.direction": "in",
     "ytick.major.width": 3,
-    "ytick.major.size": 6,
+    "ytick.major.size": 12,
     'ytick.minor.visible': True,
-    'ytick.minor.size': 3.0,
+    'ytick.minor.size': 6.0,
     'ytick.minor.width': 2.0,
     "font.family": "sans-serif",
     "font.sans-serif": [
@@ -28,11 +31,14 @@ MPL_RC_DEFAULT_PARAMS = {
         "Tahoma",
         "calibri",
     ],
+    "text.usetex": True,
+    "text.latex.preamble": r"\usepackage{amsmath}",
+    "errorbar.capsize": 2,
 }
 
 MPL_RC_BIG_FONT_PARAMS = {**MPL_RC_DEFAULT_PARAMS, **{
-    "font.size": 22,
-    "legend.fontsize": 20,
+    "font.size": 36,
+    "legend.fontsize": 22,
     "lines.markersize": 12,
 }}
 
@@ -283,3 +289,61 @@ def load_mnist1d():
     data["data"] = np.concatenate([data["x"], data["x_test"]], axis=0)
     data["target"] = np.concatenate([data["y"], data["y_test"]], axis=0)
     return data
+
+
+def number_axes(axes: Sequence[plt.Axes], **kwargs) -> Sequence[plt.Axes]:
+    """
+    Number the axes.
+
+    :param axes: Axes to number.
+    :type axes: Sequence[plt.Axes]
+    :param kwargs: Keyword arguments.
+
+    :keyword str num_type: Type of number to display. Can be either "alpha" or "numeric".
+    :keyword int start: Number to start with.
+    :keyword float x: x position of the number in the axes coordinate (see ax.transAxes). Default is 0.0.
+    :keyword float y: y position of the number in the axes coordinate (see ax.transAxes). Default is 1.2.
+    :keyword float fontsize: Font size of the number. Default is 12.
+    :keyword str fontweight: Font weight of the number. Default is "bold".
+    :keyword method: Method to use to number the axes. Available methods are "text", "title" and "set_title".
+        The "text" method will add a text to the axes. The "title" method will add the number to the existing title.
+        The "set_title" method will set the title of the axes, so the existing title will be overwritten.
+        Default is "text".
+
+    :return: The axes with the number.
+    :rtype: Sequence[plt.Axes]
+    """
+    axes_view = np.ravel(np.asarray(axes))
+    num_type = kwargs.get("num_type", "alpha").lower()
+    mth = kwargs.get("method", "text").lower()
+    start = kwargs.get("start", 0)
+    if num_type == "alpha":
+        axes_numbers = [chr(i) for i in range(97 + start, 97 + len(axes_view) + start)]
+    elif num_type == "numeric":
+        axes_numbers = [str(i) for i in range(1 + start, len(axes_view) + 1 + start)]
+    else:
+        raise ValueError(f"Unknown num_type {num_type}.")
+    for i, ax in enumerate(axes_view):
+        if mth == "text":
+            ax.text(
+                kwargs.get("x", 0.0), kwargs.get("y", 1.2),
+                f"({axes_numbers[i]})",
+                transform=ax.transAxes, fontsize=kwargs.get("fontsize", 12),
+                fontweight=kwargs.get("fontweight", 'bold'), va='top'
+            )
+        elif mth == "title":
+            ax.set_title(
+                f"({axes_numbers[i]}) {ax.get_title()}",
+                fontsize=kwargs.get("fontsize", 12),
+                fontweight=kwargs.get("fontweight", 'bold'),
+                loc=kwargs.get("loc", "left"),
+            )
+        elif mth == "set_title":
+            ax.set_title("")
+            ax.set_title(
+                f"({axes_numbers[i]})",
+                fontsize=kwargs.get("fontsize", 12),
+                fontweight=kwargs.get("fontweight", 'bold'),
+                loc=kwargs.get("loc", "left"),
+            )
+    return axes
