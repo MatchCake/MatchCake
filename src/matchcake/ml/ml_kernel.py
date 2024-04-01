@@ -446,6 +446,7 @@ class NIFKernel(MLKernel):
             cache=False,
         )
         self.qnode_kwargs.update(self.kwargs.get("qnode_kwargs", {}))
+        self.device_workers = self.kwargs.get("device_workers", 0)
 
     @property
     def size(self):
@@ -516,7 +517,7 @@ class NIFKernel(MLKernel):
             self._parameters = [pnp.random.uniform(0, 2 * np.pi, size=2) for _ in range(n_parameters)]
 
     def pre_initialize(self):
-        self._device = NonInteractingFermionicDevice(wires=self.size)
+        self._device = NonInteractingFermionicDevice(wires=self.size, n_workers=getattr(self, "device_workers", 0))
         self._qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
         if self.simpify_qnode:
             self._qnode = qml.simplify(self.qnode)

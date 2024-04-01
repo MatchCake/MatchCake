@@ -34,14 +34,15 @@ def parse_args():
         "--dataset_name", type=str,
         # default="iris",
         # default="breast_cancer",
-        default="digits",
+        # default="digits",
+        default="Olivetti_faces",
         # default="mnist",
         help=f"The dataset to be used for the classification."
              f"Available datasets: {ClassificationPipeline.available_datasets}."
     )
     parser.add_argument(
         "--method", type=str,
-        default="hfPQC-cpu",
+        default="fPQC-cpu",
         help=f"The method to be used for the classification."
              f"Available methods: {ClassificationPipeline.available_kernels}."
     )
@@ -52,13 +53,14 @@ def parse_args():
     parser.add_argument("--plot", type=bool, default=False)
     parser.add_argument("--save_dir", type=str, default=os.path.join(os.path.dirname(__file__), "results_dc_cluster"))
     parser.add_argument("--batch_size", type=int, default=16384)
-    parser.add_argument("--show_n_pts", type=int, default=512)
+    # parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--dataset_n_samples", type=int, default=None)
     parser.add_argument("--dataset_n_features", type=int, default=None)
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--simplify_qnode", type=bool, default=False)
     parser.add_argument("--max_gram_size", type=int, default=np.inf)
-    parser.add_argument("--kernel_size", type=int, default=28)
+    parser.add_argument("--kernel_size", type=int, default=1024)
+    parser.add_argument("--device_workers", type=int, default=psutil.cpu_count(logical=False))
     return parser.parse_args()
 
 
@@ -69,6 +71,10 @@ def main():
 
     plt.rcParams.update(MPL_RC_BIG_FONT_PARAMS)
     args = parse_args()
+
+    print(f"Number of available cores: {psutil.cpu_count(logical=False)}.")
+    print(f"Number of available logical processors: {psutil.cpu_count(logical=True)}.")
+    print(f"Using {args.device_workers} device workers.")
 
     if "cuda" in args.method:
         matchcake.utils.cuda.is_cuda_available(throw_error=True, enable_warnings=True)
@@ -82,6 +88,7 @@ def main():
             batch_size=args.batch_size,
             simplify_qnode=args.simplify_qnode,
             size=args.kernel_size,
+            device_workers=args.device_workers,
         ),
         throw_errors=args.throw_errors,
         dataset_n_samples=args.dataset_n_samples,

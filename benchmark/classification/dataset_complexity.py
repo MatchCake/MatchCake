@@ -657,6 +657,7 @@ def parse_args():
     )
     parser.add_argument("--max_size", type=int, default=None)
     parser.add_argument("--nb_workers", type=int, default=0)
+    parser.add_argument("--device_workers", type=int, default=0)
     return parser.parse_args()
 
 
@@ -675,6 +676,7 @@ def main():
         kernel_kwargs=dict(
             nb_workers=0,
             batch_size=args.batch_size,
+            device_workers=args.device_workers,
         ),
         throw_errors=args.throw_errors,
     )

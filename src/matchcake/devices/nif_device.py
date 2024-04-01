@@ -1,9 +1,12 @@
 import itertools
 import warnings
+from copy import deepcopy
 from typing import Iterable, Tuple, Union, Callable, Any, Optional
 
 import numpy as np
+import psutil
 from scipy import sparse
+import pythonbasictools as pbt
 import pennylane as qml
 from pennylane import numpy as pnp
 from pennylane.pulse import ParametrizedEvolution
@@ -103,7 +106,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         return capabilities
 
     @classmethod
-    def update_single_transition_particle_matrix(cls, single_transition_particle_matrix, other):
+    def update_single_particle_transition_matrix(cls, single_transition_particle_matrix, other):
         l_interface = qml.math.get_interface(single_transition_particle_matrix)
         other_interface = qml.math.get_interface(other)
         l_priority = cls.casting_priorities.index(l_interface)
@@ -124,6 +127,22 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             single_transition_particle_matrix, other
         )
         return single_transition_particle_matrix
+
+    @classmethod
+    def prod_single_particle_transition_matrices(cls, first, sptm_list):
+        """
+        Compute the product of the single particle transition matrices of a list of
+        single particle transition matrix.
+
+        :param first: The first single particle transition matrix
+        :param sptm_list: The list of single particle transition matrices
+        :return: The product of the single particle transition matrices with the first one
+        """
+        sptm = first
+        for op_r in sptm_list:
+            if op_r is not None:
+                sptm = cls.update_single_particle_transition_matrix(sptm, op_r)
+        return sptm
 
     def __init__(
             self,
@@ -177,6 +196,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The pfaffian method must be one of {self.pfaffian_methods}. "
             f"Got {self.pfaffian_method} instead."
         )
+        self.n_workers = kwargs.get("n_workers", 0)
     
     @property
     def basis_state_index(self) -> int:
@@ -473,14 +493,114 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
         return results
 
+    def apply_state_prep(self, operation, **kwargs) -> bool:
+        """
+        Apply a state preparation operation to the device. Will set the internal state of the device
+        only if the operation is a state preparation operation and then return True. Otherwise, it will
+        return False.
+
+        :param operation: The operation to apply
+        :param kwargs: Additional keyword arguments
+        :return: True if the operation was applied, False otherwise
+        :rtype: bool
+        """
+        is_applied = True
+        if isinstance(operation, qml.StatePrep):
+            self._apply_state_vector(operation.parameters[0], operation.wires)
+        elif isinstance(operation, qml.BasisState):
+            self._apply_basis_state(operation.parameters[0], operation.wires)
+        elif isinstance(operation, qml.Snapshot):
+            if self._debugger and self._debugger.active:
+                state_vector = np.array(self._flatten(self._state))
+                if operation.tag:
+                    self._debugger.snapshots[operation.tag] = state_vector
+                else:
+                    self._debugger.snapshots[len(self._debugger.snapshots)] = state_vector
+        elif isinstance(operation, qml.pulse.ParametrizedEvolution):
+            self._state = self._apply_parametrized_evolution(self._state, operation)
+        else:
+            is_applied = False
+        return is_applied
+
+    def gather_single_particle_transition_matrix(self, operation):
+        """
+        Gather the single particle transition matrix of a given operation.
+
+        :param operation: The operation to gather the single particle transition matrix from
+        :return: The single particle transition matrix of the operation
+        """
+        if isinstance(operation, qml.Identity):
+            return None
+
+        if isinstance(operation, _SingleTransitionMatrix):
+            return operation.pad(self.wires).matrix
+
+        assert operation.name in self.operations, f"Operation {operation.name} is not supported."
+        op_r = None
+        if isinstance(operation, MatchgateOperation):
+            op_r = operation.get_padded_single_transition_particle_matrix(self.wires)
+        return op_r
+
+    def gather_single_particle_transition_matrices(self, operations) -> list:
+        """
+        Gather the single particle transition matrices of a list of operations.
+
+        :param operations: The operations to gather the single particle transition matrices from
+        :return: The single particle transition matrices of the operations
+        """
+        single_particle_transition_matrices = []
+        for operation in operations:
+            op_r = self.gather_single_particle_transition_matrix(operation)
+            if op_r is not None:
+                single_particle_transition_matrices.append(op_r)
+        return single_particle_transition_matrices
+
+    def gather_single_particle_transition_matrices_mp(self, operations) -> list:
+        """
+        Gather the single particle transition matrices of a list of operations. Will use multiprocessing if the number
+        of workers is different from 0.
+
+        :param operations: The operations to gather the single particle transition matrices from
+        :return: The single particle transition matrices of the operations
+        """
+        if len(operations) == 1:
+            return [self.gather_single_particle_transition_matrix(operations[0])]
+        # return pbt.apply_func_multiprocess(
+        #     func=self.gather_single_particle_transition_matrix,
+        #     iterable_of_args=[(op,) for op in operations],
+        #     nb_workers=self.n_workers,
+        #     verbose=False, n
+        # )
+        n_processes = self.n_workers
+        if self.n_workers == -1:
+            n_processes = psutil.cpu_count(logical=True)
+        elif self.n_workers == -2:
+            n_processes = psutil.cpu_count(logical=False)
+        elif self.n_workers < 0:
+            raise ValueError("The number of workers must be greater or equal than 0 or in [0, -2].")
+
+        if n_processes == 0 or n_processes == 1:
+            return self.gather_single_particle_transition_matrices(operations)
+
+        op_splits = np.array_split(operations, n_processes)
+        sptm_outputs = pbt.apply_func_multiprocess(
+            func=self.gather_single_particle_transition_matrices,
+            iterable_of_args=[(op_split,) for op_split in op_splits],
+            nb_workers=n_processes,
+            verbose=False,
+        )
+        return list(itertools.chain(*sptm_outputs))
+
     def apply(self, operations, rotations=None, **kwargs):
+        if self.n_workers != 0:
+            return self.apply_mp(operations, rotations, **kwargs)
         rotations = rotations or []
         if not isinstance(operations, Iterable):
             operations = [operations]
         global_single_transition_particle_matrix = pnp.eye(2 * self.num_wires)[None, ...]
         batched = False
         operations = self.contract_operations(operations, self.contraction_method)
-        
+
         # apply the circuit operations
         for i, op in enumerate(operations):
             op_r = None
@@ -514,7 +634,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                     op_r = op.get_padded_single_transition_particle_matrix(self.wires)
             if op_r is not None:
                 batched = batched or (qml.math.ndim(op_r) > 2)
-                global_single_transition_particle_matrix = self.update_single_transition_particle_matrix(
+                global_single_transition_particle_matrix = self.update_single_particle_transition_matrix(
                     global_single_transition_particle_matrix, op_r
                 )
 
@@ -530,6 +650,76 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         #     self._state = self._apply_operation(self._state, operation)
         self._transition_matrix = utils.make_transition_matrix_from_action_matrix(
             global_single_transition_particle_matrix
+        )
+
+    def prod_single_particle_transition_matrices_mp(self, sptm_list):
+        """
+        Compute the product of the single particle transition matrices of a list of
+        single particle transition matrix using multiprocessing.
+
+        :param sptm_list: The list of single particle transition matrices
+        :return: The product of the single particle transition matrices
+        """
+        if len(sptm_list) == 1:
+            return sptm_list[0]
+
+        sptm = pnp.eye(2 * self.num_wires)[None, ...]
+        n_processes = self.n_workers
+        if self.n_workers == -1:
+            n_processes = psutil.cpu_count(logical=True)
+        elif self.n_workers == -2:
+            n_processes = psutil.cpu_count(logical=False)
+        elif self.n_workers < 0:
+            raise ValueError("The number of workers must be greater or equal than 0 or in [0, -2].")
+
+        if n_processes == 0 or n_processes == 1:
+            return self.prod_single_particle_transition_matrices(sptm, sptm_list)
+
+        sptm_splits = np.array_split(sptm_list, n_processes)
+        sptm_outputs = pbt.apply_func_multiprocess(
+            func=self.prod_single_particle_transition_matrices,
+            iterable_of_args=[(deepcopy(sptm), sptm_split) for sptm_split in sptm_splits],
+            nb_workers=n_processes,
+            verbose=False,
+        )
+        if len(sptm_outputs) == 1:
+            return sptm_outputs[0]
+        return self.prod_single_particle_transition_matrices(sptm, sptm_outputs)
+
+    def apply_mp(self, operations, rotations=None, **kwargs):
+        """
+        Apply a list of operations to the device using multiprocessing. This method will update the
+        ``_transition_matrix`` attribute of the device.
+
+        :param operations: The operations to apply
+        :param rotations: The rotations to apply
+        :param kwargs: Additional keyword arguments
+
+        :return: None
+        """
+        rotations = rotations or []
+        if not isinstance(operations, Iterable):
+            operations = [operations]
+
+        operations = self.contract_operations(operations, self.contraction_method)
+
+        remove_first = self.apply_state_prep(operations[0])
+        if remove_first:
+            operations = operations[1:]
+
+        sptm_list = self.gather_single_particle_transition_matrices_mp(operations)
+        batched = any([qml.math.ndim(op_r) > 2 for op_r in sptm_list])
+        global_single_particle_transition_matrix = self.prod_single_particle_transition_matrices_mp(sptm_list)
+
+        if not batched and qml.math.ndim(global_single_particle_transition_matrix) > 2:
+            global_single_particle_transition_matrix = global_single_particle_transition_matrix[0]
+        # store the pre-rotated state
+        self._pre_rotated_sparse_state = self._sparse_state
+        self._pre_rotated_state = self._state
+
+        assert rotations is None or np.asarray([rotations]).size == 0, "Rotations are not supported"
+        self._transition_matrix = utils.make_transition_matrix_from_action_matrix(
+            global_single_particle_transition_matrix
         )
 
     def get_prob_strategy_func(self) -> Callable[[Wires, Any], float]:
@@ -693,21 +883,30 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             qml.math.dot, [*[self.majorana_getter(i) for i in ket_majorana_indexes], zero_state]
         )
 
-        # iterator = itertools.product(*[range(2*self.num_wires) for _ in range(2 * len(target_binary_state))])
         np_iterator = np.ndindex(tuple([2*self.num_wires for _ in range(2 * len(target_binary_state))]))
-        target_prob = sum(
-            (
-                self._compute_partial_prob_of_m_n_vector(
-                    m_n_vector=m_n_vector,
-                    target_binary_state=target_binary_state,
-                    wires=wires,
-                    bra=bra,
-                    ket=ket,
-                )
+        sum_elements = pbt.apply_func_multiprocess(
+            func=self._compute_partial_prob_of_m_n_vector,
+            iterable_of_args=[
+                (m_n_vector, target_binary_state, wires, bra, ket)
                 for m_n_vector in np_iterator
-            ),
-            start=0.0,
+            ],
+            nb_workers=self.n_workers,
+            verbose=False,
         )
+        target_prob = sum(sum_elements, start=0.0)
+        # target_prob = sum(
+        #     (
+        #         self._compute_partial_prob_of_m_n_vector(
+        #             m_n_vector=m_n_vector,
+        #             target_binary_state=target_binary_state,
+        #             wires=wires,
+        #             bra=bra,
+        #             ket=ket,
+        #         )
+        #         for m_n_vector in np_iterator
+        #     ),
+        #     start=0.0,
+        # )
         return pnp.real(target_prob)
 
     def _compute_partial_prob_of_m_n_vector(

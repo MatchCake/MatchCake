@@ -20,6 +20,7 @@ def init_nif_device(*args, **kwargs) -> NonInteractingFermionicDevice:
         wires=wires,
         prob_strategy=kwargs.pop("prob_strategy", "lookup_table"),
         majorana_getter=kwargs.pop("majorana_getter", majorana_getter),
+        n_workers=kwargs.pop("n_workers", 0),
     )
     return nif_device
 
