@@ -57,7 +57,6 @@ def parse_args():
     # parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--dataset_n_samples", type=int, default=None)
     parser.add_argument("--dataset_n_features", type=int, default=None)
-    parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--simplify_qnode", type=bool, default=False)
     parser.add_argument("--max_gram_size", type=int, default=np.inf)
     parser.add_argument("--kernel_size", type=int, default=18)
