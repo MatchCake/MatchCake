@@ -1,55 +1,17 @@
-import time
 import sys
-import os
-from copy import deepcopy
-from collections import defaultdict
-from fractions import Fraction
-from typing import Optional, Union, List, Callable
-from functools import partial
 import argparse
+import os
+import sys
+from copy import deepcopy
+from fractions import Fraction
+from typing import Optional, List
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import psutil
-import pennylane as qml
-from numpy.polynomial import Polynomial
 from scipy import stats
-from sklearn import datasets
-from sklearn import svm
-from sklearn.datasets import fetch_openml
-from sklearn.model_selection import train_test_split
-from sklearn.utils.validation import check_is_fitted
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score, r2_score
-import functools
-import umap
 from tqdm import tqdm
-import pythonbasictools as pbt
-
-from kernels import (
-    ClassicalKernel,
-    MPennylaneQuantumKernel,
-    CPennylaneQuantumKernel,
-    NIFKernel,
-    FermionicPQCKernel,
-    PQCKernel,
-    LightningPQCKernel,
-    PennylaneFermionicPQCKernel,
-    NeighboursFermionicPQCKernel,
-    CudaFermionicPQCKernel,
-    CpuFermionicPQCKernel,
-    WideFermionicPQCKernel,
-    CpuWideFermionicPQCKernel,
-    CudaWideFermionicPQCKernel,
-    FastCudaFermionicPQCKernel,
-    FastCudaWideFermionicPQCKernel,
-    SwapCudaFermionicPQCKernel,
-    SwapCudaWideFermionicPQCKernel,
-    IdentityCudaFermionicPQCKernel,
-    IdentityCudaWideFermionicPQCKernel,
-    HadamardCudaWideFermionicPQCKernel,
-    HadamardCudaFermionicPQCKernel,
-)
 
 try:
     import matchcake
@@ -57,12 +19,84 @@ except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import matchcake
 os.environ["OMP_NUM_THREADS"] = str(psutil.cpu_count(logical=False))
-from matchcake.ml import ClassificationVisualizer
-from matchcake.ml.ml_kernel import MLKernel, FixedSizeSVC
-import warnings
 from classification_pipeline import ClassificationPipeline
-from utils import MPL_RC_BIG_FONT_PARAMS, mStyles, find_complexity, exp_fit, poly_fit, lin_fit, BIG_O_STR, log_fit, \
-    number_axes
+from utils import (
+    MPL_RC_BIG_FONT_PARAMS,
+    mStyles,
+    exp_fit,
+    poly_fit,
+    lin_fit,
+    BIG_O_STR,
+    log_fit,
+    number_axes,
+)
+
+
+def add_complexity(x, y, **kwargs):
+    fig: plt.Figure = kwargs.get("fig", None)
+    ax: plt.Axes = kwargs.get("ax", None)
+    if fig is None or ax is None:
+        raise ValueError("fig and ax must be provided.")
+    nan_mask = np.isnan(x) | np.isnan(y)
+    x = x[~nan_mask]
+    y = y[~nan_mask]
+    n_points = kwargs.get("n_points", max(2, int(0.5 * len(x))))
+    x = x[-n_points:]
+    y = y[-n_points:]
+    all_x = kwargs.get("all_x", x)
+    color = kwargs.get("color", "gray")
+    alpha = kwargs.get("alpha", 0.5)
+    linestyle = kwargs.get("linestyle", ":")
+    complexity = kwargs.get("complexity", "exponential")
+    base = kwargs.get("base", 2)
+    y_scale = kwargs.get("y_scale", "linear")
+    y_scale_base = kwargs.get("y_scale_base", base)
+    x_scale = kwargs.get("x_scale", "linear")
+    x_scale_base = kwargs.get("x_scale_base", base)
+    scale = y_scale + x_scale
+    if x_scale == "log":
+        x = np.log(x) / np.log(x_scale_base)
+        all_x = np.log(all_x) / np.log(x_scale_base)
+    if y_scale == "log":
+        y = np.log(y) / np.log(y_scale_base)
+    if complexity == "exponential" and scale == "loglog":
+        complexity_out = exp_fit(x, y, x_lbl="N",
+                                 **kwargs)  # log(y) = log(c * b^(a * log(x))) = log(c) + a * log(x) * log(b)
+        raise ValueError("Not implemented")
+    elif complexity == "exponential" and scale == "loglinear":
+        complexity_out = lin_fit(x, y, x_lbl="N", **kwargs)  # log(y) = log(c * b^(a * b)) = log(c) + a * x * log(b)
+    elif complexity == "exponential" and scale == "linearlog":
+        complexity_out = exp_fit(x, y, x_lbl="N", **kwargs)  # y = c * b^(a * log(x)) = c * b^(log(x^a))
+    elif complexity == "exponential" and scale == "linearlinear":
+        complexity_out = exp_fit(x, y, x_lbl="N", **kwargs)  # y = c * b^(a * x)
+    elif complexity == "polynomial" and scale == "loglog":
+        complexity_out = lin_fit(x, y, x_lbl="N", **kwargs)  # log(y) = log(b * (log(x)^a)) = log(b) + a log(log(x))
+    elif complexity == "polynomial" and scale == "loglinear":
+        complexity_out = log_fit(x, y, x_lbl="N", **kwargs)  # log(y) = log(b * (x^a)) = log(b) + a log(x)
+    elif complexity == "polynomial" and scale == "linearlinear":
+        complexity_out = poly_fit(x, y, x_lbl="N", **kwargs)  # y = c + b * (x^a)
+    else:
+        raise ValueError(f"Invalid complexity type: {complexity}")
+    popt = complexity_out["popt"]
+    complexity_func = complexity_out["func"]
+    # r2_str = f": $R^2={complexity_out['r2']:.2f}$"
+    r2_str = f""
+    if complexity == "exponential":
+        complexity_out["label"] = f"~${BIG_O_STR}({y_scale_base}^{{ {popt[0]:.2f}N }})${r2_str}"
+    elif complexity == "polynomial":
+        power_str = f"{popt[0]:.2f}"
+        if abs(popt[0]) < 1:
+            power_str = str(Fraction(popt[0]).limit_denominator(max_denominator=10))
+        complexity_out["label"] = f"~${BIG_O_STR}(N^{{ {power_str} }})${r2_str}"
+    x_fit = np.linspace(all_x[0], all_x[-1], 1_000)
+    y_fit = complexity_func(x_fit, *complexity_out["popt"])
+
+    if x_scale == "log":
+        x_fit = x_scale_base ** x_fit
+    if y_scale == "log":
+        y_fit = y_scale_base ** y_fit
+    ax.plot(x_fit, y_fit, color=color, linestyle=linestyle, alpha=alpha)
+    return fig, ax, complexity_out
 
 
 class DatasetComplexityPipeline:
@@ -270,7 +304,7 @@ class DatasetComplexityPipeline:
             k_linestyle = kernel_to_linestyle.get(kernel_name, base_linestyle)
 
             if kernel_to_polyfit.get(kernel_name, False):
-                *_, comp_out = self.add_complexity(
+                *_, comp_out = add_complexity(
                     fig=fig, ax=ax,
                     x=x,
                     all_x=np.sort(df[x_axis_key].unique()),
@@ -479,7 +513,7 @@ class DatasetComplexityPipeline:
 
                 x_min, x_max = np.nanmin(df[x_key].values), np.nanmax(df[x_key].values)
                 axes[i].set_xlim(x_min, x_max)
-                axes[i].set_ylim(y_min*0.99, y_max*1.01)
+                axes[i].set_ylim(y_min * 0.99, y_max * 1.01)
 
             # if len(y_lbl_to_keys) > 1:
             #     fig.supxlabel(x_lbl, y=np.sqrt(height) / 100 * 2.2)
@@ -543,71 +577,6 @@ class DatasetComplexityPipeline:
                 plt.show()
             plt.close("all")
         return
-
-    def add_complexity(self, x, y, **kwargs):
-        fig: plt.Figure = kwargs.get("fig", None)
-        ax: plt.Axes = kwargs.get("ax", None)
-        if fig is None or ax is None:
-            raise ValueError("fig and ax must be provided.")
-        nan_mask = np.isnan(x) | np.isnan(y)
-        x = x[~nan_mask]
-        y = y[~nan_mask]
-        n_points = kwargs.get("n_points", max(2, int(0.5*len(x))))
-        x = x[-n_points:]
-        y = y[-n_points:]
-        all_x = kwargs.get("all_x", x)
-        color = kwargs.get("color", "gray")
-        alpha = kwargs.get("alpha", 0.5)
-        linestyle = kwargs.get("linestyle", ":")
-        complexity = kwargs.get("complexity", "exponential")
-        base = kwargs.get("base", 2)
-        y_scale = kwargs.get("y_scale", "linear")
-        y_scale_base = kwargs.get("y_scale_base", base)
-        x_scale = kwargs.get("x_scale", "linear")
-        x_scale_base = kwargs.get("x_scale_base", base)
-        scale = y_scale + x_scale
-        if x_scale == "log":
-            x = np.log(x) / np.log(x_scale_base)
-            all_x = np.log(all_x) / np.log(x_scale_base)
-        if y_scale == "log":
-            y = np.log(y) / np.log(y_scale_base)
-        if complexity == "exponential" and scale == "loglog":
-            complexity_out = exp_fit(x, y, x_lbl="N", **kwargs)  # log(y) = log(c * b^(a * log(x))) = log(c) + a * log(x) * log(b)
-            raise ValueError("Not implemented")
-        elif complexity == "exponential" and scale == "loglinear":
-            complexity_out = lin_fit(x, y, x_lbl="N", **kwargs)  # log(y) = log(c * b^(a * b)) = log(c) + a * x * log(b)
-        elif complexity == "exponential" and scale == "linearlog":
-            complexity_out = exp_fit(x, y, x_lbl="N", **kwargs)  # y = c * b^(a * log(x)) = c * b^(log(x^a))
-        elif complexity == "exponential" and scale == "linearlinear":
-            complexity_out = exp_fit(x, y, x_lbl="N", **kwargs)  # y = c * b^(a * x)
-        elif complexity == "polynomial" and scale == "loglog":
-            complexity_out = lin_fit(x, y, x_lbl="N", **kwargs)  # log(y) = log(b * (log(x)^a)) = log(b) + a log(log(x))
-        elif complexity == "polynomial" and scale == "loglinear":
-            complexity_out = log_fit(x, y, x_lbl="N", **kwargs)  # log(y) = log(b * (x^a)) = log(b) + a log(x)
-        elif complexity == "polynomial" and scale == "linearlinear":
-            complexity_out = poly_fit(x, y, x_lbl="N", **kwargs)  # y = c + b * (x^a)
-        else:
-            raise ValueError(f"Invalid complexity type: {complexity}")
-        popt = complexity_out["popt"]
-        complexity_func = complexity_out["func"]
-        # r2_str = f": $R^2={complexity_out['r2']:.2f}$"
-        r2_str = f""
-        if complexity == "exponential":
-            complexity_out["label"] = f"~${BIG_O_STR}({y_scale_base}^{{ {popt[0]:.2f}N }})${r2_str}"
-        elif complexity == "polynomial":
-            power_str = f"{popt[0]:.2f}"
-            if abs(popt[0]) < 1:
-                power_str = str(Fraction(popt[0]).limit_denominator(max_denominator=10))
-            complexity_out["label"] = f"~${BIG_O_STR}(N^{{ {power_str} }})${r2_str}"
-        x_fit = np.linspace(all_x[0], all_x[-1], 1_000)
-        y_fit = complexity_func(x_fit, *complexity_out["popt"])
-
-        if x_scale == "log":
-            x_fit = x_scale_base**x_fit
-        if y_scale == "log":
-            y_fit = y_scale_base**y_fit
-        ax.plot(x_fit, y_fit, color=color, linestyle=linestyle, alpha=alpha)
-        return fig, ax, complexity_out
 
 
 def parse_args():
@@ -713,7 +682,8 @@ def main():
     plt.close("all")
     pipeline.plot_formatted_complexity_results(show=False, add_fit_time=False, add_accuracies=True, pre_filename="acc_")
     plt.close("all")
-    pipeline.plot_formatted_complexity_results(show=False, add_fit_time=True, add_accuracies=False, pre_filename="time_")
+    pipeline.plot_formatted_complexity_results(show=False, add_fit_time=True, add_accuracies=False,
+                                               pre_filename="time_")
     plt.close("all")
 
 
