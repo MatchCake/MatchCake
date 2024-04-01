@@ -232,7 +232,7 @@ class DatasetComplexityPipeline:
         y_scale_base = kwargs.get("y_scale_base", 2)
         x_scale = kwargs.get("x_scale", "linear")
         x_scale_base = kwargs.get("x_scale_base", 2)
-        df = self.results_table
+        df = kwargs.get("df", self.results_table)
         fig, ax = kwargs.get("fig", None), kwargs.get("ax", None)
         if fig is None or ax is None:
             fig, ax = plt.subplots(figsize=(14, 10))
@@ -384,11 +384,17 @@ class DatasetComplexityPipeline:
             accuracies_lbl: None,
         }
         df = self.results_table
+        df_acc = df.copy()
+        df_acc[ClassificationPipeline.KERNEL_KEY] = df_acc[ClassificationPipeline.KERNEL_KEY].apply(
+            lambda x: x.replace("-cuda", "").replace("-cpu", "")
+        )
+
         kernels = df[ClassificationPipeline.KERNEL_KEY].unique()
         gpu_methods = [m for m in kernels if "cuda" in m]
         cpu_methods = [m for m in kernels if m not in gpu_methods]
         complexity_methods = [m for m in cpu_methods if "i" not in m]
-        acc_methods = cpu_methods + [m for m in gpu_methods if m.replace("-cuda", "-cpu") not in cpu_methods]
+        # acc_methods = cpu_methods + [m for m in gpu_methods if m.replace("-cuda", "-cpu") not in cpu_methods]
+        acc_methods = df_acc[ClassificationPipeline.KERNEL_KEY].unique().tolist()
         kernel_to_complexity = {
             m: "exponential"
             if m == "PQC" else "polynomial"
@@ -396,12 +402,17 @@ class DatasetComplexityPipeline:
         }
         y_lbl_to_polyfit = {
             fit_time_lbl: {m: False for m in kernels},
-            accuracies_lbl: {m: False for m in kernels},
+            accuracies_lbl: {m: False for m in acc_methods},
         }
         y_lbl_to_kernels_list = {
             fit_time_lbl: complexity_methods,
             accuracies_lbl: acc_methods
         }
+        y_lbl_to_df = {
+            fit_time_lbl: df,
+            accuracies_lbl: df_acc,
+        }
+
         gpu_linestyle, cpu_linestyle = "--", "-"
         train_linestyle, test_linestyle = "-", "-."
         kernel_to_linestyle = {
@@ -410,12 +421,15 @@ class DatasetComplexityPipeline:
         }
         y_lbl_to_linestyle_list = {
             fit_time_lbl: [kernel_to_linestyle, kernel_to_linestyle],
-            accuracies_lbl: [{m: train_linestyle for m in kernels}, {m: test_linestyle for m in kernels}],
+            accuracies_lbl: [{m: train_linestyle for m in acc_methods}, {m: test_linestyle for m in acc_methods}],
         }
         kernel_to_lbl = {m: m.replace("-cuda", "").replace("-cpu", "") for m in kernels}
         kernel_to_lbl["ifPQC"] = r"$\otimes$fPQC"
         kernel_to_lbl["ifPQC-cpu"] = r"$\otimes$fPQC"
         kernel_to_lbl["iPQC"] = r"$\otimes$PQC"
+        for m in acc_methods:
+            if m not in kernel_to_lbl:
+                kernel_to_lbl[m] = m
         sorted_lbls = sorted(set(kernel_to_lbl.values()))
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         kernel_lbl_to_color = {lbl: colors[i] for i, lbl in enumerate(sorted_lbls)}
@@ -437,6 +451,7 @@ class DatasetComplexityPipeline:
                 y_min, y_max = np.inf, -np.inf
                 for j, y_k in enumerate(y_key):
                     *_, j_data_dict = self.plot_results(
+                        df=y_lbl_to_df[y_lbl],
                         x_axis_key=x_key, x_axis_label="",
                         y_axis_key=y_k, y_axis_label=y_lbl,
                         kernels=y_lbl_to_kernels_list[y_lbl],
@@ -477,7 +492,7 @@ class DatasetComplexityPipeline:
             for key_to_get_lbl in data_dict.keys():
                 for k, d in data_dict[key_to_get_lbl].items():
                     if k in complexity_methods + acc_methods:
-                        lbl_to_kernel[d.get("kernel_lbl", kernel_to_lbl[k])] = k
+                        lbl_to_kernel[d.get("kernel_lbl", kernel_to_lbl.get(k, k))] = k
             lbl_to_color_marker = {
                 f"{lbl}{data_dict[key_to_get_lbl][lbl_to_kernel[lbl]]['complexity_lbl']}":
                     (c, kernel_to_marker[lbl_to_kernel[lbl]])
