@@ -4,7 +4,6 @@ import os
 from copy import deepcopy
 from collections import defaultdict
 from typing import Optional, Union, List
-from functools import partial
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,7 +14,6 @@ from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import check_is_fitted
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
 import functools
 from tqdm import tqdm
 import pythonbasictools as pbt
@@ -68,11 +66,7 @@ from matchcake.ml.ml_kernel import (
     PennylaneFermionicPQCKernel,
     WideFermionicPQCKernel,
 )
-msim = matchcake  # Keep for compatibility with the old code
 import warnings
-
-
-
 
 
 class ClassificationPipeline:
