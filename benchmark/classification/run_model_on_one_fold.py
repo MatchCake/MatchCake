@@ -3,6 +3,7 @@ import sys
 from typing import Literal
 
 import psutil
+import shutil
 import argparse
 import numpy as np
 from tqdm import tqdm
@@ -42,7 +43,7 @@ def parse_args():
     )
     parser.add_argument(
         "--method", type=str,
-        default="iPQC",
+        default="fPQC",
         help=f"The method to be used for the classification."
              f"Available methods: {ClassificationPipeline.available_kernels}."
     )
@@ -62,6 +63,7 @@ def parse_args():
     parser.add_argument("--kernel_size", type=int, default=18)
     # parser.add_argument("--device_workers", type=int, default=psutil.cpu_count(logical=False))
     parser.add_argument("--device_workers", type=int, default=0)
+    parser.add_argument("--overwrite", action=argparse.BooleanOptionalAction, default=False)
     return parser.parse_args()
 
 
@@ -100,6 +102,9 @@ def main():
     save_path = os.path.join(
         args.save_dir, f"{kwargs['dataset_name']}", f"size{args.kernel_size}", ".class_pipeline"
     )
+    fold_path = os.path.join(save_path, args.method, f"{args.fold_idx}")
+    if os.path.exists(fold_path) and args.overwrite:
+        shutil.rmtree(fold_path)
     if args.overwrite:
         pipeline = ClassificationPipeline(save_path=save_path, **kwargs)
     else:
