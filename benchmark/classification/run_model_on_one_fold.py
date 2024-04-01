@@ -34,33 +34,34 @@ def parse_args():
         "--dataset_name", type=str,
         # default="iris",
         # default="breast_cancer",
-        # default="digits",
-        default="Olivetti_faces",
+        default="digits",
+        # default="Olivetti_faces",
         # default="mnist",
         help=f"The dataset to be used for the classification."
              f"Available datasets: {ClassificationPipeline.available_datasets}."
     )
     parser.add_argument(
         "--method", type=str,
-        default="fPQC-cpu",
+        default="iPQC",
         help=f"The method to be used for the classification."
              f"Available methods: {ClassificationPipeline.available_kernels}."
     )
     parser.add_argument("--n_kfold_splits", type=int, default=5)
-    parser.add_argument("--fold_idx", type=int, default=2)
+    parser.add_argument("--fold_idx", type=int, default=0)
     parser.add_argument("--throw_errors", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--show", type=bool, default=False)
     parser.add_argument("--plot", type=bool, default=False)
     parser.add_argument("--save_dir", type=str, default=os.path.join(os.path.dirname(__file__), "results_dc_cluster"))
-    parser.add_argument("--batch_size", type=int, default=16384)
+    parser.add_argument("--batch_size", type=int, default=32768)
     # parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--dataset_n_samples", type=int, default=None)
     parser.add_argument("--dataset_n_features", type=int, default=None)
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--simplify_qnode", type=bool, default=False)
     parser.add_argument("--max_gram_size", type=int, default=np.inf)
-    parser.add_argument("--kernel_size", type=int, default=1024)
-    parser.add_argument("--device_workers", type=int, default=psutil.cpu_count(logical=False))
+    parser.add_argument("--kernel_size", type=int, default=18)
+    # parser.add_argument("--device_workers", type=int, default=psutil.cpu_count(logical=False))
+    parser.add_argument("--device_workers", type=int, default=0)
     return parser.parse_args()
 
 
