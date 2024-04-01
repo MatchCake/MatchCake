@@ -206,9 +206,37 @@ class MLKernel(StdEstimator):
         self._assume_diag_one = kwargs.get("assume_diag_one", True)
         self._batch_size_try_counter = 0
         self._gram_type = kwargs.get("gram_type", "ndarray")
+        self._parameters = self.kwargs.get("parameters", None)
+        self.use_cuda = self.kwargs.get("use_cuda", False)
         if self._gram_type not in {"ndarray", "hdf5"}:
             raise ValueError(f"Unknown gram type: {self._gram_type}.")
         super().__init__(**kwargs)
+
+    @property
+    def size(self):
+        return self._size
+
+    @property
+    def parameters(self):
+        if getattr(self, "use_cuda", False):
+            return self.cast_tensor_to_interface(self._parameters)
+        return self._parameters
+
+    @parameters.setter
+    def parameters(self, parameters):
+        self._parameters = parameters
+        if self.use_cuda:
+            import torch
+            if not isinstance(parameters, torch.Tensor):
+                self._parameters = torch.tensor(parameters).cuda()
+        elif not isinstance(parameters, np.ndarray):
+            self._parameters = np.asarray(parameters)
+
+    def cast_tensor_to_interface(self, tensor):
+        if self.use_cuda:
+            import torch
+            return torch.tensor(tensor).cuda()
+        return tensor
 
     def _compute_default_size(self):
         return self.X_.shape[-1]
@@ -387,7 +415,6 @@ class MLKernel(StdEstimator):
                 eta_fmt = datetime.timedelta(seconds=eta)
                 p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: {eta_fmt}, {100 * n_done / n_data:.2f}%)")
         if is_square:
-            # gram[tril_indices[:, 0], tril_indices[:, 1]] = gram[tril_indices[:, 1], tril_indices[:, 0]]
             gram = gram + gram.T
         np.fill_diagonal(gram, 1.0)
         if p_bar is not None:
@@ -437,8 +464,6 @@ class NIFKernel(MLKernel):
         super().__init__(size=size, **kwargs)
         self._qnode = None
         self._device = None
-        self._parameters = self.kwargs.get("parameters", None)
-        self.use_cuda = self.kwargs.get("use_cuda", False)
         self.simpify_qnode = self.kwargs.get("simplify_qnode", False)
         self.qnode_kwargs = dict(
             interface="torch" if self.use_cuda else "auto",
@@ -447,10 +472,6 @@ class NIFKernel(MLKernel):
         )
         self.qnode_kwargs.update(self.kwargs.get("qnode_kwargs", {}))
         self.device_workers = self.kwargs.get("device_workers", 0)
-
-    @property
-    def size(self):
-        return self._size
 
     @property
     def wires(self):
@@ -504,12 +525,6 @@ class NIFKernel(MLKernel):
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.pre_initialize()
-
-    def cast_tensor_to_interface(self, tensor):
-        if self.use_cuda:
-            import torch
-            return torch.tensor(tensor).cuda()
-        return tensor
 
     def initialize_parameters(self):
         if self._parameters is None:
