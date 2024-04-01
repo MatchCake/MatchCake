@@ -14,9 +14,6 @@ from matchcake.ml.ml_kernel import (
     MLKernel,
 )
 
-from .qiskit_kernels import (
-    QiskitKernel,
-)
 from .pennylane_kernels import (
     MPennylaneQuantumKernel,
     CPennylaneQuantumKernel,
