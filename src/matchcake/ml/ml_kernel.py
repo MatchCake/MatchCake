@@ -206,8 +206,8 @@ class MLKernel(StdEstimator):
         self._assume_diag_one = kwargs.get("assume_diag_one", True)
         self._batch_size_try_counter = 0
         self._gram_type = kwargs.get("gram_type", "ndarray")
-        self._parameters = self.kwargs.get("parameters", None)
-        self.use_cuda = self.kwargs.get("use_cuda", False)
+        self._parameters = kwargs.get("parameters", None)
+        self.use_cuda = kwargs.get("use_cuda", False)
         if self._gram_type not in {"ndarray", "hdf5"}:
             raise ValueError(f"Unknown gram type: {self._gram_type}.")
         super().__init__(**kwargs)
