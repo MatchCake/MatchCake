@@ -166,8 +166,8 @@ def plot_accuracies(df: pd.DataFrame, **kwargs):
     kernels = list(sorted(kwargs.get("kernels", df[kernel_key].unique())))
     y_scale_factor = kwargs.get("y_scale_factor", 100)
     kernel_to_lbl = kwargs.get("kernel_to_lbl", default_kernel_to_lbl)
-    kernel_to_color = {k: colors[i] for i, k in enumerate(kernels)}
-    kernel_to_marker = {k: mStyles[i] for i, k in enumerate(kernels)}
+    kernel_to_color = kwargs.get("kernel_to_color", {k: colors[i] for i, k in enumerate(kernels)})
+    kernel_to_marker = kwargs.get("kernel_to_marker", {k: mStyles[i] for i, k in enumerate(kernels)})
 
     base_linestyle = kwargs.get("linestyle", "-")
     save_path = kwargs.get("save_path", None)
