@@ -21,14 +21,16 @@ except ImportError:
 os.environ["OMP_NUM_THREADS"] = str(psutil.cpu_count(logical=False))
 from classification_pipeline import ClassificationPipeline
 from utils import (
-    MPL_RC_BIG_FONT_PARAMS,
-    mStyles,
     exp_fit,
     poly_fit,
     lin_fit,
-    BIG_O_STR,
     log_fit,
     number_axes,
+)
+from figure_scripts.utils import (
+    MPL_RC_BIG_FONT_PARAMS,
+    mStyles,
+    BIG_O_STR,
 )
 
 
