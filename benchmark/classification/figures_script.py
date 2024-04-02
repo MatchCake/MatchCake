@@ -123,5 +123,19 @@ if __name__ == '__main__':
     # make_results_table(trial="k5")
     results_savedir = os.path.join(os.path.dirname(__file__), "results_dc_cluster", "digits")
     df = gather_results(results_savedir)
+    kernel_to_color = {
+        "PQC": "tab:green",
+        "fPQC": "tab:red",
+        "ifPQC": "tab:orange",
+        "hfPQC": "tab:purple",
+        "iPQC": "tab:blue",
+    }
+    kernel_to_marker = {
+        "PQC": "*",
+        "fPQC": "X",
+        "ifPQC": "v",
+        "hfPQC": "^",
+        "iPQC": "o",
+    }
     plot_accuracies(df, save_path=os.path.join(results_savedir, "figures", "accuracies.pdf"), show=True)
 
