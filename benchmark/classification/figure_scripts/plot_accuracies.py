@@ -153,6 +153,10 @@ def plot_accuracies(df: pd.DataFrame, **kwargs):
     train_accuracy_key = kwargs.get("train_accuracy_key", get_closest_match("train_accuracy", df.columns))
     test_accuracy_key = kwargs.get("test_accuracy_key", get_closest_match("test_accuracy", df.columns))
     kernel_key = kwargs.get("kernel_key", get_closest_match("kernel", df.columns))
+
+    # remove rows where the test or train accuracy is NaN
+    df = df.dropna(subset=[train_accuracy_key, test_accuracy_key])
+
     x_lbl = kwargs.get("x_lbl", r"$N$ $[-]$")
     accuracies_lbl = r"Accuracies $[\%]$"
     y_keys = [train_accuracy_key, test_accuracy_key]
