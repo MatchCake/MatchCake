@@ -19,12 +19,12 @@ from tqdm import tqdm
 import pythonbasictools as pbt
 
 from utils import (
-    MPL_RC_BIG_FONT_PARAMS,
     load_mnist1d,
     KPredictorContainer,
     MetricsContainer,
     save_on_exit,
 )
+from figure_scripts.utils import MPL_RC_BIG_FONT_PARAMS
 from kernels import (
     ClassicalKernel,
     MPennylaneQuantumKernel,
