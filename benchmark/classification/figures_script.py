@@ -137,5 +137,11 @@ if __name__ == '__main__':
         "hfPQC": "^",
         "iPQC": "o",
     }
-    plot_accuracies(df, save_path=os.path.join(results_savedir, "figures", "accuracies.pdf"), show=True)
+    plot_accuracies(
+        df,
+        kernel_to_color=kernel_to_color,
+        kernel_to_marker=kernel_to_marker,
+        save_path=os.path.join(results_savedir, "figures", "accuracies.pdf"),
+        show=True,
+    )
 
