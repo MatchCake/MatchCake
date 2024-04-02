@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 from classification_pipeline import ClassificationPipeline
+from figure_scripts.plot_accuracies import plot_accuracies, gather_results
 
 
 def get_table_path(dataset_name, trial="cls_k5") -> str:
@@ -119,4 +120,8 @@ def make_results_table(trial="cls_k5"):
 
 
 if __name__ == '__main__':
-    make_results_table(trial="k5")
+    # make_results_table(trial="k5")
+    results_savedir = os.path.join(os.path.dirname(__file__), "results_dc_cluster", "digits")
+    df = gather_results(results_savedir)
+    plot_accuracies(df, save_path=os.path.join(results_savedir, "figures", "accuracies.pdf"), show=True)
+
