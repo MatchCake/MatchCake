@@ -63,7 +63,7 @@ from matchcake.ml.ml_kernel import (
     FixedSizeSVC,
     NIFKernel,
     FermionicPQCKernel,
-    PennylaneFermionicPQCKernel,
+    StateVectorFermionicPQCKernel,
     WideFermionicPQCKernel,
 )
 import warnings
@@ -94,7 +94,7 @@ class ClassificationPipeline:
         "PQC": PQCKernel,
         "iPQC": IdentityPQCKernel,
         "lightning_PQC": LightningPQCKernel,
-        "PennylaneFermionicPQCKernel": PennylaneFermionicPQCKernel,
+        "PennylaneFermionicPQCKernel": StateVectorFermionicPQCKernel,
         "nfPQC": NeighboursFermionicPQCKernel,
         "wfPQC": WideFermionicPQCKernel,
         "wfPQC-cuda": CudaWideFermionicPQCKernel,
