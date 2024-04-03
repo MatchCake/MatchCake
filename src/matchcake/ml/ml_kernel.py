@@ -27,6 +27,7 @@ import tables as tb
 from ..devices.nif_device import NonInteractingFermionicDevice
 from ..operations import MAngleEmbedding, MAngleEmbeddings, fRZZ, fCNOT, fSWAP, fH
 from ..operations.fermionic_controlled_not import FastfCNOT
+from ..utils import torch_utils
 
 
 class GramMatrixKernel:
@@ -169,6 +170,8 @@ def mrot_zz_template(param0, param1, wires):
 
 
 class StdEstimator(BaseEstimator):
+    UNPICKLABLE_ATTRIBUTES = []
+
     def __init__(self, **kwargs) -> None:
         super().__init__()
         self.kwargs = kwargs
@@ -228,9 +231,18 @@ class MLKernel(StdEstimator):
         if self.use_cuda:
             import torch
             if not isinstance(parameters, torch.Tensor):
-                self._parameters = torch.tensor(parameters).cuda()
+                self._parameters = self.cast_tensor_to_interface(parameters)
         elif not isinstance(parameters, np.ndarray):
             self._parameters = np.asarray(parameters)
+
+    def __getstate__(self):
+        state = {
+            k: v
+            for k, v in self.__dict__.items()
+            if k not in self.UNPICKLABLE_ATTRIBUTES
+        }
+        state["_parameters"] = torch_utils.to_numpy(state["_parameters"])
+        return state
 
     def cast_tensor_to_interface(self, tensor):
         if self.use_cuda:
@@ -549,8 +561,6 @@ class NIFKernel(MLKernel):
     def circuit(self, x0, x1):
         MAngleEmbedding(x0, wires=self.wires)
         qml.broadcast(unitary=mrot_zz_template, pattern="pyramid", wires=self.wires, parameters=self.parameters)
-        # TODO: ajouter des MROT avec des paramètres aléatoires en forme de pyramids
-        # TODO: ajouter une fonction qui génère une séquence de wires en forme pyramidale.
         qml.adjoint(MAngleEmbedding)(x1, wires=self.wires)
         qml.adjoint(qml.broadcast)(unitary=mrot_zz_template, pattern="pyramid", wires=self.wires,
                                    parameters=self.parameters)
@@ -628,7 +638,7 @@ class FermionicPQCKernel(NIFKernel):
     Inspired from: https://iopscience.iop.org/article/10.1088/2632-2153/acb0b4/meta#artAbst
 
 
-    The size of the kernel is computed as
+    By default, the size of the kernel is computed as
 
     .. math::
         \text{size} = \max\left(2, \lceil\log_2(\text{n features} + 2)\rceil\right)
@@ -640,7 +650,7 @@ class FermionicPQCKernel(NIFKernel):
 
     """
 
-    available_entangling_mth = {"fcnot", "fast_fcnot", "fswap", "identity", "hadamard"}
+    available_entangling_mth = {"fswap", "identity", "hadamard"}
 
     def __init__(
             self,
@@ -675,7 +685,7 @@ class FermionicPQCKernel(NIFKernel):
         return _size
 
     def initialize_parameters(self):
-        self._depth = self.kwargs.get("depth", max(1, (self.X_.shape[-1] // self.size) - 1))
+        self._depth = self.kwargs.get("depth", int(max(1, np.ceil(self.X_.shape[-1] / self.size))))
         self.parameters = pnp.random.uniform(0.0, 1.0, size=self.X_.shape[-1])
 
     def ansatz(self, x):
@@ -687,12 +697,8 @@ class FermionicPQCKernel(NIFKernel):
             MAngleEmbedding(sub_x, wires=self.wires, rotations=self.rotations)
             fcnot_wires = wires_patterns[layer % len(wires_patterns)]
             for wires in fcnot_wires:
-                if self._entangling_mth == "fast_fcnot":
-                    FastfCNOT(wires=wires)
-                elif self._entangling_mth == "fswap":
+                if self._entangling_mth == "fswap":
                     fSWAP(wires=wires)
-                elif self._entangling_mth == "fcnot":
-                    fCNOT(wires=wires)
                 elif self._entangling_mth == "hadamard":
                     fH(wires=wires)
                 elif self._entangling_mth == "identity":
@@ -710,15 +716,7 @@ class FermionicPQCKernel(NIFKernel):
         return qml.expval(projector)
 
 
-class WideFermionicPQCKernel(FermionicPQCKernel):
-    def _compute_default_size(self):
-        _size = max(2, int(np.ceil(np.sqrt(self.X_.shape[-1] + 2))))
-        if _size % 2 != 0:
-            _size += 1
-        return _size
-
-
-class PennylaneFermionicPQCKernel(FermionicPQCKernel):
+class StateVectorFermionicPQCKernel(FermionicPQCKernel):
     def __init__(self, size: Optional[int] = None, **kwargs):
         super().__init__(size=size, **kwargs)
         self._device_name = kwargs.get("device", "default.qubit")
@@ -903,17 +901,51 @@ class FixedSizeSVC(StdEstimator):
         pred = self.predict(X, **kwargs)
         return np.mean(np.isclose(pred, y).astype(float))
 
-    def save(self, filepath):
-        import pickle
+    def save(self, filepath) -> "FixedSizeSVC":
+        """
+        Save the model to a joblib file. If the given filepath does not end with ".joblib", it will be appended.
+
+        :param filepath: The path to save the model.
+        :type filepath: str
+        :return: The model instance.
+        :rtype: self.__class__
+        """
+        from joblib import dump
+
+        if not filepath.endswith(".joblib"):
+            filepath += ".joblib"
 
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        with open(filepath, "wb") as f:
-            pickle.dump(self, f)
+        dump(self, filepath)
         return self
 
     @classmethod
     def load(cls, filepath):
-        import pickle
+        """
+        Load a model from a saved file. If the extension of the file is not specified, this method will try to load
+        the model from the file with the ".joblib" extension. If the file does not exist, it will try to load the model
+        from the file with the ".pkl" extension. Otherwise, it will try without any extension.
 
-        with open(filepath, "rb") as f:
+        :param filepath: The path to the saved model.
+        :type filepath: str
+        :return: The loaded model.
+        :rtype: FixedSizeSVC
+        """
+        import pickle
+        from joblib import load
+
+        exts = [".joblib", ".pkl", ""]
+        filepath_ext = None
+
+        for ext in exts:
+            if os.path.exists(filepath + ext):
+                filepath_ext = filepath + ext
+                break
+
+        if filepath_ext is None:
+            raise FileNotFoundError(f"Could not find the file: {filepath} with any of the following extensions: {exts}")
+
+        if filepath_ext.endswith(".joblib"):
+            return load(filepath_ext)
+        with open(filepath_ext, "rb") as f:
             return pickle.load(f)
