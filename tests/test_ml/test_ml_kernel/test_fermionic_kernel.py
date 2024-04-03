@@ -51,7 +51,7 @@ def test_fermionic_pqc_n_gates(n_qubit, n_features, entangling_mth):
     x = np.stack([np.arange(n_features) for _ in range(2)])
     y = qml.math.array(np.zeros(x.shape[0]))
     fkernel.fit(x, y)
-    fkernel._depth = int(max(1, np.ceil(n_features / n_qubit)))
+    # fkernel._depth = int(max(1, np.ceil(n_features / n_qubit)))
     fkernel.parameters = np.zeros(n_features)
     fkernel.single_distance(x[0], x[-1])
     qscript = fkernel.qnode.tape.expand()
