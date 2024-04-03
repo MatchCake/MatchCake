@@ -1,8 +1,10 @@
 import pytest
 from matchcake import ml
+from typing import Literal, List, Union, Dict
 import numpy as np
 import pennylane as qml
-from matchcake.ml.ml_kernel import FermionicPQCKernel, PennylaneFermionicPQCKernel
+from pennylane.wires import Wires
+from matchcake.ml.ml_kernel import FermionicPQCKernel, StateVectorFermionicPQCKernel
 from ...configs import (
     N_RANDOM_TESTS_PER_CASE,
     ATOL_MATRIX_COMPARISON,
@@ -23,7 +25,7 @@ def test_fermionic_pqc_gram_equal_pennylane(x, rotations):
     x = qml.math.array(x)
     y = qml.math.array(np.zeros(x.shape[0]))
     fkernel = FermionicPQCKernel(rotations=rotations)
-    pkernel = PennylaneFermionicPQCKernel(rotations=rotations)
+    pkernel = StateVectorFermionicPQCKernel(rotations=rotations)
     fkernel.fit(x, y)
     pkernel.fit(x, y)
     pkernel.parameters = fkernel.parameters
@@ -45,13 +47,31 @@ def test_fermionic_pqc_gram_equal_pennylane(x, rotations):
         for ent_mth in ["identity", "fswap", "hadamard"]
     ]
 )
-def test_fermionic_pqc_n_gates(n_qubit, n_features, entangling_mth):
+def test_fermionic_pqc_n_gates(
+        n_qubit: int,
+        n_features: int,
+        entangling_mth: Literal["identity", "fswap", "hadamard"]
+):
+    """
+    Test that the number of gates is as expected for the FermionicPQCKernel.
+
+    :param n_qubit: Number of qubits in the quantum circuit
+    :type n_qubit: int
+    :param n_features: Number of features in the data
+    :type n_features: int
+    :param entangling_mth: Entangling method
+    :type entangling_mth: Literal["identity", "fswap", "hadamard"]
+    :return: None
+
+    :raises AssertionError: If the number of rotations is not as expected
+    :raises AssertionError: If the number of gates is not as expected
+    """
     fkernel = FermionicPQCKernel(size=n_qubit, entangling_mth=entangling_mth, parameter_scaling=1, data_scaling=1)
 
     x = np.stack([np.arange(n_features) for _ in range(2)])
     y = qml.math.array(np.zeros(x.shape[0]))
     fkernel.fit(x, y)
-    # fkernel._depth = int(max(1, np.ceil(n_features / n_qubit)))
+    fkernel._depth = int(max(1, np.ceil(n_features / n_qubit)))
     fkernel.parameters = np.zeros(n_features)
     fkernel.single_distance(x[0], x[-1])
     qscript = fkernel.qnode.tape.expand()
@@ -71,3 +91,79 @@ def test_fermionic_pqc_n_gates(n_qubit, n_features, entangling_mth):
     assert n_gates == n_expected_gates, \
         (f"n_gates={n_gates}, n_expected_gates={n_expected_gates} "
          f"with n_qubit={n_qubit}, n_features={n_features}, entangling_mth={entangling_mth}")
+
+
+@pytest.mark.parametrize(
+    "n_qubit, n_features, entangling_mth, rotations, expected_arrangement",
+    [
+        (2, 2, "identity", ["X"], [dict(gate_subname="X", wires=[0, 1], parameters=[0, 1])]),
+        (2, 2, "identity", ["Y,Z"], [
+            dict(gate_subname="Y", wires=[0, 1], parameters=[0, 1]),
+            dict(gate_subname="Z", wires=[0, 1], parameters=[0, 1]),
+        ]),
+        (2, 4, "identity", ["Y,Z"], [
+            dict(gate_subname="Y", wires=[0, 1], parameters=[0, 1]),
+            dict(gate_subname="Z", wires=[0, 1], parameters=[0, 1]),
+            dict(gate_subname="Y", wires=[0, 1], parameters=[2, 3]),
+            dict(gate_subname="Z", wires=[0, 1], parameters=[2, 3]),
+        ]),
+        # (4, 6, "identity", ["Y,Z"], [
+        #     dict(gate_subname="Y", wires=[0, 1], parameters=[0, 1]),
+        #     dict(gate_subname="Z", wires=[0, 1], parameters=[0, 1]),
+        #     dict(gate_subname="Y", wires=[0, 1], parameters=[2, 3]),
+        #     dict(gate_subname="Z", wires=[0, 1], parameters=[2, 3]),
+        # ]),
+    ]
+)
+def test_fermionic_pqc_arrangement_of_gates(
+        n_qubit: int,
+        n_features: int,
+        entangling_mth: Literal["identity", "fswap", "hadamard"],
+        rotations: List[Literal["X", "Y", "Z"]],
+        expected_arrangement: List[
+            Dict[Literal["gate_subname", "wires", "parameters"], Union[str, List[int], List[float]]]
+        ]
+):
+    """
+    Test that the arrangement of the gates is as expected for the FermionicPQCKernel. Note that the
+    parameters of this test function are about the non-adjoint gates only (i.e., the first half of the gates).
+
+    :param n_qubit: Number of qubits in the quantum circuit
+    :type n_qubit: int
+    :param n_features: Number of features in the data
+    :type n_features: int
+    :param entangling_mth: Entangling method
+    :type entangling_mth: Literal["identity", "fswap", "hadamard"]
+    :param rotations: List of rotations
+    :type rotations: List[Literal["X", "Y", "Z"]]
+    :param expected_arrangement: Expected arrangement of the gates
+    :type expected_arrangement: List[Dict[Literal["gate_subname", "wires", "parameters"], Union[str, List[int], List[float]]]]
+    :return: None
+
+    :raises AssertionError: If the arrangement of the gates is not as expected
+    """
+    rotations = ','.join(rotations)
+    fkernel = FermionicPQCKernel(
+        size=n_qubit, entangling_mth=entangling_mth, rotations=rotations, parameter_scaling=1, data_scaling=1
+    )
+
+    x = np.stack([np.arange(n_features) for _ in range(2)])
+    y = qml.math.array(np.zeros(x.shape[0]))
+    fkernel.fit(x, y)
+    fkernel._depth = int(max(1, np.ceil(n_features / n_qubit)))
+    fkernel.parameters = np.zeros(n_features)
+    fkernel.single_distance(x[0], x[-1])
+    qscript = fkernel.qnode.tape.expand()
+    n_gates = len(qscript.operations) // 2  # remove the adjoint gates
+    gates = [op for op in qscript.operations[:n_gates]]
+    assert len(gates) == len(expected_arrangement), (
+        f"Expected {len(expected_arrangement)} gates but got {len(gates)} "
+    )
+    for gate, expected_gate in zip(gates, expected_arrangement):
+        assert expected_gate["gate_subname"] in gate.name, (
+            f"Expected gate {expected_gate['gate_subname']} but got {gate.name} "
+        )
+        assert Wires(expected_gate["wires"]) == gate.wires, (
+            f"Expected wires {expected_gate['wires']} but got {gate} "
+        )
+        np.testing.assert_allclose(expected_gate["parameters"], gate._given_params, atol=1e-8, rtol=1e-8)
