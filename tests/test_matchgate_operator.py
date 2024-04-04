@@ -11,7 +11,7 @@ from .test_nif_device import single_matchgate_circuit
 
 np.random.seed(TEST_SEED)
 
-fSWAP_R = Matchgate(mps.fSWAP).single_transition_particle_matrix
+fSWAP_R = Matchgate(mps.fSWAP).single_particle_transition_matrix
 
 
 @pytest.mark.parametrize(
@@ -121,7 +121,7 @@ def test_single_matchgate_obs_on_specific_cases(params, k, binary_state, observa
 def test_get_padded_single_transition_particle_matrix(wires, n_wires, padded_matrix):
     mgo = MatchgateOperation(mps.fSWAP, wires=wires)
     all_wires = list(range(n_wires))
-    pred_padded_matrix = mgo.get_padded_single_transition_particle_matrix(wires=all_wires)
+    pred_padded_matrix = mgo.get_padded_single_particle_transition_matrix(wires=all_wires)
     np.testing.assert_allclose(
         pred_padded_matrix, padded_matrix,
         atol=ATOL_MATRIX_COMPARISON,
@@ -169,7 +169,7 @@ def test_single_transition_matrix(params, expected):
     expected = qml.math.array(expected)
     mgo = MatchgateOperation(params, wires=[0, 1])
     np.testing.assert_allclose(
-        mgo.single_transition_particle_matrix.squeeze(), expected,
+        mgo.single_particle_transition_matrix.squeeze(), expected,
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )

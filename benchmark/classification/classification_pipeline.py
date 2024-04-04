@@ -3,41 +3,38 @@ import sys
 import os
 from copy import deepcopy
 from collections import defaultdict
-from typing import Optional, Union, List, Callable
-from functools import partial
+from typing import Optional, Union, List
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import psutil
-import pennylane as qml
 import sklearn
 from sklearn import datasets
-from sklearn import svm
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import check_is_fitted
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
 import functools
-import umap
 from tqdm import tqdm
 import pythonbasictools as pbt
 
-from utils import MPL_RC_BIG_FONT_PARAMS
+from utils import (
+    load_mnist1d,
+    KPredictorContainer,
+    MetricsContainer,
+    save_on_exit,
+)
+from figure_scripts.utils import MPL_RC_BIG_FONT_PARAMS
 from kernels import (
     ClassicalKernel,
     MPennylaneQuantumKernel,
     CPennylaneQuantumKernel,
-    NIFKernel,
-    FermionicPQCKernel,
     PQCKernel,
+    IdentityPQCKernel,
     LightningPQCKernel,
-    PennylaneFermionicPQCKernel,
     NeighboursFermionicPQCKernel,
     CudaFermionicPQCKernel,
     CpuFermionicPQCKernel,
-    WideFermionicPQCKernel,
     CpuWideFermionicPQCKernel,
     CudaWideFermionicPQCKernel,
     FastCudaFermionicPQCKernel,
@@ -62,190 +59,14 @@ except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import matchcake
 from matchcake.ml import ClassificationVisualizer
-from matchcake.ml.ml_kernel import MLKernel, FixedSizeSVC
-msim = matchcake  # Keep for compatibility with the old code
+from matchcake.ml.ml_kernel import (
+    FixedSizeSVC,
+    NIFKernel,
+    FermionicPQCKernel,
+    StateVectorFermionicPQCKernel,
+    WideFermionicPQCKernel,
+)
 import warnings
-
-
-def save_on_exit(_method=None, *, save_func_name="to_pickle", save_args=(), **save_kwargs):
-    """
-    Decorator for a method that saves the object on exit.
-
-    :param _method: The method to decorate.
-    :type _method: Callable
-    :param save_func_name: The name of the method that saves the object.
-    :type save_func_name: str
-    :param save_args: The arguments of the save method.
-    :type save_args: tuple
-    :param save_kwargs: The keyword arguments of the save method.
-    :return: The decorated method.
-    """
-
-    def decorator(method):
-        @functools.wraps(method)
-        def wrapper(*args, **kwargs):
-            try:
-                return method(*args, **kwargs)
-            except Exception as e:
-                warnings.warn(f"Failed to run method {method.__name__}: {e}", RuntimeWarning)
-                raise e
-            finally:
-                self = args[0]
-                if not hasattr(self, save_func_name):
-                    warnings.warn(
-                        f"The object {self.__class__.__name__} does not have a save method named {save_func_name}.",
-                        RuntimeWarning
-                    )
-                try:
-                    getattr(self, save_func_name)(*save_args, **save_kwargs)
-                except Exception as e:
-                    warnings.warn(
-                        f"Failed to save object {self.__class__.__name__}: {e} with {save_func_name} method",
-                        RuntimeWarning
-                    )
-                    # raise e
-
-        wrapper.__name__ = method.__name__ + "@save_on_exit"
-        return wrapper
-
-    if _method is None:
-        return decorator
-    else:
-        return decorator(_method)
-
-
-def get_gram_predictor(cls, kernel, x_train, **kwargs):
-    def predictor(x_test):
-        return cls.predict(kernel.pairwise_distances(x_test, x_train, **kwargs))
-    return predictor
-
-
-class KPredictorContainer:
-    def __init__(self, name: str = ""):
-        self.name = name
-        self.container = defaultdict(dict)
-
-    def get(self, key, inner_key, default_value=None):
-        return self.container.get(key, {}).get(inner_key, default_value)
-
-    def set(self, key, inner_key, value):
-        self.container[key][inner_key] = value
-
-    def get_inner(self, key):
-        return self.container[key]
-
-    def get_outer(self, inner_key, default_value=None):
-        outer_dict = {key: default_value for key in self.container}
-        for key, inner_dict in self.container.items():
-            for _inner_key, value in inner_dict.items():
-                if _inner_key == inner_key:
-                    outer_dict[key] = value
-        return outer_dict
-
-    def __setitem__(self, key, value):
-        if isinstance(key, tuple):
-            return self.set(key[0], key[1], value)
-        else:
-            raise ValueError("Key in __setitem__ must be a tuple")
-
-    def __getitem__(self, item):
-        if isinstance(item, tuple):
-            return self.get(item[0], item[1])
-        else:
-            return self.get_inner(item)
-
-    def items(self, default_value=None):
-        for key in self.keys():
-            yield key, self.get(*key, default_value=default_value)
-
-    def keys(self):
-        for key, inner_dict in self.container.items():
-            for inner_key in inner_dict:
-                yield key, inner_key
-
-    def to_dataframe(
-            self,
-            *,
-            outer_column: str = "outer",
-            inner_column: str = "inner",
-            value_column: str = "value",
-            default_value=None,
-    ) -> pd.DataFrame:
-        all_keys = list(self.keys())
-        all_outer_keys = list(set(k[0] for k in all_keys))
-        all_inner_keys = list(set(k[1] for k in all_keys))
-        df_dict = {
-            outer_column: [],
-            inner_column: [],
-            value_column: [],
-        }
-        for ok in all_outer_keys:
-            for ik in all_inner_keys:
-                df_dict[outer_column].append(ok)
-                df_dict[inner_column].append(ik)
-                df_dict[value_column].append(self.get(ok, ik, default_value))
-        return pd.DataFrame(df_dict)
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(name={self.name},outer_keys={list(self.container.keys())})"
-
-
-class MetricsContainer:
-    ACCURACY_KEY = "Accuracy"
-    F1_KEY = "F1-Score"
-    PRECISION_KEY = "Precision"
-    RECALL_KEY = "Recall"
-    available_metrics = {
-        ACCURACY_KEY: accuracy_score,
-        F1_KEY: partial(f1_score, average="weighted"),
-        PRECISION_KEY: partial(precision_score, average="weighted"),
-        RECALL_KEY: partial(recall_score, average="weighted"),
-    }
-
-    def __init__(
-            self,
-            metrics: Optional[List[str]] = None,
-            *,
-            pre_name: str = "",
-            post_name: str = "",
-            name_separator: str = "_",
-    ):
-        self.metrics = metrics or list(self.available_metrics.keys())
-        self.pre_name = pre_name
-        self.post_name = post_name
-        self.name_separator = name_separator
-        if pre_name:
-            pre_name += name_separator
-        if post_name:
-            post_name = name_separator + post_name
-        self.metrics_names = [
-            f"{pre_name}{name}{post_name}" for name in self.metrics
-        ]
-        self.containers = {
-            metric: KPredictorContainer(metric_name)
-            for metric, metric_name in zip(self.metrics, self.metrics_names)
-        }
-
-    @property
-    def containers_list(self):
-        return list(self.containers.values())
-
-    def get_is_metrics_all_computed(self, key, inner_key):
-        return all(self.get(metric, key, inner_key, None) is not None for metric in self.metrics)
-
-    def get(self, metric: str, key, inner_key, default_value=None):
-        return self.containers[metric].get(key, inner_key, default_value=default_value)
-
-    def set(self, metric: str, key, inner_key, value):
-        self.containers[metric].set(key, inner_key, value)
-
-    def get_metric(self, metric: str):
-        return self.containers[metric]
-
-    def compute_metrics(self, y_true, y_pred, key, inner_key, **kwargs):
-        for metric in self.metrics:
-            self.set(metric, key, inner_key, self.available_metrics[metric](y_true, y_pred))
-        return self.containers
 
 
 class ClassificationPipeline:
@@ -260,6 +81,7 @@ class ClassificationPipeline:
         "Olivetti_faces": datasets.fetch_olivetti_faces,
         "binary_mnist": fetch_openml,
         "binary_mnist_1800": fetch_openml,
+        "mnist1d": load_mnist1d,
     }
     available_kernels = {
         "classical": ClassicalKernel,
@@ -270,8 +92,9 @@ class ClassificationPipeline:
         "fPQC-cuda": CudaFermionicPQCKernel,
         "fPQC-cpu": CpuFermionicPQCKernel,
         "PQC": PQCKernel,
+        "iPQC": IdentityPQCKernel,
         "lightning_PQC": LightningPQCKernel,
-        "PennylaneFermionicPQCKernel": PennylaneFermionicPQCKernel,
+        "PennylaneFermionicPQCKernel": StateVectorFermionicPQCKernel,
         "nfPQC": NeighboursFermionicPQCKernel,
         "wfPQC": WideFermionicPQCKernel,
         "wfPQC-cuda": CudaWideFermionicPQCKernel,
@@ -370,28 +193,28 @@ class ClassificationPipeline:
         self.preprocess_data()
 
     def update_p_bar(self, **kwargs):
-        if self.p_bar is None:
+        if getattr(self, "p_bar", None) is None:
             return
         self.p_bar.update()
         self.set_p_bar_postfix(**kwargs)
 
     def set_p_bar_postfix(self, **kwargs):
-        if self.p_bar is None:
+        if getattr(self, "p_bar", None) is None:
             return
         self.p_bar.set_postfix(kwargs)
 
     def set_p_bar_postfix_str(self, postfix: str):
-        if self.p_bar is None:
+        if getattr(self, "p_bar", None) is None:
             return
         self.p_bar.set_postfix_str(postfix)
 
     def set_p_bar_desc(self, desc: str):
-        if self.p_bar is None:
+        if getattr(self, "p_bar", None) is None:
             return
         self.p_bar.set_description(desc)
 
     def set_p_bar_postfix_with_results_table(self):
-        if self.p_bar is None:
+        if getattr(self, "p_bar", None) is None:
             return
         # df = self.get_results_table(mean=True, mean_on=self.KERNEL_KEY, show=False, filepath=None)
         postfix = {}
@@ -406,7 +229,7 @@ class ClassificationPipeline:
         self.p_bar.set_postfix(postfix)
 
     def refresh_p_bar(self):
-        if self.p_bar is None:
+        if getattr(self, "p_bar", None) is None:
             return
         self.p_bar.refresh()
 
@@ -465,6 +288,8 @@ class ClassificationPipeline:
             x = x[np.logical_or(y == classes[0], y == classes[1])]
             y = y[np.logical_or(y == classes[0], y == classes[1])]
             self.dataset = x[:1800], y[:1800]
+        elif self.dataset_name == "mnist1d":
+            self.dataset = load_mnist1d()
         else:
             raise ValueError(f"Unknown dataset name: {self.dataset_name}")
         return self.dataset
@@ -516,128 +341,13 @@ class ClassificationPipeline:
         y_train, y_test = self.y[train_indexes], self.y[test_indexes]
         return x_train, x_test, y_train, y_test
     
-    @save_on_exit
-    def make_kernels(self, fold_idx: int = 0):
-        for kernel_name in self.methods:
-            self.set_p_bar_postfix_str(f"Making kernel {kernel_name} for fold {fold_idx}")
-            if self.kernels.get(kernel_name, fold_idx, None) is not None:
-                continue
-            try:
-                kernel_class = self.available_kernels[kernel_name]
-                self.kernels[kernel_name, fold_idx] = kernel_class(
-                    seed=self.kwargs.get("kernel_seed", 0),
-                    **self.kwargs.get("kernel_kwargs", {})
-                )
-            except Exception as e:
-                print(f"Failed to make kernel {kernel_name}: {e}")
-        return self.kernels
-    
-    @save_on_exit
-    def fit_kernels(self, fold_idx: int = 0):
-        if not self.kernels:
-            self.make_kernels()
-        to_remove = []
-        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"Fitting kernel {kernel_name} for fold {fold_idx}")
-            if kernel.is_fitted:
-                continue
-            try:
-                start_time = time.perf_counter()
-                kernel.fit(x_train, y_train)
-                elapsed_time = time.perf_counter() - start_time
-                self.fit_kernels_times[kernel_name, fold_idx] = elapsed_time
-                # self.dataframe[self.dataframe[self.KERNEL_KEY == kernel_name]][self.FIT_KERNEL_TIME_KEY] = elapsed_time
-            except Exception as e:
-                if self.kwargs.get("throw_errors", False):
-                    raise e
-                print(f"Failed to fit kernel {kernel_name}: {e}. \n Removing it from the list of kernels.")
-                to_remove.append(kernel_name)
-        for kernel_name in to_remove:
-            self.kernels[kernel_name].pop(fold_idx)
-        return self.kernels
-    
-    @save_on_exit
-    def compute_train_gram_matrices(self, fold_idx: int = 0):
-        if not self.kernels:
-            self.make_kernels()
-        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        to_remove = []
-        verbose = self.kwargs.get("verbose_gram", False)
-        throw_errors = self.kwargs.get("throw_errors", False)
-        for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"{kernel_name}: train gram matrix {fold_idx+1}/{self._n_kfold_splits}")
-            if self.train_gram_matrices.get(kernel_name, fold_idx, None) is not None:
-                continue
-            try:
-                start_time = time.perf_counter()
-                self.train_gram_matrices[kernel_name, fold_idx] = kernel.compute_gram_matrix(
-                    x_train, verbose=verbose, throw_errors=throw_errors, p_bar=self.p_bar
-                )
-                self.train_gram_compute_times[kernel_name, fold_idx] = time.perf_counter() - start_time
-            except Exception as e:
-                if throw_errors:
-                    raise e
-                warnings.warn(
-                    f"Failed to compute gram matrix for kernel {kernel_name}: {e}. "
-                    f"\n Removing it from the list of kernels.",
-                    RuntimeWarning
-                )
-                to_remove.append(kernel_name)
-        for kernel_name in to_remove:
-            self.kernels[kernel_name].pop(fold_idx)
-        return self.kernels
-    
-    @save_on_exit
-    def compute_test_gram_matrices(self, fold_idx: int = 0):
-        if not self.kernels:
-            self.make_kernels()
-        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        to_remove = []
-        verbose = self.kwargs.get("verbose_gram", False)
-        throw_errors = self.kwargs.get("throw_errors", False)
-        for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"{kernel_name}: test gram matrix {fold_idx+1}/{self._n_kfold_splits}")
-            if self.test_gram_matrices.get(kernel_name, fold_idx, None) is not None:
-                continue
-            try:
-                start_time = time.perf_counter()
-                self.test_gram_matrices[kernel_name, fold_idx] = kernel.pairwise_distances(
-                    x_test, x_train, verbose=verbose, throw_errors=throw_errors, p_bar=self.p_bar
-                )
-                self.test_gram_compute_times[kernel_name, fold_idx] = time.perf_counter() - start_time
-            except Exception as e:
-                if throw_errors:
-                    raise e
-                warnings.warn(
-                    f"Failed to compute gram matrix for kernel {kernel_name}: {e}. "
-                    f"\n Removing it from the list of kernels.",
-                    RuntimeWarning
-                )
-                to_remove.append(kernel_name)
-        for kernel_name in to_remove:
-            self.kernels[kernel_name].pop(fold_idx)
-        return self.kernels
-    
-    @save_on_exit
-    def compute_gram_matrices(self, fold_idx: int = 0):
-        self.compute_train_gram_matrices(fold_idx)
-        self.compute_test_gram_matrices(fold_idx)
-        return self.kernels
-    
-    @save_on_exit
+    @save_on_exit(save_func_name="to_dot_class_pipeline")
     def make_classifiers(self, fold_idx: int = 0):
         cache_size = self.kwargs.get("kernel_cache_size", 10_000)
         for kernel_name in self.methods:
-        # for kernel_name, kernel in self.kernels.get_outer(fold_idx).items():
             self.set_p_bar_postfix_str(f"Making classifier {kernel_name} for fold {fold_idx}")
             if self.classifiers.get(kernel_name, fold_idx, None) is not None:
                 continue
-            # if self.use_gram_matrices:
-            #     svc_kernel = "precomputed"
-            # else:
-            #     svc_kernel = kernel.pairwise_distances
-            # self.classifiers[kernel_name, fold_idx] = svm.SVC(kernel=svc_kernel, random_state=0, cache_size=cache_size)
             self.classifiers[kernel_name, fold_idx] = FixedSizeSVC(
                 kernel_cls=self.available_kernels[kernel_name],
                 kernel_kwargs=self.kwargs.get("kernel_kwargs", {}),
@@ -647,13 +357,14 @@ class ClassificationPipeline:
             )
         return self.classifiers
     
-    @save_on_exit
+    @save_on_exit(save_func_name="to_dot_class_pipeline")
     def fit_classifiers(self, fold_idx: int = 0):
         if self.classifiers is None:
             self.make_classifiers()
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        to_remove = []
         for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
+            if kernel_name not in self.methods:
+                continue
             self.set_p_bar_postfix_str(f"Fitting {kernel_name} [fold {fold_idx}]")
             is_fitted = True
             try:
@@ -667,116 +378,23 @@ class ClassificationPipeline:
                 if classifier.kernel == "precomputed":
                     classifier.fit(self.train_gram_matrices[kernel_name, fold_idx], y_train)
                 else:
-                    classifier.fit(x_train, y_train, p_bar=self.p_bar)
+                    classifier.fit(x_train, y_train, p_bar=getattr(self, "p_bar", None))
                 self.fit_times[kernel_name, fold_idx] = time.perf_counter() - start_time
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
                     raise e
-                print(f"Failed to fit classifier {kernel_name}: {e}. \n Removing it from the list of classifiers.")
-                to_remove.append(kernel_name)
+                warnings.warn(F"Failed to fit classifier {kernel_name}: {e}.", RuntimeWarning)
                 continue
-        for kernel_name in to_remove:
-            self.classifiers[kernel_name].pop(fold_idx)
-            self.kernels[kernel_name].pop(fold_idx)
         return self.classifiers
 
-    @save_on_exit
-    def compute_train_accuracies(self, fold_idx: int = 0):
-        if self.classifiers is None:
-            self.make_classifiers()
-        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        to_remove = []
-        for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"Computing train accuracy:{kernel_name} [fold {fold_idx}]")
-            if self.train_accuracies.get(kernel_name, fold_idx, None) is not None:
-                continue
-            if classifier.kernel == "precomputed":
-                train_inputs = self.train_gram_matrices[kernel_name, fold_idx]
-            else:
-                train_inputs = x_train
-            self.train_accuracies[kernel_name, fold_idx] = classifier.score(train_inputs, y_train, p_bar=self.p_bar)
-        for kernel_name in to_remove:
-            self.classifiers[kernel_name].pop(fold_idx)
-            self.kernels[kernel_name].pop(fold_idx)
-            self.train_accuracies[kernel_name].pop(fold_idx)
-        return self.classifiers
-
-    @save_on_exit
-    def compute_test_accuracies(self, fold_idx: int = 0):
-        if self.classifiers is None:
-            self.make_classifiers()
-        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        to_remove = []
-        for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"Computing test accuracy:{kernel_name} [fold {fold_idx}]")
-            if self.test_accuracies.get(kernel_name, fold_idx, None) is not None:
-                self.update_p_bar()
-                continue
-            if classifier.kernel == "precomputed":
-                test_inputs = self.test_gram_matrices[kernel_name, fold_idx]
-            else:
-                test_inputs = x_test
-            try:
-                self.test_accuracies[kernel_name, fold_idx] = classifier.score(test_inputs, y_test, p_bar=self.p_bar)
-            except Exception as e:
-                if self.kwargs.get("throw_errors", False):
-                    raise e
-                warnings.warn(
-                    f"Failed to compute test accuracy for classifier {kernel_name}: {e}. \n "
-                    f"Removing it from the list of classifiers.",
-                    RuntimeWarning
-                )
-                to_remove.append(kernel_name)
-                continue
-        for kernel_name in to_remove:
-            self.classifiers[kernel_name].pop(fold_idx)
-            self.kernels[kernel_name].pop(fold_idx)
-            self.test_accuracies[kernel_name].pop(fold_idx)
-        return self.classifiers
-
-    @save_on_exit
-    def compute_test_f1_scores(self, fold_idx: int = 0):
-        if self.classifiers is None:
-            self.make_classifiers()
-        x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        to_remove = []
-        for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
-            self.set_p_bar_postfix_str(f"Computing test f1:{kernel_name} [fold {fold_idx}]")
-            if self.test_f1_scores.get(kernel_name, fold_idx, None) is not None:
-                self.update_p_bar()
-                continue
-            if classifier.kernel == "precomputed":
-                test_inputs = self.test_gram_matrices[kernel_name, fold_idx]
-            else:
-                test_inputs = x_test
-            try:
-                self.test_f1_scores[kernel_name, fold_idx] = f1_score(
-                    y_test, classifier.predict(test_inputs), average="weighted"
-                )
-            except Exception as e:
-                if self.kwargs.get("throw_errors", False):
-                    raise e
-                warnings.warn(
-                    f"Failed to compute test f1 score for classifier {kernel_name}: {e}. \n "
-                    f"Removing it from the list of classifiers.",
-                    RuntimeWarning
-                )
-                to_remove.append(kernel_name)
-                continue
-            self.update_p_bar()
-        for kernel_name in to_remove:
-            self.classifiers[kernel_name].pop(fold_idx)
-            self.kernels[kernel_name].pop(fold_idx)
-            self.test_f1_scores[kernel_name].pop(fold_idx)
-        return self.classifiers
-
-    @save_on_exit
+    @save_on_exit(save_func_name="to_dot_class_pipeline")
     def compute_metrics(self, fold_idx: int = 0):
         if self.classifiers is None:
             self.make_classifiers()
         x_train, x_test, y_train, y_test = self.get_train_test_fold(fold_idx)
-        to_remove = []
         for kernel_name, classifier in self.classifiers.get_outer(fold_idx).items():
+            if kernel_name not in self.methods:
+                continue
             self.set_p_bar_postfix_str(f"Computing metrics:{kernel_name} [fold {fold_idx}]")
             if self.train_metrics.get_is_metrics_all_computed(kernel_name, fold_idx) and \
                     self.test_metrics.get_is_metrics_all_computed(kernel_name, fold_idx):
@@ -788,32 +406,28 @@ class ClassificationPipeline:
             else:
                 train_inputs, test_inputs = x_train, x_test
             try:
-                self.train_metrics.compute_metrics(y_train, classifier.predict(train_inputs), kernel_name, fold_idx)
-                self.test_metrics.compute_metrics(y_test, classifier.predict(test_inputs), kernel_name, fold_idx)
+                self.set_p_bar_postfix_str(f"Computing train metrics:{kernel_name} [fold {fold_idx}]")
+                self.train_metrics.compute_metrics(
+                    y_train, classifier.predict(train_inputs, p_bar=getattr(self, "p_bar", None)),
+                    kernel_name, fold_idx
+                )
+                self.set_p_bar_postfix_str(f"Computing test metrics:{kernel_name} [fold {fold_idx}]")
+                self.test_metrics.compute_metrics(
+                    y_test, classifier.predict(test_inputs, p_bar=getattr(self, "p_bar", None), cache=True),
+                    kernel_name, fold_idx
+                )
             except Exception as e:
                 if self.kwargs.get("throw_errors", False):
                     raise e
                 warnings.warn(
-                    f"Failed to compute metrics for classifier {kernel_name}: {e}. \n "
-                    f"Removing it from the list of classifiers.",
-                    RuntimeWarning
+                    f"Failed to compute metrics for classifier {kernel_name}: {e}. \n ", RuntimeWarning
                 )
-                to_remove.append(kernel_name)
                 continue
             self.update_p_bar()
-        for kernel_name in to_remove:
-            self.classifiers[kernel_name].pop(fold_idx)
-            self.kernels[kernel_name].pop(fold_idx)
-            self.test_f1_scores[kernel_name].pop(fold_idx)
         return self.classifiers
 
-    def compute_accuracies(self, fold_idx: int = 0):
-        self.compute_train_accuracies(fold_idx)
-        self.compute_test_accuracies(fold_idx)
-        self.compute_test_f1_scores(fold_idx)
-
     @pbt.decorators.log_func
-    @save_on_exit
+    @save_on_exit(save_func_name="to_dot_class_pipeline")
     def run(self, **kwargs):
         table_path = kwargs.pop("table_path", None)
         show_tables = kwargs.pop("show_table", False)
@@ -828,25 +442,30 @@ class ClassificationPipeline:
                 desc=desc,
                 unit="cls",
             )
-        for fold_idx in range(self._n_kfold_splits):
-            self.run_fold(fold_idx)
+
+        def p_bar_update_callback(*args, **kwds):
+            self.update_p_bar()
             if table_path is not None:
                 self.get_results_properties_table(mean=mean_results_table, show=show_tables, filepath=table_path)
+            return
+
+        pbt.multiprocessing_tools.apply_func_multiprocess(
+            func=self.run_fold,
+            iterable_of_args=[(fold_idx,) for fold_idx in range(self._n_kfold_splits)],
+            nb_workers=kwargs.get("nb_workers", 0),
+            callbacks=[p_bar_update_callback],
+            verbose=False,
+        )
         self.set_p_bar_postfix_str("Done. Saving results.")
-        self.to_pickle()
+        self.to_dot_class_pipeline()
         if kwargs.get("close_p_bar", True):
             self.p_bar.close()
         return self
 
-    @save_on_exit
+    @save_on_exit(save_func_name="to_dot_class_pipeline")
     def run_fold(self, fold_idx: int):
-        # self.make_kernels(fold_idx)
-        # self.fit_kernels(fold_idx)
-        # if self.use_gram_matrices:
-        #     self.compute_gram_matrices(fold_idx)
         self.make_classifiers(fold_idx)
         self.fit_classifiers(fold_idx)
-        # self.compute_accuracies(fold_idx)
         self.compute_metrics(fold_idx)
         self.set_p_bar_postfix_with_results_table()
         self.set_p_bar_postfix_str(f"Done with fold {fold_idx}")
@@ -986,7 +605,7 @@ class ClassificationPipeline:
     def plot(self, *args, **kwargs):
         return self.show(*args, **kwargs)
 
-    @pbt.decorators.log_func
+    # @pbt.decorators.log_func
     def to_pickle(self):
         if self.save_path is not None:
             import pickle
@@ -1000,10 +619,11 @@ class ClassificationPipeline:
     @classmethod
     def from_pickle(cls, pickle_path: str, new_attrs: Optional[dict] = None) -> "ClassificationPipeline":
         import pickle
+        if new_attrs is None:
+            new_attrs = {}
         with open(pickle_path, "rb") as f:
             loaded_obj = pickle.load(f)
-        if new_attrs is not None:
-            loaded_obj.__dict__.update(new_attrs)
+        loaded_obj.__dict__.update(new_attrs)
         new_obj = cls(**new_attrs)
         new_obj.__setstate__(loaded_obj.__getstate__())
         return new_obj
@@ -1023,6 +643,147 @@ class ClassificationPipeline:
                     RuntimeWarning
                 )
 
+        return cls(**kwargs)
+
+    def save_fold(self, kernel_name: str, fold_idx: int, save_path: Optional[str] = None):
+        save_path = save_path or self.save_path
+        if save_path is None:
+            return self
+        if not save_path.endswith(".class_pipeline"):
+            save_path += ".class_pipeline"
+        os.makedirs(save_path, exist_ok=True)
+        fold_save_dir: str = os.path.join(save_path, kernel_name, str(fold_idx))
+        self.classifiers.save_item(os.path.join(fold_save_dir, "classifier.pkl"), kernel_name, fold_idx)
+        self.fit_times.save_item(os.path.join(fold_save_dir, "fit_time.pkl"), kernel_name, fold_idx)
+        self.train_metrics.save_item_metrics(
+            os.path.join(fold_save_dir, "train_metrics.pkl"), kernel_name, fold_idx
+        )
+        self.test_metrics.save_item_metrics(
+            os.path.join(fold_save_dir, "test_metrics.pkl"), kernel_name, fold_idx
+        )
+        try:
+            self.save_fold_to_txt(kernel_name, fold_idx, save_path)
+        except Exception as e:
+            warnings.warn(f"Failed to save fold to txt: {e}", RuntimeWarning)
+        return self
+
+    def save_fold_to_txt(self, kernel_name: str, fold_idx: int, save_path: Optional[str] = None):
+        save_path = save_path or self.save_path
+        if save_path is None:
+            return self
+        if not save_path.endswith(".class_pipeline"):
+            save_path += ".class_pipeline"
+        os.makedirs(save_path, exist_ok=True)
+        fold_save_dir: str = os.path.join(save_path, kernel_name, str(fold_idx))
+        self.classifiers.save_item_to_txt(os.path.join(fold_save_dir, "classifier.txt"), kernel_name, fold_idx)
+        self.fit_times.save_item_to_txt(os.path.join(fold_save_dir, "fit_time.txt"), kernel_name, fold_idx)
+        self.train_metrics.save_item_metrics_to_txt(
+            os.path.join(fold_save_dir, "train_metrics.txt"), kernel_name, fold_idx
+        )
+        self.test_metrics.save_item_metrics_to_txt(
+            os.path.join(fold_save_dir, "test_metrics.txt"), kernel_name, fold_idx
+        )
+        return self
+
+    # @pbt.decorators.log_func
+    def to_dot_class_pipeline(self, save_path: Optional[str] = None):
+        """
+        The method is used to save the pipeline to a ".class_pipeline" file.
+
+        In this file, you can find the following information:
+            - a sub-folder for each classifier containing the following:
+                - a sub-folder for each fold containing the following:
+                    - a .pkl file containing the classifier
+                    - a .csv file containing the results metrics
+                    - a .csv file containing the properties of the classifier
+            - a .csv file containing the results metrics for all classifiers
+            - a .csv file containing the properties of all classifiers
+            - a .pkl file containing the pipeline itself
+
+        :return: A reference to the pipeline itself.
+        """
+        save_path = save_path or self.save_path
+        if save_path is not None:
+            save_path = save_path
+            if not save_path.endswith(".class_pipeline"):
+                save_path += ".class_pipeline"
+            os.makedirs(save_path, exist_ok=True)
+            for (kernel_name, fold_idx), classifier in self.classifiers.items():
+                self.save_fold(kernel_name, fold_idx, save_path)
+            self.to_pickle()
+        return self
+
+    def load_fold(self, kernel_name: str, fold_idx: int, save_path: Optional[str] = None):
+        save_path = save_path or self.save_path
+        if save_path is None:
+            return self
+        if not save_path.endswith(".class_pipeline"):
+            save_path += ".class_pipeline"
+        fold_save_dir: str = os.path.join(save_path, kernel_name, str(fold_idx))
+        self.classifiers.load_item(os.path.join(fold_save_dir, "classifier.pkl"), kernel_name, fold_idx)
+        self.fit_times.load_item(os.path.join(fold_save_dir, "fit_time.pkl"), kernel_name, fold_idx)
+        self.train_metrics.load_item_metrics(
+            os.path.join(fold_save_dir, "train_metrics.pkl"), kernel_name, fold_idx
+        )
+        self.test_metrics.load_item_metrics(
+            os.path.join(fold_save_dir, "test_metrics.pkl"), kernel_name, fold_idx
+        )
+        return self
+
+    @classmethod
+    def from_dot_class_pipeline(
+            cls,
+            dot_class_pipeline: str,
+            new_attrs: Optional[dict] = None
+    ) -> "ClassificationPipeline":
+        new_obj = cls(**new_attrs)
+        for root, dirs, files in os.walk(dot_class_pipeline):
+            if any([f.endswith(".pkl") for f in files]):
+                kernel_name = os.path.basename(os.path.dirname(root))
+                fold_idx = int(os.path.basename(root))
+                try:
+                    new_obj.load_fold(kernel_name, fold_idx, dot_class_pipeline)
+                except Exception as e:
+                    raise RuntimeError(f"Failed to load fold {kernel_name} - {fold_idx}: {e}")
+        return new_obj
+
+    @classmethod
+    def from_dot_class_pipeline_pkl_or_new(
+            cls,
+            dot_class_pipeline: Optional[str] = None,
+            **kwargs
+    ) -> "ClassificationPipeline":
+        """
+        Looks for a .class_pipeline file and loads it if it exists, otherwise looks
+        for a 'cls.pkl' file and loads it if it exists, otherwise creates a new object.
+
+        :param dot_class_pipeline:
+        :param kwargs:
+        :return:
+        """
+        save_path = kwargs.get("save_path", None)
+        if dot_class_pipeline is None:
+            dot_class_pipeline = save_path
+        if os.path.exists(dot_class_pipeline):
+            try:
+                return cls.from_dot_class_pipeline(dot_class_pipeline, new_attrs=kwargs)
+            except EOFError:
+                warnings.warn(
+                    f"Failed to load object from pickle file {dot_class_pipeline}. Encountered EOFError. "
+                    f"Loading a new object instead.",
+                    RuntimeWarning
+                )
+        elif os.path.exists(os.path.join(os.path.dirname(dot_class_pipeline), "cls.pkl")):
+            try:
+                return cls.from_pickle(os.path.join(os.path.dirname(dot_class_pipeline), "cls.pkl"), new_attrs=kwargs)
+            except EOFError:
+                warnings.warn(
+                    f"Failed to load object from pickle file "
+                    f"{os.path.join(os.path.dirname(dot_class_pipeline), 'cls.pkl')}. "
+                    f"Encountered EOFError. "
+                    f"Loading a new object instead.",
+                    RuntimeWarning
+                )
         return cls(**kwargs)
 
     def to_npz(self):
@@ -1056,6 +817,8 @@ class ClassificationPipeline:
             lambda df1, df2: pd.merge(df1, df2, on=[self.KERNEL_KEY, self.FOLD_IDX_KEY], how="outer"),
             df_list
         )
+        df = df.fillna(np.nan)
+
         sort = kwargs.get("sort", False)
         is_sorted = False
         mean_df = kwargs.get("mean", False)
@@ -1098,6 +861,7 @@ class ClassificationPipeline:
                 df_dict[prop].append(getattr(classifier, prop, np.NaN))
             df_dict[self.KERNEL_KEY].append(kernel_name)
         df = pd.DataFrame(df_dict)
+        df = df.fillna(np.nan)
         filepath: Optional[str] = kwargs.get("filepath", None)
         if filepath is not None:
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -1191,89 +955,4 @@ class ClassificationPipeline:
         )
         self.bar_plot(filepath=os.path.join(save_dir, "bar_plot.png"), show=False, **kwargs)
         return self
-
-
-class SyntheticGrowthPipeline:
-    def __init__(
-            self,
-            n_features_list: Optional[List[int]] = None,
-            n_samples: int = 300,
-            dataset_name: str = "synthetic",
-            classification_pipeline_kwargs: Optional[dict] = None,
-            save_dir: Optional[str] = None,
-    ):
-        self.n_features_list = n_features_list or [
-            2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
-        ]
-        self.n_samples = n_samples
-        self.dataset_name = dataset_name
-        self.classification_pipeline_kwargs = classification_pipeline_kwargs or {}
-        self.classification_pipelines = {}
-        self._results_table = None
-        self.save_dir = save_dir
-
-    @property
-    def results_table(self):
-        if self._results_table is None:
-            self.get_results_table()
-        return self._results_table
-
-    @results_table.setter
-    def results_table(self, value):
-        self._results_table = value
-
-    def run(self, **kwargs):
-        save_dir = kwargs.get("save_dir", self.save_dir)
-        for n_features in self.n_features_list:
-            cp_kwargs = deepcopy(self.classification_pipeline_kwargs)
-            cp_kwargs["dataset_n_features"] = n_features
-            cp_kwargs["dataset_n_samples"] = self.n_samples
-            if save_dir is not None:
-                cp_kwargs["save_path"] = os.path.join(
-                    save_dir, f"{self.dataset_name}_{n_features}feat.pkl"
-                )
-            self.classification_pipelines[n_features] = ClassificationPipeline.from_pickle_or_new(
-                pickle_path=cp_kwargs.get("save_path", None), **cp_kwargs
-            ).run(**kwargs)
-        return self
-
-    def get_results_table(self, **kwargs):
-        df_list = []
-        show = kwargs.pop("show", False)
-        filepath: Optional[str] = kwargs.pop("filepath", None)
-        for n_features, pipeline in self.classification_pipelines.items():
-            df_list.append(pipeline.get_results_properties_table(**kwargs))
-        df = pd.concat(df_list)
-        self.results_table = df
-
-        if filepath is not None:
-            os.makedirs(os.path.dirname(filepath), exist_ok=True)
-            df.to_csv(filepath)
-        if show:
-            print(df.to_markdown())
-        return df
-
-    def plot_results(self, **kwargs):
-        x_axis_key = kwargs.get("x_axis_key", "n_features")
-        y_axis_key = kwargs.get("y_axis_key", ClassificationPipeline.FIT_TIME_KEY)
-        df = self.results_table
-        fig, ax = kwargs.get("fig", None), kwargs.get("ax", None)
-        if fig is None or ax is None:
-            fig, ax = plt.subplots(figsize=(14, 10))
-        colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-        for i, (kernel_name, kernel_df) in enumerate(df.groupby(ClassificationPipeline.KERNEL_KEY)):
-            x_sorted_unique = np.sort(kernel_df[x_axis_key].unique())
-            y_series = kernel_df.groupby(x_axis_key)[y_axis_key]
-            y_mean = y_series.mean().values
-            y_std = y_series.std().values
-            ax.plot(x_sorted_unique, y_mean, label=kernel_name, color=colors[i])
-            if y_series.count().min() > 1:
-                ax.fill_between(x_sorted_unique, y_mean - y_std, y_mean + y_std, alpha=0.2, color=colors[i])
-        ax.set_xlabel(x_axis_key)
-        ax.set_ylabel(y_axis_key)
-        ax.legend()
-        if kwargs.get("show", False):
-            plt.show()
-        return fig, ax
-
 

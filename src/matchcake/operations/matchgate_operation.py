@@ -59,17 +59,17 @@ class MatchgateOperation(Matchgate, Operation):
             return None
         return batch_size
 
-    def get_padded_single_transition_particle_matrix(self, wires=None):
+    def get_padded_single_particle_transition_matrix(self, wires=None):
         r"""
-        Return the padded single transition particle matrix in order to have the block diagonal form where
-        the block is the single transition particle matrix at the corresponding wires.
+        Return the padded single particle transition matrix in order to have the block diagonal form where
+        the block is the single particle transition matrix at the corresponding wires.
         
         :param wires: The wires of the whole system.
-        :return: padded single transition particle matrix
+        :return: padded single particle transition matrix
         """
         if wires is None:
             wires = self.wires
-        matrix = self.single_transition_particle_matrix
+        matrix = self.single_particle_transition_matrix
         if qml.math.ndim(matrix) == 2:
             padded_matrix = pnp.eye(2*len(wires))
         elif qml.math.ndim(matrix) == 3:
@@ -136,7 +136,7 @@ class MatchgateOperation(Matchgate, Operation):
         return Operation.__copy__(self)
 
 
-class _SingleTransitionMatrix:
+class _SingleParticleTransitionMatrix:
 
     @staticmethod
     def make_wires_continuous(wires: Wires):
@@ -146,7 +146,7 @@ class _SingleTransitionMatrix:
 
     @classmethod
     def from_operation(cls, op: MatchgateOperation):
-        return cls(op.single_transition_particle_matrix, op.wires)
+        return cls(op.single_particle_transition_matrix, op.wires)
 
     @classmethod
     def from_operations(cls, ops: Iterable[MatchgateOperation]):
@@ -166,9 +166,9 @@ class _SingleTransitionMatrix:
 
         for op in ops:
             wire0_idx = all_wires.index(op.wires[0])
-            slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + op.single_transition_particle_matrix.shape[-2])
-            slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + op.single_transition_particle_matrix.shape[-1])
-            matrix[..., slice_0, slice_1] = op.single_transition_particle_matrix
+            slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + op.single_particle_transition_matrix.shape[-2])
+            slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + op.single_particle_transition_matrix.shape[-1])
+            matrix[..., slice_0, slice_1] = op.single_particle_transition_matrix
         return cls(matrix, all_wires)
 
     def __init__(self, matrix: pnp.ndarray, wires: Wires):
@@ -179,13 +179,13 @@ class _SingleTransitionMatrix:
         return self.matrix
 
     def __matmul__(self, other):
-        if not isinstance(other, _SingleTransitionMatrix):
+        if not isinstance(other, _SingleParticleTransitionMatrix):
             raise ValueError(f"Cannot multiply _SingleTransitionMatrix with {type(other)}")
 
         if self.wires != other.wires:
             raise NotImplementedError("Cannot multiply _SingleTransitionMatrix with different wires yet.")
 
-        return _SingleTransitionMatrix(self.matrix @ other.matrix, self.wires)
+        return _SingleParticleTransitionMatrix(self.matrix @ other.matrix, self.wires)
 
     def pad(self, wires: Wires):
         if self.wires == wires:
@@ -204,4 +204,4 @@ class _SingleTransitionMatrix:
         slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-2])
         slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-1])
         padded_matrix[..., slice_0, slice_1] = matrix
-        return _SingleTransitionMatrix(padded_matrix, wires)
+        return _SingleParticleTransitionMatrix(padded_matrix, wires)

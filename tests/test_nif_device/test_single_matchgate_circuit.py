@@ -162,7 +162,7 @@ def test_single_gate_transition_matrix_on_specific_cases(params, expected):
     nif_device.apply(MatchgateOperation(params, wires=[0, 1]))
     mgo = MatchgateOperation(params, wires=[0, 1])
     np.testing.assert_allclose(
-        mgo.single_transition_particle_matrix.squeeze(), expected,
+        mgo.single_particle_transition_matrix.squeeze(), expected,
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )

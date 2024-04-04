@@ -1,55 +1,17 @@
-import time
 import sys
-import os
-from copy import deepcopy
-from collections import defaultdict
-from fractions import Fraction
-from typing import Optional, Union, List, Callable
-from functools import partial
 import argparse
+import os
+import sys
+from copy import deepcopy
+from fractions import Fraction
+from typing import Optional, List
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import psutil
-import pennylane as qml
-from numpy.polynomial import Polynomial
 from scipy import stats
-from sklearn import datasets
-from sklearn import svm
-from sklearn.datasets import fetch_openml
-from sklearn.model_selection import train_test_split
-from sklearn.utils.validation import check_is_fitted
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score, r2_score
-import functools
-import umap
 from tqdm import tqdm
-import pythonbasictools as pbt
-
-from kernels import (
-    ClassicalKernel,
-    MPennylaneQuantumKernel,
-    CPennylaneQuantumKernel,
-    NIFKernel,
-    FermionicPQCKernel,
-    PQCKernel,
-    LightningPQCKernel,
-    PennylaneFermionicPQCKernel,
-    NeighboursFermionicPQCKernel,
-    CudaFermionicPQCKernel,
-    CpuFermionicPQCKernel,
-    WideFermionicPQCKernel,
-    CpuWideFermionicPQCKernel,
-    CudaWideFermionicPQCKernel,
-    FastCudaFermionicPQCKernel,
-    FastCudaWideFermionicPQCKernel,
-    SwapCudaFermionicPQCKernel,
-    SwapCudaWideFermionicPQCKernel,
-    IdentityCudaFermionicPQCKernel,
-    IdentityCudaWideFermionicPQCKernel,
-    HadamardCudaWideFermionicPQCKernel,
-    HadamardCudaFermionicPQCKernel,
-)
 
 try:
     import matchcake
@@ -57,11 +19,86 @@ except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import matchcake
 os.environ["OMP_NUM_THREADS"] = str(psutil.cpu_count(logical=False))
-from matchcake.ml import ClassificationVisualizer
-from matchcake.ml.ml_kernel import MLKernel, FixedSizeSVC
-import warnings
 from classification_pipeline import ClassificationPipeline
-from utils import MPL_RC_BIG_FONT_PARAMS, mStyles, find_complexity, exp_fit, poly_fit, lin_fit, BIG_O_STR, log_fit
+from utils import (
+    exp_fit,
+    poly_fit,
+    lin_fit,
+    log_fit,
+    number_axes,
+)
+from figure_scripts.utils import (
+    MPL_RC_BIG_FONT_PARAMS,
+    mStyles,
+    BIG_O_STR,
+)
+
+
+def add_complexity(x, y, **kwargs):
+    fig: plt.Figure = kwargs.get("fig", None)
+    ax: plt.Axes = kwargs.get("ax", None)
+    if fig is None or ax is None:
+        raise ValueError("fig and ax must be provided.")
+    nan_mask = np.isnan(x) | np.isnan(y)
+    x = x[~nan_mask]
+    y = y[~nan_mask]
+    n_points = kwargs.get("n_points", max(2, int(0.5 * len(x))))
+    x = x[-n_points:]
+    y = y[-n_points:]
+    all_x = kwargs.get("all_x", x)
+    color = kwargs.get("color", "gray")
+    alpha = kwargs.get("alpha", 0.5)
+    linestyle = kwargs.get("linestyle", ":")
+    complexity = kwargs.get("complexity", "exponential")
+    base = kwargs.get("base", 2)
+    y_scale = kwargs.get("y_scale", "linear")
+    y_scale_base = kwargs.get("y_scale_base", base)
+    x_scale = kwargs.get("x_scale", "linear")
+    x_scale_base = kwargs.get("x_scale_base", base)
+    scale = y_scale + x_scale
+    if x_scale == "log":
+        x = np.log(x) / np.log(x_scale_base)
+        all_x = np.log(all_x) / np.log(x_scale_base)
+    if y_scale == "log":
+        y = np.log(y) / np.log(y_scale_base)
+    if complexity == "exponential" and scale == "loglog":
+        complexity_out = exp_fit(x, y, x_lbl="N",
+                                 **kwargs)  # log(y) = log(c * b^(a * log(x))) = log(c) + a * log(x) * log(b)
+        raise ValueError("Not implemented")
+    elif complexity == "exponential" and scale == "loglinear":
+        complexity_out = lin_fit(x, y, x_lbl="N", **kwargs)  # log(y) = log(c * b^(a * b)) = log(c) + a * x * log(b)
+    elif complexity == "exponential" and scale == "linearlog":
+        complexity_out = exp_fit(x, y, x_lbl="N", **kwargs)  # y = c * b^(a * log(x)) = c * b^(log(x^a))
+    elif complexity == "exponential" and scale == "linearlinear":
+        complexity_out = exp_fit(x, y, x_lbl="N", **kwargs)  # y = c * b^(a * x)
+    elif complexity == "polynomial" and scale == "loglog":
+        complexity_out = lin_fit(x, y, x_lbl="N", **kwargs)  # log(y) = log(b * (log(x)^a)) = log(b) + a log(log(x))
+    elif complexity == "polynomial" and scale == "loglinear":
+        complexity_out = log_fit(x, y, x_lbl="N", **kwargs)  # log(y) = log(b * (x^a)) = log(b) + a log(x)
+    elif complexity == "polynomial" and scale == "linearlinear":
+        complexity_out = poly_fit(x, y, x_lbl="N", **kwargs)  # y = c + b * (x^a)
+    else:
+        raise ValueError(f"Invalid complexity type: {complexity}")
+    popt = complexity_out["popt"]
+    complexity_func = complexity_out["func"]
+    # r2_str = f": $R^2={complexity_out['r2']:.2f}$"
+    r2_str = f""
+    if complexity == "exponential":
+        complexity_out["label"] = f"~${BIG_O_STR}({y_scale_base}^{{ {popt[0]:.2f}N }})${r2_str}"
+    elif complexity == "polynomial":
+        power_str = f"{popt[0]:.2f}"
+        if abs(popt[0]) < 1:
+            power_str = str(Fraction(popt[0]).limit_denominator(max_denominator=10))
+        complexity_out["label"] = f"~${BIG_O_STR}(N^{{ {power_str} }})${r2_str}"
+    x_fit = np.linspace(all_x[0], all_x[-1], 1_000)
+    y_fit = complexity_func(x_fit, *complexity_out["popt"])
+
+    if x_scale == "log":
+        x_fit = x_scale_base ** x_fit
+    if y_scale == "log":
+        y_fit = y_scale_base ** y_fit
+    ax.plot(x_fit, y_fit, color=color, linestyle=linestyle, alpha=alpha)
+    return fig, ax, complexity_out
 
 
 class DatasetComplexityPipeline:
@@ -69,16 +106,19 @@ class DatasetComplexityPipeline:
         "digits": 2,
         "iris": 2,
         "breast_cancer": 2,
+        "mnist1d": 2,
     }
     DATASET_MAX_SIZE_MAP = {
         "digits": 64,
         "iris": 4,
         "breast_cancer": 30,
+        "mnist1d": 40,
     }
     DATASET_STEP_SIZE_MAP = {
-        "digits": 4,
+        "digits": 2,
         "iris": 2,
         "breast_cancer": 2,
+        "mnist1d": 2,
     }
     # DEFAULT_SIZE_LISTS = {
     #     d_name: np.arange(
@@ -94,6 +134,7 @@ class DatasetComplexityPipeline:
         "ifPQC-cpu": np.inf,
         "hfPQC-cpu": np.inf,
         "PQC": 16,
+        "iPQC": np.inf,
     }
 
     @classmethod
@@ -153,7 +194,8 @@ class DatasetComplexityPipeline:
         )
         kwargs["p_bar"] = p_bar
         kwargs["close_p_bar"] = False
-        for size in self.kernel_size_list:
+        kwargs["nb_workers"] = kwargs.get("nb_workers", 0)
+        for i, size in enumerate(self.kernel_size_list):
             p_bar.set_description(f"Complexity run on {self.dataset_name}, size={size}")
             cp_kwargs = deepcopy(self.classification_pipeline_kwargs)
             cp_kwargs["dataset_name"] = self.dataset_name
@@ -164,14 +206,16 @@ class DatasetComplexityPipeline:
             cp_kwargs["dataset_n_samples"] = self.n_samples
             if save_dir is not None:
                 cp_kwargs["save_path"] = os.path.join(
-                    save_dir, f"{self.dataset_name}", f"size{size}", "cls.pkl"
+                    save_dir, f"{self.dataset_name}", f"size{size}", ".class_pipeline"
                 )
-            self.classification_pipelines[size] = ClassificationPipeline.from_pickle_or_new(
+            self.classification_pipelines[size] = ClassificationPipeline.from_dot_class_pipeline_pkl_or_new(
                 pickle_path=cp_kwargs.get("save_path", None), **cp_kwargs
             )
             if should_run_pipelines:
                 self.classification_pipelines[size].run(**kwargs)
+            self.classification_pipelines[size].to_dot_class_pipeline()
             self.classification_pipelines[size].save_all_results()
+            p_bar.n = (i + 1) * n_mth * n_kfold_splits
         p_bar.close()
         return self
 
@@ -189,6 +233,7 @@ class DatasetComplexityPipeline:
         if filepath is not None:
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
             df.to_csv(filepath)
+            print(f"Results saved to {filepath}")
         if show:
             print(df.to_markdown())
         return df
@@ -223,7 +268,7 @@ class DatasetComplexityPipeline:
         y_scale_base = kwargs.get("y_scale_base", 2)
         x_scale = kwargs.get("x_scale", "linear")
         x_scale_base = kwargs.get("x_scale_base", 2)
-        df = self.results_table
+        df = kwargs.get("df", self.results_table)
         fig, ax = kwargs.get("fig", None), kwargs.get("ax", None)
         if fig is None or ax is None:
             fig, ax = plt.subplots(figsize=(14, 10))
@@ -252,19 +297,18 @@ class DatasetComplexityPipeline:
         for i, (kernel_name, kernel_df) in enumerate(df.groupby(ClassificationPipeline.KERNEL_KEY)):
             if kernel_name not in kernels:
                 continue
-            x_sorted_unique = np.sort(kernel_df[x_axis_key].unique())
-            y_series = kernel_df.groupby(x_axis_key)[y_axis_key]
-            y_mean = y_scale_factor * y_series.mean().values
-            y_std = y_scale_factor * y_series.std().values
+            x, y_series = list(zip(*[(x, group[y_axis_key]) for x, group in kernel_df.groupby(x_axis_key)]))
+            y_mean = y_scale_factor * np.array([y.mean() for y in y_series])
+            y_std = y_scale_factor * np.array([y.std() for y in y_series])
 
             k_color = kernel_to_color.get(kernel_name, colors[i])
             k_marker = kernel_to_marker.get(kernel_name, mStyles[i])
             k_linestyle = kernel_to_linestyle.get(kernel_name, base_linestyle)
 
             if kernel_to_polyfit.get(kernel_name, False):
-                *_, comp_out = self.add_complexity(
+                *_, comp_out = add_complexity(
                     fig=fig, ax=ax,
-                    x=x_sorted_unique,
+                    x=x,
                     all_x=np.sort(df[x_axis_key].unique()),
                     y=y_mean,
                     color=k_color,
@@ -283,13 +327,18 @@ class DatasetComplexityPipeline:
             pre_lbl, post_lbl = kwargs.get("pre_lbl", ""), kwargs.get("post_lbl", "")
             kernel_lbl = kernel_to_lbl.get(kernel_name, kernel_name)
             lbl = f"{pre_lbl}{kernel_lbl}{post_lbl}{comp_lbl}"
-            ax.plot(x_sorted_unique, y_mean, label=lbl, color=k_color, marker=k_marker, linestyle=k_linestyle)
-
             conf_int_a, conf_int_b = stats.norm.interval(
                 confidence_interval, loc=y_mean,
                 scale=y_std / np.sqrt(kernel_df.groupby(x_axis_key).size().values)
             )
-            ax.fill_between(x_sorted_unique, conf_int_a, conf_int_b, alpha=0.2, color=k_color)
+            if kwargs.get("fill_between", True):
+                ax.plot(x, y_mean, label=lbl, color=k_color, marker=k_marker, linestyle=k_linestyle)
+                ax.fill_between(x, conf_int_a, conf_int_b, alpha=0.2, color=k_color)
+            else:
+                ax.errorbar(
+                    x, y_mean, yerr=np.stack([y_mean - conf_int_a, conf_int_b - y_mean], axis=0),
+                    marker=k_marker, color=k_color, linestyle=k_linestyle, fillstyle='full', label=lbl
+                )
             if y_scale in ["log", "symlog"]:
                 ax.set_yscale(y_scale, base=10)
             else:
@@ -302,7 +351,7 @@ class DatasetComplexityPipeline:
             y_min = min(y_min, np.nanmin(conf_int_a), np.nanmin(y_mean))
             y_max = max(y_max, np.nanmax(conf_int_b), np.nanmax(y_mean))
             data_dict[kernel_name] = {
-                "x": x_sorted_unique,
+                "x": x,
                 "y": y_mean,
                 "y_std": y_std,
                 "y_min": y_min,
@@ -332,53 +381,74 @@ class DatasetComplexityPipeline:
             plt.rcParams.update(MPL_RC_BIG_FONT_PARAMS)
             plt.rcParams["legend.fontsize"] = 22
             plt.rcParams["lines.linewidth"] = 4.0
-            plt.rcParams["font.size"] = 24
-        x_keys = {"N [-]": "kernel_size"}
-        accuracies_lbl = "Accuracies [%]"
+            plt.rcParams["font.size"] = 36
+            # plt.rcParams["font.family"] = "serif"
+            # plt.rcParams["font.serif"] = "Times New Roman"
+            plt.rcParams["mathtext.fontset"] = "stix"
+            plt.rc('text', usetex=True)
+
+        x_keys = {r"$N$ $[-]$": "kernel_size"}
+        accuracies_lbl = r"Accuracies $[\%]$"
+        fit_time_lbl = "Fit Time $[s]$"
         linestyles = ["-", "--", "-.", ":"]
-        y_lbl_to_keys = {
-            ClassificationPipeline.FIT_TIME_KEY: ClassificationPipeline.FIT_TIME_KEY,
-            accuracies_lbl: [ClassificationPipeline.TRAIN_ACCURACY_KEY, ClassificationPipeline.TEST_ACCURACY_KEY],
-        }
+        y_lbl_to_keys = {}
+        if kwargs.get("add_fit_time", True):
+            y_lbl_to_keys[fit_time_lbl] = ClassificationPipeline.FIT_TIME_KEY
+        if kwargs.get("add_accuracies", True):
+            y_lbl_to_keys[accuracies_lbl] = [
+                ClassificationPipeline.TRAIN_ACCURACY_KEY, ClassificationPipeline.TEST_ACCURACY_KEY
+            ]
         y_lbl_to_pre_post_lbl = {accuracies_lbl: ("Train ", "Test ")}
         y_lbl_to_scale_factor = {
-            ClassificationPipeline.FIT_TIME_KEY: 1,
+            fit_time_lbl: 1,
             accuracies_lbl: 100,
         }
         y_lbl_to_y_scale = {
-            ClassificationPipeline.FIT_TIME_KEY: "log",
+            fit_time_lbl: "log",
             accuracies_lbl: "linear",
         }
         y_lbl_to_y_scale_base = {
-            ClassificationPipeline.FIT_TIME_KEY: 2,
+            fit_time_lbl: 2,
             accuracies_lbl: None,
         }
         y_lbl_to_x_scale = {
-            ClassificationPipeline.FIT_TIME_KEY: "linear",
+            fit_time_lbl: "linear",
             accuracies_lbl: "linear",
         }
         y_lbl_to_x_scale_base = {
-            ClassificationPipeline.FIT_TIME_KEY: 2,
+            fit_time_lbl: 2,
             accuracies_lbl: None,
         }
         df = self.results_table
+        df_acc = df.copy()
+        df_acc[ClassificationPipeline.KERNEL_KEY] = df_acc[ClassificationPipeline.KERNEL_KEY].apply(
+            lambda x: x.replace("-cuda", "").replace("-cpu", "")
+        )
+
         kernels = df[ClassificationPipeline.KERNEL_KEY].unique()
         gpu_methods = [m for m in kernels if "cuda" in m]
         cpu_methods = [m for m in kernels if m not in gpu_methods]
-        set_methods = cpu_methods + [m for m in gpu_methods if m.replace("-cuda", "-cpu") not in cpu_methods]
+        complexity_methods = [m for m in cpu_methods if "i" not in m]
+        # acc_methods = cpu_methods + [m for m in gpu_methods if m.replace("-cuda", "-cpu") not in cpu_methods]
+        acc_methods = df_acc[ClassificationPipeline.KERNEL_KEY].unique().tolist()
         kernel_to_complexity = {
             m: "exponential"
             if m == "PQC" else "polynomial"
             for m in kernels
         }
         y_lbl_to_polyfit = {
-            ClassificationPipeline.FIT_TIME_KEY: {m: False for m in kernels},
-            accuracies_lbl: {m: False for m in kernels},
+            fit_time_lbl: {m: False for m in kernels},
+            accuracies_lbl: {m: False for m in acc_methods},
         }
         y_lbl_to_kernels_list = {
-            ClassificationPipeline.FIT_TIME_KEY: cpu_methods,
-            accuracies_lbl: set_methods
+            fit_time_lbl: complexity_methods,
+            accuracies_lbl: acc_methods
         }
+        y_lbl_to_df = {
+            fit_time_lbl: df,
+            accuracies_lbl: df_acc,
+        }
+
         gpu_linestyle, cpu_linestyle = "--", "-"
         train_linestyle, test_linestyle = "-", "-."
         kernel_to_linestyle = {
@@ -386,10 +456,16 @@ class DatasetComplexityPipeline:
             for m in kernels
         }
         y_lbl_to_linestyle_list = {
-            ClassificationPipeline.FIT_TIME_KEY: [kernel_to_linestyle, kernel_to_linestyle],
-            accuracies_lbl: [{m: train_linestyle for m in kernels}, {m: test_linestyle for m in kernels}],
+            fit_time_lbl: [kernel_to_linestyle, kernel_to_linestyle],
+            accuracies_lbl: [{m: train_linestyle for m in acc_methods}, {m: test_linestyle for m in acc_methods}],
         }
         kernel_to_lbl = {m: m.replace("-cuda", "").replace("-cpu", "") for m in kernels}
+        kernel_to_lbl["ifPQC"] = r"$\otimes$fPQC"
+        kernel_to_lbl["ifPQC-cpu"] = r"$\otimes$fPQC"
+        kernel_to_lbl["iPQC"] = r"$\otimes$PQC"
+        for m in acc_methods:
+            if m not in kernel_to_lbl:
+                kernel_to_lbl[m] = m
         sorted_lbls = sorted(set(kernel_to_lbl.values()))
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         kernel_lbl_to_color = {lbl: colors[i] for i, lbl in enumerate(sorted_lbls)}
@@ -400,7 +476,7 @@ class DatasetComplexityPipeline:
         for x_lbl, x_key in x_keys.items():
             n_rows = int(np.sqrt(len(y_lbl_to_keys)))
             n_cols = int(np.ceil(len(y_lbl_to_keys) / n_rows))
-            width, height = 8 * n_cols, 8 * n_rows
+            width, height = 8 * max(2, n_cols), 8 * n_rows
             fig, axes = plt.subplots(n_rows, n_cols, figsize=(width, height))
             axes = np.ravel(np.asarray([axes]))
             y_lbl_to_ax = {y_lbl: ax for y_lbl, ax in zip(y_lbl_to_keys.keys(), axes)}
@@ -411,6 +487,7 @@ class DatasetComplexityPipeline:
                 y_min, y_max = np.inf, -np.inf
                 for j, y_k in enumerate(y_key):
                     *_, j_data_dict = self.plot_results(
+                        df=y_lbl_to_df[y_lbl],
                         x_axis_key=x_key, x_axis_label="",
                         y_axis_key=y_k, y_axis_label=y_lbl,
                         kernels=y_lbl_to_kernels_list[y_lbl],
@@ -438,44 +515,64 @@ class DatasetComplexityPipeline:
 
                 x_min, x_max = np.nanmin(df[x_key].values), np.nanmax(df[x_key].values)
                 axes[i].set_xlim(x_min, x_max)
-                axes[i].set_ylim(y_min*0.99, y_max*1.01)
+                axes[i].set_ylim(y_min * 0.99, y_max * 1.01)
 
-            fig.supxlabel(x_lbl, y=np.sqrt(height) / 100 * 2.2)
-            lbl_to_kernel = {
-                d.get("kernel_lbl", kernel_to_lbl[k]): k
-                for k, d in data_dict[ClassificationPipeline.FIT_TIME_KEY].items()
-                if k in set_methods
-            }
+            # if len(y_lbl_to_keys) > 1:
+            #     fig.supxlabel(x_lbl, y=np.sqrt(height) / 100 * 2.2)
+            # else:
+            #     axes[0].set_xlabel(x_lbl)
+            for ax in axes:
+                ax.set_xlabel(x_lbl)
+            key_to_get_lbl = list(data_dict.keys())[0]
+            lbl_to_kernel = {}
+            for key_to_get_lbl in data_dict.keys():
+                for k, d in data_dict[key_to_get_lbl].items():
+                    if k in complexity_methods + acc_methods:
+                        lbl_to_kernel[d.get("kernel_lbl", kernel_to_lbl.get(k, k))] = k
             lbl_to_color_marker = {
-                f"{lbl}{data_dict[ClassificationPipeline.FIT_TIME_KEY][lbl_to_kernel[lbl]]['complexity_lbl']}":
+                f"{lbl}{data_dict[key_to_get_lbl][lbl_to_kernel[lbl]]['complexity_lbl']}":
                     (c, kernel_to_marker[lbl_to_kernel[lbl]])
                 for lbl, c in kernel_lbl_to_color.items()
                 if lbl in lbl_to_kernel
             }
-            patches = [
-                plt.Line2D([0], [0], color=c, label=lbl, marker=mk)
-                for lbl, (c, mk) in lbl_to_color_marker.items()
-            ]
-            patches += [
-                plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
-                for lbl, ls in [
-                    # ("GPU", gpu_linestyle), ("CPU", cpu_linestyle),
-                    ("Complexity Fit", ":")
+            lbl_in_patches = []
+            if fit_time_lbl in y_lbl_to_ax:
+                patches = [
+                    plt.Line2D([0], [0], color=c, label=lbl, marker=mk)
+                    for lbl, (c, mk) in lbl_to_color_marker.items()
+                    if lbl_to_kernel[lbl] in complexity_methods
                 ]
-                if any(y_lbl_to_polyfit.get(ClassificationPipeline.FIT_TIME_KEY, {"": False}).values())
-            ]
-            if ClassificationPipeline.FIT_TIME_KEY in y_lbl_to_ax:
-                y_lbl_to_ax[ClassificationPipeline.FIT_TIME_KEY].legend(handles=patches, loc='lower right')
-            patches = [
-                plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
-                for lbl, ls in [("Train", train_linestyle), ("Test", test_linestyle)]
-            ]
+                lbl_in_patches += [lbl for lbl, k in lbl_to_kernel.items() if k in complexity_methods]
+                patches += [
+                    plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
+                    for lbl, ls in [
+                        # ("GPU", gpu_linestyle), ("CPU", cpu_linestyle),
+                        ("Complexity Fit", ":")
+                    ]
+                    if any(y_lbl_to_polyfit.get(fit_time_lbl, {"": False}).values())
+                ]
+                y_lbl_to_ax[fit_time_lbl].legend(handles=patches, loc='lower right')
+
             if accuracies_lbl in y_lbl_to_ax:
+                patches = [
+                    plt.Line2D([0], [0], color=c, label=lbl, marker=mk)
+                    for lbl, (c, mk) in lbl_to_color_marker.items()
+                    if lbl_to_kernel[lbl] in acc_methods and lbl not in lbl_in_patches
+                ]
+                lbl_in_patches += [lbl for lbl, k in lbl_to_kernel.items() if k in acc_methods]
+                patches += [
+                    plt.Line2D([0], [0], color="black", label=lbl, linestyle=ls)
+                    for lbl, ls in [("Train", train_linestyle), ("Test", test_linestyle)]
+                ]
                 y_lbl_to_ax[accuracies_lbl].legend(handles=patches, loc='lower right')
-            fig.tight_layout()
-            plt.tight_layout()
+            if len(axes) > 1:
+                number_axes(axes, fontsize=plt.rcParams["font.size"], y=1.1, x=0.0)
+            fig.tight_layout(pad=0)
             if self.save_dir is not None:
-                fig_save_path = os.path.join(self.save_dir, self.dataset_name, "figures", f"results_{x_key}.pdf")
+                pre_filename = kwargs.get("pre_filename", "")
+                fig_save_path = os.path.join(
+                    self.save_dir, self.dataset_name, "figures", f"{pre_filename}results_{x_key}.pdf"
+                )
                 os.makedirs(os.path.dirname(fig_save_path), exist_ok=True)
                 fig.savefig(fig_save_path, bbox_inches="tight", dpi=900)
             if kwargs.get("show", False):
@@ -483,77 +580,13 @@ class DatasetComplexityPipeline:
             plt.close("all")
         return
 
-    def add_complexity(self, x, y, **kwargs):
-        fig: plt.Figure = kwargs.get("fig", None)
-        ax: plt.Axes = kwargs.get("ax", None)
-        if fig is None or ax is None:
-            raise ValueError("fig and ax must be provided.")
-        nan_mask = np.isnan(x) | np.isnan(y)
-        x = x[~nan_mask]
-        y = y[~nan_mask]
-        n_points = kwargs.get("n_points", max(2, int(0.5*len(x))))
-        x = x[-n_points:]
-        y = y[-n_points:]
-        all_x = kwargs.get("all_x", x)
-        color = kwargs.get("color", "gray")
-        alpha = kwargs.get("alpha", 0.5)
-        linestyle = kwargs.get("linestyle", ":")
-        complexity = kwargs.get("complexity", "exponential")
-        base = kwargs.get("base", 2)
-        y_scale = kwargs.get("y_scale", "linear")
-        y_scale_base = kwargs.get("y_scale_base", base)
-        x_scale = kwargs.get("x_scale", "linear")
-        x_scale_base = kwargs.get("x_scale_base", base)
-        scale = y_scale + x_scale
-        if x_scale == "log":
-            x = np.log(x) / np.log(x_scale_base)
-            all_x = np.log(all_x) / np.log(x_scale_base)
-        if y_scale == "log":
-            y = np.log(y) / np.log(y_scale_base)
-        if complexity == "exponential" and scale == "loglog":
-            complexity_out = exp_fit(x, y, x_lbl="N", **kwargs)  # log(y) = log(c * b^(a * log(x))) = log(c) + a * log(x) * log(b)
-            raise ValueError("Not implemented")
-        elif complexity == "exponential" and scale == "loglinear":
-            complexity_out = lin_fit(x, y, x_lbl="N", **kwargs)  # log(y) = log(c * b^(a * b)) = log(c) + a * x * log(b)
-        elif complexity == "exponential" and scale == "linearlog":
-            complexity_out = exp_fit(x, y, x_lbl="N", **kwargs)  # y = c * b^(a * log(x)) = c * b^(log(x^a))
-        elif complexity == "exponential" and scale == "linearlinear":
-            complexity_out = exp_fit(x, y, x_lbl="N", **kwargs)  # y = c * b^(a * x)
-        elif complexity == "polynomial" and scale == "loglog":
-            complexity_out = lin_fit(x, y, x_lbl="N", **kwargs)  # log(y) = log(b * (log(x)^a)) = log(b) + a log(log(x))
-        elif complexity == "polynomial" and scale == "loglinear":
-            complexity_out = log_fit(x, y, x_lbl="N", **kwargs)  # log(y) = log(b * (x^a)) = log(b) + a log(x)
-        elif complexity == "polynomial" and scale == "linearlinear":
-            complexity_out = poly_fit(x, y, x_lbl="N", **kwargs)  # y = c + b * (x^a)
-        else:
-            raise ValueError(f"Invalid complexity type: {complexity}")
-        popt = complexity_out["popt"]
-        complexity_func = complexity_out["func"]
-        # r2_str = f": $R^2={complexity_out['r2']:.2f}$"
-        r2_str = f""
-        if complexity == "exponential":
-            complexity_out["label"] = f"~${BIG_O_STR}({y_scale_base}^{{ {popt[0]:.2f}N }})${r2_str}"
-        elif complexity == "polynomial":
-            power_str = f"{popt[0]:.2f}"
-            if abs(popt[0]) < 1:
-                power_str = str(Fraction(popt[0]).limit_denominator(max_denominator=10))
-            complexity_out["label"] = f"~${BIG_O_STR}(N^{{ {power_str} }})${r2_str}"
-        x_fit = np.linspace(all_x[0], all_x[-1], 1_000)
-        y_fit = complexity_func(x_fit, *complexity_out["popt"])
-
-        if x_scale == "log":
-            x_fit = x_scale_base**x_fit
-        if y_scale == "log":
-            y_fit = y_scale_base**y_fit
-        ax.plot(x_fit, y_fit, color=color, linestyle=linestyle, alpha=alpha)
-        return fig, ax, complexity_out
-
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset_name", type=str,
-        default="digits",
+        # default="digits",
+        default="mnist1d",
         # default="breast_cancer",
         help=f"The name of the dataset to be used for the classification. "
              f"Available datasets: {DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP.keys()}."
@@ -563,11 +596,12 @@ def parse_args():
         default=[
             "fPQC-cpu",
             "hfPQC-cpu",
-            "ifPQC-cpu",
-            "fPQC-cuda",
-            "hfPQC-cuda",
-            "ifPQC-cuda",
-            # "PQC",
+            # "ifPQC-cpu",
+            # "fPQC-cuda",
+            # "hfPQC-cuda",
+            # "ifPQC-cuda",
+            "PQC",
+            # "iPQC",
         ],
         help=f"The methods to be used for the classification."
              f"Example: --methods fPQC PQC."
@@ -601,6 +635,15 @@ def parse_args():
     )
     parser.add_argument("--n_samples", type=int, default=None)
     parser.add_argument("--run_pipelines", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--max_PQC_size", type=int, default=DatasetComplexityPipeline.MTH_MAX_SIZE_MAP["PQC"]
+    )
+    parser.add_argument(
+        "--max_iPQC_size", type=int, default=DatasetComplexityPipeline.MTH_MAX_SIZE_MAP["iPQC"]
+    )
+    parser.add_argument("--max_size", type=int, default=None)
+    parser.add_argument("--nb_workers", type=int, default=0)
+    parser.add_argument("--device_workers", type=int, default=0)
     return parser.parse_args()
 
 
@@ -609,12 +652,17 @@ def main():
     if any(["cuda" in m for m in args.methods]):
         matchcake.utils.cuda.is_cuda_available(throw_error=True, enable_warnings=True)
     print(f"{args.run_pipelines = }")
+    DatasetComplexityPipeline.MTH_MAX_SIZE_MAP["PQC"] = args.max_PQC_size
+    DatasetComplexityPipeline.MTH_MAX_SIZE_MAP["iPQC"] = args.max_iPQC_size
+    if args.max_size is not None:
+        DatasetComplexityPipeline.DATASET_MAX_SIZE_MAP[args.dataset_name] = args.max_size
     classification_pipeline_kwargs = dict(
         methods=args.methods,
         n_kfold_splits=args.n_kfold_splits,
         kernel_kwargs=dict(
             nb_workers=0,
             batch_size=args.batch_size,
+            device_workers=args.device_workers,
         ),
         throw_errors=args.throw_errors,
     )
@@ -625,19 +673,24 @@ def main():
         classification_pipeline_kwargs=classification_pipeline_kwargs,
         n_samples=args.n_samples,
     )
-    pipeline.run(run_pipelines=args.run_pipelines)
+    pipeline.run(run_pipelines=args.run_pipelines, nb_workers=args.nb_workers)
     plt.close("all")
-    pipeline.get_results_table(show=True)
-    # if args.run_pipelines:
-    #     pipeline.run(run_pipelines=args.run_pipelines)
-    #     plt.close("all")
-    #     pipeline.get_results_table(show=True)
-    # else:
-    #     pipeline.get_results_table_from_csvs(show=True)
+    pipeline.get_results_table(
+        show=True, mean=True, filepath=os.path.join(args.save_dir, args.dataset_name, "figures", "mean_results.csv")
+    )
+    pipeline.results_table = pipeline.get_results_table(show=True)
     plt.close("all")
-    pipeline.plot_formatted_complexity_results(show=True)
+    pipeline.plot_formatted_complexity_results(show=True, add_fit_time=True, add_accuracies=True, pre_filename="full_")
+    plt.close("all")
+    pipeline.plot_formatted_complexity_results(show=False, add_fit_time=False, add_accuracies=True, pre_filename="acc_")
+    plt.close("all")
+    pipeline.plot_formatted_complexity_results(show=False, add_fit_time=True, add_accuracies=False,
+                                               pre_filename="time_")
     plt.close("all")
 
 
 if __name__ == '__main__':
+    # python benchmark/classification/dataset_complexity.py --dataset_name digits
+    # --methods PQC iPQC fPQC-cpu hfPQC-cpu ifPQC-cpu --batch_size 32768
+    # --save_dir benchmark/classification/results_dc_cluster --no-run_pipelines --max_size 30
     sys.exit(main())

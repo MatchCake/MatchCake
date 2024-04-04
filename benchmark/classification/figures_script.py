@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 from classification_pipeline import ClassificationPipeline
+from figure_scripts.plot_accuracies import plot_accuracies, gather_results
 
 
 def get_table_path(dataset_name, trial="cls_k5") -> str:
@@ -60,7 +61,7 @@ def make_results_table(trial="cls_k5"):
     gpu_kernels = [m for m in all_kernels if "cuda" in m]
     cpu_kernels = [m for m in all_kernels if m not in gpu_kernels]
     all_kernels_set = cpu_kernels + [m for m in gpu_kernels if m.replace("-cuda", "-cpu") not in cpu_kernels]
-    kernels_to_keep = ["PQC", "fPQC", "ifPQC", "hfPQC"]
+    kernels_to_keep = ["PQC", "iPQC", "fPQC", "ifPQC", "hfPQC"]
     all_kernels_set = [
         m for m in all_kernels_set
         if any([
@@ -68,6 +69,15 @@ def make_results_table(trial="cls_k5"):
             for k in kernels_to_keep
         ])
     ]
+    kernels_to_fmt_names = {
+        "PQC": "PQC",
+        "fPQC": "fPQC",
+        "ifPQC": r"$\otimes$fPQC",
+        "hfPQC": "hfPQC",
+        "wfPQC": "wfPQC",
+        "hwfPQC": "hwfPQC",
+        "iwfPQC": r"$\otimes$wfPQC",
+    }
     # filter the kernels
     full_df = full_df[full_df[ClassificationPipeline.KERNEL_KEY].isin(all_kernels_set)]
     # use pm_string_to_floats to convert the accuracies and f1 to floats, multiply by 100,
@@ -85,6 +95,11 @@ def make_results_table(trial="cls_k5"):
     for c in integer_columns:
         full_df[c] = full_df[c].astype(int)
 
+    # rename the kernels
+    full_df[ClassificationPipeline.KERNEL_KEY] = full_df[ClassificationPipeline.KERNEL_KEY].apply(
+        lambda x: kernels_to_fmt_names.get(x, x)
+    )
+    # rename the columns
     full_df = full_df.rename(columns=columns_fmt_names)
     columns_to_keep = [columns_fmt_names[c] for c in columns_to_keep]
 
@@ -105,4 +120,28 @@ def make_results_table(trial="cls_k5"):
 
 
 if __name__ == '__main__':
-    make_results_table(trial="k5")
+    # make_results_table(trial="k5")
+    results_savedir = os.path.join(os.path.dirname(__file__), "results_dc_cluster", "digits")
+    df = gather_results(results_savedir)
+    kernel_to_color = {
+        "PQC": "tab:green",
+        "fPQC": "tab:red",
+        "ifPQC": "tab:orange",
+        "hfPQC": "tab:purple",
+        "iPQC": "tab:blue",
+    }
+    kernel_to_marker = {
+        "PQC": "*",
+        "fPQC": "X",
+        "ifPQC": "v",
+        "hfPQC": "^",
+        "iPQC": "o",
+    }
+    plot_accuracies(
+        df,
+        kernel_to_color=kernel_to_color,
+        kernel_to_marker=kernel_to_marker,
+        save_path=os.path.join(results_savedir, "figures", "accuracies.pdf"),
+        show=True,
+    )
+

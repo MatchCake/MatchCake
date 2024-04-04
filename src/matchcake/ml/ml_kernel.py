@@ -22,10 +22,147 @@ import pennylane as qml
 from pennylane.wires import Wires
 import pythonbasictools as pbt
 from tqdm import tqdm
+import tables as tb
 
 from ..devices.nif_device import NonInteractingFermionicDevice
 from ..operations import MAngleEmbedding, MAngleEmbeddings, fRZZ, fCNOT, fSWAP, fH
 from ..operations.fermionic_controlled_not import FastfCNOT
+from ..utils import torch_utils
+
+
+class GramMatrixKernel:
+    def __init__(
+            self,
+            shape: Tuple[int, int],
+            dtype: Optional[Union[str, np.dtype]] = np.float64,
+            array_type: str = "table",
+            **kwargs
+    ):
+        self._shape = shape
+        self._dtype = dtype
+        self._array_type = array_type
+        self.kwargs = kwargs
+        self.h5file = None
+        self.data = None
+        self._initiate_data_()
+
+    @property
+    def shape(self):
+        return self._shape
+
+    @property
+    def dtype(self):
+        return self._dtype
+
+    @property
+    def is_square(self):
+        return self.shape[0] == self.shape[1]
+
+    @property
+    def size(self):
+        return self.shape[0] * self.shape[1]
+
+    def _initiate_data_(self):
+        if self._array_type == "table":
+            self.h5file = tb.open_file("gram_matrix.h5", mode="w")
+            self.data = self.h5file.create_carray(
+                self.h5file.root,
+                "data",
+                tb.Float64Atom(),
+                shape=self.shape,
+            )
+        else:
+            self.data = np.zeros(self.shape, dtype=self.dtype)
+
+    def __array__(self):
+        return self.data[:]
+
+    def __getitem__(self, item):
+        return self.data[item]
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
+
+    def symmetrize(self):
+        if not self.is_square:
+            warnings.warn("Cannot symmetrize a non-square matrix.")
+            return
+        if self._array_type == "table":
+            self.data[:] = (self.data + self.data.T) / 2
+        elif self._array_type == "ndarray":
+            self.data = (self.data + self.data.T) / 2
+        else:
+            raise ValueError(f"Unknown array type: {self._array_type}.")
+
+    def mirror(self):
+        if not self.is_square:
+            warnings.warn("Cannot mirror a non-square matrix.")
+            return
+        if self._array_type == "table":
+            self.data[:] = self.data.T
+        elif self._array_type == "ndarray":
+            self.data = self.data.T
+        else:
+            raise ValueError(f"Unknown array type: {self._array_type}.")
+
+    def triu_reflect(self):
+        if not self.is_square:
+            warnings.warn("Cannot triu_reflect a non-square matrix.")
+            return
+        if self._array_type == "table":
+            self.data[:] = self.data + self.data.T
+        elif self._array_type == "ndarray":
+            self.data = self.data + self.data.T
+        else:
+            raise ValueError(f"Unknown array type: {self._array_type}.")
+
+    def tril_reflect(self):
+        if not self.is_square:
+            warnings.warn("Cannot tril_reflect a non-square matrix.")
+            return
+        if self._array_type == "table":
+            self.data[:] = self.data + self.data.T
+        elif self._array_type == "ndarray":
+            self.data = self.data + self.data.T
+        else:
+            raise ValueError(f"Unknown array type: {self._array_type}.")
+
+    def fill_diagonal(self, value: float):
+        if not self.is_square:
+            warnings.warn("Cannot fill_diagonal a non-square matrix.")
+            return
+        if self._array_type == "table":
+            self.data[np.diag_indices(self.shape[0])] = value
+        elif self._array_type == "ndarray":
+            np.fill_diagonal(self.data, value)
+        else:
+            raise ValueError(f"Unknown array type: {self._array_type}.")
+
+    def close(self):
+        if self.h5file is not None:
+            self.h5file.close()
+            self.h5file = None
+            self.data = None
+
+    def make_batches_indexes_generator(self, batch_size: int) -> Tuple[iter, int]:
+        if self.is_square:
+            # number of elements in the upper triangle without the diagonal elements
+            length = self.size * (self.size - 1) // 2
+        else:
+            length = self.size - self.shape[0]
+        n_batches = int(np.ceil(length / batch_size))
+
+        def _gen():
+            for i in range(n_batches):
+                b_start_idx = i * batch_size
+                b_end_idx = (i + 1) * batch_size
+                # generate the coordinates of the matrix elements in that batch
+                yield np.unravel_index(
+                    np.arange(b_start_idx, b_end_idx),
+                    self.shape
+                )
+
+        return _gen(), n_batches
 
 
 def mrot_zz_template(param0, param1, wires):
@@ -33,6 +170,8 @@ def mrot_zz_template(param0, param1, wires):
 
 
 class StdEstimator(BaseEstimator):
+    UNPICKLABLE_ATTRIBUTES = []
+
     def __init__(self, **kwargs) -> None:
         super().__init__()
         self.kwargs = kwargs
@@ -69,7 +208,47 @@ class MLKernel(StdEstimator):
         self._assume_symmetric = kwargs.get("assume_symmetric", True)
         self._assume_diag_one = kwargs.get("assume_diag_one", True)
         self._batch_size_try_counter = 0
+        self._gram_type = kwargs.get("gram_type", "ndarray")
+        self._parameters = kwargs.get("parameters", None)
+        self.use_cuda = kwargs.get("use_cuda", False)
+        if self._gram_type not in {"ndarray", "hdf5"}:
+            raise ValueError(f"Unknown gram type: {self._gram_type}.")
         super().__init__(**kwargs)
+
+    @property
+    def size(self):
+        return self._size
+
+    @property
+    def parameters(self):
+        if getattr(self, "use_cuda", False):
+            return self.cast_tensor_to_interface(self._parameters)
+        return self._parameters
+
+    @parameters.setter
+    def parameters(self, parameters):
+        self._parameters = parameters
+        if self.use_cuda:
+            import torch
+            if not isinstance(parameters, torch.Tensor):
+                self._parameters = self.cast_tensor_to_interface(parameters)
+        elif not isinstance(parameters, np.ndarray):
+            self._parameters = np.asarray(parameters)
+
+    def __getstate__(self):
+        state = {
+            k: v
+            for k, v in self.__dict__.items()
+            if k not in self.UNPICKLABLE_ATTRIBUTES
+        }
+        state["_parameters"] = torch_utils.to_numpy(state["_parameters"])
+        return state
+
+    def cast_tensor_to_interface(self, tensor):
+        if self.use_cuda:
+            import torch
+            return torch.tensor(tensor).cuda()
+        return tensor
 
     def _compute_default_size(self):
         return self.X_.shape[-1]
@@ -228,12 +407,11 @@ class MLKernel(StdEstimator):
         gram = np.zeros((qml.math.shape(x0)[0], qml.math.shape(x1)[0]))
         is_square = gram.shape[0] == gram.shape[1]
         triu_indices = np.stack(np.triu_indices(n=gram.shape[0], m=gram.shape[1], k=1), axis=-1)
-        tril_indices = np.stack(np.tril_indices(n=gram.shape[0], m=gram.shape[1], k=-1), axis=-1)
-        non_diag_indices = np.concatenate([triu_indices, tril_indices], axis=0)
         if is_square:
             indices = triu_indices
         else:
-            indices = non_diag_indices
+            tril_indices = np.stack(np.tril_indices(n=gram.shape[0], m=gram.shape[1], k=-1), axis=-1)
+            indices = np.concatenate([triu_indices, tril_indices], axis=0)
         start_time = time.perf_counter()
         n_data = qml.math.shape(indices)[0]
         n_done = 0
@@ -249,7 +427,7 @@ class MLKernel(StdEstimator):
                 eta_fmt = datetime.timedelta(seconds=eta)
                 p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: {eta_fmt}, {100 * n_done / n_data:.2f}%)")
         if is_square:
-            gram[tril_indices[:, 0], tril_indices[:, 1]] = gram[tril_indices[:, 1], tril_indices[:, 0]]
+            gram = gram + gram.T
         np.fill_diagonal(gram, 1.0)
         if p_bar is not None:
             p_bar.set_postfix_str(p_bar_postfix_str)
@@ -298,8 +476,6 @@ class NIFKernel(MLKernel):
         super().__init__(size=size, **kwargs)
         self._qnode = None
         self._device = None
-        self._parameters = self.kwargs.get("parameters", None)
-        self.use_cuda = self.kwargs.get("use_cuda", False)
         self.simpify_qnode = self.kwargs.get("simplify_qnode", False)
         self.qnode_kwargs = dict(
             interface="torch" if self.use_cuda else "auto",
@@ -307,10 +483,7 @@ class NIFKernel(MLKernel):
             cache=False,
         )
         self.qnode_kwargs.update(self.kwargs.get("qnode_kwargs", {}))
-
-    @property
-    def size(self):
-        return self._size
+        self.device_workers = self.kwargs.get("device_workers", 0)
 
     @property
     def wires(self):
@@ -365,19 +538,13 @@ class NIFKernel(MLKernel):
         self.__dict__.update(state)
         self.pre_initialize()
 
-    def cast_tensor_to_interface(self, tensor):
-        if self.use_cuda:
-            import torch
-            return torch.tensor(tensor).cuda()
-        return tensor
-
     def initialize_parameters(self):
         if self._parameters is None:
             n_parameters = self.kwargs.get("n_parameters", PATTERN_TO_NUM_PARAMS["pyramid"](self.wires))
             self._parameters = [pnp.random.uniform(0, 2 * np.pi, size=2) for _ in range(n_parameters)]
 
     def pre_initialize(self):
-        self._device = NonInteractingFermionicDevice(wires=self.size)
+        self._device = NonInteractingFermionicDevice(wires=self.size, n_workers=getattr(self, "device_workers", 0))
         self._qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
         if self.simpify_qnode:
             self._qnode = qml.simplify(self.qnode)
@@ -394,8 +561,6 @@ class NIFKernel(MLKernel):
     def circuit(self, x0, x1):
         MAngleEmbedding(x0, wires=self.wires)
         qml.broadcast(unitary=mrot_zz_template, pattern="pyramid", wires=self.wires, parameters=self.parameters)
-        # TODO: ajouter des MROT avec des paramètres aléatoires en forme de pyramids
-        # TODO: ajouter une fonction qui génère une séquence de wires en forme pyramidale.
         qml.adjoint(MAngleEmbedding)(x1, wires=self.wires)
         qml.adjoint(qml.broadcast)(unitary=mrot_zz_template, pattern="pyramid", wires=self.wires,
                                    parameters=self.parameters)
@@ -473,7 +638,7 @@ class FermionicPQCKernel(NIFKernel):
     Inspired from: https://iopscience.iop.org/article/10.1088/2632-2153/acb0b4/meta#artAbst
 
 
-    The size of the kernel is computed as
+    By default, the size of the kernel is computed as
 
     .. math::
         \text{size} = \max\left(2, \lceil\log_2(\text{n features} + 2)\rceil\right)
@@ -485,7 +650,7 @@ class FermionicPQCKernel(NIFKernel):
 
     """
 
-    available_entangling_mth = {"fcnot", "fast_fcnot", "fswap", "identity", "hadamard"}
+    available_entangling_mth = {"fswap", "identity", "hadamard"}
 
     def __init__(
             self,
@@ -520,7 +685,7 @@ class FermionicPQCKernel(NIFKernel):
         return _size
 
     def initialize_parameters(self):
-        self._depth = self.kwargs.get("depth", max(1, (self.X_.shape[-1] // self.size) - 1))
+        self._depth = self.kwargs.get("depth", int(max(1, np.ceil(self.X_.shape[-1] / self.size))))
         self.parameters = pnp.random.uniform(0.0, 1.0, size=self.X_.shape[-1])
 
     def ansatz(self, x):
@@ -532,12 +697,8 @@ class FermionicPQCKernel(NIFKernel):
             MAngleEmbedding(sub_x, wires=self.wires, rotations=self.rotations)
             fcnot_wires = wires_patterns[layer % len(wires_patterns)]
             for wires in fcnot_wires:
-                if self._entangling_mth == "fast_fcnot":
-                    FastfCNOT(wires=wires)
-                elif self._entangling_mth == "fswap":
+                if self._entangling_mth == "fswap":
                     fSWAP(wires=wires)
-                elif self._entangling_mth == "fcnot":
-                    fCNOT(wires=wires)
                 elif self._entangling_mth == "hadamard":
                     fH(wires=wires)
                 elif self._entangling_mth == "identity":
@@ -555,15 +716,7 @@ class FermionicPQCKernel(NIFKernel):
         return qml.expval(projector)
 
 
-class WideFermionicPQCKernel(FermionicPQCKernel):
-    def _compute_default_size(self):
-        _size = max(2, int(np.ceil(np.sqrt(self.X_.shape[-1] + 2))))
-        if _size % 2 != 0:
-            _size += 1
-        return _size
-
-
-class PennylaneFermionicPQCKernel(FermionicPQCKernel):
+class StateVectorFermionicPQCKernel(FermionicPQCKernel):
     def __init__(self, size: Optional[int] = None, **kwargs):
         super().__init__(size=size, **kwargs)
         self._device_name = kwargs.get("device", "default.qubit")
@@ -595,6 +748,7 @@ class FixedSizeSVC(StdEstimator):
         self.kernels = None
         self.estimators_ = None
         self.train_gram_matrices = None
+        self.memory = []
 
     @property
     def kernel(self):
@@ -693,13 +847,46 @@ class FixedSizeSVC(StdEstimator):
         for i, (gram_matrix, sub_y) in enumerate(zip(self.train_gram_matrices, y_splits)):
             self.estimators_[i].fit(gram_matrix, sub_y)
         return self
+
+    def get_gram_matrices_from_memory(self, X, **kwargs):
+        if qml.math.shape(X) == qml.math.shape(self.X_) and qml.math.allclose(self.X_, X):
+            return self.train_gram_matrices
+        if getattr(self, "memory", None) is None:
+            return None
+        for i, (x, gram_matrices) in enumerate(self.memory):
+            if qml.math.shape(X) == qml.math.shape(x) and qml.math.allclose(x, X):
+                return gram_matrices
+        return None
+
+    def get_is_in_memory(self, X):
+        return self.get_gram_matrices_from_memory(X) is not None
+
+    def push_to_memory(self, X, gram_matrices):
+        if getattr(self, "memory", None) is None:
+            self.memory = []
+        if not self.get_is_in_memory(X):
+            self.memory.append((X, gram_matrices))
+        return self
     
     def predict(self, X, **kwargs):
+        """
+        Predict the labels of the input data of shape (n_samples, n_features).
+
+        :param X: The input data of shape (n_samples, n_features).
+        :type X: np.ndarray or array-like
+        :param kwargs: Additional keyword arguments.
+
+        :keyword cache: If True, the computed gram matrices will be stored in memory. Default is False.
+
+        :return: The predicted labels of the input data.
+        :rtype: np.ndarray of shape (n_samples,)
+        """
         self.check_is_fitted()
-        if qml.math.shape(X) == qml.math.shape(self.X_) and qml.math.allclose(self.X_, X):
-            gram_matrices = self.train_gram_matrices
-        else:
+        gram_matrices = self.get_gram_matrices_from_memory(X, **kwargs)
+        if gram_matrices is None:
             gram_matrices = self.get_pairwise_distances_matrices(X, self.X_, **kwargs)
+        if kwargs.get("cache", False):
+            self.push_to_memory(X, gram_matrices)
         votes = np.zeros((qml.math.shape(X)[0], len(self.classes_)), dtype=int)
         predictions_stack = []
         for i, gram_matrix in enumerate(gram_matrices):
@@ -713,3 +900,52 @@ class FixedSizeSVC(StdEstimator):
         self.check_is_fitted()
         pred = self.predict(X, **kwargs)
         return np.mean(np.isclose(pred, y).astype(float))
+
+    def save(self, filepath) -> "FixedSizeSVC":
+        """
+        Save the model to a joblib file. If the given filepath does not end with ".joblib", it will be appended.
+
+        :param filepath: The path to save the model.
+        :type filepath: str
+        :return: The model instance.
+        :rtype: self.__class__
+        """
+        from joblib import dump
+
+        if not filepath.endswith(".joblib"):
+            filepath += ".joblib"
+
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        dump(self, filepath)
+        return self
+
+    @classmethod
+    def load(cls, filepath):
+        """
+        Load a model from a saved file. If the extension of the file is not specified, this method will try to load
+        the model from the file with the ".joblib" extension. If the file does not exist, it will try to load the model
+        from the file with the ".pkl" extension. Otherwise, it will try without any extension.
+
+        :param filepath: The path to the saved model.
+        :type filepath: str
+        :return: The loaded model.
+        :rtype: FixedSizeSVC
+        """
+        import pickle
+        from joblib import load
+
+        exts = [".joblib", ".pkl", ""]
+        filepath_ext = None
+
+        for ext in exts:
+            if os.path.exists(filepath + ext):
+                filepath_ext = filepath + ext
+                break
+
+        if filepath_ext is None:
+            raise FileNotFoundError(f"Could not find the file: {filepath} with any of the following extensions: {exts}")
+
+        if filepath_ext.endswith(".joblib"):
+            return load(filepath_ext)
+        with open(filepath_ext, "rb") as f:
+            return pickle.load(f)

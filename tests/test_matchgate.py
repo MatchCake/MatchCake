@@ -202,7 +202,7 @@ def test_random_composed_hamiltonian_params_gives_matchgate(params):
 def test_action_matrix(params, expected):
     expected = qml.math.array(expected)
     mg = Matchgate(params)
-    action_matrix = mg.single_transition_particle_matrix
+    action_matrix = mg.single_particle_transition_matrix
     np.testing.assert_allclose(
         action_matrix.squeeze(), expected,
         atol=ATOL_MATRIX_COMPARISON,
@@ -250,7 +250,7 @@ def test_single_transition_matrix(params, expected):
     expected = qml.math.array(expected)
     mg = Matchgate(params)
     np.testing.assert_allclose(
-        mg.single_transition_particle_matrix.squeeze(), expected,
+        mg.single_particle_transition_matrix.squeeze(), expected,
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
@@ -270,7 +270,7 @@ def test_single_transition_matrix_equal_to_expm_hami_coeff_if_null_epsilon(param
     mg = Matchgate(params_with_epsilon_0)
     single_transition_particle_matrix = qml.math.expm(-4 * mg.hamiltonian_coefficients_params.to_matrix())
     np.testing.assert_allclose(
-        mg.single_transition_particle_matrix.squeeze(), single_transition_particle_matrix.squeeze(),
+        mg.single_particle_transition_matrix.squeeze(), single_transition_particle_matrix.squeeze(),
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
@@ -317,7 +317,7 @@ def test_single_transition_matrix_equal_to_expm_hami_coeff_if_epsilon(params):
         -4 * mg.hamiltonian_coefficients_params.to_matrix(add_epsilon=False)
     )
     np.testing.assert_allclose(
-        mg.single_transition_particle_matrix.squeeze(), single_transition_particle_matrix.squeeze(),
+        mg.single_particle_transition_matrix.squeeze(), single_transition_particle_matrix.squeeze(),
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
@@ -336,7 +336,7 @@ def test_single_transition_matrix_equal_to_expm_hami_coeff(params):
     single_transition_particle_matrix = qml.math.expm(-4 * h)
     
     np.testing.assert_allclose(
-        mg.single_transition_particle_matrix.squeeze(), single_transition_particle_matrix.squeeze(),
+        mg.single_particle_transition_matrix.squeeze(), single_transition_particle_matrix.squeeze(),
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
