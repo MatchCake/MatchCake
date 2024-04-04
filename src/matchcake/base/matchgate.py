@@ -1,8 +1,6 @@
-from typing import NamedTuple, Union, Optional
-from dataclasses import dataclass
+from typing import Union
 import numpy as np
 import pennylane as qml
-from pennylane import numpy as pnp
 
 from .. import utils
 from .. import matchgate_parameter_sets as mps
@@ -255,7 +253,7 @@ class Matchgate:
         self.use_less_einsum_for_transition_matrix = kwargs.get(
             "use_less_einsum_for_transition_matrix", self.DEFAULT_USE_LESS_EINSUM_FOR_TRANSITION_MATRIX
         )
-        self._single_transition_particle_matrix = None
+        self._single_particle_transition_matrix = None
         self._transition_matrix = None
 
     @property
@@ -306,10 +304,10 @@ class Matchgate:
         return self._hamiltonian_matrix
     
     @property
-    def single_transition_particle_matrix(self):
-        if self._single_transition_particle_matrix is None:
-            self._make_single_transition_particle_matrix_()
-        return self._single_transition_particle_matrix
+    def single_particle_transition_matrix(self):
+        if self._single_particle_transition_matrix is None:
+            self._make_single_particle_transition_matrix_()
+        return self._single_particle_transition_matrix
     
     @property
     def transition_matrix(self):
@@ -431,7 +429,6 @@ class Matchgate:
             given_params: Union[mps.MatchgateParams, np.ndarray, list, tuple]
     ) -> mps.MatchgateParams:
         r"""
-
         Initialize the parameters of the matchgate. The parameters can be a MatchgateParams object, a list, a tuple or
         a numpy array. If the parameters are a list, tuple or numpy array, the parameters will be interpreted as
         the :attr:`_default_given_params_cls`.
@@ -568,7 +565,7 @@ class Matchgate:
         )
         return self._hamiltonian_matrix
     
-    def _make_single_transition_particle_matrix_(self) -> np.ndarray:
+    def _make_single_particle_transition_matrix_(self) -> np.ndarray:
         r"""
         Compute the single transition particle matrix. This matrix is the matrix :math:`R` such that
 
@@ -582,8 +579,8 @@ class Matchgate:
         if self.use_h_for_transition_matrix:
             h_matrix = self.hamiltonian_coefficients_params.to_matrix()
             matrix = qml.math.expm(-4 * h_matrix)
-            self._single_transition_particle_matrix = matrix
-            return self._single_transition_particle_matrix
+            self._single_particle_transition_matrix = matrix
+            return self._single_particle_transition_matrix
         u = self.gate_data
 
         # majorana_tensor.shape: (2n, 2^n, 2^n)
@@ -611,12 +608,12 @@ class Matchgate:
         matrix = qml.math.einsum("...ii", matrix, optimize="optimal") / qml.math.shape(majorana_tensor)[-1]
         if qml.math.ndim(u) > 2:
             matrix = matrix.squeeze()
-        self._single_transition_particle_matrix = matrix
-        return self._single_transition_particle_matrix
+        self._single_particle_transition_matrix = matrix
+        return self._single_particle_transition_matrix
     
     def _make_transition_matrix_(self) -> np.ndarray:
         self._transition_matrix = utils.make_transition_matrix_from_action_matrix(
-            self.single_transition_particle_matrix
+            self.single_particle_transition_matrix
         )
         return self._transition_matrix
 
@@ -740,6 +737,6 @@ class Matchgate:
         self.get_all_params_set(make_params=True)
         _ = self.gate_data
         _ = self.hamiltonian_matrix
-        _ = self.single_transition_particle_matrix
+        _ = self.single_particle_transition_matrix
         _ = self.transition_matrix
 
