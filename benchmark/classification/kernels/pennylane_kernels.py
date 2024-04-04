@@ -1,5 +1,3 @@
-import os
-import sys
 from typing import Optional
 
 import numpy as np
@@ -9,7 +7,6 @@ from pennylane import numpy as pnp
 from pennylane.ops.qubit.observables import BasisStateProjector
 from pennylane.templates.broadcast import PATTERN_TO_WIRES
 
-from . import matchcake
 from matchcake.ml.ml_kernel import (
     NIFKernel,
 )
