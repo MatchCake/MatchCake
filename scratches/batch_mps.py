@@ -42,5 +42,5 @@ np.testing.assert_almost_equal(hamiltonian_form_det, gate_det)
 np.testing.assert_almost_equal(gate_det, exp_trace)
 
 mg = matchcake.Matchgate(mps.MatchgateStandardParams(a=[1, 1], w=1, z=1, d=1))
-print(mg.single_transition_particle_matrix)
-np.testing.assert_allclose(mg.single_transition_particle_matrix, qml.math.stack([np.eye(4) for _ in range(2)]))
+print(mg.single_particle_transition_matrix)
+np.testing.assert_allclose(mg.single_particle_transition_matrix, qml.math.stack([np.eye(4) for _ in range(2)]))
