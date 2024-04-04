@@ -1,7 +1,7 @@
 import itertools
 import warnings
 from copy import deepcopy
-from typing import Iterable, Tuple, Union, Callable, Any, Optional
+from typing import Iterable, Tuple, Union, Callable, Any, Optional, List
 
 import numpy as np
 import psutil
@@ -13,62 +13,69 @@ from pennylane.pulse import ParametrizedEvolution
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 from pennylane.ops.qubit.observables import BasisStateProjector
-from ..operations.matchgate_operation import MatchgateOperation, _SingleTransitionMatrix
+
+from .device_utils import _VHMatchgatesContainer
+from ..operations.matchgate_operation import MatchgateOperation, _SingleParticleTransitionMatrix
 from ..base.lookup_table import NonInteractingFermionicLookupTable
 from .. import utils
 
 
-class _VHMatchgatesContainer:
-    def __init__(self):
-        self.op_container = {}
-        self.wires_set = set({})
-
-    def __bool__(self):
-        return len(self) > 0
-
-    def __len__(self):
-        return len(self.op_container)
-
-    def add(self, op: MatchgateOperation):
-        if op.wires in self.op_container:
-            self.op_container[op.wires] = self.op_container[op.wires] @ op
-        else:
-            self.op_container[op.wires] = op
-        self.wires_set.update(op.wires.labels)
-
-    def try_add(self, op: MatchgateOperation) -> bool:
-        if op.wires in self.op_container:
-            self.add(op)
-            return True
-        is_wire_in_container = any([w in self.wires_set for w in op.wires.labels])
-        if not is_wire_in_container:
-            self.add(op)
-            return True
-        return False
-
-    def extend(self, ops: Iterable[MatchgateOperation]) -> None:
-        for op in ops:
-            self.add(op)
-
-    def try_extend(self, ops: Iterable[MatchgateOperation]) -> int:
-        for i, op in enumerate(ops):
-            if not self.try_add(op):
-                return i
-        return -1
-
-    def clear(self):
-        self.op_container.clear()
-        self.wires_set.clear()
-
-    def contract(self) -> Optional[Union[MatchgateOperation, _SingleTransitionMatrix]]:
-        if len(self) == 0:
-            return None
-        if len(self) == 1:
-            return next(iter(self.op_container.values()))
-        return _SingleTransitionMatrix.from_operations(self.op_container.values())
-
-
 class NonInteractingFermionicDevice(qml.QubitDevice):
+    """
+    The Non-Interacting Fermionic Simulator device.
+
+    :param wires: The number of wires of the device
+    :type wires: Union[int, Wires, List[int]]
+    :param r_dtype: The data type for the real part of the state vector
+    :type r_dtype: np.dtype
+    :param c_dtype: The data type for the complex part of the state vector
+    :type c_dtype: np.dtype
+
+    :kwargs: Additional keyword arguments
+
+    :keyword prob_strategy: The strategy to compute the probabilities. Can be either "lookup_table" or "explicit_sum".
+        Defaults to "lookup_table".
+    :type prob_strategy: str
+    :keyword majorana_getter: The Majorana getter to use. Defaults to a new instance of MajoranaGetter.
+    :type majorana_getter: MajoranaGetter
+    :keyword contraction_method: The contraction method to use. Can be either None or "neighbours". Defaults to None.
+    :type contraction_method: Optional[str]
+    :keyword pfaffian_method: The method to compute the Pfaffian. Can be either "det" or "P". Defaults to "det".
+    :type pfaffian_method: str
+    :keyword n_workers: The number of workers to use for multiprocessing. Defaults to 0.
+    :type n_workers: int
+
+
+    :ivar prob_strategy: The strategy to compute the probabilities
+    :vartype prob_strategy: str
+    :ivar majorana_getter: The Majorana getter to use
+    :vartype majorana_getter: MajoranaGetter
+    :ivar contraction_method: The contraction method to use
+    :vartype contraction_method: Optional[str]
+    :ivar pfaffian_method: The method to compute the Pfaffian
+    :vartype pfaffian_method: str
+    :ivar n_workers: The number of workers to use for multiprocessing
+    :vartype n_workers: int
+    :ivar basis_state_index: The index of the basis state
+    :vartype basis_state_index: int
+    :ivar sparse_state: The sparse state of the device
+    :vartype sparse_state: sparse.coo_array
+    :ivar state: The state of the device
+    :vartype state: np.ndarray
+    :ivar is_state_initialized: Whether the state is initialized
+    :vartype is_state_initialized: bool
+    :ivar transition_matrix: The transition matrix of the device
+    :vartype transition_matrix: np.ndarray
+    :ivar lookup_table: The lookup table of the device
+    :vartype lookup_table: NonInteractingFermionicLookupTable
+    :ivar memory_usage: The memory usage of the device
+    :vartype memory_usage: int
+
+
+    :Note: This device is a simulator for non-interacting fermions. It is based on the ``default.qubit`` device.
+    :Note: This device supports batch execution.
+    :Note: This device is in development, and its API is subject to change.
+    """
     name = 'Non-Interacting Fermionic Simulator'
     short_name = "nif.qubit"
     pennylane_requires = "==0.32"
@@ -146,7 +153,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
     def __init__(
             self,
-            wires=2,
+            wires: Union[int, Wires, List[int]] = 2,
             *,
             r_dtype=np.float64,
             c_dtype=np.complex128,
@@ -532,13 +539,13 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if isinstance(operation, qml.Identity):
             return None
 
-        if isinstance(operation, _SingleTransitionMatrix):
+        if isinstance(operation, _SingleParticleTransitionMatrix):
             return operation.pad(self.wires).matrix
 
         assert operation.name in self.operations, f"Operation {operation.name} is not supported."
         op_r = None
         if isinstance(operation, MatchgateOperation):
-            op_r = operation.get_padded_single_transition_particle_matrix(self.wires)
+            op_r = operation.get_padded_single_particle_transition_matrix(self.wires)
         return op_r
 
     def gather_single_particle_transition_matrices(self, operations) -> list:
@@ -592,6 +599,18 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         return list(itertools.chain(*sptm_outputs))
 
     def apply(self, operations, rotations=None, **kwargs):
+        """
+        This method applies a list of operations to the device. It will update the ``_transition_matrix`` attribute
+        of the device.
+
+        :Note: if the number of workers is different from 0, this method will use multiprocessing method
+            :py:meth:`apply_mp` to apply the operations.
+
+        :param operations: The operations to apply
+        :param rotations: The rotations to apply
+        :param kwargs: Additional keyword arguments. The keyword arguments are passed to the :py:meth:`apply_mp` method.
+        :return: None
+        """
         if self.n_workers != 0:
             return self.apply_mp(operations, rotations, **kwargs)
         rotations = rotations or []
@@ -626,12 +645,12 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                         self._debugger.snapshots[len(self._debugger.snapshots)] = state_vector
             elif isinstance(op, qml.pulse.ParametrizedEvolution):
                 self._state = self._apply_parametrized_evolution(self._state, op)
-            elif isinstance(op, _SingleTransitionMatrix):
+            elif isinstance(op, _SingleParticleTransitionMatrix):
                 op_r = op.pad(self.wires).matrix
             else:
                 assert op.name in self.operations, f"Operation {op.name} is not supported."
                 if isinstance(op, MatchgateOperation):
-                    op_r = op.get_padded_single_transition_particle_matrix(self.wires)
+                    op_r = op.get_padded_single_particle_transition_matrix(self.wires)
             if op_r is not None:
                 batched = batched or (qml.math.ndim(op_r) > 2)
                 global_single_transition_particle_matrix = self.update_single_particle_transition_matrix(
