@@ -23,6 +23,7 @@ from pennylane.wires import Wires
 import pythonbasictools as pbt
 from tqdm import tqdm
 import tables as tb
+import joblib
 
 from ..devices.nif_device import NonInteractingFermionicDevice
 from ..operations import MAngleEmbedding, MAngleEmbeddings, fRZZ, fCNOT, fSWAP, fH
@@ -463,6 +464,54 @@ class MLKernel(StdEstimator):
                     f")"
         )
         return self.pairwise_distances(x, x, **kwargs)
+
+    def save(self, filepath: str) -> "MLKernel":
+        """
+        Save the kernel to a file.
+
+        :param filepath: The path to the file.
+        :return: The kernel.
+        :rtype: MLKernel
+        """
+        from joblib import dump
+
+        if not filepath.endswith(".joblib"):
+            filepath += ".joblib"
+
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        dump(self, filepath)
+        return self
+
+    @classmethod
+    def load(cls, filepath) -> "MLKernel":
+        """
+        Load a model from a saved file. If the extension of the file is not specified, this method will try to load
+        the model from the file with the ".joblib" extension. If the file does not exist, it will try to load the model
+        from the file with the ".pkl" extension. Otherwise, it will try without any extension.
+
+        :param filepath: The path to the saved model.
+        :type filepath: str
+        :return: The loaded model.
+        :rtype: FixedSizeSVC
+        """
+        import pickle
+        from joblib import load
+
+        exts = [".joblib", ".pkl", ""]
+        filepath_ext = None
+
+        for ext in exts:
+            if os.path.exists(filepath + ext):
+                filepath_ext = filepath + ext
+                break
+
+        if filepath_ext is None:
+            raise FileNotFoundError(f"Could not find the file: {filepath} with any of the following extensions: {exts}")
+
+        if filepath_ext.endswith(".joblib"):
+            return load(filepath_ext)
+        with open(filepath_ext, "rb") as f:
+            return pickle.load(f)
 
 
 class NIFKernel(MLKernel):
