@@ -35,21 +35,12 @@ from kernels import (
     NeighboursFermionicPQCKernel,
     CudaFermionicPQCKernel,
     CpuFermionicPQCKernel,
-    CpuWideFermionicPQCKernel,
-    CudaWideFermionicPQCKernel,
     FastCudaFermionicPQCKernel,
-    FastCudaWideFermionicPQCKernel,
     SwapCudaFermionicPQCKernel,
-    SwapCudaWideFermionicPQCKernel,
     IdentityCudaFermionicPQCKernel,
-    IdentityCudaWideFermionicPQCKernel,
-    HadamardCudaWideFermionicPQCKernel,
     HadamardCudaFermionicPQCKernel,
     SwapCpuFermionicPQCKernel,
-    SwapCpuWideFermionicPQCKernel,
     IdentityCpuFermionicPQCKernel,
-    IdentityCpuWideFermionicPQCKernel,
-    HadamardCpuWideFermionicPQCKernel,
     HadamardCpuFermionicPQCKernel,
 )
 
@@ -59,13 +50,12 @@ except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import matchcake
 from matchcake.ml import ClassificationVisualizer
-from matchcake.ml.ml_kernel import (
-    FixedSizeSVC,
+from matchcake.ml.kernels import (
     NIFKernel,
     FermionicPQCKernel,
     StateVectorFermionicPQCKernel,
-    WideFermionicPQCKernel,
 )
+from matchcake.ml.svm import FixedSizeSVC
 import warnings
 
 
@@ -96,23 +86,13 @@ class ClassificationPipeline:
         "lightning_PQC": LightningPQCKernel,
         "PennylaneFermionicPQCKernel": StateVectorFermionicPQCKernel,
         "nfPQC": NeighboursFermionicPQCKernel,
-        "wfPQC": WideFermionicPQCKernel,
-        "wfPQC-cuda": CudaWideFermionicPQCKernel,
-        "wfPQC-cpu": CpuWideFermionicPQCKernel,
         "fcPQC": FastCudaFermionicPQCKernel,
-        "fcwfPQC": FastCudaWideFermionicPQCKernel,
         "sfPQC-cuda": SwapCudaFermionicPQCKernel,
-        "swfPQC-cuda": SwapCudaWideFermionicPQCKernel,
         "ifPQC-cuda": IdentityCudaFermionicPQCKernel,
-        "iwfPQC-cuda": IdentityCudaWideFermionicPQCKernel,
         "hfPQC-cuda": HadamardCudaFermionicPQCKernel,
-        "hwfPQC-cuda": HadamardCudaWideFermionicPQCKernel,
         "sfPQC-cpu": SwapCpuFermionicPQCKernel,
-        "swfPQC-cpu": SwapCpuWideFermionicPQCKernel,
         "ifPQC-cpu": IdentityCpuFermionicPQCKernel,
-        "iwfPQC-cpu": IdentityCpuWideFermionicPQCKernel,
         "hfPQC-cpu": HadamardCpuFermionicPQCKernel,
-        "hwfPQC-cpu": HadamardCpuWideFermionicPQCKernel,
     }
     UNPICKLABLE_ATTRIBUTES = ["dataset", "p_bar"]
 

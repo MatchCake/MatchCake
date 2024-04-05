@@ -10,7 +10,7 @@ except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "src"))
     import matchcake
 
-from matchcake.ml.ml_kernel import (
+from matchcake.ml.kernels.ml_kernel import (
     MLKernel,
 )
 
@@ -23,26 +23,15 @@ from .pennylane_kernels import (
 )
 from .fermi_kernels import (
     NeighboursFermionicPQCKernel,
-    HFermionicPQCKernel,
     CudaFermionicPQCKernel,
     CpuFermionicPQCKernel,
-    CudaFermionicPQCKernel,
-    CudaWideFermionicPQCKernel,
-    CpuWideFermionicPQCKernel,
-    FastCudaWideFermionicPQCKernel,
     FastCudaFermionicPQCKernel,
     SwapCudaFermionicPQCKernel,
-    SwapCudaWideFermionicPQCKernel,
-    IdentityCudaWideFermionicPQCKernel,
     IdentityCudaFermionicPQCKernel,
     HadamardCudaFermionicPQCKernel,
-    HadamardCudaWideFermionicPQCKernel,
     SwapCpuFermionicPQCKernel,
-    SwapCpuWideFermionicPQCKernel,
-    IdentityCpuWideFermionicPQCKernel,
     IdentityCpuFermionicPQCKernel,
     HadamardCpuFermionicPQCKernel,
-    HadamardCpuWideFermionicPQCKernel,
 )
 
 

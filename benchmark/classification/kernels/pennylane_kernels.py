@@ -7,7 +7,7 @@ from pennylane import numpy as pnp
 from pennylane.ops.qubit.observables import BasisStateProjector
 from pennylane.templates.broadcast import PATTERN_TO_WIRES
 
-from matchcake.ml.ml_kernel import (
+from matchcake.ml.kernels.ml_kernel import (
     NIFKernel,
 )
 

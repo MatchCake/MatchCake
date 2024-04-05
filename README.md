@@ -76,8 +76,10 @@ print(f"Expectation value: {expval}")
 ```
 
 ## Data Classification with MatchCake
+
 ```python
-from matchcake.ml.ml_kernel import FixedSizeSVC, FermionicPQCKernel
+from matchcake.ml.kernels import FermionicPQCKernel
+from matchcake.ml.svm import FixedSizeSVC
 from matchcake.ml.visualisation import ClassificationVisualizer
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
