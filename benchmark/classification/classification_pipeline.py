@@ -35,21 +35,12 @@ from kernels import (
     NeighboursFermionicPQCKernel,
     CudaFermionicPQCKernel,
     CpuFermionicPQCKernel,
-    CpuWideFermionicPQCKernel,
-    CudaWideFermionicPQCKernel,
     FastCudaFermionicPQCKernel,
-    FastCudaWideFermionicPQCKernel,
     SwapCudaFermionicPQCKernel,
-    SwapCudaWideFermionicPQCKernel,
     IdentityCudaFermionicPQCKernel,
-    IdentityCudaWideFermionicPQCKernel,
-    HadamardCudaWideFermionicPQCKernel,
     HadamardCudaFermionicPQCKernel,
     SwapCpuFermionicPQCKernel,
-    SwapCpuWideFermionicPQCKernel,
     IdentityCpuFermionicPQCKernel,
-    IdentityCpuWideFermionicPQCKernel,
-    HadamardCpuWideFermionicPQCKernel,
     HadamardCpuFermionicPQCKernel,
 )
 
@@ -64,7 +55,6 @@ from matchcake.ml.ml_kernel import (
     NIFKernel,
     FermionicPQCKernel,
     StateVectorFermionicPQCKernel,
-    WideFermionicPQCKernel,
 )
 import warnings
 
@@ -96,23 +86,13 @@ class ClassificationPipeline:
         "lightning_PQC": LightningPQCKernel,
         "PennylaneFermionicPQCKernel": StateVectorFermionicPQCKernel,
         "nfPQC": NeighboursFermionicPQCKernel,
-        "wfPQC": WideFermionicPQCKernel,
-        "wfPQC-cuda": CudaWideFermionicPQCKernel,
-        "wfPQC-cpu": CpuWideFermionicPQCKernel,
         "fcPQC": FastCudaFermionicPQCKernel,
-        "fcwfPQC": FastCudaWideFermionicPQCKernel,
         "sfPQC-cuda": SwapCudaFermionicPQCKernel,
-        "swfPQC-cuda": SwapCudaWideFermionicPQCKernel,
         "ifPQC-cuda": IdentityCudaFermionicPQCKernel,
-        "iwfPQC-cuda": IdentityCudaWideFermionicPQCKernel,
         "hfPQC-cuda": HadamardCudaFermionicPQCKernel,
-        "hwfPQC-cuda": HadamardCudaWideFermionicPQCKernel,
         "sfPQC-cpu": SwapCpuFermionicPQCKernel,
-        "swfPQC-cpu": SwapCpuWideFermionicPQCKernel,
         "ifPQC-cpu": IdentityCpuFermionicPQCKernel,
-        "iwfPQC-cpu": IdentityCpuWideFermionicPQCKernel,
         "hfPQC-cpu": HadamardCpuFermionicPQCKernel,
-        "hwfPQC-cpu": HadamardCpuWideFermionicPQCKernel,
     }
     UNPICKLABLE_ATTRIBUTES = ["dataset", "p_bar"]
 
