@@ -50,12 +50,12 @@ except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
     import matchcake
 from matchcake.ml import ClassificationVisualizer
-from matchcake.ml.ml_kernel import (
-    FixedSizeSVC,
+from matchcake.ml.kernels import (
     NIFKernel,
     FermionicPQCKernel,
     StateVectorFermionicPQCKernel,
 )
+from matchcake.ml.svm import FixedSizeSVC
 import warnings
 
 

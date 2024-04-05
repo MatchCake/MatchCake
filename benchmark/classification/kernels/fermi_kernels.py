@@ -3,7 +3,7 @@ from typing import Optional
 import pennylane as qml
 
 from . import matchcake
-from matchcake.ml.ml_kernel import (
+from matchcake.ml.kernels.ml_kernel import (
     FermionicPQCKernel,
 )
 

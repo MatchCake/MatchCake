@@ -1,16 +1,13 @@
 import pytest
-from matchcake import ml
 from typing import Literal, List, Union, Dict
 import numpy as np
 import pennylane as qml
 from pennylane.wires import Wires
-from matchcake.ml.ml_kernel import FermionicPQCKernel, StateVectorFermionicPQCKernel
+from matchcake.ml.kernels import FermionicPQCKernel, StateVectorFermionicPQCKernel
 from ...configs import (
     N_RANDOM_TESTS_PER_CASE,
     ATOL_MATRIX_COMPARISON,
     RTOL_MATRIX_COMPARISON,
-    ATOL_SCALAR_COMPARISON,
-    RTOL_SCALAR_COMPARISON,
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
 )

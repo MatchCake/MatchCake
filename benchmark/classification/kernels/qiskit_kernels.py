@@ -6,8 +6,7 @@ from pennylane.templates.broadcast import PATTERN_TO_WIRES
 from pennylane.wires import Wires
 from qiskit_aer import AerSimulator
 
-from . import matchcake
-from matchcake.ml.ml_kernel import (
+from matchcake.ml.kernels.ml_kernel import (
     MLKernel,
 )
 
