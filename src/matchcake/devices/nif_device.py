@@ -5,6 +5,7 @@ from typing import Iterable, Tuple, Union, Callable, Any, Optional, List
 
 import numpy as np
 import psutil
+import tqdm
 from scipy import sparse
 import pythonbasictools as pbt
 import pennylane as qml
@@ -204,6 +205,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"Got {self.pfaffian_method} instead."
         )
         self.n_workers = kwargs.get("n_workers", 0)
+        self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
+        self.show_progress = kwargs.get("show_progress", self.p_bar is not None)
     
     @property
     def basis_state_index(self) -> int:
@@ -619,7 +622,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         global_single_transition_particle_matrix = pnp.eye(2 * self.num_wires)[None, ...]
         batched = False
         operations = self.contract_operations(operations, self.contraction_method)
-
+        self.initialize_p_bar(total=len(operations), desc="Applying operations")
         # apply the circuit operations
         for i, op in enumerate(operations):
             op_r = None
@@ -656,6 +659,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 global_single_transition_particle_matrix = self.update_single_particle_transition_matrix(
                     global_single_transition_particle_matrix, op_r
                 )
+            self.p_bar_set_n(i + 1)
 
         if not batched:
             global_single_transition_particle_matrix = global_single_transition_particle_matrix[0]
@@ -670,6 +674,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self._transition_matrix = utils.make_transition_matrix_from_action_matrix(
             global_single_transition_particle_matrix
         )
+        self.close_p_bar()
 
     def prod_single_particle_transition_matrices_mp(self, sptm_list):
         """
@@ -694,13 +699,16 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if n_processes == 0 or n_processes == 1:
             return self.prod_single_particle_transition_matrices(sptm, sptm_list)
 
+        self.initialize_p_bar(total=len(sptm_list), desc="Computing single particle transition matrices")
         sptm_splits = np.array_split(sptm_list, n_processes)
         sptm_outputs = pbt.apply_func_multiprocess(
             func=self.prod_single_particle_transition_matrices,
             iterable_of_args=[(deepcopy(sptm), sptm_split) for sptm_split in sptm_splits],
             nb_workers=n_processes,
             verbose=False,
+            callbacks=[self.update_p_bar],
         )
+        self.close_p_bar()
         if len(sptm_outputs) == 1:
             return sptm_outputs[0]
         return self.prod_single_particle_transition_matrices(sptm, sptm_outputs)
@@ -973,3 +981,23 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self._pre_rotated_state = self._state
         self._transition_matrix = None
         self._lookup_table = None
+
+    def update_p_bar(self, *args, **kwargs):
+        if self.p_bar is None:
+            return
+        self.p_bar.update(*args, **kwargs)
+
+    def p_bar_set_n(self, n: int):
+        if self.p_bar is not None:
+            self.p_bar.n = n
+
+    def initialize_p_bar(self, *args, **kwargs):
+        kwargs.setdefault("disable", not self.show_progress)
+        if self.p_bar is None and not self.show_progress:
+            return
+        self.p_bar = tqdm.tqdm(*args, **kwargs)
+        return self.p_bar
+
+    def close_p_bar(self):
+        if self.p_bar is not None:
+            self.p_bar.close()
