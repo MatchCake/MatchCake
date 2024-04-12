@@ -1,6 +1,7 @@
 from typing import Union
 import numpy as np
 import pennylane as qml
+import opt_einsum as oe
 
 from .. import utils
 from .. import matchgate_parameter_sets as mps
@@ -86,6 +87,8 @@ class Matchgate:
     UNPICKEABLE_ATTRS = []
     DEFAULT_USE_H_FOR_TRANSITION_MATRIX = False
     DEFAULT_USE_LESS_EINSUM_FOR_TRANSITION_MATRIX = False
+
+    SPTM_CONTRACTION_PATH = None
 
     @staticmethod
     def random() -> 'Matchgate':
@@ -206,6 +209,21 @@ class Matchgate:
             [0, y, z, 0],
             [c, 0, 0, d]
         ])
+
+    @classmethod
+    def find_single_particle_transition_matrix_contraction_path(cls, *operands, **kwargs):
+        kwargs.setdefault("optimize", "optimal")
+        cls.SPTM_CONTRACTION_PATH = oe.contract_path(
+            *operands,
+            **kwargs
+        )
+        return cls.SPTM_CONTRACTION_PATH
+
+    @classmethod
+    def get_single_particle_transition_matrix_contraction_path(cls, *operands, **kwargs):
+        if cls.SPTM_CONTRACTION_PATH is None:
+            return cls.find_single_particle_transition_matrix_contraction_path(*operands, **kwargs)
+        return cls.SPTM_CONTRACTION_PATH
 
     def __init__(
             self,
@@ -586,11 +604,20 @@ class Matchgate:
         # majorana_tensor.shape: (2n, 2^n, 2^n)
         majorana_tensor = qml.math.stack([self.majorana_getter[i] for i in range(2*self.majorana_getter.n)])
         if self.use_less_einsum_for_transition_matrix:
-            matrix = qml.math.einsum(
-                "...ij,mjq,...kq,lko->...mlio",
-                u, majorana_tensor, qml.math.conjugate(u), majorana_tensor,
-                optimize="optimal",
+            operands = ["...ij,mjq,...kq,lko->...mlio", u, majorana_tensor, qml.math.conjugate(u), majorana_tensor]
+            sptm_contraction_path = self.get_single_particle_transition_matrix_contraction_path(
+                *operands, optimize="optimal"
             )
+            # perform the contraction
+            matrix = oe.contract(
+                *operands,
+                optimize=sptm_contraction_path
+            )
+            # matrix = qml.math.einsum(
+            #     "...ij,mjq,...kq,lko->...mlio",
+            #     u, majorana_tensor, qml.math.conjugate(u), majorana_tensor,
+            #     optimize="optimal",
+            # )
         else:
             u_c = qml.math.einsum(
                 "...ij,mjq->...miq", u, majorana_tensor,
