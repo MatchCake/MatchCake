@@ -63,10 +63,6 @@ class NonInteractingFermionicLookupTable:
         if qml.math.ndim(self.transition_matrix) < 3:
             return 0
         return qml.math.shape(self.transition_matrix)[0]
-
-    @property
-    def _batch_sub_script(self):
-        return "b" if self.batch_size > 0 else ""
     
     @property
     def block_diagonal_matrix(self):
@@ -133,97 +129,64 @@ class NonInteractingFermionicLookupTable:
         return self._c_2p_alpha_m1__c_2p_beta_m1
     
     def _compute_c_d_alpha__c_d_beta(self):
-        # TODO: return only the einsum with the batch sub script as ...
-        b = self._batch_sub_script
-        if b:
-            return qml.math.einsum(
-                f"{b}pi,ij,{b}kj->{b}pk",
-                self._transition_matrix,
-                self.block_diagonal_matrix,
-                self.transition_matrix
-            )
-        b_t = qml.math.dot(self.block_diagonal_matrix, self._transition_matrix.T)
-        return qml.math.dot(self._transition_matrix, b_t)
+        return qml.math.einsum(
+            f"...pi,ij,...kj->...pk",
+            self._transition_matrix,
+            self.block_diagonal_matrix,
+            self.transition_matrix
+        )
 
     def _compute_c_d_alpha__c_e_beta(self):
-        b = self._batch_sub_script
-        if b:
-            return qml.math.einsum(
-                f"{b}pi,ij,{b}kj->{b}pk",
-                self._transition_matrix,
-                self.block_diagonal_matrix,
-                qml.math.conjugate(self.transition_matrix)
-            )
-        # b_t = qml.math.dot(self.block_diagonal_matrix, qml.math.conjugate(self.transition_matrix.T))
-        b_t = qml.math.einsum(
-            f"ij,{b}kj->{b}ik",
-            self.block_diagonal_matrix, qml.math.conjugate(self.transition_matrix)
+        return qml.math.einsum(
+            f"...pi,ij,...kj->...pk",
+            self._transition_matrix,
+            self.block_diagonal_matrix,
+            qml.math.conjugate(self.transition_matrix)
         )
-        return qml.math.dot(self._transition_matrix, b_t)
     
     def _compute_c_d_alpha__c_2p_beta_m1(self):
-        b = self._batch_sub_script
-        if b:
-            return qml.math.einsum(
-                f"{b}pi,ij->{b}pj",
-                self._transition_matrix,
-                self.block_diagonal_matrix
-            )
-        return qml.math.dot(self._transition_matrix, self.block_diagonal_matrix)
+        return qml.math.einsum(
+            f"...pi,ij->...pj",
+            self._transition_matrix,
+            self.block_diagonal_matrix
+        )
 
     def _compute_c_e_alpha__c_d_beta(self):
-        b = self._batch_sub_script
-        if b:
-            return qml.math.einsum(
-                f"{b}pi,ij,{b}kj->{b}pk",
-                qml.math.conjugate(self._transition_matrix),
-                self.block_diagonal_matrix,
-                self.transition_matrix
-            )
-        b_t = qml.math.dot(self.block_diagonal_matrix, self.transition_matrix.T)
-        return qml.math.dot(pnp.conjugate(self._transition_matrix), b_t)
+        return qml.math.einsum(
+            f"...pi,ij,...kj->...pk",
+            qml.math.conjugate(self._transition_matrix),
+            self.block_diagonal_matrix,
+            self.transition_matrix
+        )
     
     def _compute_c_e_alpha__c_e_beta(self):
-        b = self._batch_sub_script
-        if b:
-            return qml.math.einsum(
-                f"{b}pi,ij,{b}kj->{b}pk",
-                qml.math.conjugate(self._transition_matrix),
-                self.block_diagonal_matrix,
-                qml.math.conjugate(self.transition_matrix)
-            )
-        b_t = qml.math.dot(self.block_diagonal_matrix, pnp.conjugate(self.transition_matrix.T))
-        return qml.math.dot(pnp.conjugate(self._transition_matrix), b_t)
+        return qml.math.einsum(
+            f"...pi,ij,...kj->...pk",
+            qml.math.conjugate(self._transition_matrix),
+            self.block_diagonal_matrix,
+            qml.math.conjugate(self.transition_matrix)
+        )
     
     def _compute_c_e_alpha__c_2p_beta_m1(self):
-        b = self._batch_sub_script
-        if b:
-            return qml.math.einsum(
-                f"{b}pi,ij->{b}pj",
-                qml.math.conjugate(self._transition_matrix),
-                self.block_diagonal_matrix
-            )
-        return qml.math.dot(pnp.conjugate(self._transition_matrix), self.block_diagonal_matrix)
+        return qml.math.einsum(
+            f"...pi,ij->...pj",
+            qml.math.conjugate(self._transition_matrix),
+            self.block_diagonal_matrix
+        )
 
     def _compute_c_2p_alpha_m1__c_d_beta(self):
-        b = self._batch_sub_script
-        if b:
-            return qml.math.einsum(
-                f"ij,{b}kj->{b}ik",
-                self.block_diagonal_matrix,
-                self.transition_matrix
-            )
-        return qml.math.dot(self.block_diagonal_matrix, self.transition_matrix.T)
+        return qml.math.einsum(
+            f"ij,...kj->...ik",
+            self.block_diagonal_matrix,
+            self.transition_matrix
+        )
 
     def _compute_c_2p_alpha_m1__c_e_beta(self):
-        b = self._batch_sub_script
-        if b:
-            return qml.math.einsum(
-                f"ij,{b}kj->{b}ik",
-                self.block_diagonal_matrix,
-                qml.math.conjugate(self.transition_matrix)
-            )
-        return qml.math.dot(self.block_diagonal_matrix, pnp.conjugate(self.transition_matrix.T))
+        return qml.math.einsum(
+            f"ij,...kj->...ik",
+            self.block_diagonal_matrix,
+            qml.math.conjugate(self.transition_matrix)
+        )
 
     def _compute_c_2p_alpha_m1__c_2p_beta_m1(self):
         if self.batch_size > 0:
