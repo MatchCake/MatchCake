@@ -50,8 +50,7 @@ def run_circuit(use_less_einsum_for_transition_matrix: bool):
 
 if __name__ == '__main__':
     time_with_einsum = run_circuit(use_less_einsum_for_transition_matrix=False)
-    time_with_less_einsum = run_circuit(use_less_einsum_for_transition_matrix=True)
     print(f"Time with einsum: {time_with_einsum}")
+    time_with_less_einsum = run_circuit(use_less_einsum_for_transition_matrix=True)
     print(f"Time with less einsum: {time_with_less_einsum}")
     print(f"Speedup: {time_with_einsum / time_with_less_einsum}")
-
