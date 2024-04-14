@@ -438,19 +438,6 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         queue = operations.copy()
         new_operations = []
         vh_container = _VHMatchgatesContainer()
-        # while len(queue) > 1:
-        #     op1 = queue.pop(0)
-        #     if not isinstance(op1, MatchgateOperation):
-        #         new_operations.append(op1)
-        #         continue
-        #     op2 = queue.pop(0)
-        #     if not isinstance(op2, MatchgateOperation):
-        #         new_operations.append(op1)
-        #         new_operations.append(op2)
-        #         continue
-        #     if op1.wires == op2.wires:
-        #         queue.insert(0, op1 @ op2)
-        # new_operations.extend(queue)
 
         while len(queue) > 0:
             op = queue.pop(0)
@@ -467,7 +454,6 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if vh_container:
             new_operations.append(vh_container.contract())
             vh_container.clear()
-
         return new_operations
 
     def batch_execute(self, circuits):
