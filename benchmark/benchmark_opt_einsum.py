@@ -37,20 +37,20 @@ def run_circuit(use_less_einsum_for_transition_matrix: bool):
     nif_device = mc.NonInteractingFermionicDevice(wires=10, show_progress=True)
     initial_state = np.zeros(len(nif_device.wires), dtype=int)
     nif_qnode = qml.QNode(circuit, nif_device)
-    n_layers = 32  # Number of layers
+    n_layers = 256  # Number of layers
     n_gate_params = 2  # Number of parameters per gate
-    params = np.random.random((1000, n_gate_params, n_layers))
+    params = np.random.random((32, n_gate_params, n_layers))
     mc.Matchgate.DEFAULT_USE_LESS_EINSUM_FOR_TRANSITION_MATRIX = use_less_einsum_for_transition_matrix
     start_time = time.perf_counter()
     expval = nif_qnode(params, wires=nif_device.wires, initial_state=initial_state)
     end_time = time.perf_counter()
-    print(mc.Matchgate.SPTM_CONTRACTION_PATH)
     return end_time - start_time
 
 
 if __name__ == '__main__':
-    time_with_einsum = run_circuit(use_less_einsum_for_transition_matrix=False)
-    print(f"Time with einsum: {time_with_einsum}")
     time_with_less_einsum = run_circuit(use_less_einsum_for_transition_matrix=True)
     print(f"Time with less einsum: {time_with_less_einsum}")
+    time_with_einsum = run_circuit(use_less_einsum_for_transition_matrix=False)
+    print(f"Time with einsum: {time_with_einsum}")
     print(f"Speedup: {time_with_einsum / time_with_less_einsum}")
+    print(f"{mc.Matchgate.SPTM_CONTRACTION_PATH = }")
