@@ -605,13 +605,13 @@ class Matchgate:
         majorana_tensor = qml.math.stack([self.majorana_getter[i] for i in range(2*self.majorana_getter.n)])
         if self.use_less_einsum_for_transition_matrix:
             operands = ["...ij,mjq,...kq,lko->...mlio", u, majorana_tensor, qml.math.conjugate(u), majorana_tensor]
-            sptm_contraction_path = self.get_single_particle_transition_matrix_contraction_path(
+            sptm_contraction_path = Matchgate.get_single_particle_transition_matrix_contraction_path(
                 *operands, optimize="optimal"
             )
             # perform the contraction
             matrix = oe.contract(
                 *operands,
-                optimize=sptm_contraction_path
+                optimize=sptm_contraction_path[0]
             )
             # matrix = qml.math.einsum(
             #     "...ij,mjq,...kq,lko->...mlio",
