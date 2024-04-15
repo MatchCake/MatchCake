@@ -69,7 +69,7 @@ class NIFKernel(MLKernel):
     def initialize_parameters(self):
         if self._parameters is None:
             n_parameters = self.kwargs.get("n_parameters", PATTERN_TO_NUM_PARAMS["pyramid"](self.wires))
-            self._parameters = [pnp.random.uniform(0, 2 * np.pi, size=2) for _ in range(n_parameters)]
+            self._parameters = [self.parameters_rng.uniform(0, 2 * np.pi, size=2) for _ in range(n_parameters)]
 
     def pre_initialize(self):
         self._device = NonInteractingFermionicDevice(wires=self.size, n_workers=getattr(self, "device_workers", 0))

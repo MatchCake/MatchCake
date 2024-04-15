@@ -64,7 +64,7 @@ class FermionicPQCKernel(NIFKernel):
 
     def initialize_parameters(self):
         self._depth = self.kwargs.get("depth", int(max(1, np.ceil(self.X_.shape[-1] / self.size))))
-        self.parameters = pnp.random.uniform(0.0, 1.0, size=self.X_.shape[-1])
+        self.parameters = self.parameters_rng.uniform(0.0, 1.0, size=self.X_.shape[-1])
 
     def ansatz(self, x):
         wires_double = PATTERN_TO_WIRES["double"](self.wires)
