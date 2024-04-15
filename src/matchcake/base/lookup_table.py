@@ -5,14 +5,33 @@ import numpy as np
 import pennylane as qml
 from pennylane import numpy as pnp
 from scipy import sparse
+import tqdm
 
 from .. import utils
+from ..templates import TensorLike
 
 
 class NonInteractingFermionicLookupTable:
+    """
+    Lookup table for the non-interacting fermionic device.
+
+    :param transition_matrix: The transition matrix of the device.
+    :type transition_matrix: TensorLike
+    :param show_progress: Whether to show progress bars.
+    :type show_progress: bool
+
+    The lookup table is a 3x3 matrix where the rows and columns are labeled by the following:
+    - 0: c_d_alpha
+    - 1: c_e_alpha
+    - 2: c_2p_alpha_m1
+
+    # TODO: Add more documentation.
+    # TODO: Tips for optimization: Maybe there is a way to use the sparsity of the block diagonal matrix to reduce
+    # TODO: the number of operations in the lookup table.
+    """
     def __init__(
             self,
-            transition_matrix: pnp.ndarray,
+            transition_matrix: TensorLike,
             **kwargs
     ):
         self._transition_matrix = transition_matrix
@@ -28,8 +47,14 @@ class NonInteractingFermionicLookupTable:
         self._c_2p_alpha_m1__c_d_beta = None
         self._c_2p_alpha_m1__c_e_beta = None
         self._c_2p_alpha_m1__c_2p_beta_m1 = None
+
+        self._block_bm_transition_transpose_matrix = None
+        self._block_bm_transition_dagger_matrix = None
+        self._transition_bm_block_matrix = None
         
         self._observables = {}
+        self.p_bar = None
+        self.show_progress = kwargs.get("show_progress", False)
     
     @property
     def memory_usage(self):
@@ -127,47 +152,87 @@ class NonInteractingFermionicLookupTable:
         if self._c_2p_alpha_m1__c_2p_beta_m1 is None:
             self._c_2p_alpha_m1__c_2p_beta_m1 = self._compute_c_2p_alpha_m1__c_2p_beta_m1()
         return self._c_2p_alpha_m1__c_2p_beta_m1
+
+    @property
+    def block_bm_transition_transpose_matrix(self):
+        if self._block_bm_transition_transpose_matrix is None:
+            self._block_bm_transition_transpose_matrix = self._compute_block_bm_transition_transpose_matrix_()
+        return self._block_bm_transition_transpose_matrix
+
+    @property
+    def block_bm_transition_dagger_matrix(self):
+        if self._block_bm_transition_dagger_matrix is None:
+            self._block_bm_transition_dagger_matrix = self._compute_block_bm_transition_dagger_matrix_()
+        return self._block_bm_transition_dagger_matrix
+
+    @property
+    def transition_bm_block_matrix(self):
+        if self._transition_bm_block_matrix is None:
+            self._transition_bm_block_matrix = self._compute_transition_bm_block_matrix_()
+        return self._transition_bm_block_matrix
+
+    def _compute_block_bm_transition_transpose_matrix_(self):
+        self.p_bar_set_postfix_str("Computing BT^T matrix.")
+        return qml.math.einsum(
+            f"ij,...kj->...ik",
+            self.block_diagonal_matrix,
+            self.transition_matrix
+        )
+
+    def _compute_block_bm_transition_dagger_matrix_(self):
+        self.p_bar_set_postfix_str("Computing BT^dagger matrix.")
+        return qml.math.einsum(
+            f"ij,...kj->...ik",
+            self.block_diagonal_matrix,
+            qml.math.conjugate(self.transition_matrix)
+        )
+
+    def _compute_transition_bm_block_matrix_(self):
+        self.p_bar_set_postfix_str("Computing TB matrix.")
+        return qml.math.einsum(
+            f"...ij,jk->...ik",
+            self.transition_matrix,
+            self.block_diagonal_matrix
+        )
     
     def _compute_c_d_alpha__c_d_beta(self):
+        self.p_bar_set_postfix_str("Computing c_d_alpha__c_d_beta.")
         return qml.math.einsum(
-            f"...pi,ij,...kj->...pk",
-            self._transition_matrix,
-            self.block_diagonal_matrix,
+            f"...pj,...kj->...pk",
+            self.transition_bm_block_matrix,
             self.transition_matrix
         )
 
     def _compute_c_d_alpha__c_e_beta(self):
+        self.p_bar_set_postfix_str("Computing c_d_alpha__c_e_beta.")
         return qml.math.einsum(
-            f"...pi,ij,...kj->...pk",
-            self._transition_matrix,
-            self.block_diagonal_matrix,
+            f"...pj,...kj->...pk",
+            self.transition_bm_block_matrix,
             qml.math.conjugate(self.transition_matrix)
         )
     
     def _compute_c_d_alpha__c_2p_beta_m1(self):
-        return qml.math.einsum(
-            f"...pi,ij->...pj",
-            self._transition_matrix,
-            self.block_diagonal_matrix
-        )
+        self.p_bar_set_postfix_str("Computing c_d_alpha__c_2p_beta_m1.")
+        return self.transition_bm_block_matrix
 
     def _compute_c_e_alpha__c_d_beta(self):
+        self.p_bar_set_postfix_str("Computing c_e_alpha__c_d_beta.")
         return qml.math.einsum(
-            f"...pi,ij,...kj->...pk",
+            f"...pi,...ik->...pk",
             qml.math.conjugate(self._transition_matrix),
-            self.block_diagonal_matrix,
-            self.transition_matrix
+            self.block_bm_transition_transpose_matrix
         )
     
     def _compute_c_e_alpha__c_e_beta(self):
+        self.p_bar_set_postfix_str("Computing c_e_alpha__c_e_beta.")
         return qml.math.einsum(
-            f"...pi,ij,...kj->...pk",
+            f"...pi,...ik->...pk",
             qml.math.conjugate(self._transition_matrix),
-            self.block_diagonal_matrix,
-            qml.math.conjugate(self.transition_matrix)
+            self.block_bm_transition_dagger_matrix
         )
     
     def _compute_c_e_alpha__c_2p_beta_m1(self):
+        self.p_bar_set_postfix_str("Computing c_e_alpha__c_2p_beta_m1.")
         return qml.math.einsum(
             f"...pi,ij->...pj",
             qml.math.conjugate(self._transition_matrix),
@@ -175,20 +240,15 @@ class NonInteractingFermionicLookupTable:
         )
 
     def _compute_c_2p_alpha_m1__c_d_beta(self):
-        return qml.math.einsum(
-            f"ij,...kj->...ik",
-            self.block_diagonal_matrix,
-            self.transition_matrix
-        )
+        self.p_bar_set_postfix_str("Computing c_2p_alpha_m1__c_d_beta.")
+        return self.block_bm_transition_transpose_matrix
 
     def _compute_c_2p_alpha_m1__c_e_beta(self):
-        return qml.math.einsum(
-            f"ij,...kj->...ik",
-            self.block_diagonal_matrix,
-            qml.math.conjugate(self.transition_matrix)
-        )
+        self.p_bar_set_postfix_str("Computing c_2p_alpha_m1__c_e_beta.")
+        return self.block_bm_transition_dagger_matrix
 
     def _compute_c_2p_alpha_m1__c_2p_beta_m1(self):
+        self.p_bar_set_postfix_str("Computing c_2p_alpha_m1__c_2p_beta_m1.")
         if self.batch_size > 0:
             size = qml.math.shape(self.transition_matrix)[-1]
             shape = ([self.batch_size] if self.batch_size else []) + [size, size]
@@ -243,6 +303,7 @@ class NonInteractingFermionicLookupTable:
             system_state: Union[int, np.ndarray, sparse.sparray],
             target_binary_state: Optional[np.ndarray] = None,
             indexes_of_target_state: Optional[np.ndarray] = None,
+            **kwargs
     ) -> np.ndarray:
         r"""
         Get the observable corresponding to target_binary_state and the system_state.
@@ -256,6 +317,7 @@ class NonInteractingFermionicLookupTable:
         :return: The observable of shape (2(h + k), 2(h + k)) where h is the hamming weight of the system state.
         :rtype: np.ndarray
         """
+        self.show_progress = kwargs.get("show_progress", self.show_progress)
         key = (
             utils.state_to_binary_string(system_state, n=self.n_particles),
             ''.join([str(i) for i in target_binary_state]),
@@ -263,7 +325,7 @@ class NonInteractingFermionicLookupTable:
         )
         if key not in self._observables:
             self._observables[key] = self.compute_observable_of_target_state(
-                system_state, target_binary_state, indexes_of_target_state
+                system_state, target_binary_state, indexes_of_target_state, **kwargs
             )
         return self._observables[key]
     
@@ -295,6 +357,7 @@ class NonInteractingFermionicLookupTable:
             system_state: Union[int, np.ndarray, sparse.sparray],
             target_binary_state: Optional[np.ndarray] = None,
             indexes_of_target_state: Optional[np.ndarray] = None,
+            **kwargs
     ) -> np.ndarray:
         if target_binary_state is None and indexes_of_target_state is None:
             target_binary_state = np.array([1, ])
@@ -317,9 +380,46 @@ class NonInteractingFermionicLookupTable:
         obs_size = len(majorana_indexes)
         obs_shape = ([self.batch_size] if self.batch_size else []) + [obs_size, obs_size]
         obs = qml.math.convert_like(pnp.zeros(obs_shape, dtype=complex), self.transition_matrix)
+        self.initialize_p_bar(total=obs_size * (obs_size - 1) // 2, initial=0, desc="Computing observable")
         for (i, j) in zip(*np.triu_indices(obs_size, k=1)):
             i_k, j_k = majorana_indexes[i], majorana_indexes[j]
             row, col = lt_indexes[i], lt_indexes[j]
             obs[..., i, j] = self[row, col][..., i_k, j_k]
+            self.update_p_bar()
+        self.p_bar_set_postfix_str("Finishing the computation of the observable.")
         obs = obs - qml.math.einsum("...ij->...ji", obs)
+        self.p_bar_set_postfix_str("Finished the computation of the observable.")
+        self.close_p_bar()
         return obs
+
+    def update_p_bar(self, *args, **kwargs):
+        if self.p_bar is None:
+            return
+        self.p_bar.update(*args, **kwargs)
+        self.p_bar.refresh()
+
+    def p_bar_set_n(self, n: int):
+        if self.p_bar is not None:
+            self.p_bar.n = n
+            self.p_bar.refresh()
+
+    def initialize_p_bar(self, *args, **kwargs):
+        kwargs.setdefault("disable", not self.show_progress)
+        if self.p_bar is None and not self.show_progress:
+            return
+        self.p_bar = tqdm.tqdm(*args, **kwargs)
+        return self.p_bar
+
+    def p_bar_set_postfix(self, *args, **kwargs):
+        if self.p_bar is not None:
+            self.p_bar.set_postfix(*args, **kwargs)
+            self.p_bar.refresh()
+
+    def p_bar_set_postfix_str(self, *args, **kwargs):
+        if self.p_bar is not None:
+            self.p_bar.set_postfix_str(*args, **kwargs)
+            self.p_bar.refresh()
+
+    def close_p_bar(self):
+        if self.p_bar is not None:
+            self.p_bar.close()

@@ -23,7 +23,10 @@ class _VHMatchgatesContainer:
 
     def try_add(self, op: MatchgateOperation) -> bool:
         if op.wires in self.op_container:
-            self.add(op)
+            try:
+                self.add(op)
+            except Exception:
+                return False
             return True
         is_wire_in_container = any([w in self.wires_set for w in op.wires.labels])
         if not is_wire_in_container:
