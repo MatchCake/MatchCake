@@ -1,10 +1,18 @@
 from typing import Optional
+import os
+import sys
 
-import matchcake as mc
+try:
+    import matchcake as mc
+except ImportError:
+    sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
+    import matchcake as mc
+
 import pennylane as qml
 import numpy as np
 from pennylane.ops.qubit.observables import BasisStateProjector
 import time
+import datetime
 
 
 def circuit(params, wires, initial_state=None):
@@ -36,15 +44,16 @@ def circuit(params, wires, initial_state=None):
 
 def run_circuit(contraction_method: Optional[str]):
     nif_device = mc.NonInteractingFermionicDevice(
-        wires=1024,
+        wires=128,
         show_progress=True,
         contraction_method=contraction_method
     )
     initial_state = np.zeros(len(nif_device.wires), dtype=int)
     nif_qnode = qml.QNode(circuit, nif_device)
-    n_layers = 4  # Number of layers
+    n_features = 4096  # Number of features
+    n_layers = int(np.ceil(n_features / nif_device.num_wires))  # Number of layers
     n_gate_params = 2  # Number of parameters per gate
-    params = np.random.random((128, n_gate_params, n_layers))
+    params = np.random.random((8192, n_gate_params, n_layers))
     start_time = time.perf_counter()
     expval = nif_qnode(params, wires=nif_device.wires, initial_state=initial_state)
     end_time = time.perf_counter()
@@ -52,8 +61,8 @@ def run_circuit(contraction_method: Optional[str]):
 
 
 if __name__ == '__main__':
-    time_wo_contraction = run_circuit(contraction_method=None)
-    print(f"Time without contraction: {time_wo_contraction}")
     time_with_contraction = run_circuit(contraction_method="neighbours")
-    print(f"Time with contraction: {time_with_contraction}")
+    print(f"Time with contraction: {datetime.timedelta(seconds=time_with_contraction)}")
+    time_wo_contraction = run_circuit(contraction_method=None)
+    print(f"Time without contraction: {datetime.timedelta(seconds=time_wo_contraction)}")
     print(f"Speedup: {time_wo_contraction / time_with_contraction}")
