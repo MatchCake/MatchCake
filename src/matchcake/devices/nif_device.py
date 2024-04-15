@@ -39,7 +39,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     :type prob_strategy: str
     :keyword majorana_getter: The Majorana getter to use. Defaults to a new instance of MajoranaGetter.
     :type majorana_getter: MajoranaGetter
-    :keyword contraction_method: The contraction method to use. Can be either None or "neighbours". Defaults to None.
+    :keyword contraction_method: The contraction method to use. Can be either None or "neighbours".
+        Defaults to "neighbours".
     :type contraction_method: Optional[str]
     :keyword pfaffian_method: The method to compute the Pfaffian. Can be either "det" or "P". Defaults to "det".
     :type pfaffian_method: str
@@ -194,7 +195,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The majorana_getter must be initialized with {self.num_wires} wires. "
             f"Got {self.majorana_getter.n} instead."
         )
-        self.contraction_method = kwargs.get("contraction_method", None)
+        self.contraction_method = kwargs.get("contraction_method", "neighbours")
         assert self.contraction_method in self.contraction_methods, (
             f"The contraction method must be one of {self.contraction_methods}. "
             f"Got {self.contraction_method} instead."
@@ -439,8 +440,10 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         new_operations = []
         vh_container = _VHMatchgatesContainer()
 
+        self.initialize_p_bar(total=len(queue), initial=0, desc="Neighbours contraction")
         while len(queue) > 0:
             op = queue.pop(0)
+            self.p_bar_set_n(len(operations) - len(queue))
             if not isinstance(op, MatchgateOperation):
                 new_operations.append(op)
                 if vh_container:
@@ -454,6 +457,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if vh_container:
             new_operations.append(vh_container.contract())
             vh_container.clear()
+        self.close_p_bar()
         return new_operations
 
     def batch_execute(self, circuits):
@@ -635,13 +639,20 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             elif isinstance(op, qml.pulse.ParametrizedEvolution):
                 self._state = self._apply_parametrized_evolution(self._state, op)
             elif isinstance(op, _SingleParticleTransitionMatrix):
+                self.p_bar_set_postfix_str(
+                    f"Padding single particle transition matrix for {getattr(op, 'name', op.__class__.__name__)}"
+                )
                 op_r = op.pad(self.wires).matrix
             else:
                 assert op.name in self.operations, f"Operation {op.name} is not supported."
                 if isinstance(op, MatchgateOperation):
+                    self.p_bar_set_postfix_str(
+                        f"Computing single particle transition matrix for {getattr(op, 'name', op.__class__.__name__)}"
+                    )
                     op_r = op.get_padded_single_particle_transition_matrix(self.wires)
             if op_r is not None:
                 batched = batched or (qml.math.ndim(op_r) > 2)
+                self.p_bar_set_postfix_str(f"Applying operation {getattr(op, 'name', op.__class__.__name__)}")
                 global_single_transition_particle_matrix = self.update_single_particle_transition_matrix(
                     global_single_transition_particle_matrix, op_r
                 )
@@ -657,9 +668,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         # apply the circuit rotations
         # for operation in rotations:
         #     self._state = self._apply_operation(self._state, operation)
+        self.p_bar_set_postfix_str("Computing transition matrix")
         self._transition_matrix = utils.make_transition_matrix_from_action_matrix(
             global_single_transition_particle_matrix
         )
+        self.p_bar_set_postfix_str("Transition matrix computed")
         self.close_p_bar()
 
     def prod_single_particle_transition_matrices_mp(self, sptm_list):
@@ -801,7 +814,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             wires = [wires]
         wires = Wires(wires)
         obs = self.lookup_table.get_observable_of_target_state(
-            self.get_sparse_or_dense_state(), target_binary_state, wires
+            self.get_sparse_or_dense_state(), target_binary_state, wires,
+            show_progress=self.show_progress,
         )
         return qml.math.real(utils.pfaffian(obs, method=self.pfaffian_method))
 
@@ -972,10 +986,12 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if self.p_bar is None:
             return
         self.p_bar.update(*args, **kwargs)
+        self.p_bar.refresh()
 
     def p_bar_set_n(self, n: int):
         if self.p_bar is not None:
             self.p_bar.n = n
+            self.p_bar.refresh()
 
     def initialize_p_bar(self, *args, **kwargs):
         kwargs.setdefault("disable", not self.show_progress)
@@ -983,6 +999,16 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             return
         self.p_bar = tqdm.tqdm(*args, **kwargs)
         return self.p_bar
+
+    def p_bar_set_postfix(self, *args, **kwargs):
+        if self.p_bar is not None:
+            self.p_bar.set_postfix(*args, **kwargs)
+            self.p_bar.refresh()
+
+    def p_bar_set_postfix_str(self, *args, **kwargs):
+        if self.p_bar is not None:
+            self.p_bar.set_postfix_str(*args, **kwargs)
+            self.p_bar.refresh()
 
     def close_p_bar(self):
         if self.p_bar is not None:
