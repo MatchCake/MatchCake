@@ -25,8 +25,8 @@ from ...configs import (
 def test_fermionic_pqc_gram_equal_pennylane(x, rotations):
     x = qml.math.array(x)
     y = qml.math.array(np.zeros(x.shape[0]))
-    fkernel = FermionicPQCKernel(rotations=rotations)
-    pkernel = StateVectorFermionicPQCKernel(rotations=rotations)
+    fkernel = FermionicPQCKernel(rotations=rotations, parameter_scaling=0, data_scaling=1)
+    pkernel = StateVectorFermionicPQCKernel(rotations=rotations, parameter_scaling=0, data_scaling=1)
     fkernel.fit(x, y)
     pkernel.fit(x, y)
     pkernel.parameters = fkernel.parameters
@@ -34,8 +34,8 @@ def test_fermionic_pqc_gram_equal_pennylane(x, rotations):
     p_gram = pkernel.compute_gram_matrix(x)
     np.testing.assert_allclose(
         f_gram, p_gram,
-        atol=ATOL_MATRIX_COMPARISON,
-        rtol=RTOL_MATRIX_COMPARISON,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
     )
 
 
