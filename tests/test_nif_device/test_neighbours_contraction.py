@@ -33,7 +33,7 @@ def test_neighbours_contraction(operations, expected_new_operations):
     assert len(new_operations) == len(expected_new_operations), "The number of operations is different."
     for new_op, expected_op in zip(new_operations, expected_new_operations):
         np.testing.assert_allclose(
-            new_op.matrix, expected_op.matrix,
+            new_op.compute_matrix(), expected_op.compute_matrix(),
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
