@@ -252,7 +252,12 @@ def test_fermionic_pqc_identity_test(
     :return: None
     """
     rotations = ','.join(rotations)
-    fkernel = FermionicPQCKernel(size=n_qubit, entangling_mth=entangling_mth, rotations=rotations)
+    fkernel = FermionicPQCKernel(
+        size=n_qubit,
+        entangling_mth=entangling_mth,
+        rotations=rotations,
+        device_kwargs=dict(contraction_method=None),
+    )
     x = np.stack([x, x], axis=0)
     y = qml.math.array(np.zeros(x.shape[0]))
     fkernel.fit(x, y)
