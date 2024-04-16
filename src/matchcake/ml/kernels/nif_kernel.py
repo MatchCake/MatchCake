@@ -67,6 +67,7 @@ class NIFKernel(MLKernel):
         return getattr(qnode, "tape", None)
 
     def initialize_parameters(self):
+        super().initialize_parameters()
         if self._parameters is None:
             n_parameters = self.kwargs.get("n_parameters", PATTERN_TO_NUM_PARAMS["pyramid"](self.wires))
             self._parameters = [self.parameters_rng.uniform(0, 2 * np.pi, size=2) for _ in range(n_parameters)]
