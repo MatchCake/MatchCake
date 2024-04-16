@@ -73,3 +73,4 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, prob_wires):
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
+
