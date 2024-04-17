@@ -7,6 +7,7 @@ from pennylane.wires import Wires
 
 from ..base.matchgate import Matchgate
 from .. import matchgate_parameter_sets as mps, utils
+from ..templates import TensorLike
 
 
 class MatchgateOperation(Matchgate, Operation):
@@ -69,6 +70,7 @@ class MatchgateOperation(Matchgate, Operation):
         """
         if wires is None:
             wires = self.wires
+        wires = Wires(wires)
         matrix = self.single_particle_transition_matrix
         if qml.math.ndim(matrix) == 2:
             padded_matrix = pnp.eye(2*len(wires))
@@ -171,7 +173,7 @@ class _SingleParticleTransitionMatrix:
             matrix[..., slice_0, slice_1] = op.single_particle_transition_matrix
         return cls(matrix, all_wires)
 
-    def __init__(self, matrix: pnp.ndarray, wires: Wires):
+    def __init__(self, matrix: TensorLike, wires: Wires):
         self.matrix = matrix
         self.wires = wires
 
