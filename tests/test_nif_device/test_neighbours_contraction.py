@@ -22,7 +22,7 @@ np.random.seed(TEST_SEED)
         (
             [MatchgateOperation(mps.Identity, wires=[0, 1])],
             [MatchgateOperation(mps.Identity, wires=[0, 1])],
-        )
+        ),
     ]
 )
 def test_neighbours_contraction(operations, expected_new_operations):
@@ -39,7 +39,16 @@ def test_neighbours_contraction(operations, expected_new_operations):
         )
 
 
-def test_neighbours_contraction_device(operations):
+@pytest.mark.parametrize(
+    "operations",
+    [
+        # [MatchgateOperation(mps.Identity, wires=[0, 1])],
+        # [MatchgateOperation(mps.Identity, wires=[0, 1]) for _ in range(10)],
+        # [MatchgateOperation(mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1])],
+        [MatchgateOperation(mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1]) for _ in range(2)],
+    ]
+)
+def test_neighbours_contraction_device_one_line(operations):
     nif_device_nh = init_nif_device(wires=2, contraction_method="neighbours")
     nif_device = init_nif_device(wires=2, contraction_method=None)
 
