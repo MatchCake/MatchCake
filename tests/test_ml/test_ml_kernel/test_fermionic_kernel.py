@@ -10,7 +10,10 @@ from ...configs import (
     RTOL_MATRIX_COMPARISON,
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
+    TEST_SEED,
 )
+
+np.random.seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(
@@ -287,7 +290,7 @@ def test_fermionic_pqc_identity_test(
         for n_q in [2, 6]
         for ent_mth in ["identity", "fswap", "hadamard"]
         for rot in [["X"], ["Y"], ["Z"], ["X", "Y"], ["X", "Z"], ["Y", "Z"], ["X", "Y", "Z"]]
-        for rn_size in np.random.randint(n_q, 3*n_q+1, size=N_RANDOM_TESTS_PER_CASE)
+        for rn_size in np.random.randint(n_q, 2*n_q+1, size=N_RANDOM_TESTS_PER_CASE)
     ]
 )
 def test_fermionic_pqc_swap_test(

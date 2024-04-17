@@ -152,10 +152,11 @@ class _SingleParticleTransitionMatrix:
 
     @classmethod
     def from_operations(cls, ops: Iterable[MatchgateOperation]):
+        ops = list(ops)
         if len(ops) == 0:
             return None
         if len(ops) == 1:
-            return cls.from_operation(next(iter(ops)))
+            return cls.from_operation(ops[0])
         all_wires = Wires.all_wires([op.wires for op in ops], sort=True)
         all_wires = cls.make_wires_continuous(all_wires)
         batch_sizes = [op.batch_size for op in ops if op.batch_size is not None] + [None]
@@ -190,6 +191,8 @@ class _SingleParticleTransitionMatrix:
         return _SingleParticleTransitionMatrix(self.matrix @ other.matrix, self.wires)
 
     def pad(self, wires: Wires):
+        if not isinstance(wires, Wires):
+            wires = Wires(wires)
         if self.wires == wires:
             return self
         matrix = self.matrix

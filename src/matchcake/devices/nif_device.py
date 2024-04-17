@@ -15,7 +15,7 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 from pennylane.ops.qubit.observables import BasisStateProjector
 
-from .device_utils import _VHMatchgatesContainer
+from .device_utils import _VHMatchgatesContainer, _VerticalMatchgatesContainer, _HorizontalMatchgatesContainer
 from ..operations.matchgate_operation import MatchgateOperation, _SingleParticleTransitionMatrix
 from ..base.lookup_table import NonInteractingFermionicLookupTable
 from .. import utils
@@ -40,7 +40,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     :keyword majorana_getter: The Majorana getter to use. Defaults to a new instance of MajoranaGetter.
     :type majorana_getter: MajoranaGetter
     :keyword contraction_method: The contraction method to use. Can be either None or "neighbours".
-        Defaults to "neighbours".
+        Defaults to None.
     :type contraction_method: Optional[str]
     :keyword pfaffian_method: The method to compute the Pfaffian. Can be either "det" or "P". Defaults to "det".
     :type pfaffian_method: str
@@ -92,7 +92,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     observables = {"BasisStateProjector", "Projector", "Identity"}
 
     prob_strategies = {"lookup_table", "explicit_sum"}
-    contraction_methods = {None, "neighbours"}
+    contraction_methods = {None, "neighbours", "vertical", "horizontal"}
     pfaffian_methods = {"det", "P"}
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
@@ -195,7 +195,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The majorana_getter must be initialized with {self.num_wires} wires. "
             f"Got {self.majorana_getter.n} instead."
         )
-        self.contraction_method = kwargs.get("contraction_method", "neighbours")
+        self.contraction_method = kwargs.get("contraction_method", None)
         assert self.contraction_method in self.contraction_methods, (
             f"The contraction method must be one of {self.contraction_methods}. "
             f"Got {self.contraction_method} instead."
@@ -426,7 +426,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         contraction_method = contraction_method or self.contraction_method
         if contraction_method is None:
             return operations
-        elif contraction_method == "neighbours":
+        elif contraction_method in ["neighbours", "vertical", "horizontal"]:
             return self.do_neighbours_contraction(operations)
         else:
             raise NotImplementedError(
@@ -438,7 +438,14 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             return operations
         queue = operations.copy()
         new_operations = []
-        vh_container = _VHMatchgatesContainer()
+        if self.contraction_method == "neighbours":
+            container = _VHMatchgatesContainer()
+        elif self.contraction_method == "vertical":
+            container = _VerticalMatchgatesContainer()
+        elif self.contraction_method == "horizontal":
+            container = _HorizontalMatchgatesContainer()
+        else:
+            raise ValueError(f"Contraction method {self.contraction_method} is not implemented.")
 
         self.initialize_p_bar(total=len(queue), initial=0, desc="Neighbours contraction")
         # while len(queue) > 0:
@@ -447,20 +454,20 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             self.p_bar_set_n(len(operations) - len(queue))
             if not isinstance(op, MatchgateOperation):
                 new_operations.append(op)
-                if vh_container:
-                    new_operations.append(vh_container.contract())
-                    vh_container.clear()
+                if container:
+                    new_operations.append(container.contract())
+                    container.clear()
                 continue
             # if not vh_container.try_add(op):
             #     new_operations.append(vh_container.contract())
             #     vh_container.clear()
             #     vh_container.add(op)
-            new_op = vh_container.push_contract(op)
+            new_op = container.push_contract(op)
             if new_op is not None:
                 new_operations.append(new_op)
-        if vh_container:
-            new_operations.append(vh_container.contract())
-            vh_container.clear()
+        if container:
+            new_operations.append(container.contract())
+            container.clear()
         self.close_p_bar()
         return new_operations
 

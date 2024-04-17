@@ -1,9 +1,14 @@
-from typing import Iterable, Union, Optional
+import warnings
+from typing import Iterable, Union, Optional, Literal, List
 
 from ..operations.matchgate_operation import MatchgateOperation, _SingleParticleTransitionMatrix
 
 
-class _VHMatchgatesContainer:
+class _ContractionMatchgatesContainerAddException(Exception):
+    pass
+
+
+class _ContractionMatchgatesContainer:
     def __init__(self):
         self.op_container = {}
         self.wires_set = set({})
@@ -14,31 +19,28 @@ class _VHMatchgatesContainer:
     def __len__(self):
         return len(self.op_container)
 
-    def add(self, op: MatchgateOperation):
-        if op.wires in self.op_container:
-            new_op = self.op_container[op.wires] @ op
-            self.op_container[op.wires] = new_op
-        else:
-            self.op_container[op.wires] = op
-        self.wires_set.update(op.wires.labels)
+    def add(self, op: MatchgateOperation) -> bool:
+        """
+        Add an operation to the container. If the operation is not compatible with the operations already in the
+        container, an exception will be raised.
+
+        :raises _ContractionMatchgatesContainerAddException: If the operation is not compatible with the operations
+
+        :param op: The operation to add.
+        :type op: MatchgateOperation
+        :return: True if the operation was added.
+        :rtype: bool
+        """
+        raise NotImplementedError
 
     def try_add(self, op: MatchgateOperation) -> bool:
-        if op.wires in self.op_container:
-            try:
-                self.add(op)
-                return True
-            except Exception:
-                return False
-
-        is_wire_in_container = any([w in self.wires_set for w in op.wires.labels])
-        if not is_wire_in_container:
-            try:
-                self.add(op)
-                return True
-            except Exception:
-                return False
-
-        return False
+        try:
+            return self.add(op)
+        except _ContractionMatchgatesContainerAddException:
+            return False
+        except Exception as e:
+            warnings.warn(f"Unexpected exception in try_add: {e}", RuntimeWarning)
+            return False
 
     def extend(self, ops: Iterable[MatchgateOperation]) -> None:
         for op in ops:
@@ -76,3 +78,72 @@ class _VHMatchgatesContainer:
             self.add(op)
             return contracted_op
         return None
+
+    def contract_operations(self, operations) -> List[Union[MatchgateOperation, _SingleParticleTransitionMatrix]]:
+        new_operations = []
+        for op in operations:
+            if not isinstance(op, MatchgateOperation):
+                new_operations.append(op)
+                if self:
+                    new_operations.append(self.contract())
+                    self.clear()
+                continue
+            new_op = self.push_contract(op)
+            if new_op is not None:
+                new_operations.append(new_op)
+        if self:
+            new_operations.append(self.contract())
+            self.clear()
+        return new_operations
+
+
+class _VerticalMatchgatesContainer(_ContractionMatchgatesContainer):
+    def add(self, op: MatchgateOperation):
+        if op.wires in self.op_container:
+            raise _ContractionMatchgatesContainerAddException(
+                f"Operation with wires {op.wires} already in container."
+            )
+        else:
+            self.op_container[op.wires] = op
+        self.wires_set.update(op.wires.labels)
+        return True
+
+
+class _HorizontalMatchgatesContainer(_ContractionMatchgatesContainer):
+    def add(self, op: MatchgateOperation):
+        if op.wires in self.op_container:
+            new_op = self.op_container[op.wires] @ op
+            self.op_container[op.wires] = new_op
+        elif len(self) == 0:
+            self.op_container[op.wires] = op
+        else:
+            raise _ContractionMatchgatesContainerAddException(
+                f"Operation with wires {op.wires} not in container."
+            )
+        self.wires_set.update(op.wires.labels)
+        return True
+
+
+class _VHMatchgatesContainer(_ContractionMatchgatesContainer):
+    def add(self, op: MatchgateOperation):
+        if op.wires in self.op_container:
+            new_op = self.op_container[op.wires] @ op
+            self.op_container[op.wires] = new_op
+            return True
+
+        is_any_wire_in_container = any([w in self.wires_set for w in op.wires.labels])
+        if is_any_wire_in_container:
+            raise _ContractionMatchgatesContainerAddException(
+                f"Operation with wires {op.wires} not compatible with container."
+            )
+        self.op_container[op.wires] = op
+        self.wires_set.update(op.wires.labels)
+        return True
+
+
+def contract_matchgates(
+        operations: Iterable[MatchgateOperation],
+        method: Optional[Literal["vertical", "horizontal", "vh", "neighbours"]] = None
+) -> Optional[_SingleParticleTransitionMatrix]:
+    if method is None:
+        return

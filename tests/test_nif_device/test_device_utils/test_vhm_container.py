@@ -93,8 +93,8 @@ def test_vh_matchgates_container_contract_single_op(op):
     container = _VHMatchgatesContainer()
     container.add(op)
     np.testing.assert_allclose(
-        container.contract().compute_matrix(),
-        op.compute_matrix(),
+        container.contract(),
+        op.single_particle_transition_matrix,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -145,14 +145,14 @@ def test_vh_matchgates_container_contract_single_line(line_operations):
         [
             mc.MatchgateOperation(
                 mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
-                wires=[wire + i, wire + i + 1]
+                wires=[i, i + 1]
             )
-            for i in range(np.random.randint(1, 10))
+            for i in range(0, np.random.randint(1, 20), 2)
         ]
-        for wire in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
+        for _ in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
     ]
 )
-def test_vh_matchgates_container_contract_single_line(column_operations):
+def test_vh_matchgates_container_contract_single_column(column_operations):
     container = _VHMatchgatesContainer()
     assert container.contract() is None
     for op in column_operations:
@@ -167,6 +167,37 @@ def test_vh_matchgates_container_contract_single_line(column_operations):
 
     np.testing.assert_allclose(
         container.contract(),
+        contract_ops,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
+    "operations",
+    [
+        [
+            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
+            for wire in range(0, n_lines, 2)
+            for _ in range(n_columns)
+        ]
+        for n_lines, n_columns in np.random.randint(1, 10, (N_RANDOM_TESTS_PER_CASE, 2))
+    ]
+)
+def test_vh_matchgates_container_contract_line_column(operations):
+    container = _VHMatchgatesContainer()
+    assert container.contract() is None
+
+    all_wires = set(wire for op in operations for wire in op.wires)
+    contract_ops = operations[0].get_padded_single_particle_transition_matrix(all_wires)
+    for op in operations[1:]:
+        contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(all_wires)
+
+    pred_new_operations = container.contract_operations(operations)
+    assert len(pred_new_operations) == 1
+
+    np.testing.assert_allclose(
+        pred_new_operations[0].pad(all_wires),
         contract_ops,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
