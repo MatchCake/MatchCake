@@ -441,8 +441,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         vh_container = _VHMatchgatesContainer()
 
         self.initialize_p_bar(total=len(queue), initial=0, desc="Neighbours contraction")
-        while len(queue) > 0:
-            op = queue.pop(0)
+        # while len(queue) > 0:
+        #     op = queue.pop(0)
+        for op in queue:
             self.p_bar_set_n(len(operations) - len(queue))
             if not isinstance(op, MatchgateOperation):
                 new_operations.append(op)
@@ -450,10 +451,13 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                     new_operations.append(vh_container.contract())
                     vh_container.clear()
                 continue
-            if not vh_container.try_add(op):
-                new_operations.append(vh_container.contract())
-                vh_container.clear()
-                vh_container.add(op)
+            # if not vh_container.try_add(op):
+            #     new_operations.append(vh_container.contract())
+            #     vh_container.clear()
+            #     vh_container.add(op)
+            new_op = vh_container.push_contract(op)
+            if new_op is not None:
+                new_operations.append(new_op)
         if vh_container:
             new_operations.append(vh_container.contract())
             vh_container.clear()
@@ -644,12 +648,13 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 )
                 op_r = op.pad(self.wires).matrix
             else:
-                assert op.name in self.operations, f"Operation {op.name} is not supported."
                 if isinstance(op, MatchgateOperation):
                     self.p_bar_set_postfix_str(
                         f"Computing single particle transition matrix for {getattr(op, 'name', op.__class__.__name__)}"
                     )
                     op_r = op.get_padded_single_particle_transition_matrix(self.wires)
+                else:
+                    assert op.name in self.operations, f"Operation {op.name} is not supported."
             if op_r is not None:
                 batched = batched or (qml.math.ndim(op_r) > 2)
                 self.p_bar_set_postfix_str(f"Applying operation {getattr(op, 'name', op.__class__.__name__)}")
