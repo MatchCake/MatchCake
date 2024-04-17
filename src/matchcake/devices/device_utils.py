@@ -16,7 +16,8 @@ class _VHMatchgatesContainer:
 
     def add(self, op: MatchgateOperation):
         if op.wires in self.op_container:
-            self.op_container[op.wires] = self.op_container[op.wires] @ op
+            new_op = self.op_container[op.wires] @ op
+            self.op_container[op.wires] = new_op
         else:
             self.op_container[op.wires] = op
         self.wires_set.update(op.wires.labels)
@@ -25,13 +26,18 @@ class _VHMatchgatesContainer:
         if op.wires in self.op_container:
             try:
                 self.add(op)
+                return True
             except Exception:
                 return False
-            return True
+
         is_wire_in_container = any([w in self.wires_set for w in op.wires.labels])
         if not is_wire_in_container:
-            self.add(op)
-            return True
+            try:
+                self.add(op)
+                return True
+            except Exception:
+                return False
+
         return False
 
     def extend(self, ops: Iterable[MatchgateOperation]) -> None:
@@ -48,9 +54,25 @@ class _VHMatchgatesContainer:
         self.op_container.clear()
         self.wires_set.clear()
 
-    def contract(self) -> Optional[Union[MatchgateOperation, _SingleParticleTransitionMatrix]]:
+    def contract(self) -> Optional[_SingleParticleTransitionMatrix]:
         if len(self) == 0:
             return None
-        if len(self) == 1:
-            return next(iter(self.op_container.values()))
         return _SingleParticleTransitionMatrix.from_operations(self.op_container.values())
+
+    def push_contract(
+            self,
+            op: MatchgateOperation,
+    ) -> Optional[Union[MatchgateOperation, _SingleParticleTransitionMatrix]]:
+        """
+        This method will try to add the operation to the container. If it can't, it will contract the operations in the
+        container, return the contracted operation, clear the current container and add the new operation to it.
+
+        :param op: The operation to add.
+        :return: The contracted operation if the container was cleared, None otherwise.
+        """
+        if not self.try_add(op):
+            contracted_op = self.contract()
+            self.clear()
+            self.add(op)
+            return contracted_op
+        return None
