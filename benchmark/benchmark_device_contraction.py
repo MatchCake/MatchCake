@@ -13,6 +13,7 @@ import numpy as np
 from pennylane.ops.qubit.observables import BasisStateProjector
 import time
 import datetime
+import pandas as pd
 
 
 def circuit(params, wires, initial_state=None):
@@ -60,6 +61,31 @@ def run_circuit(contraction_method: Optional[str], **kwargs):
     return end_time - start_time
 
 
+def run_one_batch(**sim_params):
+    time_neighbours = run_circuit(contraction_method="neighbours", **sim_params)
+    print(f"Time with neighbours contraction: {datetime.timedelta(seconds=time_neighbours)}")
+    time_horizontal = run_circuit(contraction_method="horizontal", **sim_params)
+    print(f"Time with horizontal contraction: {datetime.timedelta(seconds=time_horizontal)}")
+    time_vertical = run_circuit(contraction_method="vertical", **sim_params)
+    print(f"Time with vertical contraction: {datetime.timedelta(seconds=time_vertical)}")
+    time_wo_contraction = run_circuit(contraction_method=None, **sim_params)
+    print(f"Time without contraction: {datetime.timedelta(seconds=time_wo_contraction)}")
+    return dict(
+        neighbours=time_neighbours,
+        horizontal=time_horizontal,
+        vertical=time_vertical,
+        none=time_wo_contraction
+    )
+
+
+def run_n_batches(n_batches: int, **sim_params):
+    results = []
+    for _ in range(n_batches):
+        results.append(run_one_batch(**sim_params))
+    df = pd.DataFrame(results)
+    return df
+
+
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
@@ -69,14 +95,11 @@ if __name__ == '__main__':
         batch_size=512,
     )
 
-    time_neighbours = run_circuit(contraction_method="neighbours", **sim_params)
-    print(f"Time with neighbours contraction: {datetime.timedelta(seconds=time_neighbours)}")
-    time_horizontal = run_circuit(contraction_method="horizontal", **sim_params)
-    print(f"Time with horizontal contraction: {datetime.timedelta(seconds=time_horizontal)}")
-    time_vertical = run_circuit(contraction_method="vertical", **sim_params)
-    print(f"Time with vertical contraction: {datetime.timedelta(seconds=time_vertical)}")
-    time_wo_contraction = run_circuit(contraction_method=None, **sim_params)
-    print(f"Time without contraction: {datetime.timedelta(seconds=time_wo_contraction)}")
+    df = run_n_batches(10, **sim_params)
+    time_neighbours = df["neighbours"].mean()
+    time_horizontal = df["horizontal"].mean()
+    time_vertical = df["vertical"].mean()
+    time_wo_contraction = df["none"].mean()
 
     fig, ax = plt.subplots()
     ax.bar(
