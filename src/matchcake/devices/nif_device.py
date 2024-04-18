@@ -447,24 +447,20 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         else:
             raise ValueError(f"Contraction method {self.contraction_method} is not implemented.")
 
-        self.initialize_p_bar(total=len(queue), initial=0, desc="Neighbours contraction")
-        # while len(queue) > 0:
-        #     op = queue.pop(0)
-        for op in queue:
-            self.p_bar_set_n(len(operations) - len(queue))
+        self.initialize_p_bar(total=len(operations), initial=0, desc="Neighbours contraction")
+        for i, op in enumerate(operations):
             if not isinstance(op, MatchgateOperation):
                 new_operations.append(op)
                 if container:
                     new_operations.append(container.contract())
                     container.clear()
+                self.p_bar_set_n(i + 1)
                 continue
-            # if not vh_container.try_add(op):
-            #     new_operations.append(vh_container.contract())
-            #     vh_container.clear()
-            #     vh_container.add(op)
             new_op = container.push_contract(op)
             if new_op is not None:
                 new_operations.append(new_op)
+            self.p_bar_set_n(i + 1)
+
         if container:
             new_operations.append(container.contract())
             container.clear()
@@ -825,8 +821,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if isinstance(wires, int):
             wires = [wires]
         wires = Wires(wires)
+        wires_indexes = wires.indices(wires)
         obs = self.lookup_table.get_observable_of_target_state(
-            self.get_sparse_or_dense_state(), target_binary_state, wires,
+            self.get_sparse_or_dense_state(), target_binary_state, wires_indexes,
             show_progress=self.show_progress,
         )
         return qml.math.real(utils.pfaffian(obs, method=self.pfaffian_method))
