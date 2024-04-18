@@ -140,20 +140,20 @@ def test_vert_matchgates_container_contract_line_column_probs(operations):
     "params_list,n_wires",
     [
         ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], num_wires)
-        # for _ in range(N_RANDOM_TESTS_PER_CASE)
-        # for num_wires in range(2, 6)
-        # for num_gates in [1, 2 ** num_wires]
-        for num_wires in [
-            # 2,
-            # 3,
-            4,
-            # 5,
-            # 6,
-        ]
-        for num_gates in [
-            # 1,
-            2 ** num_wires
-        ]
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for num_wires in range(2, 6)
+        for num_gates in [1, 2 ** num_wires]
+        # for num_wires in [
+        #     # 2,
+        #     # 3,
+        #     4,
+        #     # 5,
+        #     # 6,
+        # ]
+        # for num_gates in [
+        #     # 1,
+        #     2 ** num_wires
+        # ]
     ]
 )
 def test_multiples_matchgate_probs_with_nif_vertical(params_list, n_wires):
