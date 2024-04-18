@@ -2,10 +2,11 @@ import pytest
 from matchcake.devices.device_utils import _HorizontalMatchgatesContainer, _SingleParticleTransitionMatrix
 import matchcake as mc
 from matchcake import matchgate_parameter_sets as mps
+from matchcake import utils
 import numpy as np
 import pennylane as qml
 
-from .. import devices_init, init_nif_device
+from .. import init_qubit_device, init_nif_device
 from ..test_specific_circuit import specific_matchgate_circuit
 from ...configs import (
     N_RANDOM_TESTS_PER_CASE,
@@ -30,45 +31,6 @@ def test_horizontal_matchgates_container_contract_single_op(op):
     np.testing.assert_allclose(
         container.contract(),
         op.single_particle_transition_matrix,
-        atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON,
-    )
-
-
-@pytest.mark.parametrize(
-    "line_operations",
-    [
-        [
-            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
-            for _ in range(np.random.randint(1, 10))
-        ]
-        for wire in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
-    ]
-)
-def test_horizontal_matchgates_container_contract_single_line(line_operations):
-    container = _HorizontalMatchgatesContainer()
-    assert container.contract() is None
-    for op in line_operations:
-        container.add(op)
-
-    contract_ops = line_operations[0]
-    for op in line_operations[1:]:
-        contract_ops = contract_ops @ op
-
-    wires = line_operations[0].wires
-
-    np.testing.assert_allclose(
-        container.op_container[wires].compute_matrix(),
-        contract_ops.compute_matrix(),
-        atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON,
-    )
-
-    target_t = contract_ops.single_particle_transition_matrix
-    pred_t = container.contract()
-    np.testing.assert_allclose(
-        pred_t,
-        target_t,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -142,6 +104,97 @@ def test_horizontal_matchgates_container_contract_line_column(operations):
 
 
 @pytest.mark.parametrize(
+    "line_operations",
+    [
+        [
+            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
+            for _ in [1, 3, 5]
+        ]
+        for wire in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_horizontal_matchgates_container_contract_single_line_probs(line_operations):
+    all_wires = set(wire for op in line_operations for wire in op.wires)
+    nif_device = init_nif_device(wires=all_wires, contraction_method=None)
+    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="horizontal")
+
+    nif_device_contracted.apply(line_operations)
+    nif_device.apply(line_operations)
+
+    nif_probs = nif_device.analytic_probability()
+    nif_contract_probs = nif_device_contracted.analytic_probability()
+
+    np.testing.assert_allclose(
+        nif_contract_probs,
+        nif_probs,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
+    "operations",
+    [
+        [
+            mc.MatchgateOperation(
+                mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+                wires=[i, i + 1]
+            )
+            for i in range(0, np.random.randint(1, 10), 2)
+        ]
+        for _ in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_horizontal_matchgates_container_contract_single_column_probs(operations):
+    all_wires = set(wire for op in operations for wire in op.wires)
+    nif_device = init_nif_device(wires=all_wires, contraction_method=None)
+    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="horizontal")
+
+    nif_device_contracted.apply(operations)
+    nif_device.apply(operations)
+
+    nif_probs = nif_device.analytic_probability()
+    nif_contract_probs = nif_device_contracted.analytic_probability()
+
+    np.testing.assert_allclose(
+        nif_contract_probs,
+        nif_probs,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
+    "operations",
+    [
+        [
+            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
+            for wire in range(0, n_lines, 2)
+            for _ in range(n_columns)
+        ]
+        for n_lines, n_columns in np.random.randint(1, 10, (N_RANDOM_TESTS_PER_CASE, 2))
+    ]
+)
+def test_horizontal_matchgates_container_contract_line_column_probs(operations):
+    all_wires = set(wire for op in operations for wire in op.wires)
+    nif_device = init_nif_device(wires=all_wires, contraction_method=None)
+    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="horizontal")
+
+    nif_device.apply(operations)
+    nif_device_contracted.apply(operations)
+
+    nif_probs = nif_device.analytic_probability()
+    nif_contract_probs = nif_device_contracted.analytic_probability()
+
+    np.testing.assert_allclose(
+        nif_contract_probs,
+        nif_probs,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
     "params_list,n_wires",
     [
         ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], num_wires)
@@ -150,7 +203,7 @@ def test_horizontal_matchgates_container_contract_line_column(operations):
         for num_gates in [1, 2 ** num_wires]
     ]
 )
-def test_multiples_matchgate_transition_matrix_with_nif_horizontal(params_list, n_wires):
+def test_multiples_matchgate_probs_with_nif_horizontal(params_list, n_wires):
     nif_device = init_nif_device(wires=n_wires, contraction_method=None)
     nif_device_contracted = init_nif_device(wires=n_wires, contraction_method="horizontal")
 
@@ -165,27 +218,30 @@ def test_multiples_matchgate_transition_matrix_with_nif_horizontal(params_list, 
         (params, [wire0, wire1])
         for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
     ]
-    nif_qnode(
+    nif_probs = nif_qnode(
         params_wires_list,
         initial_binary_state,
         all_wires=nif_device.wires,
         in_param_type=mps.MatchgatePolarParams,
-        out_op="expval",
+        out_op="probs",
     )
-    nif_qnode_contracted(
+    nif_contract_probs = nif_qnode_contracted(
         params_wires_list,
         initial_binary_state,
         all_wires=nif_device_contracted.wires,
         in_param_type=mps.MatchgatePolarParams,
-        out_op="expval",
+        out_op="probs",
     )
 
-    if not np.allclose(nif_device.transition_matrix, nif_device_contracted.transition_matrix):
-        print(nif_device.transition_matrix)
-        print(nif_device_contracted.transition_matrix)
     np.testing.assert_allclose(
-        nif_device.transition_matrix,
-        nif_device_contracted.transition_matrix,
+        nif_probs.sum(), 1.0,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+        err_msg="The sum of the probabilities should be 1"
+    )
+
+    np.testing.assert_allclose(
+        nif_contract_probs.squeeze(), nif_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
