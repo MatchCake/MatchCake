@@ -42,18 +42,18 @@ def circuit(params, wires, initial_state=None):
     return qml.expval(projector)
 
 
-def run_circuit(contraction_method: Optional[str]):
+def run_circuit(contraction_method: Optional[str], **kwargs):
     nif_device = mc.NonInteractingFermionicDevice(
-        wires=128,
+        wires=kwargs.get("wires", 128),
         show_progress=True,
         contraction_method=contraction_method
     )
     initial_state = np.zeros(len(nif_device.wires), dtype=int)
     nif_qnode = qml.QNode(circuit, nif_device)
-    n_features = 4096  # Number of features
+    n_features = kwargs.get("n_features", 4096)
     n_layers = int(np.ceil(n_features / nif_device.num_wires))  # Number of layers
-    n_gate_params = 2  # Number of parameters per gate
-    params = np.random.random((8192, n_gate_params, n_layers))
+    n_gate_params = kwargs.get("n_gate_params", 2)
+    params = np.random.random((kwargs.get("batch_size", 8192), n_gate_params, n_layers))
     start_time = time.perf_counter()
     expval = nif_qnode(params, wires=nif_device.wires, initial_state=initial_state)
     end_time = time.perf_counter()
@@ -61,8 +61,30 @@ def run_circuit(contraction_method: Optional[str]):
 
 
 if __name__ == '__main__':
-    time_with_contraction = run_circuit(contraction_method="neighbours")
-    print(f"Time with contraction: {datetime.timedelta(seconds=time_with_contraction)}")
-    time_wo_contraction = run_circuit(contraction_method=None)
+    import matplotlib.pyplot as plt
+
+    sim_params = dict(
+        wires=128,
+        n_features=1024,
+        batch_size=512,
+    )
+
+    time_neighbours = run_circuit(contraction_method="neighbours", **sim_params)
+    print(f"Time with neighbours contraction: {datetime.timedelta(seconds=time_neighbours)}")
+    time_horizontal = run_circuit(contraction_method="horizontal", **sim_params)
+    print(f"Time with horizontal contraction: {datetime.timedelta(seconds=time_horizontal)}")
+    time_vertical = run_circuit(contraction_method="vertical", **sim_params)
+    print(f"Time with vertical contraction: {datetime.timedelta(seconds=time_vertical)}")
+    time_wo_contraction = run_circuit(contraction_method=None, **sim_params)
     print(f"Time without contraction: {datetime.timedelta(seconds=time_wo_contraction)}")
-    print(f"Speedup: {time_wo_contraction / time_with_contraction}")
+
+    fig, ax = plt.subplots()
+    ax.bar(
+        ["Neighbours", "Horizontal", "Vertical", "None"],
+        [time_neighbours, time_horizontal, time_vertical, time_wo_contraction]
+    )
+    ax.set_ylabel("Time (s)")
+    ax.set_title("Time to run the circuit with different contraction methods")
+    plt.show()
+
+
