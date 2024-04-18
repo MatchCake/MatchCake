@@ -59,7 +59,15 @@ class _ContractionMatchgatesContainer:
     def contract(self) -> Optional[_SingleParticleTransitionMatrix]:
         if len(self) == 0:
             return None
-        return _SingleParticleTransitionMatrix.from_operations(self.op_container.values())
+        sptms = []
+        for op in self.op_container.values():
+            if isinstance(op, _SingleParticleTransitionMatrix):
+                sptms.append(op)
+            elif isinstance(op, MatchgateOperation):
+                sptms.append(_SingleParticleTransitionMatrix(op.single_particle_transition_matrix, op.wires))
+            else:
+                raise TypeError(f"Unexpected type in container: {type(op)}")
+        return _SingleParticleTransitionMatrix.from_spt_matrices(sptms)
 
     def push_contract(
             self,
@@ -99,6 +107,7 @@ class _ContractionMatchgatesContainer:
 
 class _VerticalMatchgatesContainer(_ContractionMatchgatesContainer):
     def add(self, op: MatchgateOperation):
+        op = _SingleParticleTransitionMatrix(op.single_particle_transition_matrix, op.wires)
         if op.wires in self.op_container:
             raise _ContractionMatchgatesContainerAddException(
                 f"Operation with wires {op.wires} already in container."
@@ -111,6 +120,7 @@ class _VerticalMatchgatesContainer(_ContractionMatchgatesContainer):
 
 class _HorizontalMatchgatesContainer(_ContractionMatchgatesContainer):
     def add(self, op: MatchgateOperation):
+        op = _SingleParticleTransitionMatrix(op.single_particle_transition_matrix, op.wires)
         if op.wires in self.op_container:
             new_op = self.op_container[op.wires] @ op
             self.op_container[op.wires] = new_op
