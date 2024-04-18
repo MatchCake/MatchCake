@@ -447,7 +447,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         else:
             raise ValueError(f"Contraction method {self.contraction_method} is not implemented.")
 
-        self.initialize_p_bar(total=len(operations), initial=0, desc="Neighbours contraction")
+        self.initialize_p_bar(total=len(operations), initial=0, desc=f"{self.contraction_method} contraction")
         for i, op in enumerate(operations):
             if not isinstance(op, MatchgateOperation):
                 new_operations.append(op)
