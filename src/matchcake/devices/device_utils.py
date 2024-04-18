@@ -120,6 +120,7 @@ class _VerticalMatchgatesContainer(_ContractionMatchgatesContainer):
 
 class _HorizontalMatchgatesContainer(_ContractionMatchgatesContainer):
     def add(self, op: MatchgateOperation):
+        # TODO: is it necessary to convert the operation to a SingleParticleTransitionMatrix?
         op = _SingleParticleTransitionMatrix(op.single_particle_transition_matrix, op.wires)
         if op.wires in self.op_container:
             new_op = self.op_container[op.wires] @ op
@@ -136,6 +137,7 @@ class _HorizontalMatchgatesContainer(_ContractionMatchgatesContainer):
 
 class _VHMatchgatesContainer(_ContractionMatchgatesContainer):
     def add(self, op: MatchgateOperation):
+        # op = _SingleParticleTransitionMatrix(op.single_particle_transition_matrix, op.wires)
         if op.wires in self.op_container:
             new_op = self.op_container[op.wires] @ op
             self.op_container[op.wires] = new_op
