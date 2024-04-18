@@ -64,8 +64,8 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     sim_params = dict(
-        wires=128,
-        n_features=1024,
+        wires=64,
+        n_features=128,
         batch_size=512,
     )
 
