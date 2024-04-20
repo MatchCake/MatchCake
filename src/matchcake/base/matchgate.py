@@ -126,8 +126,8 @@ class Matchgate:
         except:
             return False
 
-    @staticmethod
-    def from_matrix(matrix: np.ndarray) -> 'Matchgate':
+    @classmethod
+    def from_matrix(cls, matrix: np.ndarray, *args, **kwargs) -> 'Matchgate':
         r"""
         Construct a Matchgate from a matrix if it is possible. The matrix must be a 4x4 matrix.
 
@@ -141,13 +141,13 @@ class Matchgate:
         """
         if matrix.shape[-2:] != (4, 4):
             raise ValueError("The matrix must be a 4x4 matrix.")
-        if Matchgate.is_matchgate(matrix):
+        if cls.is_matchgate(matrix):
             # elements_indexes_as_array = np.asarray(mps.MatchgateStandardParams.ELEMENTS_INDEXES)
             # full_params_arr = matrix[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
             # full_params = mps.MatchgateStandardParams.parse_from_params(full_params_arr)
             # params = mps.MatchgatePolarParams.parse_from_params(full_params)
             params = mps.MatchgateStandardParams.from_matrix(matrix)
-            return Matchgate(params=params)
+            return cls(params=params, *args, **kwargs)
         raise ValueError("The matrix is not a matchgate.")
 
     @staticmethod

@@ -195,7 +195,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The majorana_getter must be initialized with {self.num_wires} wires. "
             f"Got {self.majorana_getter.n} instead."
         )
-        self.contraction_method = kwargs.get("contraction_method", None)
+        self.contraction_method = kwargs.get("contraction_method", "neighbours")
         assert self.contraction_method in self.contraction_methods, (
             f"The contraction method must be one of {self.contraction_methods}. "
             f"Got {self.contraction_method} instead."
@@ -436,7 +436,6 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     def do_neighbours_contraction(self, operations):
         if len(operations) <= 1:
             return operations
-        queue = operations.copy()
         new_operations = []
         if self.contraction_method == "neighbours":
             container = _VHMatchgatesContainer()
@@ -572,12 +571,6 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         """
         if len(operations) == 1:
             return [self.gather_single_particle_transition_matrix(operations[0])]
-        # return pbt.apply_func_multiprocess(
-        #     func=self.gather_single_particle_transition_matrix,
-        #     iterable_of_args=[(op,) for op in operations],
-        #     nb_workers=self.n_workers,
-        #     verbose=False, n
-        # )
         n_processes = self.n_workers
         if self.n_workers == -1:
             n_processes = psutil.cpu_count(logical=True)
@@ -821,9 +814,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if isinstance(wires, int):
             wires = [wires]
         wires = Wires(wires)
-        wires_indexes = wires.indices(wires)
+        wires_indexes = self.wires.indices(wires)
         obs = self.lookup_table.get_observable_of_target_state(
-            self.get_sparse_or_dense_state(), target_binary_state, wires_indexes,
+            self.get_sparse_or_dense_state(),
+            target_binary_state,
+            wires_indexes,
             show_progress=self.show_progress,
         )
         return qml.math.real(utils.pfaffian(obs, method=self.pfaffian_method))

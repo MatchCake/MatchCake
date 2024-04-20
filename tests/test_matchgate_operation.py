@@ -173,3 +173,107 @@ def test_single_transition_matrix(params, expected):
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
+
+
+@pytest.mark.parametrize(
+    "op, op_adjoint",
+    [
+        (
+                MatchgateOperation(mps.fSWAP, wires=[0, 1]),
+                MatchgateOperation(mps.fSWAP, wires=[0, 1]),
+        ),
+        (
+                MatchgateOperation(mps.Identity, wires=[0, 1]),
+                MatchgateOperation(mps.Identity, wires=[0, 1]),
+        ),
+        (
+                MatchgateOperation(mps.fHH, wires=[0, 1]),
+                MatchgateOperation(mps.fHH, wires=[0, 1]),
+        ),
+        (
+                MatchgateOperation(mps.HellParams, wires=[0, 1]),
+                MatchgateOperation.from_matrix(
+                    qml.math.conj(qml.math.transpose(
+                        MatchgateOperation(mps.HellParams, wires=[0, 1]).matrix().squeeze()
+                    )),
+                    wires=[0, 1]
+                ),
+        ),
+    ]
+)
+def test_matchgate_operation_adjoint(op, op_adjoint):
+    pred = op.adjoint().matrix().squeeze()
+    expected = op_adjoint.matrix().squeeze()
+    np.testing.assert_allclose(
+        pred, expected,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
+    "op0,op1,expected",
+    [
+        (
+                MatchgateOperation(mps.fSWAP, wires=[0, 1]),
+                MatchgateOperation(mps.fSWAP, wires=[0, 1]),
+                np.array(
+                    [
+                        [1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1],
+                    ]
+                )
+        ),
+        (
+                MatchgateOperation(mps.Identity, wires=[0, 1]),
+                MatchgateOperation(mps.Identity, wires=[0, 1]),
+                np.array(
+                    [
+                        [1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1],
+                    ]
+                )
+        ),
+        (
+                MatchgateOperation(mps.fSWAP, wires=[0, 1]),
+                MatchgateOperation(mps.Identity, wires=[0, 1]),
+                MatchgateOperation(mps.fSWAP, wires=[0, 1]).matrix().squeeze(),
+        ),
+        (
+                MatchgateOperation(mps.Identity, wires=[0, 1]),
+                MatchgateOperation(mps.fSWAP, wires=[0, 1]),
+                MatchgateOperation(mps.fSWAP, wires=[0, 1]).matrix().squeeze(),
+        ),
+        (
+                MatchgateOperation(mps.fHH, wires=[0, 1]),
+                MatchgateOperation(mps.fHH, wires=[0, 1]),
+                MatchgateOperation(mps.Identity, wires=[0, 1]).matrix().squeeze(),
+        ),
+        (
+                MatchgateOperation(mps.fSWAP, wires=[0, 1]),
+                MatchgateOperation(mps.fSWAP, wires=[0, 1]).adjoint(),
+                MatchgateOperation(mps.Identity, wires=[0, 1]).matrix().squeeze(),
+        ),
+        (
+                MatchgateOperation(mps.fHH, wires=[0, 1]),
+                MatchgateOperation(mps.fHH, wires=[0, 1]).adjoint(),
+                MatchgateOperation(mps.Identity, wires=[0, 1]).matrix().squeeze(),
+        ),
+        (
+                MatchgateOperation(mps.HellParams, wires=[0, 1]),
+                MatchgateOperation(mps.HellParams, wires=[0, 1]).adjoint(),
+                MatchgateOperation(mps.Identity, wires=[0, 1]).matrix().squeeze(),
+        ),
+    ]
+)
+def test_matchgate_operation_matmul_specific_cases(op0, op1, expected):
+    pred = (op0 @ op1).matrix().squeeze()
+    np.testing.assert_allclose(
+        pred, expected,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )

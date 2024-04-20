@@ -4,9 +4,9 @@ import pytest
 
 from matchcake import MatchgateOperation, utils
 from matchcake import matchgate_parameter_sets as mps
-from . import devices_init, init_nif_device
-from .test_single_line_matchgates_circuit import single_line_matchgates_circuit
-from ..configs import (
+from .. import devices_init, init_nif_device
+from ..test_single_line_matchgates_circuit import single_line_matchgates_circuit
+from ...configs import (
     N_RANDOM_TESTS_PER_CASE,
     TEST_SEED,
     ATOL_APPROX_COMPARISON,
@@ -42,9 +42,9 @@ def test_neighbours_contraction(operations, expected_new_operations):
 @pytest.mark.parametrize(
     "operations",
     [
-        # [MatchgateOperation(mps.Identity, wires=[0, 1])],
-        # [MatchgateOperation(mps.Identity, wires=[0, 1]) for _ in range(10)],
-        # [MatchgateOperation(mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1])],
+        [MatchgateOperation(mps.Identity, wires=[0, 1])],
+        [MatchgateOperation(mps.Identity, wires=[0, 1]) for _ in range(10)],
+        [MatchgateOperation(mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1])],
         [MatchgateOperation(mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1]) for _ in range(2)],
     ]
 )
@@ -56,7 +56,7 @@ def test_neighbours_contraction_device_one_line(operations):
     nif_device.apply(operations)
 
     np.testing.assert_allclose(
-        nif_device.transition_matrix, nif_device_nh.transition_matrix,
+        nif_device.analytic_probability(), nif_device_nh.analytic_probability(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

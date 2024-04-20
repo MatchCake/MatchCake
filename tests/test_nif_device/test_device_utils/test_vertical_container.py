@@ -143,27 +143,16 @@ def test_vert_matchgates_container_contract_line_column_probs(operations):
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in range(2, 6)
         for num_gates in [1, 2 ** num_wires]
-        # for num_wires in [
-        #     # 2,
-        #     # 3,
-        #     4,
-        #     # 5,
-        #     # 6,
-        # ]
-        # for num_gates in [
-        #     # 1,
-        #     2 ** num_wires
-        # ]
     ]
 )
 def test_multiples_matchgate_probs_with_nif_vertical(params_list, n_wires):
-    nif_device = init_nif_device(wires=n_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(wires=n_wires, contraction_method="vertical")
+    all_wires = np.arange(n_wires)
+    nif_device = init_nif_device(wires=all_wires, contraction_method=None)
+    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="vertical")
 
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
     nif_qnode_contracted = qml.QNode(specific_matchgate_circuit, nif_device_contracted)
 
-    all_wires = np.arange(n_wires)
     initial_binary_state = np.zeros(n_wires, dtype=int)
     wire0_vector = np.random.choice(all_wires[:-1], size=len(params_list))
     wire1_vector = wire0_vector + 1

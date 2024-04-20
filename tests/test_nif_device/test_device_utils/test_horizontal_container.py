@@ -1,5 +1,9 @@
 import pytest
-from matchcake.devices.device_utils import _HorizontalMatchgatesContainer, _SingleParticleTransitionMatrix
+from matchcake.devices.device_utils import (
+    _HorizontalMatchgatesContainer,
+    _SingleParticleTransitionMatrix,
+    _ContractionMatchgatesContainerAddException,
+)
 import matchcake as mc
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
@@ -37,6 +41,56 @@ def test_horizontal_matchgates_container_contract_single_op(op):
 
 
 @pytest.mark.parametrize(
+    "operations",
+    [
+        [
+            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
+            for wire in range(n_gates)
+        ]
+        for n_gates in np.arange(2, N_RANDOM_TESTS_PER_CASE+2)
+    ]
+)
+def test_horizontal_matchgates_container_contract_crossing_ops(operations):
+    container = _HorizontalMatchgatesContainer()
+    assert container.contract() is None
+    container.add(operations[0])
+    with pytest.raises(_ContractionMatchgatesContainerAddException):
+        container.add(operations[1])
+    container.clear()
+    contraction = container.contract_operations(operations)
+    assert len(contraction) == len(operations)
+
+
+@pytest.mark.parametrize(
+    "operations",
+    [
+        [
+            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
+            for wire in range(n_gates)
+        ]
+        for n_gates in np.arange(2, N_RANDOM_TESTS_PER_CASE+2)
+    ]
+)
+def test_horizontal_matchgates_container_contract_crossing_ops_probs(operations):
+    all_wires = set(wire for op in operations for wire in op.wires)
+    nif_device = init_nif_device(wires=all_wires, contraction_method=None)
+    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="horizontal")
+
+    nif_device.apply(operations)
+    nif_device_contracted.apply(operations)
+
+    nif_probs = nif_device.analytic_probability()
+    nif_contract_probs = nif_device_contracted.analytic_probability()
+
+    np.testing.assert_allclose(
+        nif_contract_probs,
+        nif_probs,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
     "column_operations",
     [
         [
@@ -67,50 +121,13 @@ def test_horizontal_matchgates_container_contract_single_column(column_operation
 
 
 @pytest.mark.parametrize(
-    "operations",
-    [
-        [
-            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
-            for wire in range(0, n_lines, 2)
-            for _ in range(n_columns)
-        ]
-        for n_lines, n_columns in np.random.randint(1, 10, (N_RANDOM_TESTS_PER_CASE, 2))
-    ]
-)
-def test_horizontal_matchgates_container_contract_line_column(operations):
-    container = _HorizontalMatchgatesContainer()
-    assert container.contract() is None
-
-    all_wires = set(wire for op in operations for wire in op.wires)
-    contract_ops = operations[0].get_padded_single_particle_transition_matrix(all_wires)
-    for op in operations[1:]:
-        contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(all_wires)
-
-    pred_new_operations = container.contract_operations(operations)
-    pred_contract_ops = pred_new_operations[0]
-    if isinstance(pred_contract_ops, mc.MatchgateOperation):
-        pred_contract_ops = pred_contract_ops.get_padded_single_particle_transition_matrix(all_wires)
-    for op in pred_new_operations[1:]:
-        if isinstance(op, mc.MatchgateOperation):
-            op = op.get_padded_single_particle_transition_matrix(all_wires)
-        pred_contract_ops = pred_contract_ops.pad(all_wires) @ op.pad(all_wires)
-
-    np.testing.assert_allclose(
-        pred_contract_ops,
-        contract_ops,
-        atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON,
-    )
-
-
-@pytest.mark.parametrize(
     "line_operations",
     [
         [
-            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
-            for _ in [1, 3, 5]
+            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(1), wires=[0, 1])
+            for _ in range(n_gates)
         ]
-        for wire in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
+        for n_gates in np.arange(1, N_RANDOM_TESTS_PER_CASE+1)
     ]
 )
 def test_horizontal_matchgates_container_contract_single_line_probs(line_operations):

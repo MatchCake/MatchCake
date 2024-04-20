@@ -19,6 +19,12 @@ class _ContractionMatchgatesContainer:
     def __len__(self):
         return len(self.op_container)
 
+    def sorted_keys(self):
+        return sorted(self.op_container.keys())
+
+    def sorted_values(self):
+        return [self.op_container[key] for key in self.sorted_keys()]
+
     def add(self, op: MatchgateOperation) -> bool:
         """
         Add an operation to the container. If the operation is not compatible with the operations already in the
@@ -112,18 +118,20 @@ class _VerticalMatchgatesContainer(_ContractionMatchgatesContainer):
             raise _ContractionMatchgatesContainerAddException(
                 f"Operation with wires {op.wires} already in container."
             )
-        else:
-            self.op_container[op.wires] = op
+        is_any_wire_in_container = any([w in self.wires_set for w in op.wires.labels])
+        if is_any_wire_in_container:
+            raise _ContractionMatchgatesContainerAddException(
+                f"Operation with wires {op.wires} not compatible with container."
+            )
+        self.op_container[op.wires] = op
         self.wires_set.update(op.wires.labels)
         return True
 
 
 class _HorizontalMatchgatesContainer(_ContractionMatchgatesContainer):
     def add(self, op: MatchgateOperation):
-        # TODO: is it necessary to convert the operation to a SingleParticleTransitionMatrix?
-        op = _SingleParticleTransitionMatrix(op.single_particle_transition_matrix, op.wires)
         if op.wires in self.op_container:
-            new_op = self.op_container[op.wires] @ op
+            new_op = op @ self.op_container[op.wires]
             self.op_container[op.wires] = new_op
         elif len(self) == 0:
             self.op_container[op.wires] = op
@@ -139,7 +147,7 @@ class _VHMatchgatesContainer(_ContractionMatchgatesContainer):
     def add(self, op: MatchgateOperation):
         # op = _SingleParticleTransitionMatrix(op.single_particle_transition_matrix, op.wires)
         if op.wires in self.op_container:
-            new_op = self.op_container[op.wires] @ op
+            new_op = op @ self.op_container[op.wires]
             self.op_container[op.wires] = new_op
             return True
 

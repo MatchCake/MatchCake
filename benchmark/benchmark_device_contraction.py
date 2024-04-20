@@ -90,12 +90,12 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     sim_params = dict(
-        wires=64,
-        n_features=128,
-        batch_size=512,
+        wires=128,
+        n_features=256,
+        batch_size=32,
     )
 
-    df = run_n_batches(10, **sim_params)
+    df = run_n_batches(5, **sim_params)
     time_neighbours = df["neighbours"].mean()
     time_horizontal = df["horizontal"].mean()
     time_vertical = df["vertical"].mean()
@@ -108,6 +108,9 @@ if __name__ == '__main__':
     )
     ax.set_ylabel("Time (s)")
     ax.set_title("Time to run the circuit with different contraction methods")
+    figures_folder = os.path.join(os.path.dirname(__file__), "figures")
+    os.makedirs(figures_folder, exist_ok=True)
+    fig.savefig(os.path.join(figures_folder, "time_to_run_circuit_new_matmul.pdf"), bbox_inches="tight")
     plt.show()
 
 

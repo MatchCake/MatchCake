@@ -25,8 +25,6 @@ def init_nif_device(*args, **kwargs) -> NonInteractingFermionicDevice:
         prob_strategy=kwargs.pop("prob_strategy", "lookup_table"),
         majorana_getter=kwargs.pop("majorana_getter", majorana_getter),
         n_workers=kwargs.pop("n_workers", 0),
-        contraction_method=kwargs.pop("contraction_method", None),
-        # contraction_method=kwargs.pop("contraction_method", "vertical"),
     )
     return nif_device
 
