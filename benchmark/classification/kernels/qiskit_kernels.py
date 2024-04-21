@@ -72,6 +72,7 @@ class QiskitPQCKernel(QiskitKernel):
         """
 
     def initialize_parameters(self):
+        super().initialize_parameters()
         self._depth = self.kwargs.get("depth", max(1, (self.X_.shape[-1] // self.size) - 1))
         if self._parameters is None:
             self._parameters = self.parameters_rng.uniform(0.0, 1.0, size=self.X_.shape[-1])

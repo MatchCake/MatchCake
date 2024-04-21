@@ -7,6 +7,7 @@ from pennylane.wires import Wires
 
 from ..base.matchgate import Matchgate
 from .. import matchgate_parameter_sets as mps, utils
+from ..templates import TensorLike
 
 
 class MatchgateOperation(Matchgate, Operation):
@@ -24,7 +25,8 @@ class MatchgateOperation(Matchgate, Operation):
         # TODO: maybe remove this method to use only compute_matrix
         polar_params = mps.MatchgatePolarParams(*params, backend=pnp)
         std_params = mps.MatchgateStandardParams.parse_from_params(polar_params)
-        return pnp.array(std_params.to_matrix())
+        # return pnp.array(std_params.to_matrix())
+        return std_params.to_matrix()
     
     @staticmethod
     def compute_matrix(*params, **hyperparams):
@@ -69,6 +71,7 @@ class MatchgateOperation(Matchgate, Operation):
         """
         if wires is None:
             wires = self.wires
+        wires = Wires(wires)
         matrix = self.single_particle_transition_matrix
         if qml.math.ndim(matrix) == 2:
             padded_matrix = pnp.eye(2*len(wires))
@@ -84,7 +87,7 @@ class MatchgateOperation(Matchgate, Operation):
         # wire0_slice0 = slice(2 * wire0_idx, 2 * wire0_idx + wire0_shape[0])
         # wire0_slice1 = slice(2 * wire0_idx, 2 * wire0_idx + wire0_shape[1])
         
-        wire1_idx = wires.index(self.wires[1])
+        # wire1_idx = wires.index(self.wires[1])
         # wire1_submatrix = matrix[matrix.shape[0]//2:, matrix.shape[1]//2:]
         # wire1_shape = wire1_submatrix.shape
         # wire1_slice0 = slice(2 * wire1_idx, 2 * wire1_idx + wire1_shape[0])
@@ -98,8 +101,10 @@ class MatchgateOperation(Matchgate, Operation):
         return padded_matrix
     
     def adjoint(self):
+        new_std_params = self.standard_params.adjoint()
+        new_polar_params = mps.MatchgatePolarParams.parse_from_params(new_std_params)
         return MatchgateOperation(
-            self.polar_params.adjoint(),
+            new_polar_params,
             wires=self.wires,
             in_param_type=mps.MatchgatePolarParams,
         )
@@ -110,11 +115,28 @@ class MatchgateOperation(Matchgate, Operation):
         
         if self.wires != other.wires:
             raise NotImplementedError("Cannot multiply MatchgateOperation with different wires yet.")
-        
-        std_params = mps.MatchgateStandardParams.from_matrix(self.matrix() @ other.matrix())
-        polar_params = mps.MatchgatePolarParams.parse_from_params(std_params)
+
+        # new_std_params = mps.MatchgateStandardParams(
+        #     a=self.standard_params.a * other.standard_params.a + self.standard_params.b * other.standard_params.c,
+        #     b=self.standard_params.a * other.standard_params.b + self.standard_params.b * other.standard_params.d,
+        #     c=self.standard_params.c * other.standard_params.a + self.standard_params.d * other.standard_params.c,
+        #     d=self.standard_params.c * other.standard_params.b + self.standard_params.d * other.standard_params.d,
+        #     w=self.standard_params.w + other.standard_params.w + self.standard_params.x * other.standard_params.y,
+        #     x=self.standard_params.w * other.standard_params.x + self.standard_params.x * other.standard_params.z,
+        #     y=self.standard_params.y * other.standard_params.w + self.standard_params.z * other.standard_params.y,
+        #     z=self.standard_params.y * other.standard_params.x + self.standard_params.z * other.standard_params.z,
+        # )
+        # new_std_params = mps.MatchgateStandardParams.from_matrix(self.matrix() @ other.matrix())
+        new_std_params = mps.MatchgateStandardParams.from_matrix(
+            qml.math.einsum(
+                "...ij,...jk->...ik",
+                self.standard_params.to_matrix(),
+                other.standard_params.to_matrix()
+            )
+        )
+        new_polar_params = mps.MatchgatePolarParams.parse_from_params(new_std_params)
         return MatchgateOperation(
-            polar_params,
+            new_polar_params,
             wires=self.wires,
             in_param_type=mps.MatchgatePolarParams,
         )
@@ -137,7 +159,6 @@ class MatchgateOperation(Matchgate, Operation):
 
 
 class _SingleParticleTransitionMatrix:
-
     @staticmethod
     def make_wires_continuous(wires: Wires):
         wires_array = wires.tolist()
@@ -145,15 +166,18 @@ class _SingleParticleTransitionMatrix:
         return Wires(range(min_wire, max_wire + 1))
 
     @classmethod
-    def from_operation(cls, op: MatchgateOperation):
+    def from_operation(cls, op: MatchgateOperation) -> "_SingleParticleTransitionMatrix":
+        if isinstance(op, _SingleParticleTransitionMatrix):
+            return op
         return cls(op.single_particle_transition_matrix, op.wires)
 
     @classmethod
-    def from_operations(cls, ops: Iterable[MatchgateOperation]):
+    def from_operations(cls, ops: Iterable[MatchgateOperation]) -> "_SingleParticleTransitionMatrix":
+        ops = list(ops)
         if len(ops) == 0:
             return None
         if len(ops) == 1:
-            return cls.from_operation(next(iter(ops)))
+            return cls.from_operation(ops[0])
         all_wires = Wires.all_wires([op.wires for op in ops], sort=True)
         all_wires = cls.make_wires_continuous(all_wires)
         batch_sizes = [op.batch_size for op in ops if op.batch_size is not None] + [None]
@@ -171,9 +195,50 @@ class _SingleParticleTransitionMatrix:
             matrix[..., slice_0, slice_1] = op.single_particle_transition_matrix
         return cls(matrix, all_wires)
 
-    def __init__(self, matrix: pnp.ndarray, wires: Wires):
+    @classmethod
+    def from_spt_matrices(
+            cls,
+            matrices: Iterable["_SingleParticleTransitionMatrix"]
+    ) -> "_SingleParticleTransitionMatrix":
+        matrices = list(matrices)
+        if len(matrices) == 0:
+            return None
+        if len(matrices) == 1:
+            return matrices[0]
+        all_wires = Wires.all_wires([m.wires for m in matrices], sort=True)
+        all_wires = cls.make_wires_continuous(all_wires)
+        batch_sizes = [m.batch_size for m in matrices if m.batch_size is not None] + [None]
+        batch_size = batch_sizes[0]
+        if batch_size is None:
+            matrix = pnp.eye(2 * len(all_wires), dtype=complex)
+        else:
+            matrix = pnp.zeros((batch_size, 2 * len(all_wires), 2 * len(all_wires)), dtype=complex)
+            matrix[:, ...] = pnp.eye(2 * len(all_wires), dtype=matrix.dtype)
+
+        seen_wires = set()
+        for m in matrices:
+            if m.wires in seen_wires:
+                raise ValueError(f"Cannot have repeated wires in the matrices: {m.wires}")
+            wire0_idx = all_wires.index(m.wires[0])
+            slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + m.shape[-2])
+            slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + m.shape[-1])
+            matrix[..., slice_0, slice_1] = m.matrix
+            seen_wires.update(m.wires)
+        return cls(matrix, all_wires)
+
+    def __init__(self, matrix: TensorLike, wires: Wires):
         self.matrix = matrix
         self.wires = wires
+
+    @property
+    def shape(self):
+        return qml.math.shape(self.matrix)
+
+    @property
+    def batch_size(self):
+        if qml.math.ndim(self.matrix) > 2:
+            return self.shape[0]
+        return None
 
     def __array__(self):
         return self.matrix
@@ -185,9 +250,18 @@ class _SingleParticleTransitionMatrix:
         if self.wires != other.wires:
             raise NotImplementedError("Cannot multiply _SingleTransitionMatrix with different wires yet.")
 
-        return _SingleParticleTransitionMatrix(self.matrix @ other.matrix, self.wires)
+        return _SingleParticleTransitionMatrix(
+            qml.math.einsum(
+                "...ij,...jk->...ik",
+                self.matrix,
+                other.matrix
+            ),
+            wires=self.wires
+        )
 
     def pad(self, wires: Wires):
+        if not isinstance(wires, Wires):
+            wires = Wires(wires)
         if self.wires == wires:
             return self
         matrix = self.matrix
@@ -200,7 +274,6 @@ class _SingleParticleTransitionMatrix:
             raise NotImplementedError("This method is not implemented yet.")
 
         wire0_idx = wires.index(self.wires[0])
-        # wire1_idx = wires.index(self.wires[1])
         slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-2])
         slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-1])
         padded_matrix[..., slice_0, slice_1] = matrix

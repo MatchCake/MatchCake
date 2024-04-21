@@ -29,7 +29,8 @@ class MLKernel(StdEstimator):
         self._batch_size_try_counter = 0
         self._gram_type = kwargs.get("gram_type", "ndarray")
         self._parameters = kwargs.get("parameters", None)
-        self.parameters_rng = np.random.default_rng(seed=kwargs.get("seed", 0))
+        self.seed = kwargs.get("seed", 0)
+        self.parameters_rng = np.random.default_rng(seed=self.seed)
         self.use_cuda = kwargs.get("use_cuda", False)
         if self._gram_type not in {"ndarray", "hdf5"}:
             raise ValueError(f"Unknown gram type: {self._gram_type}.")
@@ -69,7 +70,7 @@ class MLKernel(StdEstimator):
         pass
 
     def initialize_parameters(self):
-        pass
+        self.parameters_rng = np.random.default_rng(seed=self.seed)
 
     def fit(self, X, y=None, **kwargs):
         super().fit(X, y)

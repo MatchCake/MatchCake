@@ -1,4 +1,7 @@
+from typing import Tuple
+
 import pennylane as qml
+from ..templates.tensor_like import TensorLike
 
 
 def cast_to_complex(__inputs):
@@ -79,3 +82,27 @@ def astensor(tensor, like=None, **kwargs):
     if isinstance(tensor, TensorLike):
         return tensor
     return qml.math.array(tensor, like=like, **kwargs)
+
+
+def eye_block_matrix(matrix: TensorLike, n: int, index: int):
+    """
+
+    Take a matrix and insert it into a bigger eye matrix like this:
+
+    .. math::
+
+        \begin{pmatrix}
+            I & 0 & 0 \\
+            0 & M & 0 \\
+            0 & 0 & I
+        \end{pmatrix}
+
+    where :math:`I` is the identity matrix and :math:`M` is the input matrix.
+
+    :param matrix:
+    :param n:
+    :param index:
+    :return:
+    """
+    eye = qml.math.eye(n - qml.math.shape(matrix)[0], like=matrix)
+    return qml.math.block_diag([eye[:index, :index], matrix, eye[index:, index:]])

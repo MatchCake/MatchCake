@@ -34,6 +34,7 @@ class NIFKernel(MLKernel):
         )
         self.qnode_kwargs.update(self.kwargs.get("qnode_kwargs", {}))
         self.device_workers = self.kwargs.get("device_workers", 0)
+        self.device_kwargs = self.kwargs.get("device_kwargs", {})
 
     @property
     def wires(self):
@@ -67,12 +68,14 @@ class NIFKernel(MLKernel):
         return getattr(qnode, "tape", None)
 
     def initialize_parameters(self):
+        super().initialize_parameters()
         if self._parameters is None:
             n_parameters = self.kwargs.get("n_parameters", PATTERN_TO_NUM_PARAMS["pyramid"](self.wires))
             self._parameters = [self.parameters_rng.uniform(0, 2 * np.pi, size=2) for _ in range(n_parameters)]
 
     def pre_initialize(self):
-        self._device = NonInteractingFermionicDevice(wires=self.size, n_workers=getattr(self, "device_workers", 0))
+        self.device_kwargs.setdefault("n_workers", getattr(self, "device_workers", 0))
+        self._device = NonInteractingFermionicDevice(wires=self.size, **self.device_kwargs)
         self._qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
         if self.simpify_qnode:
             self._qnode = qml.simplify(self.qnode)

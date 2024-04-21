@@ -11,11 +11,15 @@ _majorana_getters = {}
 
 def init_nif_device(*args, **kwargs) -> NonInteractingFermionicDevice:
     wires = kwargs.pop("wires", 2)
+    if isinstance(wires, int):
+        n_particles = wires
+    else:
+        n_particles = len(wires)
     majorana_getter = _majorana_getters.get(
-        wires,
-        utils.majorana.MajoranaGetter(wires, maxsize=kwargs.pop("maxsize", 1024)),
+        n_particles,
+        utils.majorana.MajoranaGetter(n_particles, maxsize=kwargs.pop("maxsize", 1024)),
     )
-    _majorana_getters[wires] = majorana_getter
+    _majorana_getters[n_particles] = majorana_getter
     nif_device = NonInteractingFermionicDevice(
         wires=wires,
         prob_strategy=kwargs.pop("prob_strategy", "lookup_table"),
