@@ -17,9 +17,9 @@ MatchCake is a Python package that provides a new PennyLane device for simulatin
 circuits called Matchgate circuits or matchcircuits. These circuits are made with matchgates, a class of restricted 
 quantum unitaries that are parity-preserving and operate on nearest-neighbor qubits. These constraints lead to matchgates being classically simulable in polynomial time.
 
-Additionally, this package provides quantum kernels made with [scikit-learn](https://scikit-learn.org/stable/) API to 
-use matchcircuits as a kernel in quantum machine learning algorithms. These kernels can be used in a Support Vector 
-Machine (SVM), for example. In the [benchmark/classification](benchmark/classification/README.md) folder, you can 
+Additionally, this package provides quantum kernels made with [scikit-learn](https://scikit-learn.org/stable/) API allowing the 
+use matchcircuits as kernels in quantum machine learning algorithms. One way to use these kernels could be in a Support Vector 
+Machine (SVM). In the [benchmark/classification](benchmark/classification/README.md) folder, you can 
 find some scripts that use SVM with matchcircuits as a kernel to classify the Iris dataset, the Breast Cancer dataset, 
 and the Digits dataset in polynomial time with high accuracy.
 
