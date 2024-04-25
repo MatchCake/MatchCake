@@ -13,9 +13,9 @@
 
 # Description
 
-MatchCake is a Python package that provides a new PennyLane device for simulating a particular type of quantum 
-circuit called Matchgate circuits or matchcircuits. These circuits are made with Matchgates, a specific group 
-of parity-preserving gates and nearest-neighbor unitary gates that can be simulated classically in polynomial time.
+MatchCake is a Python package that provides a new PennyLane device for simulating a specific class of quantum 
+circuits called Matchgate circuits or matchcircuits. These circuits are made with matchgates, a class of restricted 
+quantum unitaries that are parity-preserving and operate on nearest-neighbor qubits. Due to these constraints, matchgates are simulable classically in polynomial time.
 
 Additionally, MatchCake provides quantum kernels made with [scikit-learn](https://scikit-learn.org/stable/) API to 
 use matchcircuits as a kernel in quantum machine learning algorithms. These kernels can be used in a Support Vector 
