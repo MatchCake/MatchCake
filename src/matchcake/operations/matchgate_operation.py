@@ -134,7 +134,7 @@ class MatchgateOperation(Matchgate, Operation):
                 other.standard_params.to_matrix()
             )
         )
-        new_polar_params = mps.MatchgatePolarParams.parse_from_params(new_std_params)
+        new_polar_params = mps.MatchgatePolarParams.parse_from_params(new_std_params, force_cast_to_real=True)
         return MatchgateOperation(
             new_polar_params,
             wires=self.wires,
