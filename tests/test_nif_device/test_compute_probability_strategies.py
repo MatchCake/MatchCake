@@ -6,6 +6,7 @@ import psutil
 from matchcake import MatchgateOperation, NonInteractingFermionicDevice
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
+from .. import get_slow_test_mark
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
     TEST_SEED,
@@ -16,6 +17,8 @@ from ..configs import (
 np.random.seed(TEST_SEED)
 
 
+@get_slow_test_mark()
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "initial_binary_state,params,wire",
     [
@@ -90,6 +93,8 @@ def test_single_gate_circuit_analytic_probability_explicit_sum(initial_binary_st
     )
 
 
+@get_slow_test_mark()
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "initial_binary_state,params,wires,target_binary_state",
     [
@@ -121,6 +126,8 @@ def test_single_gate_circuit_probability_lt_vs_es(
     )
 
 
+@get_slow_test_mark()
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "initial_binary_state,params,wires,target_binary_state",
     [

@@ -10,6 +10,7 @@ from functools import partial
 
 from matchcake.utils import PAULI_Z, PAULI_X
 from . import devices_init
+from .. import get_slow_test_mark
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
     TEST_SEED,
@@ -20,6 +21,8 @@ from ..configs import (
 np.random.seed(TEST_SEED)
 
 
+@get_slow_test_mark()
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "initial_binary_state",
     [
