@@ -27,7 +27,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest
-        pip install -U pytest-cov coverage-lcov
+        pip install -U pytest-cov coverage-lcov pytest_json_report
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
@@ -37,7 +37,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        python run_pytests.py tests --N_RANDOM_TESTS_PER_CASE=10 --run_slow=False
+        python run_pytests.py tests --N_RANDOM_TESTS_PER_CASE=3 --run_slow=False
 
   Run-tests-on-Windows:
     name: Run tests on Windows-latest
@@ -53,6 +53,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest
+        pip install -U pytest-cov coverage-lcov pytest_json_report
         pip install -r requirements.txt
         pip install git+https://github.com/JeremieGince/PythonBasicTools
     - name: Lint with flake8

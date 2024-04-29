@@ -115,27 +115,27 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         return capabilities
 
     @classmethod
-    def update_single_particle_transition_matrix(cls, single_transition_particle_matrix, other):
-        l_interface = qml.math.get_interface(single_transition_particle_matrix)
+    def update_single_particle_transition_matrix(cls, single_particle_transition_matrix, other):
+        l_interface = qml.math.get_interface(single_particle_transition_matrix)
         other_interface = qml.math.get_interface(other)
         l_priority = cls.casting_priorities.index(l_interface)
         other_priority = cls.casting_priorities.index(other_interface)
         if l_priority < other_priority:
-            single_transition_particle_matrix = utils.math.convert_and_cast_like(
-                single_transition_particle_matrix, other
+            single_particle_transition_matrix = utils.math.convert_and_cast_like(
+                single_particle_transition_matrix, other
             )
         elif l_priority > other_priority:
             other = utils.math.convert_and_cast_like(
-                other, single_transition_particle_matrix
+                other, single_particle_transition_matrix
             )
         # single_transition_particle_matrix = utils.math.convert_and_cast_like(
         #     single_transition_particle_matrix, other
         # )
-        single_transition_particle_matrix = qml.math.einsum(
+        single_particle_transition_matrix = qml.math.einsum(
             "...ij,...jl->...il",
-            single_transition_particle_matrix, other
+            single_particle_transition_matrix, other
         )
-        return single_transition_particle_matrix
+        return single_particle_transition_matrix
 
     @classmethod
     def prod_single_particle_transition_matrices(cls, first, sptm_list):
@@ -609,7 +609,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         rotations = rotations or []
         if not isinstance(operations, Iterable):
             operations = [operations]
-        global_single_transition_particle_matrix = pnp.eye(2 * self.num_wires)[None, ...]
+        global_single_particle_transition_matrix = pnp.eye(2 * self.num_wires)[None, ...]
         batched = False
         operations = self.contract_operations(operations, self.contraction_method)
         self.initialize_p_bar(total=len(operations), desc="Applying operations")
@@ -654,13 +654,13 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             if op_r is not None:
                 batched = batched or (qml.math.ndim(op_r) > 2)
                 self.p_bar_set_postfix_str(f"Applying operation {getattr(op, 'name', op.__class__.__name__)}")
-                global_single_transition_particle_matrix = self.update_single_particle_transition_matrix(
-                    global_single_transition_particle_matrix, op_r
+                global_single_particle_transition_matrix = self.update_single_particle_transition_matrix(
+                    global_single_particle_transition_matrix, op_r
                 )
             self.p_bar_set_n(i + 1)
 
         if not batched:
-            global_single_transition_particle_matrix = global_single_transition_particle_matrix[0]
+            global_single_particle_transition_matrix = global_single_particle_transition_matrix[0]
         # store the pre-rotated state
         self._pre_rotated_sparse_state = self._sparse_state
         self._pre_rotated_state = self._state
@@ -671,7 +671,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         #     self._state = self._apply_operation(self._state, operation)
         self.p_bar_set_postfix_str("Computing transition matrix")
         self._transition_matrix = utils.make_transition_matrix_from_action_matrix(
-            global_single_transition_particle_matrix
+            global_single_particle_transition_matrix
         )
         self.p_bar_set_postfix_str("Transition matrix computed")
         self.close_p_bar()
