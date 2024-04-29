@@ -588,14 +588,14 @@ class Matchgate:
     
     def _make_single_particle_transition_matrix_(self) -> np.ndarray:
         r"""
-        Compute the single transition particle matrix. This matrix is the matrix :math:`R` such that
+        Compute the single particle transition matrix. This matrix is the matrix :math:`R` such that
 
         .. math::
             R_{\mu\nu} &= \frac{1}{4} \text{Tr}{\left(U c_\mu U^\dagger\right)c_\nu}
 
         where :math:`U` is the matchgate and :math:`c_\mu` is the :math:`\mu`-th Majorana operator.
 
-        :return: The single transition particle matrix.
+        :return: The single particle transition matrix.
         """
         if self.use_h_for_transition_matrix:
             h_matrix = self.hamiltonian_coefficients_params.to_matrix()
