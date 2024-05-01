@@ -144,6 +144,19 @@ Fund.
 
 
 # Citation
+[ArXiv paper](https://arxiv.org/abs/2404.19032):
+```
+@misc{gince2024fermionic,
+      title={Fermionic Machine Learning}, 
+      author={Jérémie Gince and Jean-Michel Pagé and Marco Armenta and Ayana Sarkar and Stefanos Kourtis},
+      year={2024},
+      eprint={2404.19032},
+      archivePrefix={arXiv},
+      primaryClass={quant-ph}
+}
+```
+
+Repository:
 ```
 @misc{matchcake_Gince2023,
   title={Fermionic Machine learning},
