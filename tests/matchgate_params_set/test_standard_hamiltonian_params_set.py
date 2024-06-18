@@ -125,3 +125,16 @@ def test_standard_hamiltonian_params_to_matrix(
 def test_standard_hamiltonian_params_from_matrix(matrix, params):
     params_ = MatchgateStandardHamiltonianParams.from_matrix(matrix)
     assert params_ == params
+
+
+def test_matchgate_gradient_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(batch_size, MatchgateStandardHamiltonianParams.N_PARAMS, device="cpu", requires_grad=True)
+    params = MatchgateStandardHamiltonianParams(rn_tensor)
+    assert isinstance(params.to_tensor(), torch.Tensor)
+    assert params.to_tensor().requires_grad
+    assert params.requires_grad

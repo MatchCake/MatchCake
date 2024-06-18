@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from matchcake import (
-    MatchgateStandardParams
+    MatchgateStandardParams,
 )
 from ..configs import N_RANDOM_TESTS_PER_CASE, TEST_SEED, ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON
 
@@ -103,3 +103,15 @@ def test_standard_params_from_matrix(matrix, params):
     params_ = MatchgateStandardParams.from_matrix(matrix)
     assert params_ == params
 
+
+def test_matchgate_gradient_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(batch_size, MatchgateStandardParams.N_PARAMS, device="cpu", requires_grad=True)
+    params = MatchgateStandardParams(rn_tensor)
+    assert isinstance(params.to_tensor(), torch.Tensor)
+    assert params.to_tensor().requires_grad
+    assert params.requires_grad

@@ -11,10 +11,10 @@ def test_matchgate_params_constructor_with_torch_wo_cuda():
     batch_size = 2
     rn_tensor = torch.rand(batch_size, mps.MatchgatePolarParams.N_PARAMS, device="cpu")
     params = mps.MatchgatePolarParams(rn_tensor)
-    assert isinstance(params.to_numpy(), torch.Tensor)
-    assert params.to_numpy().is_cpu
+    assert isinstance(params.to_tensor(), torch.Tensor)
+    assert params.to_tensor().is_cpu
     assert not params.is_cuda
-    assert params.to_numpy().shape == (batch_size, mps.MatchgatePolarParams.N_PARAMS)
+    assert params.to_tensor().shape == (batch_size, mps.MatchgatePolarParams.N_PARAMS)
 
 
 def test_matchgate_params_constructor_with_torch_cuda():
@@ -27,10 +27,10 @@ def test_matchgate_params_constructor_with_torch_cuda():
     batch_size = 2
     rn_tensor = torch.rand(batch_size, mps.MatchgatePolarParams.N_PARAMS, device="cuda")
     params = mps.MatchgatePolarParams(rn_tensor)
-    assert isinstance(params.to_numpy(), torch.Tensor)
-    assert params.to_numpy().is_cuda
+    assert isinstance(params.to_tensor(), torch.Tensor)
+    assert params.to_tensor().is_cuda
     assert params.is_cuda
-    assert params.to_numpy().shape == (batch_size, mps.MatchgatePolarParams.N_PARAMS)
+    assert params.to_tensor().shape == (batch_size, mps.MatchgatePolarParams.N_PARAMS)
 
 
 

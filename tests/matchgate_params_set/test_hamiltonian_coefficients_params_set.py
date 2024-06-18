@@ -71,3 +71,20 @@ def test_compute_hamiltonian(params):
     std_params = MatchgateStandardHamiltonianParams.from_numpy(params_arr)
     std_params_from = MatchgateStandardHamiltonianParams.parse_from_params(params)
     assert std_params == std_params_from
+
+
+def test_matchgate_gradient_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(
+        batch_size, MatchgateHamiltonianCoefficientsParams.N_PARAMS,
+        device="cpu",
+        requires_grad=True
+    )
+    params = MatchgateHamiltonianCoefficientsParams(rn_tensor)
+    assert isinstance(params.to_tensor(), torch.Tensor)
+    assert params.to_tensor().requires_grad
+    assert params.requires_grad
