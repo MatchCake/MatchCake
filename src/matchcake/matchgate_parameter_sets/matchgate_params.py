@@ -216,6 +216,8 @@ class MatchgateParams:
             _repr += f", batch_size={self.batch_size}"
         if self.is_cuda:
             _repr += ", device='cuda'"
+        if self.requires_grad:
+            _repr += ", requires_grad=True"
         _repr += ")"
         return _repr
 
