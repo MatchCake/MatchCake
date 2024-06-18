@@ -104,7 +104,7 @@ def test_standard_params_from_matrix(matrix, params):
     assert params_ == params
 
 
-def test_matchgate_gradient_torch():
+def test_standard_params_requires_grad_torch():
     try:
         import torch
     except ImportError:
@@ -115,3 +115,73 @@ def test_matchgate_gradient_torch():
     assert isinstance(params.to_tensor(), torch.Tensor)
     assert params.to_tensor().requires_grad
     assert params.requires_grad
+
+
+def test_standard_params_from_matrix_requires_grad_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(batch_size, 4, 4, device="cpu", requires_grad=True)
+    params = MatchgateStandardParams.from_matrix(rn_tensor)
+    assert isinstance(params.to_tensor(), torch.Tensor)
+    assert params.to_tensor().requires_grad
+    assert params.requires_grad
+
+
+def test_standard_params_from_vector_requires_grad_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(batch_size, MatchgateStandardParams.N_PARAMS, device="cpu", requires_grad=True)
+    params = MatchgateStandardParams.from_vector(rn_tensor)
+    assert isinstance(params.to_tensor(), torch.Tensor)
+    assert params.to_tensor().requires_grad
+    assert params.requires_grad
+
+
+def test_standard_params_from_vector_to_matrix_requires_grad_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(batch_size, MatchgateStandardParams.N_PARAMS, device="cpu", requires_grad=True)
+    params = MatchgateStandardParams.from_vector(rn_tensor)
+    matrix = params.to_matrix()
+    assert isinstance(matrix, torch.Tensor)
+    assert matrix.requires_grad
+
+
+def test_standard_params_from_matrix_to_vector_requires_grad_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(batch_size, 4, 4, device="cpu", requires_grad=True)
+    params = MatchgateStandardParams.from_matrix(rn_tensor)
+    vector = params.to_vector()
+    assert isinstance(vector, torch.Tensor)
+    assert vector.requires_grad
+
+
+def test_standard_params_from_matrix_grad_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(batch_size, 4, 4, device="cpu", requires_grad=True)
+    out = torch.exp(rn_tensor).sum()
+    expected_gradients = torch.autograd.grad(out, rn_tensor, torch.ones_like(out))[0]
+
+    params = MatchgateStandardParams.from_matrix(rn_tensor)
+    matrix = params.to_matrix()
+    out = torch.exp(matrix).sum()
+    out.backward()
+    gradients = params.grad
+    assert torch.allclose(gradients, expected_gradients)
