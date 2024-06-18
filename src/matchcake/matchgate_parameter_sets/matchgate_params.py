@@ -7,12 +7,13 @@ from pennylane import numpy as pnp
 import numpy as np
 
 from .. import utils
+from ..templates import TensorLike
+from ..utils.torch_utils import to_numpy
 
 
 class MatchgateParams:
     r"""
     A matchgate can be represented by several set of parameters and there exists a mapping between them.
-    # TODO: add the possibility to batch the parameters.
     """
     N_PARAMS = None
     RANGE_OF_PARAMS = None
@@ -74,6 +75,10 @@ class MatchgateParams:
         return cls(params)
 
     @classmethod
+    def from_tensor(cls, params: TensorLike) -> 'MatchgateParams':
+        return cls(params)
+
+    @classmethod
     def from_matrix(cls, matrix: np.ndarray, **kwargs) -> 'MatchgateParams':
         elements_indexes_as_array = np.array(cls.ELEMENTS_INDEXES)
         params_arr = matrix[..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
@@ -127,9 +132,20 @@ class MatchgateParams:
             import torch
         except ImportError:
             return False
-        self_arr = self.to_numpy()
+        self_arr = self.to_tensor()
         if isinstance(self_arr, torch.Tensor):
             return self_arr.is_cuda
+        return False
+
+    @property
+    def requires_grad(self):
+        try:
+            import torch
+        except ImportError:
+            return False
+        self_arr = self.to_tensor()
+        if isinstance(self_arr, torch.Tensor):
+            return self_arr.requires_grad
         return False
 
     def __getstate__(self):
@@ -182,6 +198,9 @@ class MatchgateParams:
         return self
 
     def to_numpy(self):
+        return to_numpy(self.to_tensor(), dtype=self.DEFAULT_PARAMS_TYPE)
+
+    def to_tensor(self):
         return qml.math.stack([getattr(self, attr) for attr in self.ATTRS], axis=-1)
 
     def to_string(self):
@@ -192,7 +211,13 @@ class MatchgateParams:
         attrs_str = ", ".join([
             f"{attr}={np.array2string(v, precision=4, floatmode='maxprec')}" for attr, v in zip(self.ATTRS, self_np)
         ])
-        return f"{self.__class__.__name__}({attrs_str})"
+        _repr = f"{self.__class__.__name__}({attrs_str}"
+        if self.is_batched:
+            _repr += f", batch_size={self.batch_size}"
+        if self.is_cuda:
+            _repr += ", device='cuda'"
+        _repr += ")"
+        return _repr
 
     def __str__(self):
         params_as_str = ", ".join([np.array2string(p, precision=4, floatmode='maxprec') for p in self.to_numpy()])
@@ -227,10 +252,10 @@ class MatchgateParams:
             raise AttributeError(f"{self.__class__.__name__} has no attribute {item}.")
     
     def __copy__(self):
-        return self.__class__(self.to_numpy())
+        return self.__class__(self.to_tensor())
     
     def __array__(self):
-        return self.to_numpy()
+        return self.to_tensor()
     
     @classmethod
     def random(cls, *args, **kwargs):
@@ -278,7 +303,7 @@ class MatchgateParams:
         raise NotImplementedError(f"{self.__class__.__name__} does not implement adjoint.")
     
     def to_matrix(self) -> np.ndarray:
-        params_arr = self.to_numpy()
+        params_arr = self.to_tensor()
         dtype = qml.math.get_dtype_name(params_arr)
         if self.is_batched:
             matrix = pnp.zeros((self.batch_size, 4, 4), dtype=dtype)
