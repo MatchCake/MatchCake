@@ -8,7 +8,7 @@ import numpy as np
 
 from .. import utils
 from ..templates import TensorLike
-from ..utils.torch_utils import to_numpy
+from ..utils.torch_utils import to_numpy, to_tensor
 
 
 class MatchgateParams:
@@ -76,13 +76,41 @@ class MatchgateParams:
 
     @classmethod
     def from_tensor(cls, params: TensorLike) -> 'MatchgateParams':
+        """
+        Parse the input tensor to a MatchgateParams object.
+        The input is a matchgate in his vector form i.e. the non-zero elements of the matchgate matrix.
+        The input tensor has the shape (N_PARAMS,) or (batch_size, N_PARAMS).
+
+        :param params: The tensor representation of the matchgate.
+        :return: The parsed parameters.
+        """
         return cls(params)
 
     @classmethod
-    def from_matrix(cls, matrix: np.ndarray, **kwargs) -> 'MatchgateParams':
+    def from_vector(cls, params: TensorLike) -> 'MatchgateParams':
+        """
+        Parse the input vector to a MatchgateParams object.
+        The input is a matchgate in his vector form i.e. the elements in ELEMENTS_INDEXES order.
+        The input vector has the shape (N_PARAMS,) or (batch_size, N_PARAMS).
+
+        :param params: The vector representation of the matchgate.
+        :return: The parsed parameters.
+        """
+        return cls(params)
+
+    @classmethod
+    def from_matrix(cls, matrix: TensorLike, **kwargs) -> 'MatchgateParams':
+        """
+        Parse the input matrix to a MatchgateParams object.
+        The input is a matchgate in his matrix form of shape (4, 4) or (batch_size, 4, 4).
+
+        :param matrix: The matrix representation of the matchgate.
+        :param kwargs: Additional arguments.
+        :return: The parsed parameters.
+        """
         elements_indexes_as_array = np.array(cls.ELEMENTS_INDEXES)
         params_arr = matrix[..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
-        return cls.from_numpy(params_arr)
+        return cls.from_tensor(params_arr)
 
     @classmethod
     def parse_from_any(cls, params: Any) -> 'MatchgateParams':
@@ -198,9 +226,18 @@ class MatchgateParams:
         return self
 
     def to_numpy(self):
-        return to_numpy(self.to_tensor(), dtype=self.DEFAULT_PARAMS_TYPE)
+        return to_numpy(self.to_vector(), dtype=self.DEFAULT_PARAMS_TYPE)
 
     def to_tensor(self):
+        return to_tensor(self.to_vector())
+
+    def to_vector(self):
+        """
+        Return the parameters as a vector of shape (N_PARAMS,) or (batch_size, N_PARAMS).
+        The vector is the elements in ELEMENTS_INDEXES order.
+
+        :return: The parameters as a vector.
+        """
         return qml.math.stack([getattr(self, attr) for attr in self.ATTRS], axis=-1)
 
     def to_string(self):
@@ -254,10 +291,10 @@ class MatchgateParams:
             raise AttributeError(f"{self.__class__.__name__} has no attribute {item}.")
     
     def __copy__(self):
-        return self.__class__(self.to_tensor())
+        return self.__class__(self.to_vector())
     
     def __array__(self):
-        return self.to_tensor()
+        return self.to_vector()
     
     @classmethod
     def random(cls, *args, **kwargs):
@@ -304,8 +341,8 @@ class MatchgateParams:
     def adjoint(self):
         raise NotImplementedError(f"{self.__class__.__name__} does not implement adjoint.")
     
-    def to_matrix(self) -> np.ndarray:
-        params_arr = self.to_tensor()
+    def to_matrix(self) -> TensorLike:
+        params_arr = self.to_vector()
         dtype = qml.math.get_dtype_name(params_arr)
         if self.is_batched:
             matrix = pnp.zeros((self.batch_size, 4, 4), dtype=dtype)
