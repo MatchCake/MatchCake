@@ -51,8 +51,11 @@ class MLKernel(StdEstimator):
         self._parameters = parameters
         if self.use_cuda:
             self._parameters = self.cast_tensor_to_interface(parameters)
-        elif not isinstance(parameters, np.ndarray):
-            self._parameters = torch_utils.to_numpy(parameters)
+        # elif self.qnode.interface == "torch":
+        #     import torch
+        #     self.parameters = torch.from_numpy(self.parameters).float().requires_grad_(True)
+        # elif not isinstance(parameters, np.ndarray):
+        #     self._parameters = torch_utils.to_numpy(parameters)
 
     def __setstate__(self, state):
         super().__setstate__(state)
@@ -218,6 +221,7 @@ class MLKernel(StdEstimator):
         if p_bar is not None:
             p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: ?, ?%)")
         gram = np.zeros((qml.math.shape(x0)[0], qml.math.shape(x1)[0]))
+        gram = self.cast_tensor_to_interface(gram)
         is_square = gram.shape[0] == gram.shape[1]
         triu_indices = np.stack(np.triu_indices(n=gram.shape[0], m=gram.shape[1], k=1), axis=-1)
         if is_square:
@@ -232,7 +236,7 @@ class MLKernel(StdEstimator):
         for i, b_idx in enumerate(batch_gen):
             b_x0, b_x1 = x0[b_idx[:, 0]], x1[b_idx[:, 1]]
             batched_distances = self.batch_distance(b_x0, b_x1, **kwargs)
-            gram[b_idx[:, 0], b_idx[:, 1]] = batched_distances
+            gram[b_idx[:, 0], b_idx[:, 1]] += self.cast_tensor_to_interface(batched_distances)
             if p_bar is not None:
                 n_done += qml.math.shape(b_x0)[0]
                 curr_time = time.perf_counter()
@@ -241,10 +245,19 @@ class MLKernel(StdEstimator):
                 p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: {eta_fmt}, {100 * n_done / n_data:.2f}%)")
         if is_square:
             gram = gram + gram.T
-        np.fill_diagonal(gram, 1.0)
+        gram = self.gram_diagonal_fill(gram)
         if p_bar is not None:
             p_bar.set_postfix_str(p_bar_postfix_str)
-        return qml.math.array(gram)
+        return gram
+
+    def gram_diagonal_fill(self, gram):
+        if isinstance(gram, np.ndarray):
+            np.fill_diagonal(gram, 1.0)
+        elif qml.math.get_interface(gram) == "torch":
+            gram.fill_diagonal_(1.0)
+        else:
+            qml.math.fill_diagonal(gram, 1.0)
+        return gram
 
     def pairwise_distances(self, x0, x1, **kwargs):
         x0 = check_array(x0)

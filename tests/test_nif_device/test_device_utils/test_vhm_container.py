@@ -130,7 +130,7 @@ def test_vh_matchgates_container_contract_single_line(line_operations):
     )
 
     target_t = contract_ops.single_particle_transition_matrix
-    pred_t = container.contract()
+    pred_t = container.contract().matrix
     np.testing.assert_allclose(
         pred_t,
         target_t,

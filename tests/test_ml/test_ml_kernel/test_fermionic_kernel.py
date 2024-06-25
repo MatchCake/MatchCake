@@ -332,3 +332,41 @@ def test_fermionic_pqc_swap_test(
         gram - gram.T, np.zeros((2, 2)),
         atol=2*ATOL_APPROX_COMPARISON, rtol=2*RTOL_APPROX_COMPARISON
     )
+
+
+def test_fermionic_pqc_single_distance_gradient():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    fkernel = FermionicPQCKernel(
+        size=2, device_kwargs=dict(contraction_method=None),
+        qnode_kwargs=dict(interface="torch", diff_method="backprop")
+    )
+    x = np.stack([np.random.rand(2), np.random.rand(2)], axis=0)
+    x = torch.from_numpy(x)
+    y = qml.math.array(np.zeros(x.shape[0]))
+    fkernel.fit(x, y)
+    expval = fkernel.single_distance(x[0], x[-1])
+    assert expval.grad_fn is not None, "The gradient is not computed correctly."
+    expval.backward()
+    assert fkernel.parameters.grad is not None, "The gradient is not computed correctly."
+
+
+def test_fermionic_pqc_compute_gram_matrix_gradient():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    fkernel = FermionicPQCKernel(
+        size=2, device_kwargs=dict(contraction_method=None),
+        qnode_kwargs=dict(interface="torch", diff_method="backprop")
+    )
+    x = np.stack([np.random.rand(2), np.random.rand(2)], axis=0)
+    x = torch.from_numpy(x)
+    y = qml.math.array(np.zeros(x.shape[0]))
+    fkernel.fit(x, y)
+    expvals = fkernel.compute_gram_matrix(x)
+    assert expvals.grad_fn is not None, "The gradient is not computed correctly."
+    expvals.sum().backward()
+    assert fkernel.parameters.grad is not None, "The gradient is not computed correctly."

@@ -175,13 +175,14 @@ def test_standard_params_from_matrix_grad_torch():
     except ImportError:
         pytest.skip("PyTorch not installed.")
     batch_size = 2
-    rn_tensor = torch.rand(batch_size, 4, 4, device="cpu", requires_grad=True)
-    out = torch.exp(rn_tensor).sum()
-    expected_gradients = torch.autograd.grad(out, rn_tensor, torch.ones_like(out))[0]
+    rn_tensor = torch.rand(batch_size, 4, 4, device="cpu", requires_grad=False)
+    rn_matrix = MatchgateStandardParams.from_matrix(rn_tensor).to_matrix().requires_grad_(True)
+    out = torch.exp(rn_matrix).sum()
+    expected_gradients = torch.autograd.grad(out, rn_matrix, torch.ones_like(out))[0]
 
-    params = MatchgateStandardParams.from_matrix(rn_tensor)
+    params = MatchgateStandardParams.from_matrix(rn_tensor).requires_grad_(True)
     matrix = params.to_matrix()
-    out = torch.exp(matrix).sum()
-    out.backward()
-    gradients = params.grad
+    pred_out = torch.exp(matrix).sum()
+    pred_out.backward()
+    gradients = params.to_matrix().grad
     assert torch.allclose(gradients, expected_gradients)

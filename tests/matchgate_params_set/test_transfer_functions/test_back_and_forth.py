@@ -13,7 +13,12 @@ from matchcake.matchgate_parameter_sets.transfer_functions import (
 )
 from ...configs import (
     N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED, )
+    TEST_SEED,
+    ATOL_MATRIX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+    ATOL_APPROX_COMPARISON,
+    RTOL_APPROX_COMPARISON,
+)
 
 MatchgatePolarParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 MatchgateHamiltonianCoefficientsParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
@@ -36,8 +41,10 @@ def test_infer_transfer_func_back_and_forth(__from_cls, __from_params, __to_cls)
     backward = infer_transfer_func(__to_cls, __from_cls)
     to_params = forward(__from_params)
     _from_params = backward(to_params)
-    assert _from_params == __from_params, (
-        f"Transfer function from {__from_cls.get_short_name()} -> {__to_cls.get_short_name()} failed."
+    np.testing.assert_allclose(
+        _from_params.to_numpy(), __from_params.to_numpy(),
+        atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON,
+        err_msg=f"Transfer function from {__from_cls.get_short_name()} -> {__to_cls.get_short_name()} failed."
     )
 
 
@@ -53,8 +60,10 @@ def test_infer_transfer_func_back_and_forth(__from_cls, __from_params, __to_cls)
 def test_params_to_back_and_forth(__from_cls, __from_params, __to_cls):
     to_params = params_to(__from_params, __to_cls)
     _from_params = params_to(to_params, __from_cls)
-    assert _from_params == __from_params, (
-        f"Transfer function from {__from_cls.get_short_name()} -> {__to_cls.get_short_name()} failed."
+    np.testing.assert_allclose(
+        _from_params.to_numpy(), __from_params.to_numpy(),
+        atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON,
+        err_msg=f"Transfer function from {__from_cls.get_short_name()} -> {__to_cls.get_short_name()} failed."
     )
 
 
@@ -76,7 +85,10 @@ def test_polar_standard_back_and_forth_case1(__from_params: MatchgatePolarParams
     to_params = transfer_functions.polar_to_standard(__from_params)
     _from_params = transfer_functions.standard_to_polar(to_params)
     _to_params = transfer_functions.polar_to_standard(_from_params)
-    assert to_params == _to_params
+    np.testing.assert_allclose(
+        to_params.to_numpy(), _to_params.to_numpy(),
+        atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON
+    )
 
 
 @pytest.mark.parametrize(
@@ -97,7 +109,10 @@ def test_polar_standard_back_and_forth_case2(__from_params: MatchgatePolarParams
     to_params = transfer_functions.polar_to_standard(__from_params)
     _from_params = transfer_functions.standard_to_polar(to_params)
     _to_params = transfer_functions.polar_to_standard(_from_params)
-    assert to_params == _to_params
+    np.testing.assert_allclose(
+        to_params.to_numpy(), _to_params.to_numpy(),
+        atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON
+    )
 
 
 @pytest.mark.parametrize(
@@ -119,7 +134,10 @@ def test_polar_standard_back_and_forth_case3(__from_params: MatchgatePolarParams
     to_params = transfer_functions.polar_to_standard(__from_params)
     _from_params = transfer_functions.standard_to_polar(to_params)
     _to_params = transfer_functions.polar_to_standard(_from_params)
-    assert to_params == _to_params
+    np.testing.assert_allclose(
+        to_params.to_numpy(), _to_params.to_numpy(),
+        atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON
+    )
 
 
 @pytest.mark.parametrize(
@@ -140,7 +158,10 @@ def test_polar_standard_back_and_forth_case4(__from_params: MatchgatePolarParams
     to_params = transfer_functions.polar_to_standard(__from_params)
     _from_params = transfer_functions.standard_to_polar(to_params)
     _to_params = transfer_functions.polar_to_standard(_from_params)
-    assert to_params == _to_params
+    np.testing.assert_allclose(
+        to_params.to_numpy(), _to_params.to_numpy(),
+        atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON
+    )
 
 
 @pytest.mark.parametrize(
@@ -161,7 +182,10 @@ def test_polar_standard_back_and_forth_case5(__from_params: MatchgatePolarParams
     to_params = transfer_functions.polar_to_standard(__from_params)
     _from_params = transfer_functions.standard_to_polar(to_params)
     _to_params = transfer_functions.polar_to_standard(_from_params)
-    assert to_params == _to_params
+    np.testing.assert_allclose(
+        to_params.to_numpy(), _to_params.to_numpy(),
+        atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON
+    )
 
 
 @pytest.mark.parametrize(
@@ -183,7 +207,10 @@ def test_polar_standard_back_and_forth_case6(__from_params: MatchgatePolarParams
     to_params = transfer_functions.polar_to_standard(__from_params)
     _from_params = transfer_functions.standard_to_polar(to_params)
     _to_params = transfer_functions.polar_to_standard(_from_params)
-    assert to_params == _to_params
+    np.testing.assert_allclose(
+        to_params.to_numpy(), _to_params.to_numpy(),
+        atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON
+    )
 
 
 @pytest.mark.parametrize(
@@ -206,4 +233,7 @@ def test_polar_standard_back_and_forth_case7(__from_params: MatchgatePolarParams
     to_params = transfer_functions.polar_to_standard(__from_params)
     _from_params = transfer_functions.standard_to_polar(to_params)
     _to_params = transfer_functions.polar_to_standard(_from_params)
-    assert to_params == _to_params
+    np.testing.assert_allclose(
+        to_params.to_numpy(), _to_params.to_numpy(),
+        atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON
+    )

@@ -1,5 +1,6 @@
 from typing import Union, Iterable
 
+import numpy as np
 import pennylane as qml
 from pennylane.operation import Operation
 from pennylane import numpy as pnp
@@ -266,13 +267,13 @@ class _SingleParticleTransitionMatrix:
             return self
         matrix = self.matrix
         if qml.math.ndim(matrix) == 2:
-            padded_matrix = pnp.eye(2 * len(wires), dtype=matrix.dtype)
+            padded_matrix = np.eye(2 * len(wires))
         elif qml.math.ndim(matrix) == 3:
-            padded_matrix = pnp.zeros((qml.math.shape(matrix)[0], 2 * len(wires), 2 * len(wires)), dtype=matrix.dtype)
-            padded_matrix[:, ...] = pnp.eye(2 * len(wires), dtype=matrix.dtype)
+            padded_matrix = np.zeros((qml.math.shape(matrix)[0], 2 * len(wires), 2 * len(wires)))
+            padded_matrix[:, ...] = np.eye(2 * len(wires))
         else:
             raise NotImplementedError("This method is not implemented yet.")
-
+        padded_matrix = utils.math.convert_and_cast_like(padded_matrix, matrix)
         wire0_idx = wires.index(self.wires[0])
         slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-2])
         slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-1])

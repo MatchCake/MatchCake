@@ -20,8 +20,10 @@ class MatchgateParams:
     DEFAULT_RANGE_OF_PARAMS = (-1e12, 1e12)
     PARAMS_TYPES = None
     DEFAULT_PARAMS_TYPE = float
+    DEFAULT_ARRAY_DTYPE = complex
     ALLOW_COMPLEX_PARAMS = True
     RAISE_ERROR_IF_INVALID_PARAMS = True
+    FORCE_CAST_PARAMS_TO_REAL = True
     EQUALITY_ABSOLUTE_TOLERANCE = 1e-4
     EQUALITY_RELATIVE_TOLERANCE = 1e-4
     ELEMENTS_INDEXES = None
@@ -54,7 +56,7 @@ class MatchgateParams:
             real_params = qml.math.real(np_params)
             if is_real:
                 list_params[i] = real_params
-            elif kwargs.get("force_cast_to_real", False):
+            elif kwargs.get("force_cast_to_real", cls.FORCE_CAST_PARAMS_TO_REAL):
                 list_params[i] = qml.math.cast(real_params, dtype=float)
             elif cls.RAISE_ERROR_IF_INVALID_PARAMS:
                 raise ValueError("The parameters must be real.")
@@ -176,6 +178,18 @@ class MatchgateParams:
             return self_arr.requires_grad
         return False
 
+    def requires_grad_(self, requires_grad: bool = True):
+        try:
+            import torch
+        except ImportError:
+            return self
+        for attr in self.ATTRS:
+            attr_str = self._ATTR_FORMAT.format(attr)
+            attr_tensor = getattr(self, attr_str)
+            if isinstance(attr_tensor, torch.Tensor):
+                attr_tensor.requires_grad_(requires_grad)
+        return self
+
     def __getstate__(self):
         state = {
             attr: value
@@ -225,11 +239,21 @@ class MatchgateParams:
             setattr(self, attr_str, value)
         return self
 
-    def to_numpy(self):
-        return to_numpy(self.to_vector(), dtype=self.DEFAULT_PARAMS_TYPE)
+    def to_numpy(self, dtype=None):
+        dtype = dtype or self.DEFAULT_ARRAY_DTYPE
+        return to_numpy(self.to_vector(), dtype=dtype)
 
-    def to_tensor(self):
-        return to_tensor(self.to_vector())
+    def to_tensor(self, dtype=None):
+        """
+        Return the parameters as a tensor of shape (N_PARAMS,) or (batch_size, N_PARAMS) and as a torch tensor.
+        See also to_vector.
+
+        :param dtype: The data type of the tensor. Default is None (torch.cfloat).
+        :return: The parameters as a tensor.
+        """
+        import torch
+        dtype = dtype or torch.cfloat
+        return to_tensor(self.to_vector(), dtype=dtype)
 
     def to_vector(self):
         """
@@ -238,7 +262,20 @@ class MatchgateParams:
 
         :return: The parameters as a vector.
         """
-        return qml.math.stack([getattr(self, attr) for attr in self.ATTRS], axis=-1)
+        vector = qml.math.stack([getattr(self, attr) for attr in self.ATTRS], axis=-1)
+        # Need to make sure that the grad attribute follows in the new variable
+        try:
+            import torch
+        except ImportError:
+            return vector
+        if isinstance(vector, torch.Tensor) and vector.requires_grad:
+            grads = [getattr(self, f"{attr}").grad for attr in self.ATTRS]
+            grads_is_not_none = [grad is not None for grad in grads]
+            if all(grads_is_not_none):
+                vector.grad = torch.stack(grads, axis=-1)
+            elif any(grads_is_not_none):
+                raise ValueError("The gradients of the parameters are not consistent.")
+        return vector
 
     def to_string(self):
         return str(self)
@@ -264,8 +301,8 @@ class MatchgateParams:
 
     def __eq__(self, other):
         return qml.math.allclose(
-            qml.math.array(self.to_numpy()),
-            qml.math.array(other.to_numpy()),
+            self.to_numpy(),
+            other.to_numpy(),
             atol=self.EQUALITY_ABSOLUTE_TOLERANCE,
             rtol=self.EQUALITY_RELATIVE_TOLERANCE,
         )
@@ -351,4 +388,13 @@ class MatchgateParams:
         matrix = qml.math.convert_like(matrix, params_arr)
         elements_indexes_as_array = np.array(self.ELEMENTS_INDEXES)
         matrix[..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]] = params_arr
+        # Need to make sure that the grad attribute follows in the new variable
+        try:
+            import torch
+        except ImportError:
+            return matrix
+        if isinstance(matrix, torch.Tensor) and params_arr.grad is not None:
+            grads = torch.ones_like(matrix)
+            grads[..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]] = params_arr.grad
+            matrix.grad = grads
         return matrix
