@@ -6,9 +6,9 @@ from matchcake import (
     MatchgateComposedHamiltonianParams,
     MatchgateStandardHamiltonianParams,
 )
-from ..configs import N_RANDOM_TESTS_PER_CASE, TEST_SEED
+from ..configs import N_RANDOM_TESTS_PER_CASE, TEST_SEED, set_seed
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(

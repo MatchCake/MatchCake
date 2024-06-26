@@ -9,10 +9,13 @@ from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
     TEST_SEED,
     ATOL_APPROX_COMPARISON,
-    RTOL_APPROX_COMPARISON, ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON,
+    RTOL_APPROX_COMPARISON,
+    ATOL_MATRIX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+    set_seed,
 )
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(

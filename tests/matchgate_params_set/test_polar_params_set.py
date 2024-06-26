@@ -5,9 +5,15 @@ from matchcake import (
     MatchgatePolarParams,
     mps,
 )
-from ..configs import N_RANDOM_TESTS_PER_CASE, TEST_SEED, ATOL_SCALAR_COMPARISON, RTOL_SCALAR_COMPARISON
+from ..configs import (
+    N_RANDOM_TESTS_PER_CASE,
+    TEST_SEED,
+    ATOL_SCALAR_COMPARISON,
+    RTOL_SCALAR_COMPARISON,
+    set_seed
+)
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(

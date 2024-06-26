@@ -18,13 +18,14 @@ from ...configs import (
     RTOL_MATRIX_COMPARISON,
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
+    set_seed,
 )
 
 MatchgatePolarParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 MatchgateHamiltonianCoefficientsParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 MatchgateComposedHamiltonianParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(

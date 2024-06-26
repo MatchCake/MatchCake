@@ -6,10 +6,10 @@ from pfapack import pfaffian
 from matchcake import MatchgateOperation, NonInteractingFermionicDevice, Matchgate
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
-from .configs import ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON, TEST_SEED
+from .configs import ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON, TEST_SEED, set_seed
 from .test_nif_device import single_matchgate_circuit
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 fSWAP_R = Matchgate(mps.fSWAP).single_particle_transition_matrix
 

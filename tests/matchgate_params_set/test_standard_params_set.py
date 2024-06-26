@@ -4,9 +4,14 @@ import pytest
 from matchcake import (
     MatchgateStandardParams,
 )
-from ..configs import N_RANDOM_TESTS_PER_CASE, TEST_SEED, ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON
+from ..configs import (
+    set_seed,
+    TEST_SEED,
+    ATOL_MATRIX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+)
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(

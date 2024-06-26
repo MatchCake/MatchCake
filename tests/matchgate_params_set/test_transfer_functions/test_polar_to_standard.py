@@ -14,13 +14,15 @@ from matchcake.utils import (
 )
 from ...configs import (
     N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED, )
+    TEST_SEED,
+    set_seed,
+)
 
 MatchgatePolarParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 MatchgateHamiltonianCoefficientsParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 MatchgateComposedHamiltonianParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(

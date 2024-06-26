@@ -7,7 +7,11 @@ from .configs import (
     N_RANDOM_TESTS_PER_CASE,
     ATOL_MATRIX_COMPARISON,
     RTOL_MATRIX_COMPARISON,
+    set_seed,
+    TEST_SEED,
 )
+
+set_seed(TEST_SEED)
 
 NEAR_ZERO, NEAR_INF = 1e-16, 1e0
 

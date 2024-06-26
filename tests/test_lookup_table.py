@@ -3,9 +3,15 @@ import pytest
 
 from matchcake import utils
 from matchcake.base.lookup_table import NonInteractingFermionicLookupTable
-from tests.configs import N_RANDOM_TESTS_PER_CASE, ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON, TEST_SEED
+from tests.configs import (
+    N_RANDOM_TESTS_PER_CASE,
+    ATOL_MATRIX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
+    set_seed
+)
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(

@@ -8,10 +8,13 @@ from matchcake import (
 from matchcake import utils
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED, ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
+    ATOL_MATRIX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+    set_seed,
 )
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(

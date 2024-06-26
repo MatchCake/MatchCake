@@ -5,7 +5,11 @@ from matchcake import utils
 from ..configs import (
     ATOL_MATRIX_COMPARISON,
     RTOL_MATRIX_COMPARISON,
+    set_seed,
+    TEST_SEED,
 )
+
+set_seed(TEST_SEED)
 
 ALL_PAULI = [utils.PAULI_X, utils.PAULI_Y, utils.PAULI_Z, utils.PAULI_I]
 

@@ -11,9 +11,9 @@ from ...configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
     TEST_SEED,
+    set_seed,
 )
-
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(
@@ -39,6 +39,7 @@ def test_fermionic_pqc_gram_equal_pennylane(x, rotations):
         f_gram, p_gram,
         atol=2*ATOL_APPROX_COMPARISON,
         rtol=2*RTOL_APPROX_COMPARISON,
+        err_msg=f"Gram matrices are not equal for rotations={rotations}"
     )
 
 
