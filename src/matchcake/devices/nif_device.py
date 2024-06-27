@@ -585,7 +585,12 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if n_processes == 0 or n_processes == 1:
             return self.gather_single_particle_transition_matrices(operations)
 
-        op_splits = np.array_split(operations, n_processes)
+        op_indices_splits = np.array_split(range(len(operations)), n_processes)
+        op_splits = [
+            [operations[i] for i in op_indices_split]
+            for op_indices_split in op_indices_splits
+            if len(op_indices_split) > 0
+        ]
         sptm_outputs = pbt.apply_func_multiprocess(
             func=self.gather_single_particle_transition_matrices,
             iterable_of_args=[(op_split,) for op_split in op_splits],
