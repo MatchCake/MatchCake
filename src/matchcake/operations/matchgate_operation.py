@@ -24,10 +24,12 @@ class MatchgateOperation(Matchgate, Operation):
     @staticmethod
     def _matrix(*params):
         # TODO: maybe remove this method to use only compute_matrix
-        polar_params = mps.MatchgatePolarParams(*params, backend=pnp)
+        polar_params = mps.MatchgatePolarParams(*params)
         std_params = mps.MatchgateStandardParams.parse_from_params(polar_params)
-        # return pnp.array(std_params.to_matrix())
-        return std_params.to_matrix()
+        matrix = std_params.to_matrix()
+        if qml.math.get_interface(matrix) == "torch":
+            matrix = matrix.resolve_conj()
+        return matrix
     
     @staticmethod
     def compute_matrix(*params, **hyperparams):
@@ -43,7 +45,7 @@ class MatchgateOperation(Matchgate, Operation):
         in_param_type = kwargs.get("in_param_type", mps.MatchgatePolarParams)
         in_params = in_param_type.parse_from_any(params)
         Matchgate.__init__(self, in_params, **kwargs)
-        np_params = self.polar_params.to_numpy()
+        np_params = self.polar_params.to_vector()
         self.num_params = len(np_params)
         self.draw_label_params = kwargs.get("draw_label_params", None)
         Operation.__init__(self, *np_params, wires=wires, id=id)
