@@ -1,5 +1,5 @@
 import importlib
-from typing import Any, Optional
+from typing import Any, Optional, Literal
 import warnings
 import pennylane as qml
 from pennylane import numpy as pnp
@@ -398,3 +398,13 @@ class MatchgateParams:
             grads[..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]] = params_arr.grad
             matrix.grad = grads
         return matrix
+
+    def to_interface(self, interface: Literal["numpy", "torch"], dtype=None) -> "MatchgateParams":
+        if interface == "numpy":
+            vec = self.to_numpy(dtype=dtype)
+            return self.from_numpy(vec)
+        elif interface == "torch":
+            vec = self.to_tensor(dtype=dtype)
+            return self.from_tensor(vec)
+        else:
+            raise ValueError(f"Unknown interface: {interface}.")

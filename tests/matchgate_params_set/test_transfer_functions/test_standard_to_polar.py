@@ -1,5 +1,8 @@
+from typing import Literal
+
 import numpy as np
 import pytest
+import pennylane as qml
 
 from matchcake.matchgate_parameter_sets import transfer_functions
 from matchcake.matchgate_parameter_sets.transfer_functions import (
@@ -94,3 +97,23 @@ def test_standard_to_polar_requires_grad_torch():
     assert isinstance(to_params.to_tensor(), torch.Tensor)
     assert to_params.to_tensor().requires_grad
     assert to_params.requires_grad
+
+
+@pytest.mark.parametrize(
+    "params,interface",
+    [
+        (MatchgateStandardParams.random(), interface)
+        for interface in ["numpy", "torch"]
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_standard_to_polar_interface(params, interface: Literal["numpy", "torch"]):
+    if interface == "torch":
+        try:
+            import torch
+        except ImportError:
+            pytest.skip("PyTorch not installed.")
+    from_params = params.to_interface(interface)
+    to_params = transfer_functions.standard_to_polar(from_params)
+    to_params_interface = qml.math.get_interface(to_params.to_vector())
+    assert to_params_interface == interface, f"Interface {to_params_interface} is not equal to {interface}."

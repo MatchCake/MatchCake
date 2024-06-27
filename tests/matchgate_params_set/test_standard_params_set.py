@@ -1,5 +1,8 @@
+from typing import Literal
+
 import numpy as np
 import pytest
+import pennylane as qml
 
 from matchcake import (
     MatchgateStandardParams,
@@ -9,6 +12,7 @@ from ..configs import (
     TEST_SEED,
     ATOL_MATRIX_COMPARISON,
     RTOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
 )
 
 set_seed(TEST_SEED)
@@ -191,3 +195,22 @@ def test_standard_params_from_matrix_grad_torch():
     pred_out.backward()
     gradients = params.to_matrix().grad
     assert torch.allclose(gradients, expected_gradients)
+
+
+@pytest.mark.parametrize(
+    "params,interface",
+    [
+        (MatchgateStandardParams.random(), interface)
+        for interface in ["numpy", "torch"]
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_standard_params_to_interface(params, interface: Literal["numpy", "torch"]):
+    if interface == "torch":
+        try:
+            import torch
+        except ImportError:
+            pytest.skip("PyTorch not installed.")
+    std_params = params.to_interface(interface)
+    vec = std_params.to_vector()
+    assert qml.math.get_interface(vec) == interface
