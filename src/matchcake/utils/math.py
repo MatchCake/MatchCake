@@ -32,14 +32,16 @@ def _torch_adjoint(A, E, f):
 
 def _torch_logm_scipy(A):
     import torch
-    return torch.from_numpy(scipy.linalg.logm(A.cpu(), disp=False)[0]).to(A.device)
+    if A.ndim == 2:
+        return torch.from_numpy(scipy.linalg.logm(A.cpu(), disp=False)[0]).to(A.device)
+    return torch.stack([torch.from_numpy(scipy.linalg.logm(A_.cpu(), disp=False)[0]) for A_ in A.cpu()]).to(A.device)
 
 
 class TorchLogm(torch.autograd.Function):
     @staticmethod
     def forward(ctx, A):
         import torch
-        assert A.ndim == 2 and A.size(0) == A.size(1)  # Square matrix
+        assert A.ndim in (2, 3) and A.size(-2) == A.size(-1)  # Square matrix, maybe batched
         assert A.dtype in (torch.float32, torch.float64, torch.complex64, torch.complex128)
         ctx.save_for_backward(A)
         return _torch_logm_scipy(A)
@@ -47,7 +49,9 @@ class TorchLogm(torch.autograd.Function):
     @staticmethod
     def backward(ctx, G):
         A, = ctx.saved_tensors
-        return _torch_adjoint(A, G, _torch_logm_scipy)
+        if A.ndim == 2:
+            return _torch_adjoint(A, G, _torch_logm_scipy)
+        return torch.stack([_torch_adjoint(A_, G_, _torch_logm_scipy) for A_, G_ in zip(A, G)])
 
 
 torch_logm = TorchLogm.apply
