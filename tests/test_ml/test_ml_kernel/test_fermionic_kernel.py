@@ -4,6 +4,7 @@ import numpy as np
 import pennylane as qml
 from pennylane.wires import Wires
 from matchcake.ml.kernels import FermionicPQCKernel, StateVectorFermionicPQCKernel
+from matchcake.utils.torch_utils import to_numpy
 from ...configs import (
     N_RANDOM_TESTS_PER_CASE,
     ATOL_MATRIX_COMPARISON,
@@ -32,14 +33,14 @@ def test_fermionic_pqc_gram_equal_pennylane(x, rotations):
     pkernel = StateVectorFermionicPQCKernel(rotations=rotations, parameter_scaling=0, data_scaling=1)
     fkernel.fit(x, y)
     pkernel.fit(x, y)
-    pkernel.parameters = fkernel.parameters
+    pkernel.parameters = to_numpy(fkernel.parameters)
     f_gram = fkernel.compute_gram_matrix(x)
     p_gram = pkernel.compute_gram_matrix(x)
     np.testing.assert_allclose(
         f_gram, p_gram,
         atol=2*ATOL_APPROX_COMPARISON,
         rtol=2*RTOL_APPROX_COMPARISON,
-        err_msg=f"Gram matrices are not equal for rotations={rotations}"
+        err_msg=f"Gram matrices are not equal for rotations={rotations}",
     )
 
 
@@ -335,7 +336,14 @@ def test_fermionic_pqc_swap_test(
     )
 
 
-def test_fermionic_pqc_single_distance_gradient():
+@pytest.mark.parametrize(
+    "x",
+    [
+        np.stack([np.random.rand(2), np.random.rand(2)], axis=0)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_fermionic_pqc_single_distance_gradient(x):
     try:
         import torch
     except ImportError:
@@ -344,7 +352,6 @@ def test_fermionic_pqc_single_distance_gradient():
         size=2, device_kwargs=dict(contraction_method=None),
         qnode_kwargs=dict(interface="torch", diff_method="backprop")
     )
-    x = np.stack([np.random.rand(2), np.random.rand(2)], axis=0)
     x = torch.from_numpy(x)
     y = qml.math.array(np.zeros(x.shape[0]))
     fkernel.fit(x, y)
@@ -354,7 +361,14 @@ def test_fermionic_pqc_single_distance_gradient():
     assert fkernel.parameters.grad is not None, "The gradient is not computed correctly."
 
 
-def test_fermionic_pqc_compute_gram_matrix_gradient():
+@pytest.mark.parametrize(
+    "x",
+    [
+        np.stack([np.random.rand(2), np.random.rand(2)], axis=0)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_fermionic_pqc_compute_gram_matrix_gradient(x):
     try:
         import torch
     except ImportError:
@@ -363,7 +377,6 @@ def test_fermionic_pqc_compute_gram_matrix_gradient():
         size=2, device_kwargs=dict(contraction_method=None),
         qnode_kwargs=dict(interface="torch", diff_method="backprop")
     )
-    x = np.stack([np.random.rand(2), np.random.rand(2)], axis=0)
     x = torch.from_numpy(x)
     y = qml.math.array(np.zeros(x.shape[0]))
     fkernel.fit(x, y)
@@ -371,3 +384,39 @@ def test_fermionic_pqc_compute_gram_matrix_gradient():
     assert expvals.grad_fn is not None, "The gradient is not computed correctly."
     expvals.sum().backward()
     assert fkernel.parameters.grad is not None, "The gradient is not computed correctly."
+
+
+@pytest.mark.parametrize(
+    "x",
+    [
+        np.stack([np.random.rand(2), np.random.rand(2)], axis=0)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_fermionic_pqc_compute_gram_matrix_gradient_against_state_vec_sim(x):
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+
+    fkernel = FermionicPQCKernel(
+        size=2, device_kwargs=dict(contraction_method=None),
+        qnode_kwargs=dict(interface="torch", diff_method="backprop")
+    )
+    x = torch.from_numpy(x)
+    y = qml.math.array(np.zeros(x.shape[0]))
+    fkernel.fit(x, y)
+    expval = fkernel.single_distance(x[0], x[-1])
+    expval.backward()
+    grad = fkernel.parameters.grad
+
+    pkernel = StateVectorFermionicPQCKernel(
+        size=2,
+        qnode_kwargs=dict(interface="torch", diff_method="backprop")
+    )
+    pkernel.fit(x, y)
+    pkernel.parameters = fkernel.parameters.detach().clone().requires_grad_(True)
+    p_expval = pkernel.single_distance(x[0], x[-1])
+    p_expval.backward()
+    p_grad = pkernel.parameters.grad
+    np.testing.assert_allclose(grad, p_grad, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
