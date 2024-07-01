@@ -66,6 +66,9 @@ class FermionicPQCKernel(NIFKernel):
         super().initialize_parameters()
         self._depth = self.kwargs.get("depth", int(max(1, np.ceil(self.X_.shape[-1] / self.size))))
         self.parameters = self.parameters_rng.uniform(0.0, 1.0, size=self.X_.shape[-1])
+        if self.qnode.interface == "torch":
+            import torch
+            self.parameters = torch.from_numpy(self.parameters).float().requires_grad_(True)
 
     def ansatz(self, x):
         wires_double = PATTERN_TO_WIRES["double"](self.wires)

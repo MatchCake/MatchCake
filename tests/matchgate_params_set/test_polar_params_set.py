@@ -2,11 +2,18 @@ import numpy as np
 import pytest
 
 from matchcake import (
-    MatchgatePolarParams
+    MatchgatePolarParams,
+    mps,
 )
-from ..configs import N_RANDOM_TESTS_PER_CASE, TEST_SEED, ATOL_SCALAR_COMPARISON, RTOL_SCALAR_COMPARISON
+from ..configs import (
+    N_RANDOM_TESTS_PER_CASE,
+    TEST_SEED,
+    ATOL_SCALAR_COMPARISON,
+    RTOL_SCALAR_COMPARISON,
+    set_seed
+)
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(
@@ -69,4 +76,18 @@ def test_matchgate_polar_params_constructor_batch(params, batch_size):
     np.testing.assert_equal(
         matchgate_params.to_numpy().shape, (batch_size, MatchgatePolarParams.N_PARAMS)
     )
+
+
+def test_matchgate_gradient_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(batch_size, mps.MatchgatePolarParams.N_PARAMS, device="cpu", requires_grad=True)
+    params = mps.MatchgatePolarParams(rn_tensor)
+    assert isinstance(params.to_tensor(), torch.Tensor)
+    assert params.to_tensor().requires_grad
+    assert params.requires_grad
+
 

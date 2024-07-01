@@ -254,8 +254,10 @@ class NonInteractingFermionicLookupTable:
             shape = ([self.batch_size] if self.batch_size else []) + [size, size]
             matrix = pnp.zeros(shape, dtype=complex)
             matrix[..., :, :] = qml.math.eye(size, dtype=complex)
-            return matrix
-        return np.eye(self.transition_matrix.shape[-1])
+        else:
+            matrix = np.eye(self.transition_matrix.shape[-1])
+        matrix = qml.math.convert_like(matrix, self.transition_matrix)
+        return matrix
 
     def __getitem__(self, item: Tuple[int, int]):
         i, j = item

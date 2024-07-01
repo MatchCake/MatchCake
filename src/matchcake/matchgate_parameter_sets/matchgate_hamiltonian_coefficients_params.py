@@ -114,6 +114,8 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
             matrix = pnp.zeros((self.batch_size, 4, 4), dtype=complex)
         else:
             matrix = pnp.zeros((4, 4), dtype=complex)
+        matrix = utils.math.convert_and_cast_like(matrix, self.h0)
+        matrix = qml.math.cast(matrix, dtype=complex)
         matrix[..., 0, 1] = qml.math.cast(self.h0, dtype=complex)
         matrix[..., 0, 2] = qml.math.cast(self.h1, dtype=complex)
         matrix[..., 0, 3] = qml.math.cast(self.h2, dtype=complex)
@@ -125,7 +127,6 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
         return matrix
 
     def compute_hamiltonian(self):
-        # TODO: need to be batched
         return sum([
                 self.h0 * self.h0_op,
                 self.h1 * self.h1_op,

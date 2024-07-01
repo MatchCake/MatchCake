@@ -8,7 +8,11 @@ from ..configs import (
     RTOL_MATRIX_COMPARISON,
     ATOL_SHAPE_COMPARISON,
     RTOL_SHAPE_COMPARISON,
+    set_seed,
+    TEST_SEED,
 )
+
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(

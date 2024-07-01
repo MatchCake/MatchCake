@@ -105,6 +105,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             returns_state=False,
             supports_finite_shots=False,
             supports_tensor_observables=False,
+            passthru_interface="torch",
             # passthru_devices={
             #     "tf": "default.qubit.tf",
             #     "torch": "default.qubit.torch",
@@ -157,8 +158,10 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             self,
             wires: Union[int, Wires, List[int]] = 2,
             *,
-            r_dtype=np.float64,
-            c_dtype=np.complex128,
+            # r_dtype=np.float64,
+            r_dtype=float,
+            # c_dtype=np.complex128,
+            c_dtype=complex,
             analytic=None,
             **kwargs
     ):
@@ -582,7 +585,12 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if n_processes == 0 or n_processes == 1:
             return self.gather_single_particle_transition_matrices(operations)
 
-        op_splits = np.array_split(operations, n_processes)
+        op_indices_splits = np.array_split(range(len(operations)), n_processes)
+        op_splits = [
+            [operations[i] for i in op_indices_split]
+            for op_indices_split in op_indices_splits
+            if len(op_indices_split) > 0
+        ]
         sptm_outputs = pbt.apply_func_multiprocess(
             func=self.gather_single_particle_transition_matrices,
             iterable_of_args=[(op_split,) for op_split in op_splits],
@@ -767,7 +775,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         wires = Wires(wires)
         wires_binary_states = np.array(list(itertools.product([0, 1], repeat=len(wires))))
         prob_func = self.get_prob_strategy_func()
-        return np.asarray([
+        return qml.math.stack([
             prob_func(wires, wires_binary_state)
             for wires_binary_state in wires_binary_states
         ])
@@ -971,10 +979,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         try:
             import torch
             if isinstance(x, torch.Tensor):
-                x = x.cpu().numpy()
+                # x = x.cpu().numpy()
+                x = x.cpu()
         except ImportError:
             pass
-        return qml.math.array(x, dtype=dtype)
+        return qml.math.cast(x, dtype=dtype)
 
     def reset(self):
         """Reset the device"""

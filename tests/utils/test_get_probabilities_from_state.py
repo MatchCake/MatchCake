@@ -5,7 +5,11 @@ from matchcake import utils
 from ..configs import (
     ATOL_MATRIX_COMPARISON,
     RTOL_MATRIX_COMPARISON,
+    set_seed,
+    TEST_SEED,
 )
+
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(

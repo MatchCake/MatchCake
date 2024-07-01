@@ -9,9 +9,13 @@ from ..configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
+    set_seed,
+    TEST_SEED,
 )
 from ..test_nif_device import devices_init
 from . import specific_ops_circuit
+
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(

@@ -7,14 +7,16 @@ from matchcake import MatchgateOperation, utils
 from matchcake import matchgate_parameter_sets as mps
 from . import devices_init
 from .test_specific_circuit import specific_matchgate_circuit
+from .. import get_slow_test_mark
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
     TEST_SEED,
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
+    set_seed,
 )
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 def multiples_matchgate_circuit(params_list, initial_state=None, **kwargs):
@@ -39,6 +41,8 @@ def multiples_matchgate_circuit(params_list, initial_state=None, **kwargs):
         raise ValueError(f"Unknown out_op: {out_op}.")
 
 
+@get_slow_test_mark()
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "params_list,n_wires,prob_wires",
     [
@@ -96,6 +100,8 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_w
     )
 
 
+@get_slow_test_mark()
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "params_list,n_wires,prob_wires",
     [

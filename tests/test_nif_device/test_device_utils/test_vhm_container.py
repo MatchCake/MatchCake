@@ -8,9 +8,10 @@ from ...configs import (
     TEST_SEED,
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
+    set_seed,
 )
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(
@@ -130,7 +131,7 @@ def test_vh_matchgates_container_contract_single_line(line_operations):
     )
 
     target_t = contract_ops.single_particle_transition_matrix
-    pred_t = container.contract()
+    pred_t = container.contract().matrix
     np.testing.assert_allclose(
         pred_t,
         target_t,

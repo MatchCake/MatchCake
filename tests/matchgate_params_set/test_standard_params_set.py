@@ -1,12 +1,21 @@
+from typing import Literal
+
 import numpy as np
 import pytest
+import pennylane as qml
 
 from matchcake import (
-    MatchgateStandardParams
+    MatchgateStandardParams,
 )
-from ..configs import N_RANDOM_TESTS_PER_CASE, TEST_SEED, ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON
+from ..configs import (
+    set_seed,
+    TEST_SEED,
+    ATOL_MATRIX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+)
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 @pytest.mark.parametrize(
@@ -103,3 +112,105 @@ def test_standard_params_from_matrix(matrix, params):
     params_ = MatchgateStandardParams.from_matrix(matrix)
     assert params_ == params
 
+
+def test_standard_params_requires_grad_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(batch_size, MatchgateStandardParams.N_PARAMS, device="cpu", requires_grad=True)
+    params = MatchgateStandardParams(rn_tensor)
+    assert isinstance(params.to_tensor(), torch.Tensor)
+    assert params.to_tensor().requires_grad
+    assert params.requires_grad
+
+
+def test_standard_params_from_matrix_requires_grad_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(batch_size, 4, 4, device="cpu", requires_grad=True)
+    params = MatchgateStandardParams.from_matrix(rn_tensor)
+    assert isinstance(params.to_tensor(), torch.Tensor)
+    assert params.to_tensor().requires_grad
+    assert params.requires_grad
+
+
+def test_standard_params_from_vector_requires_grad_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(batch_size, MatchgateStandardParams.N_PARAMS, device="cpu", requires_grad=True)
+    params = MatchgateStandardParams.from_vector(rn_tensor)
+    assert isinstance(params.to_tensor(), torch.Tensor)
+    assert params.to_tensor().requires_grad
+    assert params.requires_grad
+
+
+def test_standard_params_from_vector_to_matrix_requires_grad_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(batch_size, MatchgateStandardParams.N_PARAMS, device="cpu", requires_grad=True)
+    params = MatchgateStandardParams.from_vector(rn_tensor)
+    matrix = params.to_matrix()
+    assert isinstance(matrix, torch.Tensor)
+    assert matrix.requires_grad
+
+
+def test_standard_params_from_matrix_to_vector_requires_grad_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(batch_size, 4, 4, device="cpu", requires_grad=True)
+    params = MatchgateStandardParams.from_matrix(rn_tensor)
+    vector = params.to_vector()
+    assert isinstance(vector, torch.Tensor)
+    assert vector.requires_grad
+
+
+def test_standard_params_from_matrix_grad_torch():
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    batch_size = 2
+    rn_tensor = torch.rand(batch_size, 4, 4, device="cpu", requires_grad=False)
+    rn_matrix = MatchgateStandardParams.from_matrix(rn_tensor).to_matrix().requires_grad_(True)
+    out = torch.exp(rn_matrix).sum()
+    expected_gradients = torch.autograd.grad(out, rn_matrix, torch.ones_like(out))[0]
+
+    params = MatchgateStandardParams.from_matrix(rn_tensor).requires_grad_(True)
+    matrix = params.to_matrix()
+    pred_out = torch.exp(matrix).sum()
+    pred_out.backward()
+    gradients = params.to_matrix().grad
+    assert torch.allclose(gradients, expected_gradients)
+
+
+@pytest.mark.parametrize(
+    "params,interface",
+    [
+        (MatchgateStandardParams.random(), interface)
+        for interface in ["numpy", "torch"]
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_standard_params_to_interface(params, interface: Literal["numpy", "torch"]):
+    if interface == "torch":
+        try:
+            import torch
+        except ImportError:
+            pytest.skip("PyTorch not installed.")
+    std_params = params.to_interface(interface)
+    vec = std_params.to_vector()
+    assert qml.math.get_interface(vec) == interface

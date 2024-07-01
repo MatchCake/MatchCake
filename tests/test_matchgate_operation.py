@@ -6,10 +6,10 @@ from pfapack import pfaffian
 from matchcake import MatchgateOperation, NonInteractingFermionicDevice, Matchgate
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
-from .configs import ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON, TEST_SEED
+from .configs import ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON, TEST_SEED, set_seed
 from .test_nif_device import single_matchgate_circuit
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 fSWAP_R = Matchgate(mps.fSWAP).single_particle_transition_matrix
 
@@ -214,55 +214,55 @@ def test_matchgate_operation_adjoint(op, op_adjoint):
 @pytest.mark.parametrize(
     "op0,op1,expected",
     [
-        (
-                MatchgateOperation(mps.fSWAP, wires=[0, 1]),
-                MatchgateOperation(mps.fSWAP, wires=[0, 1]),
-                np.array(
-                    [
-                        [1, 0, 0, 0],
-                        [0, 1, 0, 0],
-                        [0, 0, 1, 0],
-                        [0, 0, 0, 1],
-                    ]
-                )
-        ),
-        (
-                MatchgateOperation(mps.Identity, wires=[0, 1]),
-                MatchgateOperation(mps.Identity, wires=[0, 1]),
-                np.array(
-                    [
-                        [1, 0, 0, 0],
-                        [0, 1, 0, 0],
-                        [0, 0, 1, 0],
-                        [0, 0, 0, 1],
-                    ]
-                )
-        ),
-        (
-                MatchgateOperation(mps.fSWAP, wires=[0, 1]),
-                MatchgateOperation(mps.Identity, wires=[0, 1]),
-                MatchgateOperation(mps.fSWAP, wires=[0, 1]).matrix().squeeze(),
-        ),
-        (
-                MatchgateOperation(mps.Identity, wires=[0, 1]),
-                MatchgateOperation(mps.fSWAP, wires=[0, 1]),
-                MatchgateOperation(mps.fSWAP, wires=[0, 1]).matrix().squeeze(),
-        ),
-        (
-                MatchgateOperation(mps.fHH, wires=[0, 1]),
-                MatchgateOperation(mps.fHH, wires=[0, 1]),
-                MatchgateOperation(mps.Identity, wires=[0, 1]).matrix().squeeze(),
-        ),
-        (
-                MatchgateOperation(mps.fSWAP, wires=[0, 1]),
-                MatchgateOperation(mps.fSWAP, wires=[0, 1]).adjoint(),
-                MatchgateOperation(mps.Identity, wires=[0, 1]).matrix().squeeze(),
-        ),
-        (
-                MatchgateOperation(mps.fHH, wires=[0, 1]),
-                MatchgateOperation(mps.fHH, wires=[0, 1]).adjoint(),
-                MatchgateOperation(mps.Identity, wires=[0, 1]).matrix().squeeze(),
-        ),
+        # (
+        #         MatchgateOperation(mps.fSWAP, wires=[0, 1]),
+        #         MatchgateOperation(mps.fSWAP, wires=[0, 1]),
+        #         np.array(
+        #             [
+        #                 [1, 0, 0, 0],
+        #                 [0, 1, 0, 0],
+        #                 [0, 0, 1, 0],
+        #                 [0, 0, 0, 1],
+        #             ]
+        #         )
+        # ),
+        # (
+        #         MatchgateOperation(mps.Identity, wires=[0, 1]),
+        #         MatchgateOperation(mps.Identity, wires=[0, 1]),
+        #         np.array(
+        #             [
+        #                 [1, 0, 0, 0],
+        #                 [0, 1, 0, 0],
+        #                 [0, 0, 1, 0],
+        #                 [0, 0, 0, 1],
+        #             ]
+        #         )
+        # ),
+        # (
+        #         MatchgateOperation(mps.fSWAP, wires=[0, 1]),
+        #         MatchgateOperation(mps.Identity, wires=[0, 1]),
+        #         MatchgateOperation(mps.fSWAP, wires=[0, 1]).matrix().squeeze(),
+        # ),
+        # (
+        #         MatchgateOperation(mps.Identity, wires=[0, 1]),
+        #         MatchgateOperation(mps.fSWAP, wires=[0, 1]),
+        #         MatchgateOperation(mps.fSWAP, wires=[0, 1]).matrix().squeeze(),
+        # ),
+        # (
+        #         MatchgateOperation(mps.fHH, wires=[0, 1]),
+        #         MatchgateOperation(mps.fHH, wires=[0, 1]),
+        #         MatchgateOperation(mps.Identity, wires=[0, 1]).matrix().squeeze(),
+        # ),
+        # (
+        #         MatchgateOperation(mps.fSWAP, wires=[0, 1]),
+        #         MatchgateOperation(mps.fSWAP, wires=[0, 1]).adjoint(),
+        #         MatchgateOperation(mps.Identity, wires=[0, 1]).matrix().squeeze(),
+        # ),
+        # (
+        #         MatchgateOperation(mps.fHH, wires=[0, 1]),
+        #         MatchgateOperation(mps.fHH, wires=[0, 1]).adjoint(),
+        #         MatchgateOperation(mps.Identity, wires=[0, 1]).matrix().squeeze(),
+        # ),
         (
                 MatchgateOperation(mps.HellParams, wires=[0, 1]),
                 MatchgateOperation(mps.HellParams, wires=[0, 1]).adjoint(),

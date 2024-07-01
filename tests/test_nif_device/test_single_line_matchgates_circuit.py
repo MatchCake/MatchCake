@@ -10,9 +10,10 @@ from ..configs import (
     TEST_SEED,
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
+    set_seed,
 )
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 def single_line_matchgates_circuit(params_list, initial_state=None, **kwargs):

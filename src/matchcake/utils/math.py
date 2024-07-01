@@ -1,7 +1,11 @@
 from typing import Tuple
-
+import scipy
 import pennylane as qml
 from ..templates.tensor_like import TensorLike
+try:
+    import torch
+except ImportError:
+    torch = None
 
 
 def cast_to_complex(__inputs):
@@ -15,6 +19,44 @@ def cast_to_complex(__inputs):
     return type(__inputs)(qml.math.asarray(__inputs).astype(complex))
 
 
+def _torch_adjoint(A, E, f):
+    import torch
+    A_H = A.T.conj().to(E.dtype)
+    n = A.size(0)
+    M = torch.zeros(2*n, 2*n, dtype=E.dtype, device=E.device)
+    M[:n, :n] = A_H
+    M[n:, n:] = A_H
+    M[:n, n:] = E
+    return f(M)[:n, n:].to(A.dtype)
+
+
+def _torch_logm_scipy(A):
+    import torch
+    if A.ndim == 2:
+        return torch.from_numpy(scipy.linalg.logm(A.cpu(), disp=False)[0]).to(A.device)
+    return torch.stack([torch.from_numpy(scipy.linalg.logm(A_.cpu(), disp=False)[0]) for A_ in A.cpu()]).to(A.device)
+
+
+class TorchLogm(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, A):
+        import torch
+        assert A.ndim in (2, 3) and A.size(-2) == A.size(-1)  # Square matrix, maybe batched
+        assert A.dtype in (torch.float32, torch.float64, torch.complex64, torch.complex128)
+        ctx.save_for_backward(A)
+        return _torch_logm_scipy(A)
+
+    @staticmethod
+    def backward(ctx, G):
+        A, = ctx.saved_tensors
+        if A.ndim == 2:
+            return _torch_adjoint(A, G, _torch_logm_scipy)
+        return torch.stack([_torch_adjoint(A_, G_, _torch_logm_scipy) for A_, G_ in zip(A, G)])
+
+
+torch_logm = TorchLogm.apply
+
+
 @qml.math.multi_dispatch()
 def logm(tensor, like=None):
     """Compute the matrix exponential of an array :math:`\\ln{X}`.
@@ -24,7 +66,7 @@ def logm(tensor, like=None):
         relies on the scipy implementation.
     """
     if like == "torch":
-        return tensor.matrix_log()
+        return torch_logm(tensor)
     if like == "jax":
         from jax.scipy.linalg import logm as jax_logm
         

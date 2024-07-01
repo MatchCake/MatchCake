@@ -7,7 +7,11 @@ from .configs import (
     N_RANDOM_TESTS_PER_CASE,
     ATOL_MATRIX_COMPARISON,
     RTOL_MATRIX_COMPARISON,
+    set_seed,
+    TEST_SEED,
 )
+
+set_seed(TEST_SEED)
 
 NEAR_ZERO, NEAR_INF = 1e-16, 1e0
 
@@ -20,6 +24,31 @@ NEAR_ZERO, NEAR_INF = 1e-16, 1e0
     ]
 )
 def test_logm(x):
+    np.testing.assert_allclose(
+        x, expm(logm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
+    np.testing.assert_allclose(
+        x, logm(expm(x)),
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
+    "x",
+    [
+        np.random.uniform(-NEAR_INF, NEAR_INF, size=(4, 4))
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_logm_torch(x):
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    x = torch.from_numpy(x)
     np.testing.assert_allclose(
         x, expm(logm(x)),
         atol=ATOL_MATRIX_COMPARISON,

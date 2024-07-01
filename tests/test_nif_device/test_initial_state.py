@@ -16,9 +16,10 @@ from ..configs import (
     TEST_SEED,
     ATOL_MATRIX_COMPARISON,
     RTOL_MATRIX_COMPARISON,
+    set_seed,
 )
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 @get_slow_test_mark()

@@ -13,6 +13,7 @@ from .kernel_utils import mrot_zz_template
 from .ml_kernel import MLKernel
 from matchcake.devices.nif_device import NonInteractingFermionicDevice
 from matchcake.operations import MAngleEmbedding
+from ...utils import torch_utils
 
 
 class NIFKernel(MLKernel):
@@ -28,8 +29,8 @@ class NIFKernel(MLKernel):
         self._device = None
         self.simpify_qnode = self.kwargs.get("simplify_qnode", False)
         self.qnode_kwargs = dict(
-            interface="torch" if self.use_cuda else "auto",
-            diff_method=None,
+            interface=self.kwargs.get("interface", "torch" if self.use_cuda else "auto"),
+            diff_method=self.kwargs.get("diff_method", None),
             cache=False,
         )
         self.qnode_kwargs.update(self.kwargs.get("qnode_kwargs", {}))
@@ -67,11 +68,24 @@ class NIFKernel(MLKernel):
             self.compile_qnode()
         return getattr(qnode, "tape", None)
 
+    def cast_tensor_to_interface(self, tensor):
+        if self.qnode.interface == "torch":
+            tensor = torch_utils.to_tensor(tensor)
+        else:
+            tensor = torch_utils.to_numpy(tensor)
+        if self.use_cuda:
+            tensor = torch_utils.to_cuda(tensor)
+        return tensor
+
     def initialize_parameters(self):
         super().initialize_parameters()
         if self._parameters is None:
             n_parameters = self.kwargs.get("n_parameters", PATTERN_TO_NUM_PARAMS["pyramid"](self.wires))
             self._parameters = [self.parameters_rng.uniform(0, 2 * np.pi, size=2) for _ in range(n_parameters)]
+            self._parameters = np.array(self._parameters)
+            if self.qnode.interface == "torch":
+                import torch
+                self._parameters = torch.from_numpy(self._parameters).float().requires_grad_(True)
 
     def pre_initialize(self):
         self.device_kwargs.setdefault("n_workers", getattr(self, "device_workers", 0))

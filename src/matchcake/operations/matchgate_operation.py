@@ -1,5 +1,6 @@
 from typing import Union, Iterable
 
+import numpy as np
 import pennylane as qml
 from pennylane.operation import Operation
 from pennylane import numpy as pnp
@@ -23,10 +24,12 @@ class MatchgateOperation(Matchgate, Operation):
     @staticmethod
     def _matrix(*params):
         # TODO: maybe remove this method to use only compute_matrix
-        polar_params = mps.MatchgatePolarParams(*params, backend=pnp)
+        polar_params = mps.MatchgatePolarParams(*params)
         std_params = mps.MatchgateStandardParams.parse_from_params(polar_params)
-        # return pnp.array(std_params.to_matrix())
-        return std_params.to_matrix()
+        matrix = std_params.to_matrix()
+        if qml.math.get_interface(matrix) == "torch":
+            matrix = matrix.resolve_conj()
+        return matrix
     
     @staticmethod
     def compute_matrix(*params, **hyperparams):
@@ -42,7 +45,7 @@ class MatchgateOperation(Matchgate, Operation):
         in_param_type = kwargs.get("in_param_type", mps.MatchgatePolarParams)
         in_params = in_param_type.parse_from_any(params)
         Matchgate.__init__(self, in_params, **kwargs)
-        np_params = self.polar_params.to_numpy()
+        np_params = self.polar_params.to_vector()
         self.num_params = len(np_params)
         self.draw_label_params = kwargs.get("draw_label_params", None)
         Operation.__init__(self, *np_params, wires=wires, id=id)
@@ -266,13 +269,13 @@ class _SingleParticleTransitionMatrix:
             return self
         matrix = self.matrix
         if qml.math.ndim(matrix) == 2:
-            padded_matrix = pnp.eye(2 * len(wires), dtype=matrix.dtype)
+            padded_matrix = np.eye(2 * len(wires))
         elif qml.math.ndim(matrix) == 3:
-            padded_matrix = pnp.zeros((qml.math.shape(matrix)[0], 2 * len(wires), 2 * len(wires)), dtype=matrix.dtype)
-            padded_matrix[:, ...] = pnp.eye(2 * len(wires), dtype=matrix.dtype)
+            padded_matrix = np.zeros((qml.math.shape(matrix)[0], 2 * len(wires), 2 * len(wires)))
+            padded_matrix[:, ...] = np.eye(2 * len(wires))
         else:
             raise NotImplementedError("This method is not implemented yet.")
-
+        padded_matrix = utils.math.convert_and_cast_like(padded_matrix, matrix)
         wire0_idx = wires.index(self.wires[0])
         slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-2])
         slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-1])

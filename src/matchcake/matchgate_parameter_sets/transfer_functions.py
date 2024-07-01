@@ -275,7 +275,7 @@ def _compute_theta4_from_standard(a, b, c, d, z, r1, r1_is_zero, r1_is_one, r0_i
 def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePolarParams:
     backend = MatchgateParams.load_backend_lib(kwargs.pop("backend", qml.math))
     eps = kwargs.pop("eps", 1e-12)
-    params_arr = params.to_numpy()
+    params_arr = params.to_vector()
     a, b, c, d, w, x, y, z = qml.math.cast(
         qml.math.transpose(qml.math.reshape(params_arr, (-1, params.N_PARAMS))),
         dtype=complex

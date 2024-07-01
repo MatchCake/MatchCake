@@ -9,9 +9,10 @@ from ..configs import (
     RTOL_SCALAR_COMPARISON,
     ATOL_MATRIX_COMPARISON,
     RTOL_MATRIX_COMPARISON,
+    set_seed,
 )
 
-np.random.seed(TEST_SEED)
+set_seed(TEST_SEED)
 
 
 def gen_skew_symmetric_matrix_and_det(n, batch_size=None):
