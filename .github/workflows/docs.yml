@@ -1,0 +1,63 @@
+name: Docs
+
+on:
+  push:
+    branches: ["main"]
+
+
+jobs:
+  Build-Docs:
+    name: Build docs
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.9"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install -U sphinx==6.2.1 docutils==0.18.1 sphinx_rtd_theme==1.2.2 sphinxcontrib-bibtex==2.5.0
+        pip install sphinx-theme
+        pip install groundwork-sphinx-theme
+        pip install karma_sphinx_theme
+        pip install sphinx-mdinclude
+
+    - name: Build the sphinx docs
+      run: |
+        sphinx-apidoc -f -o ./sphinx/source ./src/neurotorch
+        make -C sphinx clean
+        python sphinx/clean_html_files.py
+        make -C sphinx html
+        touch sphinx/build/html/.nojekyll
+
+    - name: Checkout gh-pages branch
+      run: |
+        git checkout -b gh-pages
+        git init
+
+    - name: Copy build files to docs folder
+      run: |
+        cp -a sphinx/build/html/. docs/
+        python sphinx/make_html_files_list.py
+        rm -rf sphinx/build
+
+    - name: Commit to gh-pages branch
+      run: |
+        git add -f docs
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git commit -m "Update docs"
+
+    - name: Push to gh-pages branch
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{secrets.GITHUB_TOKEN}}
+        branch: gh-pages
+        force: true
+        directory: docs
