@@ -21,6 +21,8 @@ class MatchgateOperation(Matchgate, Operation):
 
     generator = None
 
+    casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
+
     @staticmethod
     def _matrix(*params):
         # TODO: maybe remove this method to use only compute_matrix
@@ -162,6 +164,8 @@ class MatchgateOperation(Matchgate, Operation):
 
 
 class _SingleParticleTransitionMatrix:
+    casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
+
     @staticmethod
     def make_wires_continuous(wires: Wires):
         wires_array = wires.tolist()
@@ -218,6 +222,10 @@ class _SingleParticleTransitionMatrix:
             matrix = pnp.zeros((batch_size, 2 * len(all_wires), 2 * len(all_wires)), dtype=complex)
             matrix[:, ...] = pnp.eye(2 * len(all_wires), dtype=matrix.dtype)
 
+        matrix = utils.math.convert_and_cast_tensor_from_tensors(
+            matrix, [m.matrix for m in matrices],
+            cast_priorities=cls.casting_priorities
+        )
         seen_wires = set()
         for m in matrices:
             if m.wires in seen_wires:
