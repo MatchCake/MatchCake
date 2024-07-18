@@ -2,6 +2,7 @@ import numpy as np
 import pennylane as qml
 import pytest
 
+import matchcake as mc
 from matchcake import MatchgateOperation, utils
 from matchcake import matchgate_parameter_sets as mps
 from .. import devices_init, init_nif_device
@@ -102,4 +103,48 @@ def test_multiples_matchgate_probs_with_qbit_device_nh_contraction(params_list, 
         nif_probs.squeeze(), qubit_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
+    "x",
+    [
+        np.random.rand(4)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_nh_contraction_torch_grad(x):
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+    from matchcake.utils import torch_utils
+
+    n_qubits = 4
+    x = torch.from_numpy(x).float()
+    x_grad = x.detach().clone().requires_grad_(True)
+
+    dev = mc.NonInteractingFermionicDevice(
+        wires=n_qubits,
+        contraction_method="neighbours"
+    )
+
+    @qml.qnode(dev, interface="torch")
+    def circuit(x):
+        mc.operations.fRYY(x[0:2], wires=[0, 1])
+        mc.operations.fRYY(x[2:4], wires=[2, 3])
+        mc.operations.fRYY(x[0:2], wires=[0, 1])
+        mc.operations.fRYY(x[2:4], wires=[2, 3])
+        return qml.expval(qml.Projector([0] * n_qubits, wires=range(n_qubits)))
+
+    try:
+        circuit(x_grad)
+    except Exception as e:
+        pytest.fail(f"Error during forward pass: {e}")
+
+    np.testing.assert_allclose(
+        torch_utils.to_numpy(circuit(x)), torch_utils.to_numpy(circuit(x_grad)),
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+        err_msg="Forward pass with and without gradient computation are different."
     )
