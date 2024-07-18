@@ -11,11 +11,14 @@ addopts = [
 
 [build-system]
 requires = [
-  "setuptools",
-  "wheel",
-  "pythonbasictools",
-  "numpy",
-  "matplotlib",
+    "numpy~=1.23.5",
+    "setuptools>=57.0.0",
+    "pytest~=7.4.2",
+    "pytest-cov~=4.1.0",
+    "scipy~=1.11.4",
+    "wheel",
+    "pythonbasictools~=0.0.1a10",
+    "matplotlib~=3.8.0",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -41,11 +44,11 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    "numpy>=1.22.3",
+    "numpy~=1.23.5",
     "setuptools>=57.0.0",
-    "pytest>=7.1.2",
-    "pytest-cov>=4.1.0",
-    "scipy>=1.8.0",
+    "pytest~=7.4.2",
+    "pytest-cov~=4.1.0",
+    "scipy~=1.11.4",
 ]
 
 
