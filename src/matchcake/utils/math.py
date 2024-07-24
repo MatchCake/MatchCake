@@ -225,7 +225,7 @@ def convert_and_cast_tensor_from_tensors(
     return convert_and_cast_like(tensor, like)
 
 
-def exp_taylor_series(x: Any, terms: int = 10) -> Any:
+def exp_taylor_series(x: Any, terms: int = 18) -> Any:
     r"""
     Compute the matrix exponential using the Taylor series.
 

@@ -12,7 +12,7 @@ from .. import utils
 from .matchgate_operation import MatchgateOperation
 
 
-def _make_rot_matrix(param, direction, use_exp_taylor_series: bool = False, taylor_series_terms: int = 10):
+def _make_rot_matrix(param, direction, use_exp_taylor_series: bool = True, taylor_series_terms: int = 10):
     param_shape = qml.math.shape(param)
     ndim = len(param_shape)
     if ndim not in [0, 1]:
@@ -36,8 +36,12 @@ def _make_rot_matrix(param, direction, use_exp_taylor_series: bool = False, tayl
             matrix[:, 0, 0] = utils.math.exp_taylor_series(-1j * param / 2, terms=taylor_series_terms)
             matrix[:, 1, 1] = utils.math.exp_taylor_series(1j * param / 2, terms=taylor_series_terms)
         else:
-            matrix[:, 0, 0] = qml.math.exp(-1j * param / 2)
+            # matrix[:, 0, 0] = qml.math.exp(-1j * param / 2)
             matrix[:, 1, 1] = qml.math.exp(1j * param / 2)
+            # matrix[:, 0, 0] = qml.math.cos(param / 2) - 1j * qml.math.sin(param / 2)
+            # matrix[:, 1, 1] = qml.math.cos(param / 2) + 1j * qml.math.sin(param / 2)
+            matrix[:, 0, 0] = qml.math.cos(param / 2) - 1j * qml.math.sin(param / 2)
+            # matrix[:, 1, 1] = qml.math.cos(param / 2) + 1j * qml.math.sin(param / 2)
     else:
         raise ValueError(f"Invalid direction {direction}.")
     if ndim == 0:
