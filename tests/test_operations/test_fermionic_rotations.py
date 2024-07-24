@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from matchcake import utils
-from matchcake.operations import fRXX, fRYY, fRZZ
+from matchcake.operations import fRXX, fRYY, fRZZ, FermionicRotation
 import pennylane as qml
 
 from ..configs import (
@@ -93,3 +93,28 @@ def test_frot_adj_circuit_with_pennylane(initial_binary_string, cls_params_wires
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
+
+
+@pytest.mark.parametrize(
+    "x, directions",
+    [
+        [np.random.rand(2), directions]
+        for directions in [
+            # "XX",
+            # "YY",
+            "ZZ"
+        ]
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_fermionic_rotations_gradient_isfinite(x, directions):
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+
+    params = torch.from_numpy(x).requires_grad_(True)
+    gate = FermionicRotation(params, wires=[0, 1], directions=directions)
+    gate_real_mean = torch.real(torch.mean(gate.matrix()))
+    gate_real_mean.backward()
+    assert torch.all(torch.isfinite(params.grad)), "The gradient is not computed correctly."

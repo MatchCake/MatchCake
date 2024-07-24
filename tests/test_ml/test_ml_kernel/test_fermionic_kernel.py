@@ -362,20 +362,30 @@ def test_fermionic_pqc_single_distance_gradient(x):
 
 
 @pytest.mark.parametrize(
-    "x",
+    "x, contraction_method",
     [
-        np.stack([np.random.rand(2), np.random.rand(2)], axis=0)
+        [
+            np.stack([np.random.rand(n_qubits), np.random.rand(n_qubits)], axis=0),
+            contraction_method
+        ]
+        for n_qubits in [2, 4, 6]
+        for contraction_method in [
+            None,
+            "vertical",
+            "horizontal",
+            "neighbours",
+        ]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
-def test_fermionic_pqc_compute_gram_matrix_gradient(x):
+def test_fermionic_pqc_compute_gram_matrix_gradient(x, contraction_method):
     try:
         import torch
     except ImportError:
         pytest.skip("PyTorch not installed.")
     fkernel = FermionicPQCKernel(
-        size=2, device_kwargs=dict(contraction_method=None),
-        qnode_kwargs=dict(interface="torch", diff_method="backprop")
+        size=x.shape[-1], device_kwargs=dict(contraction_method=contraction_method),
+        qnode_kwargs=dict(interface="torch", diff_method="backprop"),
     )
     x = torch.from_numpy(x)
     y = qml.math.array(np.zeros(x.shape[0]))
@@ -383,6 +393,7 @@ def test_fermionic_pqc_compute_gram_matrix_gradient(x):
     expvals = fkernel.compute_gram_matrix(x)
     assert expvals.grad_fn is not None, "The gradient is not computed correctly."
     expvals.sum().backward()
+    assert torch.all(torch.isfinite(fkernel.parameters.grad)), "The gradient is not computed correctly."
     assert fkernel.parameters.grad is not None, "The gradient is not computed correctly."
 
 

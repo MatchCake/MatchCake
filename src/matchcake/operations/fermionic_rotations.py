@@ -12,7 +12,7 @@ from .. import utils
 from .matchgate_operation import MatchgateOperation
 
 
-def _make_rot_matrix(param, direction):
+def _make_rot_matrix(param, direction, use_exp_taylor_series: bool = False, taylor_series_terms: int = 10):
     param_shape = qml.math.shape(param)
     ndim = len(param_shape)
     if ndim not in [0, 1]:
@@ -32,8 +32,12 @@ def _make_rot_matrix(param, direction):
         matrix[:, 1, 0] = qml.math.sin(param / 2)
         matrix[:, 1, 1] = qml.math.cos(param / 2)
     elif direction == "Z":
-        matrix[:, 0, 0] = qml.math.exp(-1j * param / 2)
-        matrix[:, 1, 1] = qml.math.exp(1j * param / 2)
+        if use_exp_taylor_series:
+            matrix[:, 0, 0] = utils.math.exp_taylor_series(-1j * param / 2, terms=taylor_series_terms)
+            matrix[:, 1, 1] = utils.math.exp_taylor_series(1j * param / 2, terms=taylor_series_terms)
+        else:
+            matrix[:, 0, 0] = qml.math.exp(-1j * param / 2)
+            matrix[:, 1, 1] = qml.math.exp(1j * param / 2)
     else:
         raise ValueError(f"Invalid direction {direction}.")
     if ndim == 0:
@@ -41,7 +45,7 @@ def _make_rot_matrix(param, direction):
     return matrix
 
 
-def _make_complete_rot_matrix(params, directions):
+def _make_complete_rot_matrix(params, directions, use_exp_taylor_series: bool = False, taylor_series_terms: int = 10):
     params_shape = qml.math.shape(params)
     ndim = len(params_shape)
     if ndim not in [1, 2]:
@@ -50,9 +54,17 @@ def _make_complete_rot_matrix(params, directions):
         raise ValueError(f"Number of parameters ({params_shape[-1]}) and directions ({len(directions)}) must be equal.")
     batch_size = params_shape[0] if ndim == 2 else 1
     matrix = qml.math.cast(qml.math.convert_like(pnp.zeros((batch_size, 4, 4)), params), dtype=complex)
-    inner_matrices = _make_rot_matrix(params[..., 0], directions[0])
+    inner_matrices = _make_rot_matrix(
+        params[..., 0], directions[0],
+        use_exp_taylor_series=use_exp_taylor_series,
+        taylor_series_terms=taylor_series_terms
+    )
     inner_matrices = qml.math.reshape(inner_matrices, (batch_size, 2, 2))
-    outer_matrices = _make_rot_matrix(params[..., 1], directions[1])
+    outer_matrices = _make_rot_matrix(
+        params[..., 1], directions[1],
+        use_exp_taylor_series=use_exp_taylor_series,
+        taylor_series_terms=taylor_series_terms
+    )
     outer_matrices = qml.math.reshape(outer_matrices, (batch_size, 2, 2))
     matrix[:, 0, 0] = outer_matrices[:, 0, 0]
     matrix[:, 0, 3] = outer_matrices[:, 0, 1]
@@ -71,6 +83,9 @@ def _make_complete_rot_matrix(params, directions):
 class FermionicRotation(MatchgateOperation):
     num_wires = 2
     num_params = 2
+
+    USE_EXP_TAYLOR_SERIES = True
+    TAYLOR_SERIES_TERMS = 10
 
     def __init__(
             self,
@@ -94,7 +109,13 @@ class FermionicRotation(MatchgateOperation):
                 f"{self.__class__.__name__} requires two directions; got {self._directions}."
             )
         self._given_params = params
-        m_params = mps.MatchgateStandardParams.from_matrix(_make_complete_rot_matrix(params, self._directions))
+        m_params = mps.MatchgateStandardParams.from_matrix(
+            _make_complete_rot_matrix(
+                params, self._directions,
+                use_exp_taylor_series=self.USE_EXP_TAYLOR_SERIES,
+                taylor_series_terms=self.TAYLOR_SERIES_TERMS
+            )
+        )
         in_params = mps.MatchgatePolarParams.parse_from_params(m_params, force_cast_to_real=True)
         kwargs["in_param_type"] = mps.MatchgatePolarParams
         super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
