@@ -241,3 +241,18 @@ def exp_taylor_series(x: Any, terms: int = 18) -> Any:
     for i in range(1, terms + 1):
         results.append(results[-1] * x / i)
     return sum(results)
+
+
+def exp_euler(x: TensorLike) -> TensorLike:
+    r"""
+    Compute the matrix exponential using the Euler formula.
+
+    :math:`e^{ix} = \cos(x) + i \sin(x)`
+
+    :param x: input of the exponential.
+    :type x: TensorLike
+
+    :return: The exponential of the input.
+    :rtype: TensorLike
+    """
+    return qml.math.cos(x) + 1j * qml.math.sin(x)

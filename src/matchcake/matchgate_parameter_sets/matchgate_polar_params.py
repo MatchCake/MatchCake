@@ -55,11 +55,11 @@ class MatchgatePolarParams(MatchgateParams):
         theta0, theta1, theta2, theta3, theta4 = sp.symbols('\\theta_0 \\theta_1 \\theta_2 \\theta_3 \\theta_4')
         return sp.Matrix([r0, r1, theta0, theta1, theta2, theta3, theta4])
 
-    @staticmethod
-    def compute_r_tilde(r, backend="pennylane.numpy") -> complex:
+    @classmethod
+    def compute_r_tilde(cls, r, backend="pennylane.math") -> complex:
         _pkg = MatchgateParams.load_backend_lib(backend)
-        return _pkg.sqrt(1 - qml.math.cast(r, dtype=complex) ** 2)
-    
+        return _pkg.sqrt(1 - qml.math.cast(r, dtype=complex) ** 2 + cls.DIVISION_EPSILON)
+
     @property
     def r0_tilde(self) -> complex:
         """
