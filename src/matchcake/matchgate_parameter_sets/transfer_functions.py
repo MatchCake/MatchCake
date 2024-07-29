@@ -46,16 +46,28 @@ def polar_to_standard(params: MatchgatePolarParams, **kwargs) -> MatchgateStanda
     backend = MatchgateParams.load_backend_lib(kwargs.pop("backend", qml.math))
 
     r0_tilde = MatchgatePolarParams.compute_r_tilde(params.r0, backend=backend)
+    # r0_tilde = backend.ones_like(params.r0)
     r1_tilde = MatchgatePolarParams.compute_r_tilde(params.r1, backend=backend)
+    # r1_tilde = backend.ones_like(params.r1)
+    # return MatchgateStandardParams(
+    #     a=params.r0 * backend.exp(1j * params.theta0),
+    #     b=r0_tilde * backend.exp(1j * (params.theta2 + params.theta4 - (params.theta1 + np.pi))),
+    #     c=r0_tilde * backend.exp(1j * params.theta1),
+    #     d=params.r0 * backend.exp(1j * (params.theta2 + params.theta4 - params.theta0)),
+    #     w=params.r1 * backend.exp(1j * params.theta2),
+    #     x=r1_tilde * backend.exp(1j * (params.theta2 + params.theta4 - (params.theta3 + np.pi))),
+    #     y=r1_tilde * backend.exp(1j * params.theta3),
+    #     z=params.r1 * backend.exp(1j * params.theta4),
+    # )
     return MatchgateStandardParams(
-        a=params.r0 * backend.exp(1j * params.theta0),
-        b=r0_tilde * backend.exp(1j * (params.theta2 + params.theta4 - (params.theta1 + np.pi))),
-        c=r0_tilde * backend.exp(1j * params.theta1),
-        d=params.r0 * backend.exp(1j * (params.theta2 + params.theta4 - params.theta0)),
-        w=params.r1 * backend.exp(1j * params.theta2),
-        x=r1_tilde * backend.exp(1j * (params.theta2 + params.theta4 - (params.theta3 + np.pi))),
-        y=r1_tilde * backend.exp(1j * params.theta3),
-        z=params.r1 * backend.exp(1j * params.theta4),
+        a=params.r0 * math.exp_euler(params.theta0),
+        b=r0_tilde * math.exp_euler(params.theta2 + params.theta4 - (params.theta1 + np.pi)),
+        c=r0_tilde * math.exp_euler(params.theta1),
+        d=params.r0 * math.exp_euler(params.theta2 + params.theta4 - params.theta0),
+        w=params.r1 * math.exp_euler(params.theta2),
+        x=r1_tilde * math.exp_euler(params.theta2 + params.theta4 - (params.theta3 + np.pi)),
+        y=r1_tilde * math.exp_euler(params.theta3),
+        z=params.r1 * math.exp_euler(params.theta4),
     )
 
 

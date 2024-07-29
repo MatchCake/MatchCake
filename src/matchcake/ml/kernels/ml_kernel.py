@@ -107,13 +107,6 @@ class MLKernel(StdEstimator):
     def batch_distance(self, x0, x1, **kwargs):
         return self.batch_distance_in_sequence(x0, x1, **kwargs)
 
-    def make_batch(self, x0, x1):
-        x0 = check_array(x0)
-        x1 = check_array(x1)
-        b_x0 = qml.math.repeat(x0, qml.math.shape(x1)[0], axis=0)
-        b_x1 = qml.math.tile(x1, (qml.math.shape(x0)[0], 1))
-        return b_x0, b_x1
-
     def get_batch_size_for(self, length: int):
         if self.batch_size == "try":
             return length // 2 ** self._batch_size_try_counter
@@ -126,35 +119,6 @@ class MLKernel(StdEstimator):
         elif self.batch_size > length:
             return length
         return self.batch_size
-
-    def make_batches_generator_(self, x0, x1, **kwargs):
-        x0 = check_array(x0)
-        x1 = check_array(x1)
-        x0_indexes = np.arange(qml.math.shape(x0)[0])
-        x1_indexes = np.arange(qml.math.shape(x1)[0])
-        b_x0_indexes = qml.math.repeat(x0_indexes, qml.math.shape(x1_indexes)[0], axis=0)
-        b_x1_indexes = qml.math.tile(x1_indexes, (qml.math.shape(x0_indexes)[0],))
-        batch_size = self.get_batch_size_for(qml.math.shape(b_x0_indexes)[0])
-        n_batches = int(np.ceil(b_x0_indexes.shape[0] / batch_size))
-
-        verbose = kwargs.pop("verbose", False)
-        desc = kwargs.pop(
-            "desc",
-            f"{self.__class__.__name__}: "
-            f"pairwise_distances_in_batch("
-            f"x0:{qml.math.shape(x0)}, "
-            f"x1:{qml.math.shape(x1)}, "
-            f"batch_size={self.batch_size})"
-        )
-        p_bar = tqdm(total=n_batches, desc=desc, disable=not verbose)
-        for i in range(n_batches):
-            start_idx = i * batch_size
-            end_idx = (i + 1) * batch_size
-            ib_x0_indexes = b_x0_indexes[start_idx:end_idx]
-            ib_x1_indexes = b_x1_indexes[start_idx:end_idx]
-            yield x0[ib_x0_indexes], x1[ib_x1_indexes]
-            p_bar.update(1)
-        p_bar.close()
 
     def make_batches_generator(self, x, **kwargs) -> Tuple[iter, int]:
         length = qml.math.shape(x)[0]
@@ -170,8 +134,9 @@ class MLKernel(StdEstimator):
         return _gen(), n_batches
 
     def pairwise_distances_in_sequence(self, x0, x1, **kwargs):
-        x0 = check_array(x0)
-        x1 = check_array(x1)
+        if kwargs.get("check_array", True):
+            x0 = check_array(x0)
+            x1 = check_array(x1)
         self.check_is_fitted()
         verbose = kwargs.pop("verbose", False)
         desc = kwargs.pop(
@@ -189,32 +154,23 @@ class MLKernel(StdEstimator):
         _result = np.stack(_list_results, axis=-1)
         return _result
 
-    def pairwise_distances_in_batch_(self, x0, x1, **kwargs):
-        x0 = check_array(x0)
-        x1 = check_array(x1)
-        self.check_is_fitted()
-        p_bar: Optional[tqdm] = kwargs.pop("p_bar", None)
-        p_bar_postfix_str = p_bar.postfix if p_bar is not None else ""
-        if p_bar is not None:
-            p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: ?, ?/?)")
-        batched_distances = []
-        start_time = time.perf_counter()
-        n_data = qml.math.shape(x0)[0] * qml.math.shape(x1)[0]
-        n_done = 0
-        for i, (b_x0, b_x1) in enumerate(self.make_batches_generator(x0, x1, **kwargs)):
-            batched_distances.append(self.batch_distance(b_x0, b_x1, **kwargs))
-            if p_bar is not None:
-                n_done += qml.math.shape(b_x0)[0]
-                curr_time = time.perf_counter()
-                eta = (curr_time - start_time) / n_done * (n_data - n_done)
-                eta_fmt = datetime.timedelta(seconds=eta)
-                p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: {eta_fmt}, {n_done}/{n_data})")
-        distances = qml.math.concatenate(batched_distances, axis=0)
-        return qml.math.reshape(distances, (qml.math.shape(x0)[0], qml.math.shape(x1)[0]))
-
     def pairwise_distances_in_batch(self, x0, x1, **kwargs):
-        x0 = check_array(x0)
-        x1 = check_array(x1)
+        r"""
+        Compute pairwise distances between two sets of vectors in batch.
+
+        :param x0: First set of vectors of shape (n_samples_0, n_features)
+        :param x1: Second set of vectors of shape (n_samples_1, n_features)
+        :param kwargs: Additional keyword arguments
+
+        :keyword check_array: Whether to check the input arrays. Default is True.
+        :keyword p_bar: Progress bar. Default is None.
+
+        :return: Pairwise distances between x0 and x1 of shape (n_samples_0, n_samples_1)
+        """
+
+        if kwargs.get("check_array", True):
+            x0 = check_array(x0)
+            x1 = check_array(x1)
         self.check_is_fitted()
         p_bar: Optional[tqdm] = kwargs.pop("p_bar", None)
         p_bar_postfix_str = p_bar.postfix if p_bar is not None else ""
@@ -260,25 +216,25 @@ class MLKernel(StdEstimator):
         return gram
 
     def pairwise_distances(self, x0, x1, **kwargs):
-        x0 = check_array(x0)
-        x1 = check_array(x1)
+        r"""
+        Compute pairwise distances between two sets of vectors.
+
+        :param x0: First set of vectors of shape (n_samples_0, n_features)
+        :param x1: Second set of vectors of shape (n_samples_1, n_features)
+        :param kwargs: Additional keyword arguments
+
+        :keyword check_array: Whether to check the input arrays. Default is True.
+
+        :return: Pairwise distances between x0 and x1 of shape (n_samples_0, n_samples_1)
+        """
+        if kwargs.get("check_array", True):
+            x0 = check_array(x0)
+            x1 = check_array(x1)
         self.check_is_fitted()
         if self.batch_size == 0:
             return self.pairwise_distances_in_sequence(x0, x1, **kwargs)
         # TODO: add support for batch_size = try
         return self.pairwise_distances_in_batch(x0, x1, **kwargs)
-        try:
-            return self.pairwise_distances_in_batch(x0, x1, **kwargs)
-        except Exception as e:
-            warnings.warn(
-                f"Failed to compute pairwise distances in batch of size {self.batch_size}."
-                f" Got err: ({e})."
-                f"Computing pairwise distances in sequence.",
-                RuntimeWarning
-            )
-            if kwargs.get("throw_errors", False):
-                raise e
-            return self.pairwise_distances_in_sequence(x0, x1, **kwargs)
 
     def compute_gram_matrix(self, x, **kwargs):
         kwargs.setdefault(

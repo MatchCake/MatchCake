@@ -27,8 +27,20 @@ class StdEstimator(BaseEstimator):
         if not self.is_fitted:
             raise ValueError(f"{self.__class__.__name__} is not fitted.")
 
-    def fit(self, X, y=None, **kwargs):
-        X, y = check_X_y(X, y)
+    def fit(self, X, y=None, **kwargs) -> "StdEstimator":
+        r"""
+        Fit the model with the given data.
+
+        :param X: The input data.
+        :param y: The target values.
+        :param kwargs: Additional arguments.
+
+        :keyword check_X_y: Whether to check the input data and target values. Default is True.
+
+        :return: The fitted model.
+        """
+        if kwargs.get("check_X_y", True):
+            X, y = check_X_y(X, y)
         self.classes_ = unique_labels(y)
         self.X_ = X
         self.y_ = y

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from matchcake import utils
-from matchcake.operations import fRXX, fRYY, fRZZ
+from matchcake.operations import fRXX, fRYY, fRZZ, FermionicRotation
 import pennylane as qml
 
 from ..configs import (
@@ -93,3 +93,53 @@ def test_frot_adj_circuit_with_pennylane(initial_binary_string, cls_params_wires
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
+
+
+@pytest.mark.parametrize(
+    "x, directions, taylor_terms",
+    [
+        [np.random.rand(2), directions, taylor_terms]
+        for directions in ["XX", "YY", "ZZ"]
+        for taylor_terms in range(10, 20)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_fermionic_rotations_gradient_isfinite(x, directions, taylor_terms):
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+
+    params = torch.from_numpy(x).requires_grad_(True)
+    FermionicRotation.USE_EXP_TAYLOR_SERIES = taylor_terms > 0
+    FermionicRotation.TAYLOR_SERIES_TERMS = taylor_terms
+    gate = FermionicRotation(params, wires=[0, 1], directions=directions)
+    gate_real_mean = torch.real(torch.mean(gate.matrix()))
+    gate_real_mean.backward()
+    assert torch.all(torch.isfinite(params.grad)), \
+        f"The gradient is not computed correctly for {directions}, {taylor_terms} terms and {x}."
+
+
+@pytest.mark.parametrize(
+    "x, directions, taylor_terms",
+    [
+        [np.array([0.12429722, 0.73086748]), "ZZ", 18],
+        [np.array([0.12429722, 0.73086748]), "ZZ", 8],
+    ]
+)
+def test_fermionic_rotations_gradient_isfinite_specific(x, directions, taylor_terms):
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("PyTorch not installed.")
+
+    torch.autograd.set_detect_anomaly(True)
+
+    params = torch.from_numpy(x).requires_grad_(True)
+    FermionicRotation.USE_EXP_TAYLOR_SERIES = True
+    FermionicRotation.TAYLOR_SERIES_TERMS = taylor_terms
+    gate = FermionicRotation(params, wires=[0, 1], directions=directions)
+    gate_real_mean = torch.real(torch.mean(gate.matrix()))
+    gate_real_mean.backward()
+    assert torch.all(torch.isfinite(params.grad)), \
+        f"The gradient is not computed correctly for {directions}, {taylor_terms} terms and {x}."

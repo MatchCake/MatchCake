@@ -233,7 +233,7 @@ class _SingleParticleTransitionMatrix:
             wire0_idx = all_wires.index(m.wires[0])
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + m.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + m.shape[-1])
-            matrix[..., slice_0, slice_1] = m.matrix
+            matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(m.matrix, matrix)
             seen_wires.update(m.wires)
         return cls(matrix, all_wires)
 

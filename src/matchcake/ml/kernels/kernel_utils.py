@@ -2,7 +2,6 @@ import warnings
 from typing import Optional, Tuple, Union
 
 import numpy as np
-import tables as tb
 
 from ...operations import fRZZ
 
@@ -41,6 +40,7 @@ class GramMatrixKernel:
 
     def _initiate_data_(self):
         if self._array_type == "table":
+            import tables as tb
             self.h5file = tb.open_file("gram_matrix.h5", mode="w")
             self.data = self.h5file.create_carray(
                 self.h5file.root,

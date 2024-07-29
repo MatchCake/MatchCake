@@ -1,4 +1,4 @@
-from typing import Tuple, List, Literal
+from typing import Tuple, List, Literal, Any
 import scipy
 import pennylane as qml
 from ..templates.tensor_like import TensorLike
@@ -223,3 +223,36 @@ def convert_and_cast_tensor_from_tensors(
     # like is the first tensor with the highest priority
     like = tensors[tensors_priorities.index(highest_priority)]
     return convert_and_cast_like(tensor, like)
+
+
+def exp_taylor_series(x: Any, terms: int = 18) -> Any:
+    r"""
+    Compute the matrix exponential using the Taylor series.
+
+    :param x: input of the exponential.
+    :type x: Any
+    :param terms: Number of terms in the Taylor series.
+    :type terms: int
+
+    :return: The exponential of the input.
+    :rtype: Any
+    """
+    results = [1]
+    for i in range(1, terms + 1):
+        results.append(results[-1] * x / i)
+    return sum(results)
+
+
+def exp_euler(x: TensorLike) -> TensorLike:
+    r"""
+    Compute the matrix exponential using the Euler formula.
+
+    :math:`e^{ix} = \cos(x) + i \sin(x)`
+
+    :param x: input of the exponential.
+    :type x: TensorLike
+
+    :return: The exponential of the input.
+    :rtype: TensorLike
+    """
+    return qml.math.cos(x) + 1j * qml.math.sin(x)

@@ -189,11 +189,12 @@ def test_standard_params_from_matrix_grad_torch():
     out = torch.exp(rn_matrix).sum()
     expected_gradients = torch.autograd.grad(out, rn_matrix, torch.ones_like(out))[0]
 
-    params = MatchgateStandardParams.from_matrix(rn_tensor).requires_grad_(True)
+    params = MatchgateStandardParams.from_matrix(rn_tensor.detach().clone()).requires_grad_(True)
     matrix = params.to_matrix()
     pred_out = torch.exp(matrix).sum()
     pred_out.backward()
     gradients = params.to_matrix().grad
+    assert gradients is not None
     assert torch.allclose(gradients, expected_gradients)
 
 
