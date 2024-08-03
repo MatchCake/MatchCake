@@ -274,3 +274,52 @@ def test_lookup_table_get_observable(transition_matrix, binary_state, k, observa
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
+
+@pytest.mark.parametrize(
+    "transition_matrix,binary_state,observable",
+    [
+        #
+        (
+                0.5 * np.array(
+                    [
+                        [1, 1j, 0, 0],
+                        [0, 0, 1, 1j]
+                    ]
+                ),
+                "00",
+                np.array(
+                    [
+                        [0, 0],
+                        [0, 0],
+                    ]
+                )
+        ),
+        #
+        (
+                0.5 * np.array(
+                    [
+                        [0, 0, 1, 1j],
+                        [1, 1j, 0, 0]
+                    ]
+                ),
+                "01",
+                np.array(
+                    [
+                        [0, 1, 0, 1],
+                        [-1, 0, 0, 0],
+                        [0, 0, 0, 1],
+                        [-1, 0, -1, 0],
+                    ]
+                )
+        ),
+        #
+    ]
+)
+def test_lookup_table_compute_observable_of_target_state(transition_matrix, binary_state, observable):
+    lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
+    obs = lookup_table.compute_observable_of_target_state(utils.binary_state_to_state(binary_state))
+    np.testing.assert_allclose(
+        obs, observable,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
