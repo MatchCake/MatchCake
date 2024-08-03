@@ -829,7 +829,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             wires_indexes,
             show_progress=self.show_progress,
         )
-        return qml.math.real(utils.pfaffian(obs, method=self.pfaffian_method))
+        self.initialize_p_bar(total=1, desc=f"Computing pfaffian of observable of shape {qml.math.shape(obs)}")
+        prob = qml.math.real(utils.pfaffian(obs, method=self.pfaffian_method))
+        self.update_p_bar()
+        self.close_p_bar()
+        return prob
 
     def compute_probability_using_explicit_sum(self, wires=None):
         warnings.warn(
