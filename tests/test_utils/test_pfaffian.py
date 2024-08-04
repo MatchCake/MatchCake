@@ -29,11 +29,23 @@ def gen_skew_symmetric_matrix_and_det(n, batch_size=None):
     [
         gen_skew_symmetric_matrix_and_det(i)
         for i in range(2, N_RANDOM_TESTS_PER_CASE+2)
-        for mth in ["P", "det"]
     ]
 )
 def test_pfaffian_ltl(matrix, det):
     pf = utils.pfaffian_ltl(matrix)
+    np.testing.assert_allclose(pf ** 2, det, atol=ATOL_SCALAR_COMPARISON, rtol=RTOL_SCALAR_COMPARISON)
+
+
+@pytest.mark.parametrize(
+    "matrix, det, mth",
+    [
+        (*gen_skew_symmetric_matrix_and_det(i), mth)
+        for i in range(2, N_RANDOM_TESTS_PER_CASE+2)
+        for mth in ["P", "det"]
+    ]
+)
+def test_pfaffian_methods(matrix, det, mth):
+    pf = utils.pfaffian(matrix, method=mth)
     np.testing.assert_allclose(pf ** 2, det, atol=ATOL_SCALAR_COMPARISON, rtol=RTOL_SCALAR_COMPARISON)
 
 
@@ -46,5 +58,17 @@ def test_pfaffian_ltl(matrix, det):
 )
 def test_batch_pfaffian_ltl(matrix, det):
     pf = utils._pfaffian.batch_pfaffian_ltl(matrix)
+    np.testing.assert_allclose(pf ** 2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+
+
+@pytest.mark.parametrize(
+    "matrix, det",
+    [
+        gen_skew_symmetric_matrix_and_det(i, batch_size=5)
+        for i in range(6, N_RANDOM_TESTS_PER_CASE+6)
+    ]
+)
+def test_pfaffian_bltl(matrix, det):
+    pf = utils.pfaffian(matrix, method="bLTL")
     np.testing.assert_allclose(pf ** 2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
 
