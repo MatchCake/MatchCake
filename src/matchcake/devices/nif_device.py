@@ -117,6 +117,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
     @classmethod
     def update_single_particle_transition_matrix(cls, single_particle_transition_matrix, other):
+        if single_particle_transition_matrix is None:
+            return other
         l_interface = qml.math.get_interface(single_particle_transition_matrix)
         other_interface = qml.math.get_interface(other)
         l_priority = cls.casting_priorities.index(l_interface)
@@ -129,9 +131,6 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             other = utils.math.convert_and_cast_like(
                 other, single_particle_transition_matrix
             )
-        # single_transition_particle_matrix = utils.math.convert_and_cast_like(
-        #     single_transition_particle_matrix, other
-        # )
         single_particle_transition_matrix = qml.math.einsum(
             "...ij,...jl->...il",
             single_particle_transition_matrix, other
@@ -617,7 +616,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         rotations = rotations or []
         if not isinstance(operations, Iterable):
             operations = [operations]
-        global_single_particle_transition_matrix = pnp.eye(2 * self.num_wires)[None, ...]
+        global_single_particle_transition_matrix = None
         batched = False
         operations = self.contract_operations(operations, self.contraction_method)
         self.initialize_p_bar(total=len(operations), desc="Applying operations")
@@ -667,8 +666,10 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 )
             self.p_bar_set_n(i + 1)
 
-        if not batched:
-            global_single_particle_transition_matrix = global_single_particle_transition_matrix[0]
+        if global_single_particle_transition_matrix is None:
+            global_single_particle_transition_matrix = pnp.eye(2 * self.num_wires)[None, ...]
+            if not batched:
+                global_single_particle_transition_matrix = global_single_particle_transition_matrix[0]
         # store the pre-rotated state
         self._pre_rotated_sparse_state = self._sparse_state
         self._pre_rotated_state = self._state
