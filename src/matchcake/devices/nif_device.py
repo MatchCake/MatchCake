@@ -92,8 +92,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     observables = {"BasisStateProjector", "Projector", "Identity"}
 
     prob_strategies = {"lookup_table", "explicit_sum"}
+    DEFAULT_PROB_STRATEGY = "lookup_table"
     contraction_methods = {None, "neighbours", "vertical", "horizontal"}
-    pfaffian_methods = {"det", "P"}
+    DEFAULT_CONTRACTION_METHOD = "neighbours"
+    pfaffian_methods = {"det", "bLTL"}
+    DEFAULT_PFAFFIAN_METHOD = "bLTL"
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
 
@@ -170,7 +173,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             assert len(wires) > 1, "At least two wires are required for this device."
         super().__init__(wires=wires, shots=None, r_dtype=r_dtype, c_dtype=c_dtype, analytic=analytic)
 
-        self.prob_strategy = kwargs.get("prob_strategy", "lookup_table").lower()
+        self.prob_strategy = kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY).lower()
         assert self.prob_strategy in self.prob_strategies, (
             f"The probability strategy must be one of {self.prob_strategies}. "
             f"Got {self.prob_strategy} instead."
@@ -197,12 +200,12 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The majorana_getter must be initialized with {self.num_wires} wires. "
             f"Got {self.majorana_getter.n} instead."
         )
-        self.contraction_method = kwargs.get("contraction_method", "neighbours")
+        self.contraction_method = kwargs.get("contraction_method", self.DEFAULT_CONTRACTION_METHOD)
         assert self.contraction_method in self.contraction_methods, (
             f"The contraction method must be one of {self.contraction_methods}. "
             f"Got {self.contraction_method} instead."
         )
-        self.pfaffian_method = kwargs.get("pfaffian_method", "det")
+        self.pfaffian_method = kwargs.get("pfaffian_method", self.DEFAULT_PFAFFIAN_METHOD)
         assert self.pfaffian_method in self.pfaffian_methods, (
             f"The pfaffian method must be one of {self.pfaffian_methods}. "
             f"Got {self.pfaffian_method} instead."
