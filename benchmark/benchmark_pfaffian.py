@@ -74,6 +74,7 @@ def plot_results(results: pd.DataFrame, save_file: Optional[str] = None):
 
 def main():
     save_file = os.path.join(os.path.dirname(__file__), "data", "benchmark_pfaffian.csv")
+    os.makedirs(os.path.dirname(save_file), exist_ok=True)
     batch_size_list = [1, ]
     n_list = 2 * np.linspace(1, 2048, num=1_000, dtype=int, endpoint=True)
     methods = ["det", "bLTL", "bH"]
