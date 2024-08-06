@@ -37,7 +37,7 @@ def plot_results(results: pd.DataFrame, save_file: Optional[str] = None):
 
     # One color per method and one linestyle per interface
     method_to_color = {"det": "blue", "bLTL": "green", "bH": "red"}
-    interface_to_linestyle = {"numpy": "-", "torch": "--"}
+    interface_to_linestyle = {"numpy": "--", "torch": "-"}
 
     for method in results["method"].unique():
         for interface in results["interface"].unique():
@@ -76,14 +76,18 @@ def main():
     batch_size_list = [32, ]
     n_list = 2 * np.linspace(1, 10_000, num=1_000, dtype=int, endpoint=True)
     methods = ["det", "bLTL", "bH"]
-    interfaces = ["numpy", "torch"]
+    interfaces = [
+        # "numpy",
+        "torch"
+    ]
     seeds = np.arange(0, 5, dtype=int)
     results = pd.DataFrame(columns=["n", "batch_size", "method", "interface", "seed", "time"])
     if os.path.exists(save_file):
         results = pd.read_csv(save_file)
     parameters_list = list(itertools.product(n_list, batch_size_list, methods, interfaces, seeds))
+    save_freq = 100
     p_bar = tqdm(total=len(parameters_list), desc="Computing Pfaffian")
-    for n, batch_size, method, interface, seed in parameters_list:
+    for i, (n, batch_size, method, interface, seed) in enumerate(parameters_list):
         if results[
             (results["n"] == n) & (results["batch_size"] == batch_size) & (results["method"] == method) & (
                     results["interface"] == interface) & (results["seed"] == seed)
@@ -94,7 +98,8 @@ def main():
         pf_time = compute_pfaffian(matrix, method)
         new_result = dict(n=n, batch_size=batch_size, method=method, interface=interface, seed=seed, time=pf_time)
         results = pd.concat([results, pd.DataFrame(new_result, index=[0])], ignore_index=True)
-        results.to_csv(save_file, index=False)
+        if i % save_freq == 0:
+            results.to_csv(save_file, index=False)
         p_bar.set_postfix_str(
             f"n={n}, batch_size={batch_size}, method={method}, interface={interface}, seed={seed}, time={pf_time}"
         )
