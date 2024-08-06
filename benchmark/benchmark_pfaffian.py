@@ -67,14 +67,15 @@ def plot_results(results: pd.DataFrame, save_file: Optional[str] = None):
     ]
     ax.legend(handles=patches)
     if save_file is not None:
+        os.makedirs(os.path.dirname(save_file), exist_ok=True)
         plt.savefig(save_file)
     plt.show()
 
 
 def main():
-    save_file = os.path.join(os.path.dirname(__file__), "benchmark_pfaffian.csv")
-    batch_size_list = [32, ]
-    n_list = 2 * np.linspace(1, 10_000, num=1_000, dtype=int, endpoint=True)
+    save_file = os.path.join(os.path.dirname(__file__), "data", "benchmark_pfaffian.csv")
+    batch_size_list = [1, ]
+    n_list = 2 * np.linspace(1, 2048, num=1_000, dtype=int, endpoint=True)
     methods = ["det", "bLTL", "bH"]
     interfaces = [
         # "numpy",
@@ -105,7 +106,7 @@ def main():
         )
         p_bar.update()
     p_bar.close()
-    plot_results(results, save_file=os.path.join(os.path.dirname(__file__), "benchmark_pfaffian.pdf"))
+    plot_results(results, save_file=os.path.join(os.path.dirname(__file__), "figures", "benchmark_pfaffian.pdf"))
 
 
 if __name__ == "__main__":
