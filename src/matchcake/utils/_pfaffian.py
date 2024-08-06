@@ -48,55 +48,103 @@ def pfaffian_ltl(__matrix, overwrite_input=False) -> Union[float, complex]:
         kp = k + 1 + qml.math.abs(matrix[..., k + 1:, k]).argmax(axis=-1)
         
         # Check if we need to pivot
-        if kp != k + 1:  # TODO: need to add batch support
+        # pivot_condition = ~qml.math.isclose(kp, k + 1)
+        # if qml.math.all(pivot_condition):
+        # if kp != k + 1:  # TODO: need to add batch support
             # interchange rows k+1 and kp
-            temp = qml.math.ones_like(matrix[..., k + 1, k:]) * matrix[..., k + 1, k:]
-            matrix[..., k + 1, k:] = matrix[..., kp, k:]
-            matrix[..., kp, k:] = temp
-            
+            # temp = qml.math.ones_like(matrix[..., k + 1, k:]) * matrix[..., k + 1, k:]
+            # matrix[..., k + 1, k:] = matrix[..., kp, k:]
+            # matrix[..., kp, k:] = temp
+            # matrix = _pivot_rows(matrix, k, kp)
+
             # Then interchange columns k+1 and kp
-            temp = qml.math.ones_like(matrix[..., k:, k + 1]) * matrix[..., k:, k + 1]
-            matrix[..., k:, k + 1] = matrix[..., k:, kp]
-            matrix[..., k:, kp] = temp
-            
+            # temp = qml.math.ones_like(matrix[..., k:, k + 1]) * matrix[..., k:, k + 1]
+            # matrix[..., k:, k + 1] = matrix[..., k:, kp]
+            # matrix[..., k:, kp] = temp
+            # matrix = _pivot_cols(matrix, k, kp)
+            # matrix = _pivot(matrix, k, kp)
+
             # every interchange corresponds to a "-" in det(P)
-            pfaffian_val *= -1
+            # pfaffian_val *= -1
+            # pfaffian_val *= qml.math.where(pivot_condition, -1, 1)
         
+        # if qml.math.isclose(matrix[..., k + 1, k], zero_like):
+        #     # if we encounter a zero on the super/subdiagonal, the Pfaffian is 0
+        #     return zero_like
+        # else:
+        #     # Now form the Gauss vector
+        #     tau = qml.math.ones_like(matrix[..., k, k + 2:]) * matrix[..., k, k + 2:]
+        #     zero_mask = qml.math.isclose(matrix[..., k, k + 1], zero_like)
+        #     tau = tau / matrix[..., k, k + 1]
+        #     tau = qml.math.where(zero_mask, zero_like, tau)
+        #     pfaffian_val *= matrix[..., k, k + 1]
+        #
+        #     if k + 2 < n:
+        #         # Update the matrix block A(k+2:,k+2)
+        #         matrix[..., k + 2:, k + 2:] = matrix[..., k + 2:, k + 2:] + qml.math.outer(
+        #             tau, matrix[..., k + 2:, k + 1]
+        #         )
+        #         matrix[..., k + 2:, k + 2:] = matrix[..., k + 2:, k + 2:] - qml.math.outer(
+        #             matrix[..., k + 2:, k + 1], tau
+        #         )
+
+        # Check if we need to pivot
+        pivot_condition = ~qml.math.isclose(kp, k + 1)
+        # interchange rows and cols k+1 and kp (pivot if needed)
+        matrix = qml.math.where(pivot_condition[..., None, None], _pivot(matrix, k, kp), matrix)
+        # every interchange corresponds to a "-" in det(P)
+        pfaffian_val *= qml.math.where(pivot_condition, -1, 1)
+        #
         if qml.math.isclose(matrix[..., k + 1, k], zero_like):
             # if we encounter a zero on the super/subdiagonal, the Pfaffian is 0
-            return zero_like
+            pfaffian_val *= zero_like
         else:
-            # Now form the Gauss vector
-            tau = qml.math.ones_like(matrix[..., k, k + 2:]) * matrix[..., k, k + 2:]
-            zero_mask = qml.math.isclose(matrix[..., k, k + 1], zero_like)
-            tau = tau / matrix[..., k, k + 1]
-            tau = qml.math.where(zero_mask, zero_like, tau)
             pfaffian_val *= matrix[..., k, k + 1]
-            
-            if k + 2 < n:
-                # Update the matrix block A(k+2:,k+2)
-                matrix[..., k + 2:, k + 2:] = matrix[..., k + 2:, k + 2:] + qml.math.outer(
-                    tau, matrix[..., k + 2:, k + 1]
-                )
-                matrix[..., k + 2:, k + 2:] = matrix[..., k + 2:, k + 2:] - qml.math.outer(
-                    matrix[..., k + 2:, k + 1], tau
-                )
+
+        if k + 2 < n:
+            # Now form the Gauss vector
+            tau = _compute_gauss_vector(matrix, k)
+            # Update the matrix block A(k+2:,k+2)
+            matrix = _update_matrix_block_kp2_kp2(matrix, k, tau)
     
     return pfaffian_val
 
 
 def _pivot(__matrix, k, kp):
     matrix = qml.math.ones_like(__matrix) * __matrix
-    kp1 = np.full_like(kp, k, dtype=int) + 1
+    matrix_shape = qml.math.shape(matrix)
+    indexes_to_pivot = np.arange(matrix_shape[0])
+    if len(matrix_shape) == 2:
+        matrix[..., [kp, k + 1], k:] = matrix[..., [k + 1, kp], k:]
+        matrix[..., k:, [kp, k + 1]] = matrix[..., k:, [k + 1, kp]]
+        return matrix
+
     # interchange rows k+1 and kp
-    temp = qml.math.ones_like(matrix[..., kp1, k:]) * matrix[..., kp1, k:]
-    matrix[..., kp1, k:] = matrix[..., kp, k:]
-    matrix[..., kp, k:] = temp
+    kp_sub_matrix = matrix[indexes_to_pivot, kp, k:]
+    temp = qml.math.ones_like(kp_sub_matrix) * kp_sub_matrix
+    matrix[indexes_to_pivot, kp, k:] = matrix[indexes_to_pivot, k + 1, k:]
+    matrix[indexes_to_pivot, k + 1, k:] = temp
 
     # Then interchange columns k+1 and kp
-    temp = qml.math.ones_like(matrix[..., k:, kp1]) * matrix[..., k:, kp1]
-    matrix[..., k:, kp1] = matrix[..., k:, kp]
-    matrix[..., k:, kp] = temp
+    kp_sub_matrix = matrix[indexes_to_pivot, k:, kp]
+    temp = qml.math.ones_like(kp_sub_matrix) * kp_sub_matrix
+    matrix[indexes_to_pivot, k:, kp] = matrix[indexes_to_pivot, k:, k + 1]
+    matrix[indexes_to_pivot, k:, k + 1] = temp
+    return matrix
+
+
+def _compute_gauss_vector(__matrix, k):
+    zero_like = convert_and_cast_like(0, __matrix)
+    tau_norm = __matrix[..., k, k + 1][..., None]
+    zero_mask = qml.math.isclose(tau_norm, zero_like)
+    tau = qml.math.where(zero_mask, zero_like, __matrix[..., k, k + 2:] / tau_norm)
+    return tau
+
+
+def _update_matrix_block_kp2_kp2(__matrix, k, tau):
+    matrix = qml.math.ones_like(__matrix) * __matrix
+    matrix[..., k + 2:, k + 2:] += qml.math.einsum("...i,...j->...ij", tau, matrix[..., k + 2:, k + 1])
+    matrix[..., k + 2:, k + 2:] -= qml.math.einsum("...i,...j->...ij", matrix[..., k + 2:, k + 1], tau)
     return matrix
 
 
@@ -130,22 +178,16 @@ def _batch_pfaffian_ltl(__matrix, overwrite_input=False, test_input: bool = Fals
         assert qml.math.allclose(matrix, -matrix_t)
 
     n, m = shape[-2:]
-    if len(shape) > 2:
-        batch_size = shape[0]
-    else:
-        batch_size = 1
     matrix = qml.math.cast(matrix, dtype=complex)
     zero_like = convert_and_cast_like(0, matrix)
-    pfaffian_val = qml.math.convert_like(pnp.ones(shape[:-2], dtype=complex), matrix)
+    pfaffian_val = qml.math.convert_like(np.ones(shape[:-2], dtype=complex), matrix)
 
     # Quick return if possible
     if n % 2 == 1:
         return qml.math.zeros_like(pfaffian_val)
 
     for k in range(0, n - 1, 2):
-        # kv = np.full(batch_size, k, dtype=int)
-        # First, find the largest entry in A[k+1:,k] and
-        # permute it to A[k+1,k]
+        # First, find the largest entry in A[k+1:,k] and permute it to A[k+1,k]
         kp = k + 1 + qml.math.abs(matrix[..., k + 1:, k]).argmax(-1)
 
         # Check if we need to pivot
@@ -153,25 +195,18 @@ def _batch_pfaffian_ltl(__matrix, overwrite_input=False, test_input: bool = Fals
         # interchange rows and cols k+1 and kp (pivot if needed)
         matrix = qml.math.where(pivot_condition[..., None, None], _pivot(matrix, k, kp), matrix)
         # every interchange corresponds to a "-" in det(P)
-        pfaffian_val *= qml.math.where(pivot_condition, -1, 1)
+        pfaffian_val *= qml.math.where(pivot_condition, -1.0, 1.0)
 
         # if we encounter a zero on the super/subdiagonal, the Pfaffian is 0
         zero_ss_condition = qml.math.isclose(matrix[..., k + 1, k], zero_like)
-        pfaffian_val *= qml.math.where(zero_ss_condition, 0.0, 1.0)
+        pfaffian_val *= qml.math.where(zero_ss_condition, zero_like, matrix[..., k, k + 1])
         if qml.math.all(zero_ss_condition):
             return pfaffian_val
 
-        # Now form the Gauss vector
-        tau_norm = matrix[..., k, k + 1][..., None]
-        zero_mask = qml.math.isclose(tau_norm, zero_like)
-        tau = qml.math.where(zero_mask, zero_like, matrix[..., k, k + 2:] / tau_norm)
-        pfaffian_val *= matrix[..., k, k + 1]
-
         if k + 2 < n:
+            tau = _compute_gauss_vector(matrix, k)
             # Update the matrix block A(k+2:,k+2)
-            matrix[..., k + 2:, k + 2:] += qml.math.einsum("...i,...j->...ij", tau, matrix[..., k + 2:, k + 1])
-            matrix[..., k + 2:, k + 2:] -= qml.math.einsum("...i,...j->...ij", matrix[..., k + 2:, k + 1], tau)
-
+            matrix = _update_matrix_block_kp2_kp2(matrix, k, tau)
     return pfaffian_val
 
 
