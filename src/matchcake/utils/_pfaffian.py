@@ -1,7 +1,10 @@
-from typing import Union, Literal
+from typing import Union, Literal, Optional
 import pennylane as qml
 import numpy as np
 import warnings
+
+import tqdm
+
 from .math import convert_and_cast_like
 from ..templates import TensorLike
 
@@ -39,19 +42,20 @@ def _compute_gauss_vector(__matrix, k):
 
 def _update_matrix_block_kp2_kp2(__matrix, k, tau):
     add_matrix = qml.math.zeros_like(__matrix)
-    add_subb_matrix = (
+    add_matrix[..., k + 2:, k + 2:] += (
         qml.math.einsum("...i,...j->...ij", tau, __matrix[..., k + 2:, k + 1])
         -
         qml.math.einsum("...i,...j->...ij", __matrix[..., k + 2:, k + 1], tau)
     )
-    add_matrix[..., k + 2:, k + 2:] += add_subb_matrix
     return __matrix + add_matrix
 
 
 def batch_pfaffian_ltl(
         __matrix: TensorLike,
         overwrite_input: bool = False,
-        test_input: bool = False
+        test_input: bool = False,
+        p_bar: Optional[tqdm.tqdm] = None,
+        show_progress: bool = False
 ) -> Union[float, complex, TensorLike]:
     r"""
     Compute the Pfaffian of a real or complex skew-symmetric
@@ -68,6 +72,10 @@ def batch_pfaffian_ltl(
     :type overwrite_input: bool
     :param test_input: Whether to test the input matrix for skew-symmetry
     :type test_input: bool
+    :param p_bar: Progress bar
+    :type p_bar: Optional[tqdm.tqdm]
+    :param show_progress: Whether to show progress bar. If no progress bar is provided, a new one is created
+    :type show_progress: bool
 
     :return: Pfaffian of the matrix
     :rtype: Union[float, complex, TensorLike]
@@ -77,23 +85,30 @@ def batch_pfaffian_ltl(
     else:
         matrix = qml.math.ones_like(__matrix) * __matrix
     shape = qml.math.shape(matrix)
+    n, m = shape[-2:]
+    p_bar = p_bar or tqdm.tqdm(range(0, n - 1, 2), disable=not show_progress)
+
     if test_input:
+        p_bar.set_description("Testing input matrix")
         # Check if matrix is square
         assert shape[-2] == shape[-1] > 0
         # Check if it's skew-symmetric
         matrix_t = qml.math.einsum("...ij->...ji", matrix)
         assert qml.math.allclose(matrix, -matrix_t)
 
-    n, m = shape[-2:]
     matrix = qml.math.cast(matrix, dtype=complex)
     zero_like = convert_and_cast_like(0, matrix)
     pfaffian_val = qml.math.convert_like(np.ones(shape[:-2], dtype=complex), matrix)
 
     # Quick return if possible
     if n % 2 == 1:
+        p_bar.n = n//2
+        p_bar.set_description("Odd-sized matrix")
+        p_bar.close()
         return pfaffian_val * zero_like * matrix[..., 0, 0]  # 0.0 but with require grad if needed
 
-    for k in range(0, n - 1, 2):
+    p_bar.set_description(f"Computing Pfaffian of {shape} matrix")
+    for k in p_bar:
         # First, find the largest entry in A[k+1:,k] and permute it to A[k+1,k]
         kp = k + 1 + qml.math.abs(matrix[..., k + 1:, k]).argmax(-1)
         kp1 = qml.math.convert_like(k + 1, kp)
@@ -109,20 +124,172 @@ def batch_pfaffian_ltl(
         zero_ss_condition = qml.math.isclose(matrix[..., k + 1, k], zero_like)
         pfaffian_val *= qml.math.where(zero_ss_condition, zero_like, matrix[..., k, k + 1])
         if qml.math.all(zero_ss_condition):
+            p_bar.n = n//2
+            p_bar.set_description("Pfaffian is zero")
+            p_bar.close()
             return pfaffian_val
 
         if k + 2 < n:
             tau = _compute_gauss_vector(matrix, k)
             # Update the matrix block A(k+2:,k+2)
             matrix = _update_matrix_block_kp2_kp2(matrix, k, tau)
+
+    p_bar.set_description("Pfaffian computed")
+    p_bar.close()
+    return pfaffian_val
+
+
+def batch_householder_complex(x: TensorLike):
+    """(v, tau, alpha) = householder_real(x)
+
+    Compute a Householder transformation such that
+    (1-tau v v^T) x = alpha e_1
+    where x and v a complex vectors, tau is 0 or 2, and
+    alpha a complex number (e_1 is the first unit vector)
+    """
+    sigma = qml.math.einsum("...i,...i->...", qml.math.conjugate(x[..., 1:]), x[..., 1:])
+
+    # if sigma == 0:
+    #     return qml.math.zeros_like(x), 0, x[..., 0]
+    # else:
+    norm_x = qml.math.sqrt(qml.math.conjugate(x[..., 0]) * x[..., 0] + sigma)
+
+    v = qml.math.ones_like(x) * x
+    phase = qml.math.exp(1j * qml.math.arctan2(qml.math.imag(x[..., 0]), qml.math.real(x[..., 0])))
+    v[..., 0] = v[..., 0] + phase * norm_x
+
+    v_frobenius_norm = qml.math.einsum("...i,...i->...", qml.math.conjugate(v), v) ** 0.5
+    v = v / v_frobenius_norm[..., None]
+
+    tau = convert_and_cast_like(2.0+0.0j, x)
+    return v, tau, -phase * norm_x
+
+
+def _eliminate_ith_column_householder(matrix, i, alpha):
+    """
+    Eliminate the i-th column of the matrix using the Householder transformation.
+    Equivalent to:
+
+        matrix[..., i + 1, i] = alpha
+        matrix[..., i, i + 1] = -alpha
+        matrix[..., i + 2:, i] = zero_like
+        matrix[..., i, i + 2:] = zero_like
+
+    :param matrix:
+    :param i:
+    :param alpha:
+    :return:
+    """
+    zero_like = convert_and_cast_like(0, matrix)
+
+    where_mask = qml.math.cast(qml.math.zeros_like(matrix), dtype=bool)
+    where_mask[..., i + 1, i] = True
+    where_mask[..., i, i + 1] = True
+    where_mask[..., i + 2:, i] = True
+    where_mask[..., i, i + 2:] = True
+
+    values = qml.math.zeros_like(matrix)
+    values[..., i + 1, i] = alpha
+    values[..., i, i + 1] = -alpha
+    values[..., i + 2:, i] = zero_like
+    values[..., i, i + 2:] = zero_like
+
+    matrix = qml.math.where(where_mask, values, matrix)
+    return matrix
+
+
+def _update_matrix_block_householder(matrix, i, v, tau):
+    """
+    Update the matrix block A(i+1:N,i+1:N) using the Householder transformation.
+    Equivalent to:
+
+        w = tau * A(i+1:N,i+1:N) @ v
+        A(i+1:N,i+1:N) -= 2 * v @ w^T
+
+    :param matrix:
+    :param i:
+    :param v:
+    :param tau:
+    :return:
+    """
+    w = tau * qml.math.einsum("...ij,...j->...i", matrix[..., i + 1:, i + 1:], qml.math.conjugate(v))
+    values = qml.math.zeros_like(matrix)
+    values[..., i + 1:, i + 1:] += (
+        qml.math.einsum("...i,...j->...ij", v, w)
+        -
+        qml.math.einsum("...i,...j->...ij", w, v)
+    )
+    return matrix + values
+
+
+def batch_pfaffian_householder(
+        __matrix: TensorLike,
+        overwrite_input: bool = False,
+        test_input: bool = False,
+        p_bar: Optional[tqdm.tqdm] = None,
+        show_progress: bool = False
+):
+    """pfaffian(A, overwrite_a=False)
+
+    Compute the Pfaffian of a real or complex skew-symmetric
+    matrix A (A=-A^T). If overwrite_a=True, the matrix A
+    is overwritten in the process. This function uses the
+    Householder tridiagonalization.
+
+    Note that the function pfaffian_schur() can also be used in the
+    real case. That function does not make use of the skew-symmetry
+    and is only slightly slower than pfaffian_householder().
+    """
+    if overwrite_input:
+        matrix = __matrix
+    else:
+        matrix = qml.math.ones_like(__matrix) * __matrix
+    shape = qml.math.shape(matrix)
+    n, m = shape[-2:]
+    p_bar = p_bar or tqdm.tqdm(range(n - 2), disable=not show_progress)
+
+    if test_input:
+        p_bar.set_description("Testing input matrix")
+        # Check if matrix is square
+        assert shape[-2] == shape[-1] > 0
+        # Check if it's skew-symmetric
+        matrix_t = qml.math.einsum("...ij->...ji", matrix)
+        assert qml.math.allclose(matrix, -matrix_t)
+
+    matrix = qml.math.cast(matrix, dtype=complex)
+    zero_like = convert_and_cast_like(0, matrix)
+    pfaffian_val = qml.math.convert_like(np.ones(shape[:-2], dtype=complex), matrix)
+
+    # Quick return if possible
+    if n % 2 == 1:
+        p_bar.set_description("Odd-sized matrix")
+        p_bar.close()
+        return pfaffian_val * zero_like * matrix[..., 0, 0]  # 0.0 but with require grad if needed
+
+    p_bar.set_description(f"Computing Pfaffian of {shape} matrix")
+    for i in p_bar:
+        # Find a Householder vector to eliminate the i-th column
+        v, tau, alpha = batch_householder_complex(matrix[..., i + 1:, i])
+        matrix = _eliminate_ith_column_householder(matrix, i, alpha)
+        matrix = _update_matrix_block_householder(matrix, i, v, tau)
+
+        pfaffian_val = pfaffian_val * qml.math.where(qml.math.isclose(tau, zero_like), 1, 1 - tau)
+        if i % 2 == 0:
+            pfaffian_val = pfaffian_val * -alpha
+
+    pfaffian_val = pfaffian_val * matrix[..., n - 2, n - 1]
+    p_bar.set_description("Pfaffian computed")
+    p_bar.close()
     return pfaffian_val
 
 
 def pfaffian(
         __matrix: TensorLike,
         overwrite_input: bool = False,
-        method: Literal["P", "H", "det", "bLTL"] = "bLTL",
-        epsilon: float = 1e-12
+        method: Literal["P", "H", "det", "bLTL", "bH"] = "bLTL",
+        epsilon: float = 1e-12,
+        p_bar: Optional[tqdm.tqdm] = None,
+        show_progress: bool = False
 ) -> Union[float, complex, TensorLike]:
     """pfaffian(A, overwrite_a=False, method='P')
 
@@ -144,12 +311,16 @@ def pfaffian(
     :type method: Literal["P", "H", "det", "bLTL"]
     :param epsilon: Tolerance for the determinant method
     :type epsilon: float
+    :param p_bar: Progress bar
+    :type p_bar: Optional[tqdm.tqdm]
+    :param show_progress: Whether to show progress bar. If no progress bar is provided, a new one is created
+    :type show_progress: bool
     :return: Pfaffian of the matrix
     :rtype: Union[float, complex, TensorLike]
     """
     shape = qml.math.shape(__matrix)
     assert shape[-2] == shape[-1] > 0
-    
+
     if method == "P":
         from pfapack.pfaffian import pfaffian
         warnings.warn(
@@ -167,11 +338,19 @@ def pfaffian(
         )
         return pfaffian_householder(__matrix, overwrite_input)
     elif method == "det":
+        p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)
+        p_bar.set_description(f"Computing determinant of {shape} matrix")
         backend = qml.math.get_interface(__matrix)
         if backend in ["autograd", "numpy"]:
-            return qml.math.sqrt(qml.math.abs(qml.math.linalg.det(__matrix)) + epsilon)
-        return qml.math.sqrt(qml.math.abs(qml.math.det(__matrix)) + epsilon)
+            pf = qml.math.sqrt(qml.math.abs(qml.math.linalg.det(__matrix)) + epsilon)
+        else:
+            pf = qml.math.sqrt(qml.math.abs(qml.math.det(__matrix)) + epsilon)
+        p_bar.set_description("Determinant computed")
+        p_bar.close()
+        return pf
     elif method == "bLTL":
-        return batch_pfaffian_ltl(__matrix, overwrite_input)
+        return batch_pfaffian_ltl(__matrix, overwrite_input, show_progress=show_progress, p_bar=p_bar)
+    elif method == "bH":
+        return batch_pfaffian_householder(__matrix, overwrite_input, show_progress=show_progress, p_bar=p_bar)
     else:
         raise ValueError(f"Invalid method. Got {method}, must be 'P' or 'H'.")
