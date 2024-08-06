@@ -24,13 +24,12 @@ set_seed(TEST_SEED)
     "initial_binary_state,params,wire",
     [
         (np.random.randint(0, 2, size=n), mps.MatchgatePolarParams.random(), 0)
-        for n in [2, ]
-        # for n in range(2, 10)
+        for n in range(2, 10, 2)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
 def test_single_gate_circuit_analytic_probability_lt_vs_es(initial_binary_state, params, wire):
-    device = NonInteractingFermionicDevice(wires=len(initial_binary_state), pfaffian_method="P")
+    device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
         MatchgateOperation(params, wires=[0, 1])
