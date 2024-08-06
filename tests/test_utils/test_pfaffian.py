@@ -16,7 +16,7 @@ set_seed(TEST_SEED)
 MIN_MATRIX_SIZE = 2
 MAX_MATRIX_SIZE = 20
 BATCH_SIZE = 3
-RECOMMENDED_METHODS = ["det", "bLTL"]
+RECOMMENDED_METHODS = ["det", "bLTL", "bH"]
 
 
 def gen_skew_symmetric_matrix_and_det(n, batch_size=None):
@@ -145,3 +145,29 @@ def test_pfaffian_methods_grads(n, batch_size, mth):
             rtol=RTOL_MATRIX_COMPARISON
         )
 
+
+@pytest.mark.parametrize(
+    "matrix, det",
+    [
+        gen_skew_symmetric_matrix_and_det(i, batch_size=BATCH_SIZE)
+        for i in range(MIN_MATRIX_SIZE, MAX_MATRIX_SIZE + 1)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_pfaffian_bh(matrix, det):
+    pf = utils.pfaffian(matrix, method="bH")
+    np.testing.assert_allclose(pf ** 2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+
+
+@pytest.mark.parametrize(
+    "matrix, det",
+    [
+        gen_skew_symmetric_matrix_and_det(i, batch_size=batch_size)
+        for batch_size in [None, 1]
+        for i in range(MIN_MATRIX_SIZE, MAX_MATRIX_SIZE + 1)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_pfaffian_bltl_single_item(matrix, det):
+    pf = utils.pfaffian(matrix, method="bH")
+    np.testing.assert_allclose(pf ** 2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
