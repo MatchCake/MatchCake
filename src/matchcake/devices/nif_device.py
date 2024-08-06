@@ -95,7 +95,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     DEFAULT_PROB_STRATEGY = "lookup_table"
     contraction_methods = {None, "neighbours", "vertical", "horizontal"}
     DEFAULT_CONTRACTION_METHOD = "neighbours"
-    pfaffian_methods = {"det", "bLTL"}
+    pfaffian_methods = {"det", "bLTL", "bH"}
     DEFAULT_PFAFFIAN_METHOD = "bLTL"
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
@@ -833,10 +833,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             wires_indexes,
             show_progress=self.show_progress,
         )
-        self.initialize_p_bar(total=1, desc=f"Computing pfaffian of observable of shape {qml.math.shape(obs)}")
-        prob = qml.math.real(utils.pfaffian(obs, method=self.pfaffian_method))
-        self.update_p_bar()
-        self.close_p_bar()
+        prob = qml.math.real(utils.pfaffian(obs, method=self.pfaffian_method, show_progress=self.show_progress))
         return prob
 
     def compute_probability_using_explicit_sum(self, wires=None):
