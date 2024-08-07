@@ -44,25 +44,36 @@ def plot_results(results: pd.DataFrame, save_file: Optional[str] = None):
             mask = (results["method"] == method) & (results["interface"] == interface)
             # data needs to be sorted by n
             results[mask].sort_values("n", inplace=True)
+            # times need to be averaged over the seeds
+            mean_time = results[mask].groupby("n")["time"].mean().reset_index()
+            std_time = results[mask].groupby("n")["time"].std().reset_index()
+            n_axis = results[mask]["n"].unique()
             ax.plot(
-                results[mask]["n"],
-                results[mask]["time"],
+                mean_time["n"],
+                mean_time["time"],
                 color=method_to_color[method],
                 linestyle=interface_to_linestyle[interface],
                 # label=f"{method} ({interface})"
             )
             # compute the std over the seeds
-            time_std = results[mask].groupby("n")["time"].std()
-            # ax.fill_between(
-            #     results[mask]["n"].unique(), results[mask].groupby("n")["time"].mean() - time_std,
-            #     results[mask].groupby("n")["time"].mean() + time_std, alpha=0.2
-            # )
+            ax.fill_between(
+                mean_time["n"],
+                mean_time["time"] - std_time["time"],
+                mean_time["time"] + std_time["time"],
+                alpha=0.2, color=method_to_color[method]
+            )
+    ax.set_yscale("log")
+    ax.set_ylabel("Time [s]")
+    ax.set_xlabel("Matrix Size [-]")
+    # remove interface that are not present
+    interface_to_linestyle = {k: v for k, v in interface_to_linestyle.items() if k in results["interface"].unique()}
+    method_to_color = {k: v for k, v in method_to_color.items() if k in results["method"].unique()}
     patches = [
-        plt.Line2D([0], [0], color="black", linestyle=ls, label=f"Interface: {interface}")
+        plt.Line2D([0], [0], color="black", linestyle=ls, label=f"{interface} Interface".capitalize())
         for interface, ls in interface_to_linestyle.items()
     ]
     patches += [
-        plt.Line2D([0], [0], color=color, linestyle="-", label=f"Method: {method}")
+        plt.Line2D([0], [0], color=color, linestyle="-", label=f"{method}")
         for method, color in method_to_color.items()
     ]
     ax.legend(handles=patches)
