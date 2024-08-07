@@ -283,6 +283,26 @@ def batch_pfaffian_householder(
     return pfaffian_val
 
 
+def pfaffian_by_det(
+        __matrix: TensorLike,
+        p_bar: Optional[tqdm.tqdm] = None,
+        show_progress: bool = False,
+        epsilon: float = 1e-12
+):
+    shape = qml.math.shape(__matrix)
+    p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)
+    p_bar.set_description(f"Computing determinant of {shape} matrix")
+    backend = qml.math.get_interface(__matrix)
+    if backend in ["autograd", "numpy"]:
+        pf = qml.math.sqrt(qml.math.abs(qml.math.linalg.det(__matrix)) + epsilon)
+    else:
+        pf = qml.math.sqrt(qml.math.abs(qml.math.det(__matrix)) + epsilon)
+    p_bar.set_description(f"Determinant of {shape} matrix computed")
+    p_bar.update()
+    p_bar.close()
+    return pf
+
+
 def pfaffian(
         __matrix: TensorLike,
         overwrite_input: bool = False,
@@ -319,13 +339,13 @@ def pfaffian(
     :rtype: Union[float, complex, TensorLike]
     """
     shape = qml.math.shape(__matrix)
-    assert shape[-2] == shape[-1] > 0
+    assert shape[-2] == shape[-1] > 0, "Matrix must be square"
 
     if method == "P":
         from pfapack.pfaffian import pfaffian
         warnings.warn(
-            "The method 'H' is not implemented yet. "
-            "It is recommended to use the method 'P' instead.",
+            "The method 'P' is not implemented yet. "
+            "It is recommended to use the method 'det' instead.",
             UserWarning,
         )
         return pfaffian(__matrix, overwrite_input, method="P")
@@ -333,25 +353,15 @@ def pfaffian(
         from pfapack.pfaffian import pfaffian_householder
         warnings.warn(
             "The method 'H' is not implemented yet. "
-            "It is recommended to use the method 'P' instead.",
+            "It is recommended to use the method 'det' instead.",
             UserWarning,
         )
         return pfaffian_householder(__matrix, overwrite_input)
     elif method == "det":
-        p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)
-        p_bar.set_description(f"Computing determinant of {shape} matrix")
-        backend = qml.math.get_interface(__matrix)
-        if backend in ["autograd", "numpy"]:
-            pf = qml.math.sqrt(qml.math.abs(qml.math.linalg.det(__matrix)) + epsilon)
-        else:
-            pf = qml.math.sqrt(qml.math.abs(qml.math.det(__matrix)) + epsilon)
-        p_bar.set_description(f"Determinant of {shape} matrix computed")
-        p_bar.update()
-        p_bar.close()
-        return pf
+        return pfaffian_by_det(__matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon)
     elif method == "bLTL":
         return batch_pfaffian_ltl(__matrix, overwrite_input, show_progress=show_progress, p_bar=p_bar)
     elif method == "bH":
         return batch_pfaffian_householder(__matrix, overwrite_input, show_progress=show_progress, p_bar=p_bar)
     else:
-        raise ValueError(f"Invalid method. Got {method}, must be 'P' or 'H'.")
+        raise ValueError(f"Invalid method. Got {method}, must be 'P', 'H', 'det', 'bLTL', or 'bH'.")
