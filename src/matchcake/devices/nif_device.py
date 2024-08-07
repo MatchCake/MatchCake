@@ -96,7 +96,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     contraction_methods = {None, "neighbours", "vertical", "horizontal"}
     DEFAULT_CONTRACTION_METHOD = "neighbours"
     pfaffian_methods = {"det", "bLTL", "bH"}
-    DEFAULT_PFAFFIAN_METHOD = "bLTL"
+    DEFAULT_PFAFFIAN_METHOD = "det"
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
 
