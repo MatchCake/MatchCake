@@ -294,9 +294,10 @@ def pfaffian_by_det(
     p_bar.set_description(f"Computing determinant of {shape} matrix")
     backend = qml.math.get_interface(__matrix)
     if backend in ["autograd", "numpy"]:
-        pf = qml.math.sqrt(qml.math.abs(qml.math.linalg.det(__matrix)) + epsilon)
+        det = qml.math.linalg.det(__matrix)
     else:
-        pf = qml.math.sqrt(qml.math.abs(qml.math.det(__matrix)) + epsilon)
+        det = qml.math.det(__matrix)
+    pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
     p_bar.set_description(f"Determinant of {shape} matrix computed")
     p_bar.update()
     p_bar.close()
