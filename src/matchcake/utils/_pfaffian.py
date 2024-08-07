@@ -345,7 +345,8 @@ def pfaffian(
             pf = qml.math.sqrt(qml.math.abs(qml.math.linalg.det(__matrix)) + epsilon)
         else:
             pf = qml.math.sqrt(qml.math.abs(qml.math.det(__matrix)) + epsilon)
-        p_bar.set_description("Determinant computed")
+        p_bar.set_description(f"Determinant of {shape} matrix computed")
+        p_bar.update()
         p_bar.close()
         return pf
     elif method == "bLTL":
