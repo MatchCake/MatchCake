@@ -92,8 +92,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     observables = {"BasisStateProjector", "Projector", "Identity"}
 
     prob_strategies = {"lookup_table", "explicit_sum"}
+    DEFAULT_PROB_STRATEGY = "lookup_table"
     contraction_methods = {None, "neighbours", "vertical", "horizontal"}
-    pfaffian_methods = {"det", "P"}
+    DEFAULT_CONTRACTION_METHOD = "neighbours"
+    pfaffian_methods = {"det", "bLTL", "bH"}
+    DEFAULT_PFAFFIAN_METHOD = "det"
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
 
@@ -117,6 +120,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
     @classmethod
     def update_single_particle_transition_matrix(cls, single_particle_transition_matrix, other):
+        if single_particle_transition_matrix is None:
+            return other
         l_interface = qml.math.get_interface(single_particle_transition_matrix)
         other_interface = qml.math.get_interface(other)
         l_priority = cls.casting_priorities.index(l_interface)
@@ -129,9 +134,6 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             other = utils.math.convert_and_cast_like(
                 other, single_particle_transition_matrix
             )
-        # single_transition_particle_matrix = utils.math.convert_and_cast_like(
-        #     single_transition_particle_matrix, other
-        # )
         single_particle_transition_matrix = qml.math.einsum(
             "...ij,...jl->...il",
             single_particle_transition_matrix, other
@@ -171,7 +173,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             assert len(wires) > 1, "At least two wires are required for this device."
         super().__init__(wires=wires, shots=None, r_dtype=r_dtype, c_dtype=c_dtype, analytic=analytic)
 
-        self.prob_strategy = kwargs.get("prob_strategy", "lookup_table").lower()
+        self.prob_strategy = kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY).lower()
         assert self.prob_strategy in self.prob_strategies, (
             f"The probability strategy must be one of {self.prob_strategies}. "
             f"Got {self.prob_strategy} instead."
@@ -198,12 +200,12 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The majorana_getter must be initialized with {self.num_wires} wires. "
             f"Got {self.majorana_getter.n} instead."
         )
-        self.contraction_method = kwargs.get("contraction_method", "neighbours")
+        self.contraction_method = kwargs.get("contraction_method", self.DEFAULT_CONTRACTION_METHOD)
         assert self.contraction_method in self.contraction_methods, (
             f"The contraction method must be one of {self.contraction_methods}. "
             f"Got {self.contraction_method} instead."
         )
-        self.pfaffian_method = kwargs.get("pfaffian_method", "det")
+        self.pfaffian_method = kwargs.get("pfaffian_method", self.DEFAULT_PFAFFIAN_METHOD)
         assert self.pfaffian_method in self.pfaffian_methods, (
             f"The pfaffian method must be one of {self.pfaffian_methods}. "
             f"Got {self.pfaffian_method} instead."
@@ -617,7 +619,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         rotations = rotations or []
         if not isinstance(operations, Iterable):
             operations = [operations]
-        global_single_particle_transition_matrix = pnp.eye(2 * self.num_wires)[None, ...]
+        global_single_particle_transition_matrix = None
         batched = False
         operations = self.contract_operations(operations, self.contraction_method)
         self.initialize_p_bar(total=len(operations), desc="Applying operations")
@@ -667,8 +669,10 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 )
             self.p_bar_set_n(i + 1)
 
-        if not batched:
-            global_single_particle_transition_matrix = global_single_particle_transition_matrix[0]
+        if global_single_particle_transition_matrix is None:
+            global_single_particle_transition_matrix = pnp.eye(2 * self.num_wires)[None, ...]
+            if not batched:
+                global_single_particle_transition_matrix = global_single_particle_transition_matrix[0]
         # store the pre-rotated state
         self._pre_rotated_sparse_state = self._sparse_state
         self._pre_rotated_state = self._state
@@ -829,7 +833,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             wires_indexes,
             show_progress=self.show_progress,
         )
-        return qml.math.real(utils.pfaffian(obs, method=self.pfaffian_method))
+        prob = qml.math.real(utils.pfaffian(obs, method=self.pfaffian_method, show_progress=self.show_progress))
+        return prob
 
     def compute_probability_using_explicit_sum(self, wires=None):
         warnings.warn(

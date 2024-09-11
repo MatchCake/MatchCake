@@ -1,5 +1,6 @@
+import numbers
 import warnings
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, Iterable, List, Sized
 
 import numpy as np
 import pennylane as qml
@@ -171,6 +172,14 @@ class NonInteractingFermionicLookupTable:
             self._transition_bm_block_matrix = self._compute_transition_bm_block_matrix_()
         return self._transition_bm_block_matrix
 
+    @property
+    def getter_table(self) -> List[List[callable]]:
+        return [
+            [self.get_c_d_alpha__c_d_beta, self.get_c_d_alpha__c_e_beta, self.get_c_d_alpha__c_2p_beta_m1],
+            [self.get_c_e_alpha__c_d_beta, self.get_c_e_alpha__c_e_beta, self.get_c_e_alpha__c_2p_beta_m1],
+            [self.get_c_2p_alpha_m1__c_d_beta, self.get_c_2p_alpha_m1__c_e_beta, self.get_c_2p_alpha_m1__c_2p_beta_m1],
+        ]
+
     def _compute_block_bm_transition_transpose_matrix_(self):
         self.p_bar_set_postfix_str("Computing BT^T matrix.")
         return qml.math.einsum(
@@ -259,28 +268,79 @@ class NonInteractingFermionicLookupTable:
         matrix = qml.math.convert_like(matrix, self.transition_matrix)
         return matrix
 
+    def get_c_d_alpha__c_d_beta(self):
+        return self.c_d_alpha__c_d_beta
+
+    def get_c_d_alpha__c_e_beta(self):
+        return self.c_d_alpha__c_e_beta
+
+    def get_c_d_alpha__c_2p_beta_m1(self):
+        return self.c_d_alpha__c_2p_beta_m1
+
+    def get_c_e_alpha__c_d_beta(self):
+        return self.c_e_alpha__c_d_beta
+
+    def get_c_e_alpha__c_e_beta(self):
+        return self.c_e_alpha__c_e_beta
+
+    def get_c_e_alpha__c_2p_beta_m1(self):
+        return self.c_e_alpha__c_2p_beta_m1
+
+    def get_c_2p_alpha_m1__c_d_beta(self):
+        return self.c_2p_alpha_m1__c_d_beta
+
+    def get_c_2p_alpha_m1__c_e_beta(self):
+        return self.c_2p_alpha_m1__c_e_beta
+
+    def get_c_2p_alpha_m1__c_2p_beta_m1(self):
+        return self.c_2p_alpha_m1__c_2p_beta_m1
+
     def __getitem__(self, item: Tuple[int, int]):
         i, j = item
-        if i == 0 and j == 0:
-            return self.c_d_alpha__c_d_beta
-        elif i == 0 and j == 1:
-            return self.c_d_alpha__c_e_beta
-        elif i == 0 and j == 2:
-            return self.c_d_alpha__c_2p_beta_m1
-        elif i == 1 and j == 0:
-            return self.c_e_alpha__c_d_beta
-        elif i == 1 and j == 1:
-            return self.c_e_alpha__c_e_beta
-        elif i == 1 and j == 2:
-            return self.c_e_alpha__c_2p_beta_m1
-        elif i == 2 and j == 0:
-            return self.c_2p_alpha_m1__c_d_beta
-        elif i == 2 and j == 1:
-            return self.c_2p_alpha_m1__c_e_beta
-        elif i == 2 and j == 2:
-            return self.c_2p_alpha_m1__c_2p_beta_m1
+        getter = self.getter_table[i][j]
+        return getter()
+
+    def compute_items(self, indexes: Iterable[Tuple[int, int]], close_p_bar: bool = True) -> List[TensorLike]:
+        """
+        Compute the items of the lookup table corresponding to the indexes.
+
+        :param indexes: Indexes of the items to compute.
+        :param close_p_bar: Whether to close the progress bar.
+        :return: The items of the lookup table corresponding to the indexes.
+        """
+        self.initialize_p_bar(total=len(indexes), initial=0, desc="Computing Lookup Table Items")
+        items = []
+        for (i, j) in indexes:
+            items.append(self[i, j])
+            self.update_p_bar()
+        if close_p_bar:
+            self.close_p_bar()
+        return items
+
+    def compute_stack_and_pad_items(
+            self,
+            indexes: Iterable[Tuple[int, int]],
+            pad_value: numbers.Number = 0.0,
+            close_p_bar: bool = True
+    ) -> TensorLike:
+        items = self.compute_items(indexes, close_p_bar=close_p_bar)
+        items_shapes = [qml.math.shape(i) for i in items]
+        items_has_same_shape = all([i == items_shapes[0] for i in items_shapes])
+
+        if items_has_same_shape:
+            items = qml.math.stack(items)
         else:
-            raise IndexError(f"Index ({i}, {j}) out of bounds for lookup table of shape {self.shape}")
+            # need to pad the items to max dim in each dimension and stack them
+            max_dim_0, max_dim_1 = max([i[-2] for i in items_shapes]), max([i[-1] for i in items_shapes])
+            for i, (item, item_shape) in enumerate(zip(items, items_shapes)):
+                new_shape = list(item_shape)
+                new_shape[-2] = max_dim_0
+                new_shape[-1] = max_dim_1
+                new_item = qml.math.convert_like(np.full(new_shape, fill_value=pad_value, dtype=complex), item)
+                new_item[..., :item_shape[-2], :item_shape[-1]] = item
+                items[i] = new_item
+            items = qml.math.stack(items)
+        return items
 
     def get_observable(self, k: int, system_state: np.ndarray) -> np.ndarray:
         r"""
@@ -360,7 +420,7 @@ class NonInteractingFermionicLookupTable:
             target_binary_state: Optional[np.ndarray] = None,
             indexes_of_target_state: Optional[np.ndarray] = None,
             **kwargs
-    ) -> np.ndarray:
+    ) -> TensorLike:
         if target_binary_state is None and indexes_of_target_state is None:
             target_binary_state = np.array([1, ])
             indexes_of_target_state = np.array([0, ])
@@ -374,20 +434,31 @@ class NonInteractingFermionicLookupTable:
 
         unmeasured_cls_indexes = [2 for _ in range(len(ket_majorana_indexes))]
         measure_cls_indexes = np.array([[b, 1 - b] for b in target_binary_state]).flatten().tolist()
-        lt_indexes = unmeasured_cls_indexes + measure_cls_indexes + unmeasured_cls_indexes
+        lt_indexes = np.asarray(unmeasured_cls_indexes + measure_cls_indexes + unmeasured_cls_indexes)
 
         measure_indexes = np.array([[i, i] for i in indexes_of_target_state]).flatten().tolist()
-        majorana_indexes = list(bra_majorana_indexes) + measure_indexes + list(ket_majorana_indexes)
+        majorana_indexes = np.asarray(list(bra_majorana_indexes) + measure_indexes + list(ket_majorana_indexes))
 
         obs_size = len(majorana_indexes)
         obs_shape = ([self.batch_size] if self.batch_size else []) + [obs_size, obs_size]
-        obs = qml.math.convert_like(pnp.zeros(obs_shape, dtype=complex), self.transition_matrix)
-        self.initialize_p_bar(total=obs_size * (obs_size - 1) // 2, initial=0, desc="Computing observable")
-        for (i, j) in zip(*np.triu_indices(obs_size, k=1)):
-            i_k, j_k = majorana_indexes[i], majorana_indexes[j]
-            row, col = lt_indexes[i], lt_indexes[j]
-            obs[..., i, j] = self[row, col][..., i_k, j_k]
-            self.update_p_bar()
+        obs = qml.math.convert_like(np.zeros(obs_shape, dtype=complex), self.transition_matrix)
+
+        obs_indices = np.stack(np.triu_indices(obs_size, k=1))
+        lt_item_cols, lt_item_rows = majorana_indexes[obs_indices[0]], majorana_indexes[obs_indices[1]]
+
+        # compute items needed for the observable
+        all_lt_indexes = np.stack((lt_indexes[obs_indices[0]], lt_indexes[obs_indices[1]]), axis=-1)
+        unique_lt_indexes = np.unique(all_lt_indexes, axis=0)
+        lt_items = self.compute_stack_and_pad_items(unique_lt_indexes, close_p_bar=False)
+
+        # find the new indexes of the items in the stack
+        new_all_lt_indexes = np.empty(len(obs_indices[0]), dtype=int)
+        for i, (r, c) in enumerate(unique_lt_indexes):
+            new_all_lt_indexes = np.where(np.all(np.isclose(all_lt_indexes, [r, c]), axis=-1), i, new_all_lt_indexes)
+
+        # insert the elements in obs
+        obs[..., obs_indices[0], obs_indices[1]] = lt_items[new_all_lt_indexes, ..., lt_item_cols, lt_item_rows].T
+
         self.p_bar_set_postfix_str("Finishing the computation of the observable.")
         obs = obs - qml.math.einsum("...ij->...ji", obs)
         self.p_bar_set_postfix_str("Finished the computation of the observable.")

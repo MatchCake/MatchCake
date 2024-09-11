@@ -31,7 +31,7 @@ from .operators import (
 )
 from ._pfaffian import (
     pfaffian,
-    pfaffian_ltl,
+    batch_pfaffian_ltl,
 )
 from . import math
 from . import cuda
