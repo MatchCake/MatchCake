@@ -282,7 +282,7 @@ class MatchgateParams:
             return vector
         with warnings.catch_warnings():
             if isinstance(vector, torch.Tensor) and vector.requires_grad:
-                grads = [getattr(self, f"{attr}").grad for attr in self.ATTRS]
+                grads = [getattr(getattr(self, f"{attr}"), "grad", None) for attr in self.ATTRS]
                 grads_is_not_none = [grad is not None for grad in grads]
                 if all(grads_is_not_none):
                     vector.grad = torch.stack(grads, axis=-1)
