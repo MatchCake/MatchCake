@@ -7,6 +7,7 @@ import tqdm
 
 from .math import convert_and_cast_like
 from ..templates import TensorLike
+from .torch_pfaffian import Pfaffian
 
 
 def _pivot(__matrix, k, kp):
@@ -295,9 +296,12 @@ def pfaffian_by_det(
     backend = qml.math.get_interface(__matrix)
     if backend in ["autograd", "numpy"]:
         det = qml.math.linalg.det(__matrix)
+        pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
+    elif backend == "torch":
+        pf = Pfaffian.apply(__matrix)
     else:
         det = qml.math.det(__matrix)
-    pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
+        pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
     p_bar.set_description(f"Determinant of {shape} matrix computed")
     p_bar.update()
     p_bar.close()
