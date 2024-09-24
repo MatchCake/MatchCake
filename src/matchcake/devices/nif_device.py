@@ -165,13 +165,14 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             # c_dtype=np.complex128,
             c_dtype=complex,
             analytic=None,
+            shots: Optional[int] = None,
             **kwargs
     ):
         if np.isscalar(wires):
             assert wires > 1, "At least two wires are required for this device."
         else:
             assert len(wires) > 1, "At least two wires are required for this device."
-        super().__init__(wires=wires, shots=None, r_dtype=r_dtype, c_dtype=c_dtype, analytic=analytic)
+        super().__init__(wires=wires, shots=shots, r_dtype=r_dtype, c_dtype=c_dtype, analytic=analytic)
 
         self.prob_strategy = kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY).lower()
         assert self.prob_strategy in self.prob_strategies, (
@@ -779,10 +780,110 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         wires = Wires(wires)
         wires_binary_states = np.array(list(itertools.product([0, 1], repeat=len(wires))))
         prob_func = self.get_prob_strategy_func()
-        return qml.math.stack([
+        probs = qml.math.stack([
             prob_func(wires, wires_binary_state)
             for wires_binary_state in wires_binary_states
         ])
+        probs = probs / qml.math.sum(probs)
+        return probs
+
+    def generate_samples(self):
+        r"""Returns the computational basis samples generated for all wires.
+
+        Note that PennyLane uses the convention :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where
+        :math:`q_0` is the most significant bit.
+
+        .. warning::
+
+            This method should be overwritten on devices that
+            generate their own computational basis samples, with the resulting
+            computational basis samples stored as ``self._samples``.
+
+        Returns:
+             array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
+        """
+        if not self.is_state_initialized:
+            return None
+        return self.generate_qubit_by_qubit_samples()
+
+        n_per_subset = 1
+        wires_binary_states = np.array(list(itertools.product([0, 1], repeat=n_per_subset)))
+        prob_func = self.get_prob_strategy_func()
+        wires_batched = [Wires(wires) for wires in np.asarray(self.wires.tolist()).reshape(-1, n_per_subset)]
+
+        probs_batched = qml.math.stack(
+            [
+                [
+                    prob_func(wires, wires_binary_state)
+                    for wires_binary_state in wires_binary_states
+                ]
+                for wires in wires_batched
+            ]
+        )
+        samples_batched = [
+            self.sample_basis_states(2**n_per_subset, probs / probs.sum())
+            for probs in probs_batched
+        ]
+        binary_batched = [
+            self.states_to_binary(samples, n_per_subset)
+            for samples in samples_batched
+        ]
+
+        return qml.math.concatenate(binary_batched, -1)
+
+    def generate_qubit_by_qubit_samples(self):
+        """
+        Generate qubit-by-qubit samples.
+
+        1. Sample x_0 from the probability distribution pi_0(x_0)
+        2. for j = 1 to n-1 do
+        3.     Sample x_j from the probability distribution pi_j(x_0, ..., x_{j-1}, x_j) / pi_{j-1}(x_0, ..., x_{j-1})
+        4. end for
+        5. return x_0 ... x_{n-1}
+
+        :return: Samples with shape (shots, num_wires) of probabilities |<x|psi>|^2
+        """
+        if not self.is_state_initialized:
+            return None
+        prob_func = self.get_prob_strategy_func()
+
+        # pi_0 = pi_0(x_0) = [p_0(0), p_0(1)]
+        probs = qml.math.stack([prob_func(Wires([0]), [i]) for i in [0, 1]])
+        probs = probs / probs.sum()
+
+        # Sample x_0 from the probability distribution pi_0(x_0)
+        samples = self.sample_basis_states(2, probs)
+
+        # x_0
+        binary = self.states_to_binary(samples, 1)
+        binaries = [binary]
+        for j in range(1, self.num_wires):
+            zeros_states = qml.math.concatenate(
+                [qml.math.concatenate(binaries, -1), qml.math.zeros((self.shots, 1))], -1
+            )
+            ones_states = qml.math.concatenate(
+                [qml.math.concatenate(binaries, -1), qml.math.ones((self.shots, 1))], -1
+            )
+            zeros_probs = qml.math.stack([
+                prob_func(Wires(np.arange(j+1)), state.astype(int))
+                for state in zeros_states
+            ])
+            ones_probs = qml.math.stack([
+                prob_func(Wires(np.arange(j+1)), state.astype(int))
+                for state in ones_states
+            ])
+            # pi_j = pi_j(x_0, ..., x_{j-1}, x_j) / pi_{j-1}(x_0, ..., x_{j-1})
+            probs = qml.math.stack([zeros_probs, ones_probs], -1) / probs
+
+            # Sample x_j from the probability distribution pi_j
+            samples = qml.math.concatenate([np.random.choice([0, 1], 1, p=p / p.sum()) for p in probs])
+
+            # x_j
+            binary = self.states_to_binary(samples, 1)
+            binaries.append(binary)
+
+        # return x_0 ... x_{n-1}
+        return qml.math.concatenate(binaries, -1)
 
     def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):
