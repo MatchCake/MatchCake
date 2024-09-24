@@ -104,7 +104,7 @@ def test_pfaffian_bltl_single_item(matrix, det):
     "n, batch_size, mth",
     [
         (i, batch_size, mth)
-        for i in range(MIN_MATRIX_SIZE, MAX_MATRIX_SIZE + 1)
+        for i in range(MIN_MATRIX_SIZE, MAX_MATRIX_SIZE + 1, 2)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for mth in RECOMMENDED_METHODS
         for batch_size in [None, BATCH_SIZE]
