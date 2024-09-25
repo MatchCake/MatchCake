@@ -1,0 +1,19 @@
+from abc import ABC, abstractmethod
+from typing import Callable
+import numpy as np
+from pennylane.typing import TensorLike
+from pennylane.wires import Wires
+import pennylane as qml
+
+
+class SamplingStrategy(ABC):
+    NAME: str = "SamplingStrategy"
+
+    @abstractmethod
+    def generate_samples(
+            self,
+            device: qml.QubitDevice,
+            state_prob_func: Callable[[TensorLike, Wires], TensorLike],
+            **kwargs
+    ) -> TensorLike:
+        raise NotImplementedError("This method should be implemented by the subclass.")

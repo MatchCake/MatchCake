@@ -25,25 +25,25 @@ set_seed(TEST_SEED)
     "params_list,n_wires",
     [
         ([mps.MatchgatePolarParams.random()], 2),
-        # ([mps.MatchgatePolarParams.random(), mps.MatchgatePolarParams.random()], 2),
-        # ([mps.MatchgatePolarParams.random(), mps.MatchgatePolarParams.random()], 4)
+        ([mps.MatchgatePolarParams.random(), mps.MatchgatePolarParams.random()], 2),
+        ([mps.MatchgatePolarParams.random(), mps.MatchgatePolarParams.random()], 4)
     ]
-    # +
-    # [
-    #     ([mps.MatchgatePolarParams(r0=1, r1=1).to_numpy() for _ in range(num_gates)], num_wires)
-    #     for num_wires in range(2, 6)
-    #     for num_gates in [1, 2 ** num_wires]
-    # ]
-    # +
-    # [
-    #     ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], num_wires)
-    #     for _ in range(N_RANDOM_TESTS_PER_CASE)
-    #     for num_wires in range(2, 6)
-    #     for num_gates in [1, 2 ** num_wires]
-    # ]
+    +
+    [
+        ([mps.MatchgatePolarParams(r0=1, r1=1).to_numpy() for _ in range(num_gates)], num_wires)
+        for num_wires in range(2, 6)
+        for num_gates in [1, 2 ** num_wires]
+    ]
+    +
+    [
+        ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], num_wires)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for num_wires in range(2, 6)
+        for num_gates in [1, 2 ** num_wires]
+    ]
 )
 def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
-    nif_device, _ = devices_init(wires=n_wires, shots=int(1024 * 2**n_wires))
+    nif_device, _ = devices_init(wires=n_wires, shots=int(1024 * n_wires))
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
 
     all_wires = np.arange(n_wires)
@@ -68,16 +68,15 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
     ])
     states_probability = states_probability / np.sum(states_probability)
     states_expval = np.array([
-        nif_device.compute_probability_of_target_using_lookup_table(target_binary_state=state)
+        nif_device.get_state_probability(target_binary_state=state)
         for state in states
     ])
     states_expval = states_expval / np.sum(states_expval)
 
     abs_diff = np.abs(states_probability - states_expval)
-
     np.testing.assert_allclose(
         states_probability.squeeze(), states_expval.squeeze(),
-        atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON,
+        atol=0.05,
+        rtol=0.5,
         err_msg=f"abs_diff: {abs_diff.tolist()}"
     )

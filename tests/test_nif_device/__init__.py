@@ -22,7 +22,7 @@ def init_nif_device(*args, **kwargs) -> NonInteractingFermionicDevice:
     _majorana_getters[n_particles] = majorana_getter
     nif_device = NonInteractingFermionicDevice(
         wires=wires,
-        prob_strategy=kwargs.pop("prob_strategy", "lookup_table"),
+        prob_strategy=kwargs.pop("prob_strategy", "LookupTable"),
         majorana_getter=kwargs.pop("majorana_getter", majorana_getter),
         n_workers=kwargs.pop("n_workers", 0),
         **kwargs,
