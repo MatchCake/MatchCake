@@ -76,7 +76,7 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
     abs_diff = np.abs(states_probability - states_expval)
     np.testing.assert_allclose(
         states_probability.squeeze(), states_expval.squeeze(),
-        atol=0.05,
-        rtol=0.5,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
         err_msg=f"abs_diff: {abs_diff.tolist()}"
     )

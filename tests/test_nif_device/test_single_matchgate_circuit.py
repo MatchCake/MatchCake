@@ -95,7 +95,7 @@ def single_matchgate_circuit(params, initial_state=np.array([0, 0]), **kwargs):
 )
 def test_single_matchgate_probs_with_qbit_device(params, initial_binary_state):
     from . import devices_init
-    nif_device, qubit_device = devices_init(prob_strategy="explicit_sum")
+    nif_device, qubit_device = devices_init(prob_strategy="ExplicitSum")
     initial_binary_state = np.asarray(initial_binary_state)
     
     nif_qnode = qml.QNode(single_matchgate_circuit, nif_device)

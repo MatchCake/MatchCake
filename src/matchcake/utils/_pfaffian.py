@@ -297,8 +297,8 @@ def pfaffian_by_det(
     if backend in ["autograd", "numpy"]:
         det = qml.math.linalg.det(__matrix)
         pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
-    elif backend == "torch":
-        pf = Pfaffian.apply(__matrix)
+    # elif backend == "torch":
+    #     pf = Pfaffian.apply(__matrix)
     else:
         det = qml.math.det(__matrix)
         pf = qml.math.sqrt(qml.math.abs(det) + epsilon)

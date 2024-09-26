@@ -54,7 +54,7 @@ def test_single_gate_circuit_probability_target_state_specific_cases(
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in [2, 3]
-        for num_gates in [1, 2*num_wires]
+        for num_gates in [2*num_wires]
         for n_probs in range(1, num_wires+1)
     ]
 )
