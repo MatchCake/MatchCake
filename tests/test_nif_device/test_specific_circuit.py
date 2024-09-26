@@ -40,6 +40,8 @@ def specific_matchgate_circuit(params_wires_list, initial_state=None, **kwargs):
     elif out_op == "expval":
         projector: BasisStateProjector = qml.Projector(initial_state, wires=all_wires)
         return qml.expval(projector)
+    elif out_op == "sample":
+        return qml.sample(wires=kwargs.get("out_wires", None))
     else:
         raise ValueError(f"Unknown out_op: {out_op}.")
 

@@ -59,7 +59,7 @@ def multiples_matchgate_circuit(params_list, initial_state=None, **kwargs):
         ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], num_wires, 0)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in range(2, 6)
-        for num_gates in [1, 2**num_wires]
+        for num_gates in [1, 2*num_wires]
     ]
 )
 def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_wires):

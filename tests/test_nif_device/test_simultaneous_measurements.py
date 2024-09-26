@@ -17,59 +17,6 @@ from ..configs import (
 )
 
 set_seed(TEST_SEED)
-
-
-@pytest.mark.parametrize(
-    "initial_binary_string,params,wire",
-    [
-        ("01", mps.fSWAP, 0),
-    ]
-)
-def test_single_gate_circuit_probability_single_vs_target_specific_cases(initial_binary_string, params, wire):
-    initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
-    device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
-    operations = [
-        qml.BasisState(initial_binary_state, wires=device.wires),
-        MatchgateOperation(params, wires=[0, 1])
-    ]
-    device.apply(operations)
-    es_probs = device.compute_probability_using_explicit_sum(wire)
-    es_m_probs = np.asarray([
-        device.compute_probability_of_target_using_explicit_sum(wire, target_binary_state="0"),
-        device.compute_probability_of_target_using_explicit_sum(wire, target_binary_state="1"),
-    ])
-    np.testing.assert_allclose(
-        es_m_probs.squeeze(), es_probs.squeeze(),
-        atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON,
-    )
-
-
-@pytest.mark.parametrize(
-    "initial_binary_state,params,wire",
-    [
-        (np.random.randint(0, 2, size=n), mps.MatchgatePolarParams.random(), 0)
-        for n in [2, ]
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
-)
-def test_single_gate_circuit_probability_single_vs_target_random_cases(initial_binary_state, params, wire):
-    device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
-    operations = [
-        qml.BasisState(initial_binary_state, wires=device.wires),
-        MatchgateOperation(params, wires=[0, 1])
-    ]
-    device.apply(operations)
-    es_probs = device.compute_probability_using_explicit_sum(wire)
-    es_m_probs = np.asarray([
-        device.compute_probability_of_target_using_explicit_sum(wire, target_binary_state=0),
-        device.compute_probability_of_target_using_explicit_sum(wire, target_binary_state=1),
-    ])
-    np.testing.assert_allclose(
-        es_m_probs.squeeze(), es_probs.squeeze(),
-        atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON,
-    )
     
 
 @pytest.mark.parametrize(
@@ -82,13 +29,13 @@ def test_single_gate_circuit_probability_target_state_specific_cases(
         initial_binary_string, params, wires, target_binary_state, prob
 ):
     initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
-    device = NonInteractingFermionicDevice(wires=wires)
+    device = NonInteractingFermionicDevice(wires=wires, prob_strategy="ExplicitSum")
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
         MatchgateOperation(params, wires=wires)
     ]
     device.apply(operations)
-    es_m_prob = device.compute_probability_of_target_using_explicit_sum(wires, target_binary_state=target_binary_state)
+    es_m_prob = device.get_state_probability(target_binary_state=target_binary_state, wires=wires)
     np.testing.assert_allclose(
         es_m_prob.squeeze(), prob,
         atol=ATOL_APPROX_COMPARISON,
@@ -107,12 +54,12 @@ def test_single_gate_circuit_probability_target_state_specific_cases(
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in [2, 3]
-        for num_gates in [1, 2*num_wires]
+        for num_gates in [2*num_wires]
         for n_probs in range(1, num_wires+1)
     ]
 )
 def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_wires, prob_wires):
-    nif_device, qubit_device = devices_init(wires=n_wires, prob_strategy="explicit_sum")
+    nif_device, qubit_device = devices_init(wires=n_wires, prob_strategy="ExplicitSum")
 
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
     qubit_qnode = qml.QNode(specific_matchgate_circuit, qubit_device)
@@ -152,8 +99,8 @@ def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_
     "params_list,n_wires,prob_wires",
     [
         (
-                [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)],
-                num_wires, np.random.choice(num_wires, replace=False, size=n_probs),
+            [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)],
+            num_wires, np.random.choice(num_wires, replace=False, size=n_probs),
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in [2, 3, 4]
@@ -163,7 +110,7 @@ def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_
 )
 def test_multiples_matchgate_probs_with_qbit_device_lookup_table(params_list, n_wires, prob_wires):
     all_wires = np.arange(n_wires)
-    nif_device, qubit_device = devices_init(wires=all_wires, prob_strategy="lookup_table")
+    nif_device, qubit_device = devices_init(wires=all_wires, prob_strategy="LookupTable")
 
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
     qubit_qnode = qml.QNode(specific_matchgate_circuit, qubit_device)

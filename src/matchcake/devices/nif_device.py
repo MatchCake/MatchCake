@@ -1,6 +1,7 @@
 import itertools
 import warnings
 from copy import deepcopy
+from functools import partial
 from typing import Iterable, Tuple, Union, Callable, Any, Optional, List
 
 import numpy as np
@@ -19,6 +20,8 @@ from .device_utils import _VHMatchgatesContainer, _VerticalMatchgatesContainer, 
 from ..operations.matchgate_operation import MatchgateOperation, _SingleParticleTransitionMatrix
 from ..base.lookup_table import NonInteractingFermionicLookupTable
 from .. import utils
+from .sampling_strategies import get_sampling_strategy
+from .probability_strategies import get_probability_strategy
 
 
 class NonInteractingFermionicDevice(qml.QubitDevice):
@@ -91,12 +94,12 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     }
     observables = {"BasisStateProjector", "Projector", "Identity"}
 
-    prob_strategies = {"lookup_table", "explicit_sum"}
-    DEFAULT_PROB_STRATEGY = "lookup_table"
+    DEFAULT_PROB_STRATEGY = "LookupTable"
     contraction_methods = {None, "neighbours", "vertical", "horizontal"}
     DEFAULT_CONTRACTION_METHOD = "neighbours"
     pfaffian_methods = {"det", "bLTL", "bH"}
     DEFAULT_PFAFFIAN_METHOD = "det"
+    DEFAULT_SAMPLING_STRATEGY = "QubitByQubitSampling"
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
 
@@ -165,19 +168,20 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             # c_dtype=np.complex128,
             c_dtype=complex,
             analytic=None,
+            shots: Optional[int] = None,
             **kwargs
     ):
         if np.isscalar(wires):
             assert wires > 1, "At least two wires are required for this device."
         else:
             assert len(wires) > 1, "At least two wires are required for this device."
-        super().__init__(wires=wires, shots=None, r_dtype=r_dtype, c_dtype=c_dtype, analytic=analytic)
+        super().__init__(wires=wires, shots=shots, r_dtype=r_dtype, c_dtype=c_dtype, analytic=analytic)
 
-        self.prob_strategy = kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY).lower()
-        assert self.prob_strategy in self.prob_strategies, (
-            f"The probability strategy must be one of {self.prob_strategies}. "
-            f"Got {self.prob_strategy} instead."
-        )
+        # self.prob_strategy = kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY).lower()
+        # assert self.prob_strategy in self.prob_strategies, (
+        #     f"The probability strategy must be one of {self.prob_strategies}. "
+        #     f"Got {self.prob_strategy} instead."
+        # )
         self._debugger = kwargs.get("debugger", None)
 
         # create the initial state
@@ -210,6 +214,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The pfaffian method must be one of {self.pfaffian_methods}. "
             f"Got {self.pfaffian_method} instead."
         )
+        self.sampling_strategy = get_sampling_strategy(kwargs.get("sampling_strategy", self.DEFAULT_SAMPLING_STRATEGY))
+        self.prob_strategy = get_probability_strategy(kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY))
         self.n_workers = kwargs.get("n_workers", 0)
         self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
         self.show_progress = kwargs.get("show_progress", self.p_bar is not None)
@@ -761,142 +767,17 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             global_single_particle_transition_matrix
         )
 
-    def get_prob_strategy_func(self) -> Callable[[Wires, Any], float]:
-        if self.prob_strategy == "lookup_table":
-            return self.compute_probability_of_target_using_lookup_table
-        elif self.prob_strategy == "explicit_sum":
-            return self.compute_probability_of_target_using_explicit_sum
-        else:
-            raise NotImplementedError(f"Probability strategy {self.prob_strategy} is not implemented.")
-
-    def analytic_probability(self, wires=None):
+    def get_state_probability(self, target_binary_state: TensorLike, wires: Optional[Wires] = None):
         if not self.is_state_initialized:
             return None
         if wires is None:
             wires = self.wires
-        if isinstance(wires, int):
-            wires = [wires]
-        wires = Wires(wires)
-        wires_binary_states = np.array(list(itertools.product([0, 1], repeat=len(wires))))
-        prob_func = self.get_prob_strategy_func()
-        return qml.math.stack([
-            prob_func(wires, wires_binary_state)
-            for wires_binary_state in wires_binary_states
-        ])
 
-    def expval(self, observable, shot_range=None, bin_size=None):
-        if isinstance(observable, BasisStateProjector):
-            wires = observable.wires
-            prob_func = self.get_prob_strategy_func()
-            return prob_func(wires, observable.parameters[0])
-        elif isinstance(observable, qml.Identity):
-            return 1.0
-        else:
-            raise NotImplementedError(f"Observable {observable.name} is not implemented.")
-
-    def compute_probability_using_lookup_table(self, wires=None):
-        warnings.warn(
-            "This method is deprecated. Please use compute_probability_of_target_using_lookup_table instead.",
-            DeprecationWarning
-        )
-        if not self.is_state_initialized:
-            return None
-        if wires is None:
-            wires = self.wires
-        if isinstance(wires, int):
-            wires = [wires]
-        wires = Wires(wires)
-        device_wires = self.map_wires(wires)
-        num_wires = len(device_wires)
-
-        # assert num_wires == 1, "Only one wire is supported for now."
-        probs = pnp.zeros((num_wires, 2))
-        for wire in wires:
-            obs = self.lookup_table.get_observable(wire, self.get_sparse_or_dense_state())
-            prob1 = pnp.real(utils.pfaffian(obs, method=self.pfaffian_method))
-            prob0 = 1.0 - prob1
-            probs[wire] = pnp.array([prob0, prob1])
-        return probs.flatten()
-
-    def compute_probability_of_target_using_lookup_table(self, wires=None, target_binary_state=None):
-        if not self.is_state_initialized:
-            return None
-        if wires is None:
-            wires = self.wires
-        if isinstance(wires, int):
-            wires = [wires]
-        wires = Wires(wires)
-        wires_indexes = self.wires.indices(wires)
-        obs = self.lookup_table.get_observable_of_target_state(
-            self.get_sparse_or_dense_state(),
-            target_binary_state,
-            wires_indexes,
-            show_progress=self.show_progress,
-        )
-        prob = qml.math.real(utils.pfaffian(obs, method=self.pfaffian_method, show_progress=self.show_progress))
-        return prob
-
-    def compute_probability_using_explicit_sum(self, wires=None):
-        warnings.warn(
-            "This method is deprecated. Please use compute_probability_of_target_using_explicit_sum instead.",
-            DeprecationWarning
-        )
-        if not self.is_state_initialized:
-            return None
-        if wires is None:
-            wires = self.wires
-        if isinstance(wires, int):
-            wires = [wires]
-        wires = Wires(wires)
-        device_wires = self.map_wires(wires)
-        num_wires = len(device_wires)
-
-        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(
-            self.get_sparse_or_dense_state(), n=self.num_wires
-        )
-        ket_majorana_list = [utils.get_majorana(i, self.num_wires) for i in ket_majorana_indexes]
-        if ket_majorana_list:
-            ket_op = utils.recursive_2in_operator(pnp.matmul, ket_majorana_list)
-        else:
-            ket_op = pnp.eye(2*self.num_wires)
-        bra_majorana_indexes = list(reversed(ket_majorana_indexes))
-        bra_majorana_list = [utils.get_majorana(i, self.num_wires) for i in bra_majorana_indexes]
-        if bra_majorana_list:
-            bra_op = utils.recursive_2in_operator(pnp.matmul, bra_majorana_list)
-        else:
-            bra_op = pnp.eye(2*self.num_wires)
-        zero_state = self._create_basis_state(0).flatten()
-        probs = pnp.zeros((num_wires, 2))
-        for wire_idx, wire in enumerate(wires):
-            p = 0.0
-            for m, n in np.ndindex((2*self.num_wires, 2*self.num_wires)):
-                c_m = utils.get_majorana(m, self.num_wires)
-                c_n = utils.get_majorana(n, self.num_wires)
-                inner_op_list = [zero_state.T.conj(), bra_op, c_n, c_m, ket_op, zero_state]
-                inner_product = utils.recursive_2in_operator(qml.math.dot, inner_op_list)
-                t_wire_m = self.transition_matrix[wire, m]
-                t_wire_n = pnp.conjugate(self.transition_matrix[wire, n])
-                p += t_wire_m * t_wire_n * inner_product
-            prob1 = pnp.real(p)
-            prob0 = 1.0 - prob1
-            probs[wire_idx] = pnp.array([prob0, prob1])
-        return probs.flatten()
-
-    def compute_probability_of_target_using_explicit_sum(self, wires=None, target_binary_state=None):
-        if not self.is_state_initialized:
-            return None
-        if wires is None:
-            wires = self.wires
-        if isinstance(wires, int):
-            wires = [wires]
-        wires = Wires(wires)
-        device_wires = self.map_wires(wires)
-        num_wires = len(device_wires)
-
-        if target_binary_state is None:
-            target_binary_state = np.ones(num_wires, dtype=int)
+        num_wires = len(wires)
         if isinstance(target_binary_state, int):
-            target_binary_state = np.array([target_binary_state])
+            target_binary_state = utils.binary_string_to_vector(
+                utils.state_to_binary_string(target_binary_state, num_wires)
+            )
         elif isinstance(target_binary_state, list):
             target_binary_state = np.array(target_binary_state)
         elif isinstance(target_binary_state, str):
@@ -907,69 +788,63 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The target binary state must have {num_wires} elements. "
             f"Got {len(target_binary_state)} instead."
         )
-        if len(target_binary_state) > 4:
-            warnings.warn(
-                f"Computing the probability of a target state with more than 4 bits "
-                f"may take a long time. Please consider using the lookup table strategy instead.",
-                UserWarning,
-            )
-
-        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(
-            self.get_sparse_or_dense_state(), n=self.num_wires
-        )
-        bra_majorana_indexes = list(reversed(ket_majorana_indexes))
-        zero_state = self._create_basis_state(0).flatten()
-        # TODO: Dont compute the zero explicitly and only take the 00 element of the operator
-        bra = utils.recursive_2in_operator(
-            qml.math.dot, [zero_state.T.conj(), *[self.majorana_getter(i) for i in bra_majorana_indexes]]
-        )
-        ket = utils.recursive_2in_operator(
-            qml.math.dot, [*[self.majorana_getter(i) for i in ket_majorana_indexes], zero_state]
+        return self.prob_strategy(
+            system_state=self.get_sparse_or_dense_state(),
+            target_binary_state=target_binary_state,
+            wires=wires,
+            all_wires=self.wires,
+            lookup_table=self.lookup_table,
+            transition_matrix=self.transition_matrix,
+            pfaffian_method=self.pfaffian_method,
+            majorana_getter=self.majorana_getter,
+            show_progress=self.show_progress,
         )
 
-        np_iterator = np.ndindex(tuple([2*self.num_wires for _ in range(2 * len(target_binary_state))]))
-        sum_elements = pbt.apply_func_multiprocess(
-            func=self._compute_partial_prob_of_m_n_vector,
-            iterable_of_args=[
-                (m_n_vector, target_binary_state, wires, bra, ket)
-                for m_n_vector in np_iterator
-            ],
-            nb_workers=self.n_workers,
-            verbose=False,
-        )
-        target_prob = sum(sum_elements, start=0.0)
-        # target_prob = sum(
-        #     (
-        #         self._compute_partial_prob_of_m_n_vector(
-        #             m_n_vector=m_n_vector,
-        #             target_binary_state=target_binary_state,
-        #             wires=wires,
-        #             bra=bra,
-        #             ket=ket,
-        #         )
-        #         for m_n_vector in np_iterator
-        #     ),
-        #     start=0.0,
-        # )
-        return pnp.real(target_prob)
+    def analytic_probability(self, wires=None):
+        if not self.is_state_initialized:
+            return None
+        if wires is None:
+            wires = self.wires
+        if isinstance(wires, int):
+            wires = [wires]
+        wires = Wires(wires)
+        wires_binary_states = np.array(list(itertools.product([0, 1], repeat=len(wires))))
+        probs = qml.math.stack([
+            self.get_state_probability(wires_binary_state, wires)
+            for wires_binary_state in wires_binary_states
+        ])
+        probs = probs / qml.math.sum(probs)
+        return probs
 
-    def _compute_partial_prob_of_m_n_vector(
-            self,
-            m_n_vector,
-            target_binary_state,
-            wires,
-            bra,
-            ket,
-    ):
-        inner_op_list = [
-            self.majorana_getter((1 - b) * i + b * j, (1 - b) * j + b * i)
-            for i, j, b in zip(m_n_vector[::2], m_n_vector[1::2], target_binary_state)
-        ]
-        inner_product = utils.recursive_2in_operator(qml.math.dot, [bra, *inner_op_list, ket])
-        t_wire_m = qml.math.prod(self.transition_matrix[wires, m_n_vector[::2]])
-        t_wire_n = qml.math.prod(pnp.conjugate(self.transition_matrix[wires, m_n_vector[1::2]]))
-        product_coeff = t_wire_m * t_wire_n
-        return product_coeff * inner_product
+    def generate_samples(self):
+        r"""Returns the computational basis samples generated for all wires.
+
+        Note that PennyLane uses the convention :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where
+        :math:`q_0` is the most significant bit.
+
+        .. warning::
+
+            This method should be overwritten on devices that
+            generate their own computational basis samples, with the resulting
+            computational basis samples stored as ``self._samples``.
+
+        Returns:
+             array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
+        """
+        if not self.is_state_initialized:
+            return None
+        return self.sampling_strategy.generate_samples(self, self.get_state_probability)
+
+    def expval(self, observable, shot_range=None, bin_size=None):
+        if isinstance(observable, BasisStateProjector):
+            wires = observable.wires
+            return self.get_state_probability(observable.parameters[0], wires)
+            prob_func = self.get_prob_strategy_func()
+            return prob_func(wires, observable.parameters[0])
+        elif isinstance(observable, qml.Identity):
+            return 1.0
+        else:
+            raise NotImplementedError(f"Observable {observable.name} is not implemented.")
 
     def _asarray(self, x, dtype=None):
         r"""
