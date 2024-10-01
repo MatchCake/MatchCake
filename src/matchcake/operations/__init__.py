@@ -39,3 +39,7 @@ from .fermionic_swap import (
     FermionicSWAP,
     fSWAP,
 )
+
+from .fermionic_superposition import (
+    FermionicSuperposition,
+)
