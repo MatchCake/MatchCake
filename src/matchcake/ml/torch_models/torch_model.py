@@ -59,7 +59,11 @@ class TorchModel(nn.Module):
 
     @classmethod
     def default_save_dir_from_args(cls, args):
-        save_hash = pbt.hash_dict(vars(args))
+        if isinstance(args, dict):
+            args_dict = args.copy()
+        else:
+            args_dict = vars(args)
+        save_hash = pbt.hash_dict(args_dict)
         save_dir = f"{cls.MODEL_NAME}_{save_hash}"
         return save_dir
 
@@ -170,12 +174,12 @@ class TorchModel(nn.Module):
         return self
 
     def save_pickles(self) -> "TorchModel":
-        os.makedirs(self.models_dir, exist_ok=True)
+        os.makedirs(self.save_path, exist_ok=True)
         joblib.dump({attr: getattr(self, attr) for attr in self.ATTRS_TO_PICKLE}, self.pickles_path)
         return self
 
     def save_jsons(self) -> "TorchModel":
-        os.makedirs(self.models_dir, exist_ok=True)
+        os.makedirs(self.save_path, exist_ok=True)
         jsons = {attr: getattr(self, attr) for attr in self.ATTRS_TO_JSON}
         with open(self.jsons_path, "w") as f:
             json.dump(jsons, f, indent=4)
