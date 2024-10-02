@@ -22,6 +22,7 @@ from ..base.lookup_table import NonInteractingFermionicLookupTable
 from .. import utils
 from .sampling_strategies import get_sampling_strategy
 from .probability_strategies import get_probability_strategy
+from ..utils.math import convert_and_cast_like
 
 
 class NonInteractingFermionicDevice(qml.QubitDevice):
@@ -837,12 +838,12 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
     def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):
-            wires = observable.wires
-            return self.get_state_probability(observable.parameters[0], wires)
-            prob_func = self.get_prob_strategy_func()
-            return prob_func(wires, observable.parameters[0])
+            return self.get_state_probability(observable.parameters[0], observable.wires)
         elif isinstance(observable, qml.Identity):
-            return 1.0
+            t_shape = qml.math.shape(self.transition_matrix)
+            if len(t_shape) == 2:
+                return convert_and_cast_like(1, self.transition_matrix)
+            return convert_and_cast_like(np.ones(t_shape[0]), self.transition_matrix)
         else:
             raise NotImplementedError(f"Observable {observable.name} is not implemented.")
 
