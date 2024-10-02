@@ -89,7 +89,6 @@ class TorchModel(nn.Module):
         self.parameters_rng = np.random.default_rng(seed=self.seed)
         self.torch_rng = torch.Generator()
         self.torch_rng.manual_seed(self.seed)
-        self.initialize_parameters_()
 
     @property
     def wires(self):
