@@ -22,6 +22,7 @@ from ..base.lookup_table import NonInteractingFermionicLookupTable
 from .. import utils
 from .sampling_strategies import get_sampling_strategy
 from .probability_strategies import get_probability_strategy
+from ..utils import torch_utils
 from ..utils.math import convert_and_cast_like
 
 
@@ -93,7 +94,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         *[c.__name__ for c in utils.get_all_subclasses(MatchgateOperation)],
         "BasisEmbedding", "StatePrep", "BasisState", "Snapshot"
     }
-    observables = {"BasisStateProjector", "Projector", "Identity"}
+    observables = {"BasisStateProjector", "Projector", "Identity", "Hermitian", "PauliZ",}
 
     DEFAULT_PROB_STRATEGY = "LookupTable"
     contraction_methods = {None, "neighbours", "vertical", "horizontal"}
@@ -110,15 +111,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         capabilities.update(
             supports_broadcasting=True,
             returns_state=False,
-            supports_finite_shots=False,
-            supports_tensor_observables=False,
+            supports_finite_shots=True,
+            supports_tensor_observables=True,
             passthru_interface="torch",
-            # passthru_devices={
-            #     "tf": "default.qubit.tf",
-            #     "torch": "default.qubit.torch",
-            #     "autograd": "default.qubit.autograd",
-            #     "jax": "default.qubit.jax",
-            # },
         )
         return capabilities
 
@@ -844,8 +839,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             if len(t_shape) == 2:
                 return convert_and_cast_like(1, self.transition_matrix)
             return convert_and_cast_like(np.ones(t_shape[0]), self.transition_matrix)
-        else:
-            raise NotImplementedError(f"Observable {observable.name} is not implemented.")
+
+        return super().expval(observable, shot_range, bin_size)
 
     def _asarray(self, x, dtype=None):
         r"""
@@ -857,14 +852,17 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         :param dtype: type of the output array
         :return: array of type ``dtype``
         """
-        try:
-            import torch
-            if isinstance(x, torch.Tensor):
-                # x = x.cpu().numpy()
-                x = x.cpu()
-        except ImportError:
-            pass
-        return qml.math.cast(x, dtype=dtype)
+        return qml.math.cast(torch_utils.to_cpu(x), dtype=dtype)
+
+    def _dot(self, a, b):
+        r"""
+        Compute the dot product of two arrays.
+
+        :param a: input array
+        :param b: input array
+        :return: dot product of the input arrays
+        """
+        return qml.math.dot(a, b)
 
     def reset(self):
         """Reset the device"""
