@@ -5,6 +5,7 @@ from typing import Callable
 import numpy as np
 import pennylane as qml
 
+from ...utils.torch_utils import to_numpy
 from ..probability_strategies import ProbabilityStrategy
 
 
@@ -33,7 +34,7 @@ class QubitByQubitSampling(SamplingStrategy):
         probs = probs / probs.sum()
 
         # Sample x_0 from the probability distribution pi_0(x_0)
-        samples = device.sample_basis_states(2, probs)
+        samples = device.sample_basis_states(2, to_numpy(probs))
 
         # x_0
         binary = device.states_to_binary(samples, 1)
@@ -55,7 +56,7 @@ class QubitByQubitSampling(SamplingStrategy):
             ])
             # pi_j = pi_j(x_0, ..., x_{j-1}, x_j) / pi_{j-1}(x_0, ..., x_{j-1})
             # probs = qml.math.stack([zeros_probs, ones_probs], -1) / probs
-            probs = qml.math.stack([zeros_probs, ones_probs], -1)
+            probs = to_numpy(qml.math.stack([zeros_probs, ones_probs], -1))
 
             # Sample x_j from the probability distribution pi_j
             samples = qml.math.concatenate([np.random.choice([0, 1], 1, p=p / p.sum()) for p in probs])
