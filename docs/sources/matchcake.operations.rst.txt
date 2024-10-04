@@ -1,0 +1,85 @@
+matchcake.operations package
+============================
+
+Submodules
+----------
+
+matchcake.operations.angle\_embedding module
+--------------------------------------------
+
+.. automodule:: matchcake.operations.angle_embedding
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.fermionic\_controlled\_not module
+------------------------------------------------------
+
+.. automodule:: matchcake.operations.fermionic_controlled_not
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.fermionic\_controlled\_z module
+----------------------------------------------------
+
+.. automodule:: matchcake.operations.fermionic_controlled_z
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.fermionic\_hadamard module
+-----------------------------------------------
+
+.. automodule:: matchcake.operations.fermionic_hadamard
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.fermionic\_paulis module
+---------------------------------------------
+
+.. automodule:: matchcake.operations.fermionic_paulis
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.fermionic\_rotations module
+------------------------------------------------
+
+.. automodule:: matchcake.operations.fermionic_rotations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.fermionic\_superposition module
+----------------------------------------------------
+
+.. automodule:: matchcake.operations.fermionic_superposition
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.fermionic\_swap module
+-------------------------------------------
+
+.. automodule:: matchcake.operations.fermionic_swap
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.matchgate\_operation module
+------------------------------------------------
+
+.. automodule:: matchcake.operations.matchgate_operation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: matchcake.operations
+   :members:
+   :undoc-members:
+   :show-inheritance:

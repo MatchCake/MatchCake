@@ -1,0 +1,873 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>matchcake.base package &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="matchcake.devices package" href="matchcake.devices.html" />
+    <link rel="prev" title="matchcake package" href="matchcake.html" /> 
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="index.html">Docs</a></li>
+        
+          <li><a href="matchcake.html">matchcake package</a></li>
+        
+      <li>matchcake.base package</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="sources/matchcake.base.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#last-unstable-version">Last unstable version</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#quick-usage-preview">Quick Usage Preview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#citation">Citation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="matchcake.html">matchcake package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="matchcake.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section id="matchcake-base-package">
+<h1>matchcake.base package<a class="headerlink" href="#matchcake-base-package" title="Permalink to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-matchcake.base.lookup_table">
+<span id="matchcake-base-lookup-table-module"></span><h2>matchcake.base.lookup_table module<a class="headerlink" href="#module-matchcake.base.lookup_table" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.base.lookup_table.</span></span><span class="sig-name descname"><span class="pre">NonInteractingFermionicLookupTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transition_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="matchcake.templates.html#matchcake.templates.tensor_like.TensorLike" title="matchcake.templates.tensor_like.TensorLike"><span class="pre">TensorLike</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Lookup table for the non-interacting fermionic device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>transition_matrix</strong> (<a class="reference internal" href="matchcake.templates.html#matchcake.templates.tensor_like.TensorLike" title="matchcake.templates.tensor_like.TensorLike"><em>TensorLike</em></a>) – The transition matrix of the device.</p></li>
+<li><p><strong>show_progress</strong> (<em>bool</em>) – Whether to show progress bars.</p></li>
+</ul>
+</dd>
+</dl>
+<p>The lookup table is a 3x3 matrix where the rows and columns are labeled by the following:
+- 0: c_d_alpha
+- 1: c_e_alpha
+- 2: c_2p_alpha_m1</p>
+<p># TODO: Add more documentation.
+# TODO: Tips for optimization: Maybe there is a way to use the sparsity of the block diagonal matrix to reduce
+# TODO: the number of operations in the lookup table.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transition_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="matchcake.templates.html#matchcake.templates.tensor_like.TensorLike" title="matchcake.templates.tensor_like.TensorLike"><span class="pre">TensorLike</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.batch_size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_size</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.batch_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_bm_transition_dagger_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">block_bm_transition_dagger_matrix</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_bm_transition_dagger_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_bm_transition_transpose_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">block_bm_transition_transpose_matrix</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_bm_transition_transpose_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_diagonal_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">block_diagonal_matrix</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_diagonal_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_2p_beta_m1">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_2p_alpha_m1__c_2p_beta_m1</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_2p_beta_m1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_d_beta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_2p_alpha_m1__c_d_beta</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_d_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_e_beta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_2p_alpha_m1__c_e_beta</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_e_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_2p_beta_m1">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_d_alpha__c_2p_beta_m1</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_2p_beta_m1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_d_beta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_d_alpha__c_d_beta</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_d_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_e_beta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_d_alpha__c_e_beta</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_e_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_2p_beta_m1">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_e_alpha__c_2p_beta_m1</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_2p_beta_m1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_d_beta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_e_alpha__c_d_beta</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_d_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_e_beta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_e_alpha__c_e_beta</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_e_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.close_p_bar">
+<span class="sig-name descname"><span class="pre">close_p_bar</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.close_p_bar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.compute_items">
+<span class="sig-name descname"><span class="pre">compute_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indexes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">close_p_bar</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="matchcake.templates.html#matchcake.templates.tensor_like.TensorLike" title="matchcake.templates.tensor_like.TensorLike"><span class="pre">TensorLike</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.compute_items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the items of the lookup table corresponding to the indexes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>indexes</strong> – Indexes of the items to compute.</p></li>
+<li><p><strong>close_p_bar</strong> – Whether to close the progress bar.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The items of the lookup table corresponding to the indexes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.compute_observable_of_target_state">
+<span class="sig-name descname"><span class="pre">compute_observable_of_target_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">sparray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_binary_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes_of_target_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="matchcake.templates.html#matchcake.templates.tensor_like.TensorLike" title="matchcake.templates.tensor_like.TensorLike"><span class="pre">TensorLike</span></a></span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.compute_observable_of_target_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.compute_stack_and_pad_items">
+<span class="sig-name descname"><span class="pre">compute_stack_and_pad_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indexes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Number</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">close_p_bar</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="matchcake.templates.html#matchcake.templates.tensor_like.TensorLike" title="matchcake.templates.tensor_like.TensorLike"><span class="pre">TensorLike</span></a></span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.compute_stack_and_pad_items" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_2p_beta_m1">
+<span class="sig-name descname"><span class="pre">get_c_2p_alpha_m1__c_2p_beta_m1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_2p_beta_m1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_d_beta">
+<span class="sig-name descname"><span class="pre">get_c_2p_alpha_m1__c_d_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_d_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_e_beta">
+<span class="sig-name descname"><span class="pre">get_c_2p_alpha_m1__c_e_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_e_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_2p_beta_m1">
+<span class="sig-name descname"><span class="pre">get_c_d_alpha__c_2p_beta_m1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_2p_beta_m1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_d_beta">
+<span class="sig-name descname"><span class="pre">get_c_d_alpha__c_d_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_d_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_e_beta">
+<span class="sig-name descname"><span class="pre">get_c_d_alpha__c_e_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_e_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_2p_beta_m1">
+<span class="sig-name descname"><span class="pre">get_c_e_alpha__c_2p_beta_m1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_2p_beta_m1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_d_beta">
+<span class="sig-name descname"><span class="pre">get_c_e_alpha__c_d_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_d_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_e_beta">
+<span class="sig-name descname"><span class="pre">get_c_e_alpha__c_e_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_e_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_observable">
+<span class="sig-name descname"><span class="pre">get_observable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_observable" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: change k to y* or wires
+Get the observable corresponding to the index k and the state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k</strong> (<em>int</em>) – Index of the observable</p></li>
+<li><p><strong>system_state</strong> (<em>np.ndarray</em>) – State of the system</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The observable of shape (2(h + k), 2(h + k)) where h is the hamming weight of the state.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_observable_of_target_state">
+<span class="sig-name descname"><span class="pre">get_observable_of_target_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">sparray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_binary_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes_of_target_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_observable_of_target_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the observable corresponding to target_binary_state and the system_state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system_state</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>np.ndarray</em><em>, </em><em>sparse.sparray</em><em>]</em>) – State of the system</p></li>
+<li><p><strong>target_binary_state</strong> (<em>Optional</em><em>[</em><em>np.ndarray</em><em>]</em>) – Target state of the system</p></li>
+<li><p><strong>indexes_of_target_state</strong> (<em>Optional</em><em>[</em><em>np.ndarray</em><em>]</em>) – Indexes of the target state of the system</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The observable of shape (2(h + k), 2(h + k)) where h is the hamming weight of the system state.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.getter_table">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">getter_table</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">callable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.getter_table" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.initialize_p_bar">
+<span class="sig-name descname"><span class="pre">initialize_p_bar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.initialize_p_bar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.memory_usage">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">memory_usage</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.memory_usage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.n_particles">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_particles</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.n_particles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_n">
+<span class="sig-name descname"><span class="pre">p_bar_set_n</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_n" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_postfix">
+<span class="sig-name descname"><span class="pre">p_bar_set_postfix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_postfix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_postfix_str">
+<span class="sig-name descname"><span class="pre">p_bar_set_postfix_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_postfix_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.transition_bm_block_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transition_bm_block_matrix</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.transition_bm_block_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.transition_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transition_matrix</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.transition_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.update_p_bar">
+<span class="sig-name descname"><span class="pre">update_p_bar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.update_p_bar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.base.matchgate">
+<span id="matchcake-base-matchgate-module"></span><h2>matchcake.base.matchgate module<a class="headerlink" href="#module-matchcake.base.matchgate" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.base.matchgate.</span></span><span class="sig-name descname"><span class="pre">Matchgate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_params.MatchgateParams" title="matchcake.matchgate_parameter_sets.matchgate_params.MatchgateParams"><span class="pre">MatchgateParams</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_errors_if_not_matchgate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A matchgate is a matrix of the form</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{pmatrix}
+    a &amp; 0 &amp; 0 &amp; b \\
+    0 &amp; w &amp; x &amp; 0 \\
+    0 &amp; y &amp; z &amp; 0 \\
+    c &amp; 0 &amp; 0 &amp; d
+\end{pmatrix}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(a, b, c, d, w, x, y, z \in \mathbb{C}\)</span>. The matrix M can be decomposed as</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}A = \begin{pmatrix}
+    a &amp; b \\
+    c &amp; d
+\end{pmatrix}\end{split}\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}W = \begin{pmatrix}
+    w &amp; x \\
+    y &amp; z
+\end{pmatrix}\end{split}\]</div>
+<p>The matchgate is a unitary matrix if and only if the following conditions are satisfied:</p>
+<div class="math notranslate nohighlight">
+\[M^\dagger M = \mathbb{I} \quad \text{and} \quad MM^\dagger = \mathbb{I}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbb{I}\)</span> is the identity matrix and <span class="math notranslate nohighlight">\(M^\dagger\)</span> is the conjugate transpose of <span class="math notranslate nohighlight">\(M\)</span>,
+and the following condition is satisfied:</p>
+<div class="math notranslate nohighlight">
+\[\det(A) = \det(W)\]</div>
+<p>The final form of the matchgate is</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{pmatrix}
+    r_0 e^{i\theta_0} &amp; 0 &amp; 0 &amp; (\sqrt{1 - r_0^2}) e^{i(\theta_2 + \theta_4 - (\theta_1+\pi))} \\
+    0 &amp; r_1 e^{i\theta_2} &amp; (\sqrt{1 - r_1^2}) e^{i(\theta_2 + \theta_4 - (\theta_3+\pi))} &amp; 0 \\
+    0 &amp; (\sqrt{1 - r_1^2}) e^{i\theta_3} &amp; r_1 e^{i\theta_4} &amp; 0 \\
+    (\sqrt{1 - r_0^2}) e^{i\theta_1} &amp; 0 &amp; 0 &amp; r_0 e^{i(\theta_2 + \theta_4 - \theta_0)}
+\end{pmatrix}\end{split}\]</div>
+<p>with the parameters</p>
+<div class="math notranslate nohighlight">
+\[r_0, r_1 \quad \text{and} \quad  \theta_0, \theta_1, \theta_2, \theta_3, \theta_4\]</div>
+<p>with</p>
+<div class="math notranslate nohighlight">
+\[\theta_i \in [0, 2\pi) \forall i in \{0, 1, 2, 3, 4\}\]</div>
+<p>Note that by setting the parameter <span class="math notranslate nohighlight">\(\theta_4\)</span> to <span class="math notranslate nohighlight">\(-\theta_2\)</span>, the matchgate can be written as</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{pmatrix}
+    r_0 e^{i\theta_0} &amp; 0 &amp; 0 &amp; (\sqrt{1 - r_0^2}) e^{-i(\theta_1+\pi)} \\
+    0 &amp; r_1 e^{i\theta_2} &amp; (\sqrt{1 - r_1^2}) e^{-i(\theta_3+\pi)} &amp; 0 \\
+    0 &amp; (\sqrt{1 - r_1^2}) e^{i\theta_3} &amp; r_1 e^{-i\theta_2} &amp; 0 \\
+    (\sqrt{1 - r_0^2}) e^{i\theta_1} &amp; 0 &amp; 0 &amp; r_0 e^{-i\theta_0}
+\end{pmatrix}\end{split}\]</div>
+<p>which set</p>
+<div class="math notranslate nohighlight">
+\[\det(A) = \det(W) = 1\]</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.DEFAULT_USE_H_FOR_TRANSITION_MATRIX">
+<span class="sig-name descname"><span class="pre">DEFAULT_USE_H_FOR_TRANSITION_MATRIX</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.DEFAULT_USE_H_FOR_TRANSITION_MATRIX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.DEFAULT_USE_LESS_EINSUM_FOR_TRANSITION_MATRIX">
+<span class="sig-name descname"><span class="pre">DEFAULT_USE_LESS_EINSUM_FOR_TRANSITION_MATRIX</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.DEFAULT_USE_LESS_EINSUM_FOR_TRANSITION_MATRIX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.SPTM_CONTRACTION_PATH">
+<span class="sig-name descname"><span class="pre">SPTM_CONTRACTION_PATH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.SPTM_CONTRACTION_PATH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.UNPICKEABLE_ATTRS">
+<span class="sig-name descname"><span class="pre">UNPICKEABLE_ATTRS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.UNPICKEABLE_ATTRS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_params.MatchgateParams" title="matchcake.matchgate_parameter_sets.matchgate_params.MatchgateParams"><span class="pre">MatchgateParams</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_errors_if_not_matchgate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a Matchgate from the parameters. The parameters can be a MatchgateParams object, a list, a tuple or
+a numpy array. If the parameters are a list, tuple or numpy array, the parameters will be interpreted as
+the keyword argument <cite>default_given_params_cls</cite>.</p>
+<p>If the parameters are a MatchgateParams object, the parameters will be interpreted as the type of the object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<em>Union</em><em>[</em><em>mps.MatchgateParams</em><em>, </em><em>np.ndarray</em><em>, </em><em>list</em><em>, </em><em>tuple</em><em>]</em>) – The parameters of the Matchgate.</p></li>
+<li><p><strong>backend</strong> (<em>str</em>) – The backend to use for the computations. Can be ‘numpy’, ‘sympy’ or ‘torch’.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.batch_size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_size</span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.batch_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.batched_gate_data">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batched_gate_data</span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.batched_gate_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.check_asserts">
+<span class="sig-name descname"><span class="pre">check_asserts</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.check_asserts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.check_det_constraint">
+<span class="sig-name descname"><span class="pre">check_det_constraint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.check_det_constraint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.check_m_dagger_m_constraint">
+<span class="sig-name descname"><span class="pre">check_m_dagger_m_constraint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.check_m_dagger_m_constraint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.check_m_m_dagger_constraint">
+<span class="sig-name descname"><span class="pre">check_m_m_dagger_constraint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.check_m_m_dagger_constraint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.composed_hamiltonian_params">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">composed_hamiltonian_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_composed_hamiltonian_params.MatchgateComposedHamiltonianParams" title="matchcake.matchgate_parameter_sets.matchgate_composed_hamiltonian_params.MatchgateComposedHamiltonianParams"><span class="pre">MatchgateComposedHamiltonianParams</span></a></em><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.composed_hamiltonian_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.compute_all_attrs">
+<span class="sig-name descname"><span class="pre">compute_all_attrs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.compute_all_attrs" title="Permalink to this definition">¶</a></dt>
+<dd><p>In the constructor of this object, not all the attributes are computed. This method will compute all the
+attributes of the object. The list of attributes computed are:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#matchcake.base.matchgate.Matchgate.polar_params" title="matchcake.base.matchgate.Matchgate.polar_params"><code class="xref py py-attr docutils literal notranslate"><span class="pre">polar_params</span></code></a></p></li>
+<li><p><a class="reference internal" href="#matchcake.base.matchgate.Matchgate.standard_params" title="matchcake.base.matchgate.Matchgate.standard_params"><code class="xref py py-attr docutils literal notranslate"><span class="pre">standard_params</span></code></a></p></li>
+<li><p><a class="reference internal" href="#matchcake.base.matchgate.Matchgate.hamiltonian_coefficients_params" title="matchcake.base.matchgate.Matchgate.hamiltonian_coefficients_params"><code class="xref py py-attr docutils literal notranslate"><span class="pre">hamiltonian_coefficients_params</span></code></a></p></li>
+<li><p><a class="reference internal" href="#matchcake.base.matchgate.Matchgate.hamiltonian_coefficients_params" title="matchcake.base.matchgate.Matchgate.hamiltonian_coefficients_params"><code class="xref py py-attr docutils literal notranslate"><span class="pre">hamiltonian_coefficients_params</span></code></a></p></li>
+<li><p><a class="reference internal" href="#matchcake.base.matchgate.Matchgate.composed_hamiltonian_params" title="matchcake.base.matchgate.Matchgate.composed_hamiltonian_params"><code class="xref py py-attr docutils literal notranslate"><span class="pre">composed_hamiltonian_params</span></code></a></p></li>
+<li><p><a class="reference internal" href="#matchcake.base.matchgate.Matchgate.gate_data" title="matchcake.base.matchgate.Matchgate.gate_data"><code class="xref py py-attr docutils literal notranslate"><span class="pre">gate_data</span></code></a></p></li>
+<li><p><a class="reference internal" href="#matchcake.base.matchgate.Matchgate.hamiltonian_matrix" title="matchcake.base.matchgate.Matchgate.hamiltonian_matrix"><code class="xref py py-attr docutils literal notranslate"><span class="pre">hamiltonian_matrix</span></code></a></p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">action_matrix</span></code></p></li>
+<li><p><a class="reference internal" href="#matchcake.base.matchgate.Matchgate.transition_matrix" title="matchcake.base.matchgate.Matchgate.transition_matrix"><code class="xref py py-attr docutils literal notranslate"><span class="pre">transition_matrix</span></code></a></p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.compute_m_dagger_m">
+<span class="sig-name descname"><span class="pre">compute_m_dagger_m</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.compute_m_dagger_m" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.compute_m_m_dagger">
+<span class="sig-name descname"><span class="pre">compute_m_m_dagger</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.compute_m_m_dagger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.find_hamiltonian_coefficients">
+<span class="sig-name descname"><span class="pre">find_hamiltonian_coefficients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.find_hamiltonian_coefficients" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the 2n x 2n matrix <span class="math notranslate nohighlight">\(h\)</span> of elements <span class="math notranslate nohighlight">\(h_{\mu\nu}\)</span> such that</p>
+<div class="math notranslate nohighlight">
+\[M = \exp{-i\sum_{\mu\neq\nu = 1}^{2n} h_{\mu\nu} c_\mu c_\nu}\]</div>
+<p>where <span class="math notranslate nohighlight">\(c_\mu\)</span> is the <span class="math notranslate nohighlight">\(\mu\)</span>-th Majorana operator, <span class="math notranslate nohighlight">\(M\)</span> is the matchgate and
+<span class="math notranslate nohighlight">\(n\)</span> is the number of qubits which is equal to the number of rows and columns of the matchgate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>order</strong> (<em>int</em>) – The order of the taylor expansion of the exponential.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The matrix of coefficients <span class="math notranslate nohighlight">\(h\)</span>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.find_single_particle_transition_matrix_contraction_path">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">find_single_particle_transition_matrix_contraction_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">operands</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.find_single_particle_transition_matrix_contraction_path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.from_matrix">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.base.matchgate.Matchgate" title="matchcake.base.matchgate.Matchgate"><span class="pre">Matchgate</span></a></span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.from_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a Matchgate from a matrix if it is possible. The matrix must be a 4x4 matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>matrix</strong> (<em>np.ndarray</em>) – The matrix to construct the Matchgate from.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Matchgate constructed from the matrix.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#matchcake.base.matchgate.Matchgate" title="matchcake.base.matchgate.Matchgate">Matchgate</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the matrix is not a 4x4 matrix.</p></li>
+<li><p><strong>ValueError</strong> – If the matrix is not a matchgate.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.from_sub_matrices">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_sub_matrices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outer_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inner_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.base.matchgate.Matchgate" title="matchcake.base.matchgate.Matchgate"><span class="pre">Matchgate</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.from_sub_matrices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a Matchgate from the sub-matrices <span class="math notranslate nohighlight">\(A\)</span> (outer matrix) and <span class="math notranslate nohighlight">\(W\)</span> (inner_matrix) defined as</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}A = \begin{pmatrix}
+    a &amp; b \\
+    c &amp; d
+\end{pmatrix}\end{split}\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}W = \begin{pmatrix}
+    w &amp; x \\
+    y &amp; z
+\end{pmatrix}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(a, b, c, d, w, x, y, z \in \mathbb{C}\)</span>. The matchgate is constructed as</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{pmatrix}
+    a &amp; 0 &amp; 0 &amp; b \\
+    0 &amp; w &amp; x &amp; 0 \\
+    0 &amp; y &amp; z &amp; 0 \\
+    c &amp; 0 &amp; 0 &amp; d
+\end{pmatrix}\end{split}\]</div>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.gate_data">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gate_data</span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.gate_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.get_all_params_set">
+<span class="sig-name descname"><span class="pre">get_all_params_set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">make_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.get_all_params_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the parameters set in the matchgate. The parameters set are the attributes
+<a class="reference internal" href="#matchcake.base.matchgate.Matchgate.polar_params" title="matchcake.base.matchgate.Matchgate.polar_params"><code class="xref py py-attr docutils literal notranslate"><span class="pre">polar_params</span></code></a>, <a class="reference internal" href="#matchcake.base.matchgate.Matchgate.standard_params" title="matchcake.base.matchgate.Matchgate.standard_params"><code class="xref py py-attr docutils literal notranslate"><span class="pre">standard_params</span></code></a>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">hamiltonian_params</span></code> and
+<a class="reference internal" href="#matchcake.base.matchgate.Matchgate.composed_hamiltonian_params" title="matchcake.base.matchgate.Matchgate.composed_hamiltonian_params"><code class="xref py py-attr docutils literal notranslate"><span class="pre">composed_hamiltonian_params</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>make_params</strong> (<em>bool</em>) – If True, the parameters will be computed if they are not already computed.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of the parameters set.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.get_inner_determinant">
+<span class="sig-name descname"><span class="pre">get_inner_determinant</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.get_inner_determinant" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.get_outer_determinant">
+<span class="sig-name descname"><span class="pre">get_outer_determinant</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.get_outer_determinant" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.get_single_particle_transition_matrix_contraction_path">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_single_particle_transition_matrix_contraction_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">operands</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.get_single_particle_transition_matrix_contraction_path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.hamiltonian_coefficients_params">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hamiltonian_coefficients_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_hamiltonian_coefficients_params.MatchgateHamiltonianCoefficientsParams" title="matchcake.matchgate_parameter_sets.matchgate_hamiltonian_coefficients_params.MatchgateHamiltonianCoefficientsParams"><span class="pre">MatchgateHamiltonianCoefficientsParams</span></a></em><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.hamiltonian_coefficients_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.hamiltonian_coeffs_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hamiltonian_coeffs_matrix</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.hamiltonian_coeffs_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Since the Hamiltonian coefficients is a vector that represent the upper triangular part of a skew-symmetric
+4x4 matrix, we can reconstruct the matrix using the following formula:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{pmatrix}
+    0 &amp; h_{0} &amp; h_{1} &amp; h_{2} \\
+    -h_{0} &amp; 0 &amp; h_{3} &amp; h_{4} \\
+    -h_{1} &amp; -h_{3} &amp; 0 &amp; h_{5} \\
+    -h_{2} &amp; -h_{4} &amp; -h_{5} &amp; 0
+\end{pmatrix}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(h_{i}\)</span> is the <span class="math notranslate nohighlight">\(i\)</span>-th element of the Hamiltonian coefficients vector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The Hamiltonian coefficients matrix.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.hamiltonian_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hamiltonian_matrix</span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.hamiltonian_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.inner_gate_data">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">inner_gate_data</span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.inner_gate_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>The gate data is the matrix</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{pmatrix}
+    a &amp; 0 &amp; 0 &amp; b \\
+    0 &amp; w &amp; x &amp; 0 \\
+    0 &amp; y &amp; z &amp; 0 \\
+    c &amp; 0 &amp; 0 &amp; d
+\end{pmatrix}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(a, b, c, d, w, x, y, z \in \mathbb{C}\)</span>. The inner gate data is the following sub-matrix of the
+matchgate matrix:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{pmatrix}
+    w &amp; x \\
+    y &amp; z
+\end{pmatrix}\end{split}\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.is_matchgate">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_matchgate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.is_matchgate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.outer_gate_data">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">outer_gate_data</span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.outer_gate_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>The gate data is the matrix</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{pmatrix}
+    a &amp; 0 &amp; 0 &amp; b \\
+    0 &amp; w &amp; x &amp; 0 \\
+    0 &amp; y &amp; z &amp; 0 \\
+    c &amp; 0 &amp; 0 &amp; d
+\end{pmatrix}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(a, b, c, d, w, x, y, z \in \mathbb{C}\)</span>. The outer gate data is the following sub-matrix of the
+matchgate matrix:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{pmatrix}
+    a &amp; b \\
+    c &amp; d
+\end{pmatrix}\end{split}\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The outer gate data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.polar_params">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">polar_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams" title="matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams"><span class="pre">MatchgatePolarParams</span></a></em><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.polar_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.r">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">r</span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.r" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.random">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.base.matchgate.Matchgate" title="matchcake.base.matchgate.Matchgate"><span class="pre">Matchgate</span></a></span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.random" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a random Matchgate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A random Matchgate.</p>
+</dd>
+<dt class="field-even">Rtype Matchgate<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.single_particle_transition_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">single_particle_transition_matrix</span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.single_particle_transition_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.standard_hamiltonian_params">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">standard_hamiltonian_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_hamiltonian_params.MatchgateStandardHamiltonianParams" title="matchcake.matchgate_parameter_sets.matchgate_standard_hamiltonian_params.MatchgateStandardHamiltonianParams"><span class="pre">MatchgateStandardHamiltonianParams</span></a></em><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.standard_hamiltonian_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.standard_params">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">standard_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams" title="matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams"><span class="pre">MatchgateStandardParams</span></a></em><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.standard_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.thetas">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">thetas</span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.thetas" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.to_sympy">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">to_sympy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.to_sympy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.matchgate.Matchgate.transition_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transition_matrix</span></span><a class="headerlink" href="#matchcake.base.matchgate.Matchgate.transition_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.base">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-matchcake.base" title="Permalink to this heading">¶</a></h2>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="static/documentation_options.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+matchcake.ml package
+====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   matchcake.ml.kernels
+   matchcake.ml.torch_models
+
+Submodules
+----------
+
+matchcake.ml.std\_estimator module
+----------------------------------
+
+.. automodule:: matchcake.ml.std_estimator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.ml.svm module
+-----------------------
+
+.. automodule:: matchcake.ml.svm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.ml.visualisation module
+---------------------------------
+
+.. automodule:: matchcake.ml.visualisation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: matchcake.ml
+   :members:
+   :undoc-members:
+   :show-inheritance:
