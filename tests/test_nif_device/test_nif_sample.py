@@ -4,6 +4,7 @@ import pytest
 import psutil
 
 from matchcake import MatchgateOperation, utils
+from matchcake.utils import torch_utils
 from matchcake import matchgate_parameter_sets as mps
 from . import devices_init
 from .test_specific_circuit import specific_matchgate_circuit
@@ -54,13 +55,13 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
         (params, [wire0, wire1])
         for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
     ]
-    nif_samples = nif_qnode(
+    nif_samples = torch_utils.to_numpy(nif_qnode(
         params_wires_list,
         initial_binary_state,
         all_wires=nif_device.wires,
         in_param_type=mps.MatchgatePolarParams,
         out_op="sample"
-    ).astype(int)
+    )).astype(int)
     states = np.unique(nif_samples, axis=0).astype(int)
     states_probability = np.array([
         np.sum(np.all(nif_samples == state, axis=1)) / nif_samples.shape[0]

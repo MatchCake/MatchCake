@@ -16,12 +16,12 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 from pennylane.ops.qubit.observables import BasisStateProjector
 
-from .device_utils import _VHMatchgatesContainer, _VerticalMatchgatesContainer, _HorizontalMatchgatesContainer
 from ..operations.matchgate_operation import MatchgateOperation, _SingleParticleTransitionMatrix
 from ..base.lookup_table import NonInteractingFermionicLookupTable
 from .. import utils
 from .sampling_strategies import get_sampling_strategy
 from .probability_strategies import get_probability_strategy
+from .contraction_strategies import get_contraction_strategy
 from ..utils import torch_utils
 from ..utils.math import convert_and_cast_like
 
@@ -94,14 +94,13 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         *[c.__name__ for c in utils.get_all_subclasses(MatchgateOperation)],
         "BasisEmbedding", "StatePrep", "BasisState", "Snapshot"
     }
-    observables = {"BasisStateProjector", "Projector", "Identity", "Hermitian", "PauliZ",}
+    observables = {"BasisStateProjector", "Projector", "Identity", "Hermitian", "PauliZ"}
 
     DEFAULT_PROB_STRATEGY = "LookupTable"
-    contraction_methods = {None, "neighbours", "vertical", "horizontal"}
     DEFAULT_CONTRACTION_METHOD = "neighbours"
+    DEFAULT_SAMPLING_STRATEGY = "QubitByQubitSampling"
     pfaffian_methods = {"det", "bLTL", "bH"}
     DEFAULT_PFAFFIAN_METHOD = "det"
-    DEFAULT_SAMPLING_STRATEGY = "QubitByQubitSampling"
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
 
@@ -159,9 +158,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             self,
             wires: Union[int, Wires, List[int]] = 2,
             *,
-            # r_dtype=np.float64,
             r_dtype=float,
-            # c_dtype=np.complex128,
             c_dtype=complex,
             analytic=None,
             shots: Optional[int] = None,
@@ -173,11 +170,6 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             assert len(wires) > 1, "At least two wires are required for this device."
         super().__init__(wires=wires, shots=shots, r_dtype=r_dtype, c_dtype=c_dtype, analytic=analytic)
 
-        # self.prob_strategy = kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY).lower()
-        # assert self.prob_strategy in self.prob_strategies, (
-        #     f"The probability strategy must be one of {self.prob_strategies}. "
-        #     f"Got {self.prob_strategy} instead."
-        # )
         self._debugger = kwargs.get("debugger", None)
 
         # create the initial state
@@ -187,7 +179,6 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self._state = None
         self._pre_rotated_state = None
 
-        # create a variable for future copies of the state
         self._transition_matrix = None
         self._lookup_table = None
 
@@ -200,11 +191,6 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The majorana_getter must be initialized with {self.num_wires} wires. "
             f"Got {self.majorana_getter.n} instead."
         )
-        self.contraction_method = kwargs.get("contraction_method", self.DEFAULT_CONTRACTION_METHOD)
-        assert self.contraction_method in self.contraction_methods, (
-            f"The contraction method must be one of {self.contraction_methods}. "
-            f"Got {self.contraction_method} instead."
-        )
         self.pfaffian_method = kwargs.get("pfaffian_method", self.DEFAULT_PFAFFIAN_METHOD)
         assert self.pfaffian_method in self.pfaffian_methods, (
             f"The pfaffian method must be one of {self.pfaffian_methods}. "
@@ -212,6 +198,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         )
         self.sampling_strategy = get_sampling_strategy(kwargs.get("sampling_strategy", self.DEFAULT_SAMPLING_STRATEGY))
         self.prob_strategy = get_probability_strategy(kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY))
+        self.contraction_strategy = get_contraction_strategy(kwargs.get("contraction_strategy", self.DEFAULT_CONTRACTION_METHOD))
         self.n_workers = kwargs.get("n_workers", 0)
         self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
         self.show_progress = kwargs.get("show_progress", self.p_bar is not None)
@@ -428,50 +415,6 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The device {self.short_name} cannot execute a ParametrizedEvolution operation. "
             "Please use the jax interface."
         )
-    
-    def contract_operations(self, operations, contraction_method=None):
-        contraction_method = contraction_method or self.contraction_method
-        if contraction_method is None:
-            return operations
-        elif contraction_method in ["neighbours", "vertical", "horizontal"]:
-            return self.do_neighbours_contraction(operations)
-        else:
-            raise NotImplementedError(
-                f"The contraction method {contraction_method} is not implemented."
-            )
-
-    def do_neighbours_contraction(self, operations):
-        if len(operations) <= 1:
-            return operations
-        new_operations = []
-        if self.contraction_method == "neighbours":
-            container = _VHMatchgatesContainer()
-        elif self.contraction_method == "vertical":
-            container = _VerticalMatchgatesContainer()
-        elif self.contraction_method == "horizontal":
-            container = _HorizontalMatchgatesContainer()
-        else:
-            raise ValueError(f"Contraction method {self.contraction_method} is not implemented.")
-
-        self.initialize_p_bar(total=len(operations), initial=0, desc=f"{self.contraction_method} contraction")
-        for i, op in enumerate(operations):
-            if not isinstance(op, MatchgateOperation):
-                new_operations.append(op)
-                if container:
-                    new_operations.append(container.contract())
-                    container.clear()
-                self.p_bar_set_n(i + 1)
-                continue
-            new_op = container.push_contract(op)
-            if new_op is not None:
-                new_operations.append(new_op)
-            self.p_bar_set_n(i + 1)
-
-        if container:
-            new_operations.append(container.contract())
-            container.clear()
-        self.close_p_bar()
-        return new_operations
 
     def batch_execute(self, circuits):
         """Execute a batch of quantum circuits on the device.
@@ -623,7 +566,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             operations = [operations]
         global_single_particle_transition_matrix = None
         batched = False
-        operations = self.contract_operations(operations, self.contraction_method)
+        operations = self.contraction_strategy(operations, p_bar=self.p_bar, show_progress=self.show_progress)
         self.initialize_p_bar(total=len(operations), desc="Applying operations")
         # apply the circuit operations
         for i, op in enumerate(operations):
@@ -742,7 +685,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if not isinstance(operations, Iterable):
             operations = [operations]
 
-        operations = self.contract_operations(operations, self.contraction_method)
+        operations = self.contraction_strategy(operations, p_bar=self.p_bar, show_progress=self.show_progress)
 
         remove_first = self.apply_state_prep(operations[0])
         if remove_first:

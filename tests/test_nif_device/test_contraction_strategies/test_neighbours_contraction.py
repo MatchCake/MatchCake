@@ -30,7 +30,7 @@ set_seed(TEST_SEED)
 def test_neighbours_contraction(operations, expected_new_operations):
     all_wires = set(wire for op in operations for wire in op.wires)
     nif_device_nh = init_nif_device(wires=len(all_wires), contraction_method="neighbours")
-    new_operations = nif_device_nh.do_neighbours_contraction(operations)
+    new_operations = nif_device_nh.contraction_strategy(operations)
 
     assert len(new_operations) == len(expected_new_operations), "The number of operations is different."
     for new_op, expected_op in zip(new_operations, expected_new_operations):
