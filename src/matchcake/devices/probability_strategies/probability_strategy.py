@@ -6,7 +6,6 @@ from pennylane.wires import Wires
 import pennylane as qml
 
 
-
 class ProbabilityStrategy(ABC):
     NAME: str = "ProbabilityStrategy"
     REQUIRES_KWARGS = []

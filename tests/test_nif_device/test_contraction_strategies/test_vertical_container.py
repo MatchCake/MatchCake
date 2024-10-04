@@ -1,5 +1,5 @@
 import pytest
-from matchcake.devices.device_utils import _VerticalMatchgatesContainer, _SingleParticleTransitionMatrix
+from matchcake.devices.contraction_strategies import get_contraction_strategy
 import matchcake as mc
 from matchcake import matchgate_parameter_sets as mps
 import numpy as np
@@ -26,7 +26,8 @@ set_seed(TEST_SEED)
     ]
 )
 def test_vert_matchgates_container_contract_single_op(op):
-    container = _VerticalMatchgatesContainer()
+    strategy = get_contraction_strategy("vertical")
+    container = strategy.get_container()
     container.add(op)
     np.testing.assert_allclose(
         container.contract(),
@@ -50,7 +51,8 @@ def test_vert_matchgates_container_contract_single_op(op):
     ]
 )
 def test_vert_matchgates_container_contract_single_column(column_operations):
-    container = _VerticalMatchgatesContainer()
+    strategy = get_contraction_strategy("vertical")
+    container = strategy.get_container()
     assert container.contract() is None
     for op in column_operations:
         container.add(op)
@@ -82,7 +84,8 @@ def test_vert_matchgates_container_contract_single_column(column_operations):
     ]
 )
 def test_vert_matchgates_container_contract_line_column(operations):
-    container = _VerticalMatchgatesContainer()
+    strategy = get_contraction_strategy("vertical")
+    container = strategy.get_container()
     assert container.contract() is None
 
     all_wires = set(wire for op in operations for wire in op.wires)

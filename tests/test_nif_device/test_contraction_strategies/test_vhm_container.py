@@ -1,5 +1,5 @@
 import pytest
-from matchcake.devices.device_utils import _VHMatchgatesContainer, _SingleParticleTransitionMatrix
+from matchcake.devices.contraction_strategies import get_contraction_strategy
 import matchcake as mc
 from matchcake import matchgate_parameter_sets as mps
 import numpy as np
@@ -22,7 +22,8 @@ set_seed(TEST_SEED)
     ]
 )
 def test_vh_matchgates_container_add(new_op):
-    container = _VHMatchgatesContainer()
+    strategy = get_contraction_strategy("neighbours")
+    container = strategy.get_container()
     container.add(new_op)
     assert len(container) == 1
     assert container.wires_set == set(new_op.wires.labels)
@@ -50,7 +51,8 @@ def test_vh_matchgates_container_add(new_op):
     ]
 )
 def test_vh_matchgates_container_try_add(new_op0, new_op1, crossing_wires):
-    container = _VHMatchgatesContainer()
+    strategy = get_contraction_strategy("neighbours")
+    container = strategy.get_container()
     container.add(new_op0)
     if crossing_wires:
         assert not container.try_add(new_op1)
@@ -91,7 +93,8 @@ def test_vh_matchgates_container_try_add(new_op0, new_op1, crossing_wires):
     ]
 )
 def test_vh_matchgates_container_contract_single_op(op):
-    container = _VHMatchgatesContainer()
+    strategy = get_contraction_strategy("neighbours")
+    container = strategy.get_container()
     container.add(op)
     np.testing.assert_allclose(
         container.contract(),
@@ -112,7 +115,8 @@ def test_vh_matchgates_container_contract_single_op(op):
     ]
 )
 def test_vh_matchgates_container_contract_single_line(line_operations):
-    container = _VHMatchgatesContainer()
+    strategy = get_contraction_strategy("neighbours")
+    container = strategy.get_container()
     assert container.contract() is None
     for op in line_operations:
         container.add(op)
@@ -154,7 +158,8 @@ def test_vh_matchgates_container_contract_single_line(line_operations):
     ]
 )
 def test_vh_matchgates_container_contract_single_column(column_operations):
-    container = _VHMatchgatesContainer()
+    strategy = get_contraction_strategy("neighbours")
+    container = strategy.get_container()
     assert container.contract() is None
     for op in column_operations:
         container.add(op)
