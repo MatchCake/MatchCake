@@ -17,7 +17,7 @@ def get_contraction_strategy(name: Optional[str]) -> ContractionStrategy:
     name = str(name).lower().strip()
     if name not in contraction_strategy_map:
         raise ValueError(
-            f"Unknown sampling strategy name: {name}. "
+            f"Unknown contraction strategy name: {name}. "
             f"Available strategies: {list(contraction_strategy_map.keys())}"
         )
     return contraction_strategy_map[name]()
