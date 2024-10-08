@@ -103,6 +103,10 @@ class TorchModel(nn.Module):
         return os.path.abspath(os.path.join(self.save_path, "model.pt"))
 
     @property
+    def best_model_path(self):
+        return os.path.abspath(os.path.join(self.save_path, "best_model.pt"))
+
+    @property
     def hparams_path(self):
         return os.path.abspath(os.path.join(self.save_path, "hparams.json"))
 
@@ -157,12 +161,18 @@ class TorchModel(nn.Module):
             json.dump(metrics, f, indent=4)
         return filepath
 
-    def save(self) -> "TorchModel":
+    def save(self, model_path: Optional[str] = None) -> "TorchModel":
+        if model_path is None:
+            model_path = self.model_path
         os.makedirs(self.save_path, exist_ok=True)
-        torch.save(self.state_dict(), self.model_path)
+        torch.save(self.state_dict(), model_path)
         self.save_hparams()
         self.save_pickles()
         self.save_jsons()
+        return self
+
+    def save_best(self) -> "TorchModel":
+        self.save(model_path=self.best_model_path)
         return self
 
     def save_hparams(self) -> "TorchModel":
@@ -204,17 +214,39 @@ class TorchModel(nn.Module):
             setattr(self, attr, value)
         return self
 
-    def load(self, load_hparams: bool = True, **kwargs) -> "TorchModel":
-        self.load_state_dict(torch.load(self.model_path))
+    def load(
+            self,
+            model_path: Optional[str] = None,
+            load_hparams: bool = True,
+            **kwargs
+    ) -> "TorchModel":
+        if model_path is None:
+            model_path = self.model_path
+        self.load_state_dict(torch.load(model_path))
         if load_hparams:
             self.load_hparams()
         self.load_pickles()
         self.load_jsons()
         return self
 
-    def load_if_exists(self, load_hparams: bool = True, **kwargs) -> "TorchModel":
-        if os.path.exists(self.model_path):
-            self.load(load_hparams=load_hparams, **kwargs)
+    def load_best(self, **kwargs) -> "TorchModel":
+        self.load(model_path=self.best_model_path, **kwargs)
+        return self
+
+    def load_if_exists(
+            self,
+            model_path: Optional[str] = None,
+            load_hparams: bool = True,
+            **kwargs
+    ) -> "TorchModel":
+        if model_path is None:
+            model_path = self.model_path
+        if os.path.exists(model_path):
+            self.load(model_path=model_path, load_hparams=load_hparams, **kwargs)
+        return self
+
+    def load_best_if_exists(self, **kwargs) -> "TorchModel":
+        self.load_if_exists(model_path=self.best_model_path, **kwargs)
         return self
 
     @classmethod
