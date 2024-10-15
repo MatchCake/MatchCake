@@ -40,3 +40,28 @@ class LookupTableStrategy(ProbabilityStrategy):
         )
         prob = qml.math.real(utils.pfaffian(obs, method=pfaffian_method, show_progress=show_progress))
         return prob
+
+    def batch_call(
+            self,
+            *,
+            system_state: TensorLike,
+            target_binary_states: TensorLike,
+            batch_wires: Wires,
+            **kwargs
+    ) -> TensorLike:
+        self.check_required_kwargs(kwargs)
+
+        lookup_table: NonInteractingFermionicLookupTable = kwargs["lookup_table"]
+        pfaffian_method: str = kwargs["pfaffian_method"]
+
+        show_progress = kwargs.get("show_progress", False)
+        batch_obs = lookup_table.compute_observables_of_target_states(
+            system_state,
+            target_binary_states,
+            batch_wires,
+            show_progress=show_progress,
+        )
+        prob = qml.math.real(utils.pfaffian(batch_obs, method=pfaffian_method, show_progress=show_progress))
+        return prob
+
+

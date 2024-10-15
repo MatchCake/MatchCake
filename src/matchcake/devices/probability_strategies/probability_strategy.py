@@ -26,3 +26,27 @@ class ProbabilityStrategy(ABC):
             **kwargs
     ) -> TensorLike:
         raise NotImplementedError("This method should be implemented by the subclass.")
+
+    def batch_call(
+            self,
+            *,
+            system_state: TensorLike,
+            target_binary_states: TensorLike,
+            batch_wires: Wires,
+            **kwargs
+    ) -> TensorLike:
+        if qml.math.shape(target_binary_states) != qml.math.shape(batch_wires):
+            raise ValueError(
+                f"target_binary_states shape {qml.math.shape(target_binary_states)} does not match "
+                f"batch_wires shape {qml.math.shape(batch_wires)}"
+            )
+
+        return qml.math.stack([
+            self(
+                system_state=system_state,
+                target_binary_state=target_binary_state,
+                wires=wires,
+                **kwargs
+            )
+            for target_binary_state, wires in zip(target_binary_states, batch_wires)
+        ])

@@ -29,6 +29,10 @@ from . import utils
 from . import ml
 from .utils import math
 
+from .observables import (
+    BatchHamiltonian,
+)
+
 import warnings
 
 warnings.filterwarnings("ignore", category=Warning, module="docutils")

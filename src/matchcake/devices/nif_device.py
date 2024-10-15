@@ -7,6 +7,7 @@ from typing import Iterable, Tuple, Union, Callable, Any, Optional, List
 import numpy as np
 import psutil
 import tqdm
+from pennylane.tape import QuantumTape
 from scipy import sparse
 import pythonbasictools as pbt
 import pennylane as qml
@@ -17,11 +18,12 @@ from pennylane.wires import Wires
 from pennylane.ops.qubit.observables import BasisStateProjector
 
 from ..operations.matchgate_operation import MatchgateOperation, _SingleParticleTransitionMatrix
+from ..observables.batch_hamiltonian import BatchHamiltonian
 from ..base.lookup_table import NonInteractingFermionicLookupTable
 from .. import utils
-from .sampling_strategies import get_sampling_strategy
-from .probability_strategies import get_probability_strategy
-from .contraction_strategies import get_contraction_strategy
+from .sampling_strategies import get_sampling_strategy, SamplingStrategy
+from .probability_strategies import get_probability_strategy, ProbabilityStrategy
+from .contraction_strategies import get_contraction_strategy, ContractionStrategy
 from ..utils import torch_utils
 from ..utils.math import convert_and_cast_like
 
@@ -94,7 +96,20 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         *[c.__name__ for c in utils.get_all_subclasses(MatchgateOperation)],
         "BasisEmbedding", "StatePrep", "BasisState", "Snapshot"
     }
-    observables = {"BasisStateProjector", "Projector", "Identity", "Hermitian", "PauliZ"}
+    observables = {
+        "PauliX",
+        "PauliY",
+        "PauliZ",
+        "Hadamard",
+        "BatchHamiltonian",
+        "Hermitian",
+        "Identity",
+        "Projector",
+        "Sum",
+        "Sprod",
+        "Prod",
+        BatchHamiltonian.__name__,
+    }
 
     DEFAULT_PROB_STRATEGY = "LookupTable"
     DEFAULT_CONTRACTION_METHOD = "neighbours"
@@ -196,9 +211,15 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The pfaffian method must be one of {self.pfaffian_methods}. "
             f"Got {self.pfaffian_method} instead."
         )
-        self.sampling_strategy = get_sampling_strategy(kwargs.get("sampling_strategy", self.DEFAULT_SAMPLING_STRATEGY))
-        self.prob_strategy = get_probability_strategy(kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY))
-        self.contraction_strategy = get_contraction_strategy(kwargs.get("contraction_strategy", self.DEFAULT_CONTRACTION_METHOD))
+        self.sampling_strategy: SamplingStrategy = get_sampling_strategy(
+            kwargs.get("sampling_strategy", self.DEFAULT_SAMPLING_STRATEGY)
+        )
+        self.prob_strategy: ProbabilityStrategy = get_probability_strategy(
+            kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY)
+        )
+        self.contraction_strategy: ContractionStrategy = get_contraction_strategy(
+            kwargs.get("contraction_strategy", self.DEFAULT_CONTRACTION_METHOD)
+        )
         self.n_workers = kwargs.get("n_workers", 0)
         self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
         self.show_progress = kwargs.get("show_progress", self.p_bar is not None)
@@ -289,7 +310,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             mem += self._lookup_table.memory_usage
         return mem
     
-    def get_sparse_or_dense_state(self) -> Union[int, sparse.coo_array, np.ndarray]:
+    def get_sparse_or_dense_state(self) -> Union[int, sparse.coo_array, np.ndarray, TensorLike]:
         if self._basis_state_index is not None:
             return self.basis_state_index
         elif self._state is not None:
@@ -415,6 +436,18 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             f"The device {self.short_name} cannot execute a ParametrizedEvolution operation. "
             "Please use the jax interface."
         )
+
+    def batch_transform(self, circuit: QuantumTape):
+        if len(circuit.observables) == 1:
+            if isinstance(circuit.observables[0], BatchHamiltonian):
+                circuits = [circuit]
+
+                def hamiltonian_fn(res):
+                    return res[0]
+
+                if circuit.batch_size is None or self.capabilities().get("supports_broadcasting"):
+                    return circuits, hamiltonian_fn
+        return super().batch_transform(circuit)
 
     def batch_execute(self, circuits):
         """Execute a batch of quantum circuits on the device.
@@ -712,6 +745,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if wires is None:
             wires = self.wires
 
+        wires = Wires(wires)
         num_wires = len(wires)
         if isinstance(target_binary_state, int):
             target_binary_state = utils.binary_string_to_vector(
@@ -739,6 +773,40 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             show_progress=self.show_progress,
         )
 
+    def get_states_probability(self, target_binary_states: TensorLike, batch_wires: Optional[Wires] = None):
+        if not self.is_state_initialized:
+            return None
+        if batch_wires is None:
+            batch_wires = [self.wires]
+
+        batch_wires = np.asarray(batch_wires)
+        wires_shape = batch_wires.shape
+        if isinstance(target_binary_states, int):
+            target_binary_state = utils.binary_string_to_vector(
+                utils.state_to_binary_string(target_binary_states, wires_shape[-1])
+            )
+        elif isinstance(target_binary_states, list):
+            target_binary_state = np.array(target_binary_states)
+        elif isinstance(target_binary_states, str):
+            target_binary_state = utils.binary_string_to_vector(target_binary_states)
+        else:
+            target_binary_state = np.asarray(target_binary_states)
+        assert target_binary_state.shape == wires_shape, (
+            f"The target binary states must have the shape {wires_shape}. "
+            f"Got {target_binary_state.shape} instead."
+        )
+        return self.prob_strategy.batch_call(
+            system_state=self.get_sparse_or_dense_state(),
+            target_binary_states=target_binary_states,
+            batch_wires=batch_wires,
+            all_wires=self.wires,
+            lookup_table=self.lookup_table,
+            transition_matrix=self.transition_matrix,
+            pfaffian_method=self.pfaffian_method,
+            majorana_getter=self.majorana_getter,
+            show_progress=self.show_progress,
+        )
+
     def analytic_probability(self, wires=None):
         if not self.is_state_initialized:
             return None
@@ -747,7 +815,22 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if isinstance(wires, int):
             wires = [wires]
         wires = Wires(wires)
-        wires_binary_states = np.array(list(itertools.product([0, 1], repeat=len(wires))))
+        wires_shape = wires.toarray().shape
+        wires_binary_states = np.array(list(itertools.product([0, 1], repeat=wires_shape[-1])))
+
+        if len(wires.toarray().shape) == 2:
+            wires_batched = np.stack([wires.toarray() for _ in range(wires_binary_states.shape[-2])], axis=-2)
+            wires_binary_states = np.stack([wires_binary_states for _ in range(wires_shape[0])])
+            probs = self.get_states_probability(
+                wires_binary_states.reshape(-1, wires_shape[-1]),
+                wires_batched.reshape(-1, wires_shape[-1])
+            )
+            probs = probs.reshape(wires_shape[0], -1)
+            probs = probs / qml.math.sum(probs, -1).reshape(-1, 1)
+            return probs
+        elif len(wires_shape) > 2:
+            raise ValueError(f"The wires must be a 1D or 2D array. Got a {len(wires_shape)}D array instead.")
+
         probs = qml.math.stack([
             self.get_state_probability(wires_binary_state, wires)
             for wires_binary_state in wires_binary_states
@@ -783,7 +866,10 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 return convert_and_cast_like(1, self.transition_matrix)
             return convert_and_cast_like(np.ones(t_shape[0]), self.transition_matrix)
 
-        return super().expval(observable, shot_range, bin_size)
+        super_re = super().expval(observable, shot_range, bin_size)
+        if isinstance(observable, BatchHamiltonian):
+            return observable.reduce(super_re)
+        return super_re
 
     def _asarray(self, x, dtype=None):
         r"""
@@ -805,7 +891,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         :param b: input array
         :return: dot product of the input arrays
         """
-        return qml.math.dot(a, b)
+        return qml.math.einsum("...i,...i->...", a, b)
 
     def reset(self):
         """Reset the device"""
