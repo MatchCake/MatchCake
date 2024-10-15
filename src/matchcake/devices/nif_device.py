@@ -17,7 +17,8 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 from pennylane.ops.qubit.observables import BasisStateProjector
 
-from ..operations.matchgate_operation import MatchgateOperation, _SingleParticleTransitionMatrix
+from ..operations.matchgate_operation import MatchgateOperation
+from ..operations.single_particle_transition_matrices.single_particle_transition_matrix import _SingleParticleTransitionMatrix
 from ..observables.batch_hamiltonian import BatchHamiltonian
 from ..base.lookup_table import NonInteractingFermionicLookupTable
 from .. import utils

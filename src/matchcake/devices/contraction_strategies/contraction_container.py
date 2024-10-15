@@ -1,7 +1,8 @@
 import warnings
 from typing import Iterable, Union, Optional, Literal, List
 
-from ...operations.matchgate_operation import MatchgateOperation, _SingleParticleTransitionMatrix
+from ...operations.matchgate_operation import MatchgateOperation
+from ...operations.single_particle_transition_matrices.single_particle_transition_matrix import _SingleParticleTransitionMatrix
 
 
 class _ContractionMatchgatesContainerAddException(Exception):
