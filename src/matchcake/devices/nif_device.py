@@ -477,6 +477,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self.close_p_bar()
         return new_operations
 
+    '''
     def batch_execute(self, circuits):
         """Execute a batch of quantum circuits on the device.
 
@@ -509,7 +510,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             self.tracker.record()
 
         return results
-
+    '''
     def apply_state_prep(self, operation, **kwargs) -> bool:
         """
         Apply a state preparation operation to the device. Will set the internal state of the device

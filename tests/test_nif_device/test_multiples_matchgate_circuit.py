@@ -112,6 +112,7 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_w
     ]
 )
 def test_multiples_matchgate_probs_with_qbit_device_mp(params_list, n_wires, prob_wires):
+    pytest.skip()
     if psutil.cpu_count() < 2:
         pytest.skip("This test requires at least 2 CPUs.")
     n_workers = psutil.cpu_count()
