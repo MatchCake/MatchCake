@@ -523,7 +523,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             return None
 
         if isinstance(operation, _SingleParticleTransitionMatrix):
-            return operation.pad(self.wires).matrix
+            return operation.pad(self.wires).matrix()
 
         assert operation.name in self.operations, f"Operation {operation.name} is not supported."
         op_r = None
@@ -631,7 +631,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 self.p_bar_set_postfix_str(
                     f"Padding single particle transition matrix for {getattr(op, 'name', op.__class__.__name__)}"
                 )
-                op_r = op.pad(self.wires).matrix
+                op_r = op.pad(self.wires).matrix()
             else:
                 if isinstance(op, MatchgateOperation):
                     self.p_bar_set_postfix_str(

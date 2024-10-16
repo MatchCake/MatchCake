@@ -9,6 +9,7 @@ from pennylane.wires import Wires
 from ..base.matchgate import Matchgate
 from .. import matchgate_parameter_sets as mps, utils
 from ..templates import TensorLike
+from .single_particle_transition_matrices.single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
 class MatchgateOperation(Matchgate, Operation):
@@ -115,6 +116,9 @@ class MatchgateOperation(Matchgate, Operation):
         )
     
     def __matmul__(self, other):
+        if isinstance(other, SingleParticleTransitionMatrixOperation):
+            return SingleParticleTransitionMatrixOperation.from_operation(self) @ other
+
         if not isinstance(other, MatchgateOperation):
             raise ValueError(f"Cannot multiply MatchgateOperation with {type(other)}")
         
