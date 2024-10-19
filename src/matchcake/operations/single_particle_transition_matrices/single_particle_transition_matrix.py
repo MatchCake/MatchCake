@@ -192,11 +192,43 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
     DEFAULT_CHECK_MATRIX = False
 
+    ALLOWED_ANGLES = None
+    DEFAULT_CHECK_ANGLES = False
+    DEFAULT_CLIP_ANGLES = True
+
+    @classmethod
+    def clip_angles(cls, angles):
+        """
+        If the ALLOWED_ANGLES is not none, set the angles to the closest allowed angle.
+        """
+        if cls.ALLOWED_ANGLES is None:
+            return angles
+        angles = qml.math.where(angles >= 0, angles % (2 * np.pi), angles % (-2 * np.pi))
+        allowed_angles_array = convert_and_cast_like(np.array(cls.ALLOWED_ANGLES), angles)
+        angles_shape = qml.math.shape(angles)
+        angles_flatten = qml.math.reshape(angles, (-1, 1))
+        distances = qml.math.abs(angles_flatten - allowed_angles_array)
+        angles_flatten = allowed_angles_array[qml.math.argmin(distances, -1)]
+        angles = qml.math.reshape(angles_flatten, angles_shape)
+        return angles
+
+    @classmethod
+    def check_angles(cls, angles):
+        """
+        If the ALLOWED_ANGLES is not none, check if the angles are in the allowed range.
+        """
+        if not qml.math.all(qml.math.isin(angles, cls.ALLOWED_ANGLES)):
+            raise ValueError(f"Invalid angles: {angles}. Expected: {cls.ALLOWED_ANGLES}")
+        return True
+
     def __init__(
             self,
             matrix,
             wires: Optional[Union[Sequence[int], Wires]] = None,
+            *,
             id=None,
+            clip_angles: bool = DEFAULT_CLIP_ANGLES,
+            check_angles: bool = DEFAULT_CHECK_ANGLES,
             check_matrix: bool = DEFAULT_CHECK_MATRIX,
             **kwargs
     ):
@@ -209,8 +241,13 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         else:
             params = matrix.reshape(self.batch_size, -1)
         Operation.__init__(self, params, wires=wires, id=id, **kwargs)
+        self._hyperparameters = {
+            "clip_angles": clip_angles,
+            "check_angles": check_angles,
+            "check_matrix": check_matrix,
+        }
 
-    def matrix(self, wire_order=None):
+    def matrix(self, wire_order=None) -> TensorLike:
         if wire_order is not None and self.wires != Wires(wire_order):
             raise ValueError(f""
                              f"Invalid wire order: {wire_order}. "
@@ -221,10 +258,13 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
 
     def check_is_in_so4(self, atol=1e-6, rtol=1e-6):
         matrix = self.matrix()
-        if not np.isclose(np.linalg.det(matrix), 1, atol=atol, rtol=rtol):
-            return False
-        if not np.allclose(np.linalg.inv(matrix), matrix.T, atol=atol, rtol=rtol):
-            return False
+        if self.batch_size is None:
+            matrix = matrix[None, ...]
+        for sub_matrix in matrix:
+            if not np.isclose(np.linalg.det(sub_matrix), 1, atol=atol, rtol=rtol):
+                return False
+            if not np.allclose(np.linalg.inv(sub_matrix), sub_matrix.T, atol=atol, rtol=rtol):
+                return False
         return True
 
     def pad(self, wires: Wires):
@@ -272,6 +312,18 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
                 other.matrix()
             ),
             wires=wires
+        )
+
+    def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
+        return SingleParticleTransitionMatrixOperation(
+            qml.math.conj(
+                qml.math.einsum(
+                    "...ij->...ji",
+                    self.matrix()
+                )
+            ),
+            wires=self.wires,
+            **self._hyperparameters
         )
 
 

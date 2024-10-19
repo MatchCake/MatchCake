@@ -7,3 +7,5 @@ class SptmIdentity(SingleParticleTransitionMatrixOperation):
         matrix = np.eye(4, dtype=complex)
         super().__init__(matrix, wires=wires, id=id, **kwargs)
 
+    def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
+        return self

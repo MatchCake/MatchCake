@@ -13,3 +13,6 @@ class SptmFSwap(SingleParticleTransitionMatrixOperation):
         matrix[..., 3, 1] = 1.0
         super().__init__(matrix, wires=wires, id=id, **kwargs)
 
+    def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
+        return self
+

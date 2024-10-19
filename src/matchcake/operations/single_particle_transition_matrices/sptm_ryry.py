@@ -6,9 +6,15 @@ from .single_particle_transition_matrix import SingleParticleTransitionMatrixOpe
 
 class SptmRyRy(SingleParticleTransitionMatrixOperation):
     ALLOWED_ANGLES = [-np.pi, np.pi]
-    DEFAULT_CHECK_ANGLES = False
 
-    def __init__(self, params, wires=None, id=None, check_angles: bool = DEFAULT_CHECK_ANGLES, **kwargs):
+    def __init__(
+            self,
+            params,
+            wires=None,
+            *,
+            id=None,
+            **kwargs
+    ):
         params_shape = qml.math.shape(params)
         if params_shape[-1] != 2:
             raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
@@ -22,11 +28,10 @@ class SptmRyRy(SingleParticleTransitionMatrixOperation):
 
         if params_shape[-1] != 2:
             raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
-
-        if check_angles:
-            if not np.all(np.isin(params, self.ALLOWED_ANGLES)):
-                raise ValueError(f"Invalid angles: {params}. Expected: {self.ALLOWED_ANGLES}")
-
+        if self.hyperparameters.get("check_angles", self.DEFAULT_CHECK_ANGLES):
+            self.check_angles(params)
+        if self.hyperparameters.get("clip_angles", self.DEFAULT_CLIP_ANGLES):
+            params = self.clip_angles(params)
         matrix = convert_and_cast_like(matrix, params)
         theta, phi = params[..., 0], params[..., 1]
         theta_plus_phi = (theta + phi) / 2
