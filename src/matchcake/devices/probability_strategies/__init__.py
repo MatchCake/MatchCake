@@ -1,6 +1,7 @@
 from .probability_strategy import ProbabilityStrategy
 from .lookup_table_strategy import LookupTableStrategy
 from .explicit_sum_strategy import ExplicitSumStrategy
+from .lookup_table_strategy_v2 import LookupTableStrategyV2
 from ...utils import get_all_subclasses
 
 probability_strategy_map = {

@@ -18,7 +18,10 @@ from pennylane.wires import Wires
 from pennylane.ops.qubit.observables import BasisStateProjector
 
 from ..operations.matchgate_operation import MatchgateOperation
-from ..operations.single_particle_transition_matrices.single_particle_transition_matrix import _SingleParticleTransitionMatrix
+from ..operations.single_particle_transition_matrices.single_particle_transition_matrix import (
+    _SingleParticleTransitionMatrix,
+    SingleParticleTransitionMatrixOperation,
+)
 from ..observables.batch_hamiltonian import BatchHamiltonian
 from ..base.lookup_table import NonInteractingFermionicLookupTable
 from .. import utils
@@ -95,6 +98,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     operations = {
         MatchgateOperation.__name__,
         *[c.__name__ for c in utils.get_all_subclasses(MatchgateOperation)],
+        SingleParticleTransitionMatrixOperation.__name__,
+        *[c.__name__ for c in utils.get_all_subclasses(SingleParticleTransitionMatrixOperation)],
         "BasisEmbedding", "StatePrep", "BasisState", "Snapshot"
     }
     observables = {

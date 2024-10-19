@@ -1,15 +1,14 @@
-from typing import Union, Iterable
+from typing import Union, Iterable, Sequence, Optional
 
 import numpy as np
 import pennylane as qml
-from pennylane.operation import Operation
+from pennylane.operation import Operation, AnyWires
 from pennylane import numpy as pnp
 from pennylane.wires import Wires
 
 from ...base.matchgate import Matchgate
 from ... import matchgate_parameter_sets as mps, utils
 from ...templates import TensorLike
-from ..matchgate_operation import MatchgateOperation
 from ...utils.math import convert_and_cast_like
 
 
@@ -25,17 +24,19 @@ class _SingleParticleTransitionMatrix:
     @classmethod
     def from_operation(
             cls,
-            op: Union[MatchgateOperation, "_SingleParticleTransitionMatrix"]
+            op: Union["MatchgateOperation", "_SingleParticleTransitionMatrix"]
     ) -> "_SingleParticleTransitionMatrix":
-        if isinstance(op, _SingleParticleTransitionMatrix):
+        if isinstance(op, cls):
             return op
-        return cls(op.single_particle_transition_matrix, op.wires)
+        return cls(op.single_particle_transition_matrix, wires=op.wires)
 
     @classmethod
     def from_operations(
             cls,
-            ops: Iterable[Union[MatchgateOperation, "_SingleParticleTransitionMatrix"]]
+            ops: Iterable[Union["MatchgateOperation", "_SingleParticleTransitionMatrix"]]
     ) -> "_SingleParticleTransitionMatrix":
+        from ..matchgate_operation import MatchgateOperation
+
         ops = list(ops)
         if len(ops) == 0:
             return None
@@ -64,7 +65,7 @@ class _SingleParticleTransitionMatrix:
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + sptm.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + sptm.shape[-1])
             matrix[..., slice_0, slice_1] = sptm
-        return cls(matrix, all_wires)
+        return cls(matrix, wires=all_wires)
 
     @classmethod
     def from_spt_matrices(
@@ -99,19 +100,28 @@ class _SingleParticleTransitionMatrix:
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + m.shape[-1])
             matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(m.matrix(), matrix)
             seen_wires.update(m.wires)
-        return cls(matrix, all_wires)
+        return cls(matrix, wires=all_wires)
 
     def __init__(self, matrix: TensorLike, wires: Wires):
         self._matrix = matrix
-        self.wires = wires
+        self._wires = wires
+
+    @property
+    def wires(self):
+        """Wires that the operator acts on.
+
+        Returns:
+            Wires: wires
+        """
+        return self._wires
 
     @property
     def shape(self):
-        return qml.math.shape(self.matrix())
+        return qml.math.shape(self._matrix)
 
     @property
     def batch_size(self):
-        if qml.math.ndim(self.matrix()) > 2:
+        if qml.math.ndim(self._matrix) > 2:
             return self.shape[0]
         return None
 
@@ -119,8 +129,10 @@ class _SingleParticleTransitionMatrix:
         return self.matrix()
 
     def __matmul__(self, other):
+        from ..matchgate_operation import MatchgateOperation
+
         if isinstance(other, MatchgateOperation):
-            other = _SingleParticleTransitionMatrix.from_operation(other)
+            other = self.from_operation(other)
 
         if not isinstance(other, _SingleParticleTransitionMatrix):
             raise ValueError(f"Cannot multiply _SingleTransitionMatrix with {type(other)}")
@@ -134,7 +146,7 @@ class _SingleParticleTransitionMatrix:
         _self = self.pad(wires)
         other = other.pad(wires)
 
-        return self.__class__(
+        return _SingleParticleTransitionMatrix(
             qml.math.einsum(
                 "...ij,...jk->...ik",
                 _self.matrix(),
@@ -148,7 +160,7 @@ class _SingleParticleTransitionMatrix:
             wires = Wires(wires)
         if self.wires == wires:
             return self
-        matrix = self.matrix()
+        matrix = self._matrix
         if qml.math.ndim(matrix) == 2:
             padded_matrix = np.eye(2 * len(wires))
         elif qml.math.ndim(matrix) == 3:
@@ -161,14 +173,15 @@ class _SingleParticleTransitionMatrix:
         slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-2])
         slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-1])
         padded_matrix[..., slice_0, slice_1] = matrix
-        return self.__class__(padded_matrix, wires)
+        return _SingleParticleTransitionMatrix(padded_matrix, wires=wires)
 
     def matrix(self):
         return self._matrix
 
 
-class SingleParticleTransitionMatrixOperation(Operation, _SingleParticleTransitionMatrix):
-    num_wires = 2
+class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, Operation):
+    num_wires = AnyWires
+    num_params = 1
     par_domain = "A"
 
     grad_method = "A"
@@ -177,52 +190,88 @@ class SingleParticleTransitionMatrixOperation(Operation, _SingleParticleTransiti
     generator = None
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
+    DEFAULT_CHECK_MATRIX = False
 
-    def __init__(self, matrix, wires=None, id=None, **kwargs):
-        self._num_params = np.prod(qml.math.shape(matrix)[-2:])
-        _SingleParticleTransitionMatrix.__init__(self, matrix, wires)
+    def __init__(
+            self,
+            matrix,
+            wires: Optional[Union[Sequence[int], Wires]] = None,
+            id=None,
+            check_matrix: bool = DEFAULT_CHECK_MATRIX,
+            **kwargs
+    ):
+        if check_matrix:
+            if not self.check_is_in_so4():
+                raise ValueError(f"Matrix is not in SO(4): {matrix}")
+        _SingleParticleTransitionMatrix.__init__(self, matrix, wires=wires)
         if self.batch_size is None:
             params = matrix.reshape(-1)
         else:
             params = matrix.reshape(self.batch_size, -1)
-        Operation.__init__(self, params, wires, id, **kwargs)
+        Operation.__init__(self, params, wires=wires, id=id, **kwargs)
 
     def matrix(self, wire_order=None):
-        if self.wires != Wires(wire_order):
+        if wire_order is not None and self.wires != Wires(wire_order):
             raise ValueError(f""
                              f"Invalid wire order: {wire_order}. "
                              f"Expected: {self.wires}. "
                              f"We currently cannot permute the wires with {self.__class__.__name__}.")
-        return self._matrix
+        wires = Wires(wire_order or self.wires)
+        return self.pad(wires)._matrix
 
+    def check_is_in_so4(self, atol=1e-6, rtol=1e-6):
+        matrix = self.matrix()
+        if not np.isclose(np.linalg.det(matrix), 1, atol=atol, rtol=rtol):
+            return False
+        if not np.allclose(np.linalg.inv(matrix), matrix.T, atol=atol, rtol=rtol):
+            return False
+        return True
 
-
-class SptmRxRx(SingleParticleTransitionMatrixOperation):
-    num_params = 2
-
-    def __init__(self, params, wires=None, id=None, **kwargs):
-        params_shape = qml.math.shape(params)
-        if len(params_shape) == 1:
-            matrix = np.zeros((4, 4), dtype=complex)
-        elif len(params_shape) == 2:
-            matrix = np.zeros((params_shape[0], 4, 4), dtype=complex)
+    def pad(self, wires: Wires):
+        if not isinstance(wires, Wires):
+            wires = Wires(wires)
+        if self.wires == wires:
+            return self
+        matrix = self._matrix
+        if qml.math.ndim(matrix) == 2:
+            padded_matrix = np.eye(2 * len(wires))
+        elif qml.math.ndim(matrix) == 3:
+            padded_matrix = np.zeros((qml.math.shape(matrix)[0], 2 * len(wires), 2 * len(wires)))
+            padded_matrix[:, ...] = np.eye(2 * len(wires))
         else:
-            raise ValueError(f"Invalid shape for the parameters: {params_shape}")
+            raise NotImplementedError("This method is not implemented yet.")
+        padded_matrix = utils.math.convert_and_cast_like(padded_matrix, matrix)
+        wire0_idx = wires.index(self.wires[0])
+        slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-2])
+        slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-1])
+        padded_matrix[..., slice_0, slice_1] = matrix
+        return SingleParticleTransitionMatrixOperation(padded_matrix, wires=wires)
 
-        if params_shape[-1] != 2:
-            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
+    def __matmul__(self, other):
+        from ..matchgate_operation import MatchgateOperation
 
-        matrix = convert_and_cast_like(matrix, params)
-        theta, phi = params[..., 0], params[..., 1]
+        if isinstance(other, MatchgateOperation):
+            other = self.from_operation(other)
 
-        matrix[..., 0, 0] = qml.math.cos(phi/2 - theta/2)
-        matrix[..., 0, 3] = -qml.math.sin(phi/2 - theta/2)
-        matrix[..., 1, 1] = qml.math.cos(phi/2 + theta/2)
-        matrix[..., 1, 2] = qml.math.sin(phi/2 + theta/2)
-        matrix[..., 2, 1] = -qml.math.sin(phi/2 + theta/2)
-        matrix[..., 2, 2] = qml.math.cos(phi/2 + theta/2)
-        matrix[..., 3, 0] = qml.math.sin(phi/2 - theta/2)
-        matrix[..., 3, 3] = qml.math.cos(phi/2 - theta/2)
-        super().__init__(matrix, wires, id, **kwargs)
+        if not isinstance(other, _SingleParticleTransitionMatrix):
+            raise ValueError(f"Cannot multiply {self.__class__.__name__} with {type(other)}")
+
+        if self.wires == other.wires:
+            wires = self.wires
+        else:
+            all_wires = Wires.all_wires([self.wires, other.wires], sort=True)
+            wires = self.make_wires_continuous(all_wires)
+
+        _self = self.pad(wires)
+        other = other.pad(wires)
+
+        return SingleParticleTransitionMatrixOperation(
+            qml.math.einsum(
+                "...ij,...jk->...ik",
+                _self.matrix(),
+                other.matrix()
+            ),
+            wires=wires
+        )
 
 

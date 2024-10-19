@@ -9,9 +9,9 @@ from ...base.lookup_table import NonInteractingFermionicLookupTable
 from ... import utils
 
 
-class LookupTableStrategy(ProbabilityStrategy):
-    NAME: str = "LookupTable"
-    REQUIRES_KWARGS = ["lookup_table", "pfaffian_method"]
+class LookupTableStrategyV2(ProbabilityStrategy):
+    NAME: str = "LookupTableV2"
+    REQUIRES_KWARGS = ["lookup_table"]
 
     def __call__(
             self,
@@ -29,16 +29,13 @@ class LookupTableStrategy(ProbabilityStrategy):
         wires_indexes = all_wires.indices(wires)
 
         lookup_table: NonInteractingFermionicLookupTable = kwargs["lookup_table"]
-        pfaffian_method: str = kwargs["pfaffian_method"]
-
         show_progress = kwargs.get("show_progress", False)
-        obs = lookup_table.get_observable_of_target_state(
+        prob = lookup_table.compute_pfaffian_of_target_state(
             system_state,
             target_binary_state,
             wires_indexes,
             show_progress=show_progress,
         )
-        prob = qml.math.real(utils.pfaffian(obs, method=pfaffian_method, show_progress=show_progress))
         return prob
 
     def batch_call(

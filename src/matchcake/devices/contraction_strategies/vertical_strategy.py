@@ -1,11 +1,11 @@
 from .contraction_strategy import ContractionStrategy
 from .contraction_container import _ContractionMatchgatesContainer, _ContractionMatchgatesContainerAddException
-from ...operations.matchgate_operation import MatchgateOperation, _SingleParticleTransitionMatrix
+from ...operations import MatchgateOperation, SingleParticleTransitionMatrixOperation
 
 
 class _VerticalMatchgatesContainer(_ContractionMatchgatesContainer):
     def add(self, op: MatchgateOperation):
-        op = _SingleParticleTransitionMatrix(op.single_particle_transition_matrix, op.wires)
+        op = SingleParticleTransitionMatrixOperation(op.single_particle_transition_matrix, op.wires)
         if op.wires in self.op_container:
             raise _ContractionMatchgatesContainerAddException(
                 f"Operation with wires {op.wires} already in container."

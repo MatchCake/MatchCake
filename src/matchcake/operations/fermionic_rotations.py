@@ -54,18 +54,18 @@ def _make_complete_rot_matrix(params, directions, use_exp_taylor_series: bool = 
         raise ValueError(f"Number of parameters ({params_shape[-1]}) and directions ({len(directions)}) must be equal.")
     batch_size = params_shape[0] if ndim == 2 else 1
     matrix = qml.math.cast(qml.math.convert_like(pnp.zeros((batch_size, 4, 4)), params), dtype=complex)
-    inner_matrices = _make_rot_matrix(
-        params[..., 0], directions[0],
-        use_exp_taylor_series=use_exp_taylor_series,
-        taylor_series_terms=taylor_series_terms
-    )
-    inner_matrices = qml.math.reshape(inner_matrices, (batch_size, 2, 2))
     outer_matrices = _make_rot_matrix(
-        params[..., 1], directions[1],
+        params[..., 0], directions[1],
         use_exp_taylor_series=use_exp_taylor_series,
         taylor_series_terms=taylor_series_terms
     )
     outer_matrices = qml.math.reshape(outer_matrices, (batch_size, 2, 2))
+    inner_matrices = _make_rot_matrix(
+        params[..., 1], directions[0],
+        use_exp_taylor_series=use_exp_taylor_series,
+        taylor_series_terms=taylor_series_terms
+    )
+    inner_matrices = qml.math.reshape(inner_matrices, (batch_size, 2, 2))
     matrix[:, 0, 0] = outer_matrices[:, 0, 0]
     matrix[:, 0, 3] = outer_matrices[:, 0, 1]
     matrix[:, 1, 1] = inner_matrices[:, 0, 0]

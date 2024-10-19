@@ -612,3 +612,54 @@ class NonInteractingFermionicLookupTable:
     def close_p_bar(self):
         if self.p_bar is not None:
             self.p_bar.close()
+
+    def compute_pfaffian_of_target_state(
+            self,
+            system_state: Union[int, np.ndarray, sparse.sparray],
+            target_binary_state: Optional[np.ndarray] = None,
+            indexes_of_target_state: Optional[np.ndarray] = None,
+            **kwargs
+    ) -> TensorLike:
+        if target_binary_state is None and indexes_of_target_state is None:
+            target_binary_state = np.array([1, ])
+            indexes_of_target_state = np.array([0, ])
+        elif target_binary_state is not None and indexes_of_target_state is None:
+            indexes_of_target_state = np.arange(len(target_binary_state), dtype=int)
+        elif target_binary_state is None and indexes_of_target_state is not None:
+            target_binary_state = np.ones(len(indexes_of_target_state), dtype=int)
+
+        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(system_state, n=self.n_particles)
+        bra_majorana_indexes = list(reversed(ket_majorana_indexes))
+
+        unmeasured_cls_indexes = [2 for _ in range(len(ket_majorana_indexes))]
+        measure_cls_indexes = np.array([[b, 1 - b] for b in target_binary_state]).flatten().tolist()
+        lt_indexes = np.asarray(unmeasured_cls_indexes + measure_cls_indexes + unmeasured_cls_indexes)
+
+        measure_indexes = np.array([[i, i] for i in indexes_of_target_state]).flatten().tolist()
+        majorana_indexes = np.asarray(list(bra_majorana_indexes) + measure_indexes + list(ket_majorana_indexes))
+
+        obs_size = len(majorana_indexes)
+        obs_shape = ([self.batch_size] if self.batch_size else []) + [obs_size, obs_size]
+        obs = qml.math.convert_like(np.zeros(obs_shape, dtype=complex), self.transition_matrix)
+
+        obs_indices = np.stack(np.triu_indices(obs_size, k=1))
+        lt_item_cols, lt_item_rows = majorana_indexes[obs_indices[0]], majorana_indexes[obs_indices[1]]
+
+        # compute items needed for the observable
+        all_lt_indexes = np.stack((lt_indexes[obs_indices[0]], lt_indexes[obs_indices[1]]), axis=-1)
+        unique_lt_indexes = np.unique(all_lt_indexes, axis=0)
+        lt_items = self.compute_stack_and_pad_items(unique_lt_indexes, close_p_bar=False)
+
+        # find the new indexes of the items in the stack
+        new_all_lt_indexes = np.empty(len(obs_indices[0]), dtype=int)
+        for i, (r, c) in enumerate(unique_lt_indexes):
+            new_all_lt_indexes = np.where(np.all(np.isclose(all_lt_indexes, [r, c]), axis=-1), i, new_all_lt_indexes)
+
+        # insert the elements in obs
+        obs[..., obs_indices[0], obs_indices[1]] = lt_items[new_all_lt_indexes, ..., lt_item_cols, lt_item_rows].T
+
+        self.p_bar_set_postfix_str("Finishing the computation of the observable.")
+        obs = obs - qml.math.einsum("...ij->...ji", obs)
+        self.p_bar_set_postfix_str("Finished the computation of the observable.")
+        self.close_p_bar()
+        return qml.math.real(utils.pfaffian(obs, method="det", show_progress=self.show_progress))
