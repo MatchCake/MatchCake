@@ -5,6 +5,7 @@ import pytest
 import matchcake as mc
 from matchcake import MatchgateOperation, utils
 from matchcake import matchgate_parameter_sets as mps
+from matchcake.operations import SptmRxRx, SptmIdentity
 from .. import devices_init, init_nif_device
 from ..test_single_line_matchgates_circuit import single_line_matchgates_circuit
 from ...configs import (
@@ -51,6 +52,29 @@ def test_neighbours_contraction(operations, expected_new_operations):
     ]
 )
 def test_neighbours_contraction_device_one_line(operations):
+    nif_device_nh = init_nif_device(wires=2, contraction_method="neighbours")
+    nif_device = init_nif_device(wires=2, contraction_method=None)
+
+    nif_device_nh.apply(operations)
+    nif_device.apply(operations)
+
+    np.testing.assert_allclose(
+        nif_device.analytic_probability(), nif_device_nh.analytic_probability(),
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
+    "operations",
+    [
+        [SptmIdentity(wires=[0, 1])],
+        [SptmIdentity(wires=[0, 1]) for _ in range(10)],
+        [SptmRxRx(np.random.random(2), wires=[0, 1])],
+        [SptmRxRx(np.random.random(2), wires=[0, 1]) for _ in range(2)],
+    ]
+)
+def test_neighbours_contraction_device_one_line_sptm(operations):
     nif_device_nh = init_nif_device(wires=2, contraction_method="neighbours")
     nif_device = init_nif_device(wires=2, contraction_method=None)
 

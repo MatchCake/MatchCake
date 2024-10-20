@@ -155,5 +155,11 @@ class MatchgateOperation(Matchgate, Operation):
     def __copy__(self):
         return Operation.__copy__(self)
 
+    def to_sptm_operation(self):
+        return SingleParticleTransitionMatrixOperation(
+            self.single_particle_transition_matrix,
+            wires=self.wires
+        )
+
 
 
