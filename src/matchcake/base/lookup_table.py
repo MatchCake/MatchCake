@@ -64,6 +64,9 @@ class NonInteractingFermionicLookupTable:
     
     @property
     def memory_usage(self):
+        """
+        Compute the memory usage of the lookup table in bytes.
+        """
         size = qml.math.prod(qml.math.shape(self.transition_matrix))
         mem = size * self.transition_matrix.dtype.itemsize
         tensors = [
@@ -80,6 +83,10 @@ class NonInteractingFermionicLookupTable:
         tensors = [t for t in tensors if t is not None]
         mem += sum([qml.math.prod(qml.math.shape(t)) * t.dtype.itemsize for t in tensors])
         return mem
+
+    @property
+    def memory_usage_in_gb(self):
+        return self.memory_usage / 1e9
     
     @property
     def transition_matrix(self):
