@@ -59,7 +59,7 @@ class ContractionStrategy(ABC):
         if self.p_bar is not None:
             self.p_bar.n = n
             self.p_bar.refresh()
-    
+
     def p_bar_set_n_p1(self, n: int):
         return self.p_bar_set_n(n + 1)
 
