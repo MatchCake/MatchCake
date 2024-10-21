@@ -94,8 +94,8 @@ if __name__ == '__main__':
     import seaborn as sns
 
     sim_params = dict(
-        wires=42,
-        n_features=128,
+        wires=56,
+        n_features=256,
         batch_size=32,
     )
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     axes[0] = sns.barplot(data=df, x="contraction_method", y="time", ax=axes[0], capsize=0.5)
     axes[0].set_ylabel("Time (s)")
-    axes[0].set_title("Time to run the circuit with different contraction methods")
+    axes[0].set_title("Time to run the circuit")
 
     axes[1] = sns.barplot(data=df, x="contraction_method", y="delta_ops", ax=axes[1], capsize=0.5)
     axes[1].set_ylabel("Number of operations")
