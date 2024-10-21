@@ -34,7 +34,7 @@ class SptmRzRz(SingleParticleTransitionMatrixOperation):
         if self.hyperparameters.get("clip_angles", self.DEFAULT_CLIP_ANGLES):
             params = self.clip_angles(params)
 
-        matrix = convert_and_cast_like(matrix, params)
+        matrix = qml.math.convert_like(matrix, params)
         theta, phi = params[..., 0], params[..., 1]
 
         exp_theta, exp_phi = qml.math.exp(1j * theta), qml.math.exp(1j * phi)

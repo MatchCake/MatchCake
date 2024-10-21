@@ -1,6 +1,8 @@
 import warnings
 from typing import Iterable, Union, Optional, Literal, List, Callable
 
+from pennylane.wires import Wires
+
 from ...operations.matchgate_operation import MatchgateOperation
 from ...operations.single_particle_transition_matrices.single_particle_transition_matrix import (
     _SingleParticleTransitionMatrix,
@@ -18,6 +20,10 @@ class _ContractionMatchgatesContainer:
     def __init__(self):
         self.op_container = {}
         self.wires_set = set({})
+
+    @property
+    def all_wires(self) -> Wires:
+        return Wires(self.wires_set)
 
     def __bool__(self):
         return len(self) > 0
@@ -106,7 +112,7 @@ class _ContractionMatchgatesContainer:
     ) -> List[Union[MatchgateOperation, _SingleParticleTransitionMatrix]]:
         new_operations = []
         for i, op in enumerate(operations):
-            if not isinstance(op, type(self.ALLOWED_GATE_CLASSES)):
+            if not isinstance(op, tuple(self.ALLOWED_GATE_CLASSES)):
                 new_operations.append(op)
                 if self:
                     new_operations.append(self.contract())

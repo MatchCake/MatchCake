@@ -5,7 +5,7 @@ from ...operations import MatchgateOperation, SingleParticleTransitionMatrixOper
 
 class _VerticalMatchgatesContainer(_ContractionMatchgatesContainer):
     def add(self, op: MatchgateOperation):
-        op = SingleParticleTransitionMatrixOperation(op.single_particle_transition_matrix, op.wires)
+        op = SingleParticleTransitionMatrixOperation.from_operation(op)
         if op.wires in self.op_container:
             raise _ContractionMatchgatesContainerAddException(
                 f"Operation with wires {op.wires} already in container."

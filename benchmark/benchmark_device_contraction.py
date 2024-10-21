@@ -34,11 +34,14 @@ def circuit(params, wires, initial_state=None):
         for i, even_wire in enumerate(wires[:-1:2]):
             idx = list(wires).index(even_wire)
             curr_wires = [wires[idx], wires[idx + 1]]
-            mc.operations.fRYY(layer_params, wires=curr_wires)
-            mc.operations.fRZZ(layer_params, wires=curr_wires)
+            # mc.operations.fRYY(layer_params, wires=curr_wires)
+            # mc.operations.fRZZ(layer_params, wires=curr_wires)
+            mc.operations.SptmRyRy(layer_params, wires=curr_wires)
+            mc.operations.SptmRzRz(layer_params, wires=curr_wires)
         for i, odd_wire in enumerate(wires[1:-1:2]):
             idx = list(wires).index(odd_wire)
-            mc.operations.fSWAP(wires=[wires[idx], wires[idx + 1]])
+            # mc.operations.fSWAP(wires=[wires[idx], wires[idx + 1]])
+            mc.operations.SptmFSwap(wires=[wires[idx], wires[idx + 1]])
     projector: BasisStateProjector = qml.Projector(initial_state, wires=wires)
     return qml.expval(projector)
 
@@ -47,7 +50,7 @@ def run_circuit(contraction_method: Optional[str], **kwargs):
     nif_device = mc.NonInteractingFermionicDevice(
         wires=kwargs.get("wires", 128),
         show_progress=True,
-        contraction_method=contraction_method
+        contraction_strategy=contraction_method
     )
     initial_state = np.zeros(len(nif_device.wires), dtype=int)
     nif_qnode = qml.QNode(circuit, nif_device)
@@ -58,56 +61,56 @@ def run_circuit(contraction_method: Optional[str], **kwargs):
     start_time = time.perf_counter()
     expval = nif_qnode(params, wires=nif_device.wires, initial_state=initial_state)
     end_time = time.perf_counter()
-    return end_time - start_time
+    n_ops = len(nif_qnode.tape.operations)
+    n_contracted_ops = len(nif_device.contraction_strategy(nif_qnode.tape.operations))
+    return dict(
+        time=end_time - start_time,
+        n_ops=n_ops,
+        n_contracted_ops=n_contracted_ops,
+        delta_ops=n_ops - n_contracted_ops,
+        contraction_method=str(contraction_method),
+    )
 
 
 def run_one_batch(**sim_params):
-    time_neighbours = run_circuit(contraction_method="neighbours", **sim_params)
-    print(f"Time with neighbours contraction: {datetime.timedelta(seconds=time_neighbours)}")
-    time_horizontal = run_circuit(contraction_method="horizontal", **sim_params)
-    print(f"Time with horizontal contraction: {datetime.timedelta(seconds=time_horizontal)}")
-    time_vertical = run_circuit(contraction_method="vertical", **sim_params)
-    print(f"Time with vertical contraction: {datetime.timedelta(seconds=time_vertical)}")
-    time_wo_contraction = run_circuit(contraction_method=None, **sim_params)
-    print(f"Time without contraction: {datetime.timedelta(seconds=time_wo_contraction)}")
-    return dict(
-        neighbours=time_neighbours,
-        horizontal=time_horizontal,
-        vertical=time_vertical,
-        none=time_wo_contraction
-    )
+    data_list = []
+    for key in ["forward", "neighbours", "horizontal", "vertical", None]:
+        key_data = run_circuit(contraction_method=key, **sim_params)
+        data_list.append(key_data)
+        print(f"Time with {key} contraction: {datetime.timedelta(seconds=key_data['time'])}")
+    return data_list
 
 
 def run_n_batches(n_batches: int, **sim_params):
     results = []
     for _ in range(n_batches):
-        results.append(run_one_batch(**sim_params))
+        results.extend(run_one_batch(**sim_params))
     df = pd.DataFrame(results)
     return df
 
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
+    import seaborn as sns
 
     sim_params = dict(
-        wires=128,
-        n_features=256,
+        wires=42,
+        n_features=128,
         batch_size=32,
     )
 
     df = run_n_batches(5, **sim_params)
-    time_neighbours = df["neighbours"].mean()
-    time_horizontal = df["horizontal"].mean()
-    time_vertical = df["vertical"].mean()
-    time_wo_contraction = df["none"].mean()
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+    axes = np.asarray([axes]).ravel()
 
-    fig, ax = plt.subplots()
-    ax.bar(
-        ["Neighbours", "Horizontal", "Vertical", "None"],
-        [time_neighbours, time_horizontal, time_vertical, time_wo_contraction]
-    )
-    ax.set_ylabel("Time (s)")
-    ax.set_title("Time to run the circuit with different contraction methods")
+    axes[0] = sns.barplot(data=df, x="contraction_method", y="time", ax=axes[0], capsize=0.5)
+    axes[0].set_ylabel("Time (s)")
+    axes[0].set_title("Time to run the circuit with different contraction methods")
+
+    axes[1] = sns.barplot(data=df, x="contraction_method", y="delta_ops", ax=axes[1], capsize=0.5)
+    axes[1].set_ylabel("Number of operations")
+    axes[1].set_title("Number of operations removed by the contraction method")
+
     figures_folder = os.path.join(os.path.dirname(__file__), "figures")
     os.makedirs(figures_folder, exist_ok=True)
     fig.savefig(os.path.join(figures_folder, "time_to_run_circuit_new_matmul.pdf"), bbox_inches="tight")

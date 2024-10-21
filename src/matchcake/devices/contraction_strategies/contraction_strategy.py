@@ -31,26 +31,10 @@ class ContractionStrategy(ABC):
 
         if len(operations) <= 1:
             return operations
-        new_operations = []
         container = self.get_container()
 
         self.initialize_p_bar(total=len(operations), initial=0, desc=f"{self.NAME} contraction")
-        container.contract_operations(operations=operations, callback=self.p_bar_set_n_p1)
-        # for i, op in enumerate(operations):
-        #     if not isinstance(op, tuple(self.ALLOWED_GATE_CLASSES)):
-        #         new_operations.append(op)
-        #         if container:
-        #             new_operations.append(container.contract())
-        #             container.clear()
-        #         self.p_bar_set_n(i + 1)
-        #         continue
-        #     new_op = container.push_contract(op)
-        #     if new_op is not None:
-        #         new_operations.append(new_op)
-        #     self.p_bar_set_n(i + 1)
-        # if container:
-        #     new_operations.append(container.contract())
-        #     container.clear()
+        new_operations = container.contract_operations(operations=operations, callback=self.p_bar_set_n_p1)
         self.p_bar_set_n(len(operations))
         self.close_p_bar()
         return new_operations

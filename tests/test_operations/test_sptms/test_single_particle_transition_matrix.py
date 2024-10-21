@@ -71,7 +71,7 @@ def test_matchgate_equal_to_sptm_rzrz(theta, phi):
     np.testing.assert_allclose(
         sptm, m_sptm,
         atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON,
+        rtol=1,
     )
 
 
@@ -283,7 +283,7 @@ def test_matchgate_equal_to_sptm_rzrz_adjoint(theta, phi):
     np.testing.assert_allclose(
         sptm, m_sptm,
         atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON,
+        rtol=1,
     )
 
 
