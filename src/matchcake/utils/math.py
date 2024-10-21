@@ -114,9 +114,16 @@ def convert_and_cast_like(tensor1, tensor2):
     """
     import warnings
     import numpy as np
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=np.ComplexWarning)
-        return qml.math.cast_like(qml.math.convert_like(tensor1, tensor2), tensor2)
+    interface1, interface2 = qml.math.get_interface(tensor1), qml.math.get_interface(tensor2)
+    new_tensor1 = tensor1
+    if interface1 != interface2:
+        new_tensor1 = qml.math.convert_like(tensor1, tensor2)
+    dtype1, dtype2 = qml.math.get_dtype_name(new_tensor1), qml.math.get_dtype_name(tensor2)
+    if dtype1 != dtype2:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=np.ComplexWarning)
+            new_tensor1 = qml.math.cast_like(new_tensor1, tensor2)
+    return new_tensor1
 
 
 def astensor(tensor, like=None, **kwargs):
