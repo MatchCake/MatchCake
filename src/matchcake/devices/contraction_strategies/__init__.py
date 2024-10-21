@@ -5,6 +5,7 @@ from .none_strategy import NoneContractionStrategy
 from .horizontal_strategy import HorizontalContractionStrategy
 from .vertical_strategy import VerticalContractionStrategy
 from .neighbours_strategy import NeighboursContractionStrategy
+from .forward_strategy import ForwardContractionStrategy
 from ...utils import get_all_subclasses
 
 contraction_strategy_map = {

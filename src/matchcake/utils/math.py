@@ -160,6 +160,31 @@ def eye_block_matrix(matrix: TensorLike, n: int, index: int):
     return qml.math.block_diag([eye[:index, :index], matrix, eye[index:, index:]])
 
 
+def get_like_tensors_of_highest_priority(
+        tensors: List[TensorLike],
+        cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+                "numpy", "autograd", "jax", "tf", "torch"
+        )
+) -> TensorLike:
+    r"""
+    Convert and cast the tensors to the same type using the given priorities.
+
+    :param tensors: Tensors to convert and cast.
+    :type tensors: List[TensorLike]
+    :param cast_priorities: Priorities of the casting. Higher the index is, higher the priority.
+    :type cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]]
+
+    :return: Converted and casted tensors.
+    :rtype: List[TensorLike]
+    """
+    if len(tensors) == 0:
+        return None
+    tensors_priorities = [cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors]
+    highest_priority = max(tensors_priorities)
+    like = tensors[tensors_priorities.index(highest_priority)]
+    return like
+
+
 def convert_and_cast_tensors_to_same_type(
         tensors: List[TensorLike],
         cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
