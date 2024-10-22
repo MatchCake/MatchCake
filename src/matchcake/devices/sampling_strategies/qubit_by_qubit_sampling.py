@@ -31,8 +31,8 @@ class QubitByQubitSampling(SamplingStrategy):
         :return: Samples with shape (shots, num_wires) of probabilities |<x|psi>|^2
         """
         # pi_0 = pi_0(x_0) = [p_0(0), p_0(1)]
-        probs = qml.math.stack([state_prob_func([i], Wires([0])) for i in [0, 1]])
-        probs = probs / probs.sum()
+        probs = to_numpy(qml.math.stack([state_prob_func([i], Wires([0])) for i in [0, 1]], axis=-1))
+        probs = probs / probs.sum(axis=-1, keepdims=True)
 
         # Sample x_0 from the probability distribution pi_0(x_0)
         samples = device.sample_basis_states(2, to_numpy(probs))
@@ -41,12 +41,9 @@ class QubitByQubitSampling(SamplingStrategy):
         binary = device.states_to_binary(samples, 1)
         binaries = [binary]
         for j in range(1, device.num_wires):
-            zeros_states = qml.math.concatenate(
-                [qml.math.concatenate(binaries, -1), qml.math.zeros((device.shots, 1))], -1
-            )
-            ones_states = qml.math.concatenate(
-                [qml.math.concatenate(binaries, -1), qml.math.ones((device.shots, 1))], -1
-            )
+            binaries_array = qml.math.concatenate(binaries, -1)
+            zeros_states = qml.math.concatenate([binaries_array, qml.math.zeros((device.shots, 1))], -1)
+            ones_states = qml.math.concatenate([binaries_array, qml.math.ones((device.shots, 1))], -1)
             zeros_probs = qml.math.stack([
                 state_prob_func(state.astype(int), Wires(np.arange(j + 1)))
                 for state in zeros_states
@@ -87,24 +84,23 @@ class QubitByQubitSampling(SamplingStrategy):
         :return: Samples with shape (shots, num_wires) of probabilities |<x|psi>|^2
         """
         # pi_0 = pi_0(x_0) = [p_0(0), p_0(1)]
-        probs = to_numpy(states_prob_func(np.arange(2).reshape(2, 1), np.zeros((2, 1))))
+        probs = to_numpy(states_prob_func(np.asarray([[0], [1]]), [Wires([0]), Wires([0])]))
         # Sample x_0 from the probability distribution pi_0(x_0)
         samples = random_index(probs, n=device.shots, axis=-1)
+        batch_shape = qml.math.shape(samples)
+        ravel_batch_size = np.prod(batch_shape)
 
         # x_0
         binary = device.states_to_binary(samples, 1)
         binaries = [binary]
         for j in range(1, device.num_wires):
-            zeros_states = qml.math.concatenate(
-                [qml.math.concatenate(binaries, -1), qml.math.zeros((device.shots, 1))], -1
-            ).astype(int)
-            ones_states = qml.math.concatenate(
-                [qml.math.concatenate(binaries, -1), qml.math.ones((device.shots, 1))], -1
-            ).astype(int)
-            half_wires = np.arange(j + 1).reshape((1, -1)).repeat(zeros_states.shape[0], axis=0)
+            binaries_array = qml.math.concatenate(binaries, -1)
+            zeros_states = qml.math.concatenate([binaries_array, qml.math.zeros_like(binaries_array)], -1).astype(int)
+            ones_states = qml.math.concatenate([binaries_array, qml.math.ones_like(binaries_array)], -1).astype(int)
+            half_wires = np.arange(j + 1).reshape((1, -1)).repeat(ravel_batch_size, axis=0)
             # pi_j = pi_j(x_0, ..., x_{j-1}, x_j) / pi_{j-1}(x_0, ..., x_{j-1})
-            zeros_probs = states_prob_func(zeros_states, half_wires)
-            ones_probs = states_prob_func(ones_states, half_wires)
+            zeros_probs = states_prob_func(zeros_states.reshape(ravel_batch_size, -1), half_wires).reshape(*batch_shape, -1)
+            ones_probs = states_prob_func(ones_states.reshape(ravel_batch_size, -1), half_wires).reshape(*batch_shape, -1)
             probs = to_numpy(qml.math.stack([zeros_probs, ones_probs], -1))
             # states = qml.math.concatenate([zeros_states, ones_states], 0)
             # wires = np.arange(j + 1).reshape((1, -1)).repeat(states.shape[0], axis=0)

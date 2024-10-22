@@ -1,8 +1,14 @@
 import numpy as np
+from pennylane.wires import Wires
+
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
 class SptmFHH(SingleParticleTransitionMatrixOperation):
+    @classmethod
+    def random(cls, wires: Wires, batch_size=None, **kwargs):
+        return cls(wires=wires, **kwargs)
+
     def __init__(self, wires=None, id=None, **kwargs):
         matrix = np.zeros((4, 4), dtype=complex)
         matrix[..., 0, 2] = 1.0

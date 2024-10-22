@@ -41,7 +41,7 @@ class ProbabilityStrategy(ABC):
                 f"batch_wires shape {qml.math.shape(batch_wires)}"
             )
 
-        return qml.math.stack([
+        probs = qml.math.stack([
             self(
                 system_state=system_state,
                 target_binary_state=target_binary_state,
@@ -49,4 +49,5 @@ class ProbabilityStrategy(ABC):
                 **kwargs
             )
             for target_binary_state, wires in zip(target_binary_states, batch_wires)
-        ])
+        ], axis=-1)
+        return probs

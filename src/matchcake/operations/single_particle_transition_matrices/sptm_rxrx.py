@@ -1,10 +1,19 @@
 import numpy as np
 import pennylane as qml
+from pennylane.wires import Wires
+
 from ...utils.math import convert_and_cast_like
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
 class SptmRxRx(SingleParticleTransitionMatrixOperation):
+
+    @classmethod
+    def random(cls, wires: Wires, batch_size=None, **kwargs):
+        params_shape = ([batch_size] if batch_size is not None else []) + [2]
+        params = np.random.uniform(0, 2 * np.pi, params_shape)
+        return cls(params, wires=wires, **kwargs)
+
     def __init__(self, params, wires=None, id=None, **kwargs):
         params_shape = qml.math.shape(params)
         if params_shape[-1] != 2:

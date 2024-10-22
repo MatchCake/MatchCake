@@ -262,6 +262,11 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             matrix[..., slice_0, slice_1] = op_matrix
         return SingleParticleTransitionMatrixOperation(matrix, wires=all_wires, **kwargs)
 
+    @classmethod
+    def random(cls, wires: Wires, batch_size=None, **kwargs):
+        matrix = np.random.randn(*(([batch_size] if batch_size is not None else []) + [2 * len(wires), 2 * len(wires)]))
+        return cls(matrix, wires=wires, **kwargs)
+
     def __init__(
             self,
             matrix,

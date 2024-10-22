@@ -909,6 +909,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             for wires_binary_state in wires_binary_states
         ])
         probs = probs / qml.math.sum(probs)
+        # probs = self.get_states_probability(wires_binary_states, wires)
         return probs
 
     def generate_samples(self):
@@ -928,8 +929,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         """
         if not self.is_state_initialized:
             return None
-        # return self.sampling_strategy.generate_samples(self, self.get_state_probability)
-        return self.sampling_strategy.batch_generate_samples(self, self.get_states_probability)
+        return self.sampling_strategy.generate_samples(self, self.get_state_probability)
+        # return self.sampling_strategy.batch_generate_samples(self, self.get_states_probability)
 
     def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):
@@ -957,8 +958,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self.apply_generator(op_iterator, **kwargs)
         if output_type is None:
             return
-        if output_type == "samples":
+        if self.shots is not None and self._samples is None:
             self._samples = self.generate_samples()
+        if output_type == "samples":
+            if self.shots is None:
+                raise ValueError("The number of shots must be specified to generate samples.")
             return self._samples
         if output_type == "expval":
             return self.expval(observable)
