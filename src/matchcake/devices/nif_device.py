@@ -720,7 +720,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                         self.apply_metadata.get("n_contracted_operations", 0) + 1
                 )
             self.p_bar_set_n(i + 1)
-            del op
+            if kwargs.get("gc_op", True):
+                del op
 
         last_op = self.contraction_strategy.get_reminding()
         if last_op is not None:
