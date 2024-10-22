@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Sequence
+from typing import Sequence, Optional
 
 from pennylane.operation import Operation
 import tqdm
@@ -16,10 +16,19 @@ class ContractionStrategy(ABC):
     def __init__(self, show_progress: bool = False):
         self.p_bar = None
         self.show_progress = show_progress
+        self.container = self.get_container()
 
     @abstractmethod
     def get_container(self) -> _ContractionMatchgatesContainer:
         raise NotImplementedError("This method should be implemented by the subclass.")
+
+    def get_next_operations(self, operation) -> Sequence[Optional[Operation]]:
+        if not isinstance(operation, tuple(self.container.ALLOWED_GATE_CLASSES)):
+            return [self.container.contract_and_clear(), operation]
+        return [self.container.push_contract(operation)]
+
+    def get_reminding(self):
+        return self.container.contract_and_clear()
 
     def __call__(
             self,
@@ -31,10 +40,9 @@ class ContractionStrategy(ABC):
 
         if len(operations) <= 1:
             return operations
-        container = self.get_container()
 
         self.initialize_p_bar(total=len(operations), initial=0, desc=f"{self.NAME} contraction")
-        new_operations = container.contract_operations(operations=operations, callback=self.p_bar_set_n_p1)
+        new_operations = self.container.contract_operations(operations=operations, callback=self.p_bar_set_n_p1)
         self.p_bar_set_n(len(operations))
         self.close_p_bar()
         return new_operations

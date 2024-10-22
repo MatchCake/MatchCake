@@ -1,8 +1,9 @@
 import itertools
 import warnings
+from collections import defaultdict
 from copy import deepcopy
 from functools import partial
-from typing import Iterable, Tuple, Union, Callable, Any, Optional, List
+from typing import Iterable, Tuple, Union, Callable, Any, Optional, List, Literal
 
 import numpy as np
 import psutil
@@ -229,6 +230,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self.n_workers = kwargs.get("n_workers", 0)
         self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
         self.show_progress = kwargs.get("show_progress", self.p_bar is not None)
+        self.apply_metadata = defaultdict()
     
     @property
     def basis_state_index(self) -> int:
@@ -499,6 +501,13 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         :return: True if the operation was applied, False otherwise
         :rtype: bool
         """
+
+        if kwargs.get("index", 0) > 0 and isinstance(operation, (qml.StatePrep, qml.BasisState)):
+            raise qml.DeviceError(
+                f"Operation {operation.name} cannot be used after other Operations have already been applied "
+                f"on a {self.short_name} device."
+            )
+
         is_applied = True
         if isinstance(operation, qml.StatePrep):
             self._apply_state_vector(operation.parameters[0], operation.wires)
@@ -605,7 +614,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             operations = [operations]
         global_single_particle_transition_matrix = None
         batched = False
+        self.apply_metadata["n_operations"] = len(operations)
         operations = self.contraction_strategy(operations, p_bar=self.p_bar, show_progress=self.show_progress)
+        self.apply_metadata["n_contracted_operations"] = len(operations)
         self.initialize_p_bar(total=len(operations), desc="Applying operations")
         # apply the circuit operations
         for i, op in enumerate(operations):
@@ -671,6 +682,61 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         )
         self.p_bar_set_postfix_str("Transition matrix computed")
         self.close_p_bar()
+
+    def _apply_op(
+            self, _op: qml.operation.Operation, _batched: bool, _global_sptm: TensorLike
+    ) -> Tuple[TensorLike, bool]:
+        _op_r = SingleParticleTransitionMatrixOperation.from_operation(_op).pad(self.wires).matrix()
+        _batched = _batched or (qml.math.ndim(_op_r) > 2)
+        return self.update_single_particle_transition_matrix(_global_sptm, _op_r), _batched
+
+    def apply_generator(self, op_iterator: Iterable[qml.operation.Operation], **kwargs):
+        """
+        Apply a generator of gates to the device.
+
+        :param op_iterator: The generator of operations to apply
+        :type op_iterator: Iterable[qml.operation.Operation]
+        :param kwargs: Additional keyword arguments
+        :return: None
+        """
+        global_sptm, batched = None, False
+        n_ops = kwargs.get("n_ops", getattr(op_iterator, "__len__", lambda: None)())
+        if n_ops is not None:
+            self.initialize_p_bar(total=n_ops, desc="Applying operations")
+
+        for i, op in enumerate(op_iterator):
+            self.apply_metadata["n_operations"] = i + 1
+            if isinstance(op, qml.Identity):
+                continue
+            is_prep = self.apply_state_prep(op, index=i)
+            if is_prep:
+                continue
+            op_list = self.contraction_strategy.get_next_operations(op)
+            for j, op_j in enumerate(op_list):
+                if op_j is None:
+                    continue
+                global_sptm, batched = self._apply_op(op_j, batched, global_sptm)
+                self.apply_metadata["n_contracted_operations"] = (
+                        self.apply_metadata.get("n_contracted_operations", 0) + 1
+                )
+            self.p_bar_set_n(i + 1)
+            del op
+
+        last_op = self.contraction_strategy.get_reminding()
+        if last_op is not None:
+            global_sptm, batched = self._apply_op(last_op, batched, global_sptm)
+            self.apply_metadata["n_contracted_operations"] = self.apply_metadata.get("n_contracted_operations", 0) + 1
+
+        if global_sptm is None:
+            global_sptm = pnp.eye(2 * self.num_wires)[None, ...]
+            if not batched:
+                global_sptm = global_sptm[0]
+
+        self.p_bar_set_postfix_str("Computing transition matrix")
+        self._transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm)
+        self.p_bar_set_postfix_str("Transition matrix computed")
+        self.close_p_bar()
+        return
 
     def prod_single_particle_transition_matrices_mp(self, sptm_list):
         """
@@ -877,6 +943,27 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             return observable.reduce(super_re)
         return super_re
 
+    def execute_generator(
+            self,
+            op_iterator: Iterable[qml.operation.Operation],
+            observable: Optional = None,
+            output_type: Optional[Literal["samples", "expval", "probs"]] = None,
+            **kwargs
+    ):
+        if kwargs.get("reset", True):
+            self.reset()
+        self.apply_generator(op_iterator, **kwargs)
+        if output_type is None:
+            return
+        if output_type == "samples":
+            self._samples = self.generate_samples()
+            return self._samples
+        if output_type == "expval":
+            return self.expval(observable)
+        if output_type == "probs":
+            return self.probability(**kwargs)
+        raise ValueError(f"Output type {output_type} is not supported.")
+
     def _asarray(self, x, dtype=None):
         r"""
         Convert the input to an array of type ``dtype``.
@@ -908,6 +995,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self._pre_rotated_state = self._state
         self._transition_matrix = None
         self._lookup_table = None
+        self.apply_metadata = defaultdict()
 
     def update_p_bar(self, *args, **kwargs):
         if self.p_bar is None:

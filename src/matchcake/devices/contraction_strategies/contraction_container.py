@@ -87,6 +87,11 @@ class _ContractionMatchgatesContainer:
                 raise TypeError(f"Unexpected type in container: {type(op)}")
         return SingleParticleTransitionMatrixOperation.from_spt_matrices(sptms)
 
+    def contract_and_clear(self) -> Optional[_SingleParticleTransitionMatrix]:
+        contracted_op = self.contract()
+        self.clear()
+        return contracted_op
+
     def push_contract(
             self,
             op: MatchgateOperation,
@@ -99,8 +104,7 @@ class _ContractionMatchgatesContainer:
         :return: The contracted operation if the container was cleared, None otherwise.
         """
         if not self.try_add(op):
-            contracted_op = self.contract()
-            self.clear()
+            contracted_op = self.contract_and_clear()
             self.add(op)
             return contracted_op
         return None
@@ -115,8 +119,7 @@ class _ContractionMatchgatesContainer:
             if not isinstance(op, tuple(self.ALLOWED_GATE_CLASSES)):
                 new_operations.append(op)
                 if self:
-                    new_operations.append(self.contract())
-                    self.clear()
+                    new_operations.append(self.contract_and_clear())
                 if callback is not None:
                     callback(i)
                 continue
@@ -126,7 +129,6 @@ class _ContractionMatchgatesContainer:
             if callback is not None:
                 callback(i)
         if self:
-            new_operations.append(self.contract())
-            self.clear()
+            new_operations.append(self.contract_and_clear())
         return new_operations
 
