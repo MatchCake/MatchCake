@@ -43,8 +43,8 @@ set_seed(TEST_SEED)
         for num_gates in [1, 2 ** num_wires]
     ]
 )
-def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
-    nif_device, _ = devices_init(wires=n_wires, shots=int(1024 * n_wires))
+def test_qubit_by_qubit_sampling_with_probs(params_list, n_wires):
+    nif_device, _ = devices_init(wires=n_wires, shots=int(1024 * n_wires), sampling_strategy="QubitByQubitSampling")
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
 
     all_wires = np.arange(n_wires)
@@ -81,3 +81,6 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
         rtol=RTOL_APPROX_COMPARISON,
         err_msg=f"abs_diff: {abs_diff.tolist()}"
     )
+
+
+

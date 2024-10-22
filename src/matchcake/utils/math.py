@@ -1,4 +1,4 @@
-from typing import Tuple, List, Literal, Any
+from typing import Tuple, List, Literal, Any, Optional
 import scipy
 import pennylane as qml
 from ..templates.tensor_like import TensorLike
@@ -289,3 +289,28 @@ def exp_euler(x: TensorLike) -> TensorLike:
     :rtype: TensorLike
     """
     return qml.math.cos(x) + 1j * qml.math.sin(x)
+
+
+def random_choice(a, probs, axis=-1):
+    import numpy as np
+    axis = np.mod(axis, probs.ndim)
+    r = np.expand_dims(np.random.rand(probs.shape[1-axis]), axis=axis)
+    indexes = (probs.cumsum(axis=axis) > r).argmax(axis=axis)
+    # return the element of a at the index
+    return np.take_along_axis(a, indexes[:, None], axis=axis).squeeze(axis)
+
+
+def random_index(probs, n: Optional[int] = None, axis=-1, normalize_probs: bool = True):
+    import numpy as np
+    _n = n or 1
+    axis = np.mod(axis, probs.ndim)
+    shape_wo_axis = list(probs.shape)
+    shape_wo_axis.pop(axis)
+    shape_wo_axis = [_n] + shape_wo_axis
+    r = np.expand_dims(np.random.rand(*shape_wo_axis), axis=1+axis)
+    if normalize_probs:
+        probs = probs / probs.sum(axis=axis, keepdims=True)
+    indexes = (probs.cumsum(axis=axis) > r).argmax(axis=1+axis)
+    if n is None:
+        return indexes[0]
+    return indexes

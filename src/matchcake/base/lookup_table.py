@@ -654,7 +654,7 @@ class NonInteractingFermionicLookupTable:
 
         # compute items needed for the observable
         all_lt_indexes = np.stack((lt_indexes[obs_indices[0]], lt_indexes[obs_indices[1]]), axis=-1)
-        unique_lt_indexes = np.unique(all_lt_indexes, axis=0)
+        unique_lt_indexes = np.unique(all_lt_indexes, axis=0)  # TODO: optimize this line
         lt_items = self.compute_stack_and_pad_items(unique_lt_indexes, close_p_bar=False)
 
         # find the new indexes of the items in the stack

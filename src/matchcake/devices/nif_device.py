@@ -928,7 +928,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         """
         if not self.is_state_initialized:
             return None
-        return self.sampling_strategy.generate_samples(self, self.get_state_probability)
+        # return self.sampling_strategy.generate_samples(self, self.get_state_probability)
+        return self.sampling_strategy.batch_generate_samples(self, self.get_states_probability)
 
     def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):

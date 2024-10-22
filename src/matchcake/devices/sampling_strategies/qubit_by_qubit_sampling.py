@@ -6,6 +6,7 @@ import numpy as np
 import pennylane as qml
 
 from ...utils.torch_utils import to_numpy
+from ...utils.math import random_index
 from ..probability_strategies import ProbabilityStrategy
 
 
@@ -68,3 +69,53 @@ class QubitByQubitSampling(SamplingStrategy):
         # return x_0 ... x_{n-1}
         return qml.math.concatenate(binaries, -1)
 
+    def batch_generate_samples(
+            self,
+            device: qml.QubitDevice,
+            states_prob_func: Callable[[TensorLike, Wires], TensorLike],
+            **kwargs
+    ) -> TensorLike:
+        """
+        Generate qubit-by-qubit samples.
+
+        1. Sample x_0 from the probability distribution pi_0(x_0)
+        2. for j = 1 to n-1 do
+        3.     Sample x_j from the probability distribution pi_j(x_0, ..., x_{j-1}, x_j) / pi_{j-1}(x_0, ..., x_{j-1})
+        4. end for
+        5. return x_0 ... x_{n-1}
+
+        :return: Samples with shape (shots, num_wires) of probabilities |<x|psi>|^2
+        """
+        # pi_0 = pi_0(x_0) = [p_0(0), p_0(1)]
+        probs = to_numpy(states_prob_func(np.arange(2).reshape(2, 1), np.zeros((2, 1))))
+        # Sample x_0 from the probability distribution pi_0(x_0)
+        samples = random_index(probs, n=device.shots, axis=-1)
+
+        # x_0
+        binary = device.states_to_binary(samples, 1)
+        binaries = [binary]
+        for j in range(1, device.num_wires):
+            zeros_states = qml.math.concatenate(
+                [qml.math.concatenate(binaries, -1), qml.math.zeros((device.shots, 1))], -1
+            ).astype(int)
+            ones_states = qml.math.concatenate(
+                [qml.math.concatenate(binaries, -1), qml.math.ones((device.shots, 1))], -1
+            ).astype(int)
+            half_wires = np.arange(j + 1).reshape((1, -1)).repeat(zeros_states.shape[0], axis=0)
+            # pi_j = pi_j(x_0, ..., x_{j-1}, x_j) / pi_{j-1}(x_0, ..., x_{j-1})
+            zeros_probs = states_prob_func(zeros_states, half_wires)
+            ones_probs = states_prob_func(ones_states, half_wires)
+            probs = to_numpy(qml.math.stack([zeros_probs, ones_probs], -1))
+            # states = qml.math.concatenate([zeros_states, ones_states], 0)
+            # wires = np.arange(j + 1).reshape((1, -1)).repeat(states.shape[0], axis=0)
+            # probs = to_numpy(states_prob_func(states, wires))
+            # split the first dimension into two parts
+            # Sample x_j from the probability distribution pi_j
+            samples = random_index(probs, axis=-1)
+
+            # x_j
+            binary = device.states_to_binary(samples, 1)
+            binaries.append(binary)
+
+        # return x_0 ... x_{n-1}
+        return qml.math.concatenate(binaries, -1)

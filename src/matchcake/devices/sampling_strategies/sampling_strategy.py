@@ -17,3 +17,11 @@ class SamplingStrategy(ABC):
             **kwargs
     ) -> TensorLike:
         raise NotImplementedError("This method should be implemented by the subclass.")
+
+    def batch_generate_samples(
+            self,
+            device: qml.QubitDevice,
+            states_prob_func: Callable[[TensorLike, Wires], TensorLike],
+            **kwargs
+    ) -> TensorLike:
+        raise NotImplementedError("This method should be implemented by the subclass.")
