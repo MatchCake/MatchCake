@@ -701,11 +701,12 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         """
         global_sptm, batched = None, False
         n_ops = kwargs.get("n_ops", getattr(op_iterator, "__len__", lambda: None)())
-        if n_ops is not None:
-            self.initialize_p_bar(total=n_ops, desc="Applying operations")
+        total = n_ops or 0
+        self.initialize_p_bar(total=total, desc="Applying operations")
 
         for i, op in enumerate(op_iterator):
             self.apply_metadata["n_operations"] = i + 1
+            self.p_bar_set_total(max(i + 1, total))
             if isinstance(op, qml.Identity):
                 continue
             is_prep = self.apply_state_prep(op, index=i)
@@ -846,7 +847,12 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             show_progress=self.show_progress,
         )
 
-    def get_states_probability(self, target_binary_states: TensorLike, batch_wires: Optional[Wires] = None):
+    def get_states_probability(
+            self,
+            target_binary_states: TensorLike,
+            batch_wires: Optional[Wires] = None,
+            **kwargs
+    ):
         if not self.is_state_initialized:
             return None
         if batch_wires is None:
@@ -864,6 +870,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             target_binary_state = utils.binary_string_to_vector(target_binary_states)
         else:
             target_binary_state = np.asarray(target_binary_states)
+
+        if len(target_binary_state.shape) == len(wires_shape) + 1:
+            batch_wires = np.stack([batch_wires for _ in range(target_binary_state.shape[0])])
+            wires_shape = batch_wires.shape
+
         assert target_binary_state.shape == wires_shape, (
             f"The target binary states must have the shape {wires_shape}. "
             f"Got {target_binary_state.shape} instead."
@@ -878,6 +889,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             pfaffian_method=self.pfaffian_method,
             majorana_getter=self.majorana_getter,
             show_progress=self.show_progress,
+            nb_workers=self.n_workers,
+            **kwargs
         )
 
     def analytic_probability(self, wires=None):
@@ -929,8 +942,12 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         """
         if not self.is_state_initialized:
             return None
-        return self.sampling_strategy.generate_samples(self, self.get_state_probability)
-        # return self.sampling_strategy.batch_generate_samples(self, self.get_states_probability)
+        # return self.sampling_strategy.generate_samples(self, self.get_state_probability)
+        return self.sampling_strategy.batch_generate_samples(
+            self,
+            self.get_states_probability,
+            nb_workers=self.n_workers,
+        )
 
     def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):
@@ -1012,6 +1029,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     def p_bar_set_n(self, n: int):
         if self.p_bar is not None:
             self.p_bar.n = n
+            self.p_bar.refresh()
+
+    def p_bar_set_total(self, total: int):
+        if self.p_bar is not None:
+            self.p_bar.total = total
             self.p_bar.refresh()
 
     def initialize_p_bar(self, *args, **kwargs):

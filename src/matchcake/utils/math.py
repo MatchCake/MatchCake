@@ -300,16 +300,23 @@ def random_choice(a, probs, axis=-1):
     return np.take_along_axis(a, indexes[:, None], axis=axis).squeeze(axis)
 
 
-def random_index(probs, n: Optional[int] = None, axis=-1, normalize_probs: bool = True):
+def random_index(
+        probs,
+        n: Optional[int] = None,
+        axis=-1,
+        normalize_probs: bool = True,
+        eps: float = 1e-12
+):
     import numpy as np
     _n = n or 1
     axis = np.mod(axis, probs.ndim)
+    if normalize_probs:
+        probs = probs / (probs.sum(axis=axis, keepdims=True) + eps)
+
     shape_wo_axis = list(probs.shape)
     shape_wo_axis.pop(axis)
     shape_wo_axis = [_n] + shape_wo_axis
     r = np.expand_dims(np.random.rand(*shape_wo_axis), axis=1+axis)
-    if normalize_probs:
-        probs = probs / probs.sum(axis=axis, keepdims=True)
     indexes = (probs.cumsum(axis=axis) > r).argmax(axis=1+axis)
     if n is None:
         return indexes[0]
