@@ -721,10 +721,10 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                         self.apply_metadata.get("n_contracted_operations", 0) + 1
                 )
                 self.apply_metadata["percentage_contracted"] = (
-                        100 * self.apply_metadata["n_contracted_operations"] / self.apply_metadata["n_operations"]
+                        100 *  (i + 1 - self.apply_metadata["n_contracted_operations"]) / (i + 1)
                 )
             self.p_bar_set_n(i + 1)
-            self.p_bar_set_postfix_str(f"Percentage contracted: {self.apply_metadata['percentage_contracted']:.2f}%")
+            self.p_bar_set_postfix_str(f"Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%")
             if kwargs.get("gc_op", True):
                 del op
 
@@ -740,7 +740,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
         self.p_bar_set_postfix_str("Computing transition matrix")
         self._transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm)
-        self.p_bar_set_postfix_str("Transition matrix computed")
+        self.p_bar_set_postfix_str(
+            f"Transition matrix computed. Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%"
+        )
         self.close_p_bar()
         return
 
