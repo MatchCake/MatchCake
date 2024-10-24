@@ -888,8 +888,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             transition_matrix=self.transition_matrix,
             pfaffian_method=self.pfaffian_method,
             majorana_getter=self.majorana_getter,
-            show_progress=self.show_progress,
-            nb_workers=self.n_workers,
+            show_progress=kwargs.pop("show_progress", self.show_progress),
+            nb_workers=kwargs.pop("nb_workers", self.n_workers),
             **kwargs
         )
 
@@ -945,8 +945,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         # return self.sampling_strategy.generate_samples(self, self.get_state_probability)
         return self.sampling_strategy.batch_generate_samples(
             self,
-            self.get_states_probability,
+            partial(self.get_states_probability, show_progress=False),
             nb_workers=self.n_workers,
+            show_progress=self.show_progress
         )
 
     def expval(self, observable, shot_range=None, bin_size=None):
