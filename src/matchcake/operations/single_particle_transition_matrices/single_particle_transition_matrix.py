@@ -356,4 +356,20 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             **self._hyperparameters
         )
 
+    def to_cuda(self):
+        from ...utils import torch_utils
+        import torch
+        return SingleParticleTransitionMatrixOperation(
+            torch_utils.to_cuda(self.matrix(), dtype=torch.complex128),
+            wires=self.wires,
+            **self._hyperparameters
+        )
 
+    def to_torch(self):
+        from ...utils import torch_utils
+        import torch
+        return SingleParticleTransitionMatrixOperation(
+            torch_utils.to_tensor(self.matrix(), dtype=torch.complex128),
+            wires=self.wires,
+            **self._hyperparameters
+        )
