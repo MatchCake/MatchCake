@@ -292,7 +292,7 @@ def pfaffian_by_det(
 ):
     shape = qml.math.shape(__matrix)
     p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)
-    p_bar.set_description(f"Computing determinant of {shape} matrix")
+    p_bar.set_description(f"[det] Computing determinant of {shape} matrix")
     backend = qml.math.get_interface(__matrix)
     if backend in ["autograd", "numpy"]:
         det = qml.math.linalg.det(__matrix)
@@ -302,6 +302,34 @@ def pfaffian_by_det(
     else:
         det = qml.math.det(__matrix)
         pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
+    p_bar.set_description(f"Determinant of {shape} matrix computed")
+    p_bar.update()
+    p_bar.close()
+    return pf
+
+
+def pfaffian_by_det_cuda(
+        __matrix: TensorLike,
+        p_bar: Optional[tqdm.tqdm] = None,
+        show_progress: bool = False,
+        epsilon: float = 1e-12
+):
+    from . import torch_utils
+    import torch
+    shape = qml.math.shape(__matrix)
+    p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)
+    p_bar.set_description(f"[cuda_det] Computing determinant of {shape} matrix")
+    backend = qml.math.get_interface(__matrix)
+    cuda_det = torch.det(torch_utils.to_cuda(__matrix))
+    if backend in ["torch"]:
+        if __matrix.device.type == "cuda":
+            det = cuda_det
+        else:
+            det = torch_utils.to_cpu(cuda_det)
+    else:
+        det = torch_utils.to_cpu(cuda_det)
+    det = convert_and_cast_like(det, __matrix)
+    pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
     p_bar.set_description(f"Determinant of {shape} matrix computed")
     p_bar.update()
     p_bar.close()
@@ -364,6 +392,8 @@ def pfaffian(
         return pfaffian_householder(__matrix, overwrite_input)
     elif method == "det":
         return pfaffian_by_det(__matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon)
+    elif method == "cuda_det":
+        return pfaffian_by_det_cuda(__matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon)
     elif method == "bLTL":
         return batch_pfaffian_ltl(__matrix, overwrite_input, show_progress=show_progress, p_bar=p_bar)
     elif method == "bH":

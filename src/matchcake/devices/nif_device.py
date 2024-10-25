@@ -121,7 +121,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     DEFAULT_PROB_STRATEGY = "LookupTable"
     DEFAULT_CONTRACTION_METHOD = "neighbours"
     DEFAULT_SAMPLING_STRATEGY = "QubitByQubitSampling"
-    pfaffian_methods = {"det", "bLTL", "bH"}
+    pfaffian_methods = {"det", "bLTL", "bH", "cuda_det"}
     DEFAULT_PFAFFIAN_METHOD = "det"
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
@@ -721,23 +721,29 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                         self.apply_metadata.get("n_contracted_operations", 0) + 1
                 )
                 self.apply_metadata["percentage_contracted"] = (
-                        100 *  (i + 1 - self.apply_metadata["n_contracted_operations"]) / (i + 1)
+                        100 * (i + 1 - self.apply_metadata["n_contracted_operations"]) / (i + 1)
                 )
             self.p_bar_set_n(i + 1)
             self.p_bar_set_postfix_str(f"Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%")
             if kwargs.get("gc_op", True):
                 del op
 
+        self.p_bar_set_total(self.apply_metadata["n_operations"])
         last_op = self.contraction_strategy.get_reminding()
         if last_op is not None:
             global_sptm, batched = self._apply_op(last_op, batched, global_sptm)
             self.apply_metadata["n_contracted_operations"] = self.apply_metadata.get("n_contracted_operations", 0) + 1
-
+        self.apply_metadata["percentage_contracted"] = (
+                100 * (
+                    self.apply_metadata["n_operations"] - self.apply_metadata.get("n_contracted_operations", 0)
+                ) / self.apply_metadata["n_operations"]
+        )
         if global_sptm is None:
             global_sptm = pnp.eye(2 * self.num_wires)[None, ...]
             if not batched:
                 global_sptm = global_sptm[0]
 
+        self.p_bar_set_n(self.apply_metadata["n_operations"])
         self.p_bar_set_postfix_str("Computing transition matrix")
         self._transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm)
         self.p_bar_set_postfix_str(
@@ -1014,7 +1020,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         :param b: input array
         :return: dot product of the input arrays
         """
-        return qml.math.einsum("...i,...i->...", a, b)
+        return qml.math.einsum("...i,...i->...", self._asarray(a), self._asarray(b))
 
     def reset(self):
         """Reset the device"""
