@@ -121,7 +121,10 @@ class QubitByQubitSampling(SamplingStrategy):
             probs = qml.math.full((*batch_shape, 2), 0.0)
             for i, state in enumerate(all_states):
                 mask = np.isclose(binaries_array, state[:-1]).all(axis=-1)
-                probs[..., state[-1]] = np.where(mask, unique_states_probs[..., i], probs[..., state[-1]])
+                try:
+                    probs[..., state[-1]] = np.where(mask, unique_states_probs[i, ...], probs[..., state[-1]])
+                except:
+                    probs[..., state[-1]] = np.where(mask, unique_states_probs[..., i], probs[..., state[-1]])
 
             # Sample x_j from the probability distribution pi_j
             samples = random_index(probs, axis=-1)
