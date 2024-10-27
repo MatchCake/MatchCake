@@ -95,7 +95,7 @@ class QubitByQubitSampling(SamplingStrategy):
             unit="wires",
         )
         # pi_0 = pi_0(x_0) = [p_0(0), p_0(1)]
-        probs = to_numpy(states_prob_func(np.asarray([[0], [1]]), Wires([0])))
+        probs = to_numpy(states_prob_func(np.asarray([[0], [1]]), Wires([0]))).T
         # Sample x_0 from the probability distribution pi_0(x_0)
         samples = random_index(probs, n=device.shots, axis=-1)
         batch_shape = qml.math.shape(samples)
@@ -121,10 +121,7 @@ class QubitByQubitSampling(SamplingStrategy):
             probs = qml.math.full((*batch_shape, 2), 0.0)
             for i, state in enumerate(all_states):
                 mask = np.isclose(binaries_array, state[:-1]).all(axis=-1)
-                try:
-                    probs[..., state[-1]] = np.where(mask, unique_states_probs[i, ...], probs[..., state[-1]])
-                except:
-                    probs[..., state[-1]] = np.where(mask, unique_states_probs[..., i], probs[..., state[-1]])
+                probs[..., state[-1]] = np.where(mask, unique_states_probs[i, ...], probs[..., state[-1]])
 
             # Sample x_j from the probability distribution pi_j
             samples = random_index(probs, axis=-1)

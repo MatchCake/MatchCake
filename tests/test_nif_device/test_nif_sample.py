@@ -4,6 +4,7 @@ import pytest
 import psutil
 
 from matchcake import MatchgateOperation, utils
+from matchcake.operations import SptmRxRx
 from matchcake.utils import torch_utils
 from matchcake import matchgate_parameter_sets as mps
 from matchcake.circuits import random_sptm_operations_generator
@@ -89,7 +90,7 @@ def test_qubit_by_qubit_sampling_with_probs(params_list, n_wires):
 @pytest.mark.parametrize(
     "operations_generator, num_wires",
     [
-        (random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size), num_wires)
+        (random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size, op_types=[SptmRxRx]), num_wires)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in range(2, 6)
         for num_gates in [1, 10 * num_wires]
@@ -107,10 +108,10 @@ def test_qubit_by_qubit_sampling_with_probs_op_gen(operations_generator, num_wir
     unique_states_probability = np.stack([
         np.sum(np.isclose(nif_samples, state).all(axis=-1), axis=0) / nif_samples.shape[0]
         for state in unique_states
-    ], axis=-1)
-    unique_states_probability = unique_states_probability / np.sum(unique_states_probability, axis=-1, keepdims=True)
+    ], axis=0)
+    unique_states_probability = unique_states_probability / np.sum(unique_states_probability, axis=0, keepdims=True)
     unique_states_expval = nif_device.get_states_probability(unique_states, np.arange(num_wires))
-    states_expval = unique_states_expval / np.sum(unique_states_expval, axis=-1, keepdims=True)
+    states_expval = unique_states_expval / np.sum(unique_states_expval, axis=0, keepdims=True)
 
     abs_diff = np.abs(unique_states_probability - states_expval)
     np.testing.assert_allclose(

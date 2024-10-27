@@ -923,9 +923,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 wires_binary_states.reshape(-1, wires_shape[-1]),
                 wires_batched.reshape(-1, wires_shape[-1])
             )
-            probs = probs.reshape(wires_shape[0], -1)
-            probs = probs / qml.math.sum(probs, -1).reshape(-1, 1)
-            return probs
+            probs = probs / qml.math.sum(probs, 0).reshape(1, -1)
+            return qml.math.transpose(probs.reshape(*wires_binary_states.shape[:-1], -1), (-1, 0, 1))
         elif len(wires_shape) > 2:
             raise ValueError(f"The wires must be a 1D or 2D array. Got a {len(wires_shape)}D array instead.")
 
@@ -997,7 +996,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if output_type == "expval":
             return self.expval(observable)
         if output_type == "probs":
-            return self.probability(**kwargs)
+            return self.probability(
+                wires=kwargs.get("wires", None),
+                shot_range=kwargs.get("shot_range", None),
+                bin_size=kwargs.get("bin_size", None),
+            )
         raise ValueError(f"Output type {output_type} is not supported.")
 
     def _asarray(self, x, dtype=None):

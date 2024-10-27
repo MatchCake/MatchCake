@@ -60,5 +60,5 @@ class ProbabilityStrategy(ABC):
             unit="states",
             nb_workers=nb_workers,
         )
-        probs = qml.math.stack(probs_list, axis=-1)
+        probs = qml.math.stack(probs_list, axis=0)
         return probs

@@ -17,5 +17,5 @@ class BatchHamiltonian(qml.Hamiltonian):
         """
         Use the expectation values and the coefficients of the Hamiltonian to compute the energy.
         """
-        return qml.math.dot(self.coeffs, expectation_values)
+        return qml.math.einsum("...i,...i->...", self.coeffs, expectation_values)
 
