@@ -1,9 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import Callable
 import numpy as np
+import tqdm
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 import pennylane as qml
+
+from matchcake.utils.math import random_index
+from matchcake.utils.torch_utils import to_numpy
 
 
 class SamplingStrategy(ABC):

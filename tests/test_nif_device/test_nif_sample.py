@@ -128,18 +128,15 @@ def test_qubit_by_qubit_sampling_with_probs_op_gen(operations_generator, num_wir
     "operations_generator, num_wires",
     [
         (random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size, op_types=[SptmRxRx]), num_wires)
-        # for _ in range(N_RANDOM_TESTS_PER_CASE)
-        # for num_wires in range(2, 8, 1)
-        # for num_gates in [1, 10 * num_wires]
-        # for batch_size in [None, 16]
-        for num_wires in [5]
-        for num_gates in [10]
-        for batch_size in [16]
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for num_wires in range(2, 6)
+        for num_gates in [1, 10 * num_wires]
+        for batch_size in [None, 16]
     ]
 )
 def test_2qubits_by_2qubits_sampling_with_probs_op_gen(operations_generator, num_wires):
     nif_device, _ = devices_init(
-        wires=num_wires, shots=int(1024 * num_wires), sampling_strategy="2QubitBy2QubitSampling"
+        wires=num_wires, shots=int(2048 * num_wires), sampling_strategy="2QubitBy2QubitSampling"
     )
     nif_samples = torch_utils.to_numpy(nif_device.execute_generator(
         operations_generator,
