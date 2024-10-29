@@ -420,9 +420,9 @@ class NonInteractingFermionicLookupTable:
 
         :param system_state: State of the system
         :type system_state: Union[int, np.ndarray, sparse.sparray]
-        :param target_binary_state: Target state of the system
+        :param target_binary_states: Target state of the system
         :type target_binary_states: Optional[np.ndarray]
-        :param indexes_of_target_state: Indexes of the target state of the system
+        :param indexes_of_target_states: Indexes of the target state of the system
         :type indexes_of_target_states: Optional[np.ndarray]
         :return: The observable of shape (2(h + k), 2(h + k)) where h is the hamming weight of the system state.
         :rtype: np.ndarray
