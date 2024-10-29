@@ -647,9 +647,6 @@ class NonInteractingFermionicLookupTable:
         obs[..., obs_indices[0], obs_indices[1]] = qml.math.transpose(
             lt_items[new_all_lt_indexes, ..., lt_item_rows, lt_item_cols], (0, -1, -2)
         )
-        # _obs = obs.copy()
-        # for i in range(target_batch_size):
-        #     obs[i, ..., obs_indices[0], obs_indices[1]] = lt_items[new_all_lt_indexes[i], ..., lt_item_rows[i], lt_item_cols[i]]
 
         self.p_bar_set_postfix_str("Finishing the computation of the observable.")
         obs = obs - qml.math.einsum("...ij->...ji", obs)
