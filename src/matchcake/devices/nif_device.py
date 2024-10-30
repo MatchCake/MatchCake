@@ -982,9 +982,33 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             output_type: Optional[Literal["samples", "expval", "probs"]] = None,
             **kwargs
     ):
-        if kwargs.get("reset", True):
+        """
+        Execute a generator of operations on the device and return the result in the specified output type.
+
+        :param op_iterator: A generator of operations to execute
+        :type op_iterator: Iterable[qml.operation.Operation]
+        :param observable: The observable to measure
+        :type observable: Optional
+        :param output_type: The type of output to return. Supported types are "samples", "expval", and "probs"
+        :type output_type: Optional[Literal["samples", "expval", "probs"]]
+        :param kwargs: Additional keyword arguments
+
+        :keyword reset: Whether to reset the device before applying the operations. Default is False.
+        :keyword apply: Whether to apply the operations. Where "auto" will apply the operations if the transition matrix
+            is None which means that no operations have been applied yet. Default is "auto".
+        :keyword wires: The wires to measure the observable on. Default is None.
+        :keyword shot_range: The range of shots to measure the observable on. Default is None.
+        :keyword bin_size: The size of the bins to measure the observable on. Default is None.
+
+        :return: The result of the execution in the specified output type
+        """
+        if kwargs.get("reset", False):
             self.reset()
-        self.apply_generator(op_iterator, **kwargs)
+        apply = kwargs.get("apply", "auto")
+        if apply == "auto" and self.transition_matrix is None:
+            apply = True
+        if apply:
+            self.apply_generator(op_iterator, **kwargs)
         if output_type is None:
             return
         if self.shots is not None and self._samples is None:
