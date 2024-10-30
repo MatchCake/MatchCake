@@ -1,29 +1,17 @@
 import numpy as np
 import pytest
 
-import pennylane as qml
+import matchcake as mc
 from matchcake import utils
 from matchcake.operations import (
-    fRXX,
-    fRYY,
-    fRZZ,
-    FermionicRotation,
     fSWAP,
-    fH,
 )
 from matchcake.operations.single_particle_transition_matrices import (
-    SptmRxRx,
     SptmFSwap,
-    SptmFHH,
-    SptmIdentity,
-    SptmRzRz,
-    SptmRyRy,
-    SingleParticleTransitionMatrixOperation,
 )
 from ...configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
-    N_RANDOM_TESTS_PER_CASE,
     set_seed,
     TEST_SEED,
 )
@@ -45,21 +33,31 @@ def test_matchgate_equal_to_sptm_fswap():
 @pytest.mark.parametrize(
     "wire0, wire1, all_wires",
     [
-        (
-                np.random.uniform(-np.pi, np.pi, batch_size).squeeze(),
-                np.random.uniform(-np.pi, np.pi, batch_size).squeeze()
-        )
-        for batch_size in [1, 4]
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        # (0, 1, 2),
+        # (0, 1, 4),
+        # (0, 1, 6),
+        # (1, 2, 6),
+        # (2, 3, 6),
+        # (3, 4, 6),
+        (0, 2, 3),
     ]
 )
-def test_sptm_fswap_chain_equal_to_sptm_fswap(theta, phi):
-    params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
-    matchgate = fRXX(params, wires=[0, 1])
-    m_sptm = matchgate.single_particle_transition_matrix
-    sptm = SptmRxRx(params, wires=[0, 1]).matrix()
+def test_sptm_fswap_chain_equal_to_sptm_fswap(wire0, wire1, all_wires):
+    all_wires = list(range(all_wires))
+
+    def _gen():
+        for tmp_wire0 in range(wire0, wire1):
+            tmp_wire1 = tmp_wire0 + 1
+            yield SptmFSwap(wires=[tmp_wire0, tmp_wire1])
+        return
+
+    device = mc.NIFDevice(wires=all_wires)
+    device.execute_generator(_gen(), reset=True, apply=True, cache_global_sptm=True)
+    chain_sptm = device.apply_metadata["global_sptm"]
+    sptm = SptmFSwap(wires=[wire0, wire1], chain_sptm=chain_sptm).matrix(all_wires)
+
     np.testing.assert_allclose(
-        sptm, m_sptm,
+        sptm, chain_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
