@@ -294,11 +294,6 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         }
 
     def matrix(self, wire_order=None) -> TensorLike:
-        if wire_order is not None and self.wires != Wires(wire_order):
-            raise ValueError(f""
-                             f"Invalid wire order: {wire_order}. "
-                             f"Expected: {self.wires}. "
-                             f"We currently cannot permute the wires with {self.__class__.__name__}.")
         wires = Wires(wire_order or self.wires)
         return self.pad(wires)._matrix
 
