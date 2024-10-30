@@ -745,6 +745,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
         self.p_bar_set_n(self.apply_metadata["n_operations"])
         self.p_bar_set_postfix_str("Computing transition matrix")
+        if kwargs.get("cache_global_sptm", False):
+            self.apply_metadata["global_sptm"] = torch_utils.to_numpy(global_sptm)
         self._transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm)
         self.p_bar_set_postfix_str(
             f"Transition matrix computed. Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%"
