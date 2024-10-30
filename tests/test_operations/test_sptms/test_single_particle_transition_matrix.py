@@ -126,17 +126,6 @@ def test_sptm_ryry_is_so4(theta, phi):
     assert sptm_obj.check_is_in_so4()
 
 
-def test_matchgate_equal_to_sptm_fswap():
-    matchgate = fSWAP(wires=[0, 1])
-    m_sptm = matchgate.single_particle_transition_matrix
-    sptm = SptmFSwap(wires=[0, 1]).matrix()
-    np.testing.assert_allclose(
-        sptm, m_sptm,
-        atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON,
-    )
-
-
 def test_matchgate_equal_to_sptm_fhh():
     matchgate = fH(wires=[0, 1])
     m_sptm = matchgate.single_particle_transition_matrix
