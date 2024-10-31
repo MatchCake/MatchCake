@@ -33,13 +33,10 @@ def test_matchgate_equal_to_sptm_fswap():
 @pytest.mark.parametrize(
     "wire0, wire1, all_wires",
     [
-        # (0, 1, 2),
-        # (0, 1, 4),
-        # (0, 1, 6),
-        # (1, 2, 6),
-        # (2, 3, 6),
-        # (3, 4, 6),
-        (0, 2, 3),
+        (wire0, wire1, n_wires)
+        for n_wires in range(2, 16)
+        for wire0 in range(n_wires - 1)
+        for wire1 in range(wire0 + 1, n_wires)
     ]
 )
 def test_sptm_fswap_chain_equal_to_sptm_fswap(wire0, wire1, all_wires):
@@ -54,7 +51,7 @@ def test_sptm_fswap_chain_equal_to_sptm_fswap(wire0, wire1, all_wires):
     device = mc.NIFDevice(wires=all_wires)
     device.execute_generator(_gen(), reset=True, apply=True, cache_global_sptm=True)
     chain_sptm = device.apply_metadata["global_sptm"]
-    sptm = SptmFSwap(wires=[wire0, wire1], chain_sptm=chain_sptm).matrix(all_wires)
+    sptm = SptmFSwap(wires=[wire0, wire1]).matrix(all_wires)
 
     np.testing.assert_allclose(
         sptm, chain_sptm,
