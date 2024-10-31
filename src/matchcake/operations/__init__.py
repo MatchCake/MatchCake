@@ -12,6 +12,7 @@ from .single_particle_transition_matrices import (
     SptmRzRz,
     SptmRyRy,
     SptmAngleEmbedding,
+    SptmFSwapRzRz,
 )
 
 
