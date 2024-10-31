@@ -703,7 +703,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         n_ops = kwargs.get("n_ops", getattr(op_iterator, "__len__", lambda: None)())
         total = n_ops or 0
         self.initialize_p_bar(total=total, desc="Applying operations", unit="op")
-
+        self.apply_metadata["n_operations"] = self.apply_metadata.get("n_operations", 0)
         for i, op in enumerate(op_iterator):
             self.apply_metadata["n_operations"] = i + 1
             self.p_bar_set_total(max(i + 1, total))
@@ -736,7 +736,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self.apply_metadata["percentage_contracted"] = (
                 100 * (
                     self.apply_metadata["n_operations"] - self.apply_metadata.get("n_contracted_operations", 0)
-                ) / self.apply_metadata["n_operations"]
+                ) / max(self.apply_metadata["n_operations"], 1)
         )
         if global_sptm is None:
             global_sptm = pnp.eye(2 * self.num_wires)[None, ...]
