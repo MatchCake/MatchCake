@@ -94,13 +94,13 @@ class _SingleParticleTransitionMatrix:
         )
         seen_wires = set()
         for m in matrices:
-            if m.wires in seen_wires:
-                raise ValueError(f"Cannot have repeated wires in the matrices: {m.wires}")
-            wire0_idx = all_wires.index(m.wires[0])
+            if m.sorted_wires in seen_wires:
+                raise ValueError(f"Cannot have repeated wires in the matrices: {m.sorted_wires}")
+            wire0_idx = all_wires.index(m.sorted_wires[0])
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + m.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + m.shape[-1])
             matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(m.matrix(), matrix)
-            seen_wires.update(m.wires)
+            seen_wires.update(m.sorted_wires)
         return cls(matrix, wires=all_wires)
 
     def __init__(self, matrix: TensorLike, wires: Wires, **kwargs):
@@ -175,6 +175,10 @@ class _SingleParticleTransitionMatrix:
 
     def matrix(self):
         return self._matrix
+
+    @property
+    def sorted_wires(self):
+        return Wires(sorted(self.wires.tolist()))
 
 
 class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, Operation):
@@ -256,7 +260,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         matrix = utils.math.convert_and_cast_like(matrix, ops_sptms[0])
 
         for op, op_matrix in zip(ops, ops_sptms):
-            wire0_idx = all_wires.index(op.wires[0])
+            wire0_idx = all_wires.index(op.sorted_wires[0])
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + op_matrix.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + op_matrix.shape[-1])
             matrix[..., slice_0, slice_1] = op_matrix
@@ -293,6 +297,10 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             "check_matrix": check_matrix,
         }
 
+    @property
+    def sorted_wires(self):
+        return Wires(sorted(self.wires.tolist()))
+
     def matrix(self, wire_order=None) -> TensorLike:
         wires = Wires(wire_order or self.wires)
         return self.pad(wires)._matrix
@@ -311,7 +319,8 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     def pad(self, wires: Wires):
         if not isinstance(wires, Wires):
             wires = Wires(wires)
-        if self.wires == wires:
+        sorted_wires = Wires(sorted(wires.tolist()))
+        if self.sorted_wires == sorted_wires:
             return self
         matrix = self._matrix
         if qml.math.ndim(matrix) == 2:
@@ -322,11 +331,11 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         else:
             raise NotImplementedError("This method is not implemented yet.")
         padded_matrix = utils.math.convert_and_cast_like(padded_matrix, matrix)
-        wire0_idx = wires.index(self.wires[0])
+        wire0_idx = sorted_wires.index(self.sorted_wires[0])
         slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-2])
         slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-1])
         padded_matrix[..., slice_0, slice_1] = matrix
-        return SingleParticleTransitionMatrixOperation(padded_matrix, wires=wires, **self._hyperparameters)
+        return SingleParticleTransitionMatrixOperation(padded_matrix, wires=sorted_wires, **self._hyperparameters)
 
     def __matmul__(self, other):
         if not isinstance(other, _SingleParticleTransitionMatrix):
