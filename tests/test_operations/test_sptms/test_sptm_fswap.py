@@ -73,7 +73,7 @@ def test_sptm_fswap_chain_equal_to_sptm_fswap_reverse(wire0, wire1, all_wires):
     all_wires = list(range(all_wires))
 
     def _gen():
-        for tmp_wire0 in range(wire1 - 2, wire0 - 1, -1):
+        for tmp_wire0 in reversed(range(wire0, wire1)):
             tmp_wire1 = tmp_wire0 + 1
             yield SptmFSwap(wires=[tmp_wire0, tmp_wire1])
         return
@@ -81,7 +81,7 @@ def test_sptm_fswap_chain_equal_to_sptm_fswap_reverse(wire0, wire1, all_wires):
     device = mc.NIFDevice(wires=all_wires)
     device.execute_generator(_gen(), reset=True, apply=True, cache_global_sptm=True)
     chain_sptm = device.apply_metadata["global_sptm"]
-    sptm = SptmFSwap(wires=[wire0, wire1]).matrix(all_wires)
+    sptm = SptmFSwap(wires=[wire1, wire0]).matrix(all_wires)
 
     np.testing.assert_allclose(
         sptm, chain_sptm,
