@@ -10,13 +10,16 @@ class SptmFSwap(SingleParticleTransitionMatrixOperation):
         return cls(wires=wires, **kwargs)
 
     def __init__(self, wires=None, id=None, **kwargs):
-        chain_sptm = kwargs.get("chain_sptm", None)  # TODO: remove, for debugging only
         wires_arr = Wires(wires).toarray()
-        matrix = np.zeros((4, 4), dtype=complex)
-        matrix[..., 0, 2] = 1.0
-        matrix[..., 1, 3] = 1.0
-        matrix[..., 2, 0] = 1.0
-        matrix[..., 3, 1] = 1.0
+        wire0, wire1 = wires_arr
+        size = 2 * (wire1 - wire0 + 1)
+        matrix = np.zeros((size, size), dtype=int)
+
+        first_idx = 2 * (wire1 - wire0)
+        matrix[:2, first_idx: first_idx + 2] = np.eye(2)
+
+        rows, cols = np.where(np.eye(*matrix.shape, k=-2))
+        matrix[rows, cols] = 1
         super().__init__(matrix, wires=wires, id=id, **kwargs)
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
