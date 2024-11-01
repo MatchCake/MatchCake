@@ -302,7 +302,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         return Wires(sorted(self.wires.tolist()))
 
     def matrix(self, wire_order=None) -> TensorLike:
-        wires = Wires(wire_order or self.wires)
+        wires = Wires(self.wires) if wire_order is None else Wires(wire_order)
         return self.pad(wires)._matrix
 
     def check_is_in_so4(self, atol=1e-6, rtol=1e-6):

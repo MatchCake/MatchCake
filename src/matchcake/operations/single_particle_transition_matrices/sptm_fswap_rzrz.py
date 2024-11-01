@@ -46,6 +46,8 @@ class SptmFSwapRzRz(SingleParticleTransitionMatrixOperation):
             params = self.clip_angles(params)
 
         matrix = qml.math.convert_like(matrix, params)
+        rows, cols = np.where(np.eye(2 * n_wires, k=0))
+        matrix[..., rows, cols] = 1
         theta, phi = params[..., 0], params[..., 1]
 
         exp_theta, exp_phi = qml.math.exp(1j * theta), qml.math.exp(1j * phi)
@@ -59,8 +61,8 @@ class SptmFSwapRzRz(SingleParticleTransitionMatrixOperation):
 
         # apply this on wire 1
         matrix[..., -2, -2] = qml.math.cos(phi / 2 + theta / 2)
-        matrix[..., -2, -3] = qml.math.sin(phi / 2 + theta / 2)
-        matrix[..., -3, -2] = -qml.math.sin(phi / 2 + theta / 2)
-        matrix[..., -3, -3] = qml.math.cos(phi / 2 + theta / 2)
+        matrix[..., -2, -1] = qml.math.sin(phi / 2 + theta / 2)
+        matrix[..., -1, -2] = -qml.math.sin(phi / 2 + theta / 2)
+        matrix[..., -1, -1] = qml.math.cos(phi / 2 + theta / 2)
         super().__init__(matrix, wires=wires, id=id, **kwargs)
 
