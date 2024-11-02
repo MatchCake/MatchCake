@@ -285,6 +285,13 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     def transition_matrix(self):
         return self._transition_matrix
 
+    @transition_matrix.setter
+    def transition_matrix(self, value):
+        if self._transition_matrix is not None:
+            value = convert_and_cast_like(value, self._transition_matrix)
+        self._transition_matrix = value
+        self._lookup_table = None
+
     @property
     def lookup_table(self):
         if self.transition_matrix is None:
@@ -1009,6 +1016,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         apply = kwargs.get("apply", "auto")
         if apply == "auto" and self.transition_matrix is None:
             apply = True
+        elif apply == "auto":
+            apply = False
         if apply:
             self.apply_generator(op_iterator, **kwargs)
         if output_type is None:
