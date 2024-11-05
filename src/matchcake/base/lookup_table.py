@@ -1,6 +1,7 @@
 import numbers
 import warnings
 from typing import Optional, Tuple, Union, Iterable, List, Sized
+import itertools
 
 import numpy as np
 import pennylane as qml
@@ -31,6 +32,8 @@ class NonInteractingFermionicLookupTable:
     # TODO: the number of operations in the lookup table.
     """
     DEFAULT_CACHE_OBSERVABLES = False
+    ALL_2D_INDEXES = np.asarray(list(itertools.product(range(3), repeat=2)))
+    ALL_1D_INDEXES = utils.math.convert_2d_to_1d_indexes(ALL_2D_INDEXES, n_rows=3)
 
     def __init__(
             self,
@@ -57,6 +60,7 @@ class NonInteractingFermionicLookupTable:
         self._block_bm_transition_transpose_matrix = None
         self._block_bm_transition_dagger_matrix = None
         self._transition_bm_block_matrix = None
+        self._stacked_items = None
         
         self._observables = {}
         self.p_bar = None
@@ -192,6 +196,12 @@ class NonInteractingFermionicLookupTable:
             [self.get_c_2p_alpha_m1__c_d_beta, self.get_c_2p_alpha_m1__c_e_beta, self.get_c_2p_alpha_m1__c_2p_beta_m1],
         ]
 
+    @property
+    def stacked_items(self):
+        if self._stacked_items is None:
+            self._stacked_items = self.compute_stack_and_pad_items(self.ALL_2D_INDEXES, close_p_bar=False)
+        return self._stacked_items
+
     def _compute_block_bm_transition_transpose_matrix_(self):
         self.p_bar_set_postfix_str("Computing BT^T matrix.")
         return qml.math.einsum(
@@ -307,7 +317,9 @@ class NonInteractingFermionicLookupTable:
     def get_c_2p_alpha_m1__c_2p_beta_m1(self):
         return self.c_2p_alpha_m1__c_2p_beta_m1
 
-    def __getitem__(self, item: Tuple[int, int]):
+    def __getitem__(self, item: Union[Tuple[int, int], int]):
+        if isinstance(item, int):
+            item = utils.math.convert_1d_to_2d_indexes([item], n_rows=3)[0]
         i, j = item
         getter = self.getter_table[i][j]
         return getter()
@@ -322,7 +334,9 @@ class NonInteractingFermionicLookupTable:
         """
         self.initialize_p_bar(total=len(indexes), initial=0, desc="Computing Lookup Table Items")
         items = []
-        for (i, j) in np.asarray(indexes).reshape(-1, 2):
+        indexes = np.asarray(indexes)
+        indexes = indexes.reshape(-1, 2)
+        for (i, j) in indexes:
             items.append(self[i, j])
             self.update_p_bar()
         if close_p_bar:
@@ -485,57 +499,17 @@ class NonInteractingFermionicLookupTable:
             indexes_of_target_state: Optional[np.ndarray] = None,
             **kwargs
     ) -> TensorLike:
-        if target_binary_state is None and indexes_of_target_state is None:
-            target_binary_state = np.array([1, ])
-            indexes_of_target_state = np.array([0, ])
-        elif target_binary_state is not None and indexes_of_target_state is None:
-            indexes_of_target_state = np.arange(len(target_binary_state), dtype=int)
-        elif target_binary_state is None and indexes_of_target_state is not None:
-            target_binary_state = np.ones(len(indexes_of_target_state), dtype=int)
-
-        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(system_state, n=self.n_particles)
-        bra_majorana_indexes = list(reversed(ket_majorana_indexes))
-
-        unmeasured_cls_indexes = [2 for _ in range(len(ket_majorana_indexes))]
-        measure_cls_indexes = np.array([[b, 1 - b] for b in target_binary_state]).flatten().tolist()
-        lt_indexes = np.asarray(unmeasured_cls_indexes + measure_cls_indexes + unmeasured_cls_indexes)
-
-        measure_indexes = np.array([[i, i] for i in indexes_of_target_state]).flatten().tolist()
-        majorana_indexes = np.asarray(list(bra_majorana_indexes) + measure_indexes + list(ket_majorana_indexes))
-
-        obs_size = majorana_indexes.shape[-1]
-        obs_shape = ([self.batch_size] if self.batch_size else []) + [obs_size, obs_size]
-        obs = qml.math.convert_like(np.zeros(obs_shape, dtype=complex), self.transition_matrix)
-
-        obs_indices = np.stack(np.triu_indices(obs_size, k=1))
-        lt_item_rows, lt_item_cols = majorana_indexes[..., obs_indices[0]], majorana_indexes[..., obs_indices[1]]
-        # lt_item_rows, lt_item_cols = majorana_indexes[obs_indices[0]], majorana_indexes[obs_indices[1]]
-
-        # compute items needed for the observable
-        # all_lt_indexes = np.stack((lt_indexes[obs_indices[0]], lt_indexes[obs_indices[1]]), axis=-1)
-        # unique_lt_indexes = np.unique(all_lt_indexes, axis=0)
-        # lt_items = self.compute_stack_and_pad_items(unique_lt_indexes, close_p_bar=False)
-        all_lt_indexes = np.stack((lt_indexes[..., obs_indices[0]], lt_indexes[..., obs_indices[1]]), axis=-1)
-        all_lt_indexes_raveled = all_lt_indexes.reshape(-1, 2)
-        unique_lt_indexes = np.unique(all_lt_indexes_raveled, axis=0)
-        lt_items = self.compute_stack_and_pad_items(unique_lt_indexes, close_p_bar=False)
-
-        # find the new indexes of the items in the stack
-        # new_all_lt_indexes = np.empty(len(obs_indices[0]), dtype=int)
-        new_all_lt_indexes = np.empty(all_lt_indexes.shape[:-1], dtype=int)
-        for i, (r, c) in enumerate(unique_lt_indexes):
-            mask = np.isclose(all_lt_indexes, [r, c]).all(axis=-1)
-            new_all_lt_indexes = np.where(mask, i, new_all_lt_indexes)
-            # new_all_lt_indexes = np.where(np.all(np.isclose(all_lt_indexes, [r, c]), axis=-1), i, new_all_lt_indexes)
-
-        # insert the elements in obs
-        obs[..., obs_indices[0], obs_indices[1]] = lt_items[new_all_lt_indexes, ..., lt_item_rows, lt_item_cols].T
-
-        self.p_bar_set_postfix_str("Finishing the computation of the observable.")
-        obs = obs - qml.math.einsum("...ij->...ji", obs)
-        self.p_bar_set_postfix_str("Finished the computation of the observable.")
-        self.close_p_bar()
-        return obs
+        observables = self.compute_observables_of_target_states(
+            system_state=system_state,
+            target_binary_states=target_binary_state,
+            indexes_of_target_states=indexes_of_target_state,
+            **kwargs
+        )
+        if len(qml.math.shape(observables)) > 2 and not self.batch_size:
+            observables = qml.math.reshape(observables, (-1, *qml.math.shape(observables)[-2:]))[0]
+        elif len(qml.math.shape(observables)) > 3:
+            observables = qml.math.reshape(observables, (-1, *qml.math.shape(observables)[-3:]))[0]
+        return observables
 
     def _setup_inputs(
             self,
@@ -606,6 +580,27 @@ class NonInteractingFermionicLookupTable:
         ).astype(int)
         return majorana_indexes
 
+    def convert_2d_indexes_to_1d_indexes(
+            self,
+            all_indexes,
+            unique_indexes,
+    ):
+        new_all_indexes = np.empty(all_indexes.shape[:-1], dtype=int)
+        for i, (r, c) in enumerate(unique_indexes):
+            mask = np.isclose(all_indexes, [r, c]).all(axis=-1)
+            new_all_indexes = np.where(mask, i, new_all_indexes)
+        return new_all_indexes
+
+    def extend_unique_indexes_to_all_indexes(
+            self,
+            all_indexes,
+            unique_indexes,
+    ):
+        new_all_indexes = np.empty(all_indexes.shape, dtype=int)
+        for i, j in enumerate(unique_indexes):
+            new_all_indexes = np.where(all_indexes == j, i, new_all_indexes)
+        return new_all_indexes
+
     def compute_observables_of_target_states(
             self,
             system_state: Union[int, np.ndarray, sparse.sparray],
@@ -630,15 +625,20 @@ class NonInteractingFermionicLookupTable:
         # compute items needed for the observable
         all_lt_indexes = np.stack((lt_indexes[..., obs_indices[0]], lt_indexes[..., obs_indices[1]]), axis=-1)
         all_lt_indexes_raveled = all_lt_indexes.reshape(-1, 2)
-        unique_lt_indexes = np.unique(all_lt_indexes_raveled, axis=0)
-        lt_items = self.compute_stack_and_pad_items(unique_lt_indexes, close_p_bar=False)
-        lt_items = lt_items.reshape(lt_items.shape[0], -1, *lt_items.shape[-2:])
 
-        # find the new indexes of the items in the stack
-        new_all_lt_indexes = np.empty(all_lt_indexes.shape[:-1], dtype=int)
-        for i, (r, c) in enumerate(unique_lt_indexes):
-            mask = np.isclose(all_lt_indexes, [r, c]).all(axis=-1)
-            new_all_lt_indexes = np.where(mask, i, new_all_lt_indexes)
+        all_lt_indexes_raveled_1d = utils.math.convert_2d_to_1d_indexes(all_lt_indexes_raveled, n_rows=3)
+        all_lt_indexes_1d = all_lt_indexes_raveled_1d.reshape(*all_lt_indexes.shape[:-1])
+        unique_lt_indexes_raveled_1d = np.fromiter(set(all_lt_indexes_raveled_1d), dtype=int)
+        unique_lt_indexes_raveled_2d = utils.math.convert_1d_to_2d_indexes(unique_lt_indexes_raveled_1d, n_rows=3)
+        # lt_items = self.compute_stack_and_pad_items(unique_lt_indexes_raveled_2d, close_p_bar=False)
+        # new_all_lt_indexes = self.convert_2d_indexes_to_1d_indexes(all_lt_indexes, unique_lt_indexes_raveled_2d)
+        lt_items = self.compute_stack_and_pad_items(unique_lt_indexes_raveled_2d, close_p_bar=False)
+        new_all_lt_indexes = self.extend_unique_indexes_to_all_indexes(all_lt_indexes_1d, unique_lt_indexes_raveled_1d)
+
+        # lt_items = self.stacked_items
+        # new_all_lt_indexes = utils.math.convert_2d_to_1d_indexes(all_lt_indexes_raveled, n_rows=3)
+        # new_all_lt_indexes = new_all_lt_indexes.reshape(*all_lt_indexes.shape[:-1])
+        lt_items = lt_items.reshape(lt_items.shape[0], -1, *lt_items.shape[-2:])
 
         batch_size = [self.batch_size] if self.batch_size else [1]
         obs_shape = [target_batch_size] + batch_size + [obs_size, obs_size]

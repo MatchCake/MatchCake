@@ -1,4 +1,6 @@
-from typing import Tuple, List, Literal, Any, Optional
+from typing import Tuple, List, Literal, Any, Optional, Iterable
+
+import numpy as np
 import scipy
 import pennylane as qml
 from ..templates.tensor_like import TensorLike
@@ -324,3 +326,52 @@ def random_index(
     if n is None:
         return indexes[0]
     return indexes
+
+
+def unique_2d_array(array: TensorLike, sort: bool = False) -> TensorLike:
+    r"""
+    Get the unique rows of a 2D array.
+
+    :param array: 2D array.
+    :type array: TensorLike
+    :param sort: Whether to sort the unique rows.
+    :type sort: bool
+
+    :return: Unique rows of the array.
+    :rtype: TensorLike
+    """
+    unique_set = set(tuple(map(tuple, array)))
+    unique_list = list(unique_set)
+    if sort:
+        unique_list.sort()
+
+    # if qml.math.shape(array)[0] == 14278656:
+    #     print()
+
+    # import os
+    # max_size = qml.math.shape(array)[0]
+    # if os.path.exists(os.path.join(os.getcwd(), "unique_2d_array_max_size")):
+    #     with open(os.path.join(os.getcwd(), "unique_2d_array_max_size"), "r") as f:
+    #         max_size = max(int(f.read()), max_size)
+    #
+    # with open(os.path.join(os.getcwd(), "unique_2d_array_max_size"), "w") as f:
+    #     f.write(str(max_size))
+
+    return qml.math.array(unique_list, like=array)
+
+
+def convert_2d_to_1d_indexes(indexes: Iterable[Tuple[int, int]], n_rows: Optional[int] = None) -> np.ndarray:
+    indexes = np.asarray(indexes)
+    if n_rows is None:
+        n_rows = np.max(indexes[:, 0]) + 1
+    new_indexes = indexes[:, 0] * n_rows + indexes[:, 1]
+    return new_indexes
+
+
+def convert_1d_to_2d_indexes(indexes: Iterable[int], n_rows: Optional[int] = None) -> np.ndarray:
+    indexes = np.asarray(indexes)
+    if n_rows is None:
+        n_rows = int(np.sqrt(len(indexes)))
+    new_indexes = np.stack([indexes // n_rows, indexes % n_rows], axis=-1)
+    return new_indexes
+

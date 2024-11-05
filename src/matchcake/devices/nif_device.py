@@ -120,7 +120,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
     DEFAULT_PROB_STRATEGY = "LookupTable"
     DEFAULT_CONTRACTION_METHOD = "neighbours"
-    DEFAULT_SAMPLING_STRATEGY = "QubitByQubitSampling"
+    DEFAULT_SAMPLING_STRATEGY = "2QubitBy2QubitSampling"
     pfaffian_methods = {"det", "bLTL", "bH", "cuda_det"}
     DEFAULT_PFAFFIAN_METHOD = "det"
 

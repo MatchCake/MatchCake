@@ -28,7 +28,8 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
         bk = int(2 ** k)
         probs = qml.math.full((*batch_shape, bk), 0.0)
         for i, state in enumerate(extended_states):
-            mask = np.isclose(all_states, state[:-k]).all(axis=-1)
+            # mask = np.isclose(all_states, state[:-k]).all(axis=-1)
+            mask = (all_states == state[:-k]).all(axis=-1)
             state_idx = int(state[-k:].dot(2 ** np.arange(k)[::-1]))
             probs[..., state_idx] = np.where(mask, extended_states_probs[i, ...], probs[..., state_idx])
         return probs

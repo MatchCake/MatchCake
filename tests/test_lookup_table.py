@@ -281,6 +281,7 @@ def test_lookup_table_get_observable(transition_matrix, binary_state, k, observa
         rtol=RTOL_MATRIX_COMPARISON,
     )
 
+
 @pytest.mark.parametrize(
     "transition_matrix,binary_state,observable",
     [
