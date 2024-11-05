@@ -398,5 +398,13 @@ def pfaffian(
         return batch_pfaffian_ltl(__matrix, overwrite_input, show_progress=show_progress, p_bar=p_bar)
     elif method == "bH":
         return batch_pfaffian_householder(__matrix, overwrite_input, show_progress=show_progress, p_bar=p_bar)
+    elif method == "PfaffianFDBPf":
+        try:
+            import torch_pfaffian
+        except ImportError:
+            raise ImportError("torch_pfaffian is not installed."
+                              "Please install it with `pip install https://github.com/MatchCake/TorchPfaffian.git`.")
+        from . import torch_utils
+        return torch_pfaffian.get_pfaffian_function(method)(torch_utils.to_tensor(__matrix))
     else:
         raise ValueError(f"Invalid method. Got {method}, must be 'P', 'H', 'det', 'bLTL', or 'bH'.")
