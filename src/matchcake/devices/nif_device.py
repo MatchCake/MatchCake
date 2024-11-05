@@ -121,8 +121,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     DEFAULT_PROB_STRATEGY = "LookupTable"
     DEFAULT_CONTRACTION_METHOD = "neighbours"
     DEFAULT_SAMPLING_STRATEGY = "2QubitBy2QubitSampling"
-    pfaffian_methods = {"det", "bLTL", "bH", "cuda_det"}
+    pfaffian_methods = {"det", "bLTL", "bH", "cuda_det", "PfaffianFDBPf"}
     DEFAULT_PFAFFIAN_METHOD = "det"
+    # DEFAULT_PFAFFIAN_METHOD = "PfaffianFDBPf"
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
 
