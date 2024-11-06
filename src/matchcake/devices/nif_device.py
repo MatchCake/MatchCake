@@ -122,8 +122,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     DEFAULT_CONTRACTION_METHOD = "neighbours"
     DEFAULT_SAMPLING_STRATEGY = "2QubitBy2QubitSampling"
     pfaffian_methods = {"det", "bLTL", "bH", "cuda_det", "PfaffianFDBPf"}
-    DEFAULT_PFAFFIAN_METHOD = "det"
-    # DEFAULT_PFAFFIAN_METHOD = "PfaffianFDBPf"
+    # DEFAULT_PFAFFIAN_METHOD = "det"
+    DEFAULT_PFAFFIAN_METHOD = "PfaffianFDBPf"
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
 
@@ -617,79 +617,10 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         """
         if self.n_workers != 0:
             return self.apply_mp(operations, rotations, **kwargs)
-        rotations = rotations or []
         if not isinstance(operations, Iterable):
             operations = [operations]
-        global_single_particle_transition_matrix = None
-        batched = False
-        self.apply_metadata["n_operations"] = len(operations)
-        operations = self.contraction_strategy(operations, p_bar=self.p_bar, show_progress=self.show_progress)
-        self.apply_metadata["n_contracted_operations"] = len(operations)
-        self.initialize_p_bar(total=len(operations), desc="Applying operations")
-        # apply the circuit operations
-        for i, op in enumerate(operations):
-            op_r = None
-            if i > 0 and isinstance(op, (qml.StatePrep, qml.BasisState)):
-                raise qml.DeviceError(
-                    f"Operation {op.name} cannot be used after other Operations have already been applied "
-                    f"on a {self.short_name} device."
-                )
-
-            if isinstance(op, qml.Identity):
-                continue
-
-            if isinstance(op, qml.StatePrep):
-                self._apply_state_vector(op.parameters[0], op.wires)
-            elif isinstance(op, qml.BasisState):
-                self._apply_basis_state(op.parameters[0], op.wires)
-            elif isinstance(op, qml.Snapshot):
-                if self._debugger and self._debugger.active:
-                    state_vector = np.array(self._flatten(self._state))
-                    if op.tag:
-                        self._debugger.snapshots[op.tag] = state_vector
-                    else:
-                        self._debugger.snapshots[len(self._debugger.snapshots)] = state_vector
-            elif isinstance(op, qml.pulse.ParametrizedEvolution):
-                self._state = self._apply_parametrized_evolution(self._state, op)
-            elif isinstance(op, _SingleParticleTransitionMatrix):
-                self.p_bar_set_postfix_str(
-                    f"Padding single particle transition matrix for {getattr(op, 'name', op.__class__.__name__)}"
-                )
-                op_r = op.pad(self.wires).matrix()
-            else:
-                if isinstance(op, MatchgateOperation):
-                    self.p_bar_set_postfix_str(
-                        f"Computing single particle transition matrix for {getattr(op, 'name', op.__class__.__name__)}"
-                    )
-                    op_r = op.get_padded_single_particle_transition_matrix(self.wires)
-                else:
-                    assert op.name in self.operations, f"Operation {op.name} is not supported."
-            if op_r is not None:
-                batched = batched or (qml.math.ndim(op_r) > 2)
-                self.p_bar_set_postfix_str(f"Applying operation {getattr(op, 'name', op.__class__.__name__)}")
-                global_single_particle_transition_matrix = self.update_single_particle_transition_matrix(
-                    global_single_particle_transition_matrix, op_r
-                )
-            self.p_bar_set_n(i + 1)
-
-        if global_single_particle_transition_matrix is None:
-            global_single_particle_transition_matrix = pnp.eye(2 * self.num_wires)[None, ...]
-            if not batched:
-                global_single_particle_transition_matrix = global_single_particle_transition_matrix[0]
-        # store the pre-rotated state
-        self._pre_rotated_sparse_state = self._sparse_state
-        self._pre_rotated_state = self._state
-
-        assert rotations is None or np.asarray([rotations]).size == 0, "Rotations are not supported"
-        # apply the circuit rotations
-        # for operation in rotations:
-        #     self._state = self._apply_operation(self._state, operation)
-        self.p_bar_set_postfix_str("Computing transition matrix")
-        self._transition_matrix = utils.make_transition_matrix_from_action_matrix(
-            global_single_particle_transition_matrix
-        )
-        self.p_bar_set_postfix_str("Transition matrix computed")
-        self.close_p_bar()
+        kwargs.setdefault("n_ops", len(operations))
+        return self.apply_generator(iter(operations), rotations=rotations, **kwargs)
 
     def _apply_op(
             self, _op: qml.operation.Operation, _batched: bool, _global_sptm: TensorLike
