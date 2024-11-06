@@ -3,6 +3,7 @@ import pennylane as qml
 import numpy as np
 import warnings
 
+import torch
 import tqdm
 
 from .math import convert_and_cast_like
@@ -339,7 +340,7 @@ def pfaffian_by_det_cuda(
 def pfaffian(
         __matrix: TensorLike,
         overwrite_input: bool = False,
-        method: Literal["P", "H", "det", "bLTL", "bH"] = "bLTL",
+        method: Literal["P", "H", "det", "bLTL", "bH", "PfaffianFDBPf"] = "bLTL",
         epsilon: float = 1e-12,
         p_bar: Optional[tqdm.tqdm] = None,
         show_progress: bool = False
@@ -360,8 +361,10 @@ def pfaffian(
     :param overwrite_input: Whether to overwrite the input matrix
     :type overwrite_input: bool
     :param method: Method to use. 'P' for Parlett-Reid algorithm, 'H' for Householder tridiagonalization,
-        'det' for determinant, 'bLTL' for batched Parlett-Reid algorithm
-    :type method: Literal["P", "H", "det", "bLTL"]
+        'det' for determinant, 'bLTL' for batched Parlett-Reid algorithm,
+        'bH' for batched Householder tridiagonalization,
+        'PfaffianFDBPf' for the Pfaffian using the torch_pfaffian library.
+    :type method: Literal["P", "H", "det", "bLTL", "bH", "PfaffianFDBPf"]
     :param epsilon: Tolerance for the determinant method
     :type epsilon: float
     :param p_bar: Progress bar
@@ -405,6 +408,7 @@ def pfaffian(
             raise ImportError("torch_pfaffian is not installed."
                               "Please install it with `pip install https://github.com/MatchCake/TorchPfaffian.git`.")
         from . import torch_utils
-        return torch_pfaffian.get_pfaffian_function(method)(torch_utils.to_tensor(__matrix))
+        pf = torch_pfaffian.get_pfaffian_function(method)(torch_utils.to_tensor(__matrix, dtype=torch.complex128))
+        return convert_and_cast_like(pf, __matrix)
     else:
         raise ValueError(f"Invalid method. Got {method}, must be 'P', 'H', 'det', 'bLTL', or 'bH'.")
