@@ -209,8 +209,10 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         allowed_angles_array = convert_and_cast_like(np.array(cls.ALLOWED_ANGLES), angles)
         angles_shape = qml.math.shape(angles)
         angles_flatten = qml.math.reshape(angles, (-1, 1))
-        distances = qml.math.abs(angles_flatten - allowed_angles_array)
-        angles_flatten = allowed_angles_array[qml.math.argmin(distances, -1)]
+        distances = allowed_angles_array - angles_flatten
+        abs_distances = qml.math.abs(distances)
+        min_distances = distances[np.arange(distances.shape[0]), qml.math.argmin(abs_distances, -1)]
+        angles_flatten = angles_flatten.squeeze() + min_distances
         angles = qml.math.reshape(angles_flatten, angles_shape)
         return angles
 
