@@ -23,7 +23,7 @@ class _SingleParticleTransitionMatrix:
     @classmethod
     def from_operation(
             cls,
-            op: Union["MatchgateOperation", "_SingleParticleTransitionMatrix"],
+            op: Union[Any, "_SingleParticleTransitionMatrix"],
             **kwargs
     ) -> "_SingleParticleTransitionMatrix":
         if isinstance(op, cls):
@@ -33,7 +33,7 @@ class _SingleParticleTransitionMatrix:
     @classmethod
     def from_operations(
             cls,
-            ops: Iterable[Union["MatchgateOperation", "_SingleParticleTransitionMatrix"]]
+            ops: Iterable[Union[Any, "_SingleParticleTransitionMatrix"]]
     ) -> "_SingleParticleTransitionMatrix":
         from ..matchgate_operation import MatchgateOperation
 
@@ -237,7 +237,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     @classmethod
     def from_operations(
             cls,
-            ops: Iterable[Union["MatchgateOperation", "SingleParticleTransitionMatrixOperation"]],
+            ops: Iterable[Union[Any, "SingleParticleTransitionMatrixOperation"]],
             **kwargs
     ) -> "SingleParticleTransitionMatrixOperation":
         ops = list(ops)
