@@ -1,6 +1,5 @@
-from typing import Union, Iterable
+from typing import Union
 
-import numpy as np
 import pennylane as qml
 from pennylane.operation import Operation
 from pennylane import numpy as pnp
@@ -8,8 +7,9 @@ from pennylane.wires import Wires
 
 from ..base.matchgate import Matchgate
 from .. import matchgate_parameter_sets as mps, utils
-from ..templates import TensorLike
-from .single_particle_transition_matrices.single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
+from .single_particle_transition_matrices.single_particle_transition_matrix import (
+    SingleParticleTransitionMatrixOperation
+)
 
 
 class MatchgateOperation(Matchgate, Operation):
