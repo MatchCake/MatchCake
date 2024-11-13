@@ -7,7 +7,7 @@ __email__ = "gincejeremie@gmail.com"
 __copyright__ = "Copyright 2023, Jérémie Gince"
 __license__ = "Apache 2.0"
 __url__ = "https://github.com/MatchCake/MatchCake"
-__version__ = "0.0.1-beta1"
+__version__ = "0.0.2-beta1"
 
 from .base import Matchgate
 from .matchgate_parameter_sets import (
@@ -28,6 +28,10 @@ from .devices import (
 from . import utils
 from . import ml
 from .utils import math
+
+from .observables import (
+    BatchHamiltonian,
+)
 
 import warnings
 

@@ -1,4 +1,6 @@
-from typing import Tuple, List, Literal, Any
+from typing import Tuple, List, Literal, Any, Optional, Iterable
+
+import numpy as np
 import scipy
 import pennylane as qml
 from ..templates.tensor_like import TensorLike
@@ -114,9 +116,20 @@ def convert_and_cast_like(tensor1, tensor2):
     """
     import warnings
     import numpy as np
+    # interface1, interface2 = qml.math.get_interface(tensor1), qml.math.get_interface(tensor2)
+    # new_tensor1 = tensor1
+    # if interface1 != interface2:
+    #     new_tensor1 = qml.math.convert_like(tensor1, tensor2)
+    new_tensor1 = qml.math.convert_like(tensor1, tensor2)
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=np.ComplexWarning)
-        return qml.math.cast_like(qml.math.convert_like(tensor1, tensor2), tensor2)
+        new_tensor1 = qml.math.cast_like(new_tensor1, tensor2)
+    # dtype1, dtype2 = qml.math.get_dtype_name(new_tensor1), qml.math.get_dtype_name(tensor2)
+    # if dtype1 != dtype2:
+    #     with warnings.catch_warnings():
+    #         warnings.filterwarnings("ignore", category=np.ComplexWarning)
+    #         new_tensor1 = qml.math.cast_like(new_tensor1, tensor2)
+    return new_tensor1
 
 
 def astensor(tensor, like=None, **kwargs):
@@ -158,6 +171,31 @@ def eye_block_matrix(matrix: TensorLike, n: int, index: int):
     """
     eye = qml.math.eye(n - qml.math.shape(matrix)[0], like=matrix)
     return qml.math.block_diag([eye[:index, :index], matrix, eye[index:, index:]])
+
+
+def get_like_tensors_of_highest_priority(
+        tensors: List[TensorLike],
+        cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+                "numpy", "autograd", "jax", "tf", "torch"
+        )
+) -> TensorLike:
+    r"""
+    Convert and cast the tensors to the same type using the given priorities.
+
+    :param tensors: Tensors to convert and cast.
+    :type tensors: List[TensorLike]
+    :param cast_priorities: Priorities of the casting. Higher the index is, higher the priority.
+    :type cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]]
+
+    :return: Converted and casted tensors.
+    :rtype: List[TensorLike]
+    """
+    if len(tensors) == 0:
+        return None
+    tensors_priorities = [cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors]
+    highest_priority = max(tensors_priorities)
+    like = tensors[tensors_priorities.index(highest_priority)]
+    return like
 
 
 def convert_and_cast_tensors_to_same_type(
@@ -256,3 +294,84 @@ def exp_euler(x: TensorLike) -> TensorLike:
     :rtype: TensorLike
     """
     return qml.math.cos(x) + 1j * qml.math.sin(x)
+
+
+def random_choice(a, probs, axis=-1):
+    import numpy as np
+    axis = np.mod(axis, probs.ndim)
+    r = np.expand_dims(np.random.rand(probs.shape[1-axis]), axis=axis)
+    indexes = (probs.cumsum(axis=axis) > r).argmax(axis=axis)
+    # return the element of a at the index
+    return np.take_along_axis(a, indexes[:, None], axis=axis).squeeze(axis)
+
+
+def random_index(
+        probs,
+        n: Optional[int] = None,
+        axis=-1,
+        normalize_probs: bool = True,
+        eps: float = 1e-12
+):
+    import numpy as np
+    _n = n or 1
+    axis = np.mod(axis, probs.ndim)
+    if normalize_probs:
+        probs = probs / (probs.sum(axis=axis, keepdims=True) + eps)
+
+    shape_wo_axis = list(probs.shape)
+    shape_wo_axis.pop(axis)
+    shape_wo_axis = [_n] + shape_wo_axis
+    r = np.expand_dims(np.random.rand(*shape_wo_axis), axis=1+axis)
+    indexes = (probs.cumsum(axis=axis) > r).argmax(axis=1+axis)
+    if n is None:
+        return indexes[0]
+    return indexes
+
+
+def unique_2d_array(array: TensorLike, sort: bool = False) -> TensorLike:
+    r"""
+    Get the unique rows of a 2D array.
+
+    :param array: 2D array.
+    :type array: TensorLike
+    :param sort: Whether to sort the unique rows.
+    :type sort: bool
+
+    :return: Unique rows of the array.
+    :rtype: TensorLike
+    """
+    unique_set = set(tuple(map(tuple, array)))
+    unique_list = list(unique_set)
+    if sort:
+        unique_list.sort()
+
+    # if qml.math.shape(array)[0] == 14278656:
+    #     print()
+
+    # import os
+    # max_size = qml.math.shape(array)[0]
+    # if os.path.exists(os.path.join(os.getcwd(), "unique_2d_array_max_size")):
+    #     with open(os.path.join(os.getcwd(), "unique_2d_array_max_size"), "r") as f:
+    #         max_size = max(int(f.read()), max_size)
+    #
+    # with open(os.path.join(os.getcwd(), "unique_2d_array_max_size"), "w") as f:
+    #     f.write(str(max_size))
+
+    return qml.math.array(unique_list, like=array)
+
+
+def convert_2d_to_1d_indexes(indexes: Iterable[Tuple[int, int]], n_rows: Optional[int] = None) -> np.ndarray:
+    indexes = np.asarray(indexes)
+    if n_rows is None:
+        n_rows = np.max(indexes[:, 0]) + 1
+    new_indexes = indexes[:, 0] * n_rows + indexes[:, 1]
+    return new_indexes
+
+
+def convert_1d_to_2d_indexes(indexes: Iterable[int], n_rows: Optional[int] = None) -> np.ndarray:
+    indexes = np.asarray(indexes)
+    if n_rows is None:
+        n_rows = int(np.sqrt(len(indexes)))
+    new_indexes = np.stack([indexes // n_rows, indexes % n_rows], axis=-1)
+    return new_indexes
+

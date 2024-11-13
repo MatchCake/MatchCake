@@ -5,6 +5,7 @@ from .none_strategy import NoneContractionStrategy
 from .horizontal_strategy import HorizontalContractionStrategy
 from .vertical_strategy import VerticalContractionStrategy
 from .neighbours_strategy import NeighboursContractionStrategy
+from .forward_strategy import ForwardContractionStrategy
 from ...utils import get_all_subclasses
 
 contraction_strategy_map = {
@@ -17,7 +18,7 @@ def get_contraction_strategy(name: Optional[str]) -> ContractionStrategy:
     name = str(name).lower().strip()
     if name not in contraction_strategy_map:
         raise ValueError(
-            f"Unknown sampling strategy name: {name}. "
+            f"Unknown contraction strategy name: {name}. "
             f"Available strategies: {list(contraction_strategy_map.keys())}"
         )
     return contraction_strategy_map[name]()

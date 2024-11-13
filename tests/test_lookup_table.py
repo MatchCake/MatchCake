@@ -1,9 +1,15 @@
+import itertools
+
 import numpy as np
 import pytest
+import pennylane as qml
 
 from matchcake import utils
 from matchcake.base.lookup_table import NonInteractingFermionicLookupTable
-from tests.configs import (
+from matchcake.circuits import random_sptm_operations_generator
+from . import get_slow_test_mark
+from .test_nif_device import devices_init
+from .configs import (
     N_RANDOM_TESTS_PER_CASE,
     ATOL_MATRIX_COMPARISON,
     RTOL_MATRIX_COMPARISON,
@@ -275,6 +281,7 @@ def test_lookup_table_get_observable(transition_matrix, binary_state, k, observa
         rtol=RTOL_MATRIX_COMPARISON,
     )
 
+
 @pytest.mark.parametrize(
     "transition_matrix,binary_state,observable",
     [
@@ -320,6 +327,126 @@ def test_lookup_table_compute_observable_of_target_state(transition_matrix, bina
     obs = lookup_table.compute_observable_of_target_state(utils.binary_state_to_state(binary_state))
     np.testing.assert_allclose(
         obs, observable,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
+    "transition_matrix,binary_state,observable",
+    [
+        #
+        (
+                0.5 * np.array(
+                    [
+                        [1, 1j, 0, 0],
+                        [0, 0, 1, 1j]
+                    ]
+                ),
+                "00",
+                np.array(
+                    [
+                        [0, 0],
+                        [0, 0],
+                    ]
+                )
+        ),
+        #
+        (
+                0.5 * np.array(
+                    [
+                        [0, 0, 1, 1j],
+                        [1, 1j, 0, 0]
+                    ]
+                ),
+                "01",
+                np.array(
+                    [
+                        [0, 1, 0, 1],
+                        [-1, 0, 0, 0],
+                        [0, 0, 0, 1],
+                        [-1, 0, -1, 0],
+                    ]
+                )
+        ),
+        #
+    ]
+)
+def test_lookup_table_compute_observables_of_target_states(transition_matrix, binary_state, observable):
+    lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
+    obs = lookup_table.compute_observables_of_target_states(utils.binary_state_to_state(binary_state))
+    np.testing.assert_allclose(
+        obs.squeeze(), observable,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
+
+
+@get_slow_test_mark()
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "operations_generator, num_wires",
+    [
+        (random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size), num_wires)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for num_wires in range(2, 6)
+        for num_gates in [1, 10 * num_wires]
+        for batch_size in [None, 16]
+    ]
+)
+def test_lookup_table_compute_observable_of_target_states_rn_circuits(operations_generator, num_wires):
+    nif_device, _ = devices_init(wires=num_wires)
+    nif_device.execute_generator(operations_generator)
+
+    lookup_table = nif_device.lookup_table
+    target_states = np.array(list(itertools.product([0, 1], repeat=num_wires)))
+
+    obs_list = [
+        lookup_table.compute_observable_of_target_state(
+            nif_device.get_sparse_or_dense_state(),
+            target_state
+        )
+        for target_state in target_states.copy()
+    ]
+    loop_obs = qml.math.stack(obs_list, axis=0)
+    vec_obs = lookup_table.compute_observables_of_target_states(
+        nif_device.get_sparse_or_dense_state(), target_states.copy()
+    )
+    np.testing.assert_allclose(
+        vec_obs, loop_obs,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
+
+
+@get_slow_test_mark()
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "operations_generator, num_wires",
+    [
+        (random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size), num_wires)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for num_wires in range(2, 6)
+        for num_gates in [1, 10 * num_wires]
+        for batch_size in [None, 16]
+    ]
+)
+def test_lookup_table_compute_observable_of_target_states_rn_circuits_one_tstate(operations_generator, num_wires):
+    nif_device, _ = devices_init(wires=num_wires)
+    nif_device.execute_generator(operations_generator)
+
+    lookup_table = nif_device.lookup_table
+    target_state = np.random.randint(0, 2, size=num_wires)
+
+    obs_single = lookup_table.compute_observable_of_target_state(
+        nif_device.get_sparse_or_dense_state(),
+        target_state.copy()
+    )
+    vec_obs = lookup_table.compute_observables_of_target_states(
+        nif_device.get_sparse_or_dense_state(), target_state.copy()
+    )
+    np.testing.assert_allclose(
+        vec_obs, obs_single,
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )

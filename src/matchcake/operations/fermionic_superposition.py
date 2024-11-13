@@ -1,4 +1,5 @@
-from matchcake.operations import fSWAP, fH
+from . import fSWAP, fH
+from .single_particle_transition_matrices import SptmFSwap, SptmFHH
 from pennylane.wires import Wires
 from pennylane.operation import Operation, AnyWires
 
@@ -39,3 +40,14 @@ class FermionicSuperposition(Operation):
     @property
     def num_params(self):
         return 0
+
+
+class SptmFermionicSuperposition(Operation):
+    @staticmethod
+    def compute_decomposition(*params, wires=None, **hyperparameters):
+        wires = Wires(wires)
+        gates = []
+        for wire_i, wire_j in zip(wires[:-1], wires[1:]):
+            gates.append(SptmFSwap(wires=[wire_i, wire_j]))
+            gates.append(SptmFHH(wires=[wire_i, wire_j]))
+        return gates

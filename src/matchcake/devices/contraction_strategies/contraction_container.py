@@ -1,7 +1,13 @@
 import warnings
-from typing import Iterable, Union, Optional, Literal, List
+from typing import Iterable, Union, Optional, Literal, List, Callable
 
-from ...operations.matchgate_operation import MatchgateOperation, _SingleParticleTransitionMatrix
+from pennylane.wires import Wires
+
+from ...operations.matchgate_operation import MatchgateOperation
+from ...operations.single_particle_transition_matrices.single_particle_transition_matrix import (
+    _SingleParticleTransitionMatrix,
+    SingleParticleTransitionMatrixOperation,
+)
 
 
 class _ContractionMatchgatesContainerAddException(Exception):
@@ -9,9 +15,15 @@ class _ContractionMatchgatesContainerAddException(Exception):
 
 
 class _ContractionMatchgatesContainer:
+    ALLOWED_GATE_CLASSES = [MatchgateOperation, SingleParticleTransitionMatrixOperation]
+
     def __init__(self):
         self.op_container = {}
         self.wires_set = set({})
+
+    @property
+    def all_wires(self) -> Wires:
+        return Wires(self.wires_set)
 
     def __bool__(self):
         return len(self) > 0
@@ -25,7 +37,7 @@ class _ContractionMatchgatesContainer:
     def sorted_values(self):
         return [self.op_container[key] for key in self.sorted_keys()]
 
-    def add(self, op: MatchgateOperation) -> bool:
+    def add(self, op: Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]) -> bool:
         """
         Add an operation to the container. If the operation is not compatible with the operations already in the
         container, an exception will be raised.
@@ -39,7 +51,7 @@ class _ContractionMatchgatesContainer:
         """
         raise NotImplementedError
 
-    def try_add(self, op: MatchgateOperation) -> bool:
+    def try_add(self, op: Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]) -> bool:
         try:
             return self.add(op)
         except _ContractionMatchgatesContainerAddException:
@@ -48,11 +60,11 @@ class _ContractionMatchgatesContainer:
             warnings.warn(f"Unexpected exception in try_add: {e}", RuntimeWarning)
             return False
 
-    def extend(self, ops: Iterable[MatchgateOperation]) -> None:
+    def extend(self, ops: Iterable[Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]]) -> None:
         for op in ops:
             self.add(op)
 
-    def try_extend(self, ops: Iterable[MatchgateOperation]) -> int:
+    def try_extend(self, ops: Iterable[Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]]) -> int:
         for i, op in enumerate(ops):
             if not self.try_add(op):
                 return i
@@ -70,10 +82,15 @@ class _ContractionMatchgatesContainer:
             if isinstance(op, _SingleParticleTransitionMatrix):
                 sptms.append(op)
             elif isinstance(op, MatchgateOperation):
-                sptms.append(_SingleParticleTransitionMatrix(op.single_particle_transition_matrix, op.wires))
+                sptms.append(op.to_sptm_operation())
             else:
                 raise TypeError(f"Unexpected type in container: {type(op)}")
-        return _SingleParticleTransitionMatrix.from_spt_matrices(sptms)
+        return SingleParticleTransitionMatrixOperation.from_spt_matrices(sptms)
+
+    def contract_and_clear(self) -> Optional[_SingleParticleTransitionMatrix]:
+        contracted_op = self.contract()
+        self.clear()
+        return contracted_op
 
     def push_contract(
             self,
@@ -87,26 +104,31 @@ class _ContractionMatchgatesContainer:
         :return: The contracted operation if the container was cleared, None otherwise.
         """
         if not self.try_add(op):
-            contracted_op = self.contract()
-            self.clear()
+            contracted_op = self.contract_and_clear()
             self.add(op)
             return contracted_op
         return None
 
-    def contract_operations(self, operations) -> List[Union[MatchgateOperation, _SingleParticleTransitionMatrix]]:
+    def contract_operations(
+            self,
+            operations,
+            callback: Optional[Callable[[int], None]] = None
+    ) -> List[Union[MatchgateOperation, _SingleParticleTransitionMatrix]]:
         new_operations = []
-        for op in operations:
-            if not isinstance(op, MatchgateOperation):
+        for i, op in enumerate(operations):
+            if not isinstance(op, tuple(self.ALLOWED_GATE_CLASSES)):
                 new_operations.append(op)
                 if self:
-                    new_operations.append(self.contract())
-                    self.clear()
+                    new_operations.append(self.contract_and_clear())
+                if callback is not None:
+                    callback(i)
                 continue
             new_op = self.push_contract(op)
             if new_op is not None:
                 new_operations.append(new_op)
+            if callback is not None:
+                callback(i)
         if self:
-            new_operations.append(self.contract())
-            self.clear()
+            new_operations.append(self.contract_and_clear())
         return new_operations
 

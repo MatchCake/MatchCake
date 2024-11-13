@@ -28,9 +28,9 @@ set_seed(TEST_SEED)
         ),
     ]
 )
-def test_neighbours_contraction(operations, expected_new_operations):
+def test_forward_contraction(operations, expected_new_operations):
     all_wires = set(wire for op in operations for wire in op.wires)
-    nif_device_nh = init_nif_device(wires=len(all_wires), contraction_method="neighbours")
+    nif_device_nh = init_nif_device(wires=len(all_wires), contraction_method="forward")
     new_operations = nif_device_nh.contraction_strategy(operations)
 
     assert len(new_operations) == len(expected_new_operations), "The number of operations is different."
@@ -51,8 +51,8 @@ def test_neighbours_contraction(operations, expected_new_operations):
         [MatchgateOperation(mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1]) for _ in range(2)],
     ]
 )
-def test_neighbours_contraction_device_one_line(operations):
-    nif_device_nh = init_nif_device(wires=2, contraction_method="neighbours")
+def test_forward_contraction_device_one_line(operations):
+    nif_device_nh = init_nif_device(wires=2, contraction_method="forward")
     nif_device = init_nif_device(wires=2, contraction_method=None)
 
     nif_device_nh.apply(operations)
@@ -74,8 +74,8 @@ def test_neighbours_contraction_device_one_line(operations):
         [SptmRxRx(np.random.random(2), wires=[0, 1]) for _ in range(2)],
     ]
 )
-def test_neighbours_contraction_device_one_line_sptm(operations):
-    nif_device_nh = init_nif_device(wires=2, contraction_method="neighbours")
+def test_forward_contraction_device_one_line_sptm(operations):
+    nif_device_nh = init_nif_device(wires=2, contraction_method="forward")
     nif_device = init_nif_device(wires=2, contraction_method=None)
 
     nif_device_nh.apply(operations)
@@ -101,8 +101,8 @@ def test_neighbours_contraction_device_one_line_sptm(operations):
         for num_gates in 2 ** np.arange(1, 5)
     ]
 )
-def test_multiples_matchgate_probs_with_qbit_device_nh_contraction(params_list, prob_wires):
-    nif_device, qubit_device = devices_init(wires=2, contraction_method="neighbours")
+def test_multiples_matchgate_probs_with_qbit_device_forward_contraction(params_list, prob_wires):
+    nif_device, qubit_device = devices_init(wires=2, contraction_method="forward")
 
     nif_qnode = qml.QNode(single_line_matchgates_circuit, nif_device)
     qubit_qnode = qml.QNode(single_line_matchgates_circuit, qubit_device)
@@ -137,7 +137,7 @@ def test_multiples_matchgate_probs_with_qbit_device_nh_contraction(params_list, 
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
-def test_nh_contraction_torch_grad(x):
+def test_forward_contraction_torch_grad(x):
     try:
         import torch
     except ImportError:
@@ -150,7 +150,7 @@ def test_nh_contraction_torch_grad(x):
 
     dev = mc.NonInteractingFermionicDevice(
         wires=n_qubits,
-        contraction_method="neighbours"
+        contraction_method="forward"
     )
 
     @qml.qnode(dev, interface="torch")

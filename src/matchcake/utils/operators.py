@@ -1,6 +1,7 @@
 import importlib
-from typing import Any, List, Callable, Union
+from typing import Any, List, Callable, Union, Iterable, Generator, Iterator
 import functools
+import pennylane as qml
 
 import numpy as np
 
@@ -46,6 +47,19 @@ def recursive_2in_operator(
         raise ValueError("Invalid shape for input array")
 
 
+def adjoint_generator(
+        op_iterator: Generator[qml.operation.Operation, None, None],
+        **kwargs
+) -> Iterator[qml.operation.Operation]:
+    """
+    This function will reverse the order of the operations in the iterator and return the adjoint operations.
+
+    :param op_iterator: The iterator of operations.
+    :type op_iterator: Iterable[qml.operation.Operation]
+    :param kwargs: Additional keyword arguments.
+    :return: The iterator of adjoint operations.
+    """
+    return (op.adjoint() for op in reversed(list(op_iterator)))
 
 
 

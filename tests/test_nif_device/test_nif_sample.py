@@ -4,8 +4,10 @@ import pytest
 import psutil
 
 from matchcake import MatchgateOperation, utils
+from matchcake.operations import SptmRxRx
 from matchcake.utils import torch_utils
 from matchcake import matchgate_parameter_sets as mps
+from matchcake.circuits import random_sptm_operations_generator
 from . import devices_init
 from .test_specific_circuit import specific_matchgate_circuit
 from .. import get_slow_test_mark
@@ -33,18 +35,18 @@ set_seed(TEST_SEED)
     [
         ([mps.MatchgatePolarParams(r0=1, r1=1).to_numpy() for _ in range(num_gates)], num_wires)
         for num_wires in range(2, 6)
-        for num_gates in [1, 2 ** num_wires]
+        for num_gates in [1, 10 * num_wires]
     ]
     +
     [
         ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], num_wires)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in range(2, 6)
-        for num_gates in [1, 2 ** num_wires]
+        for num_gates in [1, 10 * num_wires]
     ]
 )
-def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
-    nif_device, _ = devices_init(wires=n_wires, shots=int(1024 * n_wires))
+def test_qubit_by_qubit_sampling_with_probs(params_list, n_wires):
+    nif_device, _ = devices_init(wires=n_wires, shots=int(1024 * n_wires), sampling_strategy="QubitByQubitSampling")
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
 
     all_wires = np.arange(n_wires)
@@ -81,3 +83,80 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
         rtol=RTOL_APPROX_COMPARISON,
         err_msg=f"abs_diff: {abs_diff.tolist()}"
     )
+
+
+@get_slow_test_mark()
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "operations_generator, num_wires",
+    [
+        (random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size, op_types=[SptmRxRx]), num_wires)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for num_wires in range(2, 6)
+        for num_gates in [1, 10 * num_wires]
+        for batch_size in [None, 16]
+    ]
+)
+def test_qubit_by_qubit_sampling_with_probs_op_gen(operations_generator, num_wires):
+    nif_device, _ = devices_init(wires=num_wires, shots=int(1024 * num_wires), sampling_strategy="QubitByQubitSampling")
+    nif_samples = torch_utils.to_numpy(nif_device.execute_generator(
+        operations_generator,
+        output_type="samples"
+    )).astype(int)
+
+    unique_states = np.unique(nif_samples.reshape(-1, num_wires), axis=0).astype(int)
+    unique_states_probability = np.stack([
+        np.sum(np.isclose(nif_samples, state).all(axis=-1), axis=0) / nif_samples.shape[0]
+        for state in unique_states
+    ], axis=0)
+    unique_states_probability = unique_states_probability / np.sum(unique_states_probability, axis=0, keepdims=True)
+    unique_states_expval = nif_device.get_states_probability(unique_states, np.arange(num_wires))
+    states_expval = unique_states_expval / np.sum(unique_states_expval, axis=0, keepdims=True)
+
+    abs_diff = np.abs(unique_states_probability - states_expval)
+    np.testing.assert_allclose(
+        unique_states_probability.squeeze(), states_expval.squeeze(),
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+        err_msg=f"abs_diff: {abs_diff.tolist()}"
+    )
+
+
+@get_slow_test_mark()
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "operations_generator, num_wires",
+    [
+        (random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size, op_types=[SptmRxRx]), num_wires)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for num_wires in range(2, 6)
+        for num_gates in [1, 10 * num_wires]
+        for batch_size in [None, 16]
+    ]
+)
+def test_2qubits_by_2qubits_sampling_with_probs_op_gen(operations_generator, num_wires):
+    nif_device, _ = devices_init(
+        wires=num_wires, shots=int(2048 * num_wires), sampling_strategy="2QubitBy2QubitSampling"
+    )
+    nif_samples = torch_utils.to_numpy(nif_device.execute_generator(
+        operations_generator,
+        output_type="samples"
+    )).astype(int)
+
+    unique_states = np.unique(nif_samples.reshape(-1, num_wires), axis=0).astype(int)
+    unique_states_probability = np.stack([
+        np.sum(np.isclose(nif_samples, state).all(axis=-1), axis=0) / nif_samples.shape[0]
+        for state in unique_states
+    ], axis=0)
+    unique_states_probability = unique_states_probability / np.sum(unique_states_probability, axis=0, keepdims=True)
+    unique_states_expval = nif_device.get_states_probability(unique_states, np.arange(num_wires))
+    states_expval = unique_states_expval / np.sum(unique_states_expval, axis=0, keepdims=True)
+
+    abs_diff = np.abs(unique_states_probability - states_expval)
+    np.testing.assert_allclose(
+        unique_states_probability.squeeze(), states_expval.squeeze(),
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+        err_msg=f"abs_diff: {abs_diff.tolist()}"
+    )
+
