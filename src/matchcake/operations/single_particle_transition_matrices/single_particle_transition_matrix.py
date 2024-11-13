@@ -1,4 +1,4 @@
-from typing import Union, Iterable, Sequence, Optional
+from typing import Union, Iterable, Sequence, Optional, Any
 
 import numpy as np
 import pennylane as qml
@@ -6,8 +6,7 @@ from pennylane.operation import Operation, AnyWires
 from pennylane import numpy as pnp
 from pennylane.wires import Wires
 
-from ...base.matchgate import Matchgate
-from ... import matchgate_parameter_sets as mps, utils
+from ... import utils
 from ...templates import TensorLike
 from ...utils.math import convert_and_cast_like
 
@@ -228,7 +227,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     @classmethod
     def from_operation(
             cls,
-            op: Union["MatchgateOperation", "SingleParticleTransitionMatrixOperation"],
+            op: Union[Any, "SingleParticleTransitionMatrixOperation"],
             **kwargs
     ) -> "SingleParticleTransitionMatrixOperation":
         if isinstance(op, SingleParticleTransitionMatrixOperation):
