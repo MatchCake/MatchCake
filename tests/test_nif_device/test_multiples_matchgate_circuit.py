@@ -66,7 +66,12 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_w
     nif_device, qubit_device = devices_init(wires=n_wires)
     
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
-    qubit_qnode = qml.QNode(specific_matchgate_circuit, qubit_device)
+    qubit_qnode = qml.QNode(
+        specific_matchgate_circuit,
+        qubit_device,
+        expansion_strategy="gradient",
+        max_expansion=10,
+    )
     
     all_wires = np.arange(n_wires)
     initial_binary_state = np.zeros(n_wires, dtype=int)
@@ -76,6 +81,7 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_w
         (params, [wire0, wire1])
         for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
     ]
+
     qubit_state = qubit_qnode(
         params_wires_list,
         initial_binary_state,
@@ -83,6 +89,7 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_w
         in_param_type=mps.MatchgatePolarParams,
         out_op="state",
     )
+
     qubit_probs = utils.get_probabilities_from_state(qubit_state, wires=prob_wires)
     nif_probs = nif_qnode(
         params_wires_list,
@@ -112,7 +119,7 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_w
     ]
 )
 def test_multiples_matchgate_probs_with_qbit_device_mp(params_list, n_wires, prob_wires):
-    pytest.skip()
+    pytest.skip() #takes to long
     if psutil.cpu_count() < 2:
         pytest.skip("This test requires at least 2 CPUs.")
     n_workers = psutil.cpu_count()
@@ -130,6 +137,7 @@ def test_multiples_matchgate_probs_with_qbit_device_mp(params_list, n_wires, pro
         (params, [wire0, wire1])
         for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
     ]
+
     qubit_state = qubit_qnode(
         params_wires_list,
         initial_binary_state,
