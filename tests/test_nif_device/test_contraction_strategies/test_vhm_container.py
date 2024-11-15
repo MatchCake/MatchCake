@@ -1,7 +1,8 @@
 import pytest
-from matchcake.devices.device_utils import _VHMatchgatesContainer, _SingleParticleTransitionMatrix
+from matchcake.devices.contraction_strategies import get_contraction_strategy
 import matchcake as mc
 from matchcake import matchgate_parameter_sets as mps
+from matchcake.operations import SptmRxRx
 import numpy as np
 from ...configs import (
     N_RANDOM_TESTS_PER_CASE,
@@ -22,7 +23,8 @@ set_seed(TEST_SEED)
     ]
 )
 def test_vh_matchgates_container_add(new_op):
-    container = _VHMatchgatesContainer()
+    strategy = get_contraction_strategy("neighbours")
+    container = strategy.get_container()
     container.add(new_op)
     assert len(container) == 1
     assert container.wires_set == set(new_op.wires.labels)
@@ -50,7 +52,8 @@ def test_vh_matchgates_container_add(new_op):
     ]
 )
 def test_vh_matchgates_container_try_add(new_op0, new_op1, crossing_wires):
-    container = _VHMatchgatesContainer()
+    strategy = get_contraction_strategy("neighbours")
+    container = strategy.get_container()
     container.add(new_op0)
     if crossing_wires:
         assert not container.try_add(new_op1)
@@ -91,7 +94,8 @@ def test_vh_matchgates_container_try_add(new_op0, new_op1, crossing_wires):
     ]
 )
 def test_vh_matchgates_container_contract_single_op(op):
-    container = _VHMatchgatesContainer()
+    strategy = get_contraction_strategy("neighbours")
+    container = strategy.get_container()
     container.add(op)
     np.testing.assert_allclose(
         container.contract(),
@@ -112,7 +116,8 @@ def test_vh_matchgates_container_contract_single_op(op):
     ]
 )
 def test_vh_matchgates_container_contract_single_line(line_operations):
-    container = _VHMatchgatesContainer()
+    strategy = get_contraction_strategy("neighbours")
+    container = strategy.get_container()
     assert container.contract() is None
     for op in line_operations:
         container.add(op)
@@ -131,7 +136,7 @@ def test_vh_matchgates_container_contract_single_line(line_operations):
     )
 
     target_t = contract_ops.single_particle_transition_matrix
-    pred_t = container.contract().matrix
+    pred_t = container.contract().matrix()
     np.testing.assert_allclose(
         pred_t,
         target_t,
@@ -154,7 +159,8 @@ def test_vh_matchgates_container_contract_single_line(line_operations):
     ]
 )
 def test_vh_matchgates_container_contract_single_column(column_operations):
-    container = _VHMatchgatesContainer()
+    strategy = get_contraction_strategy("neighbours")
+    container = strategy.get_container()
     assert container.contract() is None
     for op in column_operations:
         container.add(op)
@@ -173,3 +179,67 @@ def test_vh_matchgates_container_contract_single_column(column_operations):
         rtol=RTOL_APPROX_COMPARISON,
     )
 
+
+@pytest.mark.parametrize(
+    "new_op0, new_op1, crossing_wires",
+    [
+        (
+            SptmRxRx(np.random.random(2), wires=[0, 1]),
+            SptmRxRx(np.random.random(2), wires=[0, 1]),
+            False
+        ),
+        (
+            SptmRxRx(np.random.random(2), wires=[0, 1]),
+            mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[1, 2]),
+            True
+        ),
+        (
+            SptmRxRx(np.random.random(2), wires=[0, 1]),
+            SptmRxRx(np.random.random(2), wires=[1, 2]),
+            True
+        ),
+        (
+            SptmRxRx(np.random.random(2), wires=[0, 1]),
+            mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[2, 3]),
+            False
+        ),
+        (
+            SptmRxRx(np.random.random(2), wires=[0, 1]),
+            SptmRxRx(np.random.random(2), wires=[2, 3]),
+            False
+        )
+    ]
+)
+def test_vh_matchgates_container_try_add_sptm(new_op0, new_op1, crossing_wires):
+    strategy = get_contraction_strategy("neighbours")
+    container = strategy.get_container()
+    container.add(new_op0)
+    if crossing_wires:
+        assert not container.try_add(new_op1)
+        assert len(container) == 1
+    elif new_op0.wires == new_op1.wires:
+        assert container.try_add(new_op1)
+        assert len(container) == 1
+        assert container.wires_set == set(new_op0.wires.labels)
+        np.testing.assert_allclose(
+            container.op_container[new_op0.wires].matrix(),
+            (new_op0 @ new_op1).matrix(),
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=RTOL_APPROX_COMPARISON,
+        )
+    else:
+        assert container.try_add(new_op1)
+        assert len(container) == 2
+        assert container.wires_set == set(new_op0.wires.labels) | set(new_op1.wires.labels)
+        np.testing.assert_allclose(
+            container.op_container[new_op0.wires].matrix(),
+            new_op0.matrix(),
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=RTOL_APPROX_COMPARISON,
+        )
+        np.testing.assert_allclose(
+            container.op_container[new_op1.wires].matrix(),
+            new_op1.matrix(),
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=RTOL_APPROX_COMPARISON,
+        )

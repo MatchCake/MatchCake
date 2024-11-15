@@ -3,6 +3,7 @@ import pennylane as qml
 import numpy as np
 import warnings
 
+import torch
 import tqdm
 
 from .math import convert_and_cast_like
@@ -292,7 +293,7 @@ def pfaffian_by_det(
 ):
     shape = qml.math.shape(__matrix)
     p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)
-    p_bar.set_description(f"Computing determinant of {shape} matrix")
+    p_bar.set_description(f"[det] Computing determinant of {shape} matrix")
     backend = qml.math.get_interface(__matrix)
     if backend in ["autograd", "numpy"]:
         det = qml.math.linalg.det(__matrix)
@@ -308,10 +309,38 @@ def pfaffian_by_det(
     return pf
 
 
+def pfaffian_by_det_cuda(
+        __matrix: TensorLike,
+        p_bar: Optional[tqdm.tqdm] = None,
+        show_progress: bool = False,
+        epsilon: float = 1e-12
+):
+    from . import torch_utils
+    import torch
+    shape = qml.math.shape(__matrix)
+    p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)
+    p_bar.set_description(f"[cuda_det] Computing determinant of {shape} matrix")
+    backend = qml.math.get_interface(__matrix)
+    cuda_det = torch.det(torch_utils.to_cuda(__matrix))
+    if backend in ["torch"]:
+        if __matrix.device.type == "cuda":
+            det = cuda_det
+        else:
+            det = torch_utils.to_cpu(cuda_det)
+    else:
+        det = torch_utils.to_cpu(cuda_det)
+    det = convert_and_cast_like(det, __matrix)
+    pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
+    p_bar.set_description(f"Determinant of {shape} matrix computed")
+    p_bar.update()
+    p_bar.close()
+    return pf
+
+
 def pfaffian(
         __matrix: TensorLike,
         overwrite_input: bool = False,
-        method: Literal["P", "H", "det", "bLTL", "bH"] = "bLTL",
+        method: Literal["P", "H", "det", "bLTL", "bH", "PfaffianFDBPf"] = "bLTL",
         epsilon: float = 1e-12,
         p_bar: Optional[tqdm.tqdm] = None,
         show_progress: bool = False
@@ -332,8 +361,10 @@ def pfaffian(
     :param overwrite_input: Whether to overwrite the input matrix
     :type overwrite_input: bool
     :param method: Method to use. 'P' for Parlett-Reid algorithm, 'H' for Householder tridiagonalization,
-        'det' for determinant, 'bLTL' for batched Parlett-Reid algorithm
-    :type method: Literal["P", "H", "det", "bLTL"]
+        'det' for determinant, 'bLTL' for batched Parlett-Reid algorithm,
+        'bH' for batched Householder tridiagonalization,
+        'PfaffianFDBPf' for the Pfaffian using the torch_pfaffian library.
+    :type method: Literal["P", "H", "det", "bLTL", "bH", "PfaffianFDBPf"]
     :param epsilon: Tolerance for the determinant method
     :type epsilon: float
     :param p_bar: Progress bar
@@ -364,9 +395,20 @@ def pfaffian(
         return pfaffian_householder(__matrix, overwrite_input)
     elif method == "det":
         return pfaffian_by_det(__matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon)
+    elif method == "cuda_det":
+        return pfaffian_by_det_cuda(__matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon)
     elif method == "bLTL":
         return batch_pfaffian_ltl(__matrix, overwrite_input, show_progress=show_progress, p_bar=p_bar)
     elif method == "bH":
         return batch_pfaffian_householder(__matrix, overwrite_input, show_progress=show_progress, p_bar=p_bar)
+    elif method == "PfaffianFDBPf":
+        try:
+            import torch_pfaffian
+        except ImportError:
+            raise ImportError("torch_pfaffian is not installed."
+                              "Please install it with `pip install https://github.com/MatchCake/TorchPfaffian.git`.")
+        from . import torch_utils
+        pf = torch_pfaffian.get_pfaffian_function(method)(torch_utils.to_tensor(__matrix, dtype=torch.complex128))
+        return convert_and_cast_like(pf, __matrix)
     else:
         raise ValueError(f"Invalid method. Got {method}, must be 'P', 'H', 'det', 'bLTL', or 'bH'.")

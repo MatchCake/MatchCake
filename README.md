@@ -106,8 +106,8 @@ viz.plot_2d_decision_boundaries(model=model, y=y, show=True)
 
 
 # Tutorials
-- [MatchCake Basics](tutorials/matchcake_basics.ipynb)
-- [Iris Classification with MatchCake](tutorials/iris_classification.ipynb)
+- [MatchCake Basics](https://github.com/MatchCake/MatchCake/blob/main/tutorials/matchcake_basics.ipynb)
+- [Iris Classification with MatchCake](https://github.com/MatchCake/MatchCake/blob/main/tutorials/iris_classification.ipynb)
 
 
 

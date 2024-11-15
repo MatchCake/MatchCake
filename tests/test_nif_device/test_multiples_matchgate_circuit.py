@@ -160,3 +160,51 @@ def test_multiples_matchgate_probs_with_qbit_device_mp(params_list, n_wires, pro
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
+
+
+@get_slow_test_mark()
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "params_list,n_wires",
+    [
+        ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], num_wires)
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        for num_wires in range(2, 5)
+        for num_gates in [1, 2*num_wires]
+    ]
+)
+def test_multiples_matchgate_apply_vs_apply_gen(params_list, n_wires):
+    nif_device, _ = devices_init(wires=n_wires, contraction_strategy="neighbours")
+    nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
+
+    all_wires = np.arange(n_wires)
+    initial_binary_state = np.zeros(n_wires, dtype=int)
+    wire0_vector = np.random.choice(all_wires[:-1], size=len(params_list))
+    wire1_vector = wire0_vector + 1
+    params_wires_list = [
+        (params, [wire0, wire1])
+        for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
+    ]
+    nif_qnode(
+        params_wires_list,
+        initial_binary_state,
+        all_wires=nif_device.wires,
+        in_param_type=mps.MatchgatePolarParams,
+        out_op="probs",
+    )
+
+    nif_device.reset()
+    nif_device.apply(nif_qnode.tape.operations)
+    apply_transition_matrix = nif_device.transition_matrix
+    apply_metadata = nif_device.apply_metadata.copy()
+
+    nif_device.reset()
+    nif_device.apply_generator(nif_qnode.tape.operations)
+    apply_gen_transition_matrix = nif_device.transition_matrix
+    apply_gen_metadata = nif_device.apply_metadata.copy()
+
+    np.testing.assert_allclose(
+        apply_transition_matrix, apply_gen_transition_matrix,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+    )

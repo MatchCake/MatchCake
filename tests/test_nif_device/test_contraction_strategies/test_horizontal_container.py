@@ -1,15 +1,12 @@
 import pytest
-from matchcake.devices.device_utils import (
-    _HorizontalMatchgatesContainer,
-    _SingleParticleTransitionMatrix,
-    _ContractionMatchgatesContainerAddException,
-)
+from matchcake.devices.contraction_strategies import get_contraction_strategy
 import matchcake as mc
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
 import numpy as np
 import pennylane as qml
 
+from matchcake.devices.contraction_strategies.contraction_container import _ContractionMatchgatesContainerAddException
 from .. import init_qubit_device, init_nif_device
 from ..test_specific_circuit import specific_matchgate_circuit
 from ...configs import (
@@ -31,7 +28,8 @@ set_seed(TEST_SEED)
     ]
 )
 def test_horizontal_matchgates_container_contract_single_op(op):
-    container = _HorizontalMatchgatesContainer()
+    strategy = get_contraction_strategy("horizontal")
+    container = strategy.get_container()
     container.add(op)
     np.testing.assert_allclose(
         container.contract(),
@@ -52,7 +50,8 @@ def test_horizontal_matchgates_container_contract_single_op(op):
     ]
 )
 def test_horizontal_matchgates_container_contract_crossing_ops(operations):
-    container = _HorizontalMatchgatesContainer()
+    strategy = get_contraction_strategy("horizontal")
+    container = strategy.get_container()
     assert container.contract() is None
     container.add(operations[0])
     with pytest.raises(_ContractionMatchgatesContainerAddException):
@@ -105,7 +104,8 @@ def test_horizontal_matchgates_container_contract_crossing_ops_probs(operations)
     ]
 )
 def test_horizontal_matchgates_container_contract_single_column(column_operations):
-    container = _HorizontalMatchgatesContainer()
+    strategy = get_contraction_strategy("horizontal")
+    container = strategy.get_container()
     assert container.contract() is None
     new_operations = container.contract_operations(column_operations)
     assert len(new_operations) == len(column_operations)

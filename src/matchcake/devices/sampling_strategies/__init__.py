@@ -1,5 +1,6 @@
 from .sampling_strategy import SamplingStrategy
 from .qubit_by_qubit_sampling import QubitByQubitSampling
+from .two_qubits_by_two_qubits_sampling import TwoQubitsByTwoQubitsSampling
 from ...utils import get_all_subclasses
 
 sampling_strategy_map = {

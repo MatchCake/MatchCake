@@ -30,3 +30,11 @@ fHH = MatchgateStandardParams(
     w=_inv_sqrt_2, x=_inv_sqrt_2,
     y=_inv_sqrt_2, z=-_inv_sqrt_2,
 )
+ZI = MatchgateStandardParams(
+    a=1, b=0, c=0, d=-1,
+    w=1, x=0, y=0, z=-1,
+)
+IZ = MatchgateStandardParams(
+    a=1, b=0, c=0, d=-1,
+    w=-1, x=0, y=0, z=1,
+)

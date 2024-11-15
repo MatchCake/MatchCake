@@ -28,6 +28,10 @@ def to_cuda(x: Any, dtype=torch.float32):
     return to_tensor(x, dtype=dtype).cuda()
 
 
+def to_cpu(x: Any, dtype=torch.float32):
+    return to_tensor(x, dtype=dtype).cpu()
+
+
 def to_numpy(x: Any, dtype=np.float32):
     if isinstance(x, np.ndarray):
         return np.asarray(x, dtype=dtype)

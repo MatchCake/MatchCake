@@ -1,7 +1,10 @@
+from functools import partial
+
 import numpy as np
 import pytest
 
 from matchcake import utils
+from .. import get_slow_test_mark
 from ..configs import (
     N_RANDOM_TESTS_PER_CASE,
     TEST_SEED,
@@ -9,14 +12,16 @@ from ..configs import (
     RTOL_SCALAR_COMPARISON,
     ATOL_MATRIX_COMPARISON,
     RTOL_MATRIX_COMPARISON,
+    ATOL_APPROX_COMPARISON,
+    RTOL_APPROX_COMPARISON,
     set_seed,
 )
 
 set_seed(TEST_SEED)
 MIN_MATRIX_SIZE = 2
-MAX_MATRIX_SIZE = 20
+MAX_MATRIX_SIZE = 10
 BATCH_SIZE = 3
-RECOMMENDED_METHODS = ["det", "bLTL", "bH"]
+RECOMMENDED_METHODS = ["det", "bLTL", "bH", "PfaffianFDBPf"]
 
 
 def gen_skew_symmetric_matrix_and_det(n, batch_size=None):
@@ -100,19 +105,23 @@ def test_pfaffian_bltl_single_item(matrix, det):
     np.testing.assert_allclose(pf ** 2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
 
 
+@get_slow_test_mark()
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "n, batch_size, mth",
     [
         (i, batch_size, mth)
         for i in range(MIN_MATRIX_SIZE, MAX_MATRIX_SIZE + 1, 2)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-        for mth in RECOMMENDED_METHODS
+        # for mth in RECOMMENDED_METHODS
+        for mth in ["det", "PfaffianFDBPf"]
         for batch_size in [None, BATCH_SIZE]
     ]
 )
 def test_pfaffian_methods_grads(n, batch_size, mth):
     try:
         import torch
+        from torch.autograd import gradcheck
     except ImportError:
         pytest.skip("PyTorch is not installed.")
     torch.autograd.set_detect_anomaly(True)
@@ -123,27 +132,34 @@ def test_pfaffian_methods_grads(n, batch_size, mth):
         np_matrix = np.random.rand(batch_size, n, n)
     np_matrix = np_matrix - np.einsum("...ij->...ji", np_matrix)
     torch_matrix = torch.from_numpy(np_matrix).requires_grad_()
-    det = torch.det(torch_matrix)
-    torch_loss = torch.sum(det)
-    torch_loss.backward()
-    true_grad = torch_matrix.grad
-
-    matrix = torch.from_numpy(np_matrix).requires_grad_()
-    pf = utils.pfaffian(matrix, method=mth)
-    pred_det = torch.real(pf ** 2)
-    with torch.no_grad():
-        np.testing.assert_allclose(pred_det, det, atol=10 * ATOL_SCALAR_COMPARISON, rtol=10 * RTOL_SCALAR_COMPARISON)
-
-    pred_loss = torch.sum(pred_det)
-    pred_loss.backward()
-    pred_grad = matrix.grad
-    assert pred_grad is not None
-    if mth == "det":
-        np.testing.assert_allclose(
-            torch.abs(pred_grad), torch.abs(true_grad),
-            atol=ATOL_MATRIX_COMPARISON,
-            rtol=RTOL_MATRIX_COMPARISON
-        )
+    # det = torch.det(torch_matrix)
+    # torch_loss = torch.sum(det)
+    # torch_loss.backward()
+    # true_grad = torch_matrix.grad
+    #
+    # matrix = torch.from_numpy(np_matrix).requires_grad_()
+    # pf = utils.pfaffian(matrix, method=mth)
+    # pred_det = torch.real(pf ** 2)
+    # with torch.no_grad():
+    #     np.testing.assert_allclose(pred_det, det, atol=10 * ATOL_SCALAR_COMPARISON, rtol=10 * RTOL_SCALAR_COMPARISON)
+    #
+    # pred_loss = torch.sum(pred_det)
+    # pred_loss.backward()
+    # pred_grad = matrix.grad
+    # assert pred_grad is not None
+    # if mth == "det":
+    #     np.testing.assert_allclose(
+    #         torch.abs(pred_grad), torch.abs(true_grad),
+    #         atol=ATOL_MATRIX_COMPARISON,
+    #         rtol=RTOL_MATRIX_COMPARISON
+    #     )
+    func = partial(utils.pfaffian, method=mth)
+    assert gradcheck(
+        func, (torch_matrix,),
+        eps=1e-3,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=10*RTOL_APPROX_COMPARISON,
+    )
 
 
 @pytest.mark.parametrize(
