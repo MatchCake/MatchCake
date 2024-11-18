@@ -9,10 +9,9 @@ from .single_particle_transition_matrix import SingleParticleTransitionMatrixOpe
 class SptmRxRx(SingleParticleTransitionMatrixOperation):
 
     @classmethod
-    def random(cls, wires: Wires, batch_size=None, **kwargs):
+    def random_params(cls, batch_size=None, **kwargs):
         params_shape = ([batch_size] if batch_size is not None else []) + [2]
-        params = np.random.uniform(0, 2 * np.pi, params_shape)
-        return cls(params, wires=wires, **kwargs)
+        return np.random.uniform(0, 2 * np.pi, params_shape)
 
     def __init__(self, params, wires=None, id=None, **kwargs):
         params_shape = qml.math.shape(params)

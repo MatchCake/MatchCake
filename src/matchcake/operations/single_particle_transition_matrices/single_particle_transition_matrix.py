@@ -268,9 +268,14 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         return SingleParticleTransitionMatrixOperation(matrix, wires=all_wires, **kwargs)
 
     @classmethod
+    def random_params(cls, batch_size=None, **kwargs):
+        wires = kwargs.get("wires", None)
+        assert wires is not None, "wires kwarg must be set."
+        return np.random.randn(*(([batch_size] if batch_size is not None else []) + [2 * len(wires), 2 * len(wires)]))
+
+    @classmethod
     def random(cls, wires: Wires, batch_size=None, **kwargs):
-        matrix = np.random.randn(*(([batch_size] if batch_size is not None else []) + [2 * len(wires), 2 * len(wires)]))
-        return cls(matrix, wires=wires, **kwargs)
+        return cls(cls.random_params(batch_size=batch_size, wires=wires, **kwargs), wires=wires, **kwargs)
 
     def __init__(
             self,

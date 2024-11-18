@@ -10,10 +10,9 @@ class SptmRzRz(SingleParticleTransitionMatrixOperation):
     ALLOWED_ANGLES = [-np.pi, np.pi]
 
     @classmethod
-    def random(cls, wires: Wires, batch_size=None, **kwargs):
+    def random_params(cls, batch_size=None, **kwargs):
         params_shape = ([batch_size] if batch_size is not None else []) + [2]
-        params = np.random.choice(cls.ALLOWED_ANGLES, size=params_shape)
-        return cls(params, wires=wires, **kwargs)
+        return np.random.choice(cls.ALLOWED_ANGLES, size=params_shape)
 
     def __init__(
             self,
