@@ -39,5 +39,6 @@ class SptmRxRx(SingleParticleTransitionMatrixOperation):
         matrix[..., 2, 2] = qml.math.cos(phi/2 + theta/2)
         matrix[..., 3, 0] = qml.math.sin(phi/2 - theta/2)
         matrix[..., 3, 3] = qml.math.cos(phi/2 - theta/2)
+
         super().__init__(matrix, wires=wires, id=id, **kwargs)
 

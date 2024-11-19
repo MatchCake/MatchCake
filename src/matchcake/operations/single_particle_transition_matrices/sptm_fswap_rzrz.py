@@ -2,6 +2,7 @@ import numpy as np
 import pennylane as qml
 from pennylane.wires import Wires
 
+from ...utils import make_wires_continuous
 from ...utils.math import convert_and_cast_like
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
@@ -27,7 +28,8 @@ class SptmFSwapRzRz(SingleParticleTransitionMatrixOperation):
             raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
 
         wire0, wire1 = Wires(wires).toarray()
-        n_wires = wire1 - wire0 + 1
+        all_wires = make_wires_continuous(wires)
+        n_wires = len(all_wires)
 
         if len(params_shape) == 1:
             matrix = np.zeros((2 * n_wires, 2 * n_wires), dtype=complex)
@@ -63,5 +65,5 @@ class SptmFSwapRzRz(SingleParticleTransitionMatrixOperation):
         matrix[..., -2, -1] = qml.math.sin(phi / 2 + theta / 2)
         matrix[..., -1, -2] = -qml.math.sin(phi / 2 + theta / 2)
         matrix[..., -1, -1] = qml.math.cos(phi / 2 + theta / 2)
-        super().__init__(matrix, wires=wires, id=id, **kwargs)
+        super().__init__(matrix, wires=all_wires, id=id, **kwargs)
 

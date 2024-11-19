@@ -64,7 +64,11 @@ class _SingleParticleTransitionMatrix:
 
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + sptm.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + sptm.shape[-1])
-            matrix[..., slice_0, slice_1] = sptm
+            matrix[..., slice_0, slice_1] = qml.math.einsum(
+                "...ij,...jk->...ik",
+                matrix[..., slice_0, slice_1],
+                utils.math.convert_and_cast_like(sptm, matrix)
+            )
         return cls(matrix, wires=all_wires)
 
     @classmethod
@@ -98,6 +102,11 @@ class _SingleParticleTransitionMatrix:
             wire0_idx = all_wires.index(m.sorted_wires[0])
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + m.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + m.shape[-1])
+            # matrix[..., slice_0, slice_1] = qml.math.einsum(
+            #     "...ij,...jk->...ik",
+            #     matrix[..., slice_0, slice_1],
+            #     utils.math.convert_and_cast_like(m.matrix(), matrix)
+            # )
             matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(m.matrix(), matrix)
             seen_wires.update(m.sorted_wires)
         return cls(matrix, wires=all_wires)
