@@ -69,8 +69,6 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_w
     qubit_qnode = qml.QNode(
         specific_matchgate_circuit,
         qubit_device,
-        expansion_strategy="gradient",
-        max_expansion=10,
     )
     
     all_wires = np.arange(n_wires)

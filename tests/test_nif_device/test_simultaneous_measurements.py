@@ -122,13 +122,13 @@ def test_multiples_matchgate_probs_with_qbit_device_lookup_table(params_list, n_
         (params, [wire0, wire1])
         for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
     ]
-    qubit_state = qml.expval(qubit_qnode(
+    qubit_state = qubit_qnode(
         params_wires_list,
         initial_binary_state,
         all_wires=qubit_device.wires,
         in_param_type=mps.MatchgatePolarParams,
         out_op="state",
-    ))
+    )
     qubit_probs = utils.get_probabilities_from_state(qubit_state, wires=prob_wires)
     nif_probs = nif_qnode(
         params_wires_list,
