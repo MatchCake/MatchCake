@@ -63,7 +63,7 @@ class MatchgateOperation(Matchgate, Operation):
         if len(not_none_params) == 0:
             raise ValueError("No params set. Cannot make standard params.")
         batch_size = not_none_params[0].batch_size
-        if batch_size in [0, 1]:
+        if batch_size in [0, ]:
             return None
         return batch_size
 
