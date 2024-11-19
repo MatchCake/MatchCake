@@ -31,6 +31,7 @@ from .probability_strategies import get_probability_strategy, ProbabilityStrateg
 from .contraction_strategies import get_contraction_strategy, ContractionStrategy
 from ..utils import torch_utils
 from ..utils.math import convert_and_cast_like
+from .. import __version__
 
 
 class NonInteractingFermionicDevice(qml.QubitDevice):
@@ -92,8 +93,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     """
     name = 'Non-Interacting Fermionic Simulator'
     short_name = "nif.qubit"
-    pennylane_requires = "==0.32"
-    version = "0.0.1"
+    pennylane_requires = "==0.39"
+    version = __version__
     author = "Jérémie Gince"
 
     operations = {
@@ -464,40 +465,6 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                     return circuits, hamiltonian_fn
         return super().batch_transform(circuit)
 
-    '''
-    def batch_execute(self, circuits):
-        """Execute a batch of quantum circuits on the device.
-
-        The circuits are represented by tapes, and they are executed one-by-one using the
-        device's ``execute`` method. The results are collected in a list.
-
-        For plugin developers: This function should be overwritten if the device can efficiently run multiple
-        circuits on a backend, for example using parallel and/or asynchronous executions.
-
-        Args:
-            circuits (list[~.tape.QuantumTape]): circuits to execute on the device
-
-        Returns:
-            list[array[float]]: list of measured value(s)
-        """
-        if not qml.active_return():
-            return self._batch_execute_legacy(circuits=circuits)
-
-        results = []
-        for circuit in circuits:
-            # we need to reset the device here, else it will
-            # not start the next computation in the zero state
-            self.reset()
-
-            res = self.execute(circuit)
-            results.append(res)
-
-        if self.tracker.active:
-            self.tracker.update(batches=1, batch_len=len(circuits))
-            self.tracker.record()
-
-        return results
-    '''
     def apply_state_prep(self, operation, **kwargs) -> bool:
         """
         Apply a state preparation operation to the device. Will set the internal state of the device
