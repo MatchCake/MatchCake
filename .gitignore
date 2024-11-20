@@ -703,5 +703,5 @@ tests/tmp
 .report.json
 jobs_venv
 pstats
-/temp-update-pennylane-playground/
 /pytest-report/
+/temp-update-pennylane-playground/
