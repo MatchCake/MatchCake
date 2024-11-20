@@ -703,5 +703,3 @@ tests/tmp
 .report.json
 jobs_venv
 pstats
-/pytest-report/
-/temp-update-pennylane-playground/
