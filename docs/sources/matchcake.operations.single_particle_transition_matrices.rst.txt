@@ -1,0 +1,85 @@
+matchcake.operations.single\_particle\_transition\_matrices package
+===================================================================
+
+Submodules
+----------
+
+matchcake.operations.single\_particle\_transition\_matrices.single\_particle\_transition\_matrix module
+-------------------------------------------------------------------------------------------------------
+
+.. automodule:: matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.single\_particle\_transition\_matrices.sptm\_angle\_embedding module
+-----------------------------------------------------------------------------------------
+
+.. automodule:: matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.single\_particle\_transition\_matrices.sptm\_fhh module
+----------------------------------------------------------------------------
+
+.. automodule:: matchcake.operations.single_particle_transition_matrices.sptm_fhh
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.single\_particle\_transition\_matrices.sptm\_fswap module
+------------------------------------------------------------------------------
+
+.. automodule:: matchcake.operations.single_particle_transition_matrices.sptm_fswap
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.single\_particle\_transition\_matrices.sptm\_fswap\_rzrz module
+------------------------------------------------------------------------------------
+
+.. automodule:: matchcake.operations.single_particle_transition_matrices.sptm_fswap_rzrz
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.single\_particle\_transition\_matrices.sptm\_identity module
+---------------------------------------------------------------------------------
+
+.. automodule:: matchcake.operations.single_particle_transition_matrices.sptm_identity
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.single\_particle\_transition\_matrices.sptm\_rxrx module
+-----------------------------------------------------------------------------
+
+.. automodule:: matchcake.operations.single_particle_transition_matrices.sptm_rxrx
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.single\_particle\_transition\_matrices.sptm\_ryry module
+-----------------------------------------------------------------------------
+
+.. automodule:: matchcake.operations.single_particle_transition_matrices.sptm_ryry
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.single\_particle\_transition\_matrices.sptm\_rzrz module
+-----------------------------------------------------------------------------
+
+.. automodule:: matchcake.operations.single_particle_transition_matrices.sptm_rzrz
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: matchcake.operations.single_particle_transition_matrices
+   :members:
+   :undoc-members:
+   :show-inheritance:
