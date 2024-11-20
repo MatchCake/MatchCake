@@ -73,7 +73,7 @@ def test_single_matchgate_circuit_output_probs(params, initial_binary_state, out
     )
     qubit_probs = utils.get_probabilities_from_state(qubit_state)
     np.testing.assert_allclose(
-        qubit_probs, output_probs,
+        qubit_probs.squeeze(), output_probs.squeeze(),
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
