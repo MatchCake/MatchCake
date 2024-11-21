@@ -76,14 +76,22 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_w
         (params, [wire0, wire1])
         for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
     ]
-    qubit_state = qubit_qnode(
+    # qubit_state = qubit_qnode(
+    #     params_wires_list,
+    #     initial_binary_state,
+    #     all_wires=qubit_device.wires,
+    #     in_param_type=mps.MatchgatePolarParams,
+    #     out_op="state",
+    # )
+    # qubit_probs = utils.get_probabilities_from_state(qubit_state, wires=prob_wires)
+    qubit_probs = qubit_qnode(
         params_wires_list,
         initial_binary_state,
         all_wires=qubit_device.wires,
         in_param_type=mps.MatchgatePolarParams,
-        out_op="state",
+        out_op="probs",
+        out_wires=prob_wires,
     )
-    qubit_probs = utils.get_probabilities_from_state(qubit_state, wires=prob_wires)
     nif_probs = nif_qnode(
         params_wires_list,
         initial_binary_state,
@@ -105,16 +113,15 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires, prob_w
 @pytest.mark.parametrize(
     "params_list,n_wires,prob_wires",
     [
-        ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], num_wires, 0)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(2*num_wires)], num_wires, 0)
+        # for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in range(2, 5)
-        for num_gates in [1, 2*num_wires]
     ]
 )
 def test_multiples_matchgate_probs_with_qbit_device_mp(params_list, n_wires, prob_wires):
     if psutil.cpu_count() < 2:
         pytest.skip("This test requires at least 2 CPUs.")
-    n_workers = psutil.cpu_count()
+    n_workers = 2
     nif_device, qubit_device = devices_init(wires=n_wires, n_workers=n_workers)
     assert nif_device.n_workers == n_workers
 

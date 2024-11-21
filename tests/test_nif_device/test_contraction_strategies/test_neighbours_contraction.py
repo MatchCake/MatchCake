@@ -1,3 +1,5 @@
+import itertools
+
 import numpy as np
 import pennylane as qml
 import pytest
@@ -5,6 +7,7 @@ import pytest
 import matchcake as mc
 from matchcake import MatchgateOperation, utils
 from matchcake import matchgate_parameter_sets as mps
+from matchcake.circuits import random_sptm_operations_generator
 from matchcake.operations import SptmRxRx, SptmIdentity
 from .. import devices_init, init_nif_device
 from ..test_single_line_matchgates_circuit import single_line_matchgates_circuit
@@ -171,4 +174,119 @@ def test_nh_contraction_torch_grad(x):
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
         err_msg="Forward pass with and without gradient computation are different."
+    )
+
+
+@pytest.mark.parametrize(
+    "circuit_gen, n_wires",
+    [
+        (
+            random_sptm_operations_generator(n_ops=2+i, wires=n_wires, batch_size=batch_size), n_wires
+        )
+        for n_wires in range(2, 12)
+        for i in range(N_RANDOM_TESTS_PER_CASE)
+        for batch_size in [None, 16]
+    ]
+)
+def test_nh_contraction_with_apply_generator(circuit_gen, n_wires):
+    nif_device_nh = init_nif_device(wires=n_wires, contraction_method="neighbours")
+    nif_device_none = init_nif_device(wires=n_wires, contraction_method=None)
+
+    circuit_gen_nh, circuit_gen_none = itertools.tee(circuit_gen)
+
+    nif_device_nh.execute_generator(
+        circuit_gen_nh, apply=True, reset=True, cache_global_sptm=True
+    )
+    nh_sptm = nif_device_nh.apply_metadata["global_sptm"]
+
+    nif_device_none.execute_generator(
+        circuit_gen_none, apply=True, reset=True, cache_global_sptm=True
+    )
+    none_sptm = nif_device_none.apply_metadata["global_sptm"]
+
+    np.testing.assert_allclose(
+        nh_sptm, none_sptm,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+        err_msg="The SPTMs are different."
+    )
+
+
+@pytest.mark.parametrize(
+    "n_wires",
+    [
+        n for n in range(2, 12)
+    ]
+)
+def test_nh_contraction_with_apply_generator_sptm_supp(n_wires):
+    wires = np.arange(n_wires)
+
+    def circuit_gen():
+        for op in mc.operations.SptmFermionicSuperposition(wires=wires).decomposition():
+            yield op
+        # for wire_i, wire_j in zip(wires[:-1], wires[1:]):
+        #     yield mc.operations.SptmFSwap(wires=[wire_i, wire_j])
+        #     yield mc.operations.SptmFHH(wires=[wire_i, wire_j])
+        return
+
+    nif_device_nh = init_nif_device(wires=wires, contraction_method="neighbours")
+    nif_device_none = init_nif_device(wires=wires, contraction_method=None)
+
+    circuit_gen_nh, circuit_gen_none = itertools.tee(circuit_gen())
+
+    nif_device_nh.execute_generator(
+        circuit_gen_nh, apply=True, reset=True, cache_global_sptm=True
+    )
+    nh_sptm = nif_device_nh.apply_metadata["global_sptm"]
+
+    nif_device_none.execute_generator(
+        circuit_gen_none, apply=True, reset=True, cache_global_sptm=True
+    )
+    none_sptm = nif_device_none.apply_metadata["global_sptm"]
+
+    np.testing.assert_allclose(
+        nh_sptm, none_sptm,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+        err_msg="The SPTMs are different."
+    )
+
+
+@pytest.mark.parametrize(
+    "n_wires",
+    [
+        n for n in range(2, 12)
+    ]
+)
+def test_nh_contraction_with_apply_generator_supp(n_wires):
+    wires = np.arange(n_wires)
+
+    def circuit_gen():
+        for op in mc.operations.FermionicSuperposition(wires=wires).decomposition():
+            yield op
+        # for wire_i, wire_j in zip(wires[:-1], wires[1:]):
+        #     yield mc.operations.fSWAP(wires=[wire_i, wire_j])
+        #     yield mc.operations.fH(wires=[wire_i, wire_j])
+        return
+
+    nif_device_nh = init_nif_device(wires=wires, contraction_method="neighbours")
+    nif_device_none = init_nif_device(wires=wires, contraction_method=None)
+
+    circuit_gen_nh, circuit_gen_none = itertools.tee(circuit_gen())
+
+    nif_device_nh.execute_generator(
+        circuit_gen_nh, apply=True, reset=True, cache_global_sptm=True
+    )
+    nh_sptm = nif_device_nh.apply_metadata["global_sptm"]
+
+    nif_device_none.execute_generator(
+        circuit_gen_none, apply=True, reset=True, cache_global_sptm=True
+    )
+    none_sptm = nif_device_none.apply_metadata["global_sptm"]
+
+    np.testing.assert_allclose(
+        nh_sptm, none_sptm,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON,
+        err_msg="The SPTMs are different."
     )

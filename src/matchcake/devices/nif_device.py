@@ -120,6 +120,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
     DEFAULT_PROB_STRATEGY = "LookupTable"
     DEFAULT_CONTRACTION_METHOD = "neighbours"
+    # DEFAULT_CONTRACTION_METHOD = None
     DEFAULT_SAMPLING_STRATEGY = "2QubitBy2QubitSampling"
     pfaffian_methods = {"det", "bLTL", "bH", "cuda_det", "PfaffianFDBPf"}
     DEFAULT_PFAFFIAN_METHOD = "PfaffianFDBPf"
@@ -155,9 +156,13 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 other, single_particle_transition_matrix
             )
         single_particle_transition_matrix = qml.math.einsum(
-            "...ij,...jl->...il",
+            "...ij,...jk->...ik",
             single_particle_transition_matrix, other
         )
+        # single_particle_transition_matrix = qml.math.einsum(
+        #     "...ij,...jk->...ik",
+        #     other, single_particle_transition_matrix
+        # )
         return single_particle_transition_matrix
 
     @classmethod
@@ -1001,6 +1006,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self._transition_matrix = None
         self._lookup_table = None
         self.apply_metadata = defaultdict()
+        self.contraction_strategy.reset()
 
     def update_p_bar(self, *args, **kwargs):
         if self.p_bar is None:

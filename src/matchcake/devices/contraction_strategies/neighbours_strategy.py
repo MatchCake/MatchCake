@@ -9,6 +9,7 @@ class _VHMatchgatesContainer(_ContractionMatchgatesContainer):
         wires = Wires(sorted(op.wires))
         if wires in self.op_container:
             new_op = op @ self.op_container[wires]
+            # new_op = self.op_container[wires] @ op
             self.op_container[wires] = new_op
             return True
 

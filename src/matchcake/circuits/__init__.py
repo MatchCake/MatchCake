@@ -1,4 +1,4 @@
-from typing import Optional, Type, List, Sequence
+from typing import Optional, Type, List, Sequence, Union
 
 import numpy as np
 
@@ -10,13 +10,15 @@ from ..operations import (
     SptmIdentity,
     SptmFHH,
     SptmRyRy,
+    SptmFermionicSuperposition,
+    SptmFSwapRzRz,
 )
 
 
 # pylint: disable=too-many-arguments
 def random_sptm_operations_generator(
         n_ops: int,
-        wires: Sequence[int],
+        wires: Union[Sequence[int], int],
         batch_size: Optional[int] = None,
         op_types: List[Type[SingleParticleTransitionMatrixOperation]] = (
             SptmRxRx,
@@ -25,11 +27,16 @@ def random_sptm_operations_generator(
             SptmIdentity,
             SptmFHH,
             SptmRyRy,
+            SptmFermionicSuperposition,
+            SptmFSwapRzRz,
         ),
         *,
         use_cuda: bool = False,
         **kwargs
 ):
+    if isinstance(wires, int):
+        wires = np.arange(wires)
+    wires = np.sort(np.asarray(wires))
     for _ in range(n_ops):
         cls = np.random.choice(op_types)
         rn_wire0 = np.random.choice(wires[:-1])

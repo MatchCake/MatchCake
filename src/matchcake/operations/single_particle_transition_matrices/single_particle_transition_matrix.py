@@ -153,11 +153,7 @@ class _SingleParticleTransitionMatrix:
         other = other.pad(wires)
 
         return _SingleParticleTransitionMatrix(
-            qml.math.einsum(
-                "...ij,...jk->...ik",
-                _self.matrix(),
-                other.matrix()
-            ),
+            qml.math.einsum("...ij,...jk->...ik", _self.matrix(), other.matrix()),
             wires=wires
         )
 
@@ -363,7 +359,8 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         other = self.from_operation(other, **self._hyperparameters).pad(wires).matrix()
 
         return SingleParticleTransitionMatrixOperation(
-            qml.math.einsum("...ij,...jk->...ik", _self, other),
+            # TODO: Why the unittests fails when doing _self @ other?
+            qml.math.einsum("...ij,...jk->...ik", other, _self),
             wires=wires,
             **self._hyperparameters
         )

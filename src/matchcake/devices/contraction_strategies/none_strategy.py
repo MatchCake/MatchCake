@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Optional
 
 from .contraction_strategy import ContractionStrategy
 from pennylane.operation import Operation
@@ -16,3 +16,9 @@ class NoneContractionStrategy(ContractionStrategy):
             **kwargs
     ) -> Sequence[Operation]:
         return operations
+
+    def get_next_operations(self, operation) -> Sequence[Optional[Operation]]:
+        return [operation]
+
+    def get_reminding(self):
+        return None

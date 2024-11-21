@@ -1,11 +1,8 @@
 import numpy as np
 
-from . import fSWAP, fH, SingleParticleTransitionMatrixOperation
-from .single_particle_transition_matrices import SptmFSwap, SptmFHH
+from . import fSWAP, fH
 from pennylane.wires import Wires
 from pennylane.operation import Operation, AnyWires
-
-from ..utils import make_wires_continuous
 
 
 class FermionicSuperposition(Operation):
@@ -36,9 +33,6 @@ class FermionicSuperposition(Operation):
 
         :keyword contract_rots: If True, contract the rotations. Default is False.
         """
-        n_wires = wires if isinstance(wires, int) else len(wires)
-        if n_wires % 2 != 0:
-            raise ValueError(f"The number of wires must be even but got {n_wires}.")
         super().__init__(wires=wires, id=id)
 
     @property
@@ -46,29 +40,3 @@ class FermionicSuperposition(Operation):
         return 0
 
 
-# class SptmFermionicSuperposition(Operation):
-class SptmFermionicSuperposition(SingleParticleTransitionMatrixOperation):
-    # @staticmethod
-    # def compute_decomposition(*params, wires=None, **hyperparameters):
-    #     wires = Wires(wires)
-    #     gates = []
-    #     for wire_i, wire_j in zip(wires[:-1], wires[1:]):
-    #         gates.append(SptmFSwap(wires=[wire_i, wire_j]))
-    #         gates.append(SptmFHH(wires=[wire_i, wire_j]))
-    #     return gates
-
-    @classmethod
-    def random(cls, wires: Wires, batch_size=None, **kwargs):
-        return cls(wires=wires, **kwargs)
-
-    def __init__(self, wires=None, id=None, **kwargs):
-        all_wires = make_wires_continuous(wires)
-        n_wires = len(all_wires)
-        matrix = np.zeros((2 * n_wires, 2 * n_wires), dtype=int)
-        matrix[..., ::2, ::2] = np.eye(n_wires)
-        matrix[..., np.arange(1, 2 * n_wires - 2, 4), np.arange(3, 2 * n_wires, 4)] = 1
-        matrix[..., np.arange(3, 2 * n_wires, 4), np.arange(1, 2 * n_wires - 2, 4)] = -1
-        super().__init__(matrix, wires=wires, id=id, **kwargs)
-
-    def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
-        return self

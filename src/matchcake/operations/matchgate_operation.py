@@ -125,12 +125,10 @@ class MatchgateOperation(Matchgate, Operation):
         if self.wires != other.wires:
             raise NotImplementedError("Cannot multiply MatchgateOperation with different wires yet.")
 
+        _self = self.standard_params.to_matrix()
+        _other = other.standard_params.to_matrix()
         new_std_params = mps.MatchgateStandardParams.from_matrix(
-            qml.math.einsum(
-                "...ij,...jk->...ik",
-                self.standard_params.to_matrix(),
-                other.standard_params.to_matrix()
-            )
+            qml.math.einsum("...ij,...jk->...ik", _self, _other)
         )
         new_polar_params = mps.MatchgatePolarParams.parse_from_params(new_std_params, force_cast_to_real=True)
         return MatchgateOperation(

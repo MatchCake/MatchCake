@@ -8,6 +8,7 @@ from .sptm_ryry import SptmRyRy
 from .sptm_angle_embedding import SptmAngleEmbedding
 from .sptm_fswap_rzrz import SptmFSwapRzRz
 from .sptm_fswap_hh import SptmFSwapHH
+from .sptm_fermionic_superposition import SptmFermionicSuperposition
 
 
 

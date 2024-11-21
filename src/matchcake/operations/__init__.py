@@ -13,6 +13,7 @@ from .single_particle_transition_matrices import (
     SptmRyRy,
     SptmAngleEmbedding,
     SptmFSwapRzRz,
+    SptmFermionicSuperposition,
 )
 
 
@@ -53,7 +54,6 @@ from .fermionic_swap import (
 
 from .fermionic_superposition import (
     FermionicSuperposition,
-    SptmFermionicSuperposition,
 )
 
 from .. import matchgate_parameter_sets

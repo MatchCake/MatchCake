@@ -58,7 +58,9 @@ def test_matchgate_equal_to_sptm_rxrx(theta, phi):
     "theta, phi",
     [
         (np.full(batch_size, theta), np.full(batch_size, phi))
+        # (np.full(batch_size, theta), np.full(batch_size, theta))
         for batch_size in [1, 4]
+        # for theta in [0, np.pi, 2*np.pi, 3*np.pi]
         for theta in SptmRzRz.ALLOWED_ANGLES
         for phi in SptmRzRz.ALLOWED_ANGLES
     ]

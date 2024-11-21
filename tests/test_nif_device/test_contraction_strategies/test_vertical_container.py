@@ -91,7 +91,8 @@ def test_vert_matchgates_container_contract_line_column(operations):
     all_wires = set(wire for op in operations for wire in op.wires)
     contract_ops = operations[0].get_padded_single_particle_transition_matrix(all_wires)
     for op in operations[1:]:
-        contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(all_wires)
+        # contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(all_wires)
+        contract_ops = op.get_padded_single_particle_transition_matrix(all_wires) @ contract_ops
 
     pred_new_operations = container.contract_operations(operations)
     pred_contract_ops = pred_new_operations[0]
@@ -101,6 +102,7 @@ def test_vert_matchgates_container_contract_line_column(operations):
         if isinstance(op, mc.MatchgateOperation):
             op = op.get_padded_single_particle_transition_matrix(all_wires)
         pred_contract_ops = pred_contract_ops.pad(all_wires) @ op.pad(all_wires)
+        # pred_contract_ops = op.pad(all_wires) @ pred_contract_ops.pad(all_wires)
 
     np.testing.assert_allclose(
         pred_contract_ops,
