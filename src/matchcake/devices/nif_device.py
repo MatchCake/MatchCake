@@ -34,7 +34,7 @@ from ..utils.math import convert_and_cast_like
 from .. import __version__
 
 
-class NonInteractingFermionicDevice(qml.QubitDevice):
+class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     """
     The Non-Interacting Fermionic Simulator device.
 
