@@ -29,6 +29,7 @@ from .. import utils
 from .sampling_strategies import get_sampling_strategy, SamplingStrategy
 from .probability_strategies import get_probability_strategy, ProbabilityStrategy
 from .contraction_strategies import get_contraction_strategy, ContractionStrategy
+from .star_state_finding_strategies import get_star_state_finding_strategy, StarStateFindingStrategy
 from ..utils import torch_utils
 from ..utils.math import convert_and_cast_like
 from .. import __version__
@@ -121,8 +122,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
 
     DEFAULT_PROB_STRATEGY = "LookupTable"
     DEFAULT_CONTRACTION_METHOD = "neighbours"
-    # DEFAULT_CONTRACTION_METHOD = None
     DEFAULT_SAMPLING_STRATEGY = "2QubitBy2QubitSampling"
+    DEFAULT_STAR_STATE_FINDING_STRATEGY = "from_sampling"
     pfaffian_methods = {"det", "bLTL", "bH", "cuda_det", "PfaffianFDBPf"}
     DEFAULT_PFAFFIAN_METHOD = "PfaffianFDBPf"
 
@@ -232,6 +233,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         )
         self.contraction_strategy: ContractionStrategy = get_contraction_strategy(
             kwargs.get("contraction_strategy", self.DEFAULT_CONTRACTION_METHOD)
+        )
+        self.star_state_finding_strategy: StarStateFindingStrategy = get_star_state_finding_strategy(
+            kwargs.get("star_state_finding_strategy", self.DEFAULT_STAR_STATE_FINDING_STRATEGY)
         )
         self.n_workers = kwargs.get("n_workers", 0)
         self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
@@ -939,6 +943,15 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                 wires=kwargs.get("wires", None),
                 shot_range=kwargs.get("shot_range", None),
                 bin_size=kwargs.get("bin_size", None),
+            )
+        if output_type in ["star_state", "*state"]:
+            return self.star_state_finding_strategy(
+                self,
+                partial(self.get_states_probability, show_progress=False),
+                nb_workers=self.n_workers,
+                show_progress=self.show_progress,
+                samples=self._samples,
+                sampling_strategy=self.sampling_strategy,
             )
         raise ValueError(f"Output type {output_type} is not supported.")
 
