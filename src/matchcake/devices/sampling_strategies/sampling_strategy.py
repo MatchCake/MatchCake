@@ -6,9 +6,6 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 import pennylane as qml
 
-from matchcake.utils.math import random_index
-from matchcake.utils.torch_utils import to_numpy
-
 
 class SamplingStrategy(ABC):
     NAME: str = "SamplingStrategy"

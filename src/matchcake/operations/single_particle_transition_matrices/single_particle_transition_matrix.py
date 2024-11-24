@@ -276,7 +276,9 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     def random_params(cls, batch_size=None, **kwargs):
         wires = kwargs.get("wires", None)
         assert wires is not None, "wires kwarg must be set."
-        return np.random.randn(*(([batch_size] if batch_size is not None else []) + [2 * len(wires), 2 * len(wires)]))
+        seed = kwargs.pop("seed", None)
+        rn_gen = np.random.default_rng(seed)
+        return rn_gen.normal(size=(([batch_size] if batch_size is not None else []) + [2 * len(wires), 2 * len(wires)]))
 
     @classmethod
     def random(cls, wires: Wires, batch_size=None, **kwargs):
@@ -301,7 +303,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             params = matrix.reshape(-1)
         else:
             params = matrix.reshape(self.batch_size, -1)
-        Operation.__init__(self, params, wires=wires, id=id, **kwargs)
+        Operation.__init__(self, params, wires=wires, id=id)
         self._hyperparameters = {
             "clip_angles": clip_angles,
             "check_angles": check_angles,

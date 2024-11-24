@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable
+from typing import Callable, Tuple
 import numpy as np
 import tqdm
 from pennylane.typing import TensorLike
@@ -19,5 +19,5 @@ class StarStateFindingStrategy(ABC):
             device: qml.QubitDevice,
             states_prob_func: Callable[[TensorLike, Wires], TensorLike],
             **kwargs
-    ) -> TensorLike:
+    ) -> Tuple[TensorLike, TensorLike]:
         raise NotImplementedError("This method should be implemented by the subclass.")

@@ -12,7 +12,9 @@ class SptmRzRz(SingleParticleTransitionMatrixOperation):
     @classmethod
     def random_params(cls, batch_size=None, **kwargs):
         params_shape = ([batch_size] if batch_size is not None else []) + [2]
-        return np.random.choice(cls.ALLOWED_ANGLES, size=params_shape)
+        seed = kwargs.pop("seed", None)
+        rn_gen = np.random.default_rng(seed)
+        return rn_gen.choice(cls.ALLOWED_ANGLES, size=params_shape)
 
     def __init__(
             self,

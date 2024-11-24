@@ -60,7 +60,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     :type pfaffian_method: str
     :keyword n_workers: The number of workers to use for multiprocessing. Defaults to 0.
     :type n_workers: int
-
+    :keyword star_state_finding_strategy: The strategy to find the star state.
+    :type star_state_finding_strategy: Union[str, StarStateFindingStrategy]
 
     :ivar prob_strategy: The strategy to compute the probabilities
     :vartype prob_strategy: str
@@ -123,7 +124,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     DEFAULT_PROB_STRATEGY = "LookupTable"
     DEFAULT_CONTRACTION_METHOD = "neighbours"
     DEFAULT_SAMPLING_STRATEGY = "2QubitBy2QubitSampling"
-    DEFAULT_STAR_STATE_FINDING_STRATEGY = "from_sampling"
+    DEFAULT_STAR_STATE_FINDING_STRATEGY = "FromSampling"
     pfaffian_methods = {"det", "bLTL", "bH", "cuda_det", "PfaffianFDBPf"}
     DEFAULT_PFAFFIAN_METHOD = "PfaffianFDBPf"
 
@@ -207,6 +208,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self._pre_rotated_sparse_state = None
         self._state = None
         self._pre_rotated_state = None
+
+        self._star_state = None
+        self._star_probability = None
 
         self._transition_matrix = None
         self._lookup_table = None
@@ -334,6 +338,18 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         if self._lookup_table is not None:
             mem += self._lookup_table.memory_usage
         return mem
+
+    @property
+    def star_state(self):
+        return self._star_state
+
+    @property
+    def star_probability(self):
+        return self._star_probability
+
+    @property
+    def samples(self):
+        return self._samples
     
     def get_sparse_or_dense_state(self) -> Union[int, sparse.coo_array, np.ndarray, TensorLike]:
         if self._basis_state_index is not None:
@@ -896,7 +912,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             self,
             op_iterator: Iterable[qml.operation.Operation],
             observable: Optional = None,
-            output_type: Optional[Literal["samples", "expval", "probs"]] = None,
+            output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
             **kwargs
     ):
         """
@@ -945,15 +961,25 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                 bin_size=kwargs.get("bin_size", None),
             )
         if output_type in ["star_state", "*state"]:
-            return self.star_state_finding_strategy(
+            return self.compute_star_state(**kwargs)
+        raise ValueError(f"Output type {output_type} is not supported.")
+
+    def compute_star_state(self, **kwargs):
+        """
+        Compute the star state of the device. The star state is the state that has the highest probability.
+
+        :param kwargs:  Additional keyword arguments
+        :return: The star state and its probability
+        """
+        if self._star_state is None or self._star_probability is None:
+            self._star_state, self._star_probability = self.star_state_finding_strategy(
                 self,
                 partial(self.get_states_probability, show_progress=False),
                 nb_workers=self.n_workers,
                 show_progress=self.show_progress,
                 samples=self._samples,
-                sampling_strategy=self.sampling_strategy,
             )
-        raise ValueError(f"Output type {output_type} is not supported.")
+        return self.star_state, self.star_probability
 
     def _asarray(self, x, dtype=None):
         r"""
@@ -979,6 +1005,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
 
     def reset(self):
         """Reset the device"""
+        super().reset()
         self._basis_state_index = 0
         self._sparse_state = None
         self._pre_rotated_sparse_state = self._sparse_state
@@ -986,6 +1013,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self._pre_rotated_state = self._state
         self._transition_matrix = None
         self._lookup_table = None
+        self._star_state = None
+        self._star_probability = None
+        self._samples = None
         self.apply_metadata = defaultdict()
         self.contraction_strategy.reset()
 

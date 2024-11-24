@@ -11,7 +11,9 @@ class SptmRxRx(SingleParticleTransitionMatrixOperation):
     @classmethod
     def random_params(cls, batch_size=None, **kwargs):
         params_shape = ([batch_size] if batch_size is not None else []) + [2]
-        return np.random.uniform(0, 2 * np.pi, params_shape)
+        seed = kwargs.pop("seed", None)
+        rn_gen = np.random.default_rng(seed)
+        return rn_gen.uniform(0, 2 * np.pi, params_shape)
 
     def __init__(self, params, wires=None, id=None, **kwargs):
         params_shape = qml.math.shape(params)
