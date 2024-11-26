@@ -16,7 +16,7 @@ class StarStateFindingStrategy(ABC):
     @abstractmethod
     def __call__(
             self,
-            device: qml.QubitDevice,
+            device: qml.devices.QubitDevice,
             states_prob_func: Callable[[TensorLike, Wires], TensorLike],
             **kwargs
     ) -> Tuple[TensorLike, TensorLike]:

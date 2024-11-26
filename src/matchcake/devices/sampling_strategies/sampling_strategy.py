@@ -13,7 +13,7 @@ class SamplingStrategy(ABC):
     @abstractmethod
     def generate_samples(
             self,
-            device: qml.QubitDevice,
+            device: qml.devices.QubitDevice,
             state_prob_func: Callable[[TensorLike, Wires], TensorLike],
             **kwargs
     ) -> TensorLike:
@@ -21,7 +21,7 @@ class SamplingStrategy(ABC):
 
     def batch_generate_samples(
             self,
-            device: qml.QubitDevice,
+            device: qml.devices.QubitDevice,
             states_prob_func: Callable[[TensorLike, Wires], TensorLike],
             **kwargs
     ) -> TensorLike:

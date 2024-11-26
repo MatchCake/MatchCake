@@ -9,6 +9,7 @@ from pennylane.wires import Wires
 from ... import utils
 from ...templates import TensorLike
 from ...utils.math import convert_and_cast_like
+from ...utils.torch_utils import detach
 
 
 class _SingleParticleTransitionMatrix:
@@ -102,12 +103,12 @@ class _SingleParticleTransitionMatrix:
             wire0_idx = all_wires.index(m.sorted_wires[0])
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + m.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + m.shape[-1])
-            # matrix[..., slice_0, slice_1] = qml.math.einsum(
-            #     "...ij,...jk->...ik",
-            #     matrix[..., slice_0, slice_1],
-            #     utils.math.convert_and_cast_like(m.matrix(), matrix)
-            # )
-            matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(m.matrix(), matrix)
+            matrix[..., slice_0, slice_1] = qml.math.einsum(
+                "...ij,...jk->...ik",
+                matrix[..., slice_0, slice_1],
+                utils.math.convert_and_cast_like(m.matrix(), matrix)
+            )
+            # matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(m.matrix(), matrix)
             seen_wires.update(m.sorted_wires)
         return cls(matrix, wires=all_wires)
 
@@ -269,7 +270,14 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             wire0_idx = all_wires.index(op.sorted_wires[0])
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + op_matrix.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + op_matrix.shape[-1])
-            matrix[..., slice_0, slice_1] = op_matrix
+            # matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(matrix, op_matrix)
+            matrix[..., slice_0, slice_1] = qml.math.einsum(
+                "...ij,...jk->...ik",
+                # matrix[..., slice_0, slice_1],
+                detach(matrix[..., slice_0, slice_1]),
+                # utils.math.convert_and_cast_like(op_matrix, matrix)
+                utils.math.convert_and_cast_like(matrix, op_matrix)
+            )
         return SingleParticleTransitionMatrixOperation(matrix, wires=all_wires, **kwargs)
 
     @classmethod
@@ -363,6 +371,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         return SingleParticleTransitionMatrixOperation(
             # TODO: Why the unittests fails when doing _self @ other?
             qml.math.einsum("...ij,...jk->...ik", other, _self),
+            # qml.math.einsum("...ij,...jk->...ik", _self, other),
             wires=wires,
             **self._hyperparameters
         )

@@ -29,11 +29,11 @@ class GreedyStrategy(StarStateFindingStrategy):
         k = 2
         added_states = device.states_to_binary(np.arange(int(2 ** k)), k)
         # pi_0 = pi_0(x_0) = [p_0(0), p_0(1)]
-        probs = to_numpy(states_prob_func(added_states, Wires(range(k)))).T
-        star_states = added_states[np.argmax(probs, axis=-1)]
+        probs = to_numpy(states_prob_func(added_states, Wires(range(k))))
+        star_states = added_states[np.argmax(probs, axis=0)]
+        star_probs = np.max(probs, axis=0)
         p_bar.update(k)
 
-        # x_0
         n_wires_left = device.num_wires % k
         n_k = len(list(range(k, device.num_wires - n_wires_left, k)))
         k_list = [j for j in ([k] * n_k) + [n_wires_left] if j > 0]
@@ -41,21 +41,13 @@ class GreedyStrategy(StarStateFindingStrategy):
         for k_j in k_list:
             added_states = device.states_to_binary(np.arange(2 ** k_j), k_j)
 
-            extended_states = KQubitsByKQubitsSampling.extend_states(star_states, added_states, unique=True)
+            extended_states = KQubitsByKQubitsSampling.extend_states(star_states, added_states, unique=False)
             # compute probs of unique states: pi_j = pi_j(x_0, ..., x_{j-1}, x_j) / pi_{j-1}(x_0, ..., x_{j-1})
             extended_states_probs = to_numpy(states_prob_func(extended_states, np.arange(extended_states.shape[-1])))
-            probs = KQubitsByKQubitsSampling.compute_extend_probs_to_all(binaries_array, extended_states, extended_states_probs)
-
-            # Sample x_j from the probability distribution pi_j
-            samples = random_index(probs, axis=-1)
-
-            # x_j
-            binary = device.states_to_binary(samples, k_j)
-            binaries.append(binary)
+            star_states = extended_states[np.argmax(extended_states_probs, axis=0)]
+            star_probs = np.max(extended_states_probs, axis=0)
             p_bar.update(k_j)
 
         p_bar.close()
-
-        # return x_0 ... x_{n-1}
-        return qml.math.concatenate(binaries, -1)
+        return star_states, star_probs
 
