@@ -7,7 +7,8 @@ from .single_particle_transition_matrix import SingleParticleTransitionMatrixOpe
 
 
 class SptmRyRy(SingleParticleTransitionMatrixOperation):
-    ALLOWED_ANGLES = [-np.pi, np.pi]
+    ALLOWED_ANGLES = [np.pi, 3 * np.pi]
+    EQUAL_ALLOWED_ANGLES = [0, np.pi, 2 * np.pi, 3 * np.pi]
 
     @classmethod
     def random_params(cls, batch_size=None, **kwargs):

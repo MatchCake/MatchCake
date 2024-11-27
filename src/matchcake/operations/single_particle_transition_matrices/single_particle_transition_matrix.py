@@ -67,7 +67,7 @@ class _SingleParticleTransitionMatrix:
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + sptm.shape[-1])
             matrix[..., slice_0, slice_1] = qml.math.einsum(
                 "...ij,...jk->...ik",
-                matrix[..., slice_0, slice_1],
+                detach(matrix[..., slice_0, slice_1]),
                 utils.math.convert_and_cast_like(sptm, matrix)
             )
         return cls(matrix, wires=all_wires)
@@ -105,7 +105,7 @@ class _SingleParticleTransitionMatrix:
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + m.shape[-1])
             matrix[..., slice_0, slice_1] = qml.math.einsum(
                 "...ij,...jk->...ik",
-                matrix[..., slice_0, slice_1],
+                detach(matrix[..., slice_0, slice_1]),
                 utils.math.convert_and_cast_like(m.matrix(), matrix)
             )
             # matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(m.matrix(), matrix)
@@ -200,6 +200,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     DEFAULT_CHECK_MATRIX = False
 
     ALLOWED_ANGLES = None
+    EQUAL_ALLOWED_ANGLES = None
     DEFAULT_CHECK_ANGLES = False
     DEFAULT_CLIP_ANGLES = True
 
@@ -207,11 +208,34 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     def clip_angles(cls, angles):
         """
         If the ALLOWED_ANGLES is not none, set the angles to the closest allowed angle.
+        If all the angles are equal in the last dimension, the EQUAL_ALLOWED_ANGLES is used instead.
         """
-        if cls.ALLOWED_ANGLES is None:
+        if cls.ALLOWED_ANGLES is None and cls.EQUAL_ALLOWED_ANGLES is None:
             return angles
+
         angles = qml.math.where(angles >= 0, angles % (2 * np.pi), angles % (-2 * np.pi))
-        allowed_angles_array = convert_and_cast_like(np.array(cls.ALLOWED_ANGLES), angles)
+        angles_shape = qml.math.shape(angles)
+        if len(angles_shape) > 0:
+            angles_flatten = qml.math.reshape(angles, (-1, angles_shape[-1]))
+        else:
+            angles_flatten = qml.math.reshape(angles, (-1, 1))
+        equal_mask = qml.math.all(qml.math.isclose(angles_flatten[..., 0, None], angles_flatten[..., :]), -1)
+        allowed_clipped_angles = cls.clip_to_allowed_angles(angles_flatten, cls.ALLOWED_ANGLES)
+        equal_allowed_clipped_angles = cls.clip_to_allowed_angles(angles_flatten, cls.EQUAL_ALLOWED_ANGLES)
+        angles_flatten = qml.math.where(equal_mask[..., None], equal_allowed_clipped_angles, allowed_clipped_angles)
+        angles = qml.math.reshape(angles_flatten, angles_shape)
+        return angles
+
+    @classmethod
+    def clip_to_allowed_angles(cls, angles, allowed_angles: Optional[Sequence[float]] = None):
+        """
+        If the ALLOWED_ANGLES is not none, set the angles to the closest allowed angle.
+        """
+        if allowed_angles is None:
+            return angles
+
+        angles = qml.math.where(angles >= 0, angles % (2 * np.pi), angles % (-2 * np.pi))
+        allowed_angles_array = convert_and_cast_like(np.array(allowed_angles), angles)
         angles_shape = qml.math.shape(angles)
         angles_flatten = qml.math.reshape(angles, (-1, 1))
         distances = allowed_angles_array - angles_flatten
@@ -226,8 +250,25 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         """
         If the ALLOWED_ANGLES is not none, check if the angles are in the allowed range.
         """
-        if not qml.math.all(qml.math.isin(angles, cls.ALLOWED_ANGLES)):
+        if cls.ALLOWED_ANGLES is None and cls.EQUAL_ALLOWED_ANGLES is None:
+            return True
+
+        angles = qml.math.where(angles >= 0, angles % (2 * np.pi), angles % (-2 * np.pi))
+        angles_shape = qml.math.shape(angles)
+        if len(angles_shape) > 0:
+            angles_flatten = qml.math.reshape(angles, (-1, angles_shape[-1]))
+        else:
+            angles_flatten = qml.math.reshape(angles, (-1, 1))
+        equal_mask = qml.math.all(qml.math.isclose(angles_flatten[..., 0, None], angles_flatten[..., :]), -1)
+
+        not_equal_angles = angles_flatten[~equal_mask].reshape(-1)
+        if not qml.math.all(qml.math.isin(not_equal_angles, cls.ALLOWED_ANGLES)):
             raise ValueError(f"Invalid angles: {angles}. Expected: {cls.ALLOWED_ANGLES}")
+
+        equal_angles = angles_flatten[equal_mask].reshape(-1)
+        if not qml.math.all(qml.math.isin(equal_angles, cls.EQUAL_ALLOWED_ANGLES)):
+            raise ValueError(f"Invalid angles: {angles}. Expected: {cls.EQUAL_ALLOWED_ANGLES}")
+
         return True
 
     @classmethod

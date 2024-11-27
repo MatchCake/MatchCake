@@ -44,6 +44,7 @@ set_seed(TEST_SEED)
 )
 def test_matchgate_equal_to_sptm_rxrx(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
+    params = SptmRxRx.clip_angles(params)
     matchgate = fRXX(params, wires=[0, 1])
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmRxRx(params, wires=[0, 1]).matrix()
@@ -58,15 +59,18 @@ def test_matchgate_equal_to_sptm_rxrx(theta, phi):
     "theta, phi",
     [
         (np.full(batch_size, theta), np.full(batch_size, phi))
-        # (np.full(batch_size, theta), np.full(batch_size, theta))
         for batch_size in [1, 4]
-        # for theta in [0, np.pi, 2*np.pi, 3*np.pi]
         for theta in SptmRzRz.ALLOWED_ANGLES
         for phi in SptmRzRz.ALLOWED_ANGLES
+    ] + [
+        (np.full(batch_size, theta), np.full(batch_size, theta))
+        for batch_size in [1, 4]
+        for theta in SptmRzRz.EQUAL_ALLOWED_ANGLES
     ]
 )
 def test_matchgate_equal_to_sptm_rzrz(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
+    params = SptmRzRz.clip_angles(params)
     matchgate = fRZZ(params, wires=[0, 1])
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmRzRz(params, wires=[0, 1]).matrix()
@@ -84,10 +88,15 @@ def test_matchgate_equal_to_sptm_rzrz(theta, phi):
         for batch_size in [1, 4]
         for theta in SptmRyRy.ALLOWED_ANGLES
         for phi in SptmRyRy.ALLOWED_ANGLES
+    ] + [
+        (np.full(batch_size, theta), np.full(batch_size, theta))
+        for batch_size in [1, 4]
+        for theta in SptmRyRy.EQUAL_ALLOWED_ANGLES
     ]
 )
 def test_matchgate_equal_to_sptm_ryry(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
+    params = SptmRyRy.clip_angles(params)
     matchgate = fRYY(params, wires=[0, 1])
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmRyRy(params, wires=[0, 1]).matrix()
@@ -114,12 +123,30 @@ def test_sptm_rzrz_is_so4(theta, phi):
 
 
 @pytest.mark.parametrize(
+    "theta",
+    [
+        np.full(batch_size, theta)
+        for batch_size in [1, 4]
+        for theta in SptmRzRz.EQUAL_ALLOWED_ANGLES
+    ]
+)
+def test_sptm_rzrz_is_so4_equal_angles(theta):
+    params = np.asarray([theta, theta]).reshape(-1, 2).squeeze()
+    sptm_obj = SptmRzRz(params, wires=[0, 1])
+    assert sptm_obj.check_is_in_so4()
+
+
+@pytest.mark.parametrize(
     "theta, phi",
     [
         (np.full(batch_size, theta), np.full(batch_size, phi))
         for batch_size in [1, 4]
         for theta in SptmRyRy.ALLOWED_ANGLES
         for phi in SptmRyRy.ALLOWED_ANGLES
+    ] + [
+        (np.full(batch_size, theta), np.full(batch_size, theta))
+        for batch_size in [1, 4]
+        for theta in SptmRyRy.EQUAL_ALLOWED_ANGLES
     ]
 )
 def test_sptm_ryry_is_so4(theta, phi):
@@ -152,8 +179,8 @@ def test_matchgate_equal_to_sptm_identity():
     "theta, phi",
     [
         (
-                np.random.uniform(-np.pi, np.pi, batch_size).squeeze(),
-                np.random.uniform(-np.pi, np.pi, batch_size).squeeze()
+                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze(),
+                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze()
         )
         for batch_size in [1, 4]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
@@ -169,8 +196,8 @@ def test_sptm_ryry_is_so4_out_of_angles(theta, phi):
     "theta, phi",
     [
         (
-                np.random.uniform(-np.pi, np.pi, batch_size).squeeze(),
-                np.random.uniform(-np.pi, np.pi, batch_size).squeeze()
+                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze(),
+                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze()
         )
         for batch_size in [1, 4]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
@@ -178,6 +205,27 @@ def test_sptm_ryry_is_so4_out_of_angles(theta, phi):
 )
 def test_sptm_rzrz_is_so4_out_of_angles(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
+    sptm_obj = SptmRzRz(params, wires=[0, 1], check_angles=False, clip_angles=True)
+    assert sptm_obj.check_is_in_so4()
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        [
+            [np.pi, np.pi],
+            [np.pi, 0],
+            [0, np.pi],
+            [0, 0],
+        ],
+        [np.pi, np.pi],
+        [np.pi, 0],
+        [0, np.pi],
+        [0, 0],
+    ]
+)
+def test_sptm_rzrz_is_so4_with_params(params):
+    params = np.asarray(params).reshape(-1, 2).squeeze()
     sptm_obj = SptmRzRz(params, wires=[0, 1], check_angles=False, clip_angles=True)
     assert sptm_obj.check_is_in_so4()
 
@@ -268,6 +316,7 @@ def test_matchgate_equal_to_sptm_rxrx_adjoint(theta, phi):
 )
 def test_matchgate_equal_to_sptm_rzrz_adjoint(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
+    params = SptmRzRz.clip_angles(params)
     matchgate = fRZZ(params, wires=[0, 1]).adjoint()
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmRzRz(params, wires=[0, 1]).adjoint().matrix()
@@ -289,6 +338,7 @@ def test_matchgate_equal_to_sptm_rzrz_adjoint(theta, phi):
 )
 def test_matchgate_equal_to_sptm_ryry_adjoint(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
+    params = SptmRyRy.clip_angles(params)
     matchgate = fRYY(params, wires=[0, 1]).adjoint()
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmRyRy(params, wires=[0, 1]).adjoint().matrix()

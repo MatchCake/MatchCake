@@ -7,7 +7,8 @@ from .single_particle_transition_matrix import SingleParticleTransitionMatrixOpe
 
 
 class SptmRzRz(SingleParticleTransitionMatrixOperation):
-    ALLOWED_ANGLES = [-np.pi, np.pi]
+    ALLOWED_ANGLES = [np.pi, 3*np.pi]
+    EQUAL_ALLOWED_ANGLES = [0, np.pi, 2*np.pi, 3*np.pi]
 
     @classmethod
     def random_params(cls, batch_size=None, **kwargs):
@@ -53,6 +54,7 @@ class SptmRzRz(SingleParticleTransitionMatrixOperation):
         matrix[..., 0, 1] = qml.math.sin(phi/2 + theta/2)
         matrix[..., 1, 0] = -qml.math.sin(phi/2 + theta/2)
         matrix[..., 1, 1] = qml.math.cos(phi/2 + theta/2)
+
         matrix[..., 2, 2] = (exp_theta + exp_phi) * exp_theta_phi / 2
         matrix[..., 2, 3] = (exp_phi - exp_theta) * exp_theta_phi / 2
         matrix[..., 3, 2] = (exp_theta - exp_phi) * exp_theta_phi / 2
