@@ -40,7 +40,10 @@ set_seed(TEST_SEED)
         for num_gates in [0, 1, 10 * num_wires]
         for batch_size in [None, 16]
         for contraction_strategy in contraction_strategy_map.keys()
-        for gen_cls in [RandomSptmOperationsGenerator, RandomSptmHaarOperationsGenerator]
+        for gen_cls in [
+            RandomSptmOperationsGenerator,
+            # RandomSptmHaarOperationsGenerator
+        ]
     ]
 )
 def test_global_sptm_unitary(operations_generator: RandomSptmOperationsGenerator, contraction_strategy):

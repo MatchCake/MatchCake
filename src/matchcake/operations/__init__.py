@@ -1,5 +1,4 @@
 
-
 from .matchgate_operation import (
     MatchgateOperation
 )
@@ -71,3 +70,4 @@ class IZ(MatchgateOperation):
     num_params = 0
     def __init__(self, wires):
         super().__init__(matchgate_parameter_sets.IZ, wires=wires)
+

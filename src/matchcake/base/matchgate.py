@@ -4,6 +4,8 @@ import pennylane as qml
 
 from .. import utils
 from .. import matchgate_parameter_sets as mps
+from ..constants import _MATMUL_DIRECTION
+from ..utils.math import dagger
 
 
 class Matchgate:
@@ -607,24 +609,24 @@ class Matchgate:
         # majorana_tensor.shape: (2n, 2^n, 2^n)
         majorana_tensor = qml.math.stack([self.majorana_getter[i] for i in range(2*self.majorana_getter.n)])
         if self.use_less_einsum_for_transition_matrix:
+            if _MATMUL_DIRECTION == "lr":
+                operands = ["...ij,mjq,...kq,lko->...mlio", u, majorana_tensor, qml.math.conjugate(u), majorana_tensor]
+            else:
+                operands = ["...ij,miq,...kq,lko->...mlio", qml.math.conjugate(u), majorana_tensor, u, majorana_tensor]
             try:
                 import opt_einsum as oe
+                sptm_contraction_path = Matchgate.get_single_particle_transition_matrix_contraction_path(
+                    *operands, optimize="optimal"
+                )
+                # perform the contraction
+                matrix = oe.contract(*operands, optimize=sptm_contraction_path[0])
             except ImportError:
                 raise ImportError("The opt_einsum package is required to use the less einsum for the transition matrix.")
-            operands = ["...ij,mjq,...kq,lko->...mlio", u, majorana_tensor, qml.math.conjugate(u), majorana_tensor]
-            sptm_contraction_path = Matchgate.get_single_particle_transition_matrix_contraction_path(
-                *operands, optimize="optimal"
-            )
-            # perform the contraction
-            matrix = oe.contract(
-                *operands,
-                optimize=sptm_contraction_path[0]
-            )
-            # matrix = qml.math.einsum(
-            #     "...ij,mjq,...kq,lko->...mlio",
-            #     u, majorana_tensor, qml.math.conjugate(u), majorana_tensor,
-            #     optimize="optimal",
-            # )
+                matrix = qml.math.einsum(
+                    "...ij,mjq,...kq,lko->...mlio",
+                    u, majorana_tensor, qml.math.conjugate(u), majorana_tensor,
+                    optimize="optimal",
+                )
         else:
             u_c = qml.math.einsum(
                 "...ij,mjq->...miq", u, majorana_tensor,
@@ -640,6 +642,10 @@ class Matchgate:
                 optimize="optimal"
             )
         matrix = qml.math.einsum("...ii", matrix, optimize="optimal") / qml.math.shape(majorana_tensor)[-1]
+        if _MATMUL_DIRECTION == "rl":
+            matrix = dagger(matrix)
+        else:
+            matrix = dagger(matrix)
         if qml.math.ndim(u) > 2:
             matrix = matrix.squeeze()
         self._single_particle_transition_matrix = matrix

@@ -31,7 +31,7 @@ from .probability_strategies import get_probability_strategy, ProbabilityStrateg
 from .contraction_strategies import get_contraction_strategy, ContractionStrategy
 from .star_state_finding_strategies import get_star_state_finding_strategy, StarStateFindingStrategy
 from ..utils import torch_utils
-from ..utils.math import convert_and_cast_like
+from ..utils.math import convert_and_cast_like, circuit_matmul
 from .. import __version__
 
 
@@ -143,30 +143,30 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         return capabilities
 
     @classmethod
-    def update_single_particle_transition_matrix(cls, single_particle_transition_matrix, other):
-        if single_particle_transition_matrix is None:
-            return other
-        l_interface = qml.math.get_interface(single_particle_transition_matrix)
-        other_interface = qml.math.get_interface(other)
-        l_priority = cls.casting_priorities.index(l_interface)
-        other_priority = cls.casting_priorities.index(other_interface)
-        if l_priority < other_priority:
-            single_particle_transition_matrix = utils.math.convert_and_cast_like(
-                single_particle_transition_matrix, other
+    def update_single_particle_transition_matrix(cls, old_sptm, new_sptm):
+        """
+        Update the old single particle transition matrix by performing a matrix multiplication with the new single
+        particle transition matrix.
+        :param old_sptm: The old single particle transition matrix
+        :param new_sptm: The new single particle transition matrix
+
+        :return: The updated single particle transition matrix.
+        """
+        if old_sptm is None:
+            return new_sptm
+        old_interface = qml.math.get_interface(old_sptm)
+        new_interface = qml.math.get_interface(new_sptm)
+        old_priority = cls.casting_priorities.index(old_interface)
+        new_priority = cls.casting_priorities.index(new_interface)
+        if old_priority < new_priority:
+            old_sptm = utils.math.convert_and_cast_like(
+                old_sptm, new_sptm
             )
-        elif l_priority > other_priority:
-            other = utils.math.convert_and_cast_like(
-                other, single_particle_transition_matrix
+        elif old_priority > new_priority:
+            new_sptm = utils.math.convert_and_cast_like(
+                new_sptm, old_sptm
             )
-        single_particle_transition_matrix = qml.math.einsum(
-            "...ij,...jk->...ik",
-            single_particle_transition_matrix, other
-        )
-        # single_particle_transition_matrix = qml.math.einsum(
-        #     "...ij,...jk->...ik",
-        #     other, single_particle_transition_matrix
-        # )
-        return single_particle_transition_matrix
+        return circuit_matmul(old_sptm, new_sptm, operator="einsum")
 
     @classmethod
     def prod_single_particle_transition_matrices(cls, first, sptm_list):
@@ -301,7 +301,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
 
     @transition_matrix.setter
     def transition_matrix(self, value):
-        if self._transition_matrix is not None:
+        if self._transition_matrix is not None and value is not None:
             value = convert_and_cast_like(value, self._transition_matrix)
         self._transition_matrix = value
         self._lookup_table = None
@@ -839,6 +839,29 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         )
 
     def analytic_probability(self, wires=None):
+        r"""Return the (marginal) probability of each computational basis
+        state from the last run of the device.
+
+        PennyLane uses the convention
+        :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where :math:`q_0` is the most
+        significant bit.
+
+        If no wires are specified, then all the basis states representable by
+        the device are considered and no marginalization takes place.
+
+
+        .. note::
+
+            :meth:`~.marginal_prob` may be used as a utility method
+            to calculate the marginal probability distribution.
+
+        Args:
+            wires (Iterable[Number, str], Number, str, Wires): wires to return
+                marginal probabilities for. Wires not provided are traced out of the system.
+
+        Returns:
+            array[float]: list of the probabilities
+        """
         if not self.is_state_initialized:
             return None
         if wires is None:
@@ -847,7 +870,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             wires = [wires]
         wires = Wires(wires)
         wires_shape = wires.toarray().shape
-        wires_binary_states = np.array(list(itertools.product([0, 1], repeat=wires_shape[-1])))
+        wires_binary_states = self.states_to_binary(np.arange(2**wires_shape[-1]), wires_shape[-1])
 
         if len(wires.toarray().shape) == 2:
             wires_batched = np.stack([wires.toarray() for _ in range(wires_binary_states.shape[-2])], axis=-2)
@@ -861,12 +884,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         elif len(wires_shape) > 2:
             raise ValueError(f"The wires must be a 1D or 2D array. Got a {len(wires_shape)}D array instead.")
 
-        probs = qml.math.stack([
-            self.get_state_probability(wires_binary_state, wires)
-            for wires_binary_state in wires_binary_states
-        ])
+        probs = self.get_states_probability(wires_binary_states, wires)
         probs = probs / qml.math.sum(probs)
-        # probs = self.get_states_probability(wires_binary_states, wires)
         return probs
 
     def generate_samples(self):

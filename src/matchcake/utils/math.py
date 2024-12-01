@@ -4,6 +4,7 @@ import numpy as np
 import scipy
 import pennylane as qml
 from ..templates.tensor_like import TensorLike
+from ..constants import _MATMUL_DIRECTION
 try:
     import torch
 except ImportError:
@@ -112,7 +113,7 @@ def convert_and_cast_like(tensor1, tensor2):
     :param tensor2: Tensor to use as a reference.
     :type tensor2: Any
 
-    :return: Converted and casted tensor.
+    :return: Converted and casted tensor1.
     """
     import warnings
     import numpy as np
@@ -375,3 +376,48 @@ def convert_1d_to_2d_indexes(indexes: Iterable[int], n_rows: Optional[int] = Non
     new_indexes = np.stack([indexes // n_rows, indexes % n_rows], axis=-1)
     return new_indexes
 
+
+def circuit_matmul(
+        first_matrix: Any,
+        second_matrix: Any,
+        direction: Literal["rl", "lr"] = _MATMUL_DIRECTION,
+        operator: Literal["einsum", "matmul", "@"] = "@"
+) -> Any:
+    r"""
+    Perform a matrix multiplication of two matrices with the given direction.
+
+    :param first_matrix: First matrix.
+    :type first_matrix: Any
+    :param second_matrix: Second matrix.
+    :type second_matrix: Any
+    :param direction: Direction of the matrix multiplication. "rl" for right to left and "lr" for left to right.
+        That means the result will be first_matrix @ second_matrix if direction is "rl" and second_matrix @ first_matrix
+    :type direction: Literal["rl", "lr"]
+    :param operator: Operator to use for the matrix multiplication.
+        "einsum" for einsum, "matmul" for matmul, "@" for __matmul__.
+    :type operator: Literal["einsum", "matmul", "@"]
+
+    :return: Result of the matrix multiplication.
+    :rtype: Any
+    """
+    left, right = first_matrix, second_matrix
+    if direction == "lr":
+        left, right = second_matrix, first_matrix
+    if operator == "matmul":
+        return qml.math.matmul(left, right)
+    if operator == "@":
+        return left @ right
+    return qml.math.einsum("...ij,...jk->...ik", left, right)
+
+
+def dagger(tensor: Any) -> Any:
+    r"""
+    Compute the conjugate transpose of the tensor.
+
+    :param tensor: Input tensor.
+    :type tensor: Any
+
+    :return: Conjugate transpose of the tensor.
+    :rtype: Any
+    """
+    return qml.math.conj(qml.math.einsum("...ij->...ji", tensor))

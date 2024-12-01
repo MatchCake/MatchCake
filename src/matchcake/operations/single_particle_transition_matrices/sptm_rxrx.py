@@ -2,7 +2,8 @@ import numpy as np
 import pennylane as qml
 from pennylane.wires import Wires
 
-from ...utils.math import convert_and_cast_like
+from ...utils.math import convert_and_cast_like, dagger
+from ...constants import _MATMUL_DIRECTION
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
@@ -41,6 +42,11 @@ class SptmRxRx(SingleParticleTransitionMatrixOperation):
         matrix[..., 2, 2] = qml.math.cos(phi/2 + theta/2)
         matrix[..., 3, 0] = qml.math.sin(phi/2 - theta/2)
         matrix[..., 3, 3] = qml.math.cos(phi/2 - theta/2)
+
+        if _MATMUL_DIRECTION == "rl":
+            matrix = dagger(matrix)
+        else:
+            matrix = dagger(matrix)
 
         super().__init__(matrix, wires=wires, id=id, **kwargs)
 

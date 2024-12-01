@@ -33,7 +33,8 @@ def test_fermionic_superposition_even_states(wires):
 
     def circuit():
         qml.BasisState(np.zeros(len(wires)), wires=wires)
-        FermionicSuperposition(wires=wires)
+        # FermionicSuperposition(wires=wires)
+        [op for op in FermionicSuperposition.compute_decomposition(wires=wires)]
         return qml.state()
 
     qubit_qnode = qml.QNode(circuit, qubit_device)

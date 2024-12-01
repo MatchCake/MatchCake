@@ -24,6 +24,15 @@ class MatchgateOperation(Matchgate, Operation):
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
 
+    @classmethod
+    def random_params(cls, batch_size=None, **kwargs):
+        seed = kwargs.pop("seed", None)
+        return mps.MatchgatePolarParams.random_batch_numpy(batch_size=batch_size, seed=seed)
+
+    @classmethod
+    def random(cls, wires: Wires, batch_size=None, **kwargs):
+        return cls(cls.random_params(batch_size=batch_size, wires=wires, **kwargs), wires=wires, **kwargs)
+
     @staticmethod
     def _matrix(*params):
         # TODO: maybe remove this method to use only compute_matrix
@@ -117,7 +126,7 @@ class MatchgateOperation(Matchgate, Operation):
     
     def __matmul__(self, other):
         if isinstance(other, SingleParticleTransitionMatrixOperation):
-            return SingleParticleTransitionMatrixOperation.from_operation(self) @ other
+            return self.to_sptm_operation() @ other
 
         if not isinstance(other, MatchgateOperation):
             raise ValueError(f"Cannot multiply MatchgateOperation with {type(other)}")
@@ -154,10 +163,7 @@ class MatchgateOperation(Matchgate, Operation):
         return Operation.__copy__(self)
 
     def to_sptm_operation(self):
-        return SingleParticleTransitionMatrixOperation(
-            self.single_particle_transition_matrix,
-            wires=self.wires
-        )
+        return SingleParticleTransitionMatrixOperation.from_operation(self)
 
 
 

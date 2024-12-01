@@ -87,6 +87,13 @@ class FermionicRotation(MatchgateOperation):
     USE_EXP_TAYLOR_SERIES = False
     TAYLOR_SERIES_TERMS = 10
 
+    @classmethod
+    def random_params(cls, batch_size=None, **kwargs):
+        params_shape = ([batch_size] if batch_size is not None else []) + [cls.num_params]
+        seed = kwargs.pop("seed", None)
+        rn_gen = np.random.default_rng(seed)
+        return rn_gen.uniform(0, 2 * np.pi, params_shape)
+
     def __init__(
             self,
             params: Union[pnp.ndarray, list, tuple],
@@ -116,7 +123,9 @@ class FermionicRotation(MatchgateOperation):
                 taylor_series_terms=self.TAYLOR_SERIES_TERMS
             )
         )
-        in_params = mps.MatchgatePolarParams.parse_from_params(m_params, force_cast_to_real=True)
+        in_params = mps.MatchgatePolarParams.parse_from_params(
+            m_params, force_cast_to_real=kwargs.pop("force_cast_to_real", True)
+        )
         kwargs["in_param_type"] = mps.MatchgatePolarParams
         super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
 

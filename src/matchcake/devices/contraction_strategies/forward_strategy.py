@@ -4,6 +4,7 @@ from .contraction_strategy import ContractionStrategy
 from .contraction_container import _ContractionMatchgatesContainer, _ContractionMatchgatesContainerAddException
 from ...operations.matchgate_operation import MatchgateOperation
 from ...operations.single_particle_transition_matrices import SingleParticleTransitionMatrixOperation
+from ...utils.math import circuit_matmul
 
 
 class _ForwardMatchgatesContainer(_ContractionMatchgatesContainer):
@@ -19,7 +20,8 @@ class _ForwardMatchgatesContainer(_ContractionMatchgatesContainer):
             op_list = [self.op_container.pop(w) for w in w_list]
             other = SingleParticleTransitionMatrixOperation.from_operations(op_list)
             # new_op = op @ other
-            new_op = other @ op
+            # new_op = other @ op
+            new_op = circuit_matmul(first_matrix=self.op_container[wires], second_matrix=other)
             self.op_container[new_op.wires] = new_op
             return True
 

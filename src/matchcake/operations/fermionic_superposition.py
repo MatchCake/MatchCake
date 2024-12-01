@@ -9,6 +9,10 @@ class FermionicSuperposition(Operation):
     num_wires = AnyWires
     grad_method = None
 
+    @classmethod
+    def random(cls, wires: Wires, batch_size=None, **kwargs):
+        return cls(wires=wires, **kwargs)
+
     @staticmethod
     def compute_decomposition(*params, wires=None, **hyperparameters):
         wires = Wires(wires)

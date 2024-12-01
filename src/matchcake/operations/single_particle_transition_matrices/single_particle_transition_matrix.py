@@ -1,4 +1,4 @@
-from typing import Union, Iterable, Sequence, Optional, Any
+from typing import Union, Iterable, Sequence, Optional, Any, Literal, List
 
 import numpy as np
 import pennylane as qml
@@ -8,8 +8,9 @@ from pennylane.wires import Wires
 
 from ... import utils
 from ...templates import TensorLike
-from ...utils.math import convert_and_cast_like
+from ...utils.math import convert_and_cast_like, circuit_matmul
 from ...utils.torch_utils import detach
+from ...constants import _MATMUL_DIRECTION
 
 
 class _SingleParticleTransitionMatrix:
@@ -190,13 +191,13 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     num_wires = AnyWires
     num_params = 1
     par_domain = "A"
-
     grad_method = "A"
     grad_recipe = None
-
     generator = None
 
-    casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
+    casting_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = [
+        "numpy", "autograd", "jax", "tf", "torch",  # greater index means higher priority
+    ]
     DEFAULT_CHECK_MATRIX = False
 
     ALLOWED_ANGLES = None
@@ -312,12 +313,10 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + op_matrix.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + op_matrix.shape[-1])
             # matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(matrix, op_matrix)
-            matrix[..., slice_0, slice_1] = qml.math.einsum(
-                "...ij,...jk->...ik",
-                # matrix[..., slice_0, slice_1],
-                detach(matrix[..., slice_0, slice_1]),
-                # utils.math.convert_and_cast_like(op_matrix, matrix)
-                utils.math.convert_and_cast_like(matrix, op_matrix)
+            # matrix[..., slice_0, slice_1] = qml.math.einsum("...ij,...jk->...ik", left, right)
+            matrix[..., slice_0, slice_1] = circuit_matmul(
+                first_matrix=detach(matrix[..., slice_0, slice_1]),
+                second_matrix=utils.math.convert_and_cast_like(op_matrix, matrix)
             )
         return SingleParticleTransitionMatrixOperation(matrix, wires=all_wires, **kwargs)
 
@@ -378,6 +377,15 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
                 return False
         return True
 
+    def check_is_unitary(self, atol=1e-6, rtol=1e-6):
+        matrix = self.matrix()
+        if self.batch_size is None:
+            matrix = matrix[None, ...]
+        eye = np.eye(matrix.shape[-1])
+        matrix_dagger = qml.math.conj(qml.math.einsum("...ij->...ji", qml.math.conj(matrix)))
+        expected_eye = qml.math.einsum("...ij,...jk->...ik", matrix_dagger, matrix)
+        return np.allclose(expected_eye, eye, atol=atol, rtol=rtol)
+
     def pad(self, wires: Wires):
         if not isinstance(wires, Wires):
             wires = Wires(wires)
@@ -411,8 +419,8 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
 
         return SingleParticleTransitionMatrixOperation(
             # TODO: Why the unittests fails when doing _self @ other?
-            qml.math.einsum("...ij,...jk->...ik", other, _self),
-            # qml.math.einsum("...ij,...jk->...ik", _self, other),
+            qml.math.einsum("...ij,...jk->...ik", _self, other),
+            # qml.math.einsum("...ij,...jk->...ik", other, _self),
             wires=wires,
             **self._hyperparameters
         )
