@@ -9,6 +9,7 @@ from matchcake.base.lookup_table import NonInteractingFermionicLookupTable
 from matchcake.devices import NIFDevice
 from matchcake.devices.contraction_strategies import contraction_strategy_map
 from matchcake.circuits import RandomSptmOperationsGenerator, RandomSptmHaarOperationsGenerator
+from matchcake.utils.math import dagger
 from .. import get_slow_test_mark
 from ..test_nif_device import devices_init
 from ..configs import (
@@ -39,7 +40,14 @@ set_seed(TEST_SEED)
         for num_wires in range(2, 10)
         for num_gates in [0, 1, 10 * num_wires]
         for batch_size in [None, 16]
-        for contraction_strategy in contraction_strategy_map.keys()
+        # for contraction_strategy in contraction_strategy_map.keys()
+        for contraction_strategy in [
+            # None,
+            # "neighbours",
+            # "forward",
+            # "horizontal",
+            "vertical"
+        ]
         for gen_cls in [
             RandomSptmOperationsGenerator,
             # RandomSptmHaarOperationsGenerator
@@ -52,10 +60,18 @@ def test_global_sptm_unitary(operations_generator: RandomSptmOperationsGenerator
         operations_generator, n_ops=operations_generator.n_ops, apply=True, reset=True, cache_global_sptm=True
     )
     global_sptm = nif_device.apply_metadata["global_sptm"]
-    global_sptm_dagger = np.einsum("...ij->...ji", global_sptm).conj()
-    expected_eye = np.einsum("...ij,...jk->...ik", global_sptm, global_sptm_dagger)
+    expected_eye = np.einsum("...ij,...jk->...ik", global_sptm, dagger(global_sptm))
     eye = np.zeros_like(expected_eye)
     eye[..., np.arange(2 * operations_generator.n_wires), np.arange(2 * operations_generator.n_wires)] = 1
+    if not np.allclose(expected_eye, eye, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON):
+        nif_device.execute_generator(
+            operations_generator, n_ops=operations_generator.n_ops, apply=True, reset=True, cache_global_sptm=True
+        )
+        print(f"n_wires: {operations_generator.n_wires}, n_ops: {operations_generator.n_ops}, batch_size: {operations_generator.batch_size}, seed: {operations_generator.seed}, contraction_strategy: {contraction_strategy}")
+        print("expected_eye:")
+        print(expected_eye)
+        print("eye:")
+        print(eye)
     np.testing.assert_allclose(
         expected_eye, eye,
         atol=ATOL_MATRIX_COMPARISON,

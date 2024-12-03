@@ -111,22 +111,32 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
 @get_slow_test_mark()
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "op_gen",
+    "op_gen,contraction_strategy",
     [
-        RandomMatchgateHaarOperationsGenerator(wires=num_wires, n_ops=num_gates, output_type="probs", seed=i)
+        (
+                RandomMatchgateHaarOperationsGenerator(wires=num_wires, n_ops=num_gates, output_type="probs", seed=i),
+                contraction_strategy
+        )
         for i in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in range(2, 6)
         for num_gates in [1, 10 * num_wires]
+        for contraction_strategy in [
+            None,
+            "neighbours",
+            "forward",
+            "horizontal",
+            "vertical"
+        ]
     ]
 )
-def test_multiples_matchgate_probs_with_qbit_device_op_gen(op_gen):
-    nif_device, qubit_device = devices_init(wires=op_gen.wires)
+def test_multiples_matchgate_probs_with_qbit_device_op_gen(op_gen, contraction_strategy):
+    nif_device, qubit_device = devices_init(wires=op_gen.wires, contraction_strategy=contraction_strategy)
     qubit_qnode = qml.QNode(op_gen.circuit, qubit_device)
     qubit_probs = qubit_qnode()
     nif_probs = nif_device.execute_generator(op_gen, output_type=op_gen.output_type, observable=op_gen.observable)
     np.testing.assert_allclose(
-        # nif_probs.squeeze(), qubit_probs.squeeze(),
-        np.sort(nif_probs.squeeze()), np.sort(qubit_probs.squeeze()),
+        nif_probs.squeeze(), qubit_probs.squeeze(),
+        # np.sort(nif_probs.squeeze()), np.sort(qubit_probs.squeeze()),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

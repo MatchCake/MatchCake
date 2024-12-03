@@ -25,11 +25,24 @@ class _ContractionMatchgatesContainer:
     def all_wires(self) -> Wires:
         return Wires(self.wires_set)
 
+    @property
+    def all_cs_wires(self):
+        return Wires.all_wires([op.cs_wires for op in self.values()])
+
     def __bool__(self):
         return len(self) > 0
 
     def __len__(self):
         return len(self.op_container)
+
+    def values(self):
+        return self.op_container.values()
+
+    def keys(self):
+        return self.op_container.keys()
+
+    def items(self):
+        return self.op_container.items()
 
     def sorted_keys(self):
         return sorted(self.op_container.keys())
@@ -77,15 +90,15 @@ class _ContractionMatchgatesContainer:
     def contract(self) -> Optional[_SingleParticleTransitionMatrix]:
         if len(self) == 0:
             return None
-        sptms = []
-        for op in self.op_container.values():
-            if isinstance(op, _SingleParticleTransitionMatrix):
-                sptms.append(op)
-            elif isinstance(op, MatchgateOperation):
-                sptms.append(op.to_sptm_operation())
-            else:
-                raise TypeError(f"Unexpected type in container: {type(op)}")
-        return SingleParticleTransitionMatrixOperation.from_spt_matrices(sptms)
+        # sptms = []
+        # for op in self.op_container.values():
+        #     if isinstance(op, _SingleParticleTransitionMatrix):
+        #         sptms.append(op)
+        #     elif isinstance(op, MatchgateOperation):
+        #         sptms.append(op.to_sptm_operation())
+        #     else:
+        #         raise TypeError(f"Unexpected type in container: {type(op)}")
+        return SingleParticleTransitionMatrixOperation.from_operations(self.values())
 
     def contract_and_clear(self) -> Optional[_SingleParticleTransitionMatrix]:
         contracted_op = self.contract()
@@ -117,9 +130,9 @@ class _ContractionMatchgatesContainer:
         new_operations = []
         for i, op in enumerate(operations):
             if not isinstance(op, tuple(self.ALLOWED_GATE_CLASSES)):
-                new_operations.append(op)
                 if self:
                     new_operations.append(self.contract_and_clear())
+                new_operations.append(op)
                 if callback is not None:
                     callback(i)
                 continue

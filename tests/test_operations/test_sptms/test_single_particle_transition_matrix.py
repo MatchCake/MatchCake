@@ -35,8 +35,8 @@ set_seed(TEST_SEED)
     "theta, phi",
     [
         (
-                np.random.uniform(-np.pi, np.pi, batch_size).squeeze(),
-                np.random.uniform(-np.pi, np.pi, batch_size).squeeze()
+                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze(),
+                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze()
         )
         for batch_size in [1, 4]
         for _ in range(N_RANDOM_TESTS_PER_CASE)

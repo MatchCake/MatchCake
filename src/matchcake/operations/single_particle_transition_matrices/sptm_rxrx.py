@@ -32,16 +32,16 @@ class SptmRxRx(SingleParticleTransitionMatrixOperation):
             raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
 
         matrix = convert_and_cast_like(matrix, params)
-        theta, phi = params[..., 0], params[..., 1]
+        theta, phi = params[..., 0] / 2, params[..., 1] / 2
 
-        matrix[..., 0, 0] = qml.math.cos(phi/2 - theta/2)
-        matrix[..., 0, 3] = -qml.math.sin(phi/2 - theta/2)
-        matrix[..., 1, 1] = qml.math.cos(phi/2 + theta/2)
-        matrix[..., 1, 2] = qml.math.sin(phi/2 + theta/2)
-        matrix[..., 2, 1] = -qml.math.sin(phi/2 + theta/2)
-        matrix[..., 2, 2] = qml.math.cos(phi/2 + theta/2)
-        matrix[..., 3, 0] = qml.math.sin(phi/2 - theta/2)
-        matrix[..., 3, 3] = qml.math.cos(phi/2 - theta/2)
+        matrix[..., 0, 0] = qml.math.cos(phi - theta)
+        matrix[..., 0, 3] = -qml.math.sin(phi - theta)
+        matrix[..., 1, 1] = qml.math.cos(phi + theta)
+        matrix[..., 1, 2] = qml.math.sin(phi + theta)
+        matrix[..., 2, 1] = -qml.math.sin(phi + theta)
+        matrix[..., 2, 2] = qml.math.cos(phi + theta)
+        matrix[..., 3, 0] = qml.math.sin(phi - theta)
+        matrix[..., 3, 3] = qml.math.cos(phi - theta)
 
         if _MATMUL_DIRECTION == "rl":
             matrix = dagger(matrix)

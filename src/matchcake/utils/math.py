@@ -421,3 +421,19 @@ def dagger(tensor: Any) -> Any:
     :rtype: Any
     """
     return qml.math.conj(qml.math.einsum("...ij->...ji", tensor))
+
+
+def det(tensor: Any) -> Any:
+    r"""
+    Compute the determinant of the tensor.
+
+    :param tensor: Input tensor.
+    :type tensor: Any
+
+    :return: Determinant of the tensor.
+    :rtype: Any
+    """
+    backend = qml.math.get_interface(tensor)
+    if backend in ["autograd", "numpy"]:
+        return qml.math.linalg.det(tensor)
+    return qml.math.det(tensor)
