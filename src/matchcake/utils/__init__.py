@@ -528,3 +528,12 @@ def get_all_subclasses(__class) -> set:
         subclasses.add(subclass)
         subclasses |= get_all_subclasses(subclass)
     return subclasses
+
+
+def make_wires_continuous(wires: Union[Wires, np.ndarray]):
+    if isinstance(wires, Wires):
+        wires_array = wires.toarray()
+    else:
+        wires_array = np.asarray(wires)
+    min_wire, max_wire = np.min(wires_array), np.max(wires_array)
+    return Wires(range(min_wire, max_wire + 1))
