@@ -375,3 +375,32 @@ def convert_1d_to_2d_indexes(indexes: Iterable[int], n_rows: Optional[int] = Non
     new_indexes = np.stack([indexes // n_rows, indexes % n_rows], axis=-1)
     return new_indexes
 
+
+
+def dagger(tensor: Any) -> Any:
+    r"""
+    Compute the conjugate transpose of the tensor.
+
+    :param tensor: Input tensor.
+    :type tensor: Any
+
+    :return: Conjugate transpose of the tensor.
+    :rtype: Any
+    """
+    return qml.math.conj(qml.math.einsum("...ij->...ji", tensor))
+
+
+def det(tensor: Any) -> Any:
+    r"""
+    Compute the determinant of the tensor.
+
+    :param tensor: Input tensor.
+    :type tensor: Any
+
+    :return: Determinant of the tensor.
+    :rtype: Any
+    """
+    backend = qml.math.get_interface(tensor)
+    if backend in ["autograd", "numpy"]:
+        return qml.math.linalg.det(tensor)
+    return qml.math.det(tensor)
