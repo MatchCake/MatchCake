@@ -8,7 +8,7 @@ from pennylane.wires import Wires
 
 from ... import utils
 from ...templates import TensorLike
-from ...utils.math import convert_and_cast_like
+from ...utils.math import convert_and_cast_like, det
 
 
 class _SingleParticleTransitionMatrix:
@@ -196,6 +196,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     ALLOWED_ANGLES = None
     DEFAULT_CHECK_ANGLES = False
     DEFAULT_CLIP_ANGLES = True
+    DEFAULT_NORMALIZE = True
 
     @classmethod
     def clip_angles(cls, angles):
@@ -281,11 +282,14 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             clip_angles: bool = DEFAULT_CLIP_ANGLES,
             check_angles: bool = DEFAULT_CHECK_ANGLES,
             check_matrix: bool = DEFAULT_CHECK_MATRIX,
+            normalize: bool = DEFAULT_NORMALIZE,
             **kwargs
     ):
         if check_matrix:
             if not self.check_is_in_so4():
                 raise ValueError(f"Matrix is not in SO(4): {matrix}")
+        if normalize:
+            matrix = matrix / qml.math.reshape(det(matrix), list(qml.math.shape(matrix)[:-2]) + [1, 1])
         _SingleParticleTransitionMatrix.__init__(self, matrix, wires=wires)
         if self.batch_size is None:
             params = matrix.reshape(-1)
