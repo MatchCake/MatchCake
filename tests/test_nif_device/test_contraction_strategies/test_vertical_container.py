@@ -5,7 +5,7 @@ from matchcake import matchgate_parameter_sets as mps
 import numpy as np
 import pennylane as qml
 
-from matchcake.utils.math import circuit_matmul, dagger
+from matchcake.utils.math import circuit_matmul, dagger, fermionic_operator_matmul
 from .. import devices_init, init_nif_device
 from ..test_specific_circuit import specific_matchgate_circuit
 from ...configs import (
@@ -92,7 +92,7 @@ def test_vert_matchgates_container_contract_line_column(operations):
     all_wires = set(wire for op in operations for wire in op.wires)
     contract_ops = operations[0].to_sptm_operation().pad(all_wires)
     for op in operations[1:]:
-        contract_ops = circuit_matmul(contract_ops, op.to_sptm_operation().pad(all_wires))
+        contract_ops = fermionic_operator_matmul(contract_ops, op.to_sptm_operation().pad(all_wires))
 
     pred_new_operations = container.contract_operations(operations)
     pred_contract_ops = pred_new_operations[0]
@@ -101,10 +101,14 @@ def test_vert_matchgates_container_contract_line_column(operations):
     for op in pred_new_operations[1:]:
         if isinstance(op, mc.MatchgateOperation):
             op = op.to_sptm_operation()
-        pred_contract_ops = circuit_matmul(pred_contract_ops.pad(all_wires), op.pad(all_wires))
+        pred_contract_ops = fermionic_operator_matmul(pred_contract_ops.pad(all_wires), op.pad(all_wires))
 
     pred_contract_matrix = pred_contract_ops.matrix()
     contract_matrix = contract_ops.matrix()
+    # if not np.allclose(pred_contract_matrix, contract_matrix):
+    #     test_vert_matchgates_container_contract_line_column(operations)
+    #     print(pred_contract_matrix)
+    #     print(contract_matrix)
     np.testing.assert_allclose(
         pred_contract_matrix,
         contract_matrix,

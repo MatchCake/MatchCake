@@ -4,7 +4,8 @@ import numpy as np
 import scipy
 import pennylane as qml
 from ..templates.tensor_like import TensorLike
-from ..constants import _MATMUL_DIRECTION
+from ..constants import _CIRCUIT_MATMUL_DIRECTION, _FOP_MATMUL_DIRECTION, MatmulDirectionType
+
 try:
     import torch
 except ImportError:
@@ -377,10 +378,36 @@ def convert_1d_to_2d_indexes(indexes: Iterable[int], n_rows: Optional[int] = Non
     return new_indexes
 
 
+def matmul(
+        left: Any,
+        right: Any,
+        operator: Literal["einsum", "matmul", "@"] = "@"
+):
+    r"""
+    Perform a matrix multiplication of two matrices.
+
+    :param left: Left matrix.
+    :type left: Any
+    :param right: Right matrix.
+    :type right: Any
+    :param operator: Operator to use for the matrix multiplication.
+        "einsum" for einsum, "matmul" for matmul, "@" for __matmul__.
+    :type operator: Literal["einsum", "matmul", "@"]
+
+    :return: Result of the matrix multiplication.
+    :rtype: Any
+    """
+    if operator == "matmul":
+        return qml.math.matmul(left, right)
+    if operator == "@":
+        return left @ right
+    return qml.math.einsum("...ij,...jk->...ik", left, right)
+
+
 def circuit_matmul(
         first_matrix: Any,
         second_matrix: Any,
-        direction: Literal["rl", "lr"] = _MATMUL_DIRECTION,
+        direction: MatmulDirectionType = _CIRCUIT_MATMUL_DIRECTION,
         operator: Literal["einsum", "matmul", "@"] = "@"
 ) -> Any:
     r"""
@@ -400,14 +427,35 @@ def circuit_matmul(
     :return: Result of the matrix multiplication.
     :rtype: Any
     """
-    left, right = first_matrix, second_matrix
-    if direction == "lr":
-        left, right = second_matrix, first_matrix
-    if operator == "matmul":
-        return qml.math.matmul(left, right)
-    if operator == "@":
-        return left @ right
-    return qml.math.einsum("...ij,...jk->...ik", left, right)
+    left, right = MatmulDirectionType.place_ops(direction, first_matrix, second_matrix)
+    return matmul(left, right, operator)
+
+
+def fermionic_operator_matmul(
+        first_matrix: Any,
+        second_matrix: Any,
+        direction: MatmulDirectionType = _FOP_MATMUL_DIRECTION,
+        operator: Literal["einsum", "matmul", "@"] = "@"
+):
+    r"""
+    Perform a matrix multiplication of two fermionic operator matrices with the given direction.
+
+    :param first_matrix: First fermionic operator matrix.
+    :type first_matrix: Any
+    :param second_matrix: Second fermionic operator matrix.
+    :type second_matrix: Any
+    :param direction: Direction of the matrix multiplication. "rl" for right to left and "lr" for left to right.
+        That means the result will be first_matrix @ second_matrix if direction is "rl" and second_matrix @ first_matrix
+    :type direction: Literal["rl", "lr"]
+    :param operator: Operator to use for the matrix multiplication.
+        "einsum" for einsum, "matmul" for matmul, "@" for __matmul__.
+    :type operator: Literal["einsum", "matmul", "@"]
+
+    :return: Result of the matrix multiplication.
+    :rtype: Any
+    """
+    left, right = MatmulDirectionType.place_ops(direction, first_matrix, second_matrix)
+    return matmul(left, right, operator)
 
 
 def dagger(tensor: Any) -> Any:
@@ -437,3 +485,34 @@ def det(tensor: Any) -> Any:
     if backend in ["autograd", "numpy"]:
         return qml.math.linalg.det(tensor)
     return qml.math.det(tensor)
+
+
+def svd(tensor: Any) -> Tuple[Any, Any, Any]:
+    r"""
+    Compute the singular value decomposition of the tensor.
+
+    :param tensor: Input tensor.
+    :type tensor: Any
+
+    :return: Singular value decomposition of the tensor.
+    :rtype: Tuple[Any, Any, Any]
+    """
+    backend = qml.math.get_interface(tensor)
+    if backend in ["autograd", "numpy"]:
+        return qml.math.linalg.svd(tensor)
+    return qml.math.svd(tensor)
+
+
+def orthonormalize(tensor: Any) -> Any:
+    r"""
+    Orthonormalize the tensor.
+
+    :param tensor: Input tensor.
+    :type tensor: Any
+
+    :return: Orthonormalized tensor.
+    :rtype: Any
+    """
+    u, s, v = svd(tensor)
+    return qml.math.einsum("...ij,...jk->...ik", u, v)
+

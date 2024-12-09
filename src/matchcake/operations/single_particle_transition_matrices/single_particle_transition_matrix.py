@@ -9,9 +9,9 @@ from pennylane.wires import Wires
 from ... import utils
 from ...templates import TensorLike
 from ...utils import make_wires_continuous
-from ...utils.math import convert_and_cast_like, circuit_matmul, det
+from ...utils.math import convert_and_cast_like, circuit_matmul, det, fermionic_operator_matmul, orthonormalize
 from ...utils.torch_utils import detach
-from ...constants import _MATMUL_DIRECTION
+from ...constants import _CIRCUIT_MATMUL_DIRECTION
 
 
 class _SingleParticleTransitionMatrix:
@@ -206,7 +206,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     EQUAL_ALLOWED_ANGLES = None
     DEFAULT_CHECK_ANGLES = False
     DEFAULT_CLIP_ANGLES = True
-    DEFAULT_NORMALIZE = True
+    DEFAULT_NORMALIZE = False
 
     @classmethod
     def clip_angles(cls, angles):
@@ -296,6 +296,16 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             ops: Iterable[Union[Any, "SingleParticleTransitionMatrixOperation"]],
             **kwargs
     ) -> "SingleParticleTransitionMatrixOperation":
+        """
+        This method will contract multiple SingleParticleTransitionMatrixOperations into a single one.
+        Each operation must act on a different set of wires.
+
+        :param ops: The operations to contract.
+        :param kwargs: Additional keyword arguments.
+
+        :return: The contracted SingleParticleTransitionMatrixOperation.
+        :rtype: SingleParticleTransitionMatrixOperation
+        """
         ops = list(ops)
         if len(ops) == 0:
             return None
@@ -322,12 +332,11 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + op_matrix.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + op_matrix.shape[-1])
             matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(op_matrix, matrix)
-            # matrix[..., slice_0, slice_1] = op_matrix
-            # matrix[..., slice_0, slice_1] = qml.math.einsum("...ij,...jk->...ik", left, right)
-            # matrix[..., slice_0, slice_1] = circuit_matmul(
+            # matrix[..., slice_0, slice_1] = fermionic_operator_matmul(
             #     first_matrix=detach(matrix[..., slice_0, slice_1]),
             #     second_matrix=utils.math.convert_and_cast_like(op_matrix, matrix)
             # )
+        kwargs.setdefault("normalize", True)
         return SingleParticleTransitionMatrixOperation(matrix, wires=all_wires, **kwargs)
 
     @classmethod
@@ -358,7 +367,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             if not self.check_is_in_so4():
                 raise ValueError(f"Matrix is not in SO(4): {matrix}")
         if normalize:
-            matrix = matrix / qml.math.reshape(det(matrix), list(qml.math.shape(matrix)[:-2]) + [1, 1])
+            matrix = orthonormalize(matrix)
         _SingleParticleTransitionMatrix.__init__(self, matrix, wires=wires)
         if self.batch_size is None:
             params = matrix.reshape(-1)
@@ -406,23 +415,28 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     def pad(self, wires: Wires):
         if not isinstance(wires, Wires):
             wires = Wires(wires)
-        sorted_wires = Wires(sorted(wires.tolist()))
-        if self.sorted_wires == sorted_wires:
+        cs_wires = make_wires_continuous(wires)
+        if self.cs_wires == cs_wires:
             return self
         matrix = self._matrix
         if qml.math.ndim(matrix) == 2:
-            padded_matrix = np.eye(2 * len(wires))
+            padded_matrix = np.eye(2 * len(cs_wires))
         elif qml.math.ndim(matrix) == 3:
-            padded_matrix = np.zeros((qml.math.shape(matrix)[0], 2 * len(wires), 2 * len(wires)))
-            padded_matrix[:, ...] = np.eye(2 * len(wires))
+            padded_matrix = np.zeros((qml.math.shape(matrix)[0], 2 * len(cs_wires), 2 * len(cs_wires)))
+            padded_matrix[:, ...] = np.eye(2 * len(cs_wires))
         else:
             raise NotImplementedError("This method is not implemented yet.")
         padded_matrix = utils.math.convert_and_cast_like(padded_matrix, matrix)
-        wire0_idx = sorted_wires.index(self.sorted_wires[0])
+        wire0_idx = cs_wires.index(self.cs_wires[0])
         slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-2])
         slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-1])
-        padded_matrix[..., slice_0, slice_1] = matrix
-        return SingleParticleTransitionMatrixOperation(padded_matrix, wires=sorted_wires, **self._hyperparameters)
+        try:
+            padded_matrix[..., slice_0, slice_1] = matrix
+        except:
+            padded_matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(matrix, padded_matrix)
+        kwargs = self._hyperparameters.copy()
+        # kwargs.setdefault("normalize", True)
+        return SingleParticleTransitionMatrixOperation(padded_matrix, wires=cs_wires, **kwargs)
 
     def __matmul__(self, other):
         if not isinstance(other, _SingleParticleTransitionMatrix):
@@ -435,9 +449,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         other = self.from_operation(other, **self._hyperparameters).pad(wires).matrix()
 
         return SingleParticleTransitionMatrixOperation(
-            # TODO: Why the unittests fails when doing _self @ other?
             qml.math.einsum("...ij,...jk->...ik", _self, other),
-            # qml.math.einsum("...ij,...jk->...ik", other, _self),
             wires=wires,
             **self._hyperparameters
         )
@@ -463,6 +475,27 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         import torch
         return SingleParticleTransitionMatrixOperation(
             torch_utils.to_tensor(self.matrix(), dtype=torch.complex128),
+            wires=self.wires,
+            **self._hyperparameters
+        )
+
+    def __round__(self, n=None):
+        return SingleParticleTransitionMatrixOperation(
+            qml.math.round(self.matrix(), n),
+            wires=self.wires,
+            **self._hyperparameters
+        )
+
+    def real(self):
+        return SingleParticleTransitionMatrixOperation(
+            qml.math.real(self.matrix()),
+            wires=self.wires,
+            **self._hyperparameters
+        )
+
+    def __trunc__(self):
+        return SingleParticleTransitionMatrixOperation(
+            qml.math.trunc(self.matrix()),
             wires=self.wires,
             **self._hyperparameters
         )

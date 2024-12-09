@@ -3,7 +3,7 @@ from pennylane.wires import Wires
 
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 from ...utils.math import dagger
-from ...constants import _MATMUL_DIRECTION
+from ...constants import _CIRCUIT_MATMUL_DIRECTION
 
 
 class SptmFSwap(SingleParticleTransitionMatrixOperation):
@@ -25,9 +25,6 @@ class SptmFSwap(SingleParticleTransitionMatrixOperation):
 
         if wire0 != wires_arr[0]:
             matrix = matrix.T
-
-        if _MATMUL_DIRECTION == "lr":
-            matrix = dagger(matrix)
 
         super().__init__(matrix, wires=wires, id=id, **kwargs)
 

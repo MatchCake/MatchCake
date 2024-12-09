@@ -2,6 +2,7 @@ from pennylane.wires import Wires
 
 from .contraction_strategy import ContractionStrategy
 from .contraction_container import _ContractionMatchgatesContainer, _ContractionMatchgatesContainerAddException
+from ..device_utils import circuit_or_fop_matmul
 from ...operations.matchgate_operation import MatchgateOperation
 from ...operations.single_particle_transition_matrices import SingleParticleTransitionMatrixOperation
 from ...utils.math import circuit_matmul
@@ -15,12 +16,13 @@ class _ForwardMatchgatesContainer(_ContractionMatchgatesContainer):
         if is_any_wire_in_container:
             w_list = [
                 w for w, op in self.items()
-                if any([lbl in wires.labels for lbl in op.cs_wires.labels])
+                if any([lbl in wires.labels for lbl in w.labels])
             ]
             op_list = [self.op_container.pop(w) for w in w_list]
-            other = SingleParticleTransitionMatrixOperation.from_operations(op_list)
-            new_op = circuit_matmul(first_matrix=other, second_matrix=op, operator="@")
-            self.op_container[new_op.wires] = new_op
+            old_op = SingleParticleTransitionMatrixOperation.from_operations(op_list)
+            new_op = circuit_or_fop_matmul(first_matrix=old_op, second_matrix=op)
+            self.op_container[new_op.cs_wires] = new_op
+            self.wires_set.update(new_op.cs_wires.labels)
             return True
 
         self.op_container[wires] = op

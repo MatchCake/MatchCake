@@ -6,7 +6,7 @@ from pennylane.wires import Wires
 
 from . import SptmFSwap, SptmFHH
 from ...utils import make_wires_continuous
-from ...constants import _MATMUL_DIRECTION
+from ...constants import _CIRCUIT_MATMUL_DIRECTION
 from ...utils.math import dagger
 
 
@@ -29,12 +29,8 @@ class SptmFermionicSuperposition(SingleParticleTransitionMatrixOperation):
         n_wires = len(all_wires)
         matrix = np.zeros((2 * n_wires, 2 * n_wires), dtype=int)
         matrix[..., ::2, ::2] = np.eye(n_wires)
-        if _MATMUL_DIRECTION == "rl":
-            matrix[..., np.arange(3, 2 * n_wires, 2), np.arange(1, 2 * n_wires - 2, 2)] = -1
-            matrix[..., 1, -1] = 1
-        else:
-            matrix[..., np.arange(1, 2 * n_wires - 2, 2), np.arange(3, 2 * n_wires, 2)] = -1
-            matrix[..., -1, 1] = 1 if n_wires % 2 == 0 else 1
+        matrix[..., np.arange(3, 2 * n_wires, 2), np.arange(1, 2 * n_wires - 2, 2)] = -1
+        matrix[..., 1, -1] = 1
         super().__init__(matrix, wires=wires, id=id, **kwargs)
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":

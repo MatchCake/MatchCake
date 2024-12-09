@@ -11,6 +11,7 @@ from matchcake.circuits import (
     RandomMatchgateOperationsGenerator,
     RandomMatchgateHaarOperationsGenerator,
 )
+from matchcake.devices.contraction_strategies import contraction_strategy_map
 from . import devices_init
 from .test_specific_circuit import specific_matchgate_circuit
 from .. import get_slow_test_mark
@@ -101,8 +102,7 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
         out_wires=nif_device.wires,
     )
     np.testing.assert_allclose(
-        # nif_probs.squeeze(), qubit_probs.squeeze(),
-        np.sort(nif_probs.squeeze()), np.sort(qubit_probs.squeeze()),
+        nif_probs.squeeze(), qubit_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -120,13 +120,7 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
         for i in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in range(2, 6)
         for num_gates in [1, 10 * num_wires]
-        for contraction_strategy in [
-            None,
-            "neighbours",
-            "forward",
-            "horizontal",
-            "vertical"
-        ]
+        for contraction_strategy in contraction_strategy_map.keys()
     ]
 )
 def test_multiples_matchgate_probs_with_qbit_device_op_gen(op_gen, contraction_strategy):
@@ -136,7 +130,6 @@ def test_multiples_matchgate_probs_with_qbit_device_op_gen(op_gen, contraction_s
     nif_probs = nif_device.execute_generator(op_gen, output_type=op_gen.output_type, observable=op_gen.observable)
     np.testing.assert_allclose(
         nif_probs.squeeze(), qubit_probs.squeeze(),
-        # np.sort(nif_probs.squeeze()), np.sort(qubit_probs.squeeze()),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

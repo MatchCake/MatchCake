@@ -33,11 +33,11 @@ def test_sptm_fswap_matmul_fhh():
 
     nif_device = mc.NIFDevice(
         wires=wires,
-        contraction_strategy="neighbours",
+        contraction_strategy=None
     )
     nif_device_none = mc.NIFDevice(
         wires=wires,
-        contraction_strategy="neighbours",
+        contraction_strategy=None,
     )
 
     def circuit_gen():
@@ -110,11 +110,11 @@ def test_sptm_fermionic_superposition_decomposition(wires, is_odd):
 
     nif_device = mc.NIFDevice(
         wires=wires,
-        contraction_strategy="neighbours",
+        contraction_strategy=None,
     )
     nif_device_none = mc.NIFDevice(
         wires=wires,
-        contraction_strategy="neighbours",
+        contraction_strategy=None,
     )
 
     def circuit_gen():
@@ -154,11 +154,11 @@ def test_sptm_fermionic_superposition(wires, is_odd):
 
     nif_device = mc.NIFDevice(
         wires=wires,
-        contraction_strategy="neighbours",
+        contraction_strategy=None,
     )
     nif_device_none = mc.NIFDevice(
         wires=wires,
-        contraction_strategy="neighbours",
+        contraction_strategy=None,
     )
 
     def circuit_gen():
@@ -221,5 +221,16 @@ def test_sptm_fermionic_superposition_probs(wires, is_odd):
         rtol=RTOL_APPROX_COMPARISON,
     )
 
+
+@pytest.mark.parametrize(
+    "wires",
+    [
+        np.arange(n)
+        for n in range(2, 12)
+    ]
+)
+def test_sptm_fermionic_superposition_unitary(wires):
+    sptm = SptmFermionicSuperposition(wires=wires)
+    assert sptm.check_is_unitary(atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
 
 

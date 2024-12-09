@@ -83,17 +83,17 @@ class RandomMatchgateHaarOperationsGenerator(RandomMatchgateOperationsGenerator)
         while n_ops < self.n_ops:
             i = n_ops % (self.n_qubits - 1)
             yield fRZZ(
-                fRZZ.random_params(self.batch_size),
+                fRZZ.random_params(self.batch_size, seed=self.seed),
                 wires=[i, i + 1],
             )
             n_ops += 1
             yield fRYY(
-                fRYY.random_params(self.batch_size),
+                fRYY.random_params(self.batch_size, seed=self.seed),
                 wires=[i, i + 1],
             )
             n_ops += 1
             yield fRZZ(
-                fRZZ.random_params(self.batch_size),
+                fRZZ.random_params(self.batch_size, seed=self.seed),
                 wires=[i, i + 1],
             )
             n_ops += 1

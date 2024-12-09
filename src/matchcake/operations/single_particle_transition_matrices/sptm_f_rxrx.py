@@ -3,7 +3,7 @@ import pennylane as qml
 from pennylane.wires import Wires
 
 from ...utils.math import convert_and_cast_like, dagger
-from ...constants import _MATMUL_DIRECTION
+from ...constants import _CIRCUIT_MATMUL_DIRECTION
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 

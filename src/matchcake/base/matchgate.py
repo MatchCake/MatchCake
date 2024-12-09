@@ -4,7 +4,8 @@ import pennylane as qml
 
 from .. import utils
 from .. import matchgate_parameter_sets as mps
-from ..constants import _MATMUL_DIRECTION
+from ..constants import _CIRCUIT_MATMUL_DIRECTION
+from ..utils import make_single_particle_transition_matrix_from_gate
 from ..utils.math import dagger
 
 
@@ -606,13 +607,10 @@ class Matchgate:
             return self._single_particle_transition_matrix
         u = self.gate_data
 
-        # majorana_tensor.shape: (2n, 2^n, 2^n)
-        majorana_tensor = qml.math.stack([self.majorana_getter[i] for i in range(2*self.majorana_getter.n)])
         if self.use_less_einsum_for_transition_matrix:
-            if _MATMUL_DIRECTION == "lr":
-                operands = ["...ij,mjq,...kq,lko->...mlio", u, majorana_tensor, qml.math.conjugate(u), majorana_tensor]
-            else:
-                operands = ["...ij,miq,...kq,lko->...mlio", qml.math.conjugate(u), majorana_tensor, u, majorana_tensor]
+            # majorana_tensor.shape: (2n, 2^n, 2^n)
+            majorana_tensor = qml.math.stack([self.majorana_getter[i] for i in range(2 * self.majorana_getter.n)])
+            operands = ["...ij,mjq,...kq,lko->...mlio", u, majorana_tensor, qml.math.conjugate(u), majorana_tensor]
             try:
                 import opt_einsum as oe
                 sptm_contraction_path = Matchgate.get_single_particle_transition_matrix_contraction_path(
@@ -627,41 +625,10 @@ class Matchgate:
                     u, majorana_tensor, qml.math.conjugate(u), majorana_tensor,
                     optimize="optimal",
                 )
+            matrix = qml.math.einsum("...ii", matrix, optimize="optimal") / qml.math.shape(majorana_tensor)[-1]
         else:
-            u_c = qml.math.einsum(
-                "...ij,mjq->...miq", u, majorana_tensor,
-                optimize="optimal",
-            )
-            u_c_u_dagger = qml.math.einsum(
-                "...miq,...kq->...mik", u_c, qml.math.conjugate(u),
-                optimize="optimal",
-            )
-            matrix = qml.math.einsum(
-                "...kij,mjq->...kmiq",
-                u_c_u_dagger, majorana_tensor,
-                optimize="optimal"
-            )
+            matrix = make_single_particle_transition_matrix_from_gate(u, self.majorana_getter)
 
-            # u_dagger_c = qml.math.einsum(
-            #     "...ij,miq->...mjq", qml.math.conjugate(u), majorana_tensor,
-            #     optimize="optimal",
-            # )
-            # u_dagger_c_u = qml.math.einsum(
-            #     "...mjq,...qk->...mjk", u_dagger_c, u,
-            #     optimize="optimal",
-            # )
-            # matrix = qml.math.einsum(
-            #     "...kij,mjk->...kmiq",
-            #     u_dagger_c_u, majorana_tensor,
-            #     optimize="optimal"
-            # )
-
-        matrix = qml.math.einsum("...ii", matrix, optimize="optimal") / qml.math.shape(majorana_tensor)[-1]
-        # matrix = dagger(matrix)
-        # if _MATMUL_DIRECTION == "rl":
-        #     matrix = dagger(matrix)
-        # else:
-        #     matrix = dagger(matrix)
         if qml.math.ndim(u) > 2:
             matrix = matrix.squeeze()
         self._single_particle_transition_matrix = matrix

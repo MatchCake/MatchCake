@@ -5,7 +5,7 @@ from pennylane.wires import Wires
 from ...utils import make_wires_continuous
 from ...utils.math import convert_and_cast_like, dagger
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
-from ...constants import _MATMUL_DIRECTION
+from ...constants import _CIRCUIT_MATMUL_DIRECTION
 
 
 class SptmFSwapRzRz(SingleParticleTransitionMatrixOperation):
@@ -30,7 +30,6 @@ class SptmFSwapRzRz(SingleParticleTransitionMatrixOperation):
         if params_shape[-1] != 2:
             raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
 
-        wire0, wire1 = Wires(wires).toarray()
         all_wires = make_wires_continuous(wires)
         n_wires = len(all_wires)
 
@@ -68,8 +67,5 @@ class SptmFSwapRzRz(SingleParticleTransitionMatrixOperation):
         matrix[..., -2, -1] = qml.math.sin(phi / 2 + theta / 2)
         matrix[..., -1, -2] = -qml.math.sin(phi / 2 + theta / 2)
         matrix[..., -1, -1] = qml.math.cos(phi / 2 + theta / 2)
-
-        if _MATMUL_DIRECTION == "lr":
-            matrix = dagger(matrix)
         super().__init__(matrix, wires=all_wires, id=id, **kwargs)
 

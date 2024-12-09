@@ -11,6 +11,7 @@ from .single_particle_transition_matrices.single_particle_transition_matrix impo
     SingleParticleTransitionMatrixOperation
 )
 from ..utils import make_wires_continuous
+from ..utils.math import fermionic_operator_matmul
 
 
 class MatchgateOperation(Matchgate, Operation):
@@ -31,7 +32,7 @@ class MatchgateOperation(Matchgate, Operation):
         return mps.MatchgatePolarParams.random_batch_numpy(batch_size=batch_size, seed=seed)
 
     @classmethod
-    def random(cls, wires: Wires, batch_size=None, **kwargs):
+    def random(cls, wires: Wires, batch_size=None, **kwargs) -> "MatchgateOperation":
         return cls(cls.random_params(batch_size=batch_size, wires=wires, **kwargs), wires=wires, **kwargs)
 
     @staticmethod
@@ -93,6 +94,7 @@ class MatchgateOperation(Matchgate, Operation):
         :param wires: The wires of the whole system.
         :return: padded single particle transition matrix
         """
+        return self.to_sptm_operation().pad(wires=wires).matrix()
         if wires is None:
             wires = self.wires
         wires = Wires(wires)
@@ -135,7 +137,8 @@ class MatchgateOperation(Matchgate, Operation):
     
     def __matmul__(self, other):
         if isinstance(other, SingleParticleTransitionMatrixOperation):
-            return self.to_sptm_operation() @ other
+            return fermionic_operator_matmul(self.to_sptm_operation(), other)
+            # return self.to_sptm_operation() @ other
 
         if not isinstance(other, MatchgateOperation):
             raise ValueError(f"Cannot multiply MatchgateOperation with {type(other)}")

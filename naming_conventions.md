@@ -14,3 +14,6 @@ This file contains the naming conventions used in the project.
 
 
 
+# Others
+- https://pennylane.ai/codebook/circuits-with-many-qubits/multi-qubit-systems
+

@@ -31,8 +31,7 @@ from .probability_strategies import get_probability_strategy, ProbabilityStrateg
 from .contraction_strategies import get_contraction_strategy, ContractionStrategy
 from .star_state_finding_strategies import get_star_state_finding_strategy, StarStateFindingStrategy
 from ..utils import torch_utils
-from ..utils.math import convert_and_cast_like, circuit_matmul, dagger
-from ..constants import _MATMUL_DIRECTION
+from ..utils.math import convert_and_cast_like, circuit_matmul, dagger, fermionic_operator_matmul
 from .. import __version__
 
 
@@ -163,7 +162,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             old_sptm = utils.math.convert_and_cast_like(old_sptm, new_sptm)
         elif old_priority > new_priority:
             new_sptm = utils.math.convert_and_cast_like(new_sptm, old_sptm)
-        return circuit_matmul(old_sptm, new_sptm, operator="einsum")
+        return fermionic_operator_matmul(old_sptm, new_sptm, operator="einsum")
 
     @classmethod
     def prod_single_particle_transition_matrices(cls, first, sptm_list):
@@ -675,8 +674,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self.p_bar_set_postfix_str("Computing transition matrix")
         if kwargs.get("cache_global_sptm", False):
             self.apply_metadata["global_sptm"] = torch_utils.to_numpy(global_sptm)
-        # if _MATMUL_DIRECTION == "lr":
-        #     global_sptm = dagger(global_sptm)
         self._transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm)
         self.p_bar_set_postfix_str(
             f"Transition matrix computed. Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%"

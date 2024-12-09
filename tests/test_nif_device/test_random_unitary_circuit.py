@@ -40,17 +40,10 @@ set_seed(TEST_SEED)
         for num_wires in range(2, 10)
         for num_gates in [0, 1, 10 * num_wires]
         for batch_size in [None, 16]
-        # for contraction_strategy in contraction_strategy_map.keys()
-        for contraction_strategy in [
-            # None,
-            # "neighbours",
-            # "forward",
-            # "horizontal",
-            "vertical"
-        ]
+        for contraction_strategy in contraction_strategy_map.keys()
         for gen_cls in [
             RandomSptmOperationsGenerator,
-            # RandomSptmHaarOperationsGenerator
+            RandomSptmHaarOperationsGenerator
         ]
     ]
 )
@@ -69,7 +62,7 @@ def test_global_sptm_unitary(operations_generator: RandomSptmOperationsGenerator
         )
         print(f"n_wires: {operations_generator.n_wires}, n_ops: {operations_generator.n_ops}, batch_size: {operations_generator.batch_size}, seed: {operations_generator.seed}, contraction_strategy: {contraction_strategy}")
         print("expected_eye:")
-        print(expected_eye)
+        print(expected_eye.round(3))
         print("eye:")
         print(eye)
     np.testing.assert_allclose(

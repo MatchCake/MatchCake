@@ -96,3 +96,20 @@ def test_matchgate_equal_to_sptm_f_rxrx_adjoint(theta, phi):
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
+
+
+@pytest.mark.parametrize(
+    "theta, phi",
+    [
+        (
+                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze(),
+                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze()
+        )
+        for batch_size in [1, 4]
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_sptm_f_rxrx_unitary(theta, phi):
+    params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
+    sptm = SptmfRxRx(params, wires=[0, 1])
+    assert sptm.check_is_unitary()

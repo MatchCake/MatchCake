@@ -1,6 +1,6 @@
 import importlib
 from functools import partial
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Any
 
 import numpy as np
 from scipy import sparse
@@ -537,3 +537,41 @@ def make_wires_continuous(wires: Union[Wires, np.ndarray]):
         wires_array = np.asarray(wires)
     min_wire, max_wire = np.min(wires_array), np.max(wires_array)
     return Wires(range(min_wire, max_wire + 1))
+
+
+def make_single_particle_transition_matrix_from_gate(u: Any, majorana_getter: Optional[MajoranaGetter] = None) -> Any:
+    r"""
+    Compute the single particle transition matrix. This matrix is the matrix :math:`R` such that
+
+    .. math::
+        R_{\mu\nu} &= \frac{1}{4} \text{Tr}{\left(U c_\mu U^\dagger\right)c_\nu}
+
+    where :math:`U` is the matchgate and :math:`c_\mu` is the :math:`\mu`-th Majorana operator.
+
+    :Note: This operation is of polynomial complexity only when the number of particles is equal or less than 2
+        and of exponential complexity otherwise.
+
+    :param u: Matchgate matrix of shape (..., 2^n, 2^n)
+    :param majorana_getter: Majorana getter of n particles
+    :type majorana_getter: Optional[MajoranaGetter]
+    :return: The single particle transition matrix of shape (..., 2n, 2n)
+    """
+    if majorana_getter is None:
+        majorana_getter = MajoranaGetter(n=int(np.log2(u.shape[-1])))
+    # majorana_tensor.shape: (2n, 2^n, 2^n)
+    majorana_tensor = qml.math.stack([majorana_getter[i] for i in range(2 * majorana_getter.n)])
+    u_c = qml.math.einsum(
+        "...ij,mjq->...miq", u, majorana_tensor,
+        optimize="optimal",
+    )
+    u_c_u_dagger = qml.math.einsum(
+        "...miq,...kq->...mik", u_c, qml.math.conjugate(u),
+        optimize="optimal",
+    )
+    u_c_u_dagger_c = qml.math.einsum(
+        "...kij,mjq->...kmiq",
+        u_c_u_dagger, majorana_tensor,
+        optimize="optimal"
+    )
+    u_c_u_dagger_c_traced = qml.math.einsum("...ii", u_c_u_dagger_c, optimize="optimal")
+    return u_c_u_dagger_c_traced / qml.math.shape(majorana_tensor)[-1]
