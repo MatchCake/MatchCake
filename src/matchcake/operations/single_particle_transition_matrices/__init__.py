@@ -1,5 +1,5 @@
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
-from .sptm_rxrx import SptmRxRx
+from .sptm_f_rxrx import SptmfRxRx
 from .sptm_fswap import SptmFSwap
 from .sptm_fhh import SptmFHH
 from .sptm_identity import SptmIdentity

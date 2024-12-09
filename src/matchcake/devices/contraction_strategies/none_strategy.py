@@ -3,6 +3,8 @@ from typing import Sequence, Optional
 from .contraction_strategy import ContractionStrategy
 from pennylane.operation import Operation
 
+from ...operations import SingleParticleTransitionMatrixOperation
+
 
 class NoneContractionStrategy(ContractionStrategy):
     NAME: str = "None"
@@ -18,7 +20,7 @@ class NoneContractionStrategy(ContractionStrategy):
         return operations
 
     def get_next_operations(self, operation) -> Sequence[Optional[Operation]]:
-        return [operation]
+        return [SingleParticleTransitionMatrixOperation.from_operation(operation)]
 
     def get_reminding(self):
         return None

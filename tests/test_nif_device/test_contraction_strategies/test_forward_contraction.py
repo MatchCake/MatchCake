@@ -5,7 +5,7 @@ import pytest
 import matchcake as mc
 from matchcake import MatchgateOperation, utils
 from matchcake import matchgate_parameter_sets as mps
-from matchcake.operations import SptmRxRx, SptmIdentity
+from matchcake.operations import SptmfRxRx, SptmIdentity
 from .. import devices_init, init_nif_device
 from ..test_single_line_matchgates_circuit import single_line_matchgates_circuit
 from ...configs import (
@@ -70,8 +70,8 @@ def test_forward_contraction_device_one_line(operations):
     [
         [SptmIdentity(wires=[0, 1])],
         [SptmIdentity(wires=[0, 1]) for _ in range(10)],
-        [SptmRxRx(np.random.random(2), wires=[0, 1])],
-        [SptmRxRx(np.random.random(2), wires=[0, 1]) for _ in range(2)],
+        [SptmfRxRx(np.random.random(2), wires=[0, 1])],
+        [SptmfRxRx(np.random.random(2), wires=[0, 1]) for _ in range(2)],
     ]
 )
 def test_forward_contraction_device_one_line_sptm(operations):

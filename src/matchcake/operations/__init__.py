@@ -4,7 +4,7 @@ from .matchgate_operation import (
 )
 from .single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
-    SptmRxRx,
+    SptmfRxRx,
     SptmFSwap,
     SptmFHH,
     SptmIdentity,

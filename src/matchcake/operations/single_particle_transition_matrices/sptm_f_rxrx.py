@@ -7,7 +7,26 @@ from ...constants import _MATMUL_DIRECTION
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
-class SptmRxRx(SingleParticleTransitionMatrixOperation):
+class SptmfRxRx(SingleParticleTransitionMatrixOperation):
+    r"""
+    This class represents the single-particle transition matrix for the fermionic RxRx rotation gate.
+
+    This matrix is defined as
+
+    .. math::
+        \begin{align}
+            M(Rx(\theta), Rx(\phi)) = U(\theta, \phi) = \begin{pmatrix}
+                \cos(\phi - \theta) & 0 & 0 & -\sin(\phi - \theta) \\
+                0 & \cos(\phi + \theta) & \sin(\phi + \theta) & 0 \\
+                0 & -\sin(\phi + \theta) & \cos(\phi + \theta) & 0 \\
+                \sin(\phi - \theta) & 0 & 0 & \cos(\phi - \theta)
+            \end{pmatrix}.
+        \end{align}
+
+    :Note: In general, the 'f' in the name of the class stands for fermionic, which means that the gate is defined
+    directly as a matchgate in the form M(A, W) where A is the outer matrix and W is the inner matrix. This is in
+    contrast to a gate defined as AW where A and W are two gates that are tensor-multiplied together.
+    """
 
     @classmethod
     def random_params(cls, batch_size=None, **kwargs):
@@ -43,10 +62,10 @@ class SptmRxRx(SingleParticleTransitionMatrixOperation):
         matrix[..., 3, 0] = qml.math.sin(phi - theta)
         matrix[..., 3, 3] = qml.math.cos(phi - theta)
 
-        if _MATMUL_DIRECTION == "rl":
-            matrix = dagger(matrix)
-        else:
-            matrix = dagger(matrix)
+        # if _MATMUL_DIRECTION == "rl":
+        #     matrix = dagger(matrix)
+        # else:
+        #     matrix = dagger(matrix)
 
         super().__init__(matrix, wires=wires, id=id, **kwargs)
 

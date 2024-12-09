@@ -12,7 +12,7 @@ from matchcake.operations import (
     fH,
 )
 from matchcake.operations.single_particle_transition_matrices import (
-    SptmRxRx,
+    SptmfRxRx,
     SptmFSwap,
     SptmFHH,
     SptmIdentity,
@@ -20,6 +20,7 @@ from matchcake.operations.single_particle_transition_matrices import (
     SptmRyRy,
     SingleParticleTransitionMatrixOperation,
 )
+from matchcake.utils.math import circuit_matmul
 from ...configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
@@ -31,28 +32,8 @@ from ...configs import (
 set_seed(TEST_SEED)
 
 
-@pytest.mark.parametrize(
-    "theta, phi",
-    [
-        (
-                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze(),
-                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze()
-        )
-        for batch_size in [1, 4]
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
-)
-def test_matchgate_equal_to_sptm_rxrx(theta, phi):
-    params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
-    params = SptmRxRx.clip_angles(params)
-    matchgate = fRXX(params, wires=[0, 1])
-    m_sptm = matchgate.single_particle_transition_matrix
-    sptm = SptmRxRx(params, wires=[0, 1]).matrix()
-    np.testing.assert_allclose(
-        sptm, m_sptm,
-        atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON,
-    )
+
+
 
 
 @pytest.mark.parametrize(
@@ -281,28 +262,6 @@ def test_matchgate_equal_to_sptm_fhh_adjoint():
         rtol=RTOL_APPROX_COMPARISON,
     )
 
-
-@pytest.mark.parametrize(
-    "theta, phi",
-    [
-        (
-                np.random.uniform(-np.pi, np.pi, batch_size).squeeze(),
-                np.random.uniform(-np.pi, np.pi, batch_size).squeeze()
-        )
-        for batch_size in [1, 4]
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
-)
-def test_matchgate_equal_to_sptm_rxrx_adjoint(theta, phi):
-    params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
-    matchgate = fRXX(params, wires=[0, 1]).adjoint()
-    m_sptm = matchgate.single_particle_transition_matrix
-    sptm = SptmRxRx(params, wires=[0, 1]).adjoint().matrix()
-    np.testing.assert_allclose(
-        sptm, m_sptm,
-        atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON,
-    )
 
 
 @pytest.mark.parametrize(

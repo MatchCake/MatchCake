@@ -4,7 +4,7 @@ import pytest
 import psutil
 
 from matchcake import MatchgateOperation, utils, BatchHamiltonian
-from matchcake.operations import SptmRxRx
+from matchcake.operations import SptmfRxRx
 from matchcake.utils import torch_utils
 from matchcake import matchgate_parameter_sets as mps
 from matchcake.circuits import random_sptm_operations_generator
@@ -50,8 +50,6 @@ def test_nif_batched_hamiltonian_expval_zz_on_basis_state(basis_state, hamiltoni
     nif_device, _ = devices_init(wires=len(basis_state), shots=None, contraction_strategy=None)
     energy = nif_device.execute_generator(circuit_gen(), observable=hamiltonian, output_type="expval")
     np.testing.assert_allclose(energy, expected_energy, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
-
-
 
 
 def test_nif_hamiltonian_expval():

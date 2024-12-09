@@ -642,10 +642,10 @@ class Matchgate:
                 optimize="optimal"
             )
         matrix = qml.math.einsum("...ii", matrix, optimize="optimal") / qml.math.shape(majorana_tensor)[-1]
-        if _MATMUL_DIRECTION == "rl":
-            matrix = dagger(matrix)
-        else:
-            matrix = dagger(matrix)
+        # if _MATMUL_DIRECTION == "rl":
+        #     matrix = dagger(matrix)
+        # else:
+        #     matrix = dagger(matrix)
         if qml.math.ndim(u) > 2:
             matrix = matrix.squeeze()
         self._single_particle_transition_matrix = matrix
