@@ -22,7 +22,6 @@ from ..configs import (
 set_seed(TEST_SEED)
 
 
-
 @pytest.mark.parametrize(
     "basis_state,hamiltonian,expected_energy",
     [
@@ -52,13 +51,32 @@ def test_nif_batched_hamiltonian_expval_zz_on_basis_state(basis_state, hamiltoni
     np.testing.assert_allclose(energy, expected_energy, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
 
 
-def test_nif_hamiltonian_expval():
-    edges = [(0, 1), (1, 2), (2, 0)]
-    hamiltonian = BatchHamiltonian(
-        np.ones(len(edges)),
-        [qml.PauliZ(edge[0]) @ qml.PauliZ(edge[1]) for edge in edges]
-    )
-
+@pytest.mark.parametrize(
+    "basis_state,hamiltonian,expected_energy",
+    [
+        ([0, 0], [qml.PauliZ(0) @ qml.PauliZ(1)], 1.0),
+        ([0, 1], [qml.PauliZ(0) @ qml.PauliZ(1)], -1.0),
+        ([1, 0], [qml.PauliZ(0) @ qml.PauliZ(1)], -1.0),
+        ([1, 1], [qml.PauliZ(0) @ qml.PauliZ(1)], 1.0),
+        ([0, 0, 0], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)], 2.0),
+        ([0, 1, 0], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)], -2.0),
+        ([1, 0, 0], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)], -2.0),
+        ([1, 1, 0], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)], 2.0),
+        ([0, 0, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)], -2.0),
+        ([0, 1, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)], 2.0),
+        ([1, 0, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)], 2.0),
+        ([1, 1, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)], -2.0),
+    ]
+)
+def test_nif_sum_hamiltonian_expval_zz_on_basis_state(basis_state, hamiltonian, expected_energy):
     def circuit_gen():
-        yield
+        yield qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
+        return
+
+    nif_device, _ = devices_init(wires=len(basis_state), shots=None, contraction_strategy=None)
+    energy = sum(
+        nif_device.execute_generator(circuit_gen(), observable=obs, output_type="expval")
+        for obs in hamiltonian
+    )
+    np.testing.assert_allclose(energy, expected_energy, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
 

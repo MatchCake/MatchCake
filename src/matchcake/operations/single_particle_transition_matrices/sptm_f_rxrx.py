@@ -66,6 +66,7 @@ class SptmfRxRx(SingleParticleTransitionMatrixOperation):
         #     matrix = dagger(matrix)
         # else:
         #     matrix = dagger(matrix)
+        # matrix = dagger(matrix)
 
         super().__init__(matrix, wires=wires, id=id, **kwargs)
 

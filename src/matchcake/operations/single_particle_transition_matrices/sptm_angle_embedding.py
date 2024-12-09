@@ -6,7 +6,7 @@ import pennylane as qml
 import torch
 from pennylane.wires import Wires
 from pennylane.operation import Operation, AnyWires
-from .sptm_rxrx import SptmfRxRx
+from .sptm_f_rxrx import SptmfRxRx
 from .sptm_rzrz import SptmRzRz
 from .sptm_ryry import SptmRyRy
 import numpy as np

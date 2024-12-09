@@ -10,6 +10,7 @@ from .. import matchgate_parameter_sets as mps, utils
 from .single_particle_transition_matrices.single_particle_transition_matrix import (
     SingleParticleTransitionMatrixOperation
 )
+from ..utils import make_wires_continuous
 
 
 class MatchgateOperation(Matchgate, Operation):
@@ -75,6 +76,14 @@ class MatchgateOperation(Matchgate, Operation):
         if batch_size in [0, ]:
             return None
         return batch_size
+
+    @property
+    def sorted_wires(self):
+        return Wires(sorted(self.wires.tolist()))
+
+    @property
+    def cs_wires(self):
+        return Wires(make_wires_continuous(self.wires))
 
     def get_padded_single_particle_transition_matrix(self, wires=None):
         r"""

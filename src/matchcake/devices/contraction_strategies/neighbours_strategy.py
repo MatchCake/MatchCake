@@ -8,7 +8,7 @@ from ...utils.math import circuit_matmul
 
 class _VHMatchgatesContainer(_ContractionMatchgatesContainer):
     def add(self, op: MatchgateOperation):
-        wires = Wires(sorted(op.wires))
+        wires = op.cs_wires
         if wires in self.op_container:
             self.op_container[wires] = circuit_matmul(first_matrix=self.op_container[wires], second_matrix=op)
             return True

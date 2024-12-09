@@ -160,13 +160,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         old_priority = cls.casting_priorities.index(old_interface)
         new_priority = cls.casting_priorities.index(new_interface)
         if old_priority < new_priority:
-            old_sptm = utils.math.convert_and_cast_like(
-                old_sptm, new_sptm
-            )
+            old_sptm = utils.math.convert_and_cast_like(old_sptm, new_sptm)
         elif old_priority > new_priority:
-            new_sptm = utils.math.convert_and_cast_like(
-                new_sptm, old_sptm
-            )
+            new_sptm = utils.math.convert_and_cast_like(new_sptm, old_sptm)
         return circuit_matmul(old_sptm, new_sptm, operator="einsum")
 
     @classmethod

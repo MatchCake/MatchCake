@@ -30,7 +30,7 @@ set_seed(TEST_SEED)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
-def test_matchgate_equal_to_sptm_rxrx(theta, phi):
+def test_matchgate_equal_to_sptm_f_rxrx(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
     params = SptmfRxRx.clip_angles(params)
     matchgate = fRXX(params, wires=[0, 1])
@@ -54,7 +54,7 @@ def test_matchgate_equal_to_sptm_rxrx(theta, phi):
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
-def test_matchgate_equal_to_sptm_rxrx_multiple(theta, phi):
+def test_matchgate_equal_to_sptm_f_rxrx_multiple(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2)
     params = SptmfRxRx.clip_angles(params)
 
@@ -86,7 +86,7 @@ def test_matchgate_equal_to_sptm_rxrx_multiple(theta, phi):
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ]
 )
-def test_matchgate_equal_to_sptm_rxrx_adjoint(theta, phi):
+def test_matchgate_equal_to_sptm_f_rxrx_adjoint(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
     matchgate = fRXX(params, wires=[0, 1]).adjoint()
     m_sptm = matchgate.single_particle_transition_matrix

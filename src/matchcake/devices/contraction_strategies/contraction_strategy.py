@@ -25,7 +25,7 @@ class ContractionStrategy(ABC):
     def get_next_operations(self, operation) -> Sequence[Optional[Operation]]:
         if not isinstance(operation, tuple(self.container.ALLOWED_GATE_CLASSES)):
             return [self.container.contract_and_clear(), operation]
-        return [self.container.push_contract(SingleParticleTransitionMatrixOperation.from_operation(operation))]
+        return [self.container.push_contract(operation)]
 
     def get_reminding(self):
         return self.container.contract_and_clear()

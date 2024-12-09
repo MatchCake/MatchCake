@@ -283,6 +283,11 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     ) -> "SingleParticleTransitionMatrixOperation":
         if isinstance(op, SingleParticleTransitionMatrixOperation):
             return op
+        if not hasattr(op, "single_particle_transition_matrix"):
+            raise ValueError(
+                f"Cannot convert {type(op)} to {cls.__name__} "
+                f"without the attribute 'single_particle_transition_matrix'."
+            )
         return SingleParticleTransitionMatrixOperation(op.single_particle_transition_matrix, wires=op.wires, **kwargs)
 
     @classmethod

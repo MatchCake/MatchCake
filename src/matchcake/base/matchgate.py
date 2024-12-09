@@ -641,7 +641,23 @@ class Matchgate:
                 u_c_u_dagger, majorana_tensor,
                 optimize="optimal"
             )
+
+            # u_dagger_c = qml.math.einsum(
+            #     "...ij,miq->...mjq", qml.math.conjugate(u), majorana_tensor,
+            #     optimize="optimal",
+            # )
+            # u_dagger_c_u = qml.math.einsum(
+            #     "...mjq,...qk->...mjk", u_dagger_c, u,
+            #     optimize="optimal",
+            # )
+            # matrix = qml.math.einsum(
+            #     "...kij,mjk->...kmiq",
+            #     u_dagger_c_u, majorana_tensor,
+            #     optimize="optimal"
+            # )
+
         matrix = qml.math.einsum("...ii", matrix, optimize="optimal") / qml.math.shape(majorana_tensor)[-1]
+        # matrix = dagger(matrix)
         # if _MATMUL_DIRECTION == "rl":
         #     matrix = dagger(matrix)
         # else:
