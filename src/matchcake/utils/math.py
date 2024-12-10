@@ -498,21 +498,35 @@ def svd(tensor: Any) -> Tuple[Any, Any, Any]:
     :rtype: Tuple[Any, Any, Any]
     """
     backend = qml.math.get_interface(tensor)
-    if backend in ["autograd", "numpy"]:
+    if backend in ["autograd", "numpy", "torch"]:
         return qml.math.linalg.svd(tensor)
     return qml.math.svd(tensor)
 
 
-def orthonormalize(tensor: Any) -> Any:
+def orthonormalize(tensor: Any, check_if_normalize: bool = True) -> Any:
     r"""
     Orthonormalize the tensor.
 
+    ..math::
+        U, S, V = SVD(tensor)
+        return U @ V
+
     :param tensor: Input tensor.
     :type tensor: Any
+    :param check_if_normalize: Whether to check if the tensor is already orthonormalized.
+    :type check_if_normalize: bool
 
     :return: Orthonormalized tensor.
     :rtype: Any
     """
+    if check_if_normalize:
+        eye = qml.math.zeros_like(tensor)
+        eye[..., qml.math.arange(qml.math.shape(tensor)[-1]), qml.math.arange(qml.math.shape(tensor)[-1])] = 1
+        if qml.math.allclose(matmul(tensor, dagger(tensor)), eye):
+            return tensor
     u, s, v = svd(tensor)
-    return qml.math.einsum("...ij,...jk->...ik", u, v)
+    # test if the tensor is already orthonormalized with the eigenvalues
+    if qml.math.allclose(s ** 1, 1):
+        return tensor
+    return matmul(u, v, "einsum")
 

@@ -206,7 +206,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     EQUAL_ALLOWED_ANGLES = None
     DEFAULT_CHECK_ANGLES = False
     DEFAULT_CLIP_ANGLES = True
-    DEFAULT_NORMALIZE = False
+    DEFAULT_NORMALIZE = True
 
     @classmethod
     def clip_angles(cls, angles):
@@ -283,12 +283,14 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     ) -> "SingleParticleTransitionMatrixOperation":
         if isinstance(op, SingleParticleTransitionMatrixOperation):
             return op
-        if not hasattr(op, "single_particle_transition_matrix"):
-            raise ValueError(
-                f"Cannot convert {type(op)} to {cls.__name__} "
-                f"without the attribute 'single_particle_transition_matrix'."
-            )
-        return SingleParticleTransitionMatrixOperation(op.single_particle_transition_matrix, wires=op.wires, **kwargs)
+        if hasattr(op, "single_particle_transition_matrix"):
+            return SingleParticleTransitionMatrixOperation(op.single_particle_transition_matrix, wires=op.wires, **kwargs)
+        if hasattr(op, "to_sptm_operation") and callable(op.to_sptm_operation):
+            return op.to_sptm_operation()
+        raise ValueError(
+            f"Cannot convert {type(op)} to {cls.__name__} "
+            f"without the attribute 'single_particle_transition_matrix' or the method 'to_sptm_operation'."
+        )
 
     @classmethod
     def from_operations(

@@ -17,6 +17,7 @@ class RandomOperationsGenerator:
             output_type: Optional[str] = None,
             observable: Optional[Any] = None,
             output_wires: Optional[Sequence[int]] = None,
+            initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
             **kwargs
     ):
         if isinstance(wires, int):
@@ -32,6 +33,7 @@ class RandomOperationsGenerator:
         self.observable = observable
         self.output_wires = output_wires
         self.kwargs = kwargs
+        self.initial_state = initial_state
 
     @property
     def n_qubits(self):
@@ -49,7 +51,7 @@ class RandomOperationsGenerator:
         if self.n_ops == 0:
             return
         rn_gen = np.random.default_rng(self.seed)
-        initial_state = rn_gen.choice([0, 1], size=self.n_wires)
+        initial_state = self.get_initial_state(rn_gen)
         yield qml.BasisState(initial_state, wires=self.wires)
 
         wires = np.sort(np.asarray(self.wires))
@@ -88,3 +90,12 @@ class RandomOperationsGenerator:
     def circuit(self):
         self.tolist()
         return self.get_output_op()
+
+    def get_initial_state(self, rn_gen: np.random.Generator):
+        if self.initial_state is None:
+            initial_state = rn_gen.choice([0, 1], size=self.n_wires).astype(int)
+        else:
+            initial_state = np.asarray(self.initial_state, dtype=int)
+            if len(initial_state) != self.n_wires:
+                raise ValueError(f"Initial state has {len(initial_state)} qubits, but {self.n_wires} are required.")
+        return initial_state

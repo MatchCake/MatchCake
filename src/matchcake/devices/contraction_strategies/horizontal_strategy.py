@@ -10,7 +10,7 @@ from ...utils.math import circuit_matmul
 
 class _HorizontalMatchgatesContainer(_ContractionMatchgatesContainer):
     def add(self, op: MatchgateOperation):
-        wires = Wires(sorted(op.wires))
+        wires = op.cs_wires
         if wires in self.op_container:
             new_op = circuit_or_fop_matmul(first_matrix=self.op_container[wires], second_matrix=op)
             self.op_container[wires] = new_op

@@ -35,6 +35,7 @@ from ._pfaffian import (
 )
 from . import math
 from . import cuda
+from . import torch_utils
 
 
 def binary_string_to_vector(binary_string: str, encoding: str = "ascii") -> np.ndarray:

@@ -32,7 +32,7 @@ def test_fermionic_superposition_even_states(wires):
     nif_device, qubit_device = devices_init(wires=wires)
 
     def circuit():
-        qml.BasisState(np.zeros(len(wires)), wires=wires)
+        qml.BasisState(np.zeros(len(wires), dtype=int), wires=wires)
         # FermionicSuperposition(wires=wires)
         [op for op in FermionicSuperposition.compute_decomposition(wires=wires)]
         return qml.state()
@@ -64,7 +64,7 @@ def test_fermionic_superposition_odd_states(wires):
     nif_device, qubit_device = devices_init(wires=wires)
 
     def circuit():
-        initial_state = np.zeros(len(wires))
+        initial_state = np.zeros(len(wires), dtype=int)
         initial_state[0] = 1
         qml.BasisState(initial_state, wires=wires)
         FermionicSuperposition(wires=wires)

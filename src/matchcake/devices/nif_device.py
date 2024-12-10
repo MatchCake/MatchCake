@@ -875,8 +875,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                 wires_binary_states.reshape(-1, wires_shape[-1]),
                 wires_batched.reshape(-1, wires_shape[-1])
             )
-            probs = probs / qml.math.sum(probs, 0).reshape(1, -1)
-            return qml.math.transpose(probs.reshape(*wires_binary_states.shape[:-1], -1), (-1, 0, 1))
+            probs = qml.math.transpose(probs.reshape(*wires_binary_states.shape[:-1], -1), (-1, 0, 1))
+            probs = probs / qml.math.sum(probs, -1)[..., np.newaxis]
+            return probs
         elif len(wires_shape) > 2:
             raise ValueError(f"The wires must be a 1D or 2D array. Got a {len(wires_shape)}D array instead.")
 

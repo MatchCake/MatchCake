@@ -1,9 +1,10 @@
-from typing import Union
+from typing import Union, Optional, Any
 
 import pennylane as qml
 from pennylane.operation import Operation
 from pennylane import numpy as pnp
-from pennylane.wires import Wires
+from pennylane.math import TensorLike
+from pennylane.wires import Wires, WiresLike
 
 from ..base.matchgate import Matchgate
 from .. import matchgate_parameter_sets as mps, utils
@@ -48,6 +49,15 @@ class MatchgateOperation(Matchgate, Operation):
     @staticmethod
     def compute_matrix(*params, **hyperparams):
         return MatchgateOperation._matrix(*params)
+
+    @staticmethod
+    def compute_decomposition(
+            *params: TensorLike,
+            wires: Optional[WiresLike] = None,
+            **hyperparameters: dict[str, Any],
+    ):
+        return [qml.QubitUnitary(MatchgateOperation.compute_matrix(*params, **hyperparameters), wires=wires)]
+
     
     def __init__(
             self,
@@ -138,13 +148,12 @@ class MatchgateOperation(Matchgate, Operation):
     def __matmul__(self, other):
         if isinstance(other, SingleParticleTransitionMatrixOperation):
             return fermionic_operator_matmul(self.to_sptm_operation(), other)
-            # return self.to_sptm_operation() @ other
 
         if not isinstance(other, MatchgateOperation):
             raise ValueError(f"Cannot multiply MatchgateOperation with {type(other)}")
         
         if self.wires != other.wires:
-            raise NotImplementedError("Cannot multiply MatchgateOperation with different wires yet.")
+            return fermionic_operator_matmul(self.to_sptm_operation(), other.to_sptm_operation())
 
         _self = self.standard_params.to_matrix()
         _other = other.standard_params.to_matrix()
@@ -175,7 +184,11 @@ class MatchgateOperation(Matchgate, Operation):
         return Operation.__copy__(self)
 
     def to_sptm_operation(self):
-        return SingleParticleTransitionMatrixOperation.from_operation(self)
+        return SingleParticleTransitionMatrixOperation(
+            self.single_particle_transition_matrix,
+            wires=self.wires,
+            **getattr(self, "_hyperparameters", {})
+        )
 
 
 

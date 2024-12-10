@@ -1,6 +1,6 @@
 import numpy as np
 
-from . import fSWAP, fH
+from . import fSWAP, fH, SptmFermionicSuperposition
 from pennylane.wires import Wires
 from pennylane.operation import Operation, AnyWires
 
@@ -42,5 +42,8 @@ class FermionicSuperposition(Operation):
     @property
     def num_params(self):
         return 0
+
+    def to_sptm_operation(self):
+        return SptmFermionicSuperposition(wires=self.wires)
 
 

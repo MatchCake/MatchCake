@@ -49,12 +49,6 @@ class LookupTableStrategy(ProbabilityStrategy):
             batch_wires: Wires,
             **kwargs
     ) -> TensorLike:
-        # return super().batch_call(
-        #     system_state=system_state,
-        #     target_binary_states=target_binary_states,
-        #     batch_wires=batch_wires,
-        #     **kwargs
-        # )
         self.check_required_kwargs(kwargs)
 
         lookup_table: NonInteractingFermionicLookupTable = kwargs["lookup_table"]

@@ -37,6 +37,7 @@ class RandomMatchgateOperationsGenerator(RandomOperationsGenerator):
             output_type: Optional[str] = None,
             observable: Optional[Any] = None,
             output_wires: Optional[Sequence[int]] = None,
+            initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
             **kwargs
     ):
         super().__init__(
@@ -49,6 +50,7 @@ class RandomMatchgateOperationsGenerator(RandomOperationsGenerator):
             output_type=output_type,
             observable=observable,
             output_wires=output_wires,
+            initial_state=initial_state,
             **kwargs
         )
 
@@ -63,6 +65,7 @@ class RandomMatchgateHaarOperationsGenerator(RandomMatchgateOperationsGenerator)
             use_cuda: bool = False,
             seed: Optional[int] = None,
             add_swap_noise: bool = True,
+            initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
             **kwargs
     ):
         super().__init__(
@@ -72,6 +75,7 @@ class RandomMatchgateHaarOperationsGenerator(RandomMatchgateOperationsGenerator)
             op_types=[],
             use_cuda=use_cuda,
             seed=seed,
+            initial_state=initial_state,
             **kwargs
         )
         self.add_swap_noise = add_swap_noise
@@ -109,7 +113,8 @@ class RandomMatchgateHaarOperationsGenerator(RandomMatchgateOperationsGenerator)
         if self.n_ops == 0:
             return
         rn_gen = np.random.default_rng(self.seed)
-        yield qml.BasisState(rn_gen.choice([0, 1], size=self.n_wires), wires=self.wires)
+        initial_state = self.get_initial_state(rn_gen)
+        yield qml.BasisState(initial_state, wires=self.wires)
         yield from self.haar_circuit_gen()
         return
 
