@@ -6,7 +6,6 @@ from pennylane.wires import Wires
 
 class _VerticalMatchgatesContainer(_ContractionMatchgatesContainer):
     def add(self, op: MatchgateOperation):
-        op = SingleParticleTransitionMatrixOperation.from_operation(op)
         wires = op.cs_wires
         if wires in self.op_container:
             raise _ContractionMatchgatesContainerAddException(

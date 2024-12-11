@@ -206,7 +206,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     EQUAL_ALLOWED_ANGLES = None
     DEFAULT_CHECK_ANGLES = False
     DEFAULT_CLIP_ANGLES = True
-    DEFAULT_NORMALIZE = True
+    DEFAULT_NORMALIZE = False
 
     @classmethod
     def clip_angles(cls, angles):
@@ -338,7 +338,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             #     first_matrix=detach(matrix[..., slice_0, slice_1]),
             #     second_matrix=utils.math.convert_and_cast_like(op_matrix, matrix)
             # )
-        kwargs.setdefault("normalize", True)
+        # kwargs.setdefault("normalize", True)
         return SingleParticleTransitionMatrixOperation(matrix, wires=all_wires, **kwargs)
 
     @classmethod

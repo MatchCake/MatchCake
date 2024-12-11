@@ -88,16 +88,6 @@ class _ContractionMatchgatesContainer:
         self.wires_set.clear()
 
     def contract(self) -> Optional[_SingleParticleTransitionMatrix]:
-        if len(self) == 0:
-            return None
-        # sptms = []
-        # for op in self.op_container.values():
-        #     if isinstance(op, _SingleParticleTransitionMatrix):
-        #         sptms.append(op)
-        #     elif isinstance(op, MatchgateOperation):
-        #         sptms.append(op.to_sptm_operation())
-        #     else:
-        #         raise TypeError(f"Unexpected type in container: {type(op)}")
         return SingleParticleTransitionMatrixOperation.from_operations(self.values())
 
     def contract_and_clear(self) -> Optional[_SingleParticleTransitionMatrix]:

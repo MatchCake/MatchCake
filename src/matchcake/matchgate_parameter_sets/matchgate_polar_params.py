@@ -5,6 +5,23 @@ from .. import utils
 
 
 class MatchgatePolarParams(MatchgateParams):
+    r"""
+    Matchgate polar parameters.
+
+    They are the parameters of a Matchgate operation in the standard form which is a 4x4 matrix
+
+    .. math::
+
+            \begin{bmatrix}
+                r_0 e^{i\theta_0} & 0 & 0 & (\sqrt{1 - r_0^2}) e^{-i(\theta_1+\pi)} \\
+                0 & r_1 e^{i\theta_2} & (\sqrt{1 - r_1^2}) e^{-i(\theta_3+\pi)} & 0 \\
+                0 & (\sqrt{1 - r_1^2}) e^{i\theta_3} & r_1 e^{-i\theta_2} & 0 \\
+                (\sqrt{1 - r_0^2}) e^{i\theta_1} & 0 & 0 & r_0 e^{-i\theta_0}
+            \end{bmatrix}
+
+        where :math:`r_0, r_1, \theta_0, \theta_1, \theta_2, \theta_3, \theta_4` are the parameters.
+
+    """
     N_PARAMS = 7
     RANGE_OF_PARAMS = [(0.0, 1.0) for _ in range(2)] + [(0, 2 * np.pi) for _ in range(N_PARAMS - 2)]
     ALLOW_COMPLEX_PARAMS = False
@@ -87,4 +104,19 @@ class MatchgatePolarParams(MatchgateParams):
             theta2=-self.theta2,
             theta3=-self.theta3,
             theta4=-self.theta4,
+        )
+
+    def __matmul__(self, other):
+        if not isinstance(other, MatchgatePolarParams):
+            other = MatchgatePolarParams.parse_from_params(other)
+        raise NotImplementedError("MatchgatePolarParams.__matmul__ is not implemented yet.")
+        r0 = self.r0 * other.r0
+        r1 = self.r1 * other.r1
+        theta0 = self.theta0 + other.theta0
+        theta1 = self.theta1 + other.theta1
+        theta2 = self.theta2 + other.theta2
+        theta3 = self.theta3 + other.theta3
+        theta4 = self.theta4 + other.theta4
+        return MatchgatePolarParams(
+            r0=r0, r1=r1, theta0=theta0, theta1=theta1, theta2=theta2, theta3=theta3, theta4=theta4
         )
