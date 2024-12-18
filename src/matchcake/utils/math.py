@@ -134,6 +134,25 @@ def convert_and_cast_like(tensor1, tensor2):
     return new_tensor1
 
 
+def convert_like_and_cast_to(tensor, like, dtype=None):
+    r"""
+    Convert and cast the tensor to the same type as the tensor like.
+
+    :param tensor: Tensor to convert and cast.
+    :type tensor: Any
+    :param like: Tensor to use as a reference.
+    :type like: Any
+    :param dtype: Data type to cast the tensor.
+    :type dtype: Any
+
+    :return: Converted and casted tensor.
+    """
+    new_tensor = qml.math.convert_like(tensor, like)
+    if dtype is not None:
+        new_tensor = qml.math.cast(new_tensor, dtype)
+    return new_tensor
+
+
 def astensor(tensor, like=None, **kwargs):
     """Convert input to a tensor.
 
@@ -198,6 +217,67 @@ def get_like_tensors_of_highest_priority(
     highest_priority = max(tensors_priorities)
     like = tensors[tensors_priorities.index(highest_priority)]
     return like
+
+
+def convert_tensors_to_same_type_and_cast_to(
+        tensors: List[TensorLike],
+        cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+                "numpy", "autograd", "jax", "tf", "torch"
+        ),
+        dtype=None
+) -> List[TensorLike]:
+    r"""
+    Convert the tensors to the same type using the given priorities.
+
+    :param tensors: Tensors to convert and cast.
+    :type tensors: List[TensorLike]
+    :param cast_priorities: Priorities of the casting. Higher the index is, higher the priority.
+    :type cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]]
+
+    :return: Converted and casted tensors.
+    :rtype: List[TensorLike]
+    """
+    if len(tensors) == 0:
+        return []
+
+    tensors_priorities = [
+        cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors
+    ]
+    highest_priority = max(tensors_priorities)
+    if all(priority == highest_priority for priority in tensors_priorities):
+        return tensors
+    like = tensors[tensors_priorities.index(highest_priority)]
+    return [convert_like_and_cast_to(tensor, like, dtype) for tensor in tensors]
+
+
+def convert_tensors_to_same_type(
+        tensors: List[TensorLike],
+        cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+                "numpy", "autograd", "jax", "tf", "torch"
+        )
+) -> List[TensorLike]:
+    r"""
+    Convert the tensors to the same type using the given priorities.
+
+    :param tensors: Tensors to convert and cast.
+    :type tensors: List[TensorLike]
+    :param cast_priorities: Priorities of the casting. Higher the index is, higher the priority.
+    :type cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]]
+
+    :return: Converted and casted tensors.
+    :rtype: List[TensorLike]
+    """
+    if len(tensors) == 0:
+        return []
+
+    tensors_priorities = [
+        cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors
+    ]
+    highest_priority = max(tensors_priorities)
+    if all(priority == highest_priority for priority in tensors_priorities):
+        return tensors
+    like = tensors[tensors_priorities.index(highest_priority)]
+    return [qml.math.convert_like(tensor, like) for tensor in tensors]
 
 
 def convert_and_cast_tensors_to_same_type(

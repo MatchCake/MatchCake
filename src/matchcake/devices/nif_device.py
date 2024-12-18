@@ -864,12 +864,13 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             wires = self.wires
         if isinstance(wires, int):
             wires = [wires]
-        wires = Wires(wires)
-        wires_shape = wires.toarray().shape
+        wires = Wires(wires, _override=True)
+        wires_array = wires.toarray()
+        wires_shape = wires_array.shape
         wires_binary_states = self.states_to_binary(np.arange(2**wires_shape[-1]), wires_shape[-1])
 
-        if len(wires.toarray().shape) == 2:
-            wires_batched = np.stack([wires.toarray() for _ in range(wires_binary_states.shape[-2])], axis=-2)
+        if len(wires_shape) == 2:
+            wires_batched = np.stack([wires_array for _ in range(wires_binary_states.shape[-2])], axis=-2)
             wires_binary_states = np.stack([wires_binary_states for _ in range(wires_shape[0])])
             probs = self.get_states_probability(
                 wires_binary_states.reshape(-1, wires_shape[-1]),

@@ -9,7 +9,7 @@ from pennylane.wires import Wires
 from ... import utils
 from ...templates import TensorLike
 from ...utils import make_wires_continuous
-from ...utils.math import convert_and_cast_like, circuit_matmul, det, fermionic_operator_matmul, orthonormalize
+from ...utils.math import convert_and_cast_like, circuit_matmul, det, fermionic_operator_matmul, orthonormalize, dagger
 from ...utils.torch_utils import detach
 from ...constants import _CIRCUIT_MATMUL_DIRECTION
 
@@ -326,8 +326,10 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             matrix[:, ...] = np.eye(2 * len(all_wires), dtype=matrix.dtype)
 
         ops_sptms = [op.matrix() for op in ops]
-        ops_sptms = utils.math.convert_and_cast_tensors_to_same_type(ops_sptms, cls.casting_priorities)
-        matrix = utils.math.convert_and_cast_like(matrix, ops_sptms[0])
+        ops_sptms = utils.math.convert_tensors_to_same_type_and_cast_to(
+            ops_sptms, cls.casting_priorities, dtype=complex
+        )
+        matrix = utils.math.convert_like_and_cast_to(matrix, ops_sptms[0], dtype=complex)
 
         for op, op_matrix in zip(ops, ops_sptms):
             wire0_idx = all_wires.index(op.sorted_wires[0])
@@ -365,9 +367,6 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             normalize: bool = DEFAULT_NORMALIZE,
             **kwargs
     ):
-        if check_matrix:
-            if not self.check_is_in_so4():
-                raise ValueError(f"Matrix is not in SO(4): {matrix}")
         if normalize:
             matrix = orthonormalize(matrix)
         _SingleParticleTransitionMatrix.__init__(self, matrix, wires=wires)
@@ -381,6 +380,9 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             "check_angles": check_angles,
             "check_matrix": check_matrix,
         }
+        if check_matrix:
+            if not self.check_is_in_so4():
+                raise ValueError(f"Matrix is not in SO(4): {matrix}")
 
     @property
     def sorted_wires(self):
@@ -410,8 +412,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         if self.batch_size is None:
             matrix = matrix[None, ...]
         eye = np.eye(matrix.shape[-1])
-        matrix_dagger = qml.math.conj(qml.math.einsum("...ij->...ji", qml.math.conj(matrix)))
-        expected_eye = qml.math.einsum("...ij,...jk->...ik", matrix_dagger, matrix)
+        expected_eye = qml.math.einsum("...ij,...jk->...ik", dagger(matrix), matrix)
         return np.allclose(expected_eye, eye, atol=atol, rtol=rtol)
 
     def pad(self, wires: Wires):

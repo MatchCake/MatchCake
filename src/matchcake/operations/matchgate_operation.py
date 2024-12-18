@@ -66,6 +66,10 @@ class MatchgateOperation(Matchgate, Operation):
             id=None,
             **kwargs
     ):
+        if wires is not None:
+            wires = Wires(wires)
+            assert len(wires) == 2, f"MatchgateOperation requires exactly 2 wires, got {len(wires)}."
+            assert wires[-1] - wires[0] == 1, f"MatchgateOperation requires consecutive wires, got {wires}."
         in_param_type = kwargs.get("in_param_type", mps.MatchgatePolarParams)
         in_params = in_param_type.parse_from_any(params)
         Matchgate.__init__(self, in_params, **kwargs)
