@@ -29,3 +29,16 @@ class FermionicSWAP(MatchgateOperation):
 
 fSWAP = FermionicSWAP
 fSWAP.__name__ = "fSWAP"
+
+
+def fswap_chain_gen(wires, **kwargs):
+    is_reverse = wires[0] > wires[1]
+    wire0, wire1 = list(sorted(wires))
+    wires_gen = range(wire0, wire1) if is_reverse else reversed(range(wire0, wire1))
+    for tmp_wire0 in wires_gen:
+        yield fSWAP(wires=[tmp_wire0, tmp_wire0+1], **kwargs)
+    return
+
+
+def fswap_chain(wires, **kwargs):
+    return [op for op in fswap_chain_gen(wires, **kwargs)]

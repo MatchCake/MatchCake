@@ -49,6 +49,8 @@ from .fermionic_controlled_z import (
 from .fermionic_swap import (
     FermionicSWAP,
     fSWAP,
+    fswap_chain_gen,
+    fswap_chain,
 )
 
 from .fermionic_superposition import (
@@ -56,6 +58,9 @@ from .fermionic_superposition import (
 )
 
 from .. import matchgate_parameter_sets
+
+from .rxx import Rxx
+from .rzz import Rzz
 
 
 class ZI(MatchgateOperation):
