@@ -526,12 +526,21 @@ class TorchModel(nn.Module):
         ax.plot(self.fit_history)
         ax.set_xlabel("Iterations [-]")
         ax.set_ylabel("Cost [-]")
-        if kwargs.get("save", True):
-            fig.savefig(os.path.join(self.save_path, "fit_history.pdf"))
-        if kwargs.get("show", False):
-            plt.show()
-        if kwargs.get("close", True):
-            plt.close(fig)
+        try:
+            if kwargs.get("save", True):
+                fig.savefig(os.path.join(self.save_path, "fit_history.pdf"))
+        except Exception as e:
+            self.log_func(f"Error while saving the fit history: {e}")
+        try:
+            if kwargs.get("show", False):
+                plt.show()
+        except Exception as e:
+            self.log_func(f"Error while plotting the fit history: {e}")
+        try:
+            if kwargs.get("close", True):
+                plt.close(fig)
+        except Exception as e:
+            self.log_func(f"Error while closing the figure: {e}")
         return fig, ax
 
 
