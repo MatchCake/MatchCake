@@ -57,3 +57,7 @@ def detach(x: Any):
     elif isinstance(x, (list, tuple)):
         return type(x)([detach(v) for v in x])
     return x
+
+
+def torch_wrap_circular_bounds(tensor, lower_bound: float = 0.0, upper_bound: float = 1.0):
+    return (tensor - lower_bound) % (upper_bound - lower_bound) + lower_bound

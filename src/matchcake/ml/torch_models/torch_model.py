@@ -1,12 +1,19 @@
 import argparse
 import os
-from typing import Sequence, Optional, Any, Dict
+import time
+import warnings
+from typing import Sequence, Optional, Any, Dict, List, Tuple, Union
 
 import joblib
 import json
+
+import tqdm
 from matplotlib import pyplot as plt
 
-from matchcake.utils import torch_utils
+from ..optimizer_strategies import get_optimizer_strategy
+from ..parameters_initialisation_strategies import get_parameters_initialisation_strategy
+from ...templates import TensorLike
+from ...utils import torch_utils
 import torch
 import pennylane as qml
 from pennylane.wires import Wires
@@ -22,11 +29,16 @@ class TorchModel(nn.Module):
     DEFAULT_SAVE_DIR = None
 
     ATTRS_TO_STATE_DICT = []
-    ATTRS_TO_HPARAMS = ["use_cuda", "seed"]
-    ATTRS_TO_PICKLE = []
-    ATTRS_TO_JSON = []
+    ATTRS_TO_HPARAMS = ["use_cuda", "seed", "max_grad_norm", "learning_rate", "optimizer", "params_init"]
+    ATTRS_TO_PICKLE = ["fit_time", "start_fit_time", "end_fit_time"]
+    ATTRS_TO_JSON = ["fit_history",]
     MODEL_NAME = "TorchModel"
     DEFAULT_LOG_FUNC = print
+
+    DEFAULT_OPTIMIZER = "SimulatedAnnealing"
+    DEFAULT_PARAMETERS_INITIALISATION_STRATEGY = "Random"
+    DEFAULT_MAX_GRAD_NORM = 1.0
+    DEFAULT_LEARNING_RATE = 2e-4
 
     @classmethod
     def add_model_specific_args(cls, parent_parser: Optional[argparse.ArgumentParser] = None):
@@ -55,6 +67,30 @@ class TorchModel(nn.Module):
             default=cls.DEFAULT_SAVE_DIR,
             help="The directory to save the models. The current model will be save in save_root/save_dir.",
         )
+        parser.add_argument(
+            "--max_grad_norm",
+            type=float,
+            default=cls.DEFAULT_MAX_GRAD_NORM,
+            help="The maximum gradient norm to use.",
+        )
+        parser.add_argument(
+            "--learning_rate",
+            type=float,
+            default=cls.DEFAULT_LEARNING_RATE,
+            help="The learning rate to use.",
+        )
+        parser.add_argument(
+            "--optimizer",
+            type=str,
+            default=cls.DEFAULT_OPTIMIZER,
+            help="The optimizer to use.",
+        )
+        parser.add_argument(
+            "--params_init",
+            type=str,
+            default=cls.DEFAULT_PARAMETERS_INITIALISATION_STRATEGY,
+            help="The parameters initialisation strategy to use.",
+        )
         return parent_parser
 
     @classmethod
@@ -74,6 +110,10 @@ class TorchModel(nn.Module):
             seed: int = DEFAULT_SEED,
             save_root: Optional[str] = DEFAULT_SAVE_ROOT,
             save_dir: Optional[str] = DEFAULT_SAVE_DIR,
+            max_grad_norm: float = DEFAULT_MAX_GRAD_NORM,
+            learning_rate: float = DEFAULT_LEARNING_RATE,
+            optimizer: str = DEFAULT_OPTIMIZER,
+            params_init: str = DEFAULT_PARAMETERS_INITIALISATION_STRATEGY,
             **kwargs
     ):
         super().__init__()
@@ -81,18 +121,39 @@ class TorchModel(nn.Module):
         self.use_cuda = use_cuda
         self.seed = seed
         self.save_root = save_root
-        self.save_dir = save_dir or self.default_save_dir_from_args({"use_cuda": use_cuda, "seed": seed, **kwargs})
+        self.save_dir = save_dir or self.default_save_dir_from_args({
+            "use_cuda": use_cuda,
+            "seed": seed,
+            "max_grad_norm": max_grad_norm,
+            "learning_rate": learning_rate,
+            "optimizer": optimizer,
+            "params_init": params_init,
+            **kwargs
+        })
+        self.max_grad_norm = max_grad_norm
+        self.learning_rate = learning_rate
+        self.optimizer = optimizer
+        self.params_init = params_init
         self.kwargs = kwargs
 
         self.show_progress = kwargs.get("show_progress", False)
+
+        self.optimizer_strategy = get_optimizer_strategy(self.optimizer)
+        self.parameters_initialisation_strategy = get_parameters_initialisation_strategy(self.params_init)
 
         self.parameters_rng = np.random.default_rng(seed=self.seed)
         self.torch_rng = torch.Generator()
         self.torch_rng.manual_seed(self.seed)
 
-    @property
-    def wires(self):
-        return Wires(list(range(self.n_qubits)))
+        self.fit_time = None
+        self.start_fit_time = None
+        self.end_fit_time = None
+        self.fit_history = []
+        self._cache_last_np_cost = None
+        self._cache_last_cost = None
+        self._fit_p_bar = None
+        self.fit_args = None
+        self.fit_kwargs = None
 
     @property
     def save_path(self):
@@ -146,10 +207,10 @@ class TorchModel(nn.Module):
     def forward(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError("Subclasses must implement this method.")
 
-    def predict(self, x, **kwargs):
+    def predict(self, *args, **kwargs):
         raise NotImplementedError("Subclasses must implement this method.")
 
-    def score(self, x, y, **kwargs):
+    def score(self, *args, **kwargs):
         raise NotImplementedError("Subclasses must implement this method.")
 
     def save_metrics(self, metrics: Dict[str, Any], filename: str = "metrics.json"):
@@ -222,7 +283,9 @@ class TorchModel(nn.Module):
     ) -> "TorchModel":
         if model_path is None:
             model_path = self.model_path
-        self.load_state_dict(torch.load(model_path))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.load_state_dict(torch.load(model_path))
         if load_hparams:
             self.load_hparams()
         self.load_pickles()
@@ -315,3 +378,161 @@ class TorchModel(nn.Module):
             self.save()
         except Exception as e:
             self.log_func(f"Error while saving the model when deleting: {e}")
+
+    def update_parameters(self, parameters: List[Union[torch.nn.Parameter, Tuple[str, torch.nn.Parameter]]]):
+        if len(parameters) == 0:
+            return self
+        if isinstance(parameters[0], tuple):
+            parameters = [param[1] for param in parameters]
+        parameters = torch_utils.to_tensor(parameters)
+        for self_p, new_p in zip(self.parameters(), parameters):
+            self_p.data = new_p.data
+        return self
+
+    def cost(self, *args, **kwargs) -> TensorLike:
+        """
+        This function should return the overall cost of the model. If the cost depend on a dataset, this function
+        should be overridden and the cost should be computed using the whole dataset.
+
+        This function will be called by the fit_closure function which will be used by the optimizer to optimize the
+        model's parameters.
+
+        :Note: The arguments and keyword arguments passed to the fit function are stored in the fit_args and fit_kwargs.
+            They could be useful to compute the cost in this function. The dataset can be passed as a keyword argument
+            to the fit function and accessed in this function using kwargs.get("dataset", None) as an example.
+
+        :param args: Arguments to pass to the forward function.
+        :param kwargs: Keyword arguments to pass to the forward function.
+        :return: The overall cost of the model.
+        """
+        target = torch_utils.to_tensor(kwargs.get("target", 1.0))
+        y_hat = torch_utils.to_tensor(self(*args, **kwargs))
+        return torch.nn.MSELoss()(y_hat, target)
+
+    def fit_closure(
+            self,
+            parameters: Optional[List[torch.nn.Parameter]] = None,
+            *args,
+            **kwargs
+    ) -> TensorLike:
+        """
+        Assigns the parameters to the model and returns the cost.
+
+        :param parameters: The parameters to assign to the model.
+        :type parameters: Optional[List[torch.nn.Parameter]]
+        :param args: Arguments to pass to the cost function.
+        :type args: Any
+        :param kwargs: Keyword arguments to pass to the cost
+        :type kwargs: Any
+        :return: The cost.
+        """
+        self.zero_grad()
+        if parameters is not None:
+            self.update_parameters(parameters)
+        self._cache_last_cost = self.cost(*args, **kwargs)
+        self._cache_last_np_cost = float(torch_utils.to_numpy(self._cache_last_cost))
+        return self._cache_last_cost
+
+    def fit_callback(self, *args, **kwargs):
+        is_best = self._cache_last_np_cost <= np.nanmin(self.fit_history) if len(self.fit_history) > 0 else True
+        self.fit_history.append(self._cache_last_np_cost)
+        self.save()
+        self.plot_fit_history(show=False, save=True)
+        if is_best:
+            self.save_best()
+        if self._fit_p_bar is not None:
+            best_cost = np.nanmin(self.fit_history)
+            prev_cost = self.fit_history[-2] if len(self.fit_history) > 1 else np.nan
+            postfix = {
+                "Prev Cost": prev_cost,
+                "Cost": self._cache_last_np_cost,
+                "Best Cost": best_cost,
+                **kwargs.get("postfix", {})
+            }
+            self._fit_p_bar.set_postfix(postfix)
+            self._fit_p_bar.n = min(self._fit_p_bar.total, len(self.fit_history))
+            self._fit_p_bar.refresh()
+            if self._fit_p_bar.disable:
+                self.log_func('-' * 120)
+                self.log_func(f"Iteration {len(self.fit_history)}: {postfix}")
+                self.log_func(str(self._fit_p_bar))
+                self.log_func('-' * 120)
+        return self
+
+    def fit(
+            self,
+            *args,
+            n_iterations: int = 100,
+            n_init_iterations: int = 1,
+            **kwargs
+    ):
+        self.fit_args = args
+        self.fit_kwargs = kwargs
+        self.start_fit_time = time.perf_counter()
+        self._fit_p_bar = tqdm.tqdm(
+            total=n_iterations * n_init_iterations,
+            initial=len(self.fit_history),
+            desc="Optimizing",
+            disable=not kwargs.get("verbose", getattr(self.q_device, "show_progress", False)),
+        )
+        current_iteration = len(self.fit_history) // n_init_iterations
+        current_init_iteration = len(self.fit_history) % n_init_iterations
+
+        for i in range(current_init_iteration, n_init_iterations):
+            if i > 0:
+                next_parameters = self.parameters_initialisation_strategy.get_next_parameters(
+                    step_id=i,
+                    n_layers=self.n_layers,
+                    parameters_rng=self.parameters_rng,
+                    seed=self.seed,
+                    current_named_parameters=list(self.named_parameters()),
+                )
+                self.update_parameters(next_parameters)
+                self._fit_p_bar.set_postfix({
+                    "Cost": "N/A",
+                    "Best Cost": np.nanmin(self.fit_history),
+                    "Init Iteration": i
+                })
+            self.optimizer_strategy.set_parameters(
+                list(self.named_parameters()),
+                learning_rate=self.learning_rate,
+                max_grad_norm=self.max_grad_norm,
+            )
+            self.requires_grad_(self.optimizer_strategy.REQUIRES_GRAD)
+            best_parameters = self.optimizer_strategy.optimize(
+                closure=self.fit_closure,
+                callback=self.fit_callback,
+                n_iterations=max(n_iterations - current_iteration, 0),
+            )
+            self.update_parameters(best_parameters)
+            self.save()
+            current_iteration = 0
+
+        self.end_fit_time = time.perf_counter()
+        if self.fit_time is None:
+            self.fit_time = self.end_fit_time - self.start_fit_time
+        else:
+            self.fit_time += self.end_fit_time - self.start_fit_time
+        self._fit_p_bar.close()
+        if kwargs.get("load_best", True):
+            self.load_best()
+        return self
+
+    def plot_fit_history(self, fig=None, ax=None, **kwargs):
+        if fig is None or ax is None:
+            fig, ax = plt.subplots(figsize=(8, 6))
+        if kwargs.get("log_history", False):
+            self.log_func(f"Fit history: {self.fit_history}")
+        ax.plot(self.fit_history)
+        ax.set_xlabel("Iterations [-]")
+        ax.set_ylabel("Cost [-]")
+        if kwargs.get("save", True):
+            fig.savefig(os.path.join(self.save_path, "fit_history.pdf"))
+        if kwargs.get("show", False):
+            plt.show()
+        if kwargs.get("close", True):
+            plt.close(fig)
+        return fig, ax
+
+
+

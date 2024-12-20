@@ -8,7 +8,7 @@ from typing import Iterable, Tuple, Union, Callable, Any, Optional, List, Litera
 import numpy as np
 import psutil
 import tqdm
-from pennylane.tape import QuantumTape
+from pennylane.tape import QuantumTape, QuantumScript
 from scipy import sparse
 import pythonbasictools as pbt
 import pennylane as qml
@@ -17,6 +17,17 @@ from pennylane.pulse import ParametrizedEvolution
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 from pennylane.ops.qubit.observables import BasisStateProjector
+from pennylane.measurements import (
+    Expectation,
+    MeasurementProcess,
+    MidMeasureMP,
+    Probability,
+    Sample,
+    ShadowExpvalMP,
+    State,
+    Variance,
+)
+from pennylane.ops import Hamiltonian, LinearCombination, Prod, SProd, Sum
 
 from ..operations.matchgate_operation import MatchgateOperation
 from ..operations.single_particle_transition_matrices.single_particle_transition_matrix import (
@@ -474,6 +485,109 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             "Please use the jax interface."
         )
 
+    def _patched_super_batch_transform(self, circuit: QuantumScript):
+        """Apply a differentiable batch transform for preprocessing a circuit
+        prior to execution. This method is called directly by the QNode, and
+        should be overwritten if the device requires a transform that
+        generates multiple circuits prior to execution.
+
+        By default, this method contains logic for generating multiple
+        circuits, one per term, of a circuit that terminates in ``expval(H)``,
+        if the underlying device does not support Hamiltonian expectation values,
+        or if the device requires finite shots.
+
+        .. warning::
+
+            This method will be tracked by autodifferentiation libraries,
+            such as Autograd, JAX, TensorFlow, and Torch. Please make sure
+            to use ``qml.math`` for autodiff-agnostic tensor processing
+            if required.
+
+        Args:
+            circuit (.QuantumTape): the circuit to preprocess
+
+        Returns:
+            tuple[Sequence[.QuantumTape], callable]: Returns a tuple containing
+            the sequence of circuits to be executed, and a post-processing function
+            to be applied to the list of evaluated circuit results.
+        """
+
+        def null_postprocess(results):
+            return results[0]
+
+        finite_shots = self.shots is not None
+        has_shadow = any(isinstance(m, ShadowExpvalMP) for m in circuit.measurements)
+        is_analytic_or_shadow = not finite_shots or has_shadow
+        all_obs_usable = self._all_multi_term_obs_supported(circuit)
+        exists_multi_term_obs = any(
+            isinstance(m.obs, (Hamiltonian, Sum, Prod, SProd)) for m in circuit.measurements
+        )
+        has_overlapping_wires = len(circuit.obs_sharing_wires) > 0
+        single_hamiltonian = len(circuit.measurements) == 1 and isinstance(
+            circuit.measurements[0].obs, (Hamiltonian, Sum)
+        )
+        single_hamiltonian_with_grouping_known = (
+            single_hamiltonian and circuit.measurements[0].obs.grouping_indices is not None
+        )
+
+        if not getattr(self, "use_grouping", True) and single_hamiltonian and all_obs_usable:
+            # Special logic for the braket plugin
+            circuits = [circuit]
+            processing_fn = null_postprocess
+
+        elif not exists_multi_term_obs and not has_overlapping_wires:
+            circuits = [circuit]
+            processing_fn = null_postprocess
+
+        elif is_analytic_or_shadow and all_obs_usable and not has_overlapping_wires:
+            circuits = [circuit]
+            processing_fn = null_postprocess
+
+        elif single_hamiltonian_with_grouping_known:
+
+            # Use qwc grouping if the circuit contains a single measurement of a
+            # Hamiltonian/Sum with grouping indices already calculated.
+            circuits, processing_fn = qml.transforms.split_non_commuting(circuit, "qwc")
+
+        elif any(isinstance(m.obs, (Hamiltonian, LinearCombination)) for m in circuit.measurements):
+
+            # Otherwise, use wire-based grouping if the circuit contains a Hamiltonian
+            # that is potentially very large.
+            circuits, processing_fn = qml.transforms.split_non_commuting(circuit, "wires")
+
+        else:
+            circuits, processing_fn = qml.transforms.split_non_commuting(circuit)
+
+        ##############################################################################################################
+        # ORIGINAL CODE
+        # Check whether the circuit was broadcasted and whether broadcasting is supported
+        # if circuit.batch_size is None or self.capabilities().get("supports_broadcasting"):
+        #     # If the circuit wasn't broadcasted or broadcasting is supported, no action required
+        #     return circuits, processing_fn
+
+        # COMMENTS ON THE BUG FROM THE ORIGINAL CODE
+        # If the device supports broadcasting, we can return the circuits as is, otherwise
+        # The property 'circuit.batch_size' will raise a error if there are multiple batch sizes in the circuits.
+        # As an example, if the circuit has a batch size of 1 and 4, the property will raise an error which is
+        # not supposed to happen because the device supports broadcasting.
+        if self.capabilities().get("supports_broadcasting"):
+            return circuits, processing_fn
+        if circuit.batch_size is None:
+            return circuits, processing_fn
+        ##############################################################################################################
+
+        # Expand each of the broadcasted Hamiltonian-expanded circuits
+        expanded_tapes, expanded_fn = qml.transforms.broadcast_expand(circuits)
+
+        # Chain the postprocessing functions of the broadcasted-tape expansions and the Hamiltonian
+        # expansion. Note that the application order is reversed compared to the expansion order,
+        # i.e. while we first applied `split_non_commuting` to the tape, we need to process the
+        # results from the broadcast expansion first.
+        def total_processing(results):
+            return processing_fn(expanded_fn(results))
+
+        return expanded_tapes, total_processing
+
     def batch_transform(self, circuit: QuantumTape):
         if len(circuit.observables) == 1:
             if isinstance(circuit.observables[0], BatchHamiltonian):
@@ -482,9 +596,11 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                 def hamiltonian_fn(res):
                     return res[0]
 
-                if circuit.batch_size is None or self.capabilities().get("supports_broadcasting"):
+                if self.capabilities().get("supports_broadcasting"):
                     return circuits, hamiltonian_fn
-        return super().batch_transform(circuit)
+                if circuit.batch_size is None:
+                    return circuits, hamiltonian_fn
+        return self._patched_super_batch_transform(circuit)
 
     def apply_state_prep(self, operation, **kwargs) -> bool:
         """
