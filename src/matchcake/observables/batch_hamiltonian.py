@@ -1,10 +1,11 @@
 import pennylane as qml
+from pennylane.wires import Wires
 
 
 class BatchHamiltonian(qml.Hamiltonian):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._wires = qml.wires.Wires([op.wires for op in self.ops])
+        self._wires = Wires([op.wires for op in self.ops], _override=True)
 
     @property
     def name(self):

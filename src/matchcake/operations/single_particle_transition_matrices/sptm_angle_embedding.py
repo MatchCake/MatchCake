@@ -6,13 +6,13 @@ import pennylane as qml
 import torch
 from pennylane.wires import Wires
 from pennylane.operation import Operation, AnyWires
-from .sptm_rxrx import SptmRxRx
+from .sptm_f_rxrx import SptmfRxRx
 from .sptm_rzrz import SptmRzRz
 from .sptm_ryry import SptmRyRy
 import numpy as np
 
 
-ROT = {"X": SptmRxRx, "Y": SptmRyRy, "Z": SptmRzRz}
+ROT = {"X": SptmfRxRx, "Y": SptmRyRy, "Z": SptmRzRz}
 
 
 class SptmAngleEmbedding(Operation):

@@ -1,15 +1,17 @@
 from .contraction_strategy import ContractionStrategy
 from .contraction_container import _ContractionMatchgatesContainer, _ContractionMatchgatesContainerAddException
-from ...operations.matchgate_operation import MatchgateOperation
+from ..device_utils import circuit_or_fop_matmul
+from ...operations.matchgate_operation import MatchgateOperation, SingleParticleTransitionMatrixOperation
 from pennylane.wires import Wires
+
+from ...utils.math import circuit_matmul
 
 
 class _VHMatchgatesContainer(_ContractionMatchgatesContainer):
     def add(self, op: MatchgateOperation):
-        wires = Wires(sorted(op.wires))
+        wires = op.cs_wires
         if wires in self.op_container:
-            new_op = op @ self.op_container[wires]
-            self.op_container[wires] = new_op
+            self.op_container[wires] = circuit_or_fop_matmul(first_matrix=self.op_container[wires], second_matrix=op)
             return True
 
         is_any_wire_in_container = any([w in self.wires_set for w in wires.labels])

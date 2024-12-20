@@ -4,7 +4,7 @@ import pytest
 import psutil
 
 from matchcake import MatchgateOperation, utils
-from matchcake.operations import SptmRxRx
+from matchcake.operations import SptmfRxRx
 from matchcake.utils import torch_utils
 from matchcake import matchgate_parameter_sets as mps
 from matchcake.circuits import random_sptm_operations_generator
@@ -90,7 +90,7 @@ def test_qubit_by_qubit_sampling_with_probs(params_list, n_wires):
 @pytest.mark.parametrize(
     "operations_generator, num_wires",
     [
-        (random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size, op_types=[SptmRxRx]), num_wires)
+        (random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size, op_types=[SptmfRxRx]), num_wires)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in range(2, 6)
         for num_gates in [1, 10 * num_wires]
@@ -127,7 +127,7 @@ def test_qubit_by_qubit_sampling_with_probs_op_gen(operations_generator, num_wir
 @pytest.mark.parametrize(
     "operations_generator, num_wires",
     [
-        (random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size, op_types=[SptmRxRx]), num_wires)
+        (random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size, op_types=[SptmfRxRx]), num_wires)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in range(2, 6)
         for num_gates in [1, 10 * num_wires]

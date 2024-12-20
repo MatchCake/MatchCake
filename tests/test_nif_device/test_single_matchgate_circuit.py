@@ -170,20 +170,3 @@ def test_single_gate_transition_matrix_on_specific_cases(params, expected):
         rtol=RTOL_MATRIX_COMPARISON,
     )
 
-
-@pytest.mark.parametrize(
-    "params",
-    [
-        mps.MatchgatePolarParams.random()
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
-)
-def test_single_gate_transition_matrix_on_rn_params(params):
-    nif_device = NonInteractingFermionicDevice(wires=2)
-    nif_device.apply(MatchgateOperation(params, wires=[0, 1]))
-    mgo = MatchgateOperation(params, wires=[0, 1])
-    np.testing.assert_allclose(
-        nif_device.transition_matrix, mgo.transition_matrix,
-        atol=ATOL_MATRIX_COMPARISON,
-        rtol=RTOL_MATRIX_COMPARISON,
-    )

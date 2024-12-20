@@ -6,9 +6,6 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 import pennylane as qml
 
-from matchcake.utils.math import random_index
-from matchcake.utils.torch_utils import to_numpy
-
 
 class SamplingStrategy(ABC):
     NAME: str = "SamplingStrategy"
@@ -16,7 +13,7 @@ class SamplingStrategy(ABC):
     @abstractmethod
     def generate_samples(
             self,
-            device: qml.QubitDevice,
+            device: qml.devices.QubitDevice,
             state_prob_func: Callable[[TensorLike, Wires], TensorLike],
             **kwargs
     ) -> TensorLike:
@@ -24,7 +21,7 @@ class SamplingStrategy(ABC):
 
     def batch_generate_samples(
             self,
-            device: qml.QubitDevice,
+            device: qml.devices.QubitDevice,
             states_prob_func: Callable[[TensorLike, Wires], TensorLike],
             **kwargs
     ) -> TensorLike:

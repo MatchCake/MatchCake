@@ -30,6 +30,11 @@ class ContractionStrategy(ABC):
     def get_reminding(self):
         return self.container.contract_and_clear()
 
+    def reset(self):
+        if self.container is not None:
+            self.container.clear()
+        return self
+
     def __call__(
             self,
             operations: Sequence[Operation],

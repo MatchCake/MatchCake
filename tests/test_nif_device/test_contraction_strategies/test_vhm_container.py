@@ -2,7 +2,7 @@ import pytest
 from matchcake.devices.contraction_strategies import get_contraction_strategy
 import matchcake as mc
 from matchcake import matchgate_parameter_sets as mps
-from matchcake.operations import SptmRxRx
+from matchcake.operations import SptmfRxRx
 import numpy as np
 from ...configs import (
     N_RANDOM_TESTS_PER_CASE,
@@ -184,29 +184,29 @@ def test_vh_matchgates_container_contract_single_column(column_operations):
     "new_op0, new_op1, crossing_wires",
     [
         (
-            SptmRxRx(np.random.random(2), wires=[0, 1]),
-            SptmRxRx(np.random.random(2), wires=[0, 1]),
-            False
+                SptmfRxRx(np.random.random(2), wires=[0, 1]),
+                SptmfRxRx(np.random.random(2), wires=[0, 1]),
+                False
         ),
         (
-            SptmRxRx(np.random.random(2), wires=[0, 1]),
-            mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[1, 2]),
-            True
+                SptmfRxRx(np.random.random(2), wires=[0, 1]),
+                mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[1, 2]),
+                True
         ),
         (
-            SptmRxRx(np.random.random(2), wires=[0, 1]),
-            SptmRxRx(np.random.random(2), wires=[1, 2]),
-            True
+                SptmfRxRx(np.random.random(2), wires=[0, 1]),
+                SptmfRxRx(np.random.random(2), wires=[1, 2]),
+                True
         ),
         (
-            SptmRxRx(np.random.random(2), wires=[0, 1]),
-            mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[2, 3]),
-            False
+                SptmfRxRx(np.random.random(2), wires=[0, 1]),
+                mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[2, 3]),
+                False
         ),
         (
-            SptmRxRx(np.random.random(2), wires=[0, 1]),
-            SptmRxRx(np.random.random(2), wires=[2, 3]),
-            False
+                SptmfRxRx(np.random.random(2), wires=[0, 1]),
+                SptmfRxRx(np.random.random(2), wires=[2, 3]),
+                False
         )
     ]
 )

@@ -703,3 +703,4 @@ tests/tmp
 .report.json
 jobs_venv
 pstats
+/benchmark/figures

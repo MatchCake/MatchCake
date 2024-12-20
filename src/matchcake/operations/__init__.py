@@ -1,11 +1,10 @@
 
-
 from .matchgate_operation import (
     MatchgateOperation
 )
 from .single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
-    SptmRxRx,
+    SptmfRxRx,
     SptmFSwap,
     SptmFHH,
     SptmIdentity,
@@ -13,6 +12,7 @@ from .single_particle_transition_matrices import (
     SptmRyRy,
     SptmAngleEmbedding,
     SptmFSwapRzRz,
+    SptmFermionicSuperposition,
 )
 
 
@@ -49,14 +49,18 @@ from .fermionic_controlled_z import (
 from .fermionic_swap import (
     FermionicSWAP,
     fSWAP,
+    fswap_chain_gen,
+    fswap_chain,
 )
 
 from .fermionic_superposition import (
     FermionicSuperposition,
-    SptmFermionicSuperposition,
 )
 
 from .. import matchgate_parameter_sets
+
+from .rxx import Rxx
+from .rzz import Rzz
 
 
 class ZI(MatchgateOperation):
@@ -71,3 +75,4 @@ class IZ(MatchgateOperation):
     num_params = 0
     def __init__(self, wires):
         super().__init__(matchgate_parameter_sets.IZ, wires=wires)
+

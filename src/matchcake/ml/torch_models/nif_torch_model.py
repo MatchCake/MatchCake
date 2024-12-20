@@ -4,6 +4,7 @@ import pennylane as qml
 
 from .torch_model import TorchModel
 from ... import NonInteractingFermionicDevice
+from pennylane.wires import Wires
 
 
 class NIFTorchModel(TorchModel):
@@ -35,11 +36,15 @@ class NIFTorchModel(TorchModel):
         self.q_device = NonInteractingFermionicDevice(wires=self.n_qubits, show_progress=False)
         self.q_node = qml.QNode(
             self.circuit,
-            self._q_device,
+            self.q_device,
             interface="torch",
             diff_method="backprop",
             cache=False,
         )
+
+    @property
+    def wires(self):
+        return Wires(list(range(self.n_qubits)))
 
     def circuit(self, *args, **kwargs):
         raise NotImplementedError("This method must be implemented by the subclass.")

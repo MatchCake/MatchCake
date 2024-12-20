@@ -2,18 +2,21 @@ import numpy as np
 import pennylane as qml
 from pennylane.wires import Wires
 
-from ...utils.math import convert_and_cast_like
+from ...utils import make_wires_continuous
+from ...utils.math import convert_and_cast_like, dagger
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
+from ...constants import _CIRCUIT_MATMUL_DIRECTION
 
 
 class SptmFSwapRzRz(SingleParticleTransitionMatrixOperation):
     ALLOWED_ANGLES = [-np.pi, np.pi]
 
     @classmethod
-    def random(cls, wires: Wires, batch_size=None, **kwargs):
+    def random_params(cls, batch_size=None, **kwargs):
         params_shape = ([batch_size] if batch_size is not None else []) + [2]
-        params = np.random.choice(cls.ALLOWED_ANGLES, size=params_shape)
-        return cls(params, wires=wires, **kwargs)
+        seed = kwargs.pop("seed", None)
+        rn_gen = np.random.default_rng(seed)
+        return rn_gen.choice(cls.ALLOWED_ANGLES, size=params_shape)
 
     def __init__(
             self,
@@ -27,8 +30,8 @@ class SptmFSwapRzRz(SingleParticleTransitionMatrixOperation):
         if params_shape[-1] != 2:
             raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
 
-        wire0, wire1 = Wires(wires).toarray()
-        n_wires = wire1 - wire0 + 1
+        all_wires = make_wires_continuous(wires)
+        n_wires = len(all_wires)
 
         if len(params_shape) == 1:
             matrix = np.zeros((2 * n_wires, 2 * n_wires), dtype=complex)
@@ -64,5 +67,5 @@ class SptmFSwapRzRz(SingleParticleTransitionMatrixOperation):
         matrix[..., -2, -1] = qml.math.sin(phi / 2 + theta / 2)
         matrix[..., -1, -2] = -qml.math.sin(phi / 2 + theta / 2)
         matrix[..., -1, -1] = qml.math.cos(phi / 2 + theta / 2)
-        super().__init__(matrix, wires=wires, id=id, **kwargs)
+        super().__init__(matrix, wires=all_wires, id=id, **kwargs)
 

@@ -1,15 +1,18 @@
-from typing import Union
+from typing import Union, Optional, Any
 
 import pennylane as qml
 from pennylane.operation import Operation
 from pennylane import numpy as pnp
-from pennylane.wires import Wires
+from pennylane.math import TensorLike
+from pennylane.wires import Wires, WiresLike
 
 from ..base.matchgate import Matchgate
 from .. import matchgate_parameter_sets as mps, utils
 from .single_particle_transition_matrices.single_particle_transition_matrix import (
     SingleParticleTransitionMatrixOperation
 )
+from ..utils import make_wires_continuous
+from ..utils.math import fermionic_operator_matmul
 
 
 class MatchgateOperation(Matchgate, Operation):
@@ -24,6 +27,15 @@ class MatchgateOperation(Matchgate, Operation):
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
 
+    @classmethod
+    def random_params(cls, batch_size=None, **kwargs):
+        seed = kwargs.pop("seed", None)
+        return mps.MatchgatePolarParams.random_batch_numpy(batch_size=batch_size, seed=seed)
+
+    @classmethod
+    def random(cls, wires: Wires, batch_size=None, **kwargs) -> "MatchgateOperation":
+        return cls(cls.random_params(batch_size=batch_size, wires=wires, **kwargs), wires=wires, **kwargs)
+
     @staticmethod
     def _matrix(*params):
         # TODO: maybe remove this method to use only compute_matrix
@@ -37,6 +49,15 @@ class MatchgateOperation(Matchgate, Operation):
     @staticmethod
     def compute_matrix(*params, **hyperparams):
         return MatchgateOperation._matrix(*params)
+
+    @staticmethod
+    def compute_decomposition(
+            *params: TensorLike,
+            wires: Optional[WiresLike] = None,
+            **hyperparameters: dict[str, Any],
+    ):
+        return [qml.QubitUnitary(MatchgateOperation.compute_matrix(*params, **hyperparameters), wires=wires)]
+
     
     def __init__(
             self,
@@ -45,6 +66,10 @@ class MatchgateOperation(Matchgate, Operation):
             id=None,
             **kwargs
     ):
+        if wires is not None:
+            wires = Wires(wires)
+            assert len(wires) == 2, f"MatchgateOperation requires exactly 2 wires, got {len(wires)}."
+            assert wires[-1] - wires[0] == 1, f"MatchgateOperation requires consecutive wires, got {wires}."
         in_param_type = kwargs.get("in_param_type", mps.MatchgatePolarParams)
         in_params = in_param_type.parse_from_any(params)
         Matchgate.__init__(self, in_params, **kwargs)
@@ -67,6 +92,14 @@ class MatchgateOperation(Matchgate, Operation):
             return None
         return batch_size
 
+    @property
+    def sorted_wires(self):
+        return Wires(sorted(self.wires.tolist()))
+
+    @property
+    def cs_wires(self):
+        return Wires(make_wires_continuous(self.wires))
+
     def get_padded_single_particle_transition_matrix(self, wires=None):
         r"""
         Return the padded single particle transition matrix in order to have the block diagonal form where
@@ -75,68 +108,31 @@ class MatchgateOperation(Matchgate, Operation):
         :param wires: The wires of the whole system.
         :return: padded single particle transition matrix
         """
-        if wires is None:
-            wires = self.wires
-        wires = Wires(wires)
-        matrix = self.single_particle_transition_matrix
-        if qml.math.ndim(matrix) == 2:
-            padded_matrix = pnp.eye(2*len(wires))
-        elif qml.math.ndim(matrix) == 3:
-            padded_matrix = pnp.zeros((qml.math.shape(matrix)[0], 2*len(wires), 2*len(wires)))
-            padded_matrix[:, ...] = pnp.eye(2*len(wires))
-        else:
-            raise ValueError(f"Cannot pad matrix of ndim {qml.math.ndim(matrix)}.")
-        padded_matrix = utils.math.convert_and_cast_like(padded_matrix, matrix)
-        wire0_idx = wires.index(self.wires[0])
-        # wire0_submatrix = matrix[:matrix.shape[0]//2, :matrix.shape[1]//2]
-        # wire0_shape = wire0_submatrix.shape
-        # wire0_slice0 = slice(2 * wire0_idx, 2 * wire0_idx + wire0_shape[0])
-        # wire0_slice1 = slice(2 * wire0_idx, 2 * wire0_idx + wire0_shape[1])
-        
-        # wire1_idx = wires.index(self.wires[1])
-        # wire1_submatrix = matrix[matrix.shape[0]//2:, matrix.shape[1]//2:]
-        # wire1_shape = wire1_submatrix.shape
-        # wire1_slice0 = slice(2 * wire1_idx, 2 * wire1_idx + wire1_shape[0])
-        # wire1_slice1 = slice(2 * wire1_idx, 2 * wire1_idx + wire1_shape[1])
-        
-        # padded_matrix[wire0_slice0, wire0_slice1] = wire0_submatrix
-        # padded_matrix[wire1_slice0, wire1_slice1] = wire1_submatrix
-        slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-2])
-        slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-1])
-        padded_matrix[..., slice_0, slice_1] = matrix
-        return padded_matrix
+        return self.to_sptm_operation().pad(wires=wires).matrix()
     
     def adjoint(self):
-        new_std_params = self.standard_params.adjoint()
-        new_polar_params = mps.MatchgatePolarParams.parse_from_params(new_std_params)
+        new_params = self.standard_params.adjoint()
         return MatchgateOperation(
-            new_polar_params,
+            new_params,
             wires=self.wires,
-            in_param_type=mps.MatchgatePolarParams,
+            in_param_type=new_params.__class__,
         )
     
     def __matmul__(self, other):
         if isinstance(other, SingleParticleTransitionMatrixOperation):
-            return SingleParticleTransitionMatrixOperation.from_operation(self) @ other
+            return fermionic_operator_matmul(self.to_sptm_operation(), other)
 
         if not isinstance(other, MatchgateOperation):
             raise ValueError(f"Cannot multiply MatchgateOperation with {type(other)}")
         
         if self.wires != other.wires:
-            raise NotImplementedError("Cannot multiply MatchgateOperation with different wires yet.")
+            return fermionic_operator_matmul(self.to_sptm_operation(), other.to_sptm_operation())
 
-        new_std_params = mps.MatchgateStandardParams.from_matrix(
-            qml.math.einsum(
-                "...ij,...jk->...ik",
-                self.standard_params.to_matrix(),
-                other.standard_params.to_matrix()
-            )
-        )
-        new_polar_params = mps.MatchgatePolarParams.parse_from_params(new_std_params, force_cast_to_real=True)
+        new_params = self.standard_params @ other.standard_params
         return MatchgateOperation(
-            new_polar_params,
+            new_params,
             wires=self.wires,
-            in_param_type=mps.MatchgatePolarParams,
+            in_param_type=new_params.__class__,
         )
     
     def label(self, decimals=None, base_label=None, cache=None):
@@ -158,7 +154,8 @@ class MatchgateOperation(Matchgate, Operation):
     def to_sptm_operation(self):
         return SingleParticleTransitionMatrixOperation(
             self.single_particle_transition_matrix,
-            wires=self.wires
+            wires=self.wires,
+            **getattr(self, "_hyperparameters", {})
         )
 
 

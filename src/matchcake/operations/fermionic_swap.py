@@ -1,5 +1,6 @@
 import numpy as np
 from pennylane import numpy as pnp
+from pennylane.wires import Wires
 
 from .matchgate_operation import MatchgateOperation
 from .. import matchgate_parameter_sets as mps
@@ -8,6 +9,10 @@ from .. import matchgate_parameter_sets as mps
 class FermionicSWAP(MatchgateOperation):
     num_wires = 2
     num_params = 0
+
+    @classmethod
+    def random(cls, wires: Wires, batch_size=None, **kwargs):
+        return cls(wires=wires, **kwargs)
     
     def __init__(
             self,
@@ -24,3 +29,16 @@ class FermionicSWAP(MatchgateOperation):
 
 fSWAP = FermionicSWAP
 fSWAP.__name__ = "fSWAP"
+
+
+def fswap_chain_gen(wires, **kwargs):
+    is_reverse = wires[0] > wires[1]
+    wire0, wire1 = list(sorted(wires))
+    wires_gen = range(wire0, wire1) if is_reverse else reversed(range(wire0, wire1))
+    for tmp_wire0 in wires_gen:
+        yield fSWAP(wires=[tmp_wire0, tmp_wire0+1], **kwargs)
+    return
+
+
+def fswap_chain(wires, **kwargs):
+    return [op for op in fswap_chain_gen(wires, **kwargs)]

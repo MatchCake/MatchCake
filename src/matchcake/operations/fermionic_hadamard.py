@@ -1,5 +1,6 @@
 import numpy as np
 from pennylane import numpy as pnp
+from pennylane.wires import Wires
 
 from .matchgate_operation import MatchgateOperation
 from .. import matchgate_parameter_sets as mps
@@ -8,6 +9,10 @@ from .. import matchgate_parameter_sets as mps
 class FermionicHadamard(MatchgateOperation):
     num_wires = 2
     num_params = 0
+
+    @classmethod
+    def random(cls, wires: Wires, batch_size=None, **kwargs):
+        return cls(wires=wires, **kwargs)
     
     def __init__(
             self,
