@@ -9,7 +9,7 @@ from .random_strategy import *
 from .scipy_strategies import *
 from .genetic_strategy import *
 from .simulated_annealing_strategy import *
-from .fqaoa_simulated_annealing_strategy import *
+# from .fqaoa_simulated_annealing_strategy import *
 # from .grid_search_strategy import *
 
 optimizer_strategy_map = {
