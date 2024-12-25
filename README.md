@@ -32,7 +32,7 @@ and the Digits dataset in polynomial time with high accuracy.
 
 | Method     | Commands                                                                                                                                                                     |
 |------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **PyPi**   | `pip install matchcake`                                                                                                                                                      |
+| **PyPi**   | `pip install MatchCake`                                                                                                                                                      |
 | **source** | `pip install git+https://github.com/MatchCake/MatchCake`                                                                                                                     |
 | **wheel**  | 1.Download the .whl file [here](https://github.com/MatchCake/MatchCake/tree/main/dist);<br> 2. Copy the path of this file on your computer; <br> 3. `pip install [path].whl` |
 
