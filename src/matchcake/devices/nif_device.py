@@ -8,7 +8,7 @@ from typing import Iterable, Tuple, Union, Callable, Any, Optional, List, Litera
 import numpy as np
 import psutil
 import tqdm
-from pennylane.tape import QuantumTape
+from pennylane.tape import QuantumTape, QuantumScript
 from scipy import sparse
 import pythonbasictools as pbt
 import pennylane as qml
@@ -17,6 +17,17 @@ from pennylane.pulse import ParametrizedEvolution
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 from pennylane.ops.qubit.observables import BasisStateProjector
+from pennylane.measurements import (
+    Expectation,
+    MeasurementProcess,
+    MidMeasureMP,
+    Probability,
+    Sample,
+    ShadowExpvalMP,
+    State,
+    Variance,
+)
+from pennylane.ops import Hamiltonian, LinearCombination, Prod, SProd, Sum
 
 from ..operations.matchgate_operation import MatchgateOperation
 from ..operations.single_particle_transition_matrices.single_particle_transition_matrix import (
@@ -29,12 +40,13 @@ from .. import utils
 from .sampling_strategies import get_sampling_strategy, SamplingStrategy
 from .probability_strategies import get_probability_strategy, ProbabilityStrategy
 from .contraction_strategies import get_contraction_strategy, ContractionStrategy
+from .star_state_finding_strategies import get_star_state_finding_strategy, StarStateFindingStrategy
 from ..utils import torch_utils
-from ..utils.math import convert_and_cast_like
+from ..utils.math import convert_and_cast_like, circuit_matmul, dagger, fermionic_operator_matmul
 from .. import __version__
 
 
-class NonInteractingFermionicDevice(qml.QubitDevice):
+class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     """
     The Non-Interacting Fermionic Simulator device.
 
@@ -59,7 +71,8 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     :type pfaffian_method: str
     :keyword n_workers: The number of workers to use for multiprocessing. Defaults to 0.
     :type n_workers: int
-
+    :keyword star_state_finding_strategy: The strategy to find the star state.
+    :type star_state_finding_strategy: Union[str, StarStateFindingStrategy]
 
     :ivar prob_strategy: The strategy to compute the probabilities
     :vartype prob_strategy: str
@@ -122,6 +135,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
     DEFAULT_PROB_STRATEGY = "LookupTable"
     DEFAULT_CONTRACTION_METHOD = "neighbours"
     DEFAULT_SAMPLING_STRATEGY = "2QubitBy2QubitSampling"
+    DEFAULT_STAR_STATE_FINDING_STRATEGY = "FromSampling"
     pfaffian_methods = {"det", "bLTL", "bH", "cuda_det", "PfaffianFDBPf"}
     DEFAULT_PFAFFIAN_METHOD = "PfaffianFDBPf"
 
@@ -140,26 +154,26 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         return capabilities
 
     @classmethod
-    def update_single_particle_transition_matrix(cls, single_particle_transition_matrix, other):
-        if single_particle_transition_matrix is None:
-            return other
-        l_interface = qml.math.get_interface(single_particle_transition_matrix)
-        other_interface = qml.math.get_interface(other)
-        l_priority = cls.casting_priorities.index(l_interface)
-        other_priority = cls.casting_priorities.index(other_interface)
-        if l_priority < other_priority:
-            single_particle_transition_matrix = utils.math.convert_and_cast_like(
-                single_particle_transition_matrix, other
-            )
-        elif l_priority > other_priority:
-            other = utils.math.convert_and_cast_like(
-                other, single_particle_transition_matrix
-            )
-        single_particle_transition_matrix = qml.math.einsum(
-            "...ij,...jl->...il",
-            single_particle_transition_matrix, other
-        )
-        return single_particle_transition_matrix
+    def update_single_particle_transition_matrix(cls, old_sptm, new_sptm):
+        """
+        Update the old single particle transition matrix by performing a matrix multiplication with the new single
+        particle transition matrix.
+        :param old_sptm: The old single particle transition matrix
+        :param new_sptm: The new single particle transition matrix
+
+        :return: The updated single particle transition matrix.
+        """
+        if old_sptm is None:
+            return new_sptm
+        old_interface = qml.math.get_interface(old_sptm)
+        new_interface = qml.math.get_interface(new_sptm)
+        old_priority = cls.casting_priorities.index(old_interface)
+        new_priority = cls.casting_priorities.index(new_interface)
+        if old_priority < new_priority:
+            old_sptm = utils.math.convert_and_cast_like(old_sptm, new_sptm)
+        elif old_priority > new_priority:
+            new_sptm = utils.math.convert_and_cast_like(new_sptm, old_sptm)
+        return fermionic_operator_matmul(old_sptm, new_sptm, operator="einsum")
 
     @classmethod
     def prod_single_particle_transition_matrices(cls, first, sptm_list):
@@ -202,6 +216,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self._state = None
         self._pre_rotated_state = None
 
+        self._star_state = None
+        self._star_probability = None
+
         self._transition_matrix = None
         self._lookup_table = None
 
@@ -227,6 +244,9 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         )
         self.contraction_strategy: ContractionStrategy = get_contraction_strategy(
             kwargs.get("contraction_strategy", self.DEFAULT_CONTRACTION_METHOD)
+        )
+        self.star_state_finding_strategy: StarStateFindingStrategy = get_star_state_finding_strategy(
+            kwargs.get("star_state_finding_strategy", self.DEFAULT_STAR_STATE_FINDING_STRATEGY)
         )
         self.n_workers = kwargs.get("n_workers", 0)
         self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
@@ -288,7 +308,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
     @transition_matrix.setter
     def transition_matrix(self, value):
-        if self._transition_matrix is not None:
+        if self._transition_matrix is not None and value is not None:
             value = convert_and_cast_like(value, self._transition_matrix)
         self._transition_matrix = value
         self._lookup_table = None
@@ -325,6 +345,18 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if self._lookup_table is not None:
             mem += self._lookup_table.memory_usage
         return mem
+
+    @property
+    def star_state(self):
+        return self._star_state
+
+    @property
+    def star_probability(self):
+        return self._star_probability
+
+    @property
+    def samples(self):
+        return self._samples
     
     def get_sparse_or_dense_state(self) -> Union[int, sparse.coo_array, np.ndarray, TensorLike]:
         if self._basis_state_index is not None:
@@ -453,6 +485,109 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             "Please use the jax interface."
         )
 
+    def _patched_super_batch_transform(self, circuit: QuantumScript):
+        """Apply a differentiable batch transform for preprocessing a circuit
+        prior to execution. This method is called directly by the QNode, and
+        should be overwritten if the device requires a transform that
+        generates multiple circuits prior to execution.
+
+        By default, this method contains logic for generating multiple
+        circuits, one per term, of a circuit that terminates in ``expval(H)``,
+        if the underlying device does not support Hamiltonian expectation values,
+        or if the device requires finite shots.
+
+        .. warning::
+
+            This method will be tracked by autodifferentiation libraries,
+            such as Autograd, JAX, TensorFlow, and Torch. Please make sure
+            to use ``qml.math`` for autodiff-agnostic tensor processing
+            if required.
+
+        Args:
+            circuit (.QuantumTape): the circuit to preprocess
+
+        Returns:
+            tuple[Sequence[.QuantumTape], callable]: Returns a tuple containing
+            the sequence of circuits to be executed, and a post-processing function
+            to be applied to the list of evaluated circuit results.
+        """
+
+        def null_postprocess(results):
+            return results[0]
+
+        finite_shots = self.shots is not None
+        has_shadow = any(isinstance(m, ShadowExpvalMP) for m in circuit.measurements)
+        is_analytic_or_shadow = not finite_shots or has_shadow
+        all_obs_usable = self._all_multi_term_obs_supported(circuit)
+        exists_multi_term_obs = any(
+            isinstance(m.obs, (Hamiltonian, Sum, Prod, SProd)) for m in circuit.measurements
+        )
+        has_overlapping_wires = len(circuit.obs_sharing_wires) > 0
+        single_hamiltonian = len(circuit.measurements) == 1 and isinstance(
+            circuit.measurements[0].obs, (Hamiltonian, Sum)
+        )
+        single_hamiltonian_with_grouping_known = (
+            single_hamiltonian and circuit.measurements[0].obs.grouping_indices is not None
+        )
+
+        if not getattr(self, "use_grouping", True) and single_hamiltonian and all_obs_usable:
+            # Special logic for the braket plugin
+            circuits = [circuit]
+            processing_fn = null_postprocess
+
+        elif not exists_multi_term_obs and not has_overlapping_wires:
+            circuits = [circuit]
+            processing_fn = null_postprocess
+
+        elif is_analytic_or_shadow and all_obs_usable and not has_overlapping_wires:
+            circuits = [circuit]
+            processing_fn = null_postprocess
+
+        elif single_hamiltonian_with_grouping_known:
+
+            # Use qwc grouping if the circuit contains a single measurement of a
+            # Hamiltonian/Sum with grouping indices already calculated.
+            circuits, processing_fn = qml.transforms.split_non_commuting(circuit, "qwc")
+
+        elif any(isinstance(m.obs, (Hamiltonian, LinearCombination)) for m in circuit.measurements):
+
+            # Otherwise, use wire-based grouping if the circuit contains a Hamiltonian
+            # that is potentially very large.
+            circuits, processing_fn = qml.transforms.split_non_commuting(circuit, "wires")
+
+        else:
+            circuits, processing_fn = qml.transforms.split_non_commuting(circuit)
+
+        ##############################################################################################################
+        # ORIGINAL CODE
+        # Check whether the circuit was broadcasted and whether broadcasting is supported
+        # if circuit.batch_size is None or self.capabilities().get("supports_broadcasting"):
+        #     # If the circuit wasn't broadcasted or broadcasting is supported, no action required
+        #     return circuits, processing_fn
+
+        # COMMENTS ON THE BUG FROM THE ORIGINAL CODE
+        # If the device supports broadcasting, we can return the circuits as is, otherwise
+        # The property 'circuit.batch_size' will raise a error if there are multiple batch sizes in the circuits.
+        # As an example, if the circuit has a batch size of 1 and 4, the property will raise an error which is
+        # not supposed to happen because the device supports broadcasting.
+        if self.capabilities().get("supports_broadcasting"):
+            return circuits, processing_fn
+        if circuit.batch_size is None:
+            return circuits, processing_fn
+        ##############################################################################################################
+
+        # Expand each of the broadcasted Hamiltonian-expanded circuits
+        expanded_tapes, expanded_fn = qml.transforms.broadcast_expand(circuits)
+
+        # Chain the postprocessing functions of the broadcasted-tape expansions and the Hamiltonian
+        # expansion. Note that the application order is reversed compared to the expansion order,
+        # i.e. while we first applied `split_non_commuting` to the tape, we need to process the
+        # results from the broadcast expansion first.
+        def total_processing(results):
+            return processing_fn(expanded_fn(results))
+
+        return expanded_tapes, total_processing
+
     def batch_transform(self, circuit: QuantumTape):
         if len(circuit.observables) == 1:
             if isinstance(circuit.observables[0], BatchHamiltonian):
@@ -461,9 +596,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 def hamiltonian_fn(res):
                     return res[0]
 
-                if circuit.batch_size is None or self.capabilities().get("supports_broadcasting"):
+                if self.capabilities().get("supports_broadcasting"):
                     return circuits, hamiltonian_fn
-        return super().batch_transform(circuit)
+                if circuit.batch_size is None:
+                    return circuits, hamiltonian_fn
+        return self._patched_super_batch_transform(circuit)
 
     def apply_state_prep(self, operation, **kwargs) -> bool:
         """
@@ -814,34 +951,55 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         )
 
     def analytic_probability(self, wires=None):
+        r"""Return the (marginal) probability of each computational basis
+        state from the last run of the device.
+
+        PennyLane uses the convention
+        :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where :math:`q_0` is the most
+        significant bit.
+
+        If no wires are specified, then all the basis states representable by
+        the device are considered and no marginalization takes place.
+
+
+        .. note::
+
+            :meth:`~.marginal_prob` may be used as a utility method
+            to calculate the marginal probability distribution.
+
+        Args:
+            wires (Iterable[Number, str], Number, str, Wires): wires to return
+                marginal probabilities for. Wires not provided are traced out of the system.
+
+        Returns:
+            array[float]: list of the probabilities
+        """
         if not self.is_state_initialized:
             return None
         if wires is None:
             wires = self.wires
         if isinstance(wires, int):
             wires = [wires]
-        wires = Wires(wires)
-        wires_shape = wires.toarray().shape
-        wires_binary_states = np.array(list(itertools.product([0, 1], repeat=wires_shape[-1])))
+        wires = Wires(wires, _override=True)
+        wires_array = wires.toarray()
+        wires_shape = wires_array.shape
+        wires_binary_states = self.states_to_binary(np.arange(2**wires_shape[-1]), wires_shape[-1])
 
-        if len(wires.toarray().shape) == 2:
-            wires_batched = np.stack([wires.toarray() for _ in range(wires_binary_states.shape[-2])], axis=-2)
+        if len(wires_shape) == 2:
+            wires_batched = np.stack([wires_array for _ in range(wires_binary_states.shape[-2])], axis=-2)
             wires_binary_states = np.stack([wires_binary_states for _ in range(wires_shape[0])])
             probs = self.get_states_probability(
                 wires_binary_states.reshape(-1, wires_shape[-1]),
                 wires_batched.reshape(-1, wires_shape[-1])
             )
-            probs = probs / qml.math.sum(probs, 0).reshape(1, -1)
-            return qml.math.transpose(probs.reshape(*wires_binary_states.shape[:-1], -1), (-1, 0, 1))
+            probs = qml.math.transpose(probs.reshape(*wires_binary_states.shape[:-1], -1), (-1, 0, 1))
+            probs = probs / qml.math.sum(probs, -1)[..., np.newaxis]
+            return probs
         elif len(wires_shape) > 2:
             raise ValueError(f"The wires must be a 1D or 2D array. Got a {len(wires_shape)}D array instead.")
 
-        probs = qml.math.stack([
-            self.get_state_probability(wires_binary_state, wires)
-            for wires_binary_state in wires_binary_states
-        ])
+        probs = self.get_states_probability(wires_binary_states, wires)
         probs = probs / qml.math.sum(probs)
-        # probs = self.get_states_probability(wires_binary_states, wires)
         return probs
 
     def generate_samples(self):
@@ -862,12 +1020,13 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         if not self.is_state_initialized:
             return None
         # return self.sampling_strategy.generate_samples(self, self.get_state_probability)
-        return self.sampling_strategy.batch_generate_samples(
+        self._samples = self.sampling_strategy.batch_generate_samples(
             self,
             partial(self.get_states_probability, show_progress=False),
             nb_workers=self.n_workers,
             show_progress=self.show_progress
         )
+        return self.samples
 
     def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):
@@ -887,7 +1046,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             self,
             op_iterator: Iterable[qml.operation.Operation],
             observable: Optional = None,
-            output_type: Optional[Literal["samples", "expval", "probs"]] = None,
+            output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
             **kwargs
     ):
         """
@@ -919,6 +1078,32 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
             apply = False
         if apply:
             self.apply_generator(op_iterator, **kwargs)
+        return self.execute_output(observable=observable, output_type=output_type, **kwargs)
+
+    def execute_output(
+            self,
+            observable: Optional = None,
+            output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
+            **kwargs
+    ):
+        """
+        Return the result of the execution in the specified output type.
+
+        :param observable: The observable to measure
+        :type observable: Optional
+        :param output_type: The type of output to return. Supported types are "samples", "expval", and "probs"
+        :type output_type: Optional[Literal["samples", "expval", "probs"]]
+        :param kwargs: Additional keyword arguments
+
+        :keyword reset: Whether to reset the device before applying the operations. Default is False.
+        :keyword apply: Whether to apply the operations. Where "auto" will apply the operations if the transition matrix
+            is None which means that no operations have been applied yet. Default is "auto".
+        :keyword wires: The wires to measure the observable on. Default is None.
+        :keyword shot_range: The range of shots to measure the observable on. Default is None.
+        :keyword bin_size: The size of the bins to measure the observable on. Default is None.
+
+        :return: The result of the execution in the specified output type
+        """
         if output_type is None:
             return
         if self.shots is not None and self._samples is None:
@@ -935,7 +1120,26 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
                 shot_range=kwargs.get("shot_range", None),
                 bin_size=kwargs.get("bin_size", None),
             )
+        if output_type in ["star_state", "*state"]:
+            return self.compute_star_state(**kwargs)
         raise ValueError(f"Output type {output_type} is not supported.")
+
+    def compute_star_state(self, **kwargs):
+        """
+        Compute the star state of the device. The star state is the state that has the highest probability.
+
+        :param kwargs:  Additional keyword arguments
+        :return: The star state and its probability
+        """
+        if self._star_state is None or self._star_probability is None:
+            self._star_state, self._star_probability = self.star_state_finding_strategy(
+                self,
+                partial(self.get_states_probability, show_progress=False),
+                nb_workers=self.n_workers,
+                show_progress=self.show_progress,
+                samples=self._samples,
+            )
+        return self.star_state, self.star_probability
 
     def _asarray(self, x, dtype=None):
         r"""
@@ -961,6 +1165,7 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
 
     def reset(self):
         """Reset the device"""
+        super().reset()
         self._basis_state_index = 0
         self._sparse_state = None
         self._pre_rotated_sparse_state = self._sparse_state
@@ -968,7 +1173,11 @@ class NonInteractingFermionicDevice(qml.QubitDevice):
         self._pre_rotated_state = self._state
         self._transition_matrix = None
         self._lookup_table = None
+        self._star_state = None
+        self._star_probability = None
+        self._samples = None
         self.apply_metadata = defaultdict()
+        self.contraction_strategy.reset()
 
     def update_p_bar(self, *args, **kwargs):
         if self.p_bar is None:

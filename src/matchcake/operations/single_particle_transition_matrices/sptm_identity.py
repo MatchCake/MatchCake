@@ -9,8 +9,9 @@ class SptmIdentity(SingleParticleTransitionMatrixOperation):
     def random(cls, wires: Wires, batch_size=None, **kwargs):
         return cls(wires=wires, **kwargs)
 
-    def __init__(self, wires=None, id=None, **kwargs):
-        matrix = np.eye(4, dtype=complex)
+    def __init__(self, wires, id=None, **kwargs):
+        wires_arr = Wires(wires).toarray()
+        matrix = np.eye(2 * len(wires_arr), dtype=int)
         super().__init__(matrix, wires=wires, id=id, **kwargs)
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":

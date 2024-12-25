@@ -47,3 +47,17 @@ def to_numpy(x: Any, dtype=np.float32):
         except Exception as e:
             raise ValueError(f"Unsupported type {type(x)}") from e
     raise ValueError(f"Unsupported type {type(x)}")
+
+
+def detach(x: Any):
+    if isinstance(x, torch.Tensor):
+        return x.detach()
+    elif isinstance(x, dict):
+        return {k: detach(v) for k, v in x.items()}
+    elif isinstance(x, (list, tuple)):
+        return type(x)([detach(v) for v in x])
+    return x
+
+
+def torch_wrap_circular_bounds(tensor, lower_bound: float = 0.0, upper_bound: float = 1.0):
+    return (tensor - lower_bound) % (upper_bound - lower_bound) + lower_bound

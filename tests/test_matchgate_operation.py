@@ -6,7 +6,8 @@ from pfapack import pfaffian
 from matchcake import MatchgateOperation, NonInteractingFermionicDevice, Matchgate
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
-from .configs import ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON, TEST_SEED, set_seed
+from matchcake.utils.math import dagger, det
+from .configs import ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON, TEST_SEED, set_seed, N_RANDOM_TESTS_PER_CASE
 from .test_nif_device import single_matchgate_circuit
 
 set_seed(TEST_SEED)
@@ -274,6 +275,39 @@ def test_matchgate_operation_matmul_specific_cases(op0, op1, expected):
     pred = (op0 @ op1).matrix().squeeze()
     np.testing.assert_allclose(
         pred, expected,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
+
+
+
+@pytest.mark.parametrize(
+    "matchgate_params",
+    [mps.MatchgatePolarParams.random() for _ in range(N_RANDOM_TESTS_PER_CASE)]
+)
+def test_matchgate_sptm_unitary(matchgate_params):
+    mgo = MatchgateOperation(matchgate_params, wires=[0, 1])
+    sptm = mgo.single_particle_transition_matrix
+    expected_eye = np.einsum("...ij,...jk->...ik", sptm, dagger(sptm))
+    eye = np.zeros_like(expected_eye)
+    eye[..., np.arange(expected_eye.shape[-1]), np.arange(expected_eye.shape[-1])] = 1
+    np.testing.assert_allclose(
+        expected_eye, eye,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
+    "matchgate_params",
+    [mps.MatchgatePolarParams.random() for _ in range(N_RANDOM_TESTS_PER_CASE)]
+)
+def test_matchgate_sptm_det(matchgate_params):
+    mgo = MatchgateOperation(matchgate_params, wires=[0, 1])
+    sptm = mgo.single_particle_transition_matrix
+    sptm_det = det(sptm)
+    np.testing.assert_allclose(
+        sptm_det, 1.0,
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )

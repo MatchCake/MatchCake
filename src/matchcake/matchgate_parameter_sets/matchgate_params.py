@@ -372,6 +372,8 @@ class MatchgateParams:
 
     @classmethod
     def random_batch_numpy(cls, batch_size: int = 1, seed: Optional[int] = None, **kwargs):
+        if batch_size is None or batch_size == 0:
+            return cls.random_numpy(seed=seed)
         rn_state = np.random.RandomState(seed)
         ranges = cls.RANGE_OF_PARAMS
         types = cls.PARAMS_TYPES

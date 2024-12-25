@@ -38,13 +38,13 @@ def single_line_matchgates_circuit(params_list, initial_state=None, **kwargs):
     "params_list,prob_wires",
     [
         ([mps.MatchgatePolarParams(r0=1, r1=1).to_numpy() for _ in range(num_gates)], 0)
-        for num_gates in 2**np.arange(1, 5)
+        for num_gates in 10*np.arange(1, 5)
     ]
     +
     [
         ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], 0)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-        for num_gates in 2**np.arange(1, 5)
+        for num_gates in 10*np.arange(1, 5)
     ]
 )
 def test_multiples_matchgate_probs_with_qbit_device(params_list, prob_wires):
@@ -54,13 +54,13 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, prob_wires):
     qubit_qnode = qml.QNode(single_line_matchgates_circuit, qubit_device)
     
     initial_binary_state = np.array([0, 0])
-    qubit_state = qubit_qnode(
+    qubit_probs = qubit_qnode(
         params_list,
         initial_binary_state,
         in_param_type=mps.MatchgatePolarParams,
-        out_op="state",
+        out_op="probs",
+        out_wires=prob_wires,
     )
-    qubit_probs = utils.get_probabilities_from_state(qubit_state, wires=prob_wires)
     nif_probs = nif_qnode(
         params_list,
         initial_binary_state,

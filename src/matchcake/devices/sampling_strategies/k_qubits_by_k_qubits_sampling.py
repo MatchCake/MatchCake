@@ -17,8 +17,9 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
     NAME = "kQubitBykQubitSampling"
     K: int = None
 
+    @classmethod
     def compute_extend_probs_to_all(
-            self,
+            cls,
             all_states: TensorLike,
             extended_states: TensorLike,
             extended_states_probs: TensorLike,
@@ -34,7 +35,8 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
             probs[..., state_idx] = np.where(mask, extended_states_probs[i, ...], probs[..., state_idx])
         return probs
 
-    def extend_states(self, states: TensorLike, added_states: TensorLike, unique: bool = True) -> TensorLike:
+    @classmethod
+    def extend_states(cls, states: TensorLike, added_states: TensorLike, unique: bool = True) -> TensorLike:
         if unique:
             states = np.unique(states.reshape(-1, states.shape[-1]), axis=0)
         k = added_states.shape[-1]

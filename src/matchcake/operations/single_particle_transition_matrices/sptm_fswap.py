@@ -2,6 +2,8 @@ import numpy as np
 from pennylane.wires import Wires
 
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
+from ...utils.math import dagger
+from ...constants import _CIRCUIT_MATMUL_DIRECTION
 
 
 class SptmFSwap(SingleParticleTransitionMatrixOperation):

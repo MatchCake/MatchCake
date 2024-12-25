@@ -1,4 +1,4 @@
-from typing import Union, Iterable, Sequence, Optional, Any
+from typing import Union, Iterable, Sequence, Optional, Any, Literal, List
 
 import numpy as np
 import pennylane as qml
@@ -8,7 +8,10 @@ from pennylane.wires import Wires
 
 from ... import utils
 from ...templates import TensorLike
-from ...utils.math import convert_and_cast_like
+from ...utils import make_wires_continuous
+from ...utils.math import convert_and_cast_like, circuit_matmul, det, fermionic_operator_matmul, orthonormalize, dagger
+from ...utils.torch_utils import detach
+from ...constants import _CIRCUIT_MATMUL_DIRECTION
 
 
 class _SingleParticleTransitionMatrix:
@@ -64,7 +67,12 @@ class _SingleParticleTransitionMatrix:
 
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + sptm.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + sptm.shape[-1])
-            matrix[..., slice_0, slice_1] = sptm
+            # matrix[..., slice_0, slice_1] = qml.math.einsum(
+            #     "...ij,...jk->...ik",
+            #     detach(matrix[..., slice_0, slice_1]),
+            #     utils.math.convert_and_cast_like(sptm, matrix)
+            # )
+            matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(sptm, matrix)
         return cls(matrix, wires=all_wires)
 
     @classmethod
@@ -98,6 +106,11 @@ class _SingleParticleTransitionMatrix:
             wire0_idx = all_wires.index(m.sorted_wires[0])
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + m.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + m.shape[-1])
+            # matrix[..., slice_0, slice_1] = qml.math.einsum(
+            #     "...ij,...jk->...ik",
+            #     detach(matrix[..., slice_0, slice_1]),
+            #     utils.math.convert_and_cast_like(m.matrix(), matrix)
+            # )
             matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(m.matrix(), matrix)
             seen_wires.update(m.sorted_wires)
         return cls(matrix, wires=all_wires)
@@ -144,11 +157,7 @@ class _SingleParticleTransitionMatrix:
         other = other.pad(wires)
 
         return _SingleParticleTransitionMatrix(
-            qml.math.einsum(
-                "...ij,...jk->...ik",
-                _self.matrix(),
-                other.matrix()
-            ),
+            qml.math.einsum("...ij,...jk->...ik", _self.matrix(), other.matrix()),
             wires=wires
         )
 
@@ -184,28 +193,53 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     num_wires = AnyWires
     num_params = 1
     par_domain = "A"
-
     grad_method = "A"
     grad_recipe = None
-
     generator = None
 
-    casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
+    casting_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = [
+        "numpy", "autograd", "jax", "tf", "torch",  # greater index means higher priority
+    ]
     DEFAULT_CHECK_MATRIX = False
 
     ALLOWED_ANGLES = None
+    EQUAL_ALLOWED_ANGLES = None
     DEFAULT_CHECK_ANGLES = False
     DEFAULT_CLIP_ANGLES = True
+    DEFAULT_NORMALIZE = False
 
     @classmethod
     def clip_angles(cls, angles):
         """
         If the ALLOWED_ANGLES is not none, set the angles to the closest allowed angle.
+        If all the angles are equal in the last dimension, the EQUAL_ALLOWED_ANGLES is used instead.
         """
-        if cls.ALLOWED_ANGLES is None:
+        if cls.ALLOWED_ANGLES is None and cls.EQUAL_ALLOWED_ANGLES is None:
             return angles
+
         angles = qml.math.where(angles >= 0, angles % (2 * np.pi), angles % (-2 * np.pi))
-        allowed_angles_array = convert_and_cast_like(np.array(cls.ALLOWED_ANGLES), angles)
+        angles_shape = qml.math.shape(angles)
+        if len(angles_shape) > 0:
+            angles_flatten = qml.math.reshape(angles, (-1, angles_shape[-1]))
+        else:
+            angles_flatten = qml.math.reshape(angles, (-1, 1))
+        equal_mask = qml.math.all(qml.math.isclose(angles_flatten[..., 0, None], angles_flatten[..., :]), -1)
+        allowed_clipped_angles = cls.clip_to_allowed_angles(angles_flatten, cls.ALLOWED_ANGLES)
+        equal_allowed_clipped_angles = cls.clip_to_allowed_angles(angles_flatten, cls.EQUAL_ALLOWED_ANGLES)
+        angles_flatten = qml.math.where(equal_mask[..., None], equal_allowed_clipped_angles, allowed_clipped_angles)
+        angles = qml.math.reshape(angles_flatten, angles_shape)
+        return angles
+
+    @classmethod
+    def clip_to_allowed_angles(cls, angles, allowed_angles: Optional[Sequence[float]] = None):
+        """
+        If the ALLOWED_ANGLES is not none, set the angles to the closest allowed angle.
+        """
+        if allowed_angles is None:
+            return angles
+
+        angles = qml.math.where(angles >= 0, angles % (2 * np.pi), angles % (-2 * np.pi))
+        allowed_angles_array = convert_and_cast_like(np.array(allowed_angles), angles)
         angles_shape = qml.math.shape(angles)
         angles_flatten = qml.math.reshape(angles, (-1, 1))
         distances = allowed_angles_array - angles_flatten
@@ -220,8 +254,25 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         """
         If the ALLOWED_ANGLES is not none, check if the angles are in the allowed range.
         """
-        if not qml.math.all(qml.math.isin(angles, cls.ALLOWED_ANGLES)):
+        if cls.ALLOWED_ANGLES is None and cls.EQUAL_ALLOWED_ANGLES is None:
+            return True
+
+        angles = qml.math.where(angles >= 0, angles % (2 * np.pi), angles % (-2 * np.pi))
+        angles_shape = qml.math.shape(angles)
+        if len(angles_shape) > 0:
+            angles_flatten = qml.math.reshape(angles, (-1, angles_shape[-1]))
+        else:
+            angles_flatten = qml.math.reshape(angles, (-1, 1))
+        equal_mask = qml.math.all(qml.math.isclose(angles_flatten[..., 0, None], angles_flatten[..., :]), -1)
+
+        not_equal_angles = angles_flatten[~equal_mask].reshape(-1)
+        if not qml.math.all(qml.math.isin(not_equal_angles, cls.ALLOWED_ANGLES)):
             raise ValueError(f"Invalid angles: {angles}. Expected: {cls.ALLOWED_ANGLES}")
+
+        equal_angles = angles_flatten[equal_mask].reshape(-1)
+        if not qml.math.all(qml.math.isin(equal_angles, cls.EQUAL_ALLOWED_ANGLES)):
+            raise ValueError(f"Invalid angles: {angles}. Expected: {cls.EQUAL_ALLOWED_ANGLES}")
+
         return True
 
     @classmethod
@@ -232,7 +283,14 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     ) -> "SingleParticleTransitionMatrixOperation":
         if isinstance(op, SingleParticleTransitionMatrixOperation):
             return op
-        return SingleParticleTransitionMatrixOperation(op.single_particle_transition_matrix, wires=op.wires, **kwargs)
+        if hasattr(op, "single_particle_transition_matrix"):
+            return SingleParticleTransitionMatrixOperation(op.single_particle_transition_matrix, wires=op.wires, **kwargs)
+        if hasattr(op, "to_sptm_operation") and callable(op.to_sptm_operation):
+            return op.to_sptm_operation()
+        raise ValueError(
+            f"Cannot convert {type(op)} to {cls.__name__} "
+            f"without the attribute 'single_particle_transition_matrix' or the method 'to_sptm_operation'."
+        )
 
     @classmethod
     def from_operations(
@@ -240,37 +298,62 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             ops: Iterable[Union[Any, "SingleParticleTransitionMatrixOperation"]],
             **kwargs
     ) -> "SingleParticleTransitionMatrixOperation":
+        """
+        This method will contract multiple SingleParticleTransitionMatrixOperations into a single one.
+        Each operation must act on a different set of wires.
+
+        :param ops: The operations to contract.
+        :param kwargs: Additional keyword arguments.
+
+        :return: The contracted SingleParticleTransitionMatrixOperation.
+        :rtype: SingleParticleTransitionMatrixOperation
+        """
         ops = list(ops)
         if len(ops) == 0:
             return None
+        ops = [cls.from_operation(op, **kwargs) for op in ops]
         if len(ops) == 1:
-            return cls.from_operation(ops[0], **kwargs)
+            return ops[0]
 
-        all_wires = Wires.all_wires([op.wires for op in ops], sort=True)
+        all_wires = Wires.all_wires([op.cs_wires for op in ops], sort=True)
         all_wires = cls.make_wires_continuous(all_wires)
         batch_sizes = [op.batch_size for op in ops if op.batch_size is not None] + [None]
         batch_size = batch_sizes[0]
         if batch_size is None:
-            matrix = pnp.eye(2 * len(all_wires), dtype=complex)
+            matrix = np.eye(2 * len(all_wires), dtype=complex)
         else:
-            matrix = pnp.zeros((batch_size, 2 * len(all_wires), 2 * len(all_wires)), dtype=complex)
-            matrix[:, ...] = pnp.eye(2 * len(all_wires), dtype=matrix.dtype)
+            matrix = np.zeros((batch_size, 2 * len(all_wires), 2 * len(all_wires)), dtype=complex)
+            matrix[:, ...] = np.eye(2 * len(all_wires), dtype=matrix.dtype)
 
-        ops_sptms = [cls.from_operation(op, **kwargs).matrix() for op in ops]
-        ops_sptms = utils.math.convert_and_cast_tensors_to_same_type(ops_sptms, cls.casting_priorities)
-        matrix = utils.math.convert_and_cast_like(matrix, ops_sptms[0])
+        ops_sptms = [op.matrix() for op in ops]
+        ops_sptms = utils.math.convert_tensors_to_same_type_and_cast_to(
+            ops_sptms, cls.casting_priorities, dtype=complex
+        )
+        matrix = utils.math.convert_like_and_cast_to(matrix, ops_sptms[0], dtype=complex)
 
         for op, op_matrix in zip(ops, ops_sptms):
             wire0_idx = all_wires.index(op.sorted_wires[0])
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + op_matrix.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + op_matrix.shape[-1])
-            matrix[..., slice_0, slice_1] = op_matrix
+            matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(op_matrix, matrix)
+            # matrix[..., slice_0, slice_1] = fermionic_operator_matmul(
+            #     first_matrix=detach(matrix[..., slice_0, slice_1]),
+            #     second_matrix=utils.math.convert_and_cast_like(op_matrix, matrix)
+            # )
+        # kwargs.setdefault("normalize", True)
         return SingleParticleTransitionMatrixOperation(matrix, wires=all_wires, **kwargs)
 
     @classmethod
+    def random_params(cls, batch_size=None, **kwargs):
+        wires = kwargs.get("wires", None)
+        assert wires is not None, "wires kwarg must be set."
+        seed = kwargs.pop("seed", None)
+        rn_gen = np.random.default_rng(seed)
+        return rn_gen.normal(size=(([batch_size] if batch_size is not None else []) + [2 * len(wires), 2 * len(wires)]))
+
+    @classmethod
     def random(cls, wires: Wires, batch_size=None, **kwargs):
-        matrix = np.random.randn(*(([batch_size] if batch_size is not None else []) + [2 * len(wires), 2 * len(wires)]))
-        return cls(matrix, wires=wires, **kwargs)
+        return cls(cls.random_params(batch_size=batch_size, wires=wires, **kwargs), wires=wires, **kwargs)
 
     def __init__(
             self,
@@ -281,26 +364,33 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             clip_angles: bool = DEFAULT_CLIP_ANGLES,
             check_angles: bool = DEFAULT_CHECK_ANGLES,
             check_matrix: bool = DEFAULT_CHECK_MATRIX,
+            normalize: bool = DEFAULT_NORMALIZE,
             **kwargs
     ):
-        if check_matrix:
-            if not self.check_is_in_so4():
-                raise ValueError(f"Matrix is not in SO(4): {matrix}")
+        if normalize:
+            matrix = orthonormalize(matrix)
         _SingleParticleTransitionMatrix.__init__(self, matrix, wires=wires)
         if self.batch_size is None:
             params = matrix.reshape(-1)
         else:
             params = matrix.reshape(self.batch_size, -1)
-        Operation.__init__(self, params, wires=wires, id=id, **kwargs)
+        Operation.__init__(self, params, wires=wires, id=id)
         self._hyperparameters = {
             "clip_angles": clip_angles,
             "check_angles": check_angles,
             "check_matrix": check_matrix,
         }
+        if check_matrix:
+            if not self.check_is_in_so4():
+                raise ValueError(f"Matrix is not in SO(4): {matrix}")
 
     @property
     def sorted_wires(self):
         return Wires(sorted(self.wires.tolist()))
+
+    @property
+    def cs_wires(self):
+        return Wires(make_wires_continuous(self.wires))
 
     def matrix(self, wire_order=None) -> TensorLike:
         wires = Wires(self.wires) if wire_order is None else Wires(wire_order)
@@ -317,26 +407,39 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
                 return False
         return True
 
+    def check_is_unitary(self, atol=1e-6, rtol=1e-6):
+        matrix = self.matrix()
+        if self.batch_size is None:
+            matrix = matrix[None, ...]
+        eye = np.eye(matrix.shape[-1])
+        expected_eye = qml.math.einsum("...ij,...jk->...ik", dagger(matrix), matrix)
+        return np.allclose(expected_eye, eye, atol=atol, rtol=rtol)
+
     def pad(self, wires: Wires):
         if not isinstance(wires, Wires):
             wires = Wires(wires)
-        sorted_wires = Wires(sorted(wires.tolist()))
-        if self.sorted_wires == sorted_wires:
+        cs_wires = make_wires_continuous(wires)
+        if self.cs_wires == cs_wires:
             return self
         matrix = self._matrix
         if qml.math.ndim(matrix) == 2:
-            padded_matrix = np.eye(2 * len(wires))
+            padded_matrix = np.eye(2 * len(cs_wires))
         elif qml.math.ndim(matrix) == 3:
-            padded_matrix = np.zeros((qml.math.shape(matrix)[0], 2 * len(wires), 2 * len(wires)))
-            padded_matrix[:, ...] = np.eye(2 * len(wires))
+            padded_matrix = np.zeros((qml.math.shape(matrix)[0], 2 * len(cs_wires), 2 * len(cs_wires)))
+            padded_matrix[:, ...] = np.eye(2 * len(cs_wires))
         else:
             raise NotImplementedError("This method is not implemented yet.")
         padded_matrix = utils.math.convert_and_cast_like(padded_matrix, matrix)
-        wire0_idx = sorted_wires.index(self.sorted_wires[0])
+        wire0_idx = cs_wires.index(self.cs_wires[0])
         slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-2])
         slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-1])
-        padded_matrix[..., slice_0, slice_1] = matrix
-        return SingleParticleTransitionMatrixOperation(padded_matrix, wires=sorted_wires, **self._hyperparameters)
+        try:
+            padded_matrix[..., slice_0, slice_1] = matrix
+        except:
+            padded_matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(matrix, padded_matrix)
+        kwargs = self._hyperparameters.copy()
+        # kwargs.setdefault("normalize", True)
+        return SingleParticleTransitionMatrixOperation(padded_matrix, wires=cs_wires, **kwargs)
 
     def __matmul__(self, other):
         if not isinstance(other, _SingleParticleTransitionMatrix):
@@ -375,6 +478,27 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         import torch
         return SingleParticleTransitionMatrixOperation(
             torch_utils.to_tensor(self.matrix(), dtype=torch.complex128),
+            wires=self.wires,
+            **self._hyperparameters
+        )
+
+    def __round__(self, n=None):
+        return SingleParticleTransitionMatrixOperation(
+            qml.math.round(self.matrix(), n),
+            wires=self.wires,
+            **self._hyperparameters
+        )
+
+    def real(self):
+        return SingleParticleTransitionMatrixOperation(
+            qml.math.real(self.matrix()),
+            wires=self.wires,
+            **self._hyperparameters
+        )
+
+    def __trunc__(self):
+        return SingleParticleTransitionMatrixOperation(
+            qml.math.trunc(self.matrix()),
             wires=self.wires,
             **self._hyperparameters
         )

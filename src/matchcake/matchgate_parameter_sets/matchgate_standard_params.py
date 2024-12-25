@@ -8,6 +8,23 @@ from .matchgate_params import MatchgateParams
 
 
 class MatchgateStandardParams(MatchgateParams):
+    r"""
+    Matchgate standard parameters.
+
+    They are the parameters of a Matchgate operation in the standard form which is a 4x4 matrix
+
+    .. math::
+
+            \begin{bmatrix}
+                a & 0 & 0 & b \\
+                0 & w & x & 0 \\
+                0 & y & z & 0 \\
+                c & 0 & 0 & d
+            \end{bmatrix}
+
+        where :math:`a, b, c, d, w, x, y, z` are the parameters.
+
+    """
     N_PARAMS = 8
     ALLOW_COMPLEX_PARAMS = True
     DEFAULT_RANGE_OF_PARAMS = (-1e12, 1e12)
@@ -132,3 +149,16 @@ class MatchgateStandardParams(MatchgateParams):
             y=qml.math.conjugate(self.x),
             z=qml.math.conjugate(self.z),
         )
+
+    def __matmul__(self, other):
+        if not isinstance(other, MatchgateStandardParams):
+            other = MatchgateStandardParams.parse_from_params(other)
+        a = self.a * other.a + self.b * other.c
+        b = self.a * other.b + self.b * other.d
+        c = self.c * other.a + self.d * other.c
+        d = self.c * other.b + self.d * other.d
+        w = self.w * other.w + self.x * other.y
+        x = self.w * other.x + self.x * other.z
+        y = self.y * other.w + self.z * other.y
+        z = self.y * other.x + self.z * other.z
+        return MatchgateStandardParams(a=a, b=b, c=c, d=d, w=w, x=x, y=y, z=z)

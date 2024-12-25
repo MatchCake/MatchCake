@@ -4,6 +4,8 @@ import numpy as np
 import scipy
 import pennylane as qml
 from ..templates.tensor_like import TensorLike
+from ..constants import _CIRCUIT_MATMUL_DIRECTION, _FOP_MATMUL_DIRECTION, MatmulDirectionType
+
 try:
     import torch
 except ImportError:
@@ -112,7 +114,7 @@ def convert_and_cast_like(tensor1, tensor2):
     :param tensor2: Tensor to use as a reference.
     :type tensor2: Any
 
-    :return: Converted and casted tensor.
+    :return: Converted and casted tensor1.
     """
     import warnings
     import numpy as np
@@ -130,6 +132,25 @@ def convert_and_cast_like(tensor1, tensor2):
     #         warnings.filterwarnings("ignore", category=np.ComplexWarning)
     #         new_tensor1 = qml.math.cast_like(new_tensor1, tensor2)
     return new_tensor1
+
+
+def convert_like_and_cast_to(tensor, like, dtype=None):
+    r"""
+    Convert and cast the tensor to the same type as the tensor like.
+
+    :param tensor: Tensor to convert and cast.
+    :type tensor: Any
+    :param like: Tensor to use as a reference.
+    :type like: Any
+    :param dtype: Data type to cast the tensor.
+    :type dtype: Any
+
+    :return: Converted and casted tensor.
+    """
+    new_tensor = qml.math.convert_like(tensor, like)
+    if dtype is not None:
+        new_tensor = qml.math.cast(new_tensor, dtype)
+    return new_tensor
 
 
 def astensor(tensor, like=None, **kwargs):
@@ -196,6 +217,67 @@ def get_like_tensors_of_highest_priority(
     highest_priority = max(tensors_priorities)
     like = tensors[tensors_priorities.index(highest_priority)]
     return like
+
+
+def convert_tensors_to_same_type_and_cast_to(
+        tensors: List[TensorLike],
+        cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+                "numpy", "autograd", "jax", "tf", "torch"
+        ),
+        dtype=None
+) -> List[TensorLike]:
+    r"""
+    Convert the tensors to the same type using the given priorities.
+
+    :param tensors: Tensors to convert and cast.
+    :type tensors: List[TensorLike]
+    :param cast_priorities: Priorities of the casting. Higher the index is, higher the priority.
+    :type cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]]
+
+    :return: Converted and casted tensors.
+    :rtype: List[TensorLike]
+    """
+    if len(tensors) == 0:
+        return []
+
+    tensors_priorities = [
+        cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors
+    ]
+    highest_priority = max(tensors_priorities)
+    if all(priority == highest_priority for priority in tensors_priorities):
+        return tensors
+    like = tensors[tensors_priorities.index(highest_priority)]
+    return [convert_like_and_cast_to(tensor, like, dtype) for tensor in tensors]
+
+
+def convert_tensors_to_same_type(
+        tensors: List[TensorLike],
+        cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+                "numpy", "autograd", "jax", "tf", "torch"
+        )
+) -> List[TensorLike]:
+    r"""
+    Convert the tensors to the same type using the given priorities.
+
+    :param tensors: Tensors to convert and cast.
+    :type tensors: List[TensorLike]
+    :param cast_priorities: Priorities of the casting. Higher the index is, higher the priority.
+    :type cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]]
+
+    :return: Converted and casted tensors.
+    :rtype: List[TensorLike]
+    """
+    if len(tensors) == 0:
+        return []
+
+    tensors_priorities = [
+        cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors
+    ]
+    highest_priority = max(tensors_priorities)
+    if all(priority == highest_priority for priority in tensors_priorities):
+        return tensors
+    like = tensors[tensors_priorities.index(highest_priority)]
+    return [qml.math.convert_like(tensor, like) for tensor in tensors]
 
 
 def convert_and_cast_tensors_to_same_type(
@@ -374,4 +456,157 @@ def convert_1d_to_2d_indexes(indexes: Iterable[int], n_rows: Optional[int] = Non
         n_rows = int(np.sqrt(len(indexes)))
     new_indexes = np.stack([indexes // n_rows, indexes % n_rows], axis=-1)
     return new_indexes
+
+
+def matmul(
+        left: Any,
+        right: Any,
+        operator: Literal["einsum", "matmul", "@"] = "@"
+):
+    r"""
+    Perform a matrix multiplication of two matrices.
+
+    :param left: Left matrix.
+    :type left: Any
+    :param right: Right matrix.
+    :type right: Any
+    :param operator: Operator to use for the matrix multiplication.
+        "einsum" for einsum, "matmul" for matmul, "@" for __matmul__.
+    :type operator: Literal["einsum", "matmul", "@"]
+
+    :return: Result of the matrix multiplication.
+    :rtype: Any
+    """
+    if operator == "matmul":
+        return qml.math.matmul(left, right)
+    if operator == "@":
+        return left @ right
+    return qml.math.einsum("...ij,...jk->...ik", left, right)
+
+
+def circuit_matmul(
+        first_matrix: Any,
+        second_matrix: Any,
+        direction: MatmulDirectionType = _CIRCUIT_MATMUL_DIRECTION,
+        operator: Literal["einsum", "matmul", "@"] = "@"
+) -> Any:
+    r"""
+    Perform a matrix multiplication of two matrices with the given direction.
+
+    :param first_matrix: First matrix.
+    :type first_matrix: Any
+    :param second_matrix: Second matrix.
+    :type second_matrix: Any
+    :param direction: Direction of the matrix multiplication. "rl" for right to left and "lr" for left to right.
+        That means the result will be first_matrix @ second_matrix if direction is "rl" and second_matrix @ first_matrix
+    :type direction: Literal["rl", "lr"]
+    :param operator: Operator to use for the matrix multiplication.
+        "einsum" for einsum, "matmul" for matmul, "@" for __matmul__.
+    :type operator: Literal["einsum", "matmul", "@"]
+
+    :return: Result of the matrix multiplication.
+    :rtype: Any
+    """
+    left, right = MatmulDirectionType.place_ops(direction, first_matrix, second_matrix)
+    return matmul(left, right, operator)
+
+
+def fermionic_operator_matmul(
+        first_matrix: Any,
+        second_matrix: Any,
+        direction: MatmulDirectionType = _FOP_MATMUL_DIRECTION,
+        operator: Literal["einsum", "matmul", "@"] = "@"
+):
+    r"""
+    Perform a matrix multiplication of two fermionic operator matrices with the given direction.
+
+    :param first_matrix: First fermionic operator matrix.
+    :type first_matrix: Any
+    :param second_matrix: Second fermionic operator matrix.
+    :type second_matrix: Any
+    :param direction: Direction of the matrix multiplication. "rl" for right to left and "lr" for left to right.
+        That means the result will be first_matrix @ second_matrix if direction is "rl" and second_matrix @ first_matrix
+    :type direction: Literal["rl", "lr"]
+    :param operator: Operator to use for the matrix multiplication.
+        "einsum" for einsum, "matmul" for matmul, "@" for __matmul__.
+    :type operator: Literal["einsum", "matmul", "@"]
+
+    :return: Result of the matrix multiplication.
+    :rtype: Any
+    """
+    left, right = MatmulDirectionType.place_ops(direction, first_matrix, second_matrix)
+    return matmul(left, right, operator)
+
+
+def dagger(tensor: Any) -> Any:
+    r"""
+    Compute the conjugate transpose of the tensor.
+
+    :param tensor: Input tensor.
+    :type tensor: Any
+
+    :return: Conjugate transpose of the tensor.
+    :rtype: Any
+    """
+    return qml.math.conj(qml.math.einsum("...ij->...ji", tensor))
+
+
+def det(tensor: Any) -> Any:
+    r"""
+    Compute the determinant of the tensor.
+
+    :param tensor: Input tensor.
+    :type tensor: Any
+
+    :return: Determinant of the tensor.
+    :rtype: Any
+    """
+    backend = qml.math.get_interface(tensor)
+    if backend in ["autograd", "numpy"]:
+        return qml.math.linalg.det(tensor)
+    return qml.math.det(tensor)
+
+
+def svd(tensor: Any) -> Tuple[Any, Any, Any]:
+    r"""
+    Compute the singular value decomposition of the tensor.
+
+    :param tensor: Input tensor.
+    :type tensor: Any
+
+    :return: Singular value decomposition of the tensor.
+    :rtype: Tuple[Any, Any, Any]
+    """
+    backend = qml.math.get_interface(tensor)
+    if backend in ["autograd", "numpy", "torch"]:
+        return qml.math.linalg.svd(tensor)
+    return qml.math.svd(tensor)
+
+
+def orthonormalize(tensor: Any, check_if_normalize: bool = True) -> Any:
+    r"""
+    Orthonormalize the tensor.
+
+    ..math::
+        U, S, V = SVD(tensor)
+        return U @ V
+
+    :param tensor: Input tensor.
+    :type tensor: Any
+    :param check_if_normalize: Whether to check if the tensor is already orthonormalized.
+    :type check_if_normalize: bool
+
+    :return: Orthonormalized tensor.
+    :rtype: Any
+    """
+    if check_if_normalize:
+        eye = qml.math.zeros_like(tensor)
+        eye[..., qml.math.arange(qml.math.shape(tensor)[-1]), qml.math.arange(qml.math.shape(tensor)[-1])] = 1
+        if qml.math.allclose(matmul(tensor, dagger(tensor)), eye):
+            return tensor
+    u, s, v = svd(tensor)
+    # test if the tensor is already orthonormalized with the eigenvalues
+    if qml.math.allclose(s ** 1, 1):
+        return tensor
+    return matmul(u, v, "einsum")
 
