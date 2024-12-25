@@ -5,7 +5,11 @@ on:
 jobs:
   pypi:
     runs-on: ubuntu-latest
-
+    environment:
+      name: pypi
+      url: https://pypi.org/p/MatchCake
+    permissions:
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -33,3 +37,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip_existing: true
+          verbose: true
