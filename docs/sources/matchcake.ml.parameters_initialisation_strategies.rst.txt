@@ -1,0 +1,37 @@
+matchcake.ml.parameters\_initialisation\_strategies package
+===========================================================
+
+Submodules
+----------
+
+matchcake.ml.parameters\_initialisation\_strategies.linear\_strategy module
+---------------------------------------------------------------------------
+
+.. automodule:: matchcake.ml.parameters_initialisation_strategies.linear_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.ml.parameters\_initialisation\_strategies.parameters\_initialisation\_strategy module
+-----------------------------------------------------------------------------------------------
+
+.. automodule:: matchcake.ml.parameters_initialisation_strategies.parameters_initialisation_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.ml.parameters\_initialisation\_strategies.random\_strategy module
+---------------------------------------------------------------------------
+
+.. automodule:: matchcake.ml.parameters_initialisation_strategies.random_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: matchcake.ml.parameters_initialisation_strategies
+   :members:
+   :undoc-members:
+   :show-inheritance:

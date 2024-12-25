@@ -1,0 +1,823 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>matchcake.ml package &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="matchcake.ml.kernels package" href="matchcake.ml.kernels.html" />
+    <link rel="prev" title="matchcake.matchgate_parameter_sets package" href="matchcake.matchgate_parameter_sets.html" /> 
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="index.html">Docs</a></li>
+        
+          <li><a href="matchcake.html">matchcake package</a></li>
+        
+      <li>matchcake.ml package</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="sources/matchcake.ml.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#last-unstable-version">Last unstable version</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#quick-usage-preview">Quick Usage Preview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#citation">Citation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="matchcake.html">matchcake package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="matchcake.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section id="matchcake-ml-package">
+<h1>matchcake.ml package<a class="headerlink" href="#matchcake-ml-package" title="Permalink to this heading">¶</a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.ml.kernels.html">matchcake.ml.kernels package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.kernels.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.fermionic_pqc_kernel">matchcake.ml.kernels.fermionic_pqc_kernel module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.FermionicPQCKernel"><code class="docutils literal notranslate"><span class="pre">FermionicPQCKernel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.FermionicPQCKernel.__init__"><code class="docutils literal notranslate"><span class="pre">FermionicPQCKernel.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.FermionicPQCKernel.ansatz"><code class="docutils literal notranslate"><span class="pre">FermionicPQCKernel.ansatz()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.FermionicPQCKernel.available_entangling_mth"><code class="docutils literal notranslate"><span class="pre">FermionicPQCKernel.available_entangling_mth</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.FermionicPQCKernel.circuit"><code class="docutils literal notranslate"><span class="pre">FermionicPQCKernel.circuit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.FermionicPQCKernel.data_scaling"><code class="docutils literal notranslate"><span class="pre">FermionicPQCKernel.data_scaling</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.FermionicPQCKernel.depth"><code class="docutils literal notranslate"><span class="pre">FermionicPQCKernel.depth</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.FermionicPQCKernel.initialize_parameters"><code class="docutils literal notranslate"><span class="pre">FermionicPQCKernel.initialize_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.FermionicPQCKernel.rotations"><code class="docutils literal notranslate"><span class="pre">FermionicPQCKernel.rotations</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.FermionicPQCKernel.set_predict_request"><code class="docutils literal notranslate"><span class="pre">FermionicPQCKernel.set_predict_request()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.FermionicPQCKernel.set_transform_request"><code class="docutils literal notranslate"><span class="pre">FermionicPQCKernel.set_transform_request()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.StateVectorFermionicPQCKernel"><code class="docutils literal notranslate"><span class="pre">StateVectorFermionicPQCKernel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.StateVectorFermionicPQCKernel.__init__"><code class="docutils literal notranslate"><span class="pre">StateVectorFermionicPQCKernel.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.StateVectorFermionicPQCKernel.ansatz"><code class="docutils literal notranslate"><span class="pre">StateVectorFermionicPQCKernel.ansatz()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.StateVectorFermionicPQCKernel.pre_initialize"><code class="docutils literal notranslate"><span class="pre">StateVectorFermionicPQCKernel.pre_initialize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.StateVectorFermionicPQCKernel.set_predict_request"><code class="docutils literal notranslate"><span class="pre">StateVectorFermionicPQCKernel.set_predict_request()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.StateVectorFermionicPQCKernel.set_transform_request"><code class="docutils literal notranslate"><span class="pre">StateVectorFermionicPQCKernel.set_transform_request()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.kernel_utils">matchcake.ml.kernels.kernel_utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel_utils.GramMatrixKernel"><code class="docutils literal notranslate"><span class="pre">GramMatrixKernel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel_utils.GramMatrixKernel.__init__"><code class="docutils literal notranslate"><span class="pre">GramMatrixKernel.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel_utils.GramMatrixKernel.close"><code class="docutils literal notranslate"><span class="pre">GramMatrixKernel.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel_utils.GramMatrixKernel.dtype"><code class="docutils literal notranslate"><span class="pre">GramMatrixKernel.dtype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel_utils.GramMatrixKernel.fill_diagonal"><code class="docutils literal notranslate"><span class="pre">GramMatrixKernel.fill_diagonal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel_utils.GramMatrixKernel.is_square"><code class="docutils literal notranslate"><span class="pre">GramMatrixKernel.is_square</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel_utils.GramMatrixKernel.make_batches_indexes_generator"><code class="docutils literal notranslate"><span class="pre">GramMatrixKernel.make_batches_indexes_generator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel_utils.GramMatrixKernel.mirror"><code class="docutils literal notranslate"><span class="pre">GramMatrixKernel.mirror()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel_utils.GramMatrixKernel.shape"><code class="docutils literal notranslate"><span class="pre">GramMatrixKernel.shape</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel_utils.GramMatrixKernel.size"><code class="docutils literal notranslate"><span class="pre">GramMatrixKernel.size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel_utils.GramMatrixKernel.symmetrize"><code class="docutils literal notranslate"><span class="pre">GramMatrixKernel.symmetrize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel_utils.GramMatrixKernel.tril_reflect"><code class="docutils literal notranslate"><span class="pre">GramMatrixKernel.tril_reflect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel_utils.GramMatrixKernel.triu_reflect"><code class="docutils literal notranslate"><span class="pre">GramMatrixKernel.triu_reflect()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel_utils.mrot_zz_template"><code class="docutils literal notranslate"><span class="pre">mrot_zz_template()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.ml_kernel">matchcake.ml.kernels.ml_kernel module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel"><code class="docutils literal notranslate"><span class="pre">MLKernel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.__init__"><code class="docutils literal notranslate"><span class="pre">MLKernel.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.batch_distance"><code class="docutils literal notranslate"><span class="pre">MLKernel.batch_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.batch_distance_in_sequence"><code class="docutils literal notranslate"><span class="pre">MLKernel.batch_distance_in_sequence()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.cast_tensor_to_interface"><code class="docutils literal notranslate"><span class="pre">MLKernel.cast_tensor_to_interface()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.compute_gram_matrix"><code class="docutils literal notranslate"><span class="pre">MLKernel.compute_gram_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.fit"><code class="docutils literal notranslate"><span class="pre">MLKernel.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.fit_transform"><code class="docutils literal notranslate"><span class="pre">MLKernel.fit_transform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.get_batch_size_for"><code class="docutils literal notranslate"><span class="pre">MLKernel.get_batch_size_for()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.gram_diagonal_fill"><code class="docutils literal notranslate"><span class="pre">MLKernel.gram_diagonal_fill()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.initialize_parameters"><code class="docutils literal notranslate"><span class="pre">MLKernel.initialize_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.make_batches_generator"><code class="docutils literal notranslate"><span class="pre">MLKernel.make_batches_generator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.pairwise_distances"><code class="docutils literal notranslate"><span class="pre">MLKernel.pairwise_distances()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.pairwise_distances_in_batch"><code class="docutils literal notranslate"><span class="pre">MLKernel.pairwise_distances_in_batch()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.pairwise_distances_in_sequence"><code class="docutils literal notranslate"><span class="pre">MLKernel.pairwise_distances_in_sequence()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.parameters"><code class="docutils literal notranslate"><span class="pre">MLKernel.parameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.pre_initialize"><code class="docutils literal notranslate"><span class="pre">MLKernel.pre_initialize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.predict"><code class="docutils literal notranslate"><span class="pre">MLKernel.predict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.set_predict_request"><code class="docutils literal notranslate"><span class="pre">MLKernel.set_predict_request()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.set_transform_request"><code class="docutils literal notranslate"><span class="pre">MLKernel.set_transform_request()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.single_distance"><code class="docutils literal notranslate"><span class="pre">MLKernel.single_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.size"><code class="docutils literal notranslate"><span class="pre">MLKernel.size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel.transform"><code class="docutils literal notranslate"><span class="pre">MLKernel.transform()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.nif_kernel">matchcake.ml.kernels.nif_kernel module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel"><code class="docutils literal notranslate"><span class="pre">NIFKernel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.UNPICKLABLE_ATTRIBUTES"><code class="docutils literal notranslate"><span class="pre">NIFKernel.UNPICKLABLE_ATTRIBUTES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.__init__"><code class="docutils literal notranslate"><span class="pre">NIFKernel.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.batch_distance"><code class="docutils literal notranslate"><span class="pre">NIFKernel.batch_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.cast_tensor_to_interface"><code class="docutils literal notranslate"><span class="pre">NIFKernel.cast_tensor_to_interface()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.circuit"><code class="docutils literal notranslate"><span class="pre">NIFKernel.circuit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.compile_qnode"><code class="docutils literal notranslate"><span class="pre">NIFKernel.compile_qnode()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.draw"><code class="docutils literal notranslate"><span class="pre">NIFKernel.draw()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.draw_mpl"><code class="docutils literal notranslate"><span class="pre">NIFKernel.draw_mpl()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.fit"><code class="docutils literal notranslate"><span class="pre">NIFKernel.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.get_n_ops"><code class="docutils literal notranslate"><span class="pre">NIFKernel.get_n_ops()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.get_n_params"><code class="docutils literal notranslate"><span class="pre">NIFKernel.get_n_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.initialize_parameters"><code class="docutils literal notranslate"><span class="pre">NIFKernel.initialize_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.n_ops"><code class="docutils literal notranslate"><span class="pre">NIFKernel.n_ops</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.n_params"><code class="docutils literal notranslate"><span class="pre">NIFKernel.n_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.pre_initialize"><code class="docutils literal notranslate"><span class="pre">NIFKernel.pre_initialize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.qnode"><code class="docutils literal notranslate"><span class="pre">NIFKernel.qnode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.set_predict_request"><code class="docutils literal notranslate"><span class="pre">NIFKernel.set_predict_request()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.set_transform_request"><code class="docutils literal notranslate"><span class="pre">NIFKernel.set_transform_request()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.single_distance"><code class="docutils literal notranslate"><span class="pre">NIFKernel.single_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.tape"><code class="docutils literal notranslate"><span class="pre">NIFKernel.tape</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel.wires"><code class="docutils literal notranslate"><span class="pre">NIFKernel.wires</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html">matchcake.ml.optimizer_strategies package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake-ml-optimizer-strategies-adam-strategy-module">matchcake.ml.optimizer_strategies.adam_strategy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#module-matchcake.ml.optimizer_strategies.adamw_strategy">matchcake.ml.optimizer_strategies.adamw_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.adamw_strategy.AdamWStrategy"><code class="docutils literal notranslate"><span class="pre">AdamWStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.adamw_strategy.AdamWStrategy.NAME"><code class="docutils literal notranslate"><span class="pre">AdamWStrategy.NAME</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.adamw_strategy.AdamWStrategy.REQUIRES_GRAD"><code class="docutils literal notranslate"><span class="pre">AdamWStrategy.REQUIRES_GRAD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.adamw_strategy.AdamWStrategy.REQUIRES_HYPERPARAMETERS"><code class="docutils literal notranslate"><span class="pre">AdamWStrategy.REQUIRES_HYPERPARAMETERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.adamw_strategy.AdamWStrategy.__init__"><code class="docutils literal notranslate"><span class="pre">AdamWStrategy.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.adamw_strategy.AdamWStrategy.set_parameters"><code class="docutils literal notranslate"><span class="pre">AdamWStrategy.set_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.adamw_strategy.AdamWStrategy.step"><code class="docutils literal notranslate"><span class="pre">AdamWStrategy.step()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake-ml-optimizer-strategies-genetic-strategy-module">matchcake.ml.optimizer_strategies.genetic_strategy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#module-matchcake.ml.optimizer_strategies.optimizer_strategy">matchcake.ml.optimizer_strategies.optimizer_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.OptimizerStrategy"><code class="docutils literal notranslate"><span class="pre">OptimizerStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.OptimizerStrategy.NAME"><code class="docutils literal notranslate"><span class="pre">OptimizerStrategy.NAME</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.OptimizerStrategy.OPTIONAL_HYPERPARAMETERS"><code class="docutils literal notranslate"><span class="pre">OptimizerStrategy.OPTIONAL_HYPERPARAMETERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.OptimizerStrategy.REQUIRES_GRAD"><code class="docutils literal notranslate"><span class="pre">OptimizerStrategy.REQUIRES_GRAD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.OptimizerStrategy.REQUIRES_HYPERPARAMETERS"><code class="docutils literal notranslate"><span class="pre">OptimizerStrategy.REQUIRES_HYPERPARAMETERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.OptimizerStrategy.__init__"><code class="docutils literal notranslate"><span class="pre">OptimizerStrategy.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.OptimizerStrategy.check_required_hyperparameters"><code class="docutils literal notranslate"><span class="pre">OptimizerStrategy.check_required_hyperparameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.OptimizerStrategy.jac"><code class="docutils literal notranslate"><span class="pre">OptimizerStrategy.jac()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.OptimizerStrategy.optimize"><code class="docutils literal notranslate"><span class="pre">OptimizerStrategy.optimize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.OptimizerStrategy.params_vector"><code class="docutils literal notranslate"><span class="pre">OptimizerStrategy.params_vector</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.OptimizerStrategy.set_optional_hyperparameters"><code class="docutils literal notranslate"><span class="pre">OptimizerStrategy.set_optional_hyperparameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.OptimizerStrategy.set_parameters"><code class="docutils literal notranslate"><span class="pre">OptimizerStrategy.set_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.OptimizerStrategy.step"><code class="docutils literal notranslate"><span class="pre">OptimizerStrategy.step()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.OptimizerStrategy.vector_to_parameters"><code class="docutils literal notranslate"><span class="pre">OptimizerStrategy.vector_to_parameters()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.ScipyOptimizerStrategy"><code class="docutils literal notranslate"><span class="pre">ScipyOptimizerStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.ScipyOptimizerStrategy.NAME"><code class="docutils literal notranslate"><span class="pre">ScipyOptimizerStrategy.NAME</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.ScipyOptimizerStrategy.REQUIRES_HYPERPARAMETERS"><code class="docutils literal notranslate"><span class="pre">ScipyOptimizerStrategy.REQUIRES_HYPERPARAMETERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.ScipyOptimizerStrategy.optimize"><code class="docutils literal notranslate"><span class="pre">ScipyOptimizerStrategy.optimize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.ScipyOptimizerStrategy.set_parameters"><code class="docutils literal notranslate"><span class="pre">ScipyOptimizerStrategy.set_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.optimizer_strategy.ScipyOptimizerStrategy.step"><code class="docutils literal notranslate"><span class="pre">ScipyOptimizerStrategy.step()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#module-matchcake.ml.optimizer_strategies.random_strategy">matchcake.ml.optimizer_strategies.random_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.random_strategy.RandomStrategy"><code class="docutils literal notranslate"><span class="pre">RandomStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.random_strategy.RandomStrategy.NAME"><code class="docutils literal notranslate"><span class="pre">RandomStrategy.NAME</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.random_strategy.RandomStrategy.REQUIRES_HYPERPARAMETERS"><code class="docutils literal notranslate"><span class="pre">RandomStrategy.REQUIRES_HYPERPARAMETERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.random_strategy.RandomStrategy.__init__"><code class="docutils literal notranslate"><span class="pre">RandomStrategy.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.random_strategy.RandomStrategy.set_parameters"><code class="docutils literal notranslate"><span class="pre">RandomStrategy.set_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.random_strategy.RandomStrategy.step"><code class="docutils literal notranslate"><span class="pre">RandomStrategy.step()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#module-matchcake.ml.optimizer_strategies.scipy_strategies">matchcake.ml.optimizer_strategies.scipy_strategies module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.scipy_strategies.COBYLAStrategy"><code class="docutils literal notranslate"><span class="pre">COBYLAStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.scipy_strategies.COBYLAStrategy.NAME"><code class="docutils literal notranslate"><span class="pre">COBYLAStrategy.NAME</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.scipy_strategies.L_BFGSStrategy"><code class="docutils literal notranslate"><span class="pre">L_BFGSStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.scipy_strategies.L_BFGSStrategy.NAME"><code class="docutils literal notranslate"><span class="pre">L_BFGSStrategy.NAME</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.scipy_strategies.SLSQPStrategy"><code class="docutils literal notranslate"><span class="pre">SLSQPStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake.ml.optimizer_strategies.scipy_strategies.SLSQPStrategy.NAME"><code class="docutils literal notranslate"><span class="pre">SLSQPStrategy.NAME</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#matchcake-ml-optimizer-strategies-simulated-annealing-strategy-module">matchcake.ml.optimizer_strategies.simulated_annealing_strategy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.optimizer_strategies.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html">matchcake.ml.parameters_initialisation_strategies package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#module-matchcake.ml.parameters_initialisation_strategies.linear_strategy">matchcake.ml.parameters_initialisation_strategies.linear_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.linear_strategy.LinearStrategy"><code class="docutils literal notranslate"><span class="pre">LinearStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.linear_strategy.LinearStrategy.NAME"><code class="docutils literal notranslate"><span class="pre">LinearStrategy.NAME</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.linear_strategy.LinearStrategy.OPTIONAL_HYPERPARAMETERS"><code class="docutils literal notranslate"><span class="pre">LinearStrategy.OPTIONAL_HYPERPARAMETERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.linear_strategy.LinearStrategy.REQUIRES_HYPERPARAMETERS"><code class="docutils literal notranslate"><span class="pre">LinearStrategy.REQUIRES_HYPERPARAMETERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.linear_strategy.LinearStrategy.__init__"><code class="docutils literal notranslate"><span class="pre">LinearStrategy.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.linear_strategy.LinearStrategy.add_parameters_to_memory"><code class="docutils literal notranslate"><span class="pre">LinearStrategy.add_parameters_to_memory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.linear_strategy.LinearStrategy.get_next_parameters"><code class="docutils literal notranslate"><span class="pre">LinearStrategy.get_next_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.linear_strategy.LinearStrategy.initialise_parameters"><code class="docutils literal notranslate"><span class="pre">LinearStrategy.initialise_parameters()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#module-matchcake.ml.parameters_initialisation_strategies.parameters_initialisation_strategy">matchcake.ml.parameters_initialisation_strategies.parameters_initialisation_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.parameters_initialisation_strategy.ParametersInitialisationStrategy"><code class="docutils literal notranslate"><span class="pre">ParametersInitialisationStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.parameters_initialisation_strategy.ParametersInitialisationStrategy.NAME"><code class="docutils literal notranslate"><span class="pre">ParametersInitialisationStrategy.NAME</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.parameters_initialisation_strategy.ParametersInitialisationStrategy.OPTIONAL_HYPERPARAMETERS"><code class="docutils literal notranslate"><span class="pre">ParametersInitialisationStrategy.OPTIONAL_HYPERPARAMETERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.parameters_initialisation_strategy.ParametersInitialisationStrategy.REQUIRES_HYPERPARAMETERS"><code class="docutils literal notranslate"><span class="pre">ParametersInitialisationStrategy.REQUIRES_HYPERPARAMETERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.parameters_initialisation_strategy.ParametersInitialisationStrategy.__init__"><code class="docutils literal notranslate"><span class="pre">ParametersInitialisationStrategy.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.parameters_initialisation_strategy.ParametersInitialisationStrategy.add_parameters_to_memory"><code class="docutils literal notranslate"><span class="pre">ParametersInitialisationStrategy.add_parameters_to_memory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.parameters_initialisation_strategy.ParametersInitialisationStrategy.check_required_hyperparameters"><code class="docutils literal notranslate"><span class="pre">ParametersInitialisationStrategy.check_required_hyperparameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.parameters_initialisation_strategy.ParametersInitialisationStrategy.get_next_parameters"><code class="docutils literal notranslate"><span class="pre">ParametersInitialisationStrategy.get_next_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.parameters_initialisation_strategy.ParametersInitialisationStrategy.initialise_parameters"><code class="docutils literal notranslate"><span class="pre">ParametersInitialisationStrategy.initialise_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.parameters_initialisation_strategy.ParametersInitialisationStrategy.set_optional_hyperparameters"><code class="docutils literal notranslate"><span class="pre">ParametersInitialisationStrategy.set_optional_hyperparameters()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#module-matchcake.ml.parameters_initialisation_strategies.random_strategy">matchcake.ml.parameters_initialisation_strategies.random_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.random_strategy.RandomStrategy"><code class="docutils literal notranslate"><span class="pre">RandomStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.random_strategy.RandomStrategy.NAME"><code class="docutils literal notranslate"><span class="pre">RandomStrategy.NAME</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.random_strategy.RandomStrategy.REQUIRES_HYPERPARAMETERS"><code class="docutils literal notranslate"><span class="pre">RandomStrategy.REQUIRES_HYPERPARAMETERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.random_strategy.RandomStrategy.add_parameters_to_memory"><code class="docutils literal notranslate"><span class="pre">RandomStrategy.add_parameters_to_memory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.random_strategy.RandomStrategy.get_next_parameters"><code class="docutils literal notranslate"><span class="pre">RandomStrategy.get_next_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.random_strategy.RandomStrategy.initialise_parameters"><code class="docutils literal notranslate"><span class="pre">RandomStrategy.initialise_parameters()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#module-matchcake.ml.parameters_initialisation_strategies">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.parameters_initialisation_strategies.html#matchcake.ml.parameters_initialisation_strategies.get_parameters_initialisation_strategy"><code class="docutils literal notranslate"><span class="pre">get_parameters_initialisation_strategy()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.ml.torch_models.html">matchcake.ml.torch_models package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.torch_models.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.torch_models.html#matchcake-ml-torch-models-nif-torch-model-module">matchcake.ml.torch_models.nif_torch_model module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.torch_models.html#matchcake-ml-torch-models-torch-model-module">matchcake.ml.torch_models.torch_model module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.torch_models.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-matchcake.ml.std_estimator">
+<span id="matchcake-ml-std-estimator-module"></span><h2>matchcake.ml.std_estimator module<a class="headerlink" href="#module-matchcake.ml.std_estimator" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.ml.std_estimator.StdEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.ml.std_estimator.</span></span><span class="sig-name descname"><span class="pre">StdEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.std_estimator.StdEstimator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEstimator</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.ml.std_estimator.StdEstimator.UNPICKLABLE_ATTRIBUTES">
+<span class="sig-name descname"><span class="pre">UNPICKLABLE_ATTRIBUTES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#matchcake.ml.std_estimator.StdEstimator.UNPICKLABLE_ATTRIBUTES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.std_estimator.StdEstimator.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.ml.std_estimator.StdEstimator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.std_estimator.StdEstimator.check_is_fitted">
+<span class="sig-name descname"><span class="pre">check_is_fitted</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.std_estimator.StdEstimator.check_is_fitted" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.std_estimator.StdEstimator.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.ml.std_estimator.StdEstimator" title="matchcake.ml.std_estimator.StdEstimator"><span class="pre">StdEstimator</span></a></span></span><a class="headerlink" href="#matchcake.ml.std_estimator.StdEstimator.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the model with the given data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – The input data.</p></li>
+<li><p><strong>y</strong> – The target values.</p></li>
+<li><p><strong>kwargs</strong> – Additional arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Keyword Arguments<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>check_X_y</strong> – Whether to check the input data and target values. Default is True.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The fitted model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.ml.std_estimator.StdEstimator.is_fitted">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_fitted</span></span><a class="headerlink" href="#matchcake.ml.std_estimator.StdEstimator.is_fitted" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.std_estimator.StdEstimator.load">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.ml.std_estimator.StdEstimator" title="matchcake.ml.std_estimator.StdEstimator"><span class="pre">StdEstimator</span></a></span></span><a class="headerlink" href="#matchcake.ml.std_estimator.StdEstimator.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a model from a saved file. If the extension of the file is not specified, this method will try to load
+the model from the file with the “.joblib” extension. If the file does not exist, it will try to load the model
+from the file with the “.pkl” extension. Otherwise, it will try without any extension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – The path to the saved model.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The loaded model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#matchcake.ml.std_estimator.StdEstimator" title="matchcake.ml.std_estimator.StdEstimator">StdEstimator</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.std_estimator.StdEstimator.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.ml.std_estimator.StdEstimator" title="matchcake.ml.std_estimator.StdEstimator"><span class="pre">StdEstimator</span></a></span></span><a class="headerlink" href="#matchcake.ml.std_estimator.StdEstimator.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the model to a joblib file. If the given filepath does not end with “.joblib”, it will be appended.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – The path to save the model.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The model instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>self.__class__</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.ml.svm">
+<span id="matchcake-ml-svm-module"></span><h2>matchcake.ml.svm module<a class="headerlink" href="#module-matchcake.ml.svm" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.ml.svm.</span></span><span class="sig-name descname"><span class="pre">FixedSizeSVC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_cls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel" title="matchcake.ml.kernels.ml_kernel.MLKernel"><span class="pre">MLKernel</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_gram_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1024</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.ml.std_estimator.StdEstimator" title="matchcake.ml.std_estimator.StdEstimator"><code class="xref py py-class docutils literal notranslate"><span class="pre">StdEstimator</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_cls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel" title="matchcake.ml.kernels.ml_kernel.MLKernel"><span class="pre">MLKernel</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_gram_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1024</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the model with the given data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – The input data.</p></li>
+<li><p><strong>y</strong> – The target values.</p></li>
+<li><p><strong>kwargs</strong> – Additional arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Keyword Arguments<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>check_X_y</strong> – Whether to check the input data and target values. Default is True.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The fitted model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.get_gram_matrices">
+<span class="sig-name descname"><span class="pre">get_gram_matrices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.get_gram_matrices" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.get_gram_matrices_from_memory">
+<span class="sig-name descname"><span class="pre">get_gram_matrices_from_memory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.get_gram_matrices_from_memory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.get_gram_matrix">
+<span class="sig-name descname"><span class="pre">get_gram_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.get_gram_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.get_is_in_memory">
+<span class="sig-name descname"><span class="pre">get_is_in_memory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.get_is_in_memory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.get_pairwise_distances">
+<span class="sig-name descname"><span class="pre">get_pairwise_distances</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.get_pairwise_distances" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.get_pairwise_distances_matrices">
+<span class="sig-name descname"><span class="pre">get_pairwise_distances_matrices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.get_pairwise_distances_matrices" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.kernel">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">kernel</span></span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.kernel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.kernel_n_ops">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">kernel_n_ops</span></span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.kernel_n_ops" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.kernel_n_params">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">kernel_n_params</span></span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.kernel_n_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.kernel_size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">kernel_size</span></span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.kernel_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.n_features">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_features</span></span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.n_features" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.n_kernels">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_kernels</span></span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.n_kernels" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predict the labels of the input data of shape (n_samples, n_features).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>np.ndarray</em><em> or </em><em>array-like</em>) – The input data of shape (n_samples, n_features).</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Keyword Arguments<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>cache</strong> – If True, the computed gram matrices will be stored in memory. Default is False.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The predicted labels of the input data.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray of shape (n_samples,)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.push_to_memory">
+<span class="sig-name descname"><span class="pre">push_to_memory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gram_matrices</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.push_to_memory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.score">
+<span class="sig-name descname"><span class="pre">score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.score" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.FixedSizeSVC.split_data">
+<span class="sig-name descname"><span class="pre">split_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.FixedSizeSVC.split_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.ml.svm.SimpleSVC">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.ml.svm.</span></span><span class="sig-name descname"><span class="pre">SimpleSVC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_cls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel" title="matchcake.ml.kernels.ml_kernel.MLKernel"><span class="pre">MLKernel</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1024</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.SimpleSVC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.ml.std_estimator.StdEstimator" title="matchcake.ml.std_estimator.StdEstimator"><code class="xref py py-class docutils literal notranslate"><span class="pre">StdEstimator</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.SimpleSVC.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_cls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.ml_kernel.MLKernel" title="matchcake.ml.kernels.ml_kernel.MLKernel"><span class="pre">MLKernel</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1024</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.ml.svm.SimpleSVC.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.SimpleSVC.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_gram_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.SimpleSVC.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the model to the input data of shape (n_samples, n_features). This process involves
+building the kernel object, computing the gram matrix, and fitting the SVM model. If the
+train_gram_matrix is provided, the kernel object will not be built and the gram matrix will
+be used directly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – The input data of shape (n_samples, n_features).</p></li>
+<li><p><strong>y</strong> – The target labels of shape (n_samples,).</p></li>
+<li><p><strong>train_gram_matrix</strong> – The precomputed gram matrix of shape (n_samples, n_samples). This input is
+optional and is used to avoid recomputing the gram matrix.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments to be passed to the kernel object and the compute_gram_matrix method.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The fitted model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.SimpleSVC.get_gram_matrix_from_memory">
+<span class="sig-name descname"><span class="pre">get_gram_matrix_from_memory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.SimpleSVC.get_gram_matrix_from_memory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.SimpleSVC.get_is_in_memory">
+<span class="sig-name descname"><span class="pre">get_is_in_memory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.SimpleSVC.get_is_in_memory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.SimpleSVC.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.SimpleSVC.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predict the labels of the input data of shape (n_samples, n_features).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>np.ndarray</em><em> or </em><em>array-like</em>) – The input data of shape (n_samples, n_features).</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Keyword Arguments<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>cache</strong> – If True, the computed gram matrices will be stored in memory. Default is False.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The predicted labels of the input data.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray of shape (n_samples,)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.SimpleSVC.push_to_memory">
+<span class="sig-name descname"><span class="pre">push_to_memory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gram_matrix</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.SimpleSVC.push_to_memory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.SimpleSVC.score">
+<span class="sig-name descname"><span class="pre">score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.svm.SimpleSVC.score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the accuracy of the model on the input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – The input data of shape (n_samples, n_features).</p></li>
+<li><p><strong>y</strong> – The target labels of shape (n_samples,).</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments to be passed to the predict method.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The accuracy of the model on the input data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.svm.SimpleSVC.set_fit_request">
+<span class="sig-name descname"><span class="pre">set_fit_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_gram_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.ml.svm.SimpleSVC" title="matchcake.ml.svm.SimpleSVC"><span class="pre">SimpleSVC</span></a></span></span><a class="headerlink" href="#matchcake.ml.svm.SimpleSVC.set_fit_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Request metadata passed to the <code class="docutils literal notranslate"><span class="pre">fit</span></code> method.</p>
+<p>Note that this method is only relevant if
+<code class="docutils literal notranslate"><span class="pre">enable_metadata_routing=True</span></code> (see <code class="xref py py-func docutils literal notranslate"><span class="pre">sklearn.set_config()</span></code>).
+Please see <span class="xref std std-ref">User Guide</span> on how the routing
+mechanism works.</p>
+<p>The options for each parameter are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">True</span></code>: metadata is requested, and passed to <code class="docutils literal notranslate"><span class="pre">fit</span></code> if provided. The request is ignored if metadata is not provided.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">False</span></code>: metadata is not requested and the meta-estimator will not pass it to <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">None</span></code>: metadata is not requested, and the meta-estimator will raise an error if the user provides it.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code>: metadata should be passed to the meta-estimator with this given alias instead of the original name.</p></li>
+</ul>
+<p>The default (<code class="docutils literal notranslate"><span class="pre">sklearn.utils.metadata_routing.UNCHANGED</span></code>) retains the
+existing request. This allows you to change the request for some
+parameters and not others.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 1.3.</span></p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This method is only relevant if this estimator is used as a
+sub-estimator of a meta-estimator, e.g. used inside a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code>. Otherwise it has no effect.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>train_gram_matrix</strong> (<em>str</em><em>, </em><em>True</em><em>, </em><em>False</em><em>, or </em><em>None</em><em>,                     </em><em>default=sklearn.utils.metadata_routing.UNCHANGED</em>) – Metadata routing for <code class="docutils literal notranslate"><span class="pre">train_gram_matrix</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>self</strong> – The updated object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.ml.svm.SimpleSVC.train_gram_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">train_gram_matrix</span></span><a class="headerlink" href="#matchcake.ml.svm.SimpleSVC.train_gram_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.ml.visualisation">
+<span id="matchcake-ml-visualisation-module"></span><h2>matchcake.ml.visualisation module<a class="headerlink" href="#module-matchcake.ml.visualisation" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.ml.visualisation.ClassificationVisualizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.ml.visualisation.</span></span><span class="sig-name descname"><span class="pre">ClassificationVisualizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_reduced</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reducer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_pts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.visualisation.ClassificationVisualizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.ml.visualisation.Visualizer" title="matchcake.ml.visualisation.Visualizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Visualizer</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.visualisation.ClassificationVisualizer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_reduced</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reducer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_pts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.visualisation.ClassificationVisualizer.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.visualisation.ClassificationVisualizer.compute_x_mesh">
+<span class="sig-name descname"><span class="pre">compute_x_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.visualisation.ClassificationVisualizer.compute_x_mesh" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.visualisation.ClassificationVisualizer.compute_x_reduced">
+<span class="sig-name descname"><span class="pre">compute_x_reduced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.visualisation.ClassificationVisualizer.compute_x_reduced" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.visualisation.ClassificationVisualizer.gather_transforms">
+<span class="sig-name descname"><span class="pre">gather_transforms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.visualisation.ClassificationVisualizer.gather_transforms" title="Permalink to this definition">¶</a></dt>
+<dd><p>If a transform and an inverse_transform functions are given, they will be returned. Otherwise, the transform and
+inverse_transform will be inferred from the given reducer. If the reducer is None, then it will be
+initialized as a PCA with 2 components.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.visualisation.ClassificationVisualizer.plot_2d_decision_boundaries">
+<span class="sig-name descname"><span class="pre">plot_2d_decision_boundaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.visualisation.ClassificationVisualizer.plot_2d_decision_boundaries" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.ml.visualisation.Visualizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.ml.visualisation.</span></span><span class="sig-name descname"><span class="pre">Visualizer</span></span><a class="headerlink" href="#matchcake.ml.visualisation.Visualizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+</section>
+<section id="module-matchcake.ml">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-matchcake.ml" title="Permalink to this heading">¶</a></h2>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="static/documentation_options.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>
