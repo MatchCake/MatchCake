@@ -516,11 +516,14 @@ def get_probabilities_from_state(state: np.ndarray, wires=None) -> np.ndarray:
     return meas.process_state(state=state, wire_order=all_wires)
 
 
-def get_all_subclasses(__class) -> set:
+def get_all_subclasses(__class, include_base_cls: bool = False) -> set:
     r"""
     Get all the subclasses of a class.
 
     :param __class: Class
+    :type __class: Any
+    :param include_base_cls: Include the base class in the set of subclasses
+    :type include_base_cls: bool
     :return: Subclasses
     :rtype: set
     """
@@ -528,6 +531,8 @@ def get_all_subclasses(__class) -> set:
     for subclass in __class.__subclasses__():
         subclasses.add(subclass)
         subclasses |= get_all_subclasses(subclass)
+    if include_base_cls:
+        subclasses.add(__class)
     return subclasses
 
 
