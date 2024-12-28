@@ -465,6 +465,7 @@ class TorchModel(nn.Module):
     ):
         self.fit_args = args
         self.fit_kwargs = kwargs
+        self.load_if_exists()
         self.start_fit_time = time.perf_counter()
         self._fit_p_bar = tqdm.tqdm(
             total=n_iterations * n_init_iterations,
