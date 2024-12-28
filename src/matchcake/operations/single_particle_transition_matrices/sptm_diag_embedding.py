@@ -48,4 +48,4 @@ class SptmDiagEmbedding(SingleParticleTransitionMatrixOperation):
         matrix = qml.math.convert_like(matrix, params)
         indexes = np.arange(2 * n_wires, dtype=int)
         matrix[..., indexes, indexes] = qml.math.cast_like(params_batched_flatten, matrix)
-        super().__init__(matrix, wires=wires, id=id)
+        super().__init__(matrix, wires=wires, id=id, normalize=True)
