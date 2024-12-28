@@ -193,10 +193,7 @@ class TorchModel(nn.Module):
         return self
 
     def cast_tensor_to_interface(self, tensor):
-        if self.qnode.interface == "torch":
-            tensor = torch_utils.to_tensor(tensor)
-        else:
-            tensor = torch_utils.to_numpy(tensor)
+        tensor = torch_utils.to_tensor(tensor)
         if self.use_cuda:
             tensor = torch_utils.to_cuda(tensor)
         return tensor
