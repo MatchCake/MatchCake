@@ -459,7 +459,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
         return SingleParticleTransitionMatrixOperation(
-            qml.math.conj(qml.math.einsum("...ij->...ji", self.matrix())),
+            dagger(self.matrix()),
             wires=self.wires,
             **self._hyperparameters
         )
