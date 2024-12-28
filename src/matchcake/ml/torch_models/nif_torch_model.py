@@ -15,6 +15,8 @@ class NIFTorchModel(TorchModel):
     @classmethod
     def add_model_specific_args(cls, parent_parser: Optional[argparse.ArgumentParser] = None):
         parent_parser = super().add_model_specific_args(parent_parser)
+        if parent_parser is None:
+            parent_parser = argparse.ArgumentParser()
         parser = parent_parser.add_argument_group("NIF Torch Model")
         parser.add_argument(
             "--n_qubits",
@@ -22,6 +24,7 @@ class NIFTorchModel(TorchModel):
             default=cls.DEFAULT_N_QUBITS,
             help="The number of qubits to use in the quantum kernel",
         )
+        return parent_parser
 
     def __init__(
         self,
