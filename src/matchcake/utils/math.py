@@ -600,13 +600,22 @@ def orthonormalize(tensor: Any, check_if_normalize: bool = True) -> Any:
     :rtype: Any
     """
     if check_if_normalize:
-        eye = qml.math.zeros_like(tensor)
-        eye[..., qml.math.arange(qml.math.shape(tensor)[-1]), qml.math.arange(qml.math.shape(tensor)[-1])] = 1
-        if qml.math.allclose(matmul(tensor, dagger(tensor)), eye):
+        if check_is_unitary(tensor):
             return tensor
     u, s, v = svd(tensor)
     # test if the tensor is already orthonormalized with the eigenvalues
     if qml.math.allclose(s ** 1, 1):
         return tensor
     return matmul(u, v, "einsum")
+
+
+def eye_like(tensor: Any):
+    eye = qml.math.zeros_like(tensor)
+    tensor_shape = qml.math.shape(tensor)
+    eye[..., qml.math.arange(tensor_shape[-2]), qml.math.arange(tensor_shape[-1])] = 1
+    return eye
+
+
+def check_is_unitary(tensor: Any):
+    return qml.math.allclose(matmul(tensor, dagger(tensor)), eye_like(tensor))
 
