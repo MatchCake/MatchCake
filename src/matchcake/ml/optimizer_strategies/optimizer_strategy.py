@@ -33,6 +33,7 @@ class OptimizerStrategy(ABC):
         self.init_range_high = 4 * np.pi
         self.best_parameters = None
         self.best_cost = np.inf
+        self.stop_training_flag = False
 
     def __str__(self):
         return f"{self.NAME}"
@@ -93,6 +94,8 @@ class OptimizerStrategy(ABC):
     ) -> List[torch.nn.Parameter]:
         for _ in range(n_iterations):
             self.step(closure, callback)
+            if self.stop_training_flag:
+                break
         return self.parameters
 
 
