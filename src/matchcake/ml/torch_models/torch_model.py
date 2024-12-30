@@ -151,6 +151,7 @@ class TorchModel(nn.Module):
         self.fit_history = []
         self._cache_last_np_cost = None
         self._cache_last_cost = None
+        self.p_bar_postfix = {}
         self._fit_p_bar = None
         self.fit_args = None
         self.fit_kwargs = None
@@ -440,18 +441,18 @@ class TorchModel(nn.Module):
         if self._fit_p_bar is not None:
             best_cost = np.nanmin(self.fit_history)
             prev_cost = self.fit_history[-2] if len(self.fit_history) > 1 else np.nan
-            postfix = {
+            self.p_bar_postfix = {
                 "Prev Cost": prev_cost,
                 "Cost": self._cache_last_np_cost,
                 "Best Cost": best_cost,
                 **kwargs.get("postfix", {})
             }
-            self._fit_p_bar.set_postfix(postfix)
+            self._fit_p_bar.set_postfix(self.p_bar_postfix)
             self._fit_p_bar.n = min(self._fit_p_bar.total, len(self.fit_history))
             self._fit_p_bar.refresh()
             if self._fit_p_bar.disable:
                 self.log_func('-' * 120)
-                self.log_func(f"Iteration {len(self.fit_history)}: {postfix}")
+                self.log_func(f"Iteration {len(self.fit_history)}: {self.p_bar_postfix}")
                 self.log_func(str(self._fit_p_bar))
                 self.log_func('-' * 120)
         return self
@@ -471,7 +472,7 @@ class TorchModel(nn.Module):
         self._fit_p_bar = tqdm.tqdm(
             total=n_iterations * n_init_iterations,
             initial=len(self.fit_history),
-            desc="Optimizing",
+            desc=kwargs.get("desc", "Optimizing"),
             disable=not kwargs.get("verbose", getattr(self.q_device, "show_progress", False)),
         )
         current_iteration = len(self.fit_history) // n_init_iterations
