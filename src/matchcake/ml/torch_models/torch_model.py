@@ -180,6 +180,10 @@ class TorchModel(nn.Module):
     def jsons_path(self):
         return os.path.abspath(os.path.join(self.save_path, "jsons.json"))
 
+    @property
+    def torch_device(self):
+        return torch.device("cuda" if self.use_cuda else "cpu")
+
     def state_dict(self, *args, destination=None, prefix='', keep_vars=False):
         state = super().state_dict(*args, destination=destination, prefix=prefix, keep_vars=keep_vars)
         for attr in self.ATTRS_TO_STATE_DICT:
