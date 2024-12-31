@@ -51,7 +51,7 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
 
     def batch_generate_samples_by_subsets_of_k(
             self,
-            device: qml.QubitDevice,
+            device: qml.devices.QubitDevice,
             states_prob_func: Callable[[TensorLike, Wires], TensorLike],
             k: int = 1,
             **kwargs
@@ -111,7 +111,7 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
 
     def batch_generate_samples(
             self,
-            device: qml.QubitDevice,
+            device: qml.devices.QubitDevice,
             states_prob_func: Callable[[TensorLike, Wires], TensorLike],
             **kwargs
     ) -> TensorLike:
@@ -130,7 +130,7 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
 
     def generate_samples(
             self,
-            device: qml.QubitDevice,
+            device: qml.devices.QubitDevice,
             state_prob_func: Callable[[TensorLike, Wires], TensorLike],
             **kwargs
     ) -> TensorLike:

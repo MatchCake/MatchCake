@@ -6,13 +6,7 @@ from typing import Dict, Any, Callable, Optional, List
 
 import torch
 from pennylane.typing import TensorLike
-try:
-    import pygad
-except ImportError:
-    raise ImportError(
-        "Please install pygad to use the Genetic optimizer strategy. "
-        "You can install it with `pip install pygad`."
-    )
+
 
 
 class GeneticStrategy(OptimizerStrategy):
@@ -82,6 +76,13 @@ class GeneticStrategy(OptimizerStrategy):
             callback: Optional[Callable[[], Any]] = None,
             **hyperparameters
     ) -> List[torch.nn.Parameter]:
+        try:
+            import pygad
+        except ImportError:
+            raise ImportError(
+                "Please install pygad to use the Genetic optimizer strategy. "
+                "You can install it with `pip install pygad`."
+            )
         if self.parameters is None:
             raise ValueError(f"{self.NAME} Optimizer has not been initialized. Call set_parameters() first.")
 

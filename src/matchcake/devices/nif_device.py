@@ -35,6 +35,7 @@ from ..operations.single_particle_transition_matrices.single_particle_transition
     SingleParticleTransitionMatrixOperation,
 )
 from ..observables.batch_hamiltonian import BatchHamiltonian
+from ..observables.batch_projector import BatchProjector
 from ..base.lookup_table import NonInteractingFermionicLookupTable
 from .. import utils
 from .sampling_strategies import get_sampling_strategy, SamplingStrategy
@@ -1036,6 +1037,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             if len(t_shape) == 2:
                 return convert_and_cast_like(1, self.transition_matrix)
             return convert_and_cast_like(np.ones(t_shape[0]), self.transition_matrix)
+
+        if isinstance(observable, BatchProjector):
+            return self.get_states_probability(observable.get_states(), observable.get_batch_wires())
 
         super_re = super().expval(observable, shot_range, bin_size)
         if isinstance(observable, BatchHamiltonian):
