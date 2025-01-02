@@ -5,13 +5,14 @@ from pennylane.operation import Observable
 
 class BatchProjector(Observable):
     def __init__(self, states, wires, **kwargs):
-        super().__init__(states, wires=wires, **kwargs)
         wires = Wires(wires, _override=True)
         wires_array = wires.toarray()
         wires_shape = wires_array.shape
         if len(wires_shape) == 1:
             wires = [wires for _ in range(len(states))]
-
+        else:
+            wires = Wires([Wires(w) for w in wires])
+        super().__init__(states, wires=wires, **kwargs)
         self.projectors = [qml.Projector(state, wires=s_wires) for state, s_wires in zip(states, wires)]
 
     def get_states(self):
