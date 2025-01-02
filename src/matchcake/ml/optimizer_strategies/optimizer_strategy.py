@@ -114,6 +114,15 @@ class ScipyOptimizerStrategy(OptimizerStrategy):
     ) -> TensorLike:
         raise NotImplementedError(f"{self.NAME}.step() must be implemented.")
 
+    def get_callback_func(self, base_callback):
+        def callback(*args, **kwargs):
+            if base_callback is not None:
+                base_callback(*args, **kwargs)
+            if self.stop_training_flag:
+                # raise StopIteration
+                return True
+        return callback
+
     def optimize(
             self,
             *,
@@ -126,7 +135,7 @@ class ScipyOptimizerStrategy(OptimizerStrategy):
             fun=lambda x: float(torch_utils.to_numpy(closure(self.vector_to_parameters(x)))),
             x0=torch_utils.to_numpy(self.params_vector),
             method=self.NAME,
-            callback=callback,
+            callback=self.get_callback_func(callback),
             options={"maxiter": n_iterations},
             bounds=[(self.init_range_low, self.init_range_high)] * len(self.params_vector),
         )
