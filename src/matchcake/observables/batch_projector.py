@@ -12,7 +12,7 @@ class BatchProjector(Observable):
             wires = [wires for _ in range(len(states))]
         else:
             wires = Wires([Wires(w) for w in wires])
-        super().__init__(states, wires=wires, **kwargs)
+        super().__init__(states, wires=Wires.all_wires(wires), **kwargs)
         self.projectors = [qml.Projector(state, wires=s_wires) for state, s_wires in zip(states, wires)]
 
     def get_states(self):
