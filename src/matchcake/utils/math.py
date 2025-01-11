@@ -583,7 +583,7 @@ def svd(tensor: Any) -> Tuple[Any, Any, Any]:
     return qml.math.svd(tensor)
 
 
-def orthonormalize(tensor: Any, check_if_normalize: bool = True) -> Any:
+def orthonormalize(tensor: Any, check_if_normalize: bool = True, raises_error: bool = False) -> Any:
     r"""
     Orthonormalize the tensor.
 
@@ -599,14 +599,19 @@ def orthonormalize(tensor: Any, check_if_normalize: bool = True) -> Any:
     :return: Orthonormalized tensor.
     :rtype: Any
     """
-    if check_if_normalize:
-        if check_is_unitary(tensor):
+    try:
+        if check_if_normalize:
+            if check_is_unitary(tensor):
+                return tensor
+        u, s, v = svd(tensor)
+        # test if the tensor is already orthonormalized with the eigenvalues
+        if qml.math.allclose(s ** 1, 1):
             return tensor
-    u, s, v = svd(tensor)
-    # test if the tensor is already orthonormalized with the eigenvalues
-    if qml.math.allclose(s ** 1, 1):
+        return matmul(u, v, "einsum")
+    except Exception as e:
+        if raises_error:
+            raise e
         return tensor
-    return matmul(u, v, "einsum")
 
 
 def eye_like(tensor: Any):
