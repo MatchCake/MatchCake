@@ -1046,7 +1046,11 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                 f"Cannot compute analytic expectations of {observable.name}."
             ) from e
 
+        # TODO: Tried to order the eigvals and eigvecs in the same way as the probabilities
+        # but it doesn't seem to work.
         # eigvecs = self._asarray(observable.eigendecomposition.get("eigvec"), dtype=self.R_DTYPE)
+        # order = np.argmax(torch_utils.to_numpy(eigvecs), axis=-1)
+        # eigvals = eigvals[order]
         prob = self.probability(wires=observable.wires)
         return self._dot(prob, eigvals)
 
