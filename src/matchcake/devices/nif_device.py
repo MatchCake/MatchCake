@@ -25,7 +25,7 @@ from pennylane.measurements import (
     Sample,
     ShadowExpvalMP,
     State,
-    Variance,
+    Variance, MeasurementValue,
 )
 from pennylane.ops import Hamiltonian, LinearCombination, Prod, SProd, Sum
 
@@ -1029,6 +1029,27 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         )
         return self.samples
 
+    def exact_expval(self, observable):
+        try:
+            eigvals = self._asarray(
+                (
+                    observable.eigvals()
+                    if not isinstance(observable, MeasurementValue)
+                    # Indexing a MeasurementValue gives the output of the processing function
+                    # for that index as a binary number.
+                    else [observable[i] for i in range(2 ** len(observable.measurements))]
+                ),
+                dtype=self.R_DTYPE,
+            )
+        except qml.operation.EigvalsUndefinedError as e:
+            raise qml.operation.EigvalsUndefinedError(
+                f"Cannot compute analytic expectations of {observable.name}."
+            ) from e
+
+        # eigvecs = self._asarray(observable.eigendecomposition.get("eigvec"), dtype=self.R_DTYPE)
+        prob = self.probability(wires=observable.wires)
+        return self._dot(prob, eigvals)
+
     def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):
             return self.get_state_probability(observable.parameters[0], observable.wires)
@@ -1041,10 +1062,13 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         if isinstance(observable, BatchProjector):
             return self.get_states_probability(observable.get_states(), observable.get_batch_wires())
 
-        super_re = super().expval(observable, shot_range, bin_size)
+        if self.shots is None:
+            output = self.exact_expval(observable)
+        else:
+            output = super().expval(observable, shot_range, bin_size)
         if isinstance(observable, BatchHamiltonian):
-            return observable.reduce(super_re)
-        return super_re
+            return observable.reduce(output)
+        return output
 
     def execute_generator(
             self,
