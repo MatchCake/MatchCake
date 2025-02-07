@@ -25,7 +25,7 @@ from pennylane.measurements import (
     Sample,
     ShadowExpvalMP,
     State,
-    Variance,
+    Variance, MeasurementValue,
 )
 from pennylane.ops import Hamiltonian, LinearCombination, Prod, SProd, Sum
 
@@ -42,7 +42,7 @@ from .sampling_strategies import get_sampling_strategy, SamplingStrategy
 from .probability_strategies import get_probability_strategy, ProbabilityStrategy
 from .contraction_strategies import get_contraction_strategy, ContractionStrategy
 from .star_state_finding_strategies import get_star_state_finding_strategy, StarStateFindingStrategy
-from ..utils import torch_utils
+from ..utils import torch_utils, get_eigvals_on_z_basis
 from ..utils.math import convert_and_cast_like, circuit_matmul, dagger, fermionic_operator_matmul
 from .. import __version__
 
@@ -1029,6 +1029,14 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         )
         return self.samples
 
+    def exact_expval(self, observable):
+        if isinstance(observable, BatchHamiltonian):
+            eigvals_on_z_basis = observable.eigvals_on_z_basis()
+        else:
+            eigvals_on_z_basis = get_eigvals_on_z_basis(observable)
+        prob = self.probability(wires=observable.wires)
+        return self._dot(prob, eigvals_on_z_basis)
+
     def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):
             return self.get_state_probability(observable.parameters[0], observable.wires)
@@ -1041,10 +1049,13 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         if isinstance(observable, BatchProjector):
             return self.get_states_probability(observable.get_states(), observable.get_batch_wires())
 
-        super_re = super().expval(observable, shot_range, bin_size)
+        if self.shots is None:
+            output = self.exact_expval(observable)
+        else:
+            output = super().expval(observable, shot_range, bin_size)
         if isinstance(observable, BatchHamiltonian):
-            return observable.reduce(super_re)
-        return super_re
+            return observable.reduce(output)
+        return output
 
     def execute_generator(
             self,
