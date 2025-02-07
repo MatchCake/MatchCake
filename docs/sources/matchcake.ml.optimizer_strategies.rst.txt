@@ -1,0 +1,69 @@
+matchcake.ml.optimizer\_strategies package
+==========================================
+
+Submodules
+----------
+
+matchcake.ml.optimizer\_strategies.adam\_strategy module
+--------------------------------------------------------
+
+.. automodule:: matchcake.ml.optimizer_strategies.adam_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.ml.optimizer\_strategies.adamw\_strategy module
+---------------------------------------------------------
+
+.. automodule:: matchcake.ml.optimizer_strategies.adamw_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.ml.optimizer\_strategies.genetic\_strategy module
+-----------------------------------------------------------
+
+.. automodule:: matchcake.ml.optimizer_strategies.genetic_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.ml.optimizer\_strategies.optimizer\_strategy module
+-------------------------------------------------------------
+
+.. automodule:: matchcake.ml.optimizer_strategies.optimizer_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.ml.optimizer\_strategies.random\_strategy module
+----------------------------------------------------------
+
+.. automodule:: matchcake.ml.optimizer_strategies.random_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.ml.optimizer\_strategies.scipy\_strategies module
+-----------------------------------------------------------
+
+.. automodule:: matchcake.ml.optimizer_strategies.scipy_strategies
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.ml.optimizer\_strategies.simulated\_annealing\_strategy module
+------------------------------------------------------------------------
+
+.. automodule:: matchcake.ml.optimizer_strategies.simulated_annealing_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: matchcake.ml.optimizer_strategies
+   :members:
+   :undoc-members:
+   :show-inheritance:
