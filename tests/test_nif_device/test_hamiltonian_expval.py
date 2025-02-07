@@ -69,22 +69,22 @@ def test_nif_sum_hamiltonian_expval_zz_on_basis_state_against_qubit_device(basis
 @pytest.mark.parametrize(
     "basis_state,hamiltonian",
     [
-        # ([0, 0], [qml.PauliZ(0) @ qml.PauliZ(1)]),
-        # ([0, 1], [qml.PauliZ(0) @ qml.PauliZ(1)]),
-        # ([1, 0], [qml.PauliZ(0) @ qml.PauliZ(1)]),
-        # ([1, 1], [qml.PauliZ(0) @ qml.PauliZ(1)]),
+        ([0, 0], [qml.PauliZ(0) @ qml.PauliZ(1)]),
+        ([0, 1], [qml.PauliZ(0) @ qml.PauliZ(1)]),
+        ([1, 0], [qml.PauliZ(0) @ qml.PauliZ(1)]),
+        ([1, 1], [qml.PauliZ(0) @ qml.PauliZ(1)]),
         ([0, 0, 0], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
-        # ([0, 1, 0], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
-        # ([1, 0, 0], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
-        # ([1, 1, 0], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
-        # ([0, 0, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
-        # ([0, 1, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
-        # ([1, 0, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
-        # ([1, 1, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
+        ([0, 1, 0], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
+        ([1, 0, 0], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
+        ([1, 1, 0], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
+        ([0, 0, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
+        ([0, 1, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
+        ([1, 0, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
+        ([1, 1, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
     ]
 )
 def test_nif_pennylane_hamiltonian_expval_zz_on_basis_state_against_qubit_device(basis_state, hamiltonian):
-    pytest.skip(("pennylane.Hamiltonian seems to have unexpected behaviours with NIF device."))
+    # pytest.skip(("pennylane.Hamiltonian seems to have unexpected behaviours with NIF device."))
     pennylane_hamiltonian = qml.Hamiltonian(coeffs=[1.0] * len(hamiltonian), observables=hamiltonian)
 
     def circuit_gen():
