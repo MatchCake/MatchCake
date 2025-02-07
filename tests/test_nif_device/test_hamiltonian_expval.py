@@ -84,7 +84,6 @@ def test_nif_sum_hamiltonian_expval_zz_on_basis_state_against_qubit_device(basis
     ]
 )
 def test_nif_pennylane_hamiltonian_expval_zz_on_basis_state_against_qubit_device(basis_state, hamiltonian):
-    # pytest.skip(("pennylane.Hamiltonian seems to have unexpected behaviours with NIF device."))
     pennylane_hamiltonian = qml.Hamiltonian(coeffs=[1.0] * len(hamiltonian), observables=hamiltonian)
 
     def circuit_gen():
