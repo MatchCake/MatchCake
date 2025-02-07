@@ -15,9 +15,6 @@ from ..configs import (
 
 set_seed(TEST_SEED)
 
-def get_rn_pauli_cls():
-    return np.random.choice([qml.PauliX, qml.PauliY, qml.PauliZ])
-
 
 hand_made_test_data = [
     ([0, 0], [qml.PauliZ(0) @ qml.PauliZ(1)]),
