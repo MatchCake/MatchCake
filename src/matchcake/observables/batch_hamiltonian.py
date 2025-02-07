@@ -1,6 +1,8 @@
 import pennylane as qml
 from pennylane.wires import Wires
 
+from matchcake.utils import get_eigvals_on_z_basis
+
 
 class BatchHamiltonian(qml.Hamiltonian):
     def __init__(self, *args, **kwargs):
@@ -13,6 +15,9 @@ class BatchHamiltonian(qml.Hamiltonian):
 
     def eigvals(self):
         return qml.math.stack([op.eigvals() for op in self.ops])
+
+    def eigvals_on_z_basis(self):
+        return qml.math.stack([get_eigvals_on_z_basis(op) for op in self.ops])
 
     def reduce(self, expectation_values):
         """

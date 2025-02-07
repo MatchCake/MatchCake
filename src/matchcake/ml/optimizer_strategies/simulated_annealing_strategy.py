@@ -102,4 +102,6 @@ class SimulatedAnnealingStrategy(OptimizerStrategy):
         for i in range(n_iterations):
             self.current_temperature = self.temperature / (i + 1)
             self.step(closure, callback)
+            if self.stop_training_flag:
+                break
         return self.best_parameters

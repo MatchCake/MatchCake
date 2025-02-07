@@ -31,11 +31,6 @@ from .angle_embedding import (
     MAngleEmbeddings,
 )
 
-from .fermionic_controlled_not import (
-    FermionicCNOT,
-    fCNOT,
-)
-
 from .fermionic_hadamard import (
     FermionicHadamard,
     fH,

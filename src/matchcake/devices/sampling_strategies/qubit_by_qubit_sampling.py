@@ -16,7 +16,7 @@ class QubitByQubitSampling(KQubitsByKQubitsSampling):
 
     def generate_samples(
             self,
-            device: qml.QubitDevice,
+            device: qml.devices.QubitDevice,
             state_prob_func: Callable[[TensorLike, Wires], TensorLike],
             **kwargs
     ) -> TensorLike:

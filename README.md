@@ -3,14 +3,17 @@
 <div style="text-align:center"><img src="https://github.com/MatchCake/MatchCake/blob/main/images/logo/Logo.svg?raw=true" width="40%" /></div>
 
 [![Star on GitHub](https://img.shields.io/github/stars/MatchCake/MatchCake.svg?style=social)](https://github.com/MatchCake/MatchCake/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/MatchCake/MatchCake?style=social)](https://github.com/MatchCake/MatchCake/network/members)
 [![Python 3.6](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-310/)
+[![downloads](https://img.shields.io/pypi/dm/MatchCake)](https://pypi.org/project/MatchCake)
+[![PyPI version](https://img.shields.io/pypi/v/MatchCake)](https://pypi.org/project/MatchCake)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 ![Tests Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/tests.yml/badge.svg)
 ![Dist Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/build_dist.yml/badge.svg)
-![Code coverage](https://raw.githubusercontent.com/MatchCake/MatchCake/coverage-badge/coverage.svg?raw=true)
 ![Doc Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/docs.yml/badge.svg)
 ![Publish Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/publish.yml/badge.svg)
+![Code coverage](https://raw.githubusercontent.com/MatchCake/MatchCake/coverage-badge/coverage.svg)
 
 
 
@@ -18,7 +21,8 @@
 
 MatchCake is a Python package that provides a new PennyLane device for simulating a specific class of quantum 
 circuits called Matchgate circuits or matchcircuits. These circuits are made with matchgates, a class of restricted 
-quantum unitaries that are parity-preserving and operate on nearest-neighbor qubits. These constraints lead to matchgates being classically simulable in polynomial time.
+quantum unitaries that are parity-preserving and operate on nearest-neighbor qubits. These constraints lead to 
+matchgates being classically simulable in polynomial time.
 
 Additionally, this package provides quantum kernels made with [scikit-learn](https://scikit-learn.org/stable/) API allowing the 
 use matchcircuits as kernels in quantum machine learning algorithms. One way to use these kernels could be in a Support Vector 
@@ -32,6 +36,7 @@ and the Digits dataset in polynomial time with high accuracy.
 
 | Method     | Commands                                                                                                                                                                     |
 |------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **poetry** | `poetry install`                                                                                                                                                             |
 | **PyPi**   | `pip install MatchCake`                                                                                                                                                      |
 | **source** | `pip install git+https://github.com/MatchCake/MatchCake`                                                                                                                     |
 | **wheel**  | 1.Download the .whl file [here](https://github.com/MatchCake/MatchCake/tree/main/dist);<br> 2. Copy the path of this file on your computer; <br> 3. `pip install [path].whl` |

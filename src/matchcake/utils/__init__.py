@@ -7,6 +7,7 @@ from scipy import sparse
 import pennylane as qml
 import pennylane.numpy as pnp
 from pennylane.wires import Wires
+from pennylane.operation import Operation
 
 from . import (
     constants,
@@ -36,6 +37,7 @@ from ._pfaffian import (
 from . import math
 from . import cuda
 from . import torch_utils
+from ..templates import TensorLike
 
 
 def binary_string_to_vector(binary_string: str, encoding: str = "ascii") -> np.ndarray:
@@ -516,11 +518,14 @@ def get_probabilities_from_state(state: np.ndarray, wires=None) -> np.ndarray:
     return meas.process_state(state=state, wire_order=all_wires)
 
 
-def get_all_subclasses(__class) -> set:
+def get_all_subclasses(__class, include_base_cls: bool = False) -> set:
     r"""
     Get all the subclasses of a class.
 
     :param __class: Class
+    :type __class: Any
+    :param include_base_cls: Include the base class in the set of subclasses
+    :type include_base_cls: bool
     :return: Subclasses
     :rtype: set
     """
@@ -528,6 +533,8 @@ def get_all_subclasses(__class) -> set:
     for subclass in __class.__subclasses__():
         subclasses.add(subclass)
         subclasses |= get_all_subclasses(subclass)
+    if include_base_cls:
+        subclasses.add(__class)
     return subclasses
 
 
@@ -576,3 +583,39 @@ def make_single_particle_transition_matrix_from_gate(u: Any, majorana_getter: Op
     )
     u_c_u_dagger_c_traced = qml.math.einsum("...ii", u_c_u_dagger_c, optimize="optimal")
     return u_c_u_dagger_c_traced / qml.math.shape(majorana_tensor)[-1]
+
+
+def get_eigvals_on_z_basis(
+        op: Operation,
+        raise_on_failure: bool = False,
+        options_on_failure: Optional[dict] = None
+) -> TensorLike:
+    r"""
+    Get the eigenvalues of the operator on the Z basis.
+    At first, the eigenvalues are computed by extracting the diagonal elements of the operator matrix.
+    If the computation fails, the eigenvalues are computed by calling the `qml.eigvals` function.
+    The problem with the last one is that we have no guarantee that the eigenvalues are ordered and
+    based on the Z basis.
+
+    :param op: Operator
+    :type op: qml.Operation
+    :param raise_on_failure: Raise an exception if the computation fails. Default is False.
+    :type raise_on_failure: bool
+    :param options_on_failure: Options to pass to the `qml.eigvals` function if the computation fails.
+    :type options_on_failure: Optional[dict]
+
+    :return: Eigenvalues of the operator on the Z basis.
+    :rtype: qml.TensorLike
+    """
+    try:
+        op_matrix = op.matrix()
+        diag_idx = np.diag_indices(2 ** len(op.wires))
+        eigvals_on_z_basis = op_matrix[..., diag_idx[0], diag_idx[1]]
+    except Exception as e:
+        if raise_on_failure:
+            raise e
+        options_on_failure = options_on_failure or {}
+        eigvals_on_z_basis = qml.eigvals(op, **options_on_failure)
+    return eigvals_on_z_basis
+
+

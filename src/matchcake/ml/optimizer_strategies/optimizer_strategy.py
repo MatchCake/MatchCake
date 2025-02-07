@@ -33,6 +33,7 @@ class OptimizerStrategy(ABC):
         self.init_range_high = 4 * np.pi
         self.best_parameters = None
         self.best_cost = np.inf
+        self.stop_training_flag = False
 
     def __str__(self):
         return f"{self.NAME}"
@@ -93,6 +94,8 @@ class OptimizerStrategy(ABC):
     ) -> List[torch.nn.Parameter]:
         for _ in range(n_iterations):
             self.step(closure, callback)
+            if self.stop_training_flag:
+                break
         return self.parameters
 
 
@@ -111,6 +114,15 @@ class ScipyOptimizerStrategy(OptimizerStrategy):
     ) -> TensorLike:
         raise NotImplementedError(f"{self.NAME}.step() must be implemented.")
 
+    def get_callback_func(self, base_callback):
+        def callback(*args, **kwargs):
+            if base_callback is not None:
+                base_callback(*args, **kwargs)
+            if self.stop_training_flag:
+                # raise StopIteration
+                return True
+        return callback
+
     def optimize(
             self,
             *,
@@ -123,7 +135,7 @@ class ScipyOptimizerStrategy(OptimizerStrategy):
             fun=lambda x: float(torch_utils.to_numpy(closure(self.vector_to_parameters(x)))),
             x0=torch_utils.to_numpy(self.params_vector),
             method=self.NAME,
-            callback=callback,
+            callback=self.get_callback_func(callback),
             options={"maxiter": n_iterations},
             bounds=[(self.init_range_low, self.init_range_high)] * len(self.params_vector),
         )

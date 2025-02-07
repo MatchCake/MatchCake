@@ -29,7 +29,7 @@ class TorchModel(nn.Module):
     DEFAULT_SAVE_DIR = None
 
     ATTRS_TO_STATE_DICT = []
-    ATTRS_TO_HPARAMS = ["use_cuda", "seed", "max_grad_norm", "learning_rate", "optimizer", "params_init"]
+    ATTRS_TO_HPARAMS = ["use_cuda", "seed", "max_grad_norm", "learning_rate", "optimizer", "params_init", "fit_patience"]
     ATTRS_TO_PICKLE = ["fit_time", "start_fit_time", "end_fit_time"]
     ATTRS_TO_JSON = ["fit_history",]
     MODEL_NAME = "TorchModel"
@@ -39,6 +39,7 @@ class TorchModel(nn.Module):
     DEFAULT_PARAMETERS_INITIALISATION_STRATEGY = "Random"
     DEFAULT_MAX_GRAD_NORM = 1.0
     DEFAULT_LEARNING_RATE = 2e-4
+    DEFAULT_FIT_PATIENCE = 10
 
     @classmethod
     def add_model_specific_args(cls, parent_parser: Optional[argparse.ArgumentParser] = None):
@@ -91,6 +92,12 @@ class TorchModel(nn.Module):
             default=cls.DEFAULT_PARAMETERS_INITIALISATION_STRATEGY,
             help="The parameters initialisation strategy to use.",
         )
+        parser.add_argument(
+            "--fit_patience",
+            type=int,
+            default=cls.DEFAULT_FIT_PATIENCE,
+            help="The patience to use during the fit.",
+        )
         return parent_parser
 
     @classmethod
@@ -114,6 +121,7 @@ class TorchModel(nn.Module):
             learning_rate: float = DEFAULT_LEARNING_RATE,
             optimizer: str = DEFAULT_OPTIMIZER,
             params_init: str = DEFAULT_PARAMETERS_INITIALISATION_STRATEGY,
+            fit_patience: Optional[int] = DEFAULT_FIT_PATIENCE,
             **kwargs
     ):
         super().__init__()
@@ -128,12 +136,14 @@ class TorchModel(nn.Module):
             "learning_rate": learning_rate,
             "optimizer": optimizer,
             "params_init": params_init,
+            "fit_patience": fit_patience,
             **kwargs
         })
         self.max_grad_norm = max_grad_norm
         self.learning_rate = learning_rate
         self.optimizer = optimizer
         self.params_init = params_init
+        self.fit_patience = fit_patience
         self.kwargs = kwargs
 
         self.show_progress = kwargs.get("show_progress", False)
@@ -151,6 +161,7 @@ class TorchModel(nn.Module):
         self.fit_history = []
         self._cache_last_np_cost = None
         self._cache_last_cost = None
+        self.p_bar_postfix = {}
         self._fit_p_bar = None
         self.fit_args = None
         self.fit_kwargs = None
@@ -179,6 +190,10 @@ class TorchModel(nn.Module):
     def jsons_path(self):
         return os.path.abspath(os.path.join(self.save_path, "jsons.json"))
 
+    @property
+    def torch_device(self):
+        return torch.device("cuda" if self.use_cuda else "cpu")
+
     def state_dict(self, *args, destination=None, prefix='', keep_vars=False):
         state = super().state_dict(*args, destination=destination, prefix=prefix, keep_vars=keep_vars)
         for attr in self.ATTRS_TO_STATE_DICT:
@@ -193,10 +208,7 @@ class TorchModel(nn.Module):
         return self
 
     def cast_tensor_to_interface(self, tensor):
-        if self.qnode.interface == "torch":
-            tensor = torch_utils.to_tensor(tensor)
-        else:
-            tensor = torch_utils.to_numpy(tensor)
+        tensor = torch_utils.to_tensor(tensor)
         if self.use_cuda:
             tensor = torch_utils.to_cuda(tensor)
         return tensor
@@ -443,20 +455,27 @@ class TorchModel(nn.Module):
         if self._fit_p_bar is not None:
             best_cost = np.nanmin(self.fit_history)
             prev_cost = self.fit_history[-2] if len(self.fit_history) > 1 else np.nan
-            postfix = {
+            self.p_bar_postfix = {
                 "Prev Cost": prev_cost,
                 "Cost": self._cache_last_np_cost,
                 "Best Cost": best_cost,
                 **kwargs.get("postfix", {})
             }
-            self._fit_p_bar.set_postfix(postfix)
+            self._fit_p_bar.set_postfix(self.p_bar_postfix)
             self._fit_p_bar.n = min(self._fit_p_bar.total, len(self.fit_history))
             self._fit_p_bar.refresh()
             if self._fit_p_bar.disable:
                 self.log_func('-' * 120)
-                self.log_func(f"Iteration {len(self.fit_history)}: {postfix}")
+                self.log_func(f"Iteration {len(self.fit_history)}: {self.p_bar_postfix}")
                 self.log_func(str(self._fit_p_bar))
                 self.log_func('-' * 120)
+        if self.fit_patience is not None:
+            if len(self.fit_history) > self.fit_patience:
+                if np.allclose(np.diff(self.fit_history[-self.fit_patience:]), 0.0):
+                    self.optimizer_strategy.stop_training_flag = True
+                    self.p_bar_postfix["stop_training_flag"] = True
+                    self.p_bar_postfix["stop_training_reason"] = "loss is not changing"
+                    self._fit_p_bar.set_postfix(self.p_bar_postfix)
         return self
 
     def fit(
@@ -468,11 +487,13 @@ class TorchModel(nn.Module):
     ):
         self.fit_args = args
         self.fit_kwargs = kwargs
+        if not kwargs.get("overwrite", False):
+            self.load_if_exists()
         self.start_fit_time = time.perf_counter()
         self._fit_p_bar = tqdm.tqdm(
             total=n_iterations * n_init_iterations,
             initial=len(self.fit_history),
-            desc="Optimizing",
+            desc=kwargs.get("desc", "Optimizing"),
             disable=not kwargs.get("verbose", getattr(self.q_device, "show_progress", False)),
         )
         current_iteration = len(self.fit_history) // n_init_iterations
