@@ -1,3 +1,5 @@
+import itertools
+
 import numpy as np
 import pennylane as qml
 import pytest
@@ -60,11 +62,15 @@ rn_test_data = [
 
 
 @pytest.mark.parametrize(
-    "basis_state,pauli_string",
-    hand_made_test_data
+    "basis_state, pauli_string, init_param",
+    [
+        (basis_state, pauli_string, init_param)
+        for basis_state, pauli_string in hand_made_test_data
+        for init_param in np.linspace(0, np.pi, num=N_RANDOM_TESTS_PER_CASE)
+    ]
 )
 def test_nif_pauli_strings_grads_with_random_circuit_against_torch_gradcheck_handmade_batch_hamiltonian(
-        basis_state, pauli_string
+        basis_state, pauli_string, init_param
 ):
     nif_device, _ = devices_init(
         wires=len(basis_state), shots=None, contraction_strategy=None, name="lightning.qubit"
@@ -77,7 +83,6 @@ def test_nif_pauli_strings_grads_with_random_circuit_against_torch_gradcheck_han
         Rxx(params, wires=[0, 1])
         return qml.expval(hamiltonian)
 
-    init_param = np.pi / 7
     init_params_nif = torch.Tensor([init_param, ]).requires_grad_()
     assert gradcheck(
         circuit, (init_params_nif,),
@@ -88,11 +93,15 @@ def test_nif_pauli_strings_grads_with_random_circuit_against_torch_gradcheck_han
 
 
 @pytest.mark.parametrize(
-    "basis_state,pauli_string",
-    hand_made_test_data
+    "basis_state, pauli_string, init_param",
+    [
+        (basis_state, pauli_string, init_param)
+        for basis_state, pauli_string in hand_made_test_data
+        for init_param in np.linspace(0, np.pi, num=N_RANDOM_TESTS_PER_CASE)
+    ]
 )
 def test_nif_pauli_strings_grads_with_random_circuit_against_torch_gradcheck_handmade_sum_hamiltonian(
-        basis_state, pauli_string
+        basis_state, pauli_string, init_param
 ):
     nif_device, _ = devices_init(
         wires=len(basis_state), shots=None, contraction_strategy=None, name="lightning.qubit"
@@ -105,7 +114,6 @@ def test_nif_pauli_strings_grads_with_random_circuit_against_torch_gradcheck_han
         Rxx(params, wires=[0, 1])
         return qml.expval(hamiltonian)
 
-    init_param = np.pi / 7
     init_params_nif = torch.Tensor([init_param, ]).requires_grad_()
     assert gradcheck(
         circuit, (init_params_nif,),
