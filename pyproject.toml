@@ -62,10 +62,10 @@ dependencies = [
     "torch (>=2.1.2,<2.2.0)",
     "tables (>=3.9.2)",
     "pylint (>=3.1.0,<3.2.0)",
-    "torchpfaffian @ git+https://github.com/MatchCake/TorchPfaffian.git",
     "pennylane (==0.39.0)",
     "pandas (>=2.1.0)",
     "pennylane-lightning (==0.39.0)",
+    "torchpfaffian (>=0.0.0)",
 ]
 license={file="LICENSE"}
 
