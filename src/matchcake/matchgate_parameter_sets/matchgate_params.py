@@ -276,18 +276,18 @@ class MatchgateParams:
         """
         vector = qml.math.stack([getattr(self, attr) for attr in self.ATTRS], axis=-1)
         # Need to make sure that the grad attribute follows in the new variable
-        try:
-            import torch
-        except ImportError:
-            return vector
-        with warnings.catch_warnings():
-            if isinstance(vector, torch.Tensor) and vector.requires_grad:
-                grads = [getattr(getattr(self, f"{attr}"), "grad", None) for attr in self.ATTRS]
-                grads_is_not_none = [grad is not None for grad in grads]
-                if all(grads_is_not_none):
-                    vector.grad = torch.stack(grads, axis=-1)
-                elif any(grads_is_not_none):
-                    raise ValueError("The gradients of the parameters are not consistent.")
+        # try:
+        #     import torch
+        # except ImportError:
+        #     return vector
+        # with warnings.catch_warnings():
+        #     if isinstance(vector, torch.Tensor) and vector.requires_grad:
+        #         grads = [getattr(getattr(self, f"{attr}"), "grad", None) for attr in self.ATTRS]
+        #         grads_is_not_none = [grad is not None for grad in grads]
+        #         if all(grads_is_not_none):
+        #             vector.grad = torch.stack(grads, axis=-1)
+        #         elif any(grads_is_not_none):
+        #             raise ValueError("The gradients of the parameters are not consistent.")
         return vector
 
     def to_string(self):
@@ -404,15 +404,15 @@ class MatchgateParams:
         elements_indexes_as_array = np.array(self.ELEMENTS_INDEXES)
         matrix[..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]] = params_arr
         # Need to make sure that the grad attribute follows in the new variable
-        with warnings.catch_warnings():
-            try:
-                import torch
-            except ImportError:
-                return matrix
-            if isinstance(matrix, torch.Tensor) and params_arr.grad is not None:
-                grads = torch.ones_like(matrix)
-                grads[..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]] = params_arr.grad
-                matrix.grad = grads
+        # with warnings.catch_warnings():
+        #     try:
+        #         import torch
+        #     except ImportError:
+        #         return matrix
+        #     if isinstance(matrix, torch.Tensor) and params_arr.grad is not None:
+        #         grads = torch.ones_like(matrix)
+        #         grads[..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]] = params_arr.grad
+        #         matrix.grad = grads
         return matrix
 
     def to_interface(self, interface: Literal["numpy", "torch"], dtype=None) -> "MatchgateParams":

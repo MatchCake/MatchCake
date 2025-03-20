@@ -6,9 +6,22 @@ import torch
 
 
 def to_tensor(x: Any, dtype=torch.float32):
+    if dtype is float:
+        dtype = torch.float32
+    elif dtype is int:
+        dtype = torch.int64
+    elif dtype is complex:
+        dtype = torch.complex64
+    elif dtype is bool:
+        dtype = torch.bool
+
     if isinstance(x, np.ndarray):
+        if dtype is None:
+            return torch.from_numpy(x)
         return torch.from_numpy(x).type(dtype)
     elif isinstance(x, torch.Tensor):
+        if dtype is None:
+            return x
         return x.type(dtype)
     elif isinstance(x, numbers.Number):
         return torch.tensor(x, dtype=dtype)

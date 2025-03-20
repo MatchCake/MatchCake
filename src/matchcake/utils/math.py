@@ -118,6 +118,7 @@ def convert_and_cast_like(tensor1, tensor2):
     """
     import warnings
     import numpy as np
+    import torch
     # interface1, interface2 = qml.math.get_interface(tensor1), qml.math.get_interface(tensor2)
     # new_tensor1 = tensor1
     # if interface1 != interface2:
@@ -125,7 +126,18 @@ def convert_and_cast_like(tensor1, tensor2):
     new_tensor1 = qml.math.convert_like(tensor1, tensor2)
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=np.ComplexWarning)
-        new_tensor1 = qml.math.cast_like(new_tensor1, tensor2)
+        # get the real if the tensor1 is complex but not tensor2
+        if not qml.math.any(qml.math.iscomplex(new_tensor1)):
+            new_tensor1 = qml.math.real(new_tensor1)
+        if (
+                "complex" in qml.math.get_dtype_name(new_tensor1).lower()
+                and not "complex" in qml.math.get_dtype_name(tensor2).lower()
+            ):
+            new_tensor1 = qml.math.real(new_tensor1)
+        try:
+            new_tensor1 = qml.math.cast_like(new_tensor1, tensor2)
+        except TypeError:
+            new_tensor1 = qml.math.cast_like(new_tensor1, tensor2)
     # dtype1, dtype2 = qml.math.get_dtype_name(new_tensor1), qml.math.get_dtype_name(tensor2)
     # if dtype1 != dtype2:
     #     with warnings.catch_warnings():

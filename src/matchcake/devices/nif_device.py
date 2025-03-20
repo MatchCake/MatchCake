@@ -1030,12 +1030,14 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         return self.samples
 
     def exact_expval(self, observable):
+        prob = self.probability(wires=observable.wires)
         if isinstance(observable, BatchHamiltonian):
             eigvals_on_z_basis = observable.eigvals_on_z_basis()
         else:
             eigvals_on_z_basis = get_eigvals_on_z_basis(observable)
-        prob = self.probability(wires=observable.wires)
-        return self._dot(prob, eigvals_on_z_basis)
+        # eigvals_on_z_basis = qml.eigvals(observable)
+        return qml.math.einsum("...i,...i->...", prob, eigvals_on_z_basis)
+        # return self._dot(prob, eigvals_on_z_basis)
 
     def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):
@@ -1166,7 +1168,14 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         :param dtype: type of the output array
         :return: array of type ``dtype``
         """
-        return qml.math.cast(torch_utils.to_cpu(x), dtype=dtype)
+        is_complex = qml.math.any(qml.math.iscomplex(x))
+        if dtype is None and is_complex:
+            dtype = self.C_DTYPE
+        elif dtype is None:
+            dtype = self.R_DTYPE
+        if not is_complex:
+            x = qml.math.real(x)
+        return qml.math.cast(torch_utils.to_cpu(x, dtype=dtype), dtype=dtype)
 
     def _dot(self, a, b):
         r"""
