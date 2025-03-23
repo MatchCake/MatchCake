@@ -7,6 +7,7 @@ from typing import Iterable, Tuple, Union, Callable, Any, Optional, List, Litera
 
 import numpy as np
 import psutil
+import torch
 import tqdm
 from pennylane.tape import QuantumTape, QuantumScript
 from scipy import sparse
@@ -196,8 +197,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             self,
             wires: Union[int, Wires, List[int]] = 2,
             *,
-            r_dtype=float,
-            c_dtype=complex,
+            r_dtype=torch.float64,
+            c_dtype=torch.complex128,
             analytic=None,
             shots: Optional[int] = None,
             **kwargs
@@ -1035,9 +1036,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             eigvals_on_z_basis = observable.eigvals_on_z_basis()
         else:
             eigvals_on_z_basis = get_eigvals_on_z_basis(observable)
-        # eigvals_on_z_basis = qml.eigvals(observable)
         return qml.math.einsum("...i,...i->...", prob, eigvals_on_z_basis)
-        # return self._dot(prob, eigvals_on_z_basis)
 
     def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):

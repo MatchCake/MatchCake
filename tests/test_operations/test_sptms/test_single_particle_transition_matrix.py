@@ -2,7 +2,10 @@ import numpy as np
 import pytest
 
 import pennylane as qml
-from matchcake import utils
+import torch
+from pennylane.ops.qubit.observables import BasisStateProjector
+
+from matchcake import utils, NonInteractingFermionicDevice
 from matchcake.operations import (
     fRXX,
     fRYY,
@@ -20,6 +23,7 @@ from matchcake.operations.single_particle_transition_matrices import (
     SptmRyRy,
     SingleParticleTransitionMatrixOperation,
 )
+from matchcake.utils import torch_utils
 from matchcake.utils.math import circuit_matmul
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -30,10 +34,6 @@ from ...configs import (
 )
 
 set_seed(TEST_SEED)
-
-
-
-
 
 
 @pytest.mark.parametrize(
@@ -263,7 +263,6 @@ def test_matchgate_equal_to_sptm_fhh_adjoint():
     )
 
 
-
 @pytest.mark.parametrize(
     "theta, phi",
     [
@@ -306,3 +305,63 @@ def test_matchgate_equal_to_sptm_ryry_adjoint(theta, phi):
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
+
+
+@pytest.mark.parametrize(
+    "matrix",
+    [
+        np.random.random((batch_size, 2*size, 2*size))
+        for batch_size in [1, 4]
+        for size in np.arange(2, 2+N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_sptm_sum_gradient_check(matrix):
+    def sptm_sum(p):
+        return torch.sum(
+            SingleParticleTransitionMatrixOperation(
+                matrix=p,
+                wires=np.arange(p.shape[-1] // 2)
+            ).matrix()
+        )
+
+    torch.autograd.gradcheck(
+        sptm_sum,
+        torch_utils.to_tensor(matrix, torch.double).requires_grad_(),
+        raise_exception=True,
+        check_undefined_grad=False,
+    )
+
+
+
+@pytest.mark.parametrize(
+    "matrix, obs",
+    [
+        (np.random.random((batch_size, 2*size, 2*size)), obs)
+        for batch_size in [1, 4]
+        for size in np.arange(2, 2+N_RANDOM_TESTS_PER_CASE)
+        for obs in [
+            qml.PauliZ(0),
+            sum([qml.PauliZ(i) for i in range(size)]),
+            BasisStateProjector(np.zeros(size, dtype=int), wires=np.arange(size)),
+        ]
+    ]
+)
+def test_sptm_circuit_gradient_check(matrix, obs):
+    nif_device = NonInteractingFermionicDevice(wires=matrix.shape[-1] // 2)
+
+    def circuit(p):
+        return nif_device.execute_generator(
+            [SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2))],
+            observable=obs,
+            output_type="expval",
+        )
+
+    torch.autograd.gradcheck(
+        circuit,
+        torch_utils.to_tensor(matrix, torch.double).requires_grad_(),
+        raise_exception=True,
+        check_undefined_grad=False,
+    )
+
+
+
