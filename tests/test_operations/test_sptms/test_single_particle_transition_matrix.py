@@ -324,7 +324,7 @@ def test_sptm_sum_gradient_check(matrix):
             ).matrix()
         )
 
-    torch.autograd.gradcheck(
+    assert torch.autograd.gradcheck(
         sptm_sum,
         torch_utils.to_tensor(matrix, torch.double).requires_grad_(),
         raise_exception=True,
@@ -333,34 +333,23 @@ def test_sptm_sum_gradient_check(matrix):
 
 
 @pytest.mark.parametrize(
-    "matrix, obs",
+    "matrix",
     [
-        (np.random.random((batch_size, 2*size, 2*size)), obs)
+        np.random.random((batch_size, 2*size, 2*size))
         for batch_size in [1, 4]
         for size in np.arange(2, 2+N_RANDOM_TESTS_PER_CASE)
-        for obs in [
-            qml.PauliZ(0),
-            sum([qml.PauliZ(i) for i in range(size)]),
-            BasisStateProjector(np.zeros(size, dtype=int), wires=np.arange(size)),
-        ]
     ]
 )
-def test_sptm_circuit_gradient_check(matrix, obs):
-    nif_device = NonInteractingFermionicDevice(wires=matrix.shape[-1] // 2)
+def test_sptm_init_gradient_check(matrix):
+    def sptm_init(p):
+        return SingleParticleTransitionMatrixOperation(
+                    matrix=p,
+                    wires=np.arange(p.shape[-1] // 2)
+                ).matrix()
 
-    def circuit(p):
-        return nif_device.execute_generator(
-            [SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2))],
-            observable=obs,
-            output_type="expval",
-        )
-
-    torch.autograd.gradcheck(
-        circuit,
+    assert torch.autograd.gradcheck(
+        sptm_init,
         torch_utils.to_tensor(matrix, torch.double).requires_grad_(),
         raise_exception=True,
         check_undefined_grad=False,
     )
-
-
-

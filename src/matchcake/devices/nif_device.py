@@ -948,23 +948,23 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         batch_wires = np.asarray(batch_wires)
         wires_shape = batch_wires.shape
         if isinstance(target_binary_states, int):
-            target_binary_state = utils.binary_string_to_vector(
+            target_binary_states = utils.binary_string_to_vector(
                 utils.state_to_binary_string(target_binary_states, wires_shape[-1])
             )
         elif isinstance(target_binary_states, list):
-            target_binary_state = np.array(target_binary_states)
+            target_binary_states = np.array(target_binary_states)
         elif isinstance(target_binary_states, str):
-            target_binary_state = utils.binary_string_to_vector(target_binary_states)
+            target_binary_states = utils.binary_string_to_vector(target_binary_states)
         else:
-            target_binary_state = np.asarray(target_binary_states)
+            target_binary_states = np.asarray(target_binary_states)
 
-        if len(target_binary_state.shape) == len(wires_shape) + 1:
-            batch_wires = np.stack([batch_wires for _ in range(target_binary_state.shape[0])])
+        if len(target_binary_states.shape) == len(wires_shape) + 1:
+            batch_wires = np.stack([batch_wires for _ in range(target_binary_states.shape[0])])
             wires_shape = batch_wires.shape
 
-        assert target_binary_state.shape == wires_shape, (
+        assert target_binary_states.shape == wires_shape, (
             f"The target binary states must have the shape {wires_shape}. "
-            f"Got {target_binary_state.shape} instead."
+            f"Got {target_binary_states.shape} instead."
         )
         return self.prob_strategy.batch_call(
             system_state=self.binary_state,
