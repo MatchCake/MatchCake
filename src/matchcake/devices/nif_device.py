@@ -43,7 +43,7 @@ from .sampling_strategies import get_sampling_strategy, SamplingStrategy
 from .probability_strategies import get_probability_strategy, ProbabilityStrategy
 from .contraction_strategies import get_contraction_strategy, ContractionStrategy
 from .star_state_finding_strategies import get_star_state_finding_strategy, StarStateFindingStrategy
-from ..utils import torch_utils, get_eigvals_on_z_basis
+from ..utils import torch_utils, get_eigvals_on_z_basis, binary_string_to_vector, binary_state_to_state
 from ..utils.math import convert_and_cast_like, circuit_matmul, dagger, fermionic_operator_matmul
 from .. import __version__
 
@@ -213,6 +213,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
 
         # create the initial state
         self._basis_state_index = 0
+        self._binary_state = None
         self._sparse_state = None
         self._pre_rotated_sparse_state = None
         self._state = None
@@ -254,7 +255,29 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
         self.show_progress = kwargs.get("show_progress", self.p_bar is not None)
         self.apply_metadata = defaultdict()
-    
+
+    @property
+    def binary_state(self):
+        if self._binary_state is not None:
+            return self._binary_state
+        elif self._basis_state_index is not None:
+            return np.binary_repr(self._basis_state_index, width=self.num_wires)
+        raise ValueError("The state doesn't seem to be initialized.")
+
+    @binary_state.setter
+    def binary_state(self, value):
+        self._basis_state_index = None
+        self._sparse_state = None
+        self._state = None
+        if isinstance(value, str):
+            value = binary_string_to_vector(value)
+        else:
+            value = np.asarray(value)
+        if value.size != self.num_wires:
+            raise ValueError(f"Got state of length {value.size} while setting binary state of the "
+                             f"{self.__class__.__name__} device. Expected length of {self.num_wires}.")
+        self._binary_state = value
+
     @property
     def basis_state_index(self) -> int:
         if self._basis_state_index is None:
@@ -289,6 +312,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         if self._state is None:
             if self._basis_state_index is not None:
                 pre_state = self._create_basis_state(self._basis_state_index)
+            elif self._binary_state is not None:
+                pre_state = binary_state_to_state(self._binary_state)
             else:
                 assert self._sparse_state is not None, "The sparse state is not initialized."
                 pre_state = self.sparse_state.toarray()
@@ -302,7 +327,13 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     
     @property
     def is_state_initialized(self) -> bool:
-        return self._state is not None or self._sparse_state is not None or self._basis_state_index is not None
+        state_attrs = [
+            self._state,
+            self._sparse_state,
+            self._basis_state_index,
+            self._binary_state,
+        ]
+        return any([s is not None for s in state_attrs])
 
     @property
     def transition_matrix(self):
@@ -408,6 +439,10 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                 or broadcasted state of shape ``(batch_size, 2**len(wires))``
             device_wires (Wires): wires that get initialized in the state
         """
+        raise ValueError(f""
+                         f"This {self.__class__.__name__} can only be initialized with BasisState, "
+                         f"not with state vector."
+                         )
         
         # translate to wire labels used by device
         device_wires = self.map_wires(device_wires)
@@ -466,14 +501,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         if n_basis_state != len(device_wires):
             raise ValueError("BasisState parameter and wires must be of equal length.")
 
-        # get computational basis state number
-        basis_states = 2 ** (self.num_wires - 1 - np.array(device_wires))
-        basis_states = qml.math.convert_like(basis_states, state)
-        num = int(qml.math.dot(state, basis_states))
-        
-        self._basis_state_index = num
-        self._sparse_state = None
-        self._state = None
+        self.binary_state = state
 
     def _apply_parametrized_evolution(self, state: TensorLike, operation: ParametrizedEvolution):
         """Applies a parametrized evolution to the input state.
@@ -895,7 +923,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             f"Got {len(target_binary_state)} instead."
         )
         return self.prob_strategy(
-            system_state=self.get_sparse_or_dense_state(),
+            system_state=self.binary_state,
             target_binary_state=target_binary_state,
             wires=wires,
             all_wires=self.wires,
@@ -939,7 +967,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             f"Got {target_binary_state.shape} instead."
         )
         return self.prob_strategy.batch_call(
-            system_state=self.get_sparse_or_dense_state(),
+            system_state=self.binary_state,
             target_binary_states=target_binary_states,
             batch_wires=batch_wires,
             all_wires=self.wires,

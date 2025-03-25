@@ -332,7 +332,6 @@ def test_sptm_sum_gradient_check(matrix):
     )
 
 
-
 @pytest.mark.parametrize(
     "matrix, obs",
     [

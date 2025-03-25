@@ -62,7 +62,7 @@ class ExplicitSumStrategy(ProbabilityStrategy):
                 UserWarning,
             )
 
-        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(system_state, n=num_wires)
+        ket_majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(system_state)
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
         zero_state = self._create_basis_state(0, num_wires).flatten()
         # TODO: Dont compute the zero explicitly and only take the 00 element of the operator

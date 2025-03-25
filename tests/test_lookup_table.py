@@ -32,9 +32,8 @@ def test_lookup_table_observable_form(transition_matrix, binary_state):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
     binary_state = utils.binary_string_to_vector(binary_state)
     hamming_weight = np.sum(binary_state, dtype=int)
-    state = utils.binary_state_to_state(binary_state)
-    
-    obs = lookup_table.get_observable(0, state)
+
+    obs = lookup_table.get_observable(0, binary_state)
     np.testing.assert_allclose(
         obs.shape, (2 * hamming_weight + 2, 2 * hamming_weight + 2),
         err_msg="The observable has the wrong shape."
@@ -274,7 +273,7 @@ def test_lookup_table_item22(transition_matrix):
 )
 def test_lookup_table_get_observable(transition_matrix, binary_state, k, observable):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
-    obs = lookup_table.get_observable(k, utils.binary_state_to_state(binary_state))
+    obs = lookup_table.get_observable(k, utils.binary_string_to_vector(binary_state))
     np.testing.assert_allclose(
         obs, observable,
         atol=ATOL_MATRIX_COMPARISON,
@@ -324,7 +323,7 @@ def test_lookup_table_get_observable(transition_matrix, binary_state, k, observa
 )
 def test_lookup_table_compute_observable_of_target_state(transition_matrix, binary_state, observable):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
-    obs = lookup_table.compute_observable_of_target_state(utils.binary_state_to_state(binary_state))
+    obs = lookup_table.compute_observable_of_target_state(utils.binary_string_to_vector(binary_state))
     np.testing.assert_allclose(
         obs, observable,
         atol=ATOL_MATRIX_COMPARISON,
@@ -374,7 +373,7 @@ def test_lookup_table_compute_observable_of_target_state(transition_matrix, bina
 )
 def test_lookup_table_compute_observables_of_target_states(transition_matrix, binary_state, observable):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
-    obs = lookup_table.compute_observables_of_target_states(utils.binary_state_to_state(binary_state))
+    obs = lookup_table.compute_observables_of_target_states(utils.binary_string_to_vector(binary_state))
     np.testing.assert_allclose(
         obs.squeeze(), observable,
         atol=ATOL_MATRIX_COMPARISON,

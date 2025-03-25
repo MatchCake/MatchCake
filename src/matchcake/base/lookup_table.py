@@ -470,8 +470,8 @@ class NonInteractingFermionicLookupTable:
         return qml.math.stack(all_obs)
     
     def _compute_observable(self, k: int, system_state: Union[int, np.ndarray, sparse.sparray]) -> np.ndarray:
-        warnings.warn("This method is deprecated. Use compute_observable_of_target_state instead.", DeprecationWarning)
-        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(system_state, n=self.n_particles)
+        warnings.warn("This method is deprecated. Use compute_observable_of_target_states instead.", DeprecationWarning)
+        ket_majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(system_state)
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
 
         unmeasured_cls_indexes = [2 for _ in range(len(ket_majorana_indexes))]
@@ -549,7 +549,7 @@ class NonInteractingFermionicLookupTable:
             **kwargs
     ):
         target_batch_size = target_binary_states.shape[0]
-        ket_majorana_indexes = utils.decompose_state_into_majorana_indexes(system_state, n=self.n_particles)
+        ket_majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(system_state)
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
 
         ket_majorana_indexes = np.asarray(ket_majorana_indexes)[np.newaxis, :].repeat(target_batch_size, axis=0)
