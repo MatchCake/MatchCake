@@ -139,7 +139,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     DEFAULT_SAMPLING_STRATEGY = "2QubitBy2QubitSampling"
     DEFAULT_STAR_STATE_FINDING_STRATEGY = "FromSampling"
     pfaffian_methods = {"det", "bLTL", "bH", "cuda_det", "PfaffianFDBPf"}
-    DEFAULT_PFAFFIAN_METHOD = "PfaffianFDBPf"
+    DEFAULT_PFAFFIAN_METHOD = "det"
 
     casting_priorities = ["numpy", "autograd", "jax", "tf", "torch"]  # greater index means higher priority
 

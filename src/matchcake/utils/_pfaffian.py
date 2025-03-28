@@ -294,12 +294,20 @@ def pfaffian_by_det(
     shape = qml.math.shape(__matrix)
     p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)
     p_bar.set_description(f"[det] Computing determinant of {shape} matrix")
+
+    # Quick return if possible
+    if shape[-2] % 2 == 1:
+        p_bar.set_description("Odd-sized matrix")
+        p_bar.close()
+        matrix = qml.math.cast(__matrix, dtype=complex)
+        zero_like = convert_and_cast_like(0, matrix)
+        pfaffian_val = qml.math.convert_like(np.ones(shape[:-2], dtype=complex), matrix)
+        return pfaffian_val * zero_like * matrix[..., 0, 0]
+
     backend = qml.math.get_interface(__matrix)
     if backend in ["autograd", "numpy"]:
         det = qml.math.linalg.det(__matrix)
         pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
-    # elif backend == "torch":
-    #     pf = Pfaffian.apply(__matrix)
     else:
         det = qml.math.det(__matrix)
         pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
