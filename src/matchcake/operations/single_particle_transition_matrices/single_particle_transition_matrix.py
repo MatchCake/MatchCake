@@ -217,7 +217,8 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         if cls.ALLOWED_ANGLES is None and cls.EQUAL_ALLOWED_ANGLES is None:
             return angles
 
-        angles = qml.math.where(angles >= 0, angles % (2 * np.pi), angles % (-2 * np.pi))
+        real_angles = qml.math.real(angles)
+        angles = qml.math.where(real_angles >= 0, real_angles % (2 * np.pi), real_angles % (-2 * np.pi))
         angles_shape = qml.math.shape(angles)
         if len(angles_shape) > 0:
             angles_flatten = qml.math.reshape(angles, (-1, angles_shape[-1]))
@@ -438,7 +439,6 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         except:
             padded_matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(matrix, padded_matrix)
         kwargs = self._hyperparameters.copy()
-        # kwargs.setdefault("normalize", True)
         return SingleParticleTransitionMatrixOperation(padded_matrix, wires=cs_wires, **kwargs)
 
     def __matmul__(self, other):

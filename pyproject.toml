@@ -66,6 +66,7 @@ dependencies = [
     "pandas (>=2.1.0)",
     "pennylane-lightning (==0.39.0)",
     "torchpfaffian (>=0.0.0)",
+    "opt-einsum (>=3.4.0)",
 ]
 license={file="LICENSE"}
 

@@ -5,10 +5,23 @@ import numpy as np
 import torch
 
 
-def to_tensor(x: Any, dtype=torch.float32):
+def to_tensor(x: Any, dtype=torch.float64):
+    if dtype is float:
+        dtype = torch.float64
+    elif dtype is int:
+        dtype = torch.int64
+    elif dtype is complex:
+        dtype = torch.complex128
+    elif dtype is bool:
+        dtype = torch.bool
+
     if isinstance(x, np.ndarray):
+        if dtype is None:
+            return torch.from_numpy(x)
         return torch.from_numpy(x).type(dtype)
     elif isinstance(x, torch.Tensor):
+        if dtype is None:
+            return x
         return x.type(dtype)
     elif isinstance(x, numbers.Number):
         return torch.tensor(x, dtype=dtype)
@@ -24,15 +37,15 @@ def to_tensor(x: Any, dtype=torch.float32):
     raise ValueError(f"Unsupported type {type(x)}")
 
 
-def to_cuda(x: Any, dtype=torch.float32):
+def to_cuda(x: Any, dtype=torch.float64):
     return to_tensor(x, dtype=dtype).cuda()
 
 
-def to_cpu(x: Any, dtype=torch.float32):
+def to_cpu(x: Any, dtype=torch.float64):
     return to_tensor(x, dtype=dtype).cpu()
 
 
-def to_numpy(x: Any, dtype=np.float32):
+def to_numpy(x: Any, dtype=np.float64):
     if isinstance(x, np.ndarray):
         return np.asarray(x, dtype=dtype)
     elif isinstance(x, torch.Tensor):

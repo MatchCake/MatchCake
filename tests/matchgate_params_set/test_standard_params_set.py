@@ -3,6 +3,7 @@ from typing import Literal
 import numpy as np
 import pytest
 import pennylane as qml
+from torch.autograd import gradcheck
 
 from matchcake import (
     MatchgateStandardParams,
@@ -12,7 +13,7 @@ from ..configs import (
     TEST_SEED,
     ATOL_MATRIX_COMPARISON,
     RTOL_MATRIX_COMPARISON,
-    N_RANDOM_TESTS_PER_CASE,
+    N_RANDOM_TESTS_PER_CASE, ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON,
 )
 
 set_seed(TEST_SEED)
@@ -184,18 +185,18 @@ def test_standard_params_from_matrix_grad_torch():
     except ImportError:
         pytest.skip("PyTorch not installed.")
     batch_size = 2
-    rn_tensor = torch.rand(batch_size, 4, 4, device="cpu", requires_grad=False)
-    rn_matrix = MatchgateStandardParams.from_matrix(rn_tensor).to_matrix().requires_grad_(True)
-    out = torch.exp(rn_matrix).sum()
-    expected_gradients = torch.autograd.grad(out, rn_matrix, torch.ones_like(out))[0]
+    rn_tensor = torch.rand(batch_size, 4, 4, device="cpu", requires_grad=True)
 
-    params = MatchgateStandardParams.from_matrix(rn_tensor.detach().clone()).requires_grad_(True)
-    matrix = params.to_matrix()
-    pred_out = torch.exp(matrix).sum()
-    pred_out.backward()
-    gradients = params.to_matrix().grad
-    assert gradients is not None
-    assert torch.allclose(gradients, expected_gradients)
+    def std_sum(inputs):
+        params = MatchgateStandardParams.from_matrix(inputs)
+        return torch.sum(params.to_matrix())
+
+    assert gradcheck(
+        std_sum, (rn_tensor,),
+        eps=1e-3,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON
+    )
 
 
 @pytest.mark.parametrize(

@@ -1,5 +1,9 @@
 import pytest
 import numpy as np
+import torch
+from scipy.linalg import expm
+from torch.autograd import gradcheck
+
 from matchcake import utils
 from matchcake import matchgate_parameter_sets as mps
 from ..configs import (
@@ -9,7 +13,7 @@ from ..configs import (
     RTOL_MATRIX_COMPARISON,
     ATOL_SCALAR_COMPARISON,
     RTOL_SCALAR_COMPARISON,
-    set_seed,
+    set_seed, ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON,
 )
 
 set_seed(TEST_SEED)
@@ -155,6 +159,24 @@ def test_make_transition_matrix_from_action_matrix(matrix):
         reconstructed_matrix, matrix,
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
+    )
+
+
+@pytest.mark.parametrize(
+    "matrix",
+    [
+        expm(np.random.randn(batch_size, 2 * size, 2 * size))
+        for size in np.linspace(1, 6, num=N_RANDOM_TESTS_PER_CASE, dtype=int)
+        for batch_size in [1, 4]
+    ]
+)
+def test_make_transition_matrix_from_action_matrix_gradients(matrix):
+    params = torch.from_numpy(matrix).requires_grad_()
+    assert gradcheck(
+        utils.make_transition_matrix_from_action_matrix, (params, ),
+        eps=1e-3,
+        atol=ATOL_APPROX_COMPARISON,
+        rtol=RTOL_APPROX_COMPARISON
     )
 
 

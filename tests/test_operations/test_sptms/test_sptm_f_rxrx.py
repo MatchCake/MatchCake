@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import torch
 
 from matchcake.operations import (
     fRXX,
@@ -7,6 +8,7 @@ from matchcake.operations import (
 from matchcake.operations.single_particle_transition_matrices import (
     SptmfRxRx,
 )
+from matchcake.utils import torch_utils
 from matchcake.utils.math import circuit_matmul
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -113,3 +115,28 @@ def test_sptm_f_rxrx_unitary(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
     sptm = SptmfRxRx(params, wires=[0, 1])
     assert sptm.check_is_unitary()
+
+
+@pytest.mark.parametrize(
+    "theta, phi",
+    [
+        (
+                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze(),
+                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze()
+        )
+        for batch_size in [1, 4]
+        for _ in range(N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_sptm_sum_gradient_check(theta, phi):
+    def sptm_sum(p):
+        return torch.sum(SptmfRxRx(p, wires=[0, 1]).matrix())
+
+    torch.autograd.gradcheck(
+        sptm_sum,
+        torch_utils.to_tensor(np.c_[theta, phi], torch.double).requires_grad_(),
+        raise_exception=True,
+        check_undefined_grad=False,
+    )
+
+

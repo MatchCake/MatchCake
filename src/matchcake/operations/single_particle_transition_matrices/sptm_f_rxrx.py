@@ -40,9 +40,9 @@ class SptmfRxRx(SingleParticleTransitionMatrixOperation):
             raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
 
         if len(params_shape) == 1:
-            matrix = np.zeros((4, 4), dtype=complex)
+            matrix = np.zeros((4, 4), dtype=float)
         elif len(params_shape) == 2:
-            matrix = np.zeros((params_shape[0], 4, 4), dtype=complex)
+            matrix = np.zeros((params_shape[0], 4, 4), dtype=float)
         else:
             raise ValueError(f"Invalid shape for the parameters: {params_shape}")
 
