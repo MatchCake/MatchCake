@@ -28,7 +28,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest pytest-cov coverage-lcov pytest_json_report
         pip install poetry
-        python -m poetry install --no-interaction --no-ansi
+        poetry self add poetry-plugin-export
+        poetry export --without-hashes --format=requirements.txt > requirements.txt
+        pip install -r requirements.txt
 
     - name: Lint with flake8
       run: |
