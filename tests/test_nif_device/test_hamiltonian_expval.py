@@ -190,7 +190,6 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_basis_state_against_qubit_devic
     np.testing.assert_allclose(energy, expected_energy, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
 
 
-
 @get_slow_test_mark()
 @pytest.mark.slow
 @pytest.mark.parametrize(

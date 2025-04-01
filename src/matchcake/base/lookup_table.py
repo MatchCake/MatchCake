@@ -510,6 +510,23 @@ class NonInteractingFermionicLookupTable:
         elif len(qml.math.shape(observables)) > 3:
             observables = qml.math.reshape(observables, (-1, *qml.math.shape(observables)[-3:]))[0]
         return observables
+    
+    def assert_binary(self, binary_state: np.ndarray) -> bool:
+        r"""
+        Check if the binary state contains only zeros or ones. If not, a value error will be raised.
+        
+        :param binary_state: Input binary state.
+        :type binary_state: np.ndarray
+        
+        :return: Weather the input state is binary or not.
+        :rtype: bool
+
+        :raises: ValueError
+        """
+        unique_values = np.unique(binary_state)
+        if len(unique_values) > 2 or not np.all(np.isin(unique_values, [0, 1])):
+            raise ValueError(f"The binary state must contain only zeros and ones. Currently contains: {unique_values}")
+        return True
 
     def _setup_inputs(
             self,
@@ -518,6 +535,21 @@ class NonInteractingFermionicLookupTable:
             indexes_of_target_states: Optional[np.ndarray] = None,
             **kwargs
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int]:
+        r"""
+        Setup the inputs for the compute_observables_of_target_states method.
+        This includes reshaping the inputs and checking their validity.
+
+        :param system_state: The state of the system.
+        :type system_state: Union[int, np.ndarray, sparse.sparray]
+        :param target_binary_states: The target states to compute the probability from.
+        :type target_binary_states: Optional[np.ndarray]
+        :param indexes_of_target_states: The index of the particules of the target states.
+        :type indexes_of_target_states: Optional[np.ndarray]
+        :param kwargs: Additional keywords arguments
+
+        :return: The processed inputs: (system_state, target_binary_states, indexes_of_target_states, initial_ndim)
+        :rtype: Tuple[np.ndarray, np.ndarray, np.ndarray, int]
+        """
         initial_ndim = None
         if target_binary_states is not None:
             target_binary_states = np.asarray(target_binary_states)
@@ -540,6 +572,9 @@ class NonInteractingFermionicLookupTable:
             target_binary_states = np.ones(
                 indexes_of_target_states.shape[-1], dtype=int
             )[np.newaxis, :].repeat(indexes_of_target_states.shape[0], axis=0)
+
+        self.assert_binary(system_state)
+        self.assert_binary(target_binary_states)
         return system_state, target_binary_states, indexes_of_target_states, initial_ndim
 
     def _get_bra_ket_indexes(
@@ -630,20 +665,14 @@ class NonInteractingFermionicLookupTable:
         all_lt_indexes_1d = all_lt_indexes_raveled_1d.reshape(*all_lt_indexes.shape[:-1])
         unique_lt_indexes_raveled_1d = np.fromiter(set(all_lt_indexes_raveled_1d), dtype=int)
         unique_lt_indexes_raveled_2d = utils.math.convert_1d_to_2d_indexes(unique_lt_indexes_raveled_1d, n_rows=3)
-        # lt_items = self.compute_stack_and_pad_items(unique_lt_indexes_raveled_2d, close_p_bar=False)
-        # new_all_lt_indexes = self.convert_2d_indexes_to_1d_indexes(all_lt_indexes, unique_lt_indexes_raveled_2d)
+
         lt_items = self.compute_stack_and_pad_items(unique_lt_indexes_raveled_2d, close_p_bar=False)
         new_all_lt_indexes = self.extend_unique_indexes_to_all_indexes(all_lt_indexes_1d, unique_lt_indexes_raveled_1d)
-
-        # lt_items = self.stacked_items
-        # new_all_lt_indexes = utils.math.convert_2d_to_1d_indexes(all_lt_indexes_raveled, n_rows=3)
-        # new_all_lt_indexes = new_all_lt_indexes.reshape(*all_lt_indexes.shape[:-1])
         lt_items = lt_items.reshape(lt_items.shape[0], -1, *lt_items.shape[-2:])
 
         batch_size = [self.batch_size] if self.batch_size else [1]
         obs_shape = [target_batch_size] + batch_size + [obs_size, obs_size]
         obs = qml.math.convert_like(np.zeros(obs_shape, dtype=complex), self.transition_matrix)
-        # insert the elements in obs
         obs[..., obs_indices[0], obs_indices[1]] = qml.math.transpose(
             lt_items[new_all_lt_indexes, ..., lt_item_rows, lt_item_cols], (0, -1, -2)
         )

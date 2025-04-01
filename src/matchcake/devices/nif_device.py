@@ -29,6 +29,7 @@ from pennylane.measurements import (
     Variance, MeasurementValue,
 )
 from pennylane.ops import Hamiltonian, LinearCombination, Prod, SProd, Sum
+from pennylane.operation import Operation
 
 from ..operations.matchgate_operation import MatchgateOperation
 from ..operations.single_particle_transition_matrices.single_particle_transition_matrix import (
@@ -167,6 +168,10 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         """
         if old_sptm is None:
             return new_sptm
+        if isinstance(old_sptm, Operation):
+            old_sptm = old_sptm.matrix()
+        if isinstance(new_sptm, Operation):
+            new_sptm = new_sptm.matrix()
         old_interface = qml.math.get_interface(old_sptm)
         new_interface = qml.math.get_interface(new_sptm)
         old_priority = cls.casting_priorities.index(old_interface)
@@ -224,6 +229,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
 
         self._transition_matrix = None
         self._lookup_table = None
+        self._global_sptm = None
+        self._batched = False
 
         self.majorana_getter = kwargs.get("majorana_getter", utils.MajoranaGetter(self.num_wires, maxsize=256))
         assert isinstance(self.majorana_getter, utils.MajoranaGetter), (
@@ -257,11 +264,11 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self.apply_metadata = defaultdict()
 
     @property
-    def binary_state(self):
+    def binary_state(self) -> np.ndarray:
         if self._binary_state is not None:
             return self._binary_state
         elif self._basis_state_index is not None:
-            return np.binary_repr(self._basis_state_index, width=self.num_wires)
+            return binary_string_to_vector(np.binary_repr(self._basis_state_index, width=self.num_wires))
         raise ValueError("The state doesn't seem to be initialized.")
 
     @binary_state.setter
@@ -337,6 +344,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
 
     @property
     def transition_matrix(self):
+        if self._transition_matrix is None and self.global_sptm is not None:
+            self._transition_matrix = utils.make_transition_matrix_from_action_matrix(self.global_sptm.matrix())
         return self._transition_matrix
 
     @transition_matrix.setter
@@ -345,6 +354,19 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             value = convert_and_cast_like(value, self._transition_matrix)
         self._transition_matrix = value
         self._lookup_table = None
+
+    @property
+    def global_sptm(self) -> Optional[SingleParticleTransitionMatrixOperation]:
+        return self._global_sptm
+
+    @global_sptm.setter
+    def global_sptm(self, value):
+        if self._global_sptm is not None and value is not None:
+            value = convert_and_cast_like(value, self._global_sptm.matrix())
+        if not isinstance(value, SingleParticleTransitionMatrixOperation):
+            value = SingleParticleTransitionMatrixOperation(value, wires=self.wires)
+        self._global_sptm = value
+        self.transition_matrix = None
 
     @property
     def lookup_table(self):
@@ -761,7 +783,16 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     ) -> Tuple[TensorLike, bool]:
         _op_r = SingleParticleTransitionMatrixOperation.from_operation(_op).pad(self.wires).matrix()
         _batched = _batched or (qml.math.ndim(_op_r) > 2)
-        return self.update_single_particle_transition_matrix(_global_sptm, _op_r), _batched
+        new_sptm = self.update_single_particle_transition_matrix(_global_sptm, _op_r)
+        self.global_sptm = new_sptm
+        self._batched = _batched
+        return new_sptm, _batched
+
+    def apply_op(self, op: qml.operation.Operation):
+        op_sptm = SingleParticleTransitionMatrixOperation.from_operation(op).pad(self.wires).matrix()
+        self._batched = self._batched or (qml.math.ndim(op_sptm) > 2)
+        self.global_sptm = self.update_single_particle_transition_matrix(self.global_sptm, op_sptm)
+        return self.global_sptm
 
     def apply_generator(self, op_iterator: Iterable[qml.operation.Operation], **kwargs):
         """
@@ -820,7 +851,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self.p_bar_set_postfix_str("Computing transition matrix")
         if kwargs.get("cache_global_sptm", False):
             self.apply_metadata["global_sptm"] = torch_utils.to_numpy(global_sptm)
-        self._transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm)
+        self.global_sptm = global_sptm
+        self.transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm)
         self.p_bar_set_postfix_str(
             f"Transition matrix computed. Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%"
         )
@@ -942,14 +974,10 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     ):
         if not self.is_state_initialized:
             return None
-        if batch_wires is None:
-            batch_wires = [self.wires]
 
-        batch_wires = np.asarray(batch_wires)
-        wires_shape = batch_wires.shape
         if isinstance(target_binary_states, int):
             target_binary_states = utils.binary_string_to_vector(
-                utils.state_to_binary_string(target_binary_states, wires_shape[-1])
+                utils.state_to_binary_string(target_binary_states, self.num_wires)
             )
         elif isinstance(target_binary_states, list):
             target_binary_states = np.array(target_binary_states)
@@ -958,12 +986,13 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         else:
             target_binary_states = np.asarray(target_binary_states)
 
-        if len(target_binary_states.shape) == len(wires_shape) + 1:
-            batch_wires = np.stack([batch_wires for _ in range(target_binary_states.shape[0])])
-            wires_shape = batch_wires.shape
+        if batch_wires is None:
+            batch_wires = self.wires
+        batch_wires = np.asarray(batch_wires)
+        batch_wires = np.broadcast_to(batch_wires, target_binary_states.shape)
 
-        assert target_binary_states.shape == wires_shape, (
-            f"The target binary states must have the shape {wires_shape}. "
+        assert target_binary_states.shape == batch_wires.shape, (
+            f"The target binary states must have the shape {batch_wires.shape}. "
             f"Got {target_binary_states.shape} instead."
         )
         return self.prob_strategy.batch_call(
@@ -1029,6 +1058,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             raise ValueError(f"The wires must be a 1D or 2D array. Got a {len(wires_shape)}D array instead.")
 
         probs = self.get_states_probability(wires_binary_states, wires)
+        probs = qml.math.transpose(probs)
         probs = probs / qml.math.sum(probs)
         return probs
 
@@ -1065,6 +1095,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         else:
             eigvals_on_z_basis = get_eigvals_on_z_basis(observable)
         return qml.math.einsum("...i,...i->...", prob, eigvals_on_z_basis)
+
 
     def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):
