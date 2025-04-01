@@ -1,5 +1,5 @@
 from .probability_strategy import ProbabilityStrategy
-from typing import Callable
+from typing import Callable, Optional
 import numpy as np
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
@@ -46,7 +46,7 @@ class LookupTableStrategy(ProbabilityStrategy):
             *,
             system_state: TensorLike,
             target_binary_states: TensorLike,
-            batch_wires: Wires,
+            batch_wires: Optional[Wires] = None,
             **kwargs
     ) -> TensorLike:
         self.check_required_kwargs(kwargs)
