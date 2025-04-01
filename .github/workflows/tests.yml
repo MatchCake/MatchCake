@@ -56,5 +56,5 @@ jobs:
         poetry install --no-interaction --no-ansi
     - name: Test with pytest
       run: |
-        . ./venv/bin/activate
+        . ./venv/Scripts/activate
         python run_pytests.py tests --N_RANDOM_TESTS_PER_CASE=3 --run_slow=False
