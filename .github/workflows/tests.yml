@@ -28,7 +28,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest pytest-cov coverage-lcov pytest_json_report
         pip install poetry
-        poetry install --no-interaction --no-ansi
+        python -m poetry install --no-interaction --no-ansi
 
     - name: Lint with flake8
       run: |
@@ -55,7 +55,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest pytest-cov coverage-lcov pytest_json_report
         pip install poetry
-        poetry install --no-interaction --no-ansi
+        python -m poetry install --no-interaction --no-ansi
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
