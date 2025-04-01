@@ -518,7 +518,7 @@ class NonInteractingFermionicLookupTable:
         :param binary_state: Input binary state.
         :type binary_state: np.ndarray
         
-        :return: Weather the input state is binary or not.
+        :return: Whether the input state is binary or not.
         :rtype: bool
 
         :raises: ValueError
