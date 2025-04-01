@@ -12,6 +12,7 @@ from matchcake.operations.single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
 )
 from matchcake.utils import torch_utils
+from ... import get_slow_test_mark
 from ...configs import (
     N_RANDOM_TESTS_PER_CASE,
     set_seed,
@@ -117,6 +118,8 @@ def test_execute_generator_gradient_check_with_sptm_circuit(matrix):
     )
 
 
+@get_slow_test_mark()
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "input_matrix, system_state, target_binary_states",
     [
@@ -156,6 +159,8 @@ def test_sptm_circuit_prob_strategy_batch_call_rn_transition_matrix_gradient_che
     )
 
 
+@get_slow_test_mark()
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "input_matrix, system_state, target_binary_states",
     [
@@ -232,6 +237,8 @@ def test_sptm_circuit_prob_strategy_batch_call_gradient_check(
     )
 
 
+@get_slow_test_mark()
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "input_matrix",
     [
@@ -260,6 +267,8 @@ def test_sptm_circuit_probability_gradient_check(
     )
 
 
+@get_slow_test_mark()
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "matrix, obs",
     [
@@ -294,6 +303,8 @@ def test_sptm_circuit_expval_gradient_check(matrix, obs):
     )
 
 
+@get_slow_test_mark()
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "matrix, obs",
     [
@@ -325,6 +336,8 @@ def test_sptm_circuit_exact_expval_gradient_check(matrix, obs):
     )
 
 
+@get_slow_test_mark()
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "matrix",
     [
@@ -351,6 +364,8 @@ def test_sptm_circuit_analytic_probability_gradient_check(matrix):
     )
 
 
+@get_slow_test_mark()
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "input_matrix, target_binary_states",
     [

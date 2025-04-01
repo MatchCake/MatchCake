@@ -213,7 +213,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         else:
             assert len(wires) > 1, "At least two wires are required for this device."
         super().__init__(wires=wires, shots=shots, r_dtype=r_dtype, c_dtype=c_dtype, analytic=analytic)
-
         self._debugger = kwargs.get("debugger", None)
 
         # create the initial state
@@ -357,12 +356,17 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
 
     @property
     def global_sptm(self) -> Optional[SingleParticleTransitionMatrixOperation]:
+        if self._global_sptm is None:
+            matrix = np.eye(2 * self.num_wires)[None, ...]
+            if not self._batched:
+                matrix = matrix[0]
+            return SingleParticleTransitionMatrixOperation(matrix, wires=self.wires)
         return self._global_sptm
 
     @global_sptm.setter
     def global_sptm(self, value):
-        if self._global_sptm is not None and value is not None:
-            value = convert_and_cast_like(value, self._global_sptm.matrix())
+        if isinstance(value, Operation):
+            value = SingleParticleTransitionMatrixOperation.from_operation(value)
         if not isinstance(value, SingleParticleTransitionMatrixOperation):
             value = SingleParticleTransitionMatrixOperation(value, wires=self.wires)
         self._global_sptm = value
@@ -778,23 +782,13 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         kwargs.setdefault("n_ops", len(operations))
         return self.apply_generator(iter(operations), rotations=rotations, **kwargs)
 
-    def _apply_op(
-            self, _op: qml.operation.Operation, _batched: bool, _global_sptm: TensorLike
-    ) -> Tuple[TensorLike, bool]:
-        _op_r = SingleParticleTransitionMatrixOperation.from_operation(_op).pad(self.wires).matrix()
-        _batched = _batched or (qml.math.ndim(_op_r) > 2)
-        new_sptm = self.update_single_particle_transition_matrix(_global_sptm, _op_r)
-        self.global_sptm = new_sptm
-        self._batched = _batched
-        return new_sptm, _batched
-
-    def apply_op(self, op: qml.operation.Operation):
+    def apply_op(self, op: qml.operation.Operation) -> SingleParticleTransitionMatrixOperation:
         op_sptm = SingleParticleTransitionMatrixOperation.from_operation(op).pad(self.wires).matrix()
         self._batched = self._batched or (qml.math.ndim(op_sptm) > 2)
-        self.global_sptm = self.update_single_particle_transition_matrix(self.global_sptm, op_sptm)
+        self.global_sptm = self.update_single_particle_transition_matrix(self._global_sptm, op_sptm)
         return self.global_sptm
 
-    def apply_generator(self, op_iterator: Iterable[qml.operation.Operation], **kwargs):
+    def apply_generator(self, op_iterator: Iterable[qml.operation.Operation], **kwargs) -> 'NonInteractingFermionicDevice':
         """
         Apply a generator of gates to the device.
 
@@ -803,7 +797,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         :param kwargs: Additional keyword arguments
         :return: None
         """
-        global_sptm, batched = None, False
         n_ops = kwargs.get("n_ops", getattr(op_iterator, "__len__", lambda: None)())
         total = n_ops or 0
         self.initialize_p_bar(total=total, desc="Applying operations", unit="op")
@@ -820,7 +813,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             for j, op_j in enumerate(op_list):
                 if op_j is None:
                     continue
-                global_sptm, batched = self._apply_op(op_j, batched, global_sptm)
+                self.apply_op(op_j)
                 self.apply_metadata["n_contracted_operations"] = (
                         self.apply_metadata.get("n_contracted_operations", 0) + 1
                 )
@@ -835,29 +828,23 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self.p_bar_set_total(self.apply_metadata["n_operations"])
         last_op = self.contraction_strategy.get_reminding()
         if last_op is not None:
-            global_sptm, batched = self._apply_op(last_op, batched, global_sptm)
+            self.apply_op(last_op)
             self.apply_metadata["n_contracted_operations"] = self.apply_metadata.get("n_contracted_operations", 0) + 1
         self.apply_metadata["percentage_contracted"] = (
                 100 * (
                     self.apply_metadata["n_operations"] - self.apply_metadata.get("n_contracted_operations", 0)
                 ) / max(self.apply_metadata["n_operations"], 1)
         )
-        if global_sptm is None:
-            global_sptm = pnp.eye(2 * self.num_wires)[None, ...]
-            if not batched:
-                global_sptm = global_sptm[0]
 
         self.p_bar_set_n(self.apply_metadata["n_operations"])
         self.p_bar_set_postfix_str("Computing transition matrix")
         if kwargs.get("cache_global_sptm", False):
-            self.apply_metadata["global_sptm"] = torch_utils.to_numpy(global_sptm)
-        self.global_sptm = global_sptm
-        self.transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm)
+            self.apply_metadata["global_sptm"] = torch_utils.to_numpy(self.global_sptm.matrix())
         self.p_bar_set_postfix_str(
-            f"Transition matrix computed. Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%"
+            f"Global Sptm matrix computed. Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%"
         )
         self.close_p_bar()
-        return
+        return self
 
     def prod_single_particle_transition_matrices_mp(self, sptm_list):
         """
@@ -928,9 +915,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self._pre_rotated_state = self._state
 
         assert rotations is None or np.asarray([rotations]).size == 0, "Rotations are not supported"
-        self._transition_matrix = utils.make_transition_matrix_from_action_matrix(
-            global_single_particle_transition_matrix
-        )
+        self.global_sptm = global_single_particle_transition_matrix
 
     def get_state_probability(self, target_binary_state: TensorLike, wires: Optional[Wires] = None):
         if not self.is_state_initialized:
@@ -1096,7 +1081,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             eigvals_on_z_basis = get_eigvals_on_z_basis(observable)
         return qml.math.einsum("...i,...i->...", prob, eigvals_on_z_basis)
 
-
     def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):
             return self.get_state_probability(observable.parameters[0], observable.wires)
@@ -1147,7 +1131,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         if kwargs.get("reset", False):
             self.reset()
         apply = kwargs.get("apply", "auto")
-        if apply == "auto" and self.transition_matrix is None:
+        if apply == "auto" and self._global_sptm is None:
             apply = True
         elif apply == "auto":
             apply = False
@@ -1248,11 +1232,14 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     def reset(self):
         """Reset the device"""
         super().reset()
+        self._binary_state = None
         self._basis_state_index = 0
         self._sparse_state = None
         self._pre_rotated_sparse_state = self._sparse_state
         self._state = None
         self._pre_rotated_state = self._state
+        self._global_sptm = None
+        self._batched = False
         self._transition_matrix = None
         self._lookup_table = None
         self._star_state = None

@@ -1,5 +1,5 @@
 from typing import Optional, Type, List, Sequence, Union, Any
-
+import json
 import numpy as np
 import pennylane as qml
 
@@ -99,3 +99,6 @@ class RandomOperationsGenerator:
             if len(initial_state) != self.n_wires:
                 raise ValueError(f"Initial state has {len(initial_state)} qubits, but {self.n_wires} are required.")
         return initial_state
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({json.dumps(self.__dict__, default=str, sort_keys=True)})"
