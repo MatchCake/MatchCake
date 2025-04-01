@@ -165,8 +165,9 @@ def test_make_transition_matrix_from_action_matrix(matrix):
 @pytest.mark.parametrize(
     "matrix",
     [
-        expm(np.random.randn(2 * size, 2 * size))
-        for size in range(2, 2+N_RANDOM_TESTS_PER_CASE)
+        expm(np.random.randn(batch_size, 2 * size, 2 * size))
+        for size in np.linspace(1, 6, num=N_RANDOM_TESTS_PER_CASE, dtype=int)
+        for batch_size in [1, 4]
     ]
 )
 def test_make_transition_matrix_from_action_matrix_gradients(matrix):

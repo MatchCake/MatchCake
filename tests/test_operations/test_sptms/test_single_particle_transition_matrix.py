@@ -353,3 +353,26 @@ def test_sptm_init_gradient_check(matrix):
         raise_exception=True,
         check_undefined_grad=False,
     )
+
+
+@pytest.mark.parametrize(
+    "matrix",
+    [
+        np.random.random((batch_size, 2*size, 2*size))
+        for batch_size in [1, 4]
+        for size in np.arange(2, 2+N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_sptm_copy_gradient_check(matrix):
+    def func(p):
+        wires = np.arange(0, p.shape[-1] // 2, dtype=int)
+        op = SingleParticleTransitionMatrixOperation(matrix=p, wires=wires)
+        new_op = SingleParticleTransitionMatrixOperation(matrix=op.matrix(), wires=op.wires)
+        return new_op.matrix()
+
+    assert torch.autograd.gradcheck(
+        func,
+        torch_utils.to_tensor(matrix, torch.double).requires_grad_(),
+        raise_exception=True,
+        check_undefined_grad=False,
+    )

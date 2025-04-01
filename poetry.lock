@@ -1337,6 +1337,19 @@ files = [
 ]
 
 [[package]]
+name = "opt-einsum"
+version = "3.4.0"
+description = "Path optimization of einsum functions."
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+files = [
+    {file = "opt_einsum-3.4.0-py3-none-any.whl", hash = "sha256:69bb92469f86a1565195ece4ac0323943e83477171b91d24c35afe028a90d7cd"},
+    {file = "opt_einsum-3.4.0.tar.gz", hash = "sha256:96ca72f1b886d148241348783498194c577fa30a8faac108586b14f1ba4473ac"},
+]
+
+[[package]]
 name = "packaging"
 version = "24.2"
 description = "Core utilities for Python packages"
@@ -2328,26 +2341,22 @@ dynamo = ["jinja2"]
 opt-einsum = ["opt-einsum (>=3.3)"]
 
 [[package]]
-name = "TorchPfaffian"
+name = "torchpfaffian"
 version = "0.0.0"
 description = ""
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
-files = []
-develop = false
+files = [
+    {file = "torchpfaffian-0.0.0-py3-none-any.whl", hash = "sha256:ce175651fc636796219bd22f248f6b04f94cb2d8b729f31c4fd3323d53184b12"},
+    {file = "torchpfaffian-0.0.0.tar.gz", hash = "sha256:afe290cb14623567e5734f9a42268f2ef4a31747f3f1e6982b4a9dff82baff5d"},
+]
 
 [package.dependencies]
 numpy = ">=1.23.0"
 setuptools = ">=57.0.0"
 torch = "*"
-
-[package.source]
-type = "git"
-url = "https://github.com/MatchCake/TorchPfaffian.git"
-reference = "HEAD"
-resolved_reference = "ef82ebcfea7e59e4f757ef4fba08bd0359b36abb"
 
 [[package]]
 name = "tqdm"
@@ -2446,4 +2455,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4"
-content-hash = "8b57cb19c3e13512a15b8a787fa1a3070967966c042d5513cb9323e0903ffb61"
+content-hash = "bc2e0ccd77dfcc4638ec534191e2d277bdfca36df2c8c75ccc24b217d2e06da2"

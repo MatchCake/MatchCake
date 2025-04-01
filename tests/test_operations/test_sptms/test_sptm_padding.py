@@ -2,6 +2,8 @@ import numpy as np
 import pytest
 
 import pennylane as qml
+import torch
+
 from matchcake import utils
 from matchcake.operations import (
     fRXX,
@@ -21,7 +23,8 @@ from matchcake.operations.single_particle_transition_matrices import (
     SptmRyRy,
     SingleParticleTransitionMatrixOperation,
 )
-from matchcake.utils import MajoranaGetter, recursive_kron, make_single_particle_transition_matrix_from_gate
+from matchcake.utils import MajoranaGetter, recursive_kron, make_single_particle_transition_matrix_from_gate, \
+    torch_utils
 from matchcake.utils.math import circuit_matmul
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -68,4 +71,53 @@ def test_matchgate_to_sptm_with_padding(active_wire0, n_wires):
         rtol=RTOL_APPROX_COMPARISON,
     )
 
+
+@pytest.mark.parametrize(
+    "matrix",
+    [
+        np.random.random((batch_size, 2*size, 2*size))
+        for batch_size in [1, 4]
+        for size in np.arange(2, 2+N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_sptm_trivial_pad_gradient_check(matrix):
+    def func(p):
+        wires = np.arange(0, p.shape[-1] // 2, dtype=int)
+        op = SingleParticleTransitionMatrixOperation(matrix=p, wires=wires)
+        new_op = op.pad(wires)
+        return new_op.matrix()
+
+    assert torch.autograd.gradcheck(
+        func,
+        torch_utils.to_tensor(matrix, torch.double).requires_grad_(),
+        raise_exception=True,
+        check_undefined_grad=False,
+    )
+
+
+@pytest.mark.parametrize(
+    "matrix",
+    [
+        np.random.random((batch_size, 2*size, 2*size))
+        for batch_size in [1, 4]
+        for size in np.arange(2, 2+N_RANDOM_TESTS_PER_CASE)
+    ]
+)
+def test_sptm_pad_gradient_check(matrix):
+    w0 = np.random.randint(0, 10)
+    new_wf = np.random.randint(1, 10)
+    wires = np.arange(w0, w0 + matrix.shape[-1] // 2, dtype=int)
+    new_wires = np.arange(0, np.max(wires) + new_wf, dtype=int)
+
+    def func(p):
+        op = SingleParticleTransitionMatrixOperation(matrix=p, wires=wires)
+        new_op = op.pad(new_wires)
+        return new_op.matrix()
+
+    assert torch.autograd.gradcheck(
+        func,
+        torch_utils.to_tensor(matrix, torch.double).requires_grad_(),
+        raise_exception=True,
+        check_undefined_grad=False,
+    )
 

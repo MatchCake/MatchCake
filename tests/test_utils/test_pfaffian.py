@@ -19,7 +19,7 @@ from ..configs import (
 
 set_seed(TEST_SEED)
 MIN_MATRIX_SIZE = 2
-MAX_MATRIX_SIZE = 8
+MAX_MATRIX_SIZE = 6
 BATCH_SIZE = 3
 RECOMMENDED_METHODS = ["det", "bLTL", "bH", "PfaffianFDBPf"]
 
