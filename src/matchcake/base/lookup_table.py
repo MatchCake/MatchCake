@@ -543,7 +543,7 @@ class NonInteractingFermionicLookupTable:
         :type system_state: Union[int, np.ndarray, sparse.sparray]
         :param target_binary_states: The target states to compute the probability from.
         :type target_binary_states: Optional[np.ndarray]
-        :param indexes_of_target_states: The index of the particules of the target states.
+        :param indexes_of_target_states: The index of the particles of the target states.
         :type indexes_of_target_states: Optional[np.ndarray]
         :param kwargs: Additional keywords arguments
 
