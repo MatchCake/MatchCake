@@ -1,0 +1,21 @@
+matchcake.templates package
+===========================
+
+Submodules
+----------
+
+matchcake.templates.tensor\_like module
+---------------------------------------
+
+.. automodule:: matchcake.templates.tensor_like
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: matchcake.templates
+   :members:
+   :undoc-members:
+   :show-inheritance:
