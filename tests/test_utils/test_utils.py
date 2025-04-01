@@ -166,7 +166,7 @@ def test_make_transition_matrix_from_action_matrix(matrix):
     "matrix",
     [
         expm(np.random.randn(batch_size, 2 * size, 2 * size))
-        for size in range(2, 2+N_RANDOM_TESTS_PER_CASE)
+        for size in np.linspace(1, 6, num=N_RANDOM_TESTS_PER_CASE, dtype=int)
         for batch_size in [1, 4]
     ]
 )
