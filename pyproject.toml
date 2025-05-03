@@ -89,3 +89,35 @@ where = ["src"]
 
 [tool.poetry]
 version = "0.0.1"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.15.0"
+black = "^25.1.0"
+
+[[tool.mypy.overrides]]
+module = [
+    # PennyLane
+    "pennylane",
+    "pennylane.wires",
+    "pennylane.templates.broadcast",
+    "pennylane.ops.qubit.observables",
+    "pennylane.typing",
+    "pennylane.operation",
+    "pennylane.tape",
+    "pennylane.pulse",
+    "pennylane.measurements",
+    "pennylane.ops",
+    # Scikit-learn
+    "sklearn",
+    "sklearn.base",
+    "sklearn.utils.validation",
+    "sklearn.utils.multiclass",
+    "scipy",
+    "scipy.optimize",
+    # PythonBasicTools
+    "pythonbasictools",
+    "tqdm",
+    "joblib",
+    "psutil",
+]
+ignore_missing_imports = true
