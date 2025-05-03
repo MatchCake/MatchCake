@@ -221,12 +221,12 @@ def test_multiples_matchgate_apply_vs_apply_gen(params_list, n_wires):
     )
 
     nif_device.reset()
-    nif_device.apply(nif_qnode.tape.operations)
+    nif_device.apply(nif_qnode._tape.operations)
     apply_transition_matrix = nif_device.transition_matrix
     apply_metadata = nif_device.apply_metadata.copy()
 
     nif_device.reset()
-    nif_device.apply_generator(nif_qnode.tape.operations)
+    nif_device.apply_generator(nif_qnode._tape.operations)
     apply_gen_transition_matrix = nif_device.transition_matrix
     apply_gen_metadata = nif_device.apply_metadata.copy()
 
