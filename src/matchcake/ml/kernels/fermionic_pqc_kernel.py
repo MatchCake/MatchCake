@@ -2,9 +2,15 @@ from typing import Optional
 
 import numpy as np
 import pennylane as qml
-from pennylane import numpy as pnp
 from pennylane.ops.qubit.observables import BasisStateProjector
-from pennylane.templates.broadcast import PATTERN_TO_WIRES
+try:
+    from pennylane.templates.broadcast import PATTERN_TO_WIRES
+except ImportError:
+    # Hotfix for pennylane>0.39.0
+    PATTERN_TO_WIRES = {
+        "double": lambda wires: [wires.subset([i, i + 1]) for i in range(0, len(wires) - 1, 2)],
+        "double_odd": lambda wires: [wires.subset([i, i + 1]) for i in range(1, len(wires) - 1, 2)],
+    }
 
 from .nif_kernel import NIFKernel
 from ...operations import MAngleEmbedding, fSWAP, fH, SptmFSwap, SptmAngleEmbedding, SptmFHH

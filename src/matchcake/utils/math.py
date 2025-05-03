@@ -125,7 +125,7 @@ def convert_and_cast_like(tensor1, tensor2):
     #     new_tensor1 = qml.math.convert_like(tensor1, tensor2)
     new_tensor1 = qml.math.convert_like(tensor1, tensor2)
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=np.ComplexWarning)
+        warnings.filterwarnings("ignore", category=np.exceptions.ComplexWarning)
         # get the real if the tensor1 is complex but not tensor2
         if not qml.math.any(qml.math.iscomplex(new_tensor1)):
             new_tensor1 = qml.math.real(new_tensor1)

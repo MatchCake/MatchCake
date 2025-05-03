@@ -9,6 +9,10 @@ import numpy as np
 import psutil
 import torch
 import tqdm
+try:
+    from pennylane.ops import Hamiltonian
+except ImportError:
+    from pennylane.ops.op_math.linear_combination import Hamiltonian
 from pennylane.tape import QuantumTape, QuantumScript
 from scipy import sparse
 import pythonbasictools as pbt
@@ -28,7 +32,8 @@ from pennylane.measurements import (
     State,
     Variance, MeasurementValue,
 )
-from pennylane.ops import Hamiltonian, LinearCombination, Prod, SProd, Sum
+from pennylane.ops import LinearCombination, Prod, SProd, Sum
+
 from pennylane.operation import Operation
 
 from ..operations.matchgate_operation import MatchgateOperation
