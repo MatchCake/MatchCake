@@ -54,7 +54,7 @@ def get_majorana_pauli_list(i: int, n: int) -> List[np.ndarray]:
     return [PAULI_Z for _ in range(k)] + [gate] + [PAULI_I for _ in range(n - k - 1)]
 
 
-def get_majorana_pauli_string(i: int, n: int, join_char='⊗') -> str:
+def get_majorana_pauli_string(i: int, n: int, join_char="⊗") -> str:
     assert 0 <= i < 2 * n
     k = int(i / 2)  # 0, ..., n-1
     if (i + 1) % 2 == 0:
@@ -124,7 +124,7 @@ def get_majorana_pair(i: int, j: int, n: int) -> np.ndarray:
     assert 0 <= i < 2 * n
     assert 0 <= j < 2 * n
     if i == j:
-        return np.eye(2 ** n)
+        return np.eye(2**n)
     return get_majorana(i, n) @ get_majorana(j, n)
 
 
@@ -138,6 +138,7 @@ class MajoranaGetter:
     :type n: int
 
     """
+
     def __init__(self, n: int, maxsize=None):
         self.n = n
         self.maxsize = maxsize or np.inf

@@ -18,9 +18,12 @@ set_seed(TEST_SEED)
 @pytest.mark.parametrize(
     "new_op",
     [
-        mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
+        mc.MatchgateOperation(
+            mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+            wires=[wire, wire + 1],
+        )
         for wire in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_vh_matchgates_container_add(new_op):
     strategy = get_contraction_strategy("neighbours")
@@ -37,19 +40,19 @@ def test_vh_matchgates_container_add(new_op):
         (
             mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[0, 1]),
             mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[0, 1]),
-            False
+            False,
         ),
         (
             mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[0, 1]),
             mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[1, 2]),
-            True
+            True,
         ),
         (
             mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[0, 1]),
             mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[2, 3]),
-            False
-        )
-    ]
+            False,
+        ),
+    ],
 )
 def test_vh_matchgates_container_try_add(new_op0, new_op1, crossing_wires):
     strategy = get_contraction_strategy("neighbours")
@@ -71,7 +74,9 @@ def test_vh_matchgates_container_try_add(new_op0, new_op1, crossing_wires):
     else:
         assert container.try_add(new_op1)
         assert len(container) == 2
-        assert container.wires_set == set(new_op0.wires.labels) | set(new_op1.wires.labels)
+        assert container.wires_set == set(new_op0.wires.labels) | set(
+            new_op1.wires.labels
+        )
         np.testing.assert_allclose(
             container.op_container[new_op0.wires].compute_matrix(),
             new_op0.compute_matrix(),
@@ -89,9 +94,12 @@ def test_vh_matchgates_container_try_add(new_op0, new_op1, crossing_wires):
 @pytest.mark.parametrize(
     "op",
     [
-        mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
+        mc.MatchgateOperation(
+            mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+            wires=[wire, wire + 1],
+        )
         for wire in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_vh_matchgates_container_contract_single_op(op):
     strategy = get_contraction_strategy("neighbours")
@@ -109,11 +117,13 @@ def test_vh_matchgates_container_contract_single_op(op):
     "line_operations",
     [
         [
-            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(1), wires=[0, 1])
+            mc.MatchgateOperation(
+                mc.matchgate_parameter_sets.MatchgatePolarParams.random(1), wires=[0, 1]
+            )
             for _ in range(n_gates)
         ]
         for n_gates in np.arange(1, N_RANDOM_TESTS_PER_CASE + 1)
-    ]
+    ],
 )
 def test_vh_matchgates_container_contract_single_line(line_operations):
     strategy = get_contraction_strategy("neighbours")
@@ -151,12 +161,12 @@ def test_vh_matchgates_container_contract_single_line(line_operations):
         [
             mc.MatchgateOperation(
                 mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
-                wires=[i, i + 1]
+                wires=[i, i + 1],
             )
             for i in range(0, np.random.randint(1, 20), 2)
         ]
         for _ in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_vh_matchgates_container_contract_single_column(column_operations):
     strategy = get_contraction_strategy("neighbours")
@@ -168,9 +178,13 @@ def test_vh_matchgates_container_contract_single_column(column_operations):
     assert len(container) == len(column_operations)
     all_wires = set(wire for op in column_operations for wire in op.wires)
 
-    contract_ops = column_operations[0].get_padded_single_particle_transition_matrix(all_wires)
+    contract_ops = column_operations[0].get_padded_single_particle_transition_matrix(
+        all_wires
+    )
     for op in column_operations[1:]:
-        contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(all_wires)
+        contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(
+            all_wires
+        )
 
     np.testing.assert_allclose(
         container.contract(),
@@ -184,31 +198,31 @@ def test_vh_matchgates_container_contract_single_column(column_operations):
     "new_op0, new_op1, crossing_wires",
     [
         (
-                SptmfRxRx(np.random.random(2), wires=[0, 1]),
-                SptmfRxRx(np.random.random(2), wires=[0, 1]),
-                False
+            SptmfRxRx(np.random.random(2), wires=[0, 1]),
+            SptmfRxRx(np.random.random(2), wires=[0, 1]),
+            False,
         ),
         (
-                SptmfRxRx(np.random.random(2), wires=[0, 1]),
-                mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[1, 2]),
-                True
+            SptmfRxRx(np.random.random(2), wires=[0, 1]),
+            mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[1, 2]),
+            True,
         ),
         (
-                SptmfRxRx(np.random.random(2), wires=[0, 1]),
-                SptmfRxRx(np.random.random(2), wires=[1, 2]),
-                True
+            SptmfRxRx(np.random.random(2), wires=[0, 1]),
+            SptmfRxRx(np.random.random(2), wires=[1, 2]),
+            True,
         ),
         (
-                SptmfRxRx(np.random.random(2), wires=[0, 1]),
-                mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[2, 3]),
-                False
+            SptmfRxRx(np.random.random(2), wires=[0, 1]),
+            mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[2, 3]),
+            False,
         ),
         (
-                SptmfRxRx(np.random.random(2), wires=[0, 1]),
-                SptmfRxRx(np.random.random(2), wires=[2, 3]),
-                False
-        )
-    ]
+            SptmfRxRx(np.random.random(2), wires=[0, 1]),
+            SptmfRxRx(np.random.random(2), wires=[2, 3]),
+            False,
+        ),
+    ],
 )
 def test_vh_matchgates_container_try_add_sptm(new_op0, new_op1, crossing_wires):
     strategy = get_contraction_strategy("neighbours")
@@ -230,7 +244,9 @@ def test_vh_matchgates_container_try_add_sptm(new_op0, new_op1, crossing_wires):
     else:
         assert container.try_add(new_op1)
         assert len(container) == 2
-        assert container.wires_set == set(new_op0.wires.labels) | set(new_op1.wires.labels)
+        assert container.wires_set == set(new_op0.wires.labels) | set(
+            new_op1.wires.labels
+        )
         np.testing.assert_allclose(
             container.op_container[new_op0.wires].matrix(),
             new_op0.matrix(),

@@ -12,17 +12,17 @@ class SamplingStrategy(ABC):
 
     @abstractmethod
     def generate_samples(
-            self,
-            device: qml.devices.QubitDevice,
-            state_prob_func: Callable[[TensorLike, Wires], TensorLike],
-            **kwargs
+        self,
+        device: qml.devices.QubitDevice,
+        state_prob_func: Callable[[TensorLike, Wires], TensorLike],
+        **kwargs,
     ) -> TensorLike:
         raise NotImplementedError("This method should be implemented by the subclass.")
 
     def batch_generate_samples(
-            self,
-            device: qml.devices.QubitDevice,
-            states_prob_func: Callable[[TensorLike, Wires], TensorLike],
-            **kwargs
+        self,
+        device: qml.devices.QubitDevice,
+        states_prob_func: Callable[[TensorLike, Wires], TensorLike],
+        **kwargs,
     ) -> TensorLike:
         raise NotImplementedError("This method should be implemented by the subclass.")

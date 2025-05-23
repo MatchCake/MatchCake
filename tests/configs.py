@@ -1,4 +1,3 @@
-
 N_RANDOM_TESTS_PER_CASE = 10
 TEST_SEED = 42
 
@@ -19,10 +18,12 @@ RUN_SLOW_TESTS = True
 
 def set_seed(seed: int = TEST_SEED):
     import numpy as np
+
     np.random.seed(seed)
 
     try:
         import torch
+
         torch.random.manual_seed(TEST_SEED)
     except ImportError:
         pass

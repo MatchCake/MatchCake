@@ -14,12 +14,12 @@ class LookupTableStrategyV2(ProbabilityStrategy):
     REQUIRES_KWARGS = ["lookup_table"]
 
     def __call__(
-            self,
-            *,
-            system_state: TensorLike,
-            target_binary_state: TensorLike,
-            wires: Wires,
-            **kwargs
+        self,
+        *,
+        system_state: TensorLike,
+        target_binary_state: TensorLike,
+        wires: Wires,
+        **kwargs,
     ) -> TensorLike:
         self.check_required_kwargs(kwargs)
         if isinstance(wires, int):
@@ -39,18 +39,18 @@ class LookupTableStrategyV2(ProbabilityStrategy):
         return prob
 
     def batch_call(
-            self,
-            *,
-            system_state: TensorLike,
-            target_binary_states: TensorLike,
-            batch_wires: Wires,
-            **kwargs
+        self,
+        *,
+        system_state: TensorLike,
+        target_binary_states: TensorLike,
+        batch_wires: Wires,
+        **kwargs,
     ) -> TensorLike:
         return super().batch_call(
             system_state=system_state,
             target_binary_states=target_binary_states,
             batch_wires=batch_wires,
-            **kwargs
+            **kwargs,
         )
         self.check_required_kwargs(kwargs)
 
@@ -64,7 +64,9 @@ class LookupTableStrategyV2(ProbabilityStrategy):
             batch_wires,
             show_progress=show_progress,
         )
-        prob = qml.math.real(utils.pfaffian(batch_obs, method=pfaffian_method, show_progress=show_progress))
+        prob = qml.math.real(
+            utils.pfaffian(
+                batch_obs, method=pfaffian_method, show_progress=show_progress
+            )
+        )
         return prob
-
-

@@ -17,27 +17,30 @@ from ..configs import (
 )
 
 set_seed(TEST_SEED)
-    
+
 
 @pytest.mark.parametrize(
     "initial_binary_string,params,wires,target_binary_state,prob",
     [
         ("01", mps.fSWAP, [0, 1], "10", 1),
-    ]
+    ],
 )
 def test_single_gate_circuit_probability_target_state_specific_cases(
-        initial_binary_string, params, wires, target_binary_state, prob
+    initial_binary_string, params, wires, target_binary_state, prob
 ):
     initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
     device = NonInteractingFermionicDevice(wires=wires, prob_strategy="ExplicitSum")
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
-        MatchgateOperation(params, wires=wires)
+        MatchgateOperation(params, wires=wires),
     ]
     device.apply(operations)
-    es_m_prob = device.get_state_probability(target_binary_state=target_binary_state, wires=wires)
+    es_m_prob = device.get_state_probability(
+        target_binary_state=target_binary_state, wires=wires
+    )
     np.testing.assert_allclose(
-        es_m_prob.squeeze(), prob,
+        es_m_prob.squeeze(),
+        prob,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -50,15 +53,18 @@ def test_single_gate_circuit_probability_target_state_specific_cases(
     [
         (
             [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)],
-            num_wires, np.random.choice(num_wires, replace=False, size=n_probs)
+            num_wires,
+            np.random.choice(num_wires, replace=False, size=n_probs),
         )
         # for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in [2, 3]
-        for num_gates in [2*num_wires]
-        for n_probs in range(1, num_wires+1)
-    ]
+        for num_gates in [2 * num_wires]
+        for n_probs in range(1, num_wires + 1)
+    ],
 )
-def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_wires, prob_wires):
+def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(
+    params_list, n_wires, prob_wires
+):
     nif_device, qubit_device = devices_init(wires=n_wires, prob_strategy="ExplicitSum")
 
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
@@ -89,7 +95,8 @@ def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_
         out_wires=prob_wires,
     )
     np.testing.assert_allclose(
-        nif_probs.squeeze(), qubit_probs.squeeze(),
+        nif_probs.squeeze(),
+        qubit_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -100,17 +107,22 @@ def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_
     [
         (
             [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)],
-            num_wires, np.random.choice(num_wires, replace=False, size=n_probs),
+            num_wires,
+            np.random.choice(num_wires, replace=False, size=n_probs),
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in [2, 3, 4]
-        for num_gates in [1, 2*num_wires]
-        for n_probs in range(1, num_wires+1)
-    ]
+        for num_gates in [1, 2 * num_wires]
+        for n_probs in range(1, num_wires + 1)
+    ],
 )
-def test_multiples_matchgate_probs_with_qbit_device_lookup_table(params_list, n_wires, prob_wires):
+def test_multiples_matchgate_probs_with_qbit_device_lookup_table(
+    params_list, n_wires, prob_wires
+):
     all_wires = np.arange(n_wires)
-    nif_device, qubit_device = devices_init(wires=all_wires, prob_strategy="LookupTable")
+    nif_device, qubit_device = devices_init(
+        wires=all_wires, prob_strategy="LookupTable"
+    )
 
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
     qubit_qnode = qml.QNode(specific_matchgate_circuit, qubit_device)
@@ -139,7 +151,8 @@ def test_multiples_matchgate_probs_with_qbit_device_lookup_table(params_list, n_
         out_wires=prob_wires,
     )
     np.testing.assert_allclose(
-        nif_probs.squeeze(), qubit_probs.squeeze(),
+        nif_probs.squeeze(),
+        qubit_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

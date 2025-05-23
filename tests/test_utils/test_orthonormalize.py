@@ -25,6 +25,7 @@ set_seed(TEST_SEED)
 
 class __SpecialOrthonormalizedTensor:
     IDS = []
+
     def __init__(self, tensor):
         self.tensor = tensor
         self.orthonormalized_tensor = orthonormalize(tensor)
@@ -35,21 +36,24 @@ class __SpecialOrthonormalizedTensor:
         return self.orthonormalized_tensor
 
 
-
 @pytest.mark.parametrize(
     "matrix",
     [
         np.random.uniform(1, 10) * np.random.rand(batch_size, size, size).squeeze()
         for size in range(2, 10)
         for batch_size in [1, 3]
-    ]
+    ],
 )
 def test_orthonormalize(matrix):
     ortho_matrix = orthonormalize(matrix)
-    expected_eye = qml.math.einsum("...ij,...jk->...ik", ortho_matrix, dagger(ortho_matrix))
+    expected_eye = qml.math.einsum(
+        "...ij,...jk->...ik", ortho_matrix, dagger(ortho_matrix)
+    )
     eye = np.zeros_like(expected_eye)
     eye[..., np.arange(eye.shape[-1]), np.arange(eye.shape[-1])] = 1
-    np.testing.assert_allclose(expected_eye, eye, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+    np.testing.assert_allclose(
+        expected_eye, eye, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
+    )
 
 
 @pytest.mark.parametrize(
@@ -58,7 +62,7 @@ def test_orthonormalize(matrix):
         np.random.uniform(1, 10) * np.random.rand(batch_size, size, size).squeeze()
         for size in range(2, 10)
         for batch_size in [1, 3]
-    ]
+    ],
 )
 def test_orthonormalize_already_orthonormalize(matrix):
     special_tensor = __SpecialOrthonormalizedTensor(matrix)

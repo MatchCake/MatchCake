@@ -29,22 +29,27 @@ class SptmAngleEmbedding(Operation):
         rotations = hyperparameters.get("rotations", [ROT["X"]])
 
         return [
-            rot(qml.math.stack([p0, p1], axis=-1), wires=[wires[2 * i], wires[2 * i + 1]])
+            rot(
+                qml.math.stack([p0, p1], axis=-1),
+                wires=[wires[2 * i], wires[2 * i + 1]],
+            )
             for i, (p0, p1) in enumerate(zip(params[0::2], params[1::2]))
             for rot in rotations
         ]
-    
+
     @staticmethod
     def pad_params(params):
         r"""
         If the number of parameters is odd, pad the parameters with zero to make it even.
-        
+
         :param params: The parameters to pad.
         :return: The padded parameters.
         """
         n_params = qml.math.shape(params)[-1]
         if n_params % 2 != 0:
-            params = qml.math.concatenate([params, qml.math.zeros_like(params[..., :1])], axis=-1)
+            params = qml.math.concatenate(
+                [params, qml.math.zeros_like(params[..., :1])], axis=-1
+            )
         return params
 
     def __repr__(self):
@@ -83,4 +88,3 @@ class SptmAngleEmbedding(Operation):
     @property
     def ndim_params(self):
         return (1,)
-

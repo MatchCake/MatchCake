@@ -4,9 +4,17 @@ from typing import Optional
 import numpy as np
 import pennylane as qml
 from matplotlib import pyplot as plt
-from pennylane import numpy as pnp
 from pennylane.ops.qubit.observables import BasisStateProjector
-from pennylane.templates.broadcast import PATTERN_TO_NUM_PARAMS
+
+try:
+    from pennylane.templates.broadcast import PATTERN_TO_NUM_PARAMS
+except ImportError:
+    # Hotfix for pennylane>0.39.0
+    PATTERN_TO_NUM_PARAMS = {
+        "pyramid": lambda w: (
+            0 if len(w) in [0, 1] else sum(i + 1 for i in range(len(w) // 2))
+        ),
+    }
 from pennylane.wires import Wires
 
 from .kernel_utils import mrot_zz_template
@@ -17,19 +25,17 @@ from ...utils import torch_utils
 
 
 class NIFKernel(MLKernel):
-    UNPICKLABLE_ATTRIBUTES = ['_device', "_qnode"]
+    UNPICKLABLE_ATTRIBUTES = ["_device", "_qnode"]
 
-    def __init__(
-            self,
-            size: Optional[int] = None,
-            **kwargs
-    ):
+    def __init__(self, size: Optional[int] = None, **kwargs):
         super().__init__(size=size, **kwargs)
         self._qnode = None
         self._device = None
         self.simpify_qnode = self.kwargs.get("simplify_qnode", False)
         self.qnode_kwargs = dict(
-            interface=self.kwargs.get("interface", "torch" if self.use_cuda else "auto"),
+            interface=self.kwargs.get(
+                "interface", "torch" if self.use_cuda else "auto"
+            ),
             diff_method=self.kwargs.get("diff_method", None),
             cache=False,
         )
@@ -80,16 +86,26 @@ class NIFKernel(MLKernel):
     def initialize_parameters(self):
         super().initialize_parameters()
         if self._parameters is None:
-            n_parameters = self.kwargs.get("n_parameters", PATTERN_TO_NUM_PARAMS["pyramid"](self.wires))
-            self._parameters = [self.parameters_rng.uniform(0, 2 * np.pi, size=2) for _ in range(n_parameters)]
+            n_parameters = self.kwargs.get(
+                "n_parameters", PATTERN_TO_NUM_PARAMS["pyramid"](self.wires)
+            )
+            self._parameters = [
+                self.parameters_rng.uniform(0, 2 * np.pi, size=2)
+                for _ in range(n_parameters)
+            ]
             self._parameters = np.array(self._parameters)
             if self.qnode.interface == "torch":
                 import torch
-                self._parameters = torch.from_numpy(self._parameters).float().requires_grad_(True)
+
+                self._parameters = (
+                    torch.from_numpy(self._parameters).float().requires_grad_(True)
+                )
 
     def pre_initialize(self):
         self.device_kwargs.setdefault("n_workers", getattr(self, "device_workers", 0))
-        self._device = NonInteractingFermionicDevice(wires=self.size, **self.device_kwargs)
+        self._device = NonInteractingFermionicDevice(
+            wires=self.size, **self.device_kwargs
+        )
         self._qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
         if self.simpify_qnode:
             self._qnode = qml.simplify(self.qnode)
@@ -105,11 +121,22 @@ class NIFKernel(MLKernel):
 
     def circuit(self, x0, x1):
         MAngleEmbedding(x0, wires=self.wires)
-        qml.broadcast(unitary=mrot_zz_template, pattern="pyramid", wires=self.wires, parameters=self.parameters)
+        qml.broadcast(
+            unitary=mrot_zz_template,
+            pattern="pyramid",
+            wires=self.wires,
+            parameters=self.parameters,
+        )
         qml.adjoint(MAngleEmbedding)(x1, wires=self.wires)
-        qml.adjoint(qml.broadcast)(unitary=mrot_zz_template, pattern="pyramid", wires=self.wires,
-                                   parameters=self.parameters)
-        projector: BasisStateProjector = qml.Projector(np.zeros(self.size), wires=self.wires)
+        qml.adjoint(qml.broadcast)(
+            unitary=mrot_zz_template,
+            pattern="pyramid",
+            wires=self.wires,
+            parameters=self.parameters,
+        )
+        projector: BasisStateProjector = qml.Projector(
+            np.zeros(self.size), wires=self.wires
+        )
         return qml.expval(projector)
 
     def single_distance(self, x0, x1, **kwargs):
@@ -133,7 +160,10 @@ class NIFKernel(MLKernel):
     def draw(self, **kwargs):
         logging_func = kwargs.pop("logging_func", print)
         name = kwargs.pop("name", self.__class__.__name__)
-        if getattr(self, "qnode", None) is None or getattr(self.qnode, "tape", None) is None:
+        if (
+            getattr(self, "qnode", None) is None
+            or getattr(self.qnode, "tape", None) is None
+        ):
             _str = f"{name}: "
         else:
             n_ops = len(self.qnode.tape.operations)
@@ -148,13 +178,14 @@ class NIFKernel(MLKernel):
         return _str
 
     def draw_mpl(
-            self,
-            fig: Optional[plt.Figure] = None,
-            ax: Optional[plt.Axes] = None,
-            **kwargs
+        self, fig: Optional[plt.Figure] = None, ax: Optional[plt.Axes] = None, **kwargs
     ):
-        x0, x1 = self.cast_tensor_to_interface(self.X_[:2]), self.cast_tensor_to_interface(self.X_[-2:])
-        _fig, _ax = qml.draw_mpl(self.qnode, expansion_strategy=kwargs.get("expansion_strategy", "device"))(x0, x1)
+        x0, x1 = self.cast_tensor_to_interface(
+            self.X_[:2]
+        ), self.cast_tensor_to_interface(self.X_[-2:])
+        _fig, _ax = qml.draw_mpl(
+            self.qnode, expansion_strategy=kwargs.get("expansion_strategy", "device")
+        )(x0, x1)
         if fig is None or ax is None:
             fig, ax = _fig, _ax
         else:

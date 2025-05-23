@@ -15,9 +15,9 @@ class StarStateFindingStrategy(ABC):
 
     @abstractmethod
     def __call__(
-            self,
-            device: qml.devices.QubitDevice,
-            states_prob_func: Callable[[TensorLike, Wires], TensorLike],
-            **kwargs
+        self,
+        device: qml.devices.QubitDevice,
+        states_prob_func: Callable[[TensorLike, Wires], TensorLike],
+        **kwargs,
     ) -> Tuple[TensorLike, TensorLike]:
         raise NotImplementedError("This method should be implemented by the subclass.")

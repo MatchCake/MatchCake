@@ -25,7 +25,7 @@ set_seed(TEST_SEED)
     ],
 )
 def test_parse_from_hamiltonian_coeffs_with_slow_method(
-        params: MatchgateHamiltonianCoefficientsParams,
+    params: MatchgateHamiltonianCoefficientsParams,
 ):
     hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(
         params.to_matrix(add_epsilon=False), params.epsilon
@@ -39,89 +39,126 @@ def test_parse_from_hamiltonian_coeffs_with_slow_method(
     "params,expected",
     [
         (
-                MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=1, u3=1, u4=1, u5=1, u6=1, u7=1),
-                np.array([
+            MatchgateStandardHamiltonianParams(
+                u0=1, u1=1, u2=1, u3=1, u4=1, u5=1, u6=1, u7=1
+            ),
+            np.array(
+                [
                     [1, 0.0, 0.0, 1],
                     [0.0, 1, 1, 0.0],
                     [0.0, 1, 1, 0.0],
                     [1, 0.0, 0.0, 1],
-                ]),
+                ]
+            ),
         ),
         (
-                MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=-1, u3=1, u4=1, u5=1, u6=1, u7=1),
-                np.array([
+            MatchgateStandardHamiltonianParams(
+                u0=1, u1=1, u2=-1, u3=1, u4=1, u5=1, u6=1, u7=1
+            ),
+            np.array(
+                [
                     [1, 0.0, 0.0, 1],
                     [0.0, -1, 1, 0.0],
                     [0.0, 1, 1, 0.0],
                     [1, 0.0, 0.0, 1],
-                ]),
+                ]
+            ),
         ),
         (
-                MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=1, u3=-1, u4=1, u5=-1, u6=1, u7=1),
-                np.array([
+            MatchgateStandardHamiltonianParams(
+                u0=1, u1=1, u2=1, u3=-1, u4=1, u5=-1, u6=1, u7=1
+            ),
+            np.array(
+                [
                     [1, 0.0, 0.0, 1],
                     [0.0, 1, -1, 0.0],
                     [0.0, 1, -1, 0.0],
                     [1, 0.0, 0.0, 1],
-                ]),
+                ]
+            ),
         ),
         (
-                MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=1, u3=1, u4=1, u5=-1, u6=1, u7=1),
-                np.array([
+            MatchgateStandardHamiltonianParams(
+                u0=1, u1=1, u2=1, u3=1, u4=1, u5=-1, u6=1, u7=1
+            ),
+            np.array(
+                [
                     [1, 0.0, 0.0, 1],
                     [0.0, 1, 1, 0.0],
                     [0.0, 1, -1, 0.0],
                     [1, 0.0, 0.0, 1],
-                ]),
+                ]
+            ),
         ),
     ],
 )
 def test_standard_hamiltonian_params_to_matrix(
-        params: MatchgateStandardHamiltonianParams,
-        expected: np.ndarray,
+    params: MatchgateStandardHamiltonianParams,
+    expected: np.ndarray,
 ):
     matrix = params.to_matrix()
-    np.testing.assert_allclose(matrix.squeeze(), expected, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+    np.testing.assert_allclose(
+        matrix.squeeze(),
+        expected,
+        atol=ATOL_MATRIX_COMPARISON,
+        rtol=RTOL_MATRIX_COMPARISON,
+    )
 
 
 @pytest.mark.parametrize(
     "matrix,params",
     [
         (
-                np.array([
+            np.array(
+                [
                     [1, 0.0, 0.0, 1],
                     [0.0, 1, 1, 0.0],
                     [0.0, 1, 1, 0.0],
                     [1, 0.0, 0.0, 1],
-                ]),
-                MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=1, u3=1, u4=1, u5=1, u6=1, u7=1),
+                ]
+            ),
+            MatchgateStandardHamiltonianParams(
+                u0=1, u1=1, u2=1, u3=1, u4=1, u5=1, u6=1, u7=1
+            ),
         ),
         (
-                np.array([
+            np.array(
+                [
                     [1, 0.0, 0.0, 1],
                     [0.0, -1, 1, 0.0],
                     [0.0, 1, 1, 0.0],
                     [1, 0.0, 0.0, 1],
-                ]),
-                MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=-1, u3=1, u4=1, u5=1, u6=1, u7=1),
+                ]
+            ),
+            MatchgateStandardHamiltonianParams(
+                u0=1, u1=1, u2=-1, u3=1, u4=1, u5=1, u6=1, u7=1
+            ),
         ),
         (
-                np.array([
+            np.array(
+                [
                     [1, 0.0, 0.0, 1],
                     [0.0, 1, -1, 0.0],
                     [0.0, 1, -1, 0.0],
                     [1, 0.0, 0.0, 1],
-                ]),
-                MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=1, u3=-1, u4=1, u5=-1, u6=1, u7=1),
+                ]
+            ),
+            MatchgateStandardHamiltonianParams(
+                u0=1, u1=1, u2=1, u3=-1, u4=1, u5=-1, u6=1, u7=1
+            ),
         ),
         (
-                np.array([
+            np.array(
+                [
                     [1, 0.0, 0.0, 1],
                     [0.0, 1, 1, 0.0],
                     [0.0, 1, -1, 0.0],
                     [1, 0.0, 0.0, 1],
-                ]),
-                MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=1, u3=1, u4=1, u5=-1, u6=1, u7=1),
+                ]
+            ),
+            MatchgateStandardHamiltonianParams(
+                u0=1, u1=1, u2=1, u3=1, u4=1, u5=-1, u6=1, u7=1
+            ),
         ),
     ],
 )
@@ -136,7 +173,12 @@ def test_matchgate_gradient_torch():
     except ImportError:
         pytest.skip("PyTorch not installed.")
     batch_size = 2
-    rn_tensor = torch.rand(batch_size, MatchgateStandardHamiltonianParams.N_PARAMS, device="cpu", requires_grad=True)
+    rn_tensor = torch.rand(
+        batch_size,
+        MatchgateStandardHamiltonianParams.N_PARAMS,
+        device="cpu",
+        requires_grad=True,
+    )
     params = MatchgateStandardHamiltonianParams(rn_tensor)
     assert isinstance(params.to_tensor(), torch.Tensor)
     assert params.to_tensor().requires_grad

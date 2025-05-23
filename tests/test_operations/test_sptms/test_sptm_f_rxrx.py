@@ -25,12 +25,12 @@ set_seed(TEST_SEED)
     "theta, phi",
     [
         (
-                np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
-                np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze()
+            np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
+            np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
         )
         for batch_size in [1, 4]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_matchgate_equal_to_sptm_f_rxrx(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
@@ -39,7 +39,8 @@ def test_matchgate_equal_to_sptm_f_rxrx(theta, phi):
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmfRxRx(params, wires=[0, 1]).matrix()
     np.testing.assert_allclose(
-        sptm, m_sptm,
+        sptm,
+        m_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -49,12 +50,12 @@ def test_matchgate_equal_to_sptm_f_rxrx(theta, phi):
     "theta, phi",
     [
         (
-                np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
-                np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze()
+            np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
+            np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
         )
         for batch_size in [1, 4]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_matchgate_equal_to_sptm_f_rxrx_multiple(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2)
@@ -71,7 +72,8 @@ def test_matchgate_equal_to_sptm_f_rxrx_multiple(theta, phi):
     for s in sptms[1:]:
         sptm = circuit_matmul(sptm, s, operator="einsum")
     np.testing.assert_allclose(
-        sptm, m_sptm,
+        sptm,
+        m_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -81,12 +83,12 @@ def test_matchgate_equal_to_sptm_f_rxrx_multiple(theta, phi):
     "theta, phi",
     [
         (
-                np.random.uniform(-np.pi, np.pi, batch_size).squeeze(),
-                np.random.uniform(-np.pi, np.pi, batch_size).squeeze()
+            np.random.uniform(-np.pi, np.pi, batch_size).squeeze(),
+            np.random.uniform(-np.pi, np.pi, batch_size).squeeze(),
         )
         for batch_size in [1, 4]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_matchgate_equal_to_sptm_f_rxrx_adjoint(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
@@ -94,7 +96,8 @@ def test_matchgate_equal_to_sptm_f_rxrx_adjoint(theta, phi):
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmfRxRx(params, wires=[0, 1]).adjoint().matrix()
     np.testing.assert_allclose(
-        sptm, m_sptm,
+        sptm,
+        m_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -104,12 +107,12 @@ def test_matchgate_equal_to_sptm_f_rxrx_adjoint(theta, phi):
     "theta, phi",
     [
         (
-                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze(),
-                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze()
+            np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
+            np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
         )
         for batch_size in [1, 4]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_sptm_f_rxrx_unitary(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
@@ -121,12 +124,12 @@ def test_sptm_f_rxrx_unitary(theta, phi):
     "theta, phi",
     [
         (
-                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze(),
-                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze()
+            np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
+            np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
         )
         for batch_size in [1, 4]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_sptm_sum_gradient_check(theta, phi):
     def sptm_sum(p):
@@ -138,5 +141,3 @@ def test_sptm_sum_gradient_check(theta, phi):
         raise_exception=True,
         check_undefined_grad=False,
     )
-
-

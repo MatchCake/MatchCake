@@ -13,7 +13,9 @@ class NIFTorchModel(TorchModel):
     ATTRS_TO_HPARAMS = TorchModel.ATTRS_TO_HPARAMS + ["n_qubits"]
 
     @classmethod
-    def add_model_specific_args(cls, parent_parser: Optional[argparse.ArgumentParser] = None):
+    def add_model_specific_args(
+        cls, parent_parser: Optional[argparse.ArgumentParser] = None
+    ):
         parent_parser = super().add_model_specific_args(parent_parser)
         if parent_parser is None:
             parent_parser = argparse.ArgumentParser()
@@ -26,17 +28,17 @@ class NIFTorchModel(TorchModel):
         )
         return parent_parser
 
-    def __init__(
-        self,
-        *,
-        n_qubits: Optional[int] = DEFAULT_N_QUBITS,
-        **kwargs
-    ):
-        kwargs.setdefault("save_dir", self.default_save_dir_from_args({"n_qubits": n_qubits, **kwargs}))
+    def __init__(self, *, n_qubits: Optional[int] = DEFAULT_N_QUBITS, **kwargs):
+        kwargs.setdefault(
+            "save_dir",
+            self.default_save_dir_from_args({"n_qubits": n_qubits, **kwargs}),
+        )
         super().__init__(**kwargs)
         self.n_qubits = n_qubits
 
-        self.q_device = NonInteractingFermionicDevice(wires=self.n_qubits, show_progress=False)
+        self.q_device = NonInteractingFermionicDevice(
+            wires=self.n_qubits, show_progress=False
+        )
         self.q_node = qml.QNode(
             self.circuit,
             self.q_device,
@@ -51,5 +53,3 @@ class NIFTorchModel(TorchModel):
 
     def circuit(self, *args, **kwargs):
         raise NotImplementedError("This method must be implemented by the subclass.")
-
-

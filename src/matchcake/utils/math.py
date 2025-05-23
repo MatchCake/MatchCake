@@ -4,7 +4,11 @@ import numpy as np
 import scipy
 import pennylane as qml
 from ..templates.tensor_like import TensorLike
-from ..constants import _CIRCUIT_MATMUL_DIRECTION, _FOP_MATMUL_DIRECTION, MatmulDirectionType
+from ..constants import (
+    _CIRCUIT_MATMUL_DIRECTION,
+    _FOP_MATMUL_DIRECTION,
+    MatmulDirectionType,
+)
 
 try:
     import torch
@@ -25,9 +29,10 @@ def cast_to_complex(__inputs):
 
 def _torch_adjoint(A, E, f):
     import torch
+
     A_H = A.T.conj().to(E.dtype)
     n = A.size(0)
-    M = torch.zeros(2*n, 2*n, dtype=E.dtype, device=E.device)
+    M = torch.zeros(2 * n, 2 * n, dtype=E.dtype, device=E.device)
     M[:n, :n] = A_H
     M[n:, n:] = A_H
     M[:n, n:] = E
@@ -36,26 +41,39 @@ def _torch_adjoint(A, E, f):
 
 def _torch_logm_scipy(A):
     import torch
+
     if A.ndim == 2:
         return torch.from_numpy(scipy.linalg.logm(A.cpu(), disp=False)[0]).to(A.device)
-    return torch.stack([torch.from_numpy(scipy.linalg.logm(A_.cpu(), disp=False)[0]) for A_ in A.cpu()]).to(A.device)
+    return torch.stack(
+        [torch.from_numpy(scipy.linalg.logm(A_.cpu(), disp=False)[0]) for A_ in A.cpu()]
+    ).to(A.device)
 
 
 class TorchLogm(torch.autograd.Function):
     @staticmethod
     def forward(ctx, A):
         import torch
-        assert A.ndim in (2, 3) and A.size(-2) == A.size(-1)  # Square matrix, maybe batched
-        assert A.dtype in (torch.float32, torch.float64, torch.complex64, torch.complex128)
+
+        assert A.ndim in (2, 3) and A.size(-2) == A.size(
+            -1
+        )  # Square matrix, maybe batched
+        assert A.dtype in (
+            torch.float32,
+            torch.float64,
+            torch.complex64,
+            torch.complex128,
+        )
         ctx.save_for_backward(A)
         return _torch_logm_scipy(A)
 
     @staticmethod
     def backward(ctx, G):
-        A, = ctx.saved_tensors
+        (A,) = ctx.saved_tensors
         if A.ndim == 2:
             return _torch_adjoint(A, G, _torch_logm_scipy)
-        return torch.stack([_torch_adjoint(A_, G_, _torch_logm_scipy) for A_, G_ in zip(A, G)])
+        return torch.stack(
+            [_torch_adjoint(A_, G_, _torch_logm_scipy) for A_, G_ in zip(A, G)]
+        )
 
 
 torch_logm = TorchLogm.apply
@@ -73,14 +91,14 @@ def logm(tensor, like=None):
         return torch_logm(tensor)
     if like == "jax":
         from jax.scipy.linalg import logm as jax_logm
-        
+
         return jax_logm(tensor)
     if like == "tensorflow":
         import tensorflow as tf
-        
+
         return tf.linalg.logm(tensor)
     from scipy.linalg import logm as scipy_logm
-    
+
     as_arr = qml.math.array(tensor, dtype=complex)
     tensor_shape = qml.math.shape(as_arr)
     batched_tensor = qml.math.reshape(as_arr, (-1, *tensor_shape[-2:]))
@@ -119,20 +137,21 @@ def convert_and_cast_like(tensor1, tensor2):
     import warnings
     import numpy as np
     import torch
+
     # interface1, interface2 = qml.math.get_interface(tensor1), qml.math.get_interface(tensor2)
     # new_tensor1 = tensor1
     # if interface1 != interface2:
     #     new_tensor1 = qml.math.convert_like(tensor1, tensor2)
     new_tensor1 = qml.math.convert_like(tensor1, tensor2)
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=np.ComplexWarning)
+        warnings.filterwarnings("ignore", category=np.exceptions.ComplexWarning)
         # get the real if the tensor1 is complex but not tensor2
         if not qml.math.any(qml.math.iscomplex(new_tensor1)):
             new_tensor1 = qml.math.real(new_tensor1)
         if (
-                "complex" in qml.math.get_dtype_name(new_tensor1).lower()
-                and not "complex" in qml.math.get_dtype_name(tensor2).lower()
-            ):
+            "complex" in qml.math.get_dtype_name(new_tensor1).lower()
+            and not "complex" in qml.math.get_dtype_name(tensor2).lower()
+        ):
             new_tensor1 = qml.math.real(new_tensor1)
         try:
             new_tensor1 = qml.math.cast_like(new_tensor1, tensor2)
@@ -177,6 +196,7 @@ def astensor(tensor, like=None, **kwargs):
     :rtype: Any
     """
     from ..templates.tensor_like import TensorLike
+
     if isinstance(tensor, TensorLike):
         return tensor
     return qml.math.array(tensor, like=like, **kwargs)
@@ -207,10 +227,14 @@ def eye_block_matrix(matrix: TensorLike, n: int, index: int):
 
 
 def get_like_tensors_of_highest_priority(
-        tensors: List[TensorLike],
-        cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
-                "numpy", "autograd", "jax", "tf", "torch"
-        )
+    tensors: List[TensorLike],
+    cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+        "numpy",
+        "autograd",
+        "jax",
+        "tf",
+        "torch",
+    ),
 ) -> TensorLike:
     r"""
     Convert and cast the tensors to the same type using the given priorities.
@@ -225,18 +249,24 @@ def get_like_tensors_of_highest_priority(
     """
     if len(tensors) == 0:
         return None
-    tensors_priorities = [cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors]
+    tensors_priorities = [
+        cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors
+    ]
     highest_priority = max(tensors_priorities)
     like = tensors[tensors_priorities.index(highest_priority)]
     return like
 
 
 def convert_tensors_to_same_type_and_cast_to(
-        tensors: List[TensorLike],
-        cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
-                "numpy", "autograd", "jax", "tf", "torch"
-        ),
-        dtype=None
+    tensors: List[TensorLike],
+    cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+        "numpy",
+        "autograd",
+        "jax",
+        "tf",
+        "torch",
+    ),
+    dtype=None,
 ) -> List[TensorLike]:
     r"""
     Convert the tensors to the same type using the given priorities.
@@ -263,10 +293,14 @@ def convert_tensors_to_same_type_and_cast_to(
 
 
 def convert_tensors_to_same_type(
-        tensors: List[TensorLike],
-        cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
-                "numpy", "autograd", "jax", "tf", "torch"
-        )
+    tensors: List[TensorLike],
+    cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+        "numpy",
+        "autograd",
+        "jax",
+        "tf",
+        "torch",
+    ),
 ) -> List[TensorLike]:
     r"""
     Convert the tensors to the same type using the given priorities.
@@ -293,10 +327,14 @@ def convert_tensors_to_same_type(
 
 
 def convert_and_cast_tensors_to_same_type(
-        tensors: List[TensorLike],
-        cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
-                "numpy", "autograd", "jax", "tf", "torch"
-        )
+    tensors: List[TensorLike],
+    cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+        "numpy",
+        "autograd",
+        "jax",
+        "tf",
+        "torch",
+    ),
 ) -> List[TensorLike]:
     r"""
     Convert and cast the tensors to the same type using the given priorities.
@@ -323,11 +361,15 @@ def convert_and_cast_tensors_to_same_type(
 
 
 def convert_and_cast_tensor_from_tensors(
-        tensor: TensorLike,
-        tensors: List[TensorLike],
-        cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
-                "numpy", "autograd", "jax", "tf", "torch"
-        )
+    tensor: TensorLike,
+    tensors: List[TensorLike],
+    cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+        "numpy",
+        "autograd",
+        "jax",
+        "tf",
+        "torch",
+    ),
 ) -> TensorLike:
     r"""
     Convert and cast the tensor to the same type as the tensors using the given priorities.
@@ -392,21 +434,23 @@ def exp_euler(x: TensorLike) -> TensorLike:
 
 def random_choice(a, probs, axis=-1):
     import numpy as np
+
     axis = np.mod(axis, probs.ndim)
-    r = np.expand_dims(np.random.rand(probs.shape[1-axis]), axis=axis)
+    r = np.expand_dims(np.random.rand(probs.shape[1 - axis]), axis=axis)
     indexes = (probs.cumsum(axis=axis) > r).argmax(axis=axis)
     # return the element of a at the index
     return np.take_along_axis(a, indexes[:, None], axis=axis).squeeze(axis)
 
 
 def random_index(
-        probs,
-        n: Optional[int] = None,
-        axis=-1,
-        normalize_probs: bool = True,
-        eps: float = 1e-12
+    probs,
+    n: Optional[int] = None,
+    axis=-1,
+    normalize_probs: bool = True,
+    eps: float = 1e-12,
 ):
     import numpy as np
+
     _n = n or 1
     axis = np.mod(axis, probs.ndim)
     if normalize_probs:
@@ -415,8 +459,8 @@ def random_index(
     shape_wo_axis = list(probs.shape)
     shape_wo_axis.pop(axis)
     shape_wo_axis = [_n] + shape_wo_axis
-    r = np.expand_dims(np.random.rand(*shape_wo_axis), axis=1+axis)
-    indexes = (probs.cumsum(axis=axis) > r).argmax(axis=1+axis)
+    r = np.expand_dims(np.random.rand(*shape_wo_axis), axis=1 + axis)
+    indexes = (probs.cumsum(axis=axis) > r).argmax(axis=1 + axis)
     if n is None:
         return indexes[0]
     return indexes
@@ -454,7 +498,9 @@ def unique_2d_array(array: TensorLike, sort: bool = False) -> TensorLike:
     return qml.math.array(unique_list, like=array)
 
 
-def convert_2d_to_1d_indexes(indexes: Iterable[Tuple[int, int]], n_rows: Optional[int] = None) -> np.ndarray:
+def convert_2d_to_1d_indexes(
+    indexes: Iterable[Tuple[int, int]], n_rows: Optional[int] = None
+) -> np.ndarray:
     indexes = np.asarray(indexes)
     if n_rows is None:
         n_rows = np.max(indexes[:, 0]) + 1
@@ -462,7 +508,9 @@ def convert_2d_to_1d_indexes(indexes: Iterable[Tuple[int, int]], n_rows: Optiona
     return new_indexes
 
 
-def convert_1d_to_2d_indexes(indexes: Iterable[int], n_rows: Optional[int] = None) -> np.ndarray:
+def convert_1d_to_2d_indexes(
+    indexes: Iterable[int], n_rows: Optional[int] = None
+) -> np.ndarray:
     indexes = np.asarray(indexes)
     if n_rows is None:
         n_rows = int(np.sqrt(len(indexes)))
@@ -470,11 +518,7 @@ def convert_1d_to_2d_indexes(indexes: Iterable[int], n_rows: Optional[int] = Non
     return new_indexes
 
 
-def matmul(
-        left: Any,
-        right: Any,
-        operator: Literal["einsum", "matmul", "@"] = "@"
-):
+def matmul(left: Any, right: Any, operator: Literal["einsum", "matmul", "@"] = "@"):
     r"""
     Perform a matrix multiplication of two matrices.
 
@@ -497,10 +541,10 @@ def matmul(
 
 
 def circuit_matmul(
-        first_matrix: Any,
-        second_matrix: Any,
-        direction: MatmulDirectionType = _CIRCUIT_MATMUL_DIRECTION,
-        operator: Literal["einsum", "matmul", "@"] = "@"
+    first_matrix: Any,
+    second_matrix: Any,
+    direction: MatmulDirectionType = _CIRCUIT_MATMUL_DIRECTION,
+    operator: Literal["einsum", "matmul", "@"] = "@",
 ) -> Any:
     r"""
     Perform a matrix multiplication of two matrices with the given direction.
@@ -524,10 +568,10 @@ def circuit_matmul(
 
 
 def fermionic_operator_matmul(
-        first_matrix: Any,
-        second_matrix: Any,
-        direction: MatmulDirectionType = _FOP_MATMUL_DIRECTION,
-        operator: Literal["einsum", "matmul", "@"] = "@"
+    first_matrix: Any,
+    second_matrix: Any,
+    direction: MatmulDirectionType = _FOP_MATMUL_DIRECTION,
+    operator: Literal["einsum", "matmul", "@"] = "@",
 ):
     r"""
     Perform a matrix multiplication of two fermionic operator matrices with the given direction.
@@ -595,7 +639,9 @@ def svd(tensor: Any) -> Tuple[Any, Any, Any]:
     return qml.math.svd(tensor)
 
 
-def orthonormalize(tensor: Any, check_if_normalize: bool = True, raises_error: bool = False) -> Any:
+def orthonormalize(
+    tensor: Any, check_if_normalize: bool = True, raises_error: bool = False
+) -> Any:
     r"""
     Orthonormalize the tensor.
 
@@ -617,7 +663,7 @@ def orthonormalize(tensor: Any, check_if_normalize: bool = True, raises_error: b
                 return tensor
         u, s, v = svd(tensor)
         # test if the tensor is already orthonormalized with the eigenvalues
-        if qml.math.allclose(s ** 1, 1):
+        if qml.math.allclose(s**1, 1):
             return tensor
         return matmul(u, v, "einsum")
     except Exception as e:
@@ -635,4 +681,3 @@ def eye_like(tensor: Any):
 
 def check_is_unitary(tensor: Any):
     return qml.math.allclose(matmul(tensor, dagger(tensor)), eye_like(tensor))
-

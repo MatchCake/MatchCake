@@ -21,7 +21,7 @@ class AdamWStrategy(OptimizerStrategy):
     def __getstate__(self) -> Dict[str, Any]:
         return {
             "optimizer": self.optimizer.state_dict(),
-            **{key: getattr(self, key) for key in self.REQUIRES_HYPERPARAMETERS}
+            **{key: getattr(self, key) for key in self.REQUIRES_HYPERPARAMETERS},
         }
 
     def __setstate__(self, state: Dict[str, Any]):
@@ -39,15 +39,19 @@ class AdamWStrategy(OptimizerStrategy):
         return self
 
     def step(
-            self,
-            closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
-            callback: Optional[Callable[[], Any]] = None
+        self,
+        closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
+        callback: Optional[Callable[[], Any]] = None,
     ) -> TensorLike:
         if self.optimizer is None:
-            raise ValueError("Optimizer has not been initialized. Call set_parameters() first.")
+            raise ValueError(
+                "Optimizer has not been initialized. Call set_parameters() first."
+            )
         loss = closure()
         if not isinstance(loss, torch.Tensor):
-            raise ValueError(f"Expected closure to return a torch.Tensor, but got {type(loss)}")
+            raise ValueError(
+                f"Expected closure to return a torch.Tensor, but got {type(loss)}"
+            )
         self.optimizer.zero_grad()
         loss.backward()
         if np.isfinite(self.max_grad_norm):

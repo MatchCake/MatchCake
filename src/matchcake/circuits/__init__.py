@@ -13,4 +13,3 @@ from .random_matchgate_circuits import (
     RandomMatchgateOperationsGenerator,
     RandomMatchgateHaarOperationsGenerator,
 )
-

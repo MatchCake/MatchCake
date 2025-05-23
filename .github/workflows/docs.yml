@@ -19,9 +19,12 @@ jobs:
 
     - name: Install dependencies
       run: |
+        python -m venv ./venv
+        . ./venv/bin/activate
         python -m pip install --upgrade pip
+        pip install poetry
+        poetry install --no-interaction --no-ansi
         pip install flake8
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install -U sphinx==6.2.1 docutils==0.18.1 sphinx_rtd_theme==1.2.2 sphinxcontrib-bibtex==2.5.0
         pip install sphinx-theme
         pip install groundwork-sphinx-theme

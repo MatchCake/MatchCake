@@ -1,6 +1,6 @@
 # MatchCake
 
-<div style="text-align:center"><img src="https://github.com/MatchCake/MatchCake/blob/main/images/logo/Logo.svg?raw=true" width="40%" /></div>
+<p align="center"><img src="https://github.com/MatchCake/MatchCake/blob/main/images/logo/Logo.svg?raw=true" width="60%" /></p>
 
 [![Star on GitHub](https://img.shields.io/github/stars/MatchCake/MatchCake.svg?style=social)](https://github.com/MatchCake/MatchCake/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/MatchCake/MatchCake?style=social)](https://github.com/MatchCake/MatchCake/network/members)

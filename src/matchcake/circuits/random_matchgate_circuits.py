@@ -18,27 +18,27 @@ from ..operations import (
 
 class RandomMatchgateOperationsGenerator(RandomOperationsGenerator):
     def __init__(
-            self,
-            wires: Union[Sequence[int], int],
-            n_ops: Optional[int] = None,
-            batch_size: Optional[int] = None,
-            op_types: List[Type[MatchgateOperation]] = (
-                MatchgateOperation,
-                fRXX,
-                fSWAP,
-                fRZZ,
-                fH,
-                fRYY,
-                FermionicSuperposition,
-            ),
-            *,
-            use_cuda: bool = False,
-            seed: Optional[int] = None,
-            output_type: Optional[str] = None,
-            observable: Optional[Any] = None,
-            output_wires: Optional[Sequence[int]] = None,
-            initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
-            **kwargs
+        self,
+        wires: Union[Sequence[int], int],
+        n_ops: Optional[int] = None,
+        batch_size: Optional[int] = None,
+        op_types: List[Type[MatchgateOperation]] = (
+            MatchgateOperation,
+            fRXX,
+            fSWAP,
+            fRZZ,
+            fH,
+            fRYY,
+            FermionicSuperposition,
+        ),
+        *,
+        use_cuda: bool = False,
+        seed: Optional[int] = None,
+        output_type: Optional[str] = None,
+        observable: Optional[Any] = None,
+        output_wires: Optional[Sequence[int]] = None,
+        initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
+        **kwargs,
     ):
         super().__init__(
             wires=wires,
@@ -51,22 +51,22 @@ class RandomMatchgateOperationsGenerator(RandomOperationsGenerator):
             observable=observable,
             output_wires=output_wires,
             initial_state=initial_state,
-            **kwargs
+            **kwargs,
         )
 
 
 class RandomMatchgateHaarOperationsGenerator(RandomMatchgateOperationsGenerator):
     def __init__(
-            self,
-            wires: Union[Sequence[int], int],
-            n_ops: Optional[int] = None,
-            batch_size: Optional[int] = None,
-            *,
-            use_cuda: bool = False,
-            seed: Optional[int] = None,
-            add_swap_noise: bool = True,
-            initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
-            **kwargs
+        self,
+        wires: Union[Sequence[int], int],
+        n_ops: Optional[int] = None,
+        batch_size: Optional[int] = None,
+        *,
+        use_cuda: bool = False,
+        seed: Optional[int] = None,
+        add_swap_noise: bool = True,
+        initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
+        **kwargs,
     ):
         super().__init__(
             wires=wires,
@@ -76,7 +76,7 @@ class RandomMatchgateHaarOperationsGenerator(RandomMatchgateOperationsGenerator)
             use_cuda=use_cuda,
             seed=seed,
             initial_state=initial_state,
-            **kwargs
+            **kwargs,
         )
         self.add_swap_noise = add_swap_noise
 
@@ -117,6 +117,3 @@ class RandomMatchgateHaarOperationsGenerator(RandomMatchgateOperationsGenerator)
         yield qml.BasisState(initial_state, wires=self.wires)
         yield from self.haar_circuit_gen()
         return
-
-
-
