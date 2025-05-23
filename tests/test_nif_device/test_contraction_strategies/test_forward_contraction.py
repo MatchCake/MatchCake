@@ -26,17 +26,20 @@ set_seed(TEST_SEED)
             [MatchgateOperation(mps.Identity, wires=[0, 1])],
             [MatchgateOperation(mps.Identity, wires=[0, 1])],
         ),
-    ]
+    ],
 )
 def test_forward_contraction(operations, expected_new_operations):
     all_wires = set(wire for op in operations for wire in op.wires)
     nif_device_nh = init_nif_device(wires=len(all_wires), contraction_method="forward")
     new_operations = nif_device_nh.contraction_strategy(operations)
 
-    assert len(new_operations) == len(expected_new_operations), "The number of operations is different."
+    assert len(new_operations) == len(
+        expected_new_operations
+    ), "The number of operations is different."
     for new_op, expected_op in zip(new_operations, expected_new_operations):
         np.testing.assert_allclose(
-            new_op.compute_matrix(), expected_op.compute_matrix(),
+            new_op.compute_matrix(),
+            expected_op.compute_matrix(),
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
@@ -47,9 +50,18 @@ def test_forward_contraction(operations, expected_new_operations):
     [
         [MatchgateOperation(mps.Identity, wires=[0, 1])],
         [MatchgateOperation(mps.Identity, wires=[0, 1]) for _ in range(10)],
-        [MatchgateOperation(mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1])],
-        [MatchgateOperation(mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1]) for _ in range(2)],
-    ]
+        [
+            MatchgateOperation(
+                mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1]
+            )
+        ],
+        [
+            MatchgateOperation(
+                mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1]
+            )
+            for _ in range(2)
+        ],
+    ],
 )
 def test_forward_contraction_device_one_line(operations):
     nif_device_nh = init_nif_device(wires=2, contraction_method="forward")
@@ -59,7 +71,8 @@ def test_forward_contraction_device_one_line(operations):
     nif_device.apply(operations)
 
     np.testing.assert_allclose(
-        nif_device.analytic_probability(), nif_device_nh.analytic_probability(),
+        nif_device.analytic_probability(),
+        nif_device_nh.analytic_probability(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -72,7 +85,7 @@ def test_forward_contraction_device_one_line(operations):
         [SptmIdentity(wires=[0, 1]) for _ in range(10)],
         [SptmfRxRx(np.random.random(2), wires=[0, 1])],
         [SptmfRxRx(np.random.random(2), wires=[0, 1]) for _ in range(2)],
-    ]
+    ],
 )
 def test_forward_contraction_device_one_line_sptm(operations):
     nif_device_nh = init_nif_device(wires=2, contraction_method="forward")
@@ -82,7 +95,8 @@ def test_forward_contraction_device_one_line_sptm(operations):
     nif_device.apply(operations)
 
     np.testing.assert_allclose(
-        nif_device.analytic_probability(), nif_device_nh.analytic_probability(),
+        nif_device.analytic_probability(),
+        nif_device_nh.analytic_probability(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -94,14 +108,15 @@ def test_forward_contraction_device_one_line_sptm(operations):
         ([mps.MatchgatePolarParams(r0=1, r1=1).to_numpy() for _ in range(num_gates)], 0)
         for num_gates in 2 ** np.arange(1, 5)
     ]
-    +
-    [
+    + [
         ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], 0)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_gates in 2 ** np.arange(1, 5)
-    ]
+    ],
 )
-def test_multiples_matchgate_probs_with_qbit_device_forward_contraction(params_list, prob_wires):
+def test_multiples_matchgate_probs_with_qbit_device_forward_contraction(
+    params_list, prob_wires
+):
     nif_device, qubit_device = devices_init(wires=2, contraction_method="forward")
 
     nif_qnode = qml.QNode(single_line_matchgates_circuit, nif_device)
@@ -124,18 +139,15 @@ def test_multiples_matchgate_probs_with_qbit_device_forward_contraction(params_l
     )
 
     np.testing.assert_allclose(
-        nif_probs.squeeze(), qubit_probs.squeeze(),
+        nif_probs.squeeze(),
+        qubit_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
 
 
 @pytest.mark.parametrize(
-    "x",
-    [
-        np.random.rand(4)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    "x", [np.random.rand(4) for _ in range(N_RANDOM_TESTS_PER_CASE)]
 )
 def test_forward_contraction_torch_grad(x):
     try:
@@ -148,10 +160,7 @@ def test_forward_contraction_torch_grad(x):
     x = torch.from_numpy(x).float()
     x_grad = x.detach().clone().requires_grad_(True)
 
-    dev = mc.NonInteractingFermionicDevice(
-        wires=n_qubits,
-        contraction_method="forward"
-    )
+    dev = mc.NonInteractingFermionicDevice(wires=n_qubits, contraction_method="forward")
 
     @qml.qnode(dev, interface="torch")
     def circuit(x):
@@ -167,8 +176,9 @@ def test_forward_contraction_torch_grad(x):
         pytest.fail(f"Error during forward pass: {e}")
 
     np.testing.assert_allclose(
-        torch_utils.to_numpy(circuit(x)), torch_utils.to_numpy(circuit(x_grad)),
+        torch_utils.to_numpy(circuit(x)),
+        torch_utils.to_numpy(circuit(x_grad)),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
-        err_msg="Forward pass with and without gradient computation are different."
+        err_msg="Forward pass with and without gradient computation are different.",
     )

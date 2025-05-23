@@ -43,11 +43,12 @@ set_seed(TEST_SEED)
         for batch_size in [1, 4]
         for theta in SptmRzRz.ALLOWED_ANGLES
         for phi in SptmRzRz.ALLOWED_ANGLES
-    ] + [
+    ]
+    + [
         (np.full(batch_size, theta), np.full(batch_size, theta))
         for batch_size in [1, 4]
         for theta in SptmRzRz.EQUAL_ALLOWED_ANGLES
-    ]
+    ],
 )
 def test_matchgate_equal_to_sptm_rzrz(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
@@ -56,7 +57,8 @@ def test_matchgate_equal_to_sptm_rzrz(theta, phi):
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmRzRz(params, wires=[0, 1]).matrix()
     np.testing.assert_allclose(
-        sptm, m_sptm,
+        sptm,
+        m_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=1,
     )
@@ -69,11 +71,12 @@ def test_matchgate_equal_to_sptm_rzrz(theta, phi):
         for batch_size in [1, 4]
         for theta in SptmRyRy.ALLOWED_ANGLES
         for phi in SptmRyRy.ALLOWED_ANGLES
-    ] + [
+    ]
+    + [
         (np.full(batch_size, theta), np.full(batch_size, theta))
         for batch_size in [1, 4]
         for theta in SptmRyRy.EQUAL_ALLOWED_ANGLES
-    ]
+    ],
 )
 def test_matchgate_equal_to_sptm_ryry(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
@@ -82,7 +85,8 @@ def test_matchgate_equal_to_sptm_ryry(theta, phi):
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmRyRy(params, wires=[0, 1]).matrix()
     np.testing.assert_allclose(
-        sptm, m_sptm,
+        sptm,
+        m_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -95,7 +99,7 @@ def test_matchgate_equal_to_sptm_ryry(theta, phi):
         for batch_size in [1, 4]
         for theta in SptmRzRz.ALLOWED_ANGLES
         for phi in SptmRzRz.ALLOWED_ANGLES
-    ]
+    ],
 )
 def test_sptm_rzrz_is_so4(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
@@ -109,7 +113,7 @@ def test_sptm_rzrz_is_so4(theta, phi):
         np.full(batch_size, theta)
         for batch_size in [1, 4]
         for theta in SptmRzRz.EQUAL_ALLOWED_ANGLES
-    ]
+    ],
 )
 def test_sptm_rzrz_is_so4_equal_angles(theta):
     params = np.asarray([theta, theta]).reshape(-1, 2).squeeze()
@@ -124,11 +128,12 @@ def test_sptm_rzrz_is_so4_equal_angles(theta):
         for batch_size in [1, 4]
         for theta in SptmRyRy.ALLOWED_ANGLES
         for phi in SptmRyRy.ALLOWED_ANGLES
-    ] + [
+    ]
+    + [
         (np.full(batch_size, theta), np.full(batch_size, theta))
         for batch_size in [1, 4]
         for theta in SptmRyRy.EQUAL_ALLOWED_ANGLES
-    ]
+    ],
 )
 def test_sptm_ryry_is_so4(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
@@ -141,7 +146,8 @@ def test_matchgate_equal_to_sptm_fhh():
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmFHH(wires=[0, 1]).matrix()
     np.testing.assert_allclose(
-        sptm, m_sptm,
+        sptm,
+        m_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -150,7 +156,8 @@ def test_matchgate_equal_to_sptm_fhh():
 def test_matchgate_equal_to_sptm_identity():
     sptm = SptmIdentity(wires=[0, 1]).matrix()
     np.testing.assert_allclose(
-        sptm, np.eye(4),
+        sptm,
+        np.eye(4),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -160,12 +167,12 @@ def test_matchgate_equal_to_sptm_identity():
     "theta, phi",
     [
         (
-                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze(),
-                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze()
+            np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
+            np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
         )
         for batch_size in [1, 4]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_sptm_ryry_is_so4_out_of_angles(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
@@ -177,12 +184,12 @@ def test_sptm_ryry_is_so4_out_of_angles(theta, phi):
     "theta, phi",
     [
         (
-                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze(),
-                np.random.uniform(-4*np.pi, 4*np.pi, batch_size).squeeze()
+            np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
+            np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
         )
         for batch_size in [1, 4]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_sptm_rzrz_is_so4_out_of_angles(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
@@ -203,7 +210,7 @@ def test_sptm_rzrz_is_so4_out_of_angles(theta, phi):
         [np.pi, 0],
         [0, np.pi],
         [0, 0],
-    ]
+    ],
 )
 def test_sptm_rzrz_is_so4_with_params(params):
     params = np.asarray(params).reshape(-1, 2).squeeze()
@@ -214,10 +221,10 @@ def test_sptm_rzrz_is_so4_with_params(params):
 @pytest.mark.parametrize(
     "angles",
     [
-        np.random.uniform(-10*np.pi, 10*np.pi, batch_size).squeeze()
+        np.random.uniform(-10 * np.pi, 10 * np.pi, batch_size).squeeze()
         for batch_size in [1, 4, (4, 2)]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_sptm_ryry_clip_angles(angles):
     new_angles = SptmRyRy.clip_angles(angles)
@@ -229,10 +236,10 @@ def test_sptm_ryry_clip_angles(angles):
 @pytest.mark.parametrize(
     "angles",
     [
-        np.random.uniform(-10*np.pi, 10*np.pi, batch_size).squeeze()
+        np.random.uniform(-10 * np.pi, 10 * np.pi, batch_size).squeeze()
         for batch_size in [1, 4, (4, 2)]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_sptm_rzrz_clip_angles(angles):
     new_angles = SptmRzRz.clip_angles(angles)
@@ -246,7 +253,8 @@ def test_matchgate_equal_to_sptm_fswap_adjoint():
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmFSwap(wires=[0, 1]).adjoint().matrix()
     np.testing.assert_allclose(
-        sptm, m_sptm,
+        sptm,
+        m_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -257,7 +265,8 @@ def test_matchgate_equal_to_sptm_fhh_adjoint():
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmFHH(wires=[0, 1]).matrix()
     np.testing.assert_allclose(
-        sptm, m_sptm,
+        sptm,
+        m_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -270,7 +279,7 @@ def test_matchgate_equal_to_sptm_fhh_adjoint():
         for batch_size in [1, 4]
         for theta in SptmRzRz.ALLOWED_ANGLES
         for phi in SptmRzRz.ALLOWED_ANGLES
-    ]
+    ],
 )
 def test_matchgate_equal_to_sptm_rzrz_adjoint(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
@@ -279,7 +288,8 @@ def test_matchgate_equal_to_sptm_rzrz_adjoint(theta, phi):
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmRzRz(params, wires=[0, 1]).adjoint().matrix()
     np.testing.assert_allclose(
-        sptm, m_sptm,
+        sptm,
+        m_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=1,
     )
@@ -292,7 +302,7 @@ def test_matchgate_equal_to_sptm_rzrz_adjoint(theta, phi):
         for batch_size in [1, 4]
         for theta in SptmRyRy.ALLOWED_ANGLES
         for phi in SptmRyRy.ALLOWED_ANGLES
-    ]
+    ],
 )
 def test_matchgate_equal_to_sptm_ryry_adjoint(theta, phi):
     params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
@@ -301,7 +311,8 @@ def test_matchgate_equal_to_sptm_ryry_adjoint(theta, phi):
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmRyRy(params, wires=[0, 1]).adjoint().matrix()
     np.testing.assert_allclose(
-        sptm, m_sptm,
+        sptm,
+        m_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -310,17 +321,16 @@ def test_matchgate_equal_to_sptm_ryry_adjoint(theta, phi):
 @pytest.mark.parametrize(
     "matrix",
     [
-        np.random.random((batch_size, 2*size, 2*size))
+        np.random.random((batch_size, 2 * size, 2 * size))
         for batch_size in [1, 4]
-        for size in np.arange(2, 2+N_RANDOM_TESTS_PER_CASE)
-    ]
+        for size in np.arange(2, 2 + N_RANDOM_TESTS_PER_CASE)
+    ],
 )
 def test_sptm_sum_gradient_check(matrix):
     def sptm_sum(p):
         return torch.sum(
             SingleParticleTransitionMatrixOperation(
-                matrix=p,
-                wires=np.arange(p.shape[-1] // 2)
+                matrix=p, wires=np.arange(p.shape[-1] // 2)
             ).matrix()
         )
 
@@ -335,17 +345,16 @@ def test_sptm_sum_gradient_check(matrix):
 @pytest.mark.parametrize(
     "matrix",
     [
-        np.random.random((batch_size, 2*size, 2*size))
+        np.random.random((batch_size, 2 * size, 2 * size))
         for batch_size in [1, 4]
-        for size in np.arange(2, 2+N_RANDOM_TESTS_PER_CASE)
-    ]
+        for size in np.arange(2, 2 + N_RANDOM_TESTS_PER_CASE)
+    ],
 )
 def test_sptm_init_gradient_check(matrix):
     def sptm_init(p):
         return SingleParticleTransitionMatrixOperation(
-                    matrix=p,
-                    wires=np.arange(p.shape[-1] // 2)
-                ).matrix()
+            matrix=p, wires=np.arange(p.shape[-1] // 2)
+        ).matrix()
 
     assert torch.autograd.gradcheck(
         sptm_init,
@@ -358,16 +367,18 @@ def test_sptm_init_gradient_check(matrix):
 @pytest.mark.parametrize(
     "matrix",
     [
-        np.random.random((batch_size, 2*size, 2*size))
+        np.random.random((batch_size, 2 * size, 2 * size))
         for batch_size in [1, 4]
-        for size in np.arange(2, 2+N_RANDOM_TESTS_PER_CASE)
-    ]
+        for size in np.arange(2, 2 + N_RANDOM_TESTS_PER_CASE)
+    ],
 )
 def test_sptm_copy_gradient_check(matrix):
     def func(p):
         wires = np.arange(0, p.shape[-1] // 2, dtype=int)
         op = SingleParticleTransitionMatrixOperation(matrix=p, wires=wires)
-        new_op = SingleParticleTransitionMatrixOperation(matrix=op.matrix(), wires=op.wires)
+        new_op = SingleParticleTransitionMatrixOperation(
+            matrix=op.matrix(), wires=op.wires
+        )
         return new_op.matrix()
 
     assert torch.autograd.gradcheck(

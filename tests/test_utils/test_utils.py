@@ -13,7 +13,9 @@ from ..configs import (
     RTOL_MATRIX_COMPARISON,
     ATOL_SCALAR_COMPARISON,
     RTOL_SCALAR_COMPARISON,
-    set_seed, ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON,
+    set_seed,
+    ATOL_APPROX_COMPARISON,
+    RTOL_APPROX_COMPARISON,
 )
 
 set_seed(TEST_SEED)
@@ -24,37 +26,21 @@ set_seed(TEST_SEED)
     [
         (
             np.array([1]),
-            np.array([
-                [0, 1],
-                [-1, 0],
-            ])
+            np.array(
+                [
+                    [0, 1],
+                    [-1, 0],
+                ]
+            ),
         ),
-        (
-            np.array([1, 2]),
-            ValueError
-        ),
-        (
-            np.array([1, 2, 3]),
-            np.array([
-                [0, 1, 2],
-                [-1, 0, 3],
-                [-2, -3, 0]
-            ])
-        ),
-        (
-            np.array([1, 2, 3, 4]),
-            ValueError
-        ),
+        (np.array([1, 2]), ValueError),
+        (np.array([1, 2, 3]), np.array([[0, 1, 2], [-1, 0, 3], [-2, -3, 0]])),
+        (np.array([1, 2, 3, 4]), ValueError),
         (
             np.array([1, 2, 3, 4, 5, 6]),
-            np.array([
-                [0, 1, 2, 3],
-                [-1, 0, 4, 5],
-                [-2, -4, 0, 6],
-                [-3, -5, -6, 0]
-            ])
+            np.array([[0, 1, 2, 3], [-1, 0, 4, 5], [-2, -4, 0, 6], [-3, -5, -6, 0]]),
         ),
-    ]
+    ],
 )
 def test_skew_antisymmetric_vector_to_matrix(input_vector, target_matrix):
     if isinstance(target_matrix, np.ndarray):
@@ -87,12 +73,13 @@ def test_skew_antisymmetric_vector_to_matrix(input_vector, target_matrix):
         (np.array([1, 0, 1, 0, 0, 1, 0, 1]), 2),
         (np.array([1, 0, 0, 1, 0, 1, 0, 1]), 3),
         (np.array([0, 1, 0, 1, 0, 1, 0, 1]), 4),
-    ]
+    ],
 )
 def test_get_hamming_weight(state, hamming_weight):
     out_hamming_weight = utils.get_hamming_weight(state)
     np.testing.assert_allclose(
-        out_hamming_weight, hamming_weight,
+        out_hamming_weight,
+        hamming_weight,
         atol=ATOL_SCALAR_COMPARISON,
         rtol=RTOL_SCALAR_COMPARISON,
     )
@@ -102,31 +89,35 @@ def test_get_hamming_weight(state, hamming_weight):
     "coeffs,hamiltonian",
     [
         (
-            mps.MatchgateHamiltonianCoefficientsParams(h0=1.0, h1=1.0, h2=1.0, h3=1.0, h4=1.0, h5=1.0),
-            -2j*np.array([
-                [2j, 0, 0, 2j],
-                [0, 0, -2, 0],
-                [0, 2, 0, 0],
-                [2j, 0, 0, -2j],
-            ])
+            mps.MatchgateHamiltonianCoefficientsParams(
+                h0=1.0, h1=1.0, h2=1.0, h3=1.0, h4=1.0, h5=1.0
+            ),
+            -2j
+            * np.array(
+                [
+                    [2j, 0, 0, 2j],
+                    [0, 0, -2, 0],
+                    [0, 2, 0, 0],
+                    [2j, 0, 0, -2j],
+                ]
+            ),
         ),
-    ]
+    ],
 )
 def test_get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs, hamiltonian):
-    out_hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs.to_matrix())
+    out_hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(
+        coeffs.to_matrix()
+    )
     np.testing.assert_allclose(
-        out_hamiltonian.squeeze(), hamiltonian.squeeze(),
+        out_hamiltonian.squeeze(),
+        hamiltonian.squeeze(),
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
 
 
 @pytest.mark.parametrize(
-    "coefficients",
-    [
-        np.random.rand(4)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    "coefficients", [np.random.rand(4) for _ in range(N_RANDOM_TESTS_PER_CASE)]
 )
 def test_decompose_matrix_into_majoranas(coefficients):
     matrix = np.zeros((coefficients.size, coefficients.size), dtype=complex)
@@ -136,18 +127,15 @@ def test_decompose_matrix_into_majoranas(coefficients):
 
     out_coefficients = utils.decompose_matrix_into_majoranas(matrix)
     np.testing.assert_allclose(
-        out_coefficients, coefficients,
+        out_coefficients,
+        coefficients,
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
 
 
 @pytest.mark.parametrize(
-    "matrix",
-    [
-        np.random.rand(4, 4)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    "matrix", [np.random.rand(4, 4) for _ in range(N_RANDOM_TESTS_PER_CASE)]
 )
 def test_make_transition_matrix_from_action_matrix(matrix):
     t_matrix = utils.make_transition_matrix_from_action_matrix(matrix)
@@ -156,7 +144,8 @@ def test_make_transition_matrix_from_action_matrix(matrix):
     reconstructed_matrix[:, ::2] = 2 * np.real(t_matrix).T
     reconstructed_matrix[:, 1::2] = 2 * np.imag(t_matrix).T
     np.testing.assert_allclose(
-        reconstructed_matrix, matrix,
+        reconstructed_matrix,
+        matrix,
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
@@ -168,31 +157,35 @@ def test_make_transition_matrix_from_action_matrix(matrix):
         expm(np.random.randn(batch_size, 2 * size, 2 * size))
         for size in np.linspace(1, 6, num=N_RANDOM_TESTS_PER_CASE, dtype=int)
         for batch_size in [1, 4]
-    ]
+    ],
 )
 def test_make_transition_matrix_from_action_matrix_gradients(matrix):
     params = torch.from_numpy(matrix).requires_grad_()
     assert gradcheck(
-        utils.make_transition_matrix_from_action_matrix, (params, ),
+        utils.make_transition_matrix_from_action_matrix,
+        (params,),
         eps=1e-3,
         atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON
+        rtol=RTOL_APPROX_COMPARISON,
     )
 
 
 @pytest.mark.parametrize(
     "binary_string,binary_vector",
     [
-        (''.join(str(x) for x in vector), vector)
+        ("".join(str(x) for x in vector), vector)
         for vector_length in range(1, 10)
-        for vector in np.random.randint(0, 2, size=(N_RANDOM_TESTS_PER_CASE, vector_length))
-    ]
+        for vector in np.random.randint(
+            0, 2, size=(N_RANDOM_TESTS_PER_CASE, vector_length)
+        )
+    ],
 )
 def test_binary_string_to_vector(binary_string, binary_vector):
     binary_vector = np.asarray(binary_vector)
     out_binary_vector = utils.binary_string_to_vector(binary_string)
     np.testing.assert_allclose(
-        out_binary_vector, binary_vector,
+        out_binary_vector,
+        binary_vector,
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
@@ -227,7 +220,7 @@ def test_binary_string_to_vector(binary_string, binary_vector):
         (np.array([0, 0, 0, 0, 0, 1, 0, 0]), "101"),
         (np.array([0, 0, 0, 0, 0, 0, 1, 0]), "110"),
         (np.array([0, 0, 0, 0, 0, 0, 0, 1]), "111"),
-    ]
+    ],
 )
 def test_state_to_binary_state(inputs, out_state):
     if isinstance(inputs, tuple):
@@ -235,6 +228,3 @@ def test_state_to_binary_state(inputs, out_state):
     else:
         binary_state = utils.state_to_binary_string(inputs)
     assert binary_state == out_state, f"{binary_state} != {out_state}"
-
-
-
