@@ -10,7 +10,7 @@ class RandomOperationsGenerator:
         wires: Union[Sequence[int], int],
         n_ops: Optional[int] = None,
         batch_size: Optional[int] = None,
-        op_types: List[Type[Any]] = (),
+        op_types: Sequence[Type[Any]] = (),
         *,
         use_cuda: bool = False,
         seed: Optional[int] = None,

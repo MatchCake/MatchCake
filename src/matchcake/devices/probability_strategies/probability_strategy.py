@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable
+from typing import Callable, List
 import numpy as np
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
@@ -9,7 +9,7 @@ from pythonbasictools.multiprocessing_tools import apply_func_multiprocess
 
 class ProbabilityStrategy(ABC):
     NAME: str = "ProbabilityStrategy"
-    REQUIRES_KWARGS = []
+    REQUIRES_KWARGS: List[str] = []
 
     def check_required_kwargs(self, kwargs):
         for kwarg in self.REQUIRES_KWARGS:

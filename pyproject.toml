@@ -105,6 +105,8 @@ module = [
     "pennylane.pulse",
     "pennylane.measurements",
     "pennylane.ops",
+    "pennylane.numpy",
+    "pennylane.ops.op_math.linear_combination",
     # Scikit-learn
     "sklearn",
     "sklearn.base",
@@ -112,10 +114,25 @@ module = [
     "sklearn.utils.multiclass",
     "scipy",
     "scipy.optimize",
+    "sklearn.utils.estimator_checks",
+    # Scipy
+    "scipy.linalg",
+    # Seaborn
+    "seaborn",
     # PythonBasicTools
     "pythonbasictools",
+    "pythonbasictools.multiprocessing_tools",
+    # Others
     "tqdm",
     "joblib",
     "psutil",
+    "umap",
+    "tensorflow",
+    "jax.scipy.linalg",
+    "pfapack.pfaffian",
+    "torch_pfaffian",
+    "sympy",
+    "networkx",
+    "opt_einsum",
 ]
 ignore_missing_imports = true
