@@ -67,7 +67,7 @@ jobs:
         directory: dist
 
     - name: Create Tag and Release
-      id: version
+      id: create_tag_and_release
       uses: anothrNick/github-tag-action@2.12.0
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
