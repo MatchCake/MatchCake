@@ -31,7 +31,17 @@ jobs:
         pip install pytest pytest-cov coverage-lcov pytest_json_report
         pip install poetry
         poetry install --no-interaction --no-ansi
-    - name: Test with pytest
+    - name: Test Linting
+      run: |
+        . ./venv/bin/activate
+        black src/matchcake --check --diff
+        black tests --check --diff
+    - name: Test Typing
+      run: |
+        . ./venv/bin/activate
+        mypy src/matchcake
+        mypy tests
+    - name: Test Unittests with pytest
       run: |
         . ./venv/bin/activate
         python run_pytests.py tests --N_RANDOM_TESTS_PER_CASE=3 --run_slow=False
@@ -54,7 +64,7 @@ jobs:
         pip install pytest pytest-cov coverage-lcov pytest_json_report
         pip install poetry
         poetry install --no-interaction --no-ansi
-    - name: Test with pytest
+    - name: Test Unittests with pytest
       run: |
         . ./venv/Scripts/activate
         python run_pytests.py tests --N_RANDOM_TESTS_PER_CASE=3 --run_slow=False
