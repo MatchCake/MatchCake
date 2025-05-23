@@ -244,7 +244,7 @@ class MatchgateParams:
         for i, attr in enumerate(self.ATTRS):
             attr_values = kwargs.get(attr, values[..., i])
             with warnings.catch_warnings():
-                warnings.simplefilter("ignore", category=np.ComplexWarning)
+                warnings.simplefilter("ignore", category=np.exceptions.ComplexWarning)
                 ones = utils.math.convert_and_cast_like(qml.math.ones_like(values[..., i]), attr_values)
             value = attr_values * ones
             attr_str = self._ATTR_FORMAT.format(attr)

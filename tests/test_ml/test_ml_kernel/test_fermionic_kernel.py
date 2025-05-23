@@ -80,7 +80,7 @@ def test_fermionic_pqc_n_gates(
     fkernel.fit(x, y)
     fkernel.parameters = np.zeros(n_features)
     fkernel.single_distance(x[0], x[-1])
-    qscript = fkernel.qnode.tape.expand()
+    qscript = fkernel.qnode._tape.expand()
     n_gates = len(qscript.operations) // 2  # remove the adjoint gates
     gates = [op.name for op in qscript.operations[:n_gates]]
     rotations = fkernel.rotations.split(',')
@@ -208,7 +208,7 @@ def test_fermionic_pqc_arrangement_of_gates(
     fkernel.fit(x, y)
     fkernel.parameters = np.zeros(n_features)
     fkernel.single_distance(x[0], x[-1])
-    qscript = fkernel.qnode.tape.expand()
+    qscript = fkernel.qnode._tape.expand()
     n_gates = len(qscript.operations) // 2  # remove the adjoint gates
     gates = [op for op in qscript.operations[:n_gates]]
     assert len(gates) == len(expected_arrangement), (

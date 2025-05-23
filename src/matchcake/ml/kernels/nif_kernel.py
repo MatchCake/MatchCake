@@ -4,9 +4,14 @@ from typing import Optional
 import numpy as np
 import pennylane as qml
 from matplotlib import pyplot as plt
-from pennylane import numpy as pnp
 from pennylane.ops.qubit.observables import BasisStateProjector
-from pennylane.templates.broadcast import PATTERN_TO_NUM_PARAMS
+try:
+    from pennylane.templates.broadcast import PATTERN_TO_NUM_PARAMS
+except ImportError:
+    # Hotfix for pennylane>0.39.0
+    PATTERN_TO_NUM_PARAMS = {
+        "pyramid": lambda w: 0 if len(w) in [0, 1] else sum(i + 1 for i in range(len(w) // 2)),
+    }
 from pennylane.wires import Wires
 
 from .kernel_utils import mrot_zz_template
