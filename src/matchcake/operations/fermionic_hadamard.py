@@ -13,21 +13,22 @@ class FermionicHadamard(MatchgateOperation):
     @classmethod
     def random(cls, wires: Wires, batch_size=None, **kwargs):
         return cls(wires=wires, **kwargs)
-    
-    def __init__(
-            self,
-            wires=None,
-            id=None,
-            **kwargs
-    ):
+
+    def __init__(self, wires=None, id=None, **kwargs):
         inv_sqrt_2 = 1 / np.sqrt(2)
         m_params = mps.MatchgateStandardParams(
-            a=inv_sqrt_2, b=inv_sqrt_2,
-            c=inv_sqrt_2, d=-inv_sqrt_2,
-            w=inv_sqrt_2, x=inv_sqrt_2,
-            y=inv_sqrt_2, z=-inv_sqrt_2,
+            a=inv_sqrt_2,
+            b=inv_sqrt_2,
+            c=inv_sqrt_2,
+            d=-inv_sqrt_2,
+            w=inv_sqrt_2,
+            x=inv_sqrt_2,
+            y=inv_sqrt_2,
+            z=-inv_sqrt_2,
         )
-        in_params = mps.MatchgatePolarParams.parse_from_params(m_params, force_cast_to_real=True)
+        in_params = mps.MatchgatePolarParams.parse_from_params(
+            m_params, force_cast_to_real=True
+        )
         kwargs["in_param_type"] = mps.MatchgatePolarParams
         super().__init__(in_params, wires=wires, id=id, **kwargs)
 

@@ -12,7 +12,9 @@ parameters_initialisation_strategy_map = {
 }
 
 
-def get_parameters_initialisation_strategy(name: Optional[str]) -> ParametersInitialisationStrategy:
+def get_parameters_initialisation_strategy(
+    name: Optional[str],
+) -> ParametersInitialisationStrategy:
     name = str(name).lower().strip()
     if name not in parameters_initialisation_strategy_map:
         raise ValueError(

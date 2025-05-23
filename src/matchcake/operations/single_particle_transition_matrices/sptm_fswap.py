@@ -18,7 +18,7 @@ class SptmFSwap(SingleParticleTransitionMatrixOperation):
         matrix = np.zeros((size, size), dtype=int)
 
         first_idx = 2 * (wire1 - wire0)
-        matrix[:2, first_idx: first_idx + 2] = np.eye(2)
+        matrix[:2, first_idx : first_idx + 2] = np.eye(2)
 
         rows, cols = np.where(np.eye(*matrix.shape, k=-2))
         matrix[rows, cols] = 1
@@ -30,4 +30,3 @@ class SptmFSwap(SingleParticleTransitionMatrixOperation):
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
         return self
-

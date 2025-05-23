@@ -1,10 +1,15 @@
 from pennylane.wires import Wires
 
 from .contraction_strategy import ContractionStrategy
-from .contraction_container import _ContractionMatchgatesContainer, _ContractionMatchgatesContainerAddException
+from .contraction_container import (
+    _ContractionMatchgatesContainer,
+    _ContractionMatchgatesContainerAddException,
+)
 from ..device_utils import circuit_or_fop_matmul
 from ...operations.matchgate_operation import MatchgateOperation
-from ...operations.single_particle_transition_matrices import SingleParticleTransitionMatrixOperation
+from ...operations.single_particle_transition_matrices import (
+    SingleParticleTransitionMatrixOperation,
+)
 from ...utils.math import circuit_matmul
 
 
@@ -15,7 +20,8 @@ class _ForwardMatchgatesContainer(_ContractionMatchgatesContainer):
         is_any_wire_in_container = any([w in self.all_cs_wires for w in wires.labels])
         if is_any_wire_in_container:
             w_list = [
-                w for w, op in self.items()
+                w
+                for w, op in self.items()
                 if any([lbl in wires.labels for lbl in w.labels])
             ]
             op_list = [self.op_container.pop(w) for w in w_list]

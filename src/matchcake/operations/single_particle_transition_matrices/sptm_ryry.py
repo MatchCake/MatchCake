@@ -17,17 +17,12 @@ class SptmRyRy(SingleParticleTransitionMatrixOperation):
         rn_gen = np.random.default_rng(seed)
         return rn_gen.choice(cls.ALLOWED_ANGLES, size=params_shape)
 
-    def __init__(
-            self,
-            params,
-            wires=None,
-            *,
-            id=None,
-            **kwargs
-    ):
+    def __init__(self, params, wires=None, *, id=None, **kwargs):
         params_shape = qml.math.shape(params)
         if params_shape[-1] != 2:
-            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
+            raise ValueError(
+                f"Invalid number of parameters: {params_shape[-1]}. Expected 2."
+            )
 
         if len(params_shape) == 1:
             matrix = np.zeros((4, 4), dtype=complex)
@@ -37,7 +32,9 @@ class SptmRyRy(SingleParticleTransitionMatrixOperation):
             raise ValueError(f"Invalid shape for the parameters: {params_shape}")
 
         if params_shape[-1] != 2:
-            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
+            raise ValueError(
+                f"Invalid number of parameters: {params_shape[-1]}. Expected 2."
+            )
         if self.hyperparameters.get("check_angles", self.DEFAULT_CHECK_ANGLES):
             self.check_angles(params)
         if self.hyperparameters.get("clip_angles", self.DEFAULT_CLIP_ANGLES):
@@ -59,4 +56,3 @@ class SptmRyRy(SingleParticleTransitionMatrixOperation):
         matrix[..., 3, 0] = qml.math.sin(theta_minus_phi)
         matrix[..., 3, 3] = qml.math.cos(theta_minus_phi)
         super().__init__(matrix, wires=wires, id=id, **kwargs)
-

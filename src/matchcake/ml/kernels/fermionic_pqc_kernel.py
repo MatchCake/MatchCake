@@ -3,17 +3,29 @@ from typing import Optional
 import numpy as np
 import pennylane as qml
 from pennylane.ops.qubit.observables import BasisStateProjector
+
 try:
     from pennylane.templates.broadcast import PATTERN_TO_WIRES
 except ImportError:
     # Hotfix for pennylane>0.39.0
     PATTERN_TO_WIRES = {
-        "double": lambda wires: [wires.subset([i, i + 1]) for i in range(0, len(wires) - 1, 2)],
-        "double_odd": lambda wires: [wires.subset([i, i + 1]) for i in range(1, len(wires) - 1, 2)],
+        "double": lambda wires: [
+            wires.subset([i, i + 1]) for i in range(0, len(wires) - 1, 2)
+        ],
+        "double_odd": lambda wires: [
+            wires.subset([i, i + 1]) for i in range(1, len(wires) - 1, 2)
+        ],
     }
 
 from .nif_kernel import NIFKernel
-from ...operations import MAngleEmbedding, fSWAP, fH, SptmFSwap, SptmAngleEmbedding, SptmFHH
+from ...operations import (
+    MAngleEmbedding,
+    fSWAP,
+    fH,
+    SptmFSwap,
+    SptmAngleEmbedding,
+    SptmFHH,
+)
 
 
 class FermionicPQCKernel(NIFKernel):
@@ -36,11 +48,7 @@ class FermionicPQCKernel(NIFKernel):
 
     available_entangling_mth = {"fswap", "identity", "hadamard"}
 
-    def __init__(
-            self,
-            size: Optional[int] = None,
-            **kwargs
-    ):
+    def __init__(self, size: Optional[int] = None, **kwargs):
         super().__init__(size=size, **kwargs)
         self._data_scaling = kwargs.get("data_scaling", np.pi / 2)
         self._parameter_scaling = kwargs.get("parameter_scaling", np.pi / 2)
@@ -70,18 +78,23 @@ class FermionicPQCKernel(NIFKernel):
 
     def initialize_parameters(self):
         super().initialize_parameters()
-        self._depth = self.kwargs.get("depth", int(max(1, np.ceil(self.X_.shape[-1] / self.size))))
+        self._depth = self.kwargs.get(
+            "depth", int(max(1, np.ceil(self.X_.shape[-1] / self.size)))
+        )
         self.parameters = self.parameters_rng.uniform(0.0, 1.0, size=self.X_.shape[-1])
         if self.qnode.interface == "torch":
             import torch
-            self.parameters = torch.from_numpy(self.parameters).float().requires_grad_(True)
+
+            self.parameters = (
+                torch.from_numpy(self.parameters).float().requires_grad_(True)
+            )
 
     def ansatz(self, x):
         wires_double = PATTERN_TO_WIRES["double"](self.wires)
         wires_double_odd = PATTERN_TO_WIRES["double_odd"](self.wires)
         wires_patterns = [wires_double, wires_double_odd]
         for layer in range(self.depth):
-            sub_x = x[..., layer * self.size: (layer + 1) * self.size]
+            sub_x = x[..., layer * self.size : (layer + 1) * self.size]
             SptmAngleEmbedding(sub_x, wires=self.wires, rotations=self.rotations)
             fcnot_wires = wires_patterns[layer % len(wires_patterns)]
             for wires in fcnot_wires:
@@ -92,7 +105,9 @@ class FermionicPQCKernel(NIFKernel):
                 elif self._entangling_mth == "identity":
                     pass
                 else:
-                    raise ValueError(f"Unknown entangling method: {self._entangling_mth}")
+                    raise ValueError(
+                        f"Unknown entangling method: {self._entangling_mth}"
+                    )
         return
 
     def circuit(self, x0, x1):
@@ -100,7 +115,9 @@ class FermionicPQCKernel(NIFKernel):
         theta_x1 = self._parameter_scaling * self.parameters + self.data_scaling * x1
         self.ansatz(theta_x0)
         qml.adjoint(self.ansatz)(theta_x1)
-        projector: BasisStateProjector = qml.Projector(np.zeros(self.size), wires=self.wires)
+        projector: BasisStateProjector = qml.Projector(
+            np.zeros(self.size), wires=self.wires
+        )
         return qml.expval(projector)
 
 
@@ -111,7 +128,9 @@ class StateVectorFermionicPQCKernel(FermionicPQCKernel):
         self._device_kwargs = kwargs.get("device_kwargs", {})
 
     def pre_initialize(self):
-        self._device = qml.device(self._device_name, wires=self.size, **self._device_kwargs)
+        self._device = qml.device(
+            self._device_name, wires=self.size, **self._device_kwargs
+        )
         self._qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
         if self.simpify_qnode:
             self._qnode = qml.simplify(self.qnode)
@@ -121,7 +140,7 @@ class StateVectorFermionicPQCKernel(FermionicPQCKernel):
         wires_double_odd = PATTERN_TO_WIRES["double_odd"](self.wires)
         wires_patterns = [wires_double, wires_double_odd]
         for layer in range(self.depth):
-            sub_x = x[..., layer * self.size: (layer + 1) * self.size]
+            sub_x = x[..., layer * self.size : (layer + 1) * self.size]
             MAngleEmbedding(sub_x, wires=self.wires, rotations=self.rotations)
             fcnot_wires = wires_patterns[layer % len(wires_patterns)]
             for wires in fcnot_wires:
@@ -132,5 +151,7 @@ class StateVectorFermionicPQCKernel(FermionicPQCKernel):
                 elif self._entangling_mth == "identity":
                     pass
                 else:
-                    raise ValueError(f"Unknown entangling method: {self._entangling_mth}")
+                    raise ValueError(
+                        f"Unknown entangling method: {self._entangling_mth}"
+                    )
         return

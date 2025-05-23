@@ -9,8 +9,7 @@ from .forward_strategy import ForwardContractionStrategy
 from ...utils import get_all_subclasses
 
 contraction_strategy_map = {
-    _cls.NAME.lower().strip(): _cls
-    for _cls in get_all_subclasses(ContractionStrategy)
+    _cls.NAME.lower().strip(): _cls for _cls in get_all_subclasses(ContractionStrategy)
 }
 
 

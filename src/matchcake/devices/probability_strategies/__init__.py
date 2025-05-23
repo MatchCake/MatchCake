@@ -5,8 +5,7 @@ from .lookup_table_strategy_v2 import LookupTableStrategyV2
 from ...utils import get_all_subclasses
 
 probability_strategy_map = {
-    _cls.NAME.lower().strip(): _cls
-    for _cls in get_all_subclasses(ProbabilityStrategy)
+    _cls.NAME.lower().strip(): _cls for _cls in get_all_subclasses(ProbabilityStrategy)
 }
 
 

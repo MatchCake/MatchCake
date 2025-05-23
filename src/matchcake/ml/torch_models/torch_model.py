@@ -11,7 +11,9 @@ import tqdm
 from matplotlib import pyplot as plt
 
 from ..optimizer_strategies import get_optimizer_strategy
-from ..parameters_initialisation_strategies import get_parameters_initialisation_strategy
+from ..parameters_initialisation_strategies import (
+    get_parameters_initialisation_strategy,
+)
 from ...templates import TensorLike
 from ...utils import torch_utils
 import torch
@@ -29,9 +31,19 @@ class TorchModel(nn.Module):
     DEFAULT_SAVE_DIR = None
 
     ATTRS_TO_STATE_DICT = []
-    ATTRS_TO_HPARAMS = ["use_cuda", "seed", "max_grad_norm", "learning_rate", "optimizer", "params_init", "fit_patience"]
+    ATTRS_TO_HPARAMS = [
+        "use_cuda",
+        "seed",
+        "max_grad_norm",
+        "learning_rate",
+        "optimizer",
+        "params_init",
+        "fit_patience",
+    ]
     ATTRS_TO_PICKLE = ["fit_time", "start_fit_time", "end_fit_time"]
-    ATTRS_TO_JSON = ["fit_history",]
+    ATTRS_TO_JSON = [
+        "fit_history",
+    ]
     MODEL_NAME = "TorchModel"
     DEFAULT_LOG_FUNC = print
 
@@ -42,7 +54,9 @@ class TorchModel(nn.Module):
     DEFAULT_FIT_PATIENCE = 10
 
     @classmethod
-    def add_model_specific_args(cls, parent_parser: Optional[argparse.ArgumentParser] = None):
+    def add_model_specific_args(
+        cls, parent_parser: Optional[argparse.ArgumentParser] = None
+    ):
         if parent_parser is None:
             parent_parser = argparse.ArgumentParser()
         parser = parent_parser.add_argument_group("Torch Model")
@@ -111,34 +125,36 @@ class TorchModel(nn.Module):
         return save_dir
 
     def __init__(
-            self,
-            *,
-            use_cuda: bool = DEFAULT_USE_CUDA,
-            seed: int = DEFAULT_SEED,
-            save_root: Optional[str] = DEFAULT_SAVE_ROOT,
-            save_dir: Optional[str] = DEFAULT_SAVE_DIR,
-            max_grad_norm: float = DEFAULT_MAX_GRAD_NORM,
-            learning_rate: float = DEFAULT_LEARNING_RATE,
-            optimizer: str = DEFAULT_OPTIMIZER,
-            params_init: str = DEFAULT_PARAMETERS_INITIALISATION_STRATEGY,
-            fit_patience: Optional[int] = DEFAULT_FIT_PATIENCE,
-            **kwargs
+        self,
+        *,
+        use_cuda: bool = DEFAULT_USE_CUDA,
+        seed: int = DEFAULT_SEED,
+        save_root: Optional[str] = DEFAULT_SAVE_ROOT,
+        save_dir: Optional[str] = DEFAULT_SAVE_DIR,
+        max_grad_norm: float = DEFAULT_MAX_GRAD_NORM,
+        learning_rate: float = DEFAULT_LEARNING_RATE,
+        optimizer: str = DEFAULT_OPTIMIZER,
+        params_init: str = DEFAULT_PARAMETERS_INITIALISATION_STRATEGY,
+        fit_patience: Optional[int] = DEFAULT_FIT_PATIENCE,
+        **kwargs,
     ):
         super().__init__()
         self.log_func = kwargs.pop("log_func", self.DEFAULT_LOG_FUNC)
         self.use_cuda = use_cuda
         self.seed = seed
         self.save_root = save_root
-        self.save_dir = save_dir or self.default_save_dir_from_args({
-            "use_cuda": use_cuda,
-            "seed": seed,
-            "max_grad_norm": max_grad_norm,
-            "learning_rate": learning_rate,
-            "optimizer": optimizer,
-            "params_init": params_init,
-            "fit_patience": fit_patience,
-            **kwargs
-        })
+        self.save_dir = save_dir or self.default_save_dir_from_args(
+            {
+                "use_cuda": use_cuda,
+                "seed": seed,
+                "max_grad_norm": max_grad_norm,
+                "learning_rate": learning_rate,
+                "optimizer": optimizer,
+                "params_init": params_init,
+                "fit_patience": fit_patience,
+                **kwargs,
+            }
+        )
         self.max_grad_norm = max_grad_norm
         self.learning_rate = learning_rate
         self.optimizer = optimizer
@@ -149,7 +165,9 @@ class TorchModel(nn.Module):
         self.show_progress = kwargs.get("show_progress", False)
 
         self.optimizer_strategy = get_optimizer_strategy(self.optimizer)
-        self.parameters_initialisation_strategy = get_parameters_initialisation_strategy(self.params_init)
+        self.parameters_initialisation_strategy = (
+            get_parameters_initialisation_strategy(self.params_init)
+        )
 
         self.parameters_rng = np.random.default_rng(seed=self.seed)
         self.torch_rng = torch.Generator()
@@ -194,8 +212,10 @@ class TorchModel(nn.Module):
     def torch_device(self):
         return torch.device("cuda" if self.use_cuda else "cpu")
 
-    def state_dict(self, *args, destination=None, prefix='', keep_vars=False):
-        state = super().state_dict(*args, destination=destination, prefix=prefix, keep_vars=keep_vars)
+    def state_dict(self, *args, destination=None, prefix="", keep_vars=False):
+        state = super().state_dict(
+            *args, destination=destination, prefix=prefix, keep_vars=keep_vars
+        )
         for attr in self.ATTRS_TO_STATE_DICT:
             state[attr] = getattr(self, attr)
         return state
@@ -257,7 +277,10 @@ class TorchModel(nn.Module):
 
     def save_pickles(self) -> "TorchModel":
         os.makedirs(self.save_path, exist_ok=True)
-        joblib.dump({attr: getattr(self, attr) for attr in self.ATTRS_TO_PICKLE}, self.pickles_path)
+        joblib.dump(
+            {attr: getattr(self, attr) for attr in self.ATTRS_TO_PICKLE},
+            self.pickles_path,
+        )
         return self
 
     def save_jsons(self) -> "TorchModel":
@@ -288,10 +311,7 @@ class TorchModel(nn.Module):
         return self
 
     def load(
-            self,
-            model_path: Optional[str] = None,
-            load_hparams: bool = True,
-            **kwargs
+        self, model_path: Optional[str] = None, load_hparams: bool = True, **kwargs
     ) -> "TorchModel":
         if model_path is None:
             model_path = self.model_path
@@ -309,10 +329,7 @@ class TorchModel(nn.Module):
         return self
 
     def load_if_exists(
-            self,
-            model_path: Optional[str] = None,
-            load_hparams: bool = True,
-            **kwargs
+        self, model_path: Optional[str] = None, load_hparams: bool = True, **kwargs
     ) -> "TorchModel":
         if model_path is None:
             model_path = self.model_path
@@ -326,11 +343,11 @@ class TorchModel(nn.Module):
 
     @classmethod
     def from_folder(
-            cls,
-            folder: str,
-            model_args: Optional[Sequence[Any]] = None,
-            model_kwargs: Optional[Dict[str, Any]] = None,
-            **kwargs
+        cls,
+        folder: str,
+        model_args: Optional[Sequence[Any]] = None,
+        model_kwargs: Optional[Dict[str, Any]] = None,
+        **kwargs,
     ) -> "TorchModel":
         model = cls(*model_args, **model_kwargs)
         model.save_root = os.path.dirname(folder)
@@ -341,11 +358,11 @@ class TorchModel(nn.Module):
 
     @classmethod
     def from_folder_or_new(
-            cls,
-            folder: str,
-            model_args: Optional[Sequence[Any]] = None,
-            model_kwargs: Optional[Dict[str, Any]] = None,
-            **kwargs
+        cls,
+        folder: str,
+        model_args: Optional[Sequence[Any]] = None,
+        model_kwargs: Optional[Dict[str, Any]] = None,
+        **kwargs,
     ) -> "TorchModel":
         model = cls(*model_args, **model_kwargs)
         model.save_root = os.path.dirname(folder)
@@ -355,7 +372,7 @@ class TorchModel(nn.Module):
         return model
 
     def draw_mpl(
-            self, fig: Optional[plt.Figure] = None, ax: Optional[plt.Axes] = None, **kwargs
+        self, fig: Optional[plt.Figure] = None, ax: Optional[plt.Axes] = None, **kwargs
     ):
         x0, x1 = np.random.rand(2, *self.input_shape), np.random.rand(
             2, *self.input_shape
@@ -391,7 +408,10 @@ class TorchModel(nn.Module):
         except Exception as e:
             self.log_func(f"Error while saving the model when deleting: {e}")
 
-    def update_parameters(self, parameters: List[Union[torch.nn.Parameter, Tuple[str, torch.nn.Parameter]]]):
+    def update_parameters(
+        self,
+        parameters: List[Union[torch.nn.Parameter, Tuple[str, torch.nn.Parameter]]],
+    ):
         if len(parameters) == 0:
             return self
         if isinstance(parameters[0], tuple):
@@ -422,10 +442,7 @@ class TorchModel(nn.Module):
         return torch.nn.MSELoss()(y_hat, target)
 
     def fit_closure(
-            self,
-            parameters: Optional[List[torch.nn.Parameter]] = None,
-            *args,
-            **kwargs
+        self, parameters: Optional[List[torch.nn.Parameter]] = None, *args, **kwargs
     ) -> TensorLike:
         """
         Assigns the parameters to the model and returns the cost.
@@ -446,7 +463,11 @@ class TorchModel(nn.Module):
         return self._cache_last_cost
 
     def fit_callback(self, *args, **kwargs):
-        is_best = self._cache_last_np_cost <= np.nanmin(self.fit_history) if len(self.fit_history) > 0 else True
+        is_best = (
+            self._cache_last_np_cost <= np.nanmin(self.fit_history)
+            if len(self.fit_history) > 0
+            else True
+        )
         self.fit_history.append(self._cache_last_np_cost)
         self.save()
         self.plot_fit_history(show=False, save=True)
@@ -459,32 +480,28 @@ class TorchModel(nn.Module):
                 "Prev Cost": prev_cost,
                 "Cost": self._cache_last_np_cost,
                 "Best Cost": best_cost,
-                **kwargs.get("postfix", {})
+                **kwargs.get("postfix", {}),
             }
             self._fit_p_bar.set_postfix(self.p_bar_postfix)
             self._fit_p_bar.n = min(self._fit_p_bar.total, len(self.fit_history))
             self._fit_p_bar.refresh()
             if self._fit_p_bar.disable:
-                self.log_func('-' * 120)
-                self.log_func(f"Iteration {len(self.fit_history)}: {self.p_bar_postfix}")
+                self.log_func("-" * 120)
+                self.log_func(
+                    f"Iteration {len(self.fit_history)}: {self.p_bar_postfix}"
+                )
                 self.log_func(str(self._fit_p_bar))
-                self.log_func('-' * 120)
+                self.log_func("-" * 120)
         if self.fit_patience is not None:
             if len(self.fit_history) > self.fit_patience:
-                if np.allclose(np.diff(self.fit_history[-self.fit_patience:]), 0.0):
+                if np.allclose(np.diff(self.fit_history[-self.fit_patience :]), 0.0):
                     self.optimizer_strategy.stop_training_flag = True
                     self.p_bar_postfix["stop_training_flag"] = True
                     self.p_bar_postfix["stop_training_reason"] = "loss is not changing"
                     self._fit_p_bar.set_postfix(self.p_bar_postfix)
         return self
 
-    def fit(
-            self,
-            *args,
-            n_iterations: int = 100,
-            n_init_iterations: int = 1,
-            **kwargs
-    ):
+    def fit(self, *args, n_iterations: int = 100, n_init_iterations: int = 1, **kwargs):
         self.fit_args = args
         self.fit_kwargs = kwargs
         if not kwargs.get("overwrite", False):
@@ -494,26 +511,32 @@ class TorchModel(nn.Module):
             total=n_iterations * n_init_iterations,
             initial=len(self.fit_history),
             desc=kwargs.get("desc", "Optimizing"),
-            disable=not kwargs.get("verbose", getattr(self.q_device, "show_progress", False)),
+            disable=not kwargs.get(
+                "verbose", getattr(self.q_device, "show_progress", False)
+            ),
         )
         current_iteration = len(self.fit_history) // n_init_iterations
         current_init_iteration = len(self.fit_history) % n_init_iterations
 
         for i in range(current_init_iteration, n_init_iterations):
             if i > 0:
-                next_parameters = self.parameters_initialisation_strategy.get_next_parameters(
-                    step_id=i,
-                    n_layers=self.n_layers,
-                    parameters_rng=self.parameters_rng,
-                    seed=self.seed,
-                    current_named_parameters=list(self.named_parameters()),
+                next_parameters = (
+                    self.parameters_initialisation_strategy.get_next_parameters(
+                        step_id=i,
+                        n_layers=self.n_layers,
+                        parameters_rng=self.parameters_rng,
+                        seed=self.seed,
+                        current_named_parameters=list(self.named_parameters()),
+                    )
                 )
                 self.update_parameters(next_parameters)
-                self._fit_p_bar.set_postfix({
-                    "Cost": "N/A",
-                    "Best Cost": np.nanmin(self.fit_history),
-                    "Init Iteration": i
-                })
+                self._fit_p_bar.set_postfix(
+                    {
+                        "Cost": "N/A",
+                        "Best Cost": np.nanmin(self.fit_history),
+                        "Init Iteration": i,
+                    }
+                )
             self.optimizer_strategy.set_parameters(
                 list(self.named_parameters()),
                 learning_rate=self.learning_rate,
@@ -563,6 +586,3 @@ class TorchModel(nn.Module):
         except Exception as e:
             self.log_func(f"Error while closing the figure: {e}")
         return fig, ax
-
-
-

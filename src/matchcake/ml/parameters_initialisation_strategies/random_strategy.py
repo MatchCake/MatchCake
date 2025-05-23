@@ -42,5 +42,6 @@ class RandomStrategy(ParametersInitialisationStrategy):
     def get_next_parameters(self, step_id: int, **hyperparameters):
         parameters_rng = np.random.default_rng(seed=hyperparameters["seed"] + step_id)
         self.initialise_parameters(parameters_rng=parameters_rng, **hyperparameters)
-        return self.initialise_parameters(parameters_rng=parameters_rng, **hyperparameters)
-
+        return self.initialise_parameters(
+            parameters_rng=parameters_rng, **hyperparameters
+        )

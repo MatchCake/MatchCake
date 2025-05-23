@@ -16,17 +16,17 @@ class Visualizer:
 
 class ClassificationVisualizer(Visualizer):
     def __init__(
-            self,
-            *,
-            x: Optional[np.ndarray] = None,
-            x_reduced: Optional[np.ndarray] = None,
-            x_mesh: Optional[np.ndarray] = None,
-            reducer: Optional[Any] = None,
-            transform: Optional[Callable] = None,
-            inverse_transform: Optional[Callable] = None,
-            n_pts: int = 1_000,
-            seed: Optional[int] = 0,
-            **kwargs
+        self,
+        *,
+        x: Optional[np.ndarray] = None,
+        x_reduced: Optional[np.ndarray] = None,
+        x_mesh: Optional[np.ndarray] = None,
+        reducer: Optional[Any] = None,
+        transform: Optional[Callable] = None,
+        inverse_transform: Optional[Callable] = None,
+        n_pts: int = 1_000,
+        seed: Optional[int] = 0,
+        **kwargs,
     ):
         self.x = x
         self.reducer = reducer
@@ -38,7 +38,7 @@ class ClassificationVisualizer(Visualizer):
 
         self.x_reduced = x_reduced
         self.x_mesh = x_mesh
-    
+
     def gather_transforms(self, **kwargs):
         """
         If a transform and an inverse_transform functions are given, they will be returned. Otherwise, the transform and
@@ -50,18 +50,25 @@ class ClassificationVisualizer(Visualizer):
             return self.transform, self.inverse_transform
         kwargs = {**self.kwargs, **kwargs}
         if self.transform is not None:
-            assert self.inverse_transform is not None, "inverse_transform must be given if transform is given."
-        
+            assert (
+                self.inverse_transform is not None
+            ), "inverse_transform must be given if transform is given."
+
         if need_reducer:
             if self.reducer is None:
                 self.reducer = "pca"
             if isinstance(self.reducer, str):
                 n_jobs = kwargs.get("n_jobs", max(0, psutil.cpu_count() - 2))
                 if self.reducer.lower() == "pca":
-                    self.reducer = decomposition.PCA(n_components=2, random_state=self.seed)
+                    self.reducer = decomposition.PCA(
+                        n_components=2, random_state=self.seed
+                    )
                 elif self.reducer.lower() == "umap":
                     import umap
-                    self.reducer = umap.UMAP(n_components=2, transform_seed=self.seed, n_jobs=n_jobs)
+
+                    self.reducer = umap.UMAP(
+                        n_components=2, transform_seed=self.seed, n_jobs=n_jobs
+                    )
                 else:
                     raise ValueError(f"Unknown reducer: {self.reducer}")
             if kwargs.get("check_estimators", True):
@@ -83,7 +90,9 @@ class ClassificationVisualizer(Visualizer):
             self.x_reduced = self.transform(self.x)
 
         if self.x_reduced.ndim != 2:
-            raise ValueError(f"x_reduced.ndim = {self.x_reduced.ndim} != 2. The given reducer does not reduce to 2D.")
+            raise ValueError(
+                f"x_reduced.ndim = {self.x_reduced.ndim} != 2. The given reducer does not reduce to 2D."
+            )
         return self.x_reduced
 
     def compute_x_mesh(self, **kwargs):
@@ -95,7 +104,7 @@ class ClassificationVisualizer(Visualizer):
         y_min, y_max = self.x_reduced[:, 1].min() - 1, self.x_reduced[:, 1].max() + 1
         xx, yy = np.meshgrid(
             np.linspace(x_min, x_max, num=int(np.sqrt(self.n_pts))),
-            np.linspace(y_min, y_max, num=int(np.sqrt(self.n_pts)))
+            np.linspace(y_min, y_max, num=int(np.sqrt(self.n_pts))),
         )
 
         x_mesh_reduced = np.c_[xx.ravel(), yy.ravel()]
@@ -108,12 +117,12 @@ class ClassificationVisualizer(Visualizer):
         return self.x_mesh
 
     def plot_2d_decision_boundaries(
-            self,
-            *,
-            y: Optional[np.ndarray] = None,
-            model: Optional[Any] = None,
-            y_pred: Optional[np.ndarray] = None,
-            **kwargs
+        self,
+        *,
+        y: Optional[np.ndarray] = None,
+        model: Optional[Any] = None,
+        y_pred: Optional[np.ndarray] = None,
+        **kwargs,
     ):
         kwargs = {**self.kwargs, **kwargs}
         axis_label_cue = None
@@ -135,11 +144,11 @@ class ClassificationVisualizer(Visualizer):
         y_min, y_max = self.x_reduced[:, 1].min() - 1, self.x_reduced[:, 1].max() + 1
         side_length = int(np.sqrt(y_pred.shape[0]))
         y_mesh = y_pred.reshape((side_length, side_length))
-        
+
         fig, ax = kwargs.get("fig", None), kwargs.get("ax", None)
         if fig is None or ax is None:
             fig, ax = plt.subplots(1, 1, tight_layout=True, figsize=(14, 10))
-        
+
         if y is None:
             n_labels = len(np.unique(y_pred))
         else:
@@ -162,13 +171,13 @@ class ClassificationVisualizer(Visualizer):
                 self.x_reduced[:, 0],
                 self.x_reduced[:, 1],
                 c=[cmap(i) for i in y],
-                edgecolor='k',
+                edgecolor="k",
                 linewidths=kwargs.get("linewidths", 1.5),
                 s=kwargs.get("s", 100),
             )
         ax.set_xlim(x_min, x_max)
         ax.set_ylim(y_min, y_max)
-        
+
         # legend_labels = getattr(dataset, "target_names", list(range(N_labels)))
         legend_labels = kwargs.get("legend_labels", None)
         if legend_labels is None:
@@ -176,16 +185,22 @@ class ClassificationVisualizer(Visualizer):
         patches = []
         for i, legend in enumerate(legend_labels):
             patch = matplotlib.lines.Line2D(
-                [0], [0], marker='o', linestyle='None', markerfacecolor=cmap(i),
-                markersize=kwargs.get("markersize", 10), markeredgecolor='k', label=legend
+                [0],
+                [0],
+                marker="o",
+                linestyle="None",
+                markerfacecolor=cmap(i),
+                markersize=kwargs.get("markersize", 10),
+                markeredgecolor="k",
+                label=legend,
             )
             patches.append(patch)
-        
+
         ax.set_title(
             kwargs.get("title", "Decision boundaries in the reduced space."),
             fontsize=kwargs.get("fontsize", 18),
         )
-        
+
         ax.legend(handles=patches, fontsize=kwargs.get("fontsize", 18))
         if kwargs.get("hide_ticks", True):
             ax.set_xticks([])
@@ -200,7 +215,7 @@ class ClassificationVisualizer(Visualizer):
         y_label = kwargs.get("y_label", f"{axis_name} 2")
         ax.set_xlabel(x_label, fontsize=kwargs.get("fontsize", 18))
         ax.set_ylabel(y_label, fontsize=kwargs.get("fontsize", 18))
-        
+
         if kwargs.get("show", False):
             plt.show()
         return fig, ax, y_pred

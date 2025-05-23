@@ -8,11 +8,11 @@ from ...operations import fRZZ
 
 class GramMatrixKernel:
     def __init__(
-            self,
-            shape: Tuple[int, int],
-            dtype: Optional[Union[str, np.dtype]] = np.float64,
-            array_type: str = "table",
-            **kwargs
+        self,
+        shape: Tuple[int, int],
+        dtype: Optional[Union[str, np.dtype]] = np.float64,
+        array_type: str = "table",
+        **kwargs,
     ):
         self._shape = shape
         self._dtype = dtype
@@ -41,6 +41,7 @@ class GramMatrixKernel:
     def _initiate_data_(self):
         if self._array_type == "table":
             import tables as tb
+
             self.h5file = tb.open_file("gram_matrix.h5", mode="w")
             self.data = self.h5file.create_carray(
                 self.h5file.root,
@@ -134,10 +135,7 @@ class GramMatrixKernel:
                 b_start_idx = i * batch_size
                 b_end_idx = (i + 1) * batch_size
                 # generate the coordinates of the matrix elements in that batch
-                yield np.unravel_index(
-                    np.arange(b_start_idx, b_end_idx),
-                    self.shape
-                )
+                yield np.unravel_index(np.arange(b_start_idx, b_end_idx), self.shape)
 
         return _gen(), n_batches
 

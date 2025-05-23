@@ -12,10 +12,10 @@ class FromSamplingStrategy(StarStateFindingStrategy):
     NAME: str = "FromSampling"
 
     def __call__(
-            self,
-            device: qml.devices.QubitDevice,
-            states_prob_func: Callable[[TensorLike, Wires], TensorLike],
-            **kwargs
+        self,
+        device: qml.devices.QubitDevice,
+        states_prob_func: Callable[[TensorLike, Wires], TensorLike],
+        **kwargs,
     ) -> Tuple[TensorLike, TensorLike]:
         samples = device.samples
         if samples is None:
@@ -29,7 +29,9 @@ class FromSamplingStrategy(StarStateFindingStrategy):
         for bi in range(samples_reshaped.shape[1]):
             batch_samples = samples_reshaped[:, bi, :]
 
-            unique_samples, unique_counts = np.unique(batch_samples, return_counts=True, axis=0)
+            unique_samples, unique_counts = np.unique(
+                batch_samples, return_counts=True, axis=0
+            )
             unique_probs = unique_counts / samples.shape[0]
             star_state = unique_samples[np.argmax(unique_counts)]
             star_prob = unique_probs[np.argmax(unique_counts)]
@@ -39,4 +41,3 @@ class FromSamplingStrategy(StarStateFindingStrategy):
         star_states = np.stack(star_states, axis=0).reshape(samples.shape[1:])
         star_probs = np.stack(star_probs, axis=0).reshape(samples.shape[1:-1])
         return star_states, star_probs
-

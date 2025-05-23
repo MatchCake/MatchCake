@@ -5,7 +5,12 @@ from .matchgate_operation import MatchgateOperation
 from .. import matchgate_parameter_sets as mps
 from .. import utils
 
-paulis_map = {"X": utils.PAULI_X, "Y": utils.PAULI_Y, "Z": utils.PAULI_Z, "I": utils.PAULI_I}
+paulis_map = {
+    "X": utils.PAULI_X,
+    "Y": utils.PAULI_Y,
+    "Z": utils.PAULI_Z,
+    "I": utils.PAULI_I,
+}
 
 
 class FermionicPauli(MatchgateOperation):
@@ -16,15 +21,7 @@ class FermionicPauli(MatchgateOperation):
     def random(cls, wires: Wires, batch_size=None, **kwargs):
         return cls(wires=wires, **kwargs)
 
-    def __init__(
-            self,
-            wires=None,
-            paulis="XX",
-            id=None,
-            *,
-            backend=pnp,
-            **kwargs
-    ):
+    def __init__(self, wires=None, paulis="XX", id=None, *, backend=pnp, **kwargs):
         self._paulis = paulis.upper()
         if len(self._paulis) != 2:
             raise ValueError(
@@ -33,7 +30,9 @@ class FermionicPauli(MatchgateOperation):
         m_params = mps.MatchgateStandardParams.from_sub_matrices(
             paulis_map[self._paulis[0]], paulis_map[self._paulis[1]]
         )
-        in_params = mps.MatchgatePolarParams.parse_from_params(m_params, force_cast_to_real=True)
+        in_params = mps.MatchgatePolarParams.parse_from_params(
+            m_params, force_cast_to_real=True
+        )
         kwargs["in_param_type"] = mps.MatchgatePolarParams
         super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
 
@@ -52,38 +51,17 @@ class FermionicPauli(MatchgateOperation):
 
 
 class FermionicXX(FermionicPauli):
-    def __init__(
-            self,
-            wires=None,
-            id=None,
-            *,
-            backend=pnp,
-            **kwargs
-    ):
+    def __init__(self, wires=None, id=None, *, backend=pnp, **kwargs):
         super().__init__(wires=wires, paulis="XX", id=id, backend=backend, **kwargs)
 
 
 class FermionicYY(FermionicPauli):
-    def __init__(
-            self,
-            wires=None,
-            id=None,
-            *,
-            backend=pnp,
-            **kwargs
-    ):
+    def __init__(self, wires=None, id=None, *, backend=pnp, **kwargs):
         super().__init__(wires=wires, paulis="YY", id=id, backend=backend, **kwargs)
 
 
 class FermionicZZ(FermionicPauli):
-    def __init__(
-            self,
-            wires=None,
-            id=None,
-            *,
-            backend=pnp,
-            **kwargs
-    ):
+    def __init__(self, wires=None, id=None, *, backend=pnp, **kwargs):
         super().__init__(wires=wires, paulis="ZZ", id=id, backend=backend, **kwargs)
 
 
