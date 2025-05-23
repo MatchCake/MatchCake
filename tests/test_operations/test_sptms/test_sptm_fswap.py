@@ -13,7 +13,9 @@ from ...configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
     set_seed,
-    TEST_SEED, ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
+    ATOL_MATRIX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
 )
 
 set_seed(TEST_SEED)
@@ -24,7 +26,8 @@ def test_matchgate_equal_to_sptm_fswap():
     m_sptm = matchgate.single_particle_transition_matrix
     sptm = SptmFSwap(wires=[0, 1]).matrix()
     np.testing.assert_allclose(
-        sptm, m_sptm,
+        sptm,
+        m_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -37,7 +40,7 @@ def test_matchgate_equal_to_sptm_fswap():
         for n_wires in range(2, 16)
         for wire0 in range(n_wires - 1)
         for wire1 in range(wire0 + 1, n_wires)
-    ]
+    ],
 )
 def test_sptm_fswap_chain_equal_to_sptm_fswap(wire0, wire1, all_wires):
     all_wires = list(range(all_wires))
@@ -53,7 +56,8 @@ def test_sptm_fswap_chain_equal_to_sptm_fswap(wire0, wire1, all_wires):
     sptm = SptmFSwap(wires=[wire0, wire1]).matrix(all_wires)
 
     np.testing.assert_allclose(
-        sptm, chain_sptm,
+        sptm,
+        chain_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -66,7 +70,7 @@ def test_sptm_fswap_chain_equal_to_sptm_fswap(wire0, wire1, all_wires):
         for n_wires in range(2, 16)
         for wire0 in range(n_wires - 1)
         for wire1 in range(wire0 + 1, n_wires)
-    ]
+    ],
 )
 def test_fswap_chain_equal_to_sptm_fswap(wire0, wire1, all_wires):
     all_wires = list(range(all_wires))
@@ -82,7 +86,8 @@ def test_fswap_chain_equal_to_sptm_fswap(wire0, wire1, all_wires):
     sptm = SptmFSwap(wires=[wire0, wire1]).matrix(all_wires)
 
     np.testing.assert_allclose(
-        sptm, chain_sptm,
+        sptm,
+        chain_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -95,7 +100,7 @@ def test_fswap_chain_equal_to_sptm_fswap(wire0, wire1, all_wires):
         for n_wires in range(2, 16)
         for wire0 in range(n_wires - 1)
         for wire1 in range(wire0 + 1, n_wires)
-    ]
+    ],
 )
 def test_sptm_fswap_chain_equal_to_sptm_fswap_reverse(wire0, wire1, all_wires):
     all_wires = list(range(all_wires))
@@ -111,7 +116,8 @@ def test_sptm_fswap_chain_equal_to_sptm_fswap_reverse(wire0, wire1, all_wires):
     sptm = SptmFSwap(wires=[wire1, wire0]).matrix(all_wires)
 
     np.testing.assert_allclose(
-        sptm, chain_sptm,
+        sptm,
+        chain_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -124,7 +130,7 @@ def test_sptm_fswap_chain_equal_to_sptm_fswap_reverse(wire0, wire1, all_wires):
         for n_wires in range(2, 16)
         for wire0 in range(n_wires - 1)
         for wire1 in range(wire0 + 1, n_wires)
-    ]
+    ],
 )
 def test_fswap_chain_equal_to_sptm_fswap_reverse(wire0, wire1, all_wires):
     all_wires = list(range(all_wires))
@@ -140,7 +146,8 @@ def test_fswap_chain_equal_to_sptm_fswap_reverse(wire0, wire1, all_wires):
     sptm = SptmFSwap(wires=[wire1, wire0]).matrix(all_wires)
 
     np.testing.assert_allclose(
-        sptm, chain_sptm,
+        sptm,
+        chain_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -153,7 +160,7 @@ def test_fswap_chain_equal_to_sptm_fswap_reverse(wire0, wire1, all_wires):
         for n_wires in range(2, 16)
         for wire0 in range(n_wires - 1)
         for wire1 in range(wire0 + 1, n_wires)
-    ]
+    ],
 )
 def test_sptm_fswap_in_so4(wire0, wire1, all_wires):
     all_wires = list(range(all_wires))
@@ -163,7 +170,8 @@ def test_sptm_fswap_in_so4(wire0, wire1, all_wires):
     sptm_dagger = np.einsum("...ij->...ji", sptm_matrix).conj()
     expected_eye = np.einsum("...ij,...jk->...ik", sptm_matrix, sptm_dagger)
     np.testing.assert_allclose(
-        expected_eye, np.eye(2 * len(all_wires)),
+        expected_eye,
+        np.eye(2 * len(all_wires)),
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
@@ -176,9 +184,11 @@ def test_sptm_fswap_in_so4(wire0, wire1, all_wires):
         for n_wires in range(2, 16)
         for wire0 in range(n_wires - 1)
         for wire1 in range(wire0 + 1, n_wires)
-    ]
+    ],
 )
 def test_sptm_fswap_unitary(wire0, wire1, all_wires):
     all_wires = list(range(all_wires))
     sptm = SptmFSwap(wires=[wire0, wire1]).pad(all_wires)
-    assert sptm.check_is_unitary(atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+    assert sptm.check_is_unitary(
+        atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
+    )

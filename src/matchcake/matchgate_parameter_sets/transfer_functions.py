@@ -17,7 +17,9 @@ from .. import utils
 from ..utils import math
 
 
-def polar_to_standard(params: MatchgatePolarParams, **kwargs) -> MatchgateStandardParams:
+def polar_to_standard(
+    params: MatchgatePolarParams, **kwargs
+) -> MatchgateStandardParams:
     r"""
     Convert from polar to standard parameterization. The conversion is given by
 
@@ -61,24 +63,28 @@ def polar_to_standard(params: MatchgatePolarParams, **kwargs) -> MatchgateStanda
     # )
     return MatchgateStandardParams(
         a=params.r0 * math.exp_euler(params.theta0),
-        b=r0_tilde * math.exp_euler(params.theta2 + params.theta4 - (params.theta1 + np.pi)),
+        b=r0_tilde
+        * math.exp_euler(params.theta2 + params.theta4 - (params.theta1 + np.pi)),
         c=r0_tilde * math.exp_euler(params.theta1),
         d=params.r0 * math.exp_euler(params.theta2 + params.theta4 - params.theta0),
         w=params.r1 * math.exp_euler(params.theta2),
-        x=r1_tilde * math.exp_euler(params.theta2 + params.theta4 - (params.theta3 + np.pi)),
+        x=r1_tilde
+        * math.exp_euler(params.theta2 + params.theta4 - (params.theta3 + np.pi)),
         y=r1_tilde * math.exp_euler(params.theta3),
         z=params.r1 * math.exp_euler(params.theta4),
     )
 
 
-def standard_to_standard_hamiltonian(params: MatchgateStandardParams, **kwargs) -> MatchgateStandardHamiltonianParams:
+def standard_to_standard_hamiltonian(
+    params: MatchgateStandardParams, **kwargs
+) -> MatchgateStandardHamiltonianParams:
     gate = qml.math.cast(params.to_matrix(), dtype=complex)
     hamiltonian = -1j * math.logm(gate)
     return MatchgateStandardHamiltonianParams.from_matrix(hamiltonian, **kwargs)
 
 
 def standard_hamiltonian_to_hamiltonian_coefficients(
-        params: MatchgateStandardHamiltonianParams, **kwargs
+    params: MatchgateStandardHamiltonianParams, **kwargs
 ) -> MatchgateHamiltonianCoefficientsParams:
     r"""
     Convert from standard hamiltonian to hamiltonian coefficients parameterization. The conversion is given by
@@ -114,7 +120,7 @@ def standard_hamiltonian_to_hamiltonian_coefficients(
 
 
 def hamiltonian_coefficients_to_composed_hamiltonian(
-        params: MatchgateHamiltonianCoefficientsParams, **kwargs
+    params: MatchgateHamiltonianCoefficientsParams, **kwargs
 ) -> MatchgateComposedHamiltonianParams:
     r"""
     Convert from hamiltonian coefficients to composed hamiltonian parameterization. The conversion is given by
@@ -149,7 +155,7 @@ def hamiltonian_coefficients_to_composed_hamiltonian(
 
 
 def composed_hamiltonian_to_hamiltonian_coefficients(
-        params: MatchgateComposedHamiltonianParams, **kwargs
+    params: MatchgateComposedHamiltonianParams, **kwargs
 ) -> MatchgateHamiltonianCoefficientsParams:
     r"""
     Convert from composed hamiltonian to hamiltonian coefficients parameterization. The conversion is given by
@@ -183,7 +189,7 @@ def composed_hamiltonian_to_hamiltonian_coefficients(
 
 
 def hamiltonian_coefficients_to_standard_hamiltonian(
-        params: MatchgateHamiltonianCoefficientsParams, **kwargs
+    params: MatchgateHamiltonianCoefficientsParams, **kwargs
 ) -> MatchgateStandardHamiltonianParams:
     r"""
     Convert from hamiltonian coefficients to standard hamiltonian parameterization. The conversion is given by
@@ -226,7 +232,7 @@ def hamiltonian_coefficients_to_standard_hamiltonian(
 
 
 def standard_hamiltonian_to_standard(
-        params: MatchgateStandardHamiltonianParams, **kwargs
+    params: MatchgateStandardHamiltonianParams, **kwargs
 ) -> MatchgateStandardParams:
     gate = utils.get_unitary_from_hermitian_matrix(params.to_matrix())
     return MatchgateStandardParams.from_matrix(gate, **kwargs)
@@ -240,72 +246,110 @@ def _compute_r1_from_standard(w, backend):
     return backend.sqrt(w * backend.conjugate(w))
 
 
-def _compute_theta0_from_standard(a, r0, r0_is_zero, r0_is_one, zero_like, backend, eps=1e-12):
-    theta0 = backend.where(r0_is_zero, zero_like, -1j * (backend.log(a + eps) - backend.log(r0 + eps)))
+def _compute_theta0_from_standard(
+    a, r0, r0_is_zero, r0_is_one, zero_like, backend, eps=1e-12
+):
+    theta0 = backend.where(
+        r0_is_zero, zero_like, -1j * (backend.log(a + eps) - backend.log(r0 + eps))
+    )
     theta0 = backend.where(r0_is_one, -1j * backend.log(a + eps), theta0)
     return theta0
 
 
-def _compute_theta1_from_standard(c, r0_tilde, r0_is_zero, r0_is_one, zero_like, backend, eps=1e-12):
+def _compute_theta1_from_standard(
+    c, r0_tilde, r0_is_zero, r0_is_one, zero_like, backend, eps=1e-12
+):
     theta1 = backend.where(
-        r0_is_zero, -1j * backend.log(c + eps), -1j * (backend.log(c + eps) - backend.log(r0_tilde + eps))
+        r0_is_zero,
+        -1j * backend.log(c + eps),
+        -1j * (backend.log(c + eps) - backend.log(r0_tilde + eps)),
     )
     theta1 = backend.where(r0_is_one, 0, theta1)
     return theta1
 
 
-def _compute_theta2_from_standard(a, b, c, d, w, r1, r1_is_zero, r1_is_one, r0_is_one, backend, eps=1e-12):
+def _compute_theta2_from_standard(
+    a, b, c, d, w, r1, r1_is_zero, r1_is_one, r0_is_one, backend, eps=1e-12
+):
     theta2 = backend.where(
-        r1_is_zero, -0.5j * backend.log(-b * c + eps), -1j * (backend.log(w + eps) - backend.log(r1 + eps))
+        r1_is_zero,
+        -0.5j * backend.log(-b * c + eps),
+        -1j * (backend.log(w + eps) - backend.log(r1 + eps)),
     )
     theta2 = backend.where(r1_is_one, -1j * backend.log(w + eps), theta2)
-    theta2 = backend.where(r0_is_one & r1_is_zero, -0.5j * backend.log(d * a + eps), theta2)
+    theta2 = backend.where(
+        r0_is_one & r1_is_zero, -0.5j * backend.log(d * a + eps), theta2
+    )
     return theta2
 
 
-def _compute_theta3_from_standard(y, r1_is_zero, r1_is_one, r1_tilde, backend, eps=1e-12):
+def _compute_theta3_from_standard(
+    y, r1_is_zero, r1_is_one, r1_tilde, backend, eps=1e-12
+):
     theta3 = backend.where(
         r1_is_zero,
         -1j * backend.log(y + eps),
-        -1j * (backend.log(y + eps) - backend.log(r1_tilde + eps))
+        -1j * (backend.log(y + eps) - backend.log(r1_tilde + eps)),
     )
     theta3 = backend.where(r1_is_one, 0, theta3)
     return theta3
 
 
-def _compute_theta4_from_standard(a, b, c, d, z, r1, r1_is_zero, r1_is_one, r0_is_one, backend, eps=1e-12):
+def _compute_theta4_from_standard(
+    a, b, c, d, z, r1, r1_is_zero, r1_is_one, r0_is_one, backend, eps=1e-12
+):
     theta4 = backend.where(
         r1_is_zero,
         -0.5j * backend.log(-b * c + eps),
-        -1j * (backend.log(z + eps) - backend.log(r1 + eps))
+        -1j * (backend.log(z + eps) - backend.log(r1 + eps)),
     )
     theta4 = backend.where(r1_is_one, -1j * backend.log(z + eps), theta4)
-    theta4 = backend.where(r0_is_one & r1_is_zero, -0.5j * backend.log(d * a + eps), theta4)
+    theta4 = backend.where(
+        r0_is_one & r1_is_zero, -0.5j * backend.log(d * a + eps), theta4
+    )
     return theta4
 
 
-def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePolarParams:
+def standard_to_polar(
+    params: MatchgateStandardParams, **kwargs
+) -> MatchgatePolarParams:
     backend = MatchgateParams.load_backend_lib(kwargs.pop("backend", qml.math))
     eps = kwargs.pop("eps", 1e-12)
     params_arr = params.to_vector()
     a, b, c, d, w, x, y, z = qml.math.cast(
         qml.math.transpose(qml.math.reshape(params_arr, (-1, params.N_PARAMS))),
-        dtype=complex
+        dtype=complex,
     )
     r0 = _compute_r0_from_standard(a, backend=backend)
     r1 = _compute_r1_from_standard(w, backend=backend)
     r0_tilde = MatchgatePolarParams.compute_r_tilde(r0, backend=backend)
     r1_tilde = MatchgatePolarParams.compute_r_tilde(r1, backend=backend)
 
-    zero_like, one_like = utils.math.convert_and_cast_like(0, r0), utils.math.convert_and_cast_like(1, r0)
-    r0_is_zero, r0_is_one = backend.isclose(r0, zero_like), backend.isclose(r0, one_like)
-    r1_is_zero, r1_is_one = backend.isclose(r1, zero_like), backend.isclose(r1, one_like)
+    zero_like, one_like = utils.math.convert_and_cast_like(
+        0, r0
+    ), utils.math.convert_and_cast_like(1, r0)
+    r0_is_zero, r0_is_one = backend.isclose(r0, zero_like), backend.isclose(
+        r0, one_like
+    )
+    r1_is_zero, r1_is_one = backend.isclose(r1, zero_like), backend.isclose(
+        r1, one_like
+    )
 
-    theta0 = _compute_theta0_from_standard(a, r0, r0_is_zero, r0_is_one, zero_like, backend, eps=eps)
-    theta1 = _compute_theta1_from_standard(c, r0_tilde, r0_is_zero, r0_is_one, zero_like, backend, eps=eps)
-    theta2 = _compute_theta2_from_standard(a, b, c, d, w, r1, r1_is_zero, r1_is_one, r0_is_one, backend, eps=eps)
-    theta3 = _compute_theta3_from_standard(y, r1_is_zero, r1_is_one, r1_tilde, backend, eps=eps)
-    theta4 = _compute_theta4_from_standard(a, b, c, d, z, r1, r1_is_zero, r1_is_one, r0_is_one, backend, eps=eps)
+    theta0 = _compute_theta0_from_standard(
+        a, r0, r0_is_zero, r0_is_one, zero_like, backend, eps=eps
+    )
+    theta1 = _compute_theta1_from_standard(
+        c, r0_tilde, r0_is_zero, r0_is_one, zero_like, backend, eps=eps
+    )
+    theta2 = _compute_theta2_from_standard(
+        a, b, c, d, w, r1, r1_is_zero, r1_is_one, r0_is_one, backend, eps=eps
+    )
+    theta3 = _compute_theta3_from_standard(
+        y, r1_is_zero, r1_is_one, r1_tilde, backend, eps=eps
+    )
+    theta4 = _compute_theta4_from_standard(
+        a, b, c, d, z, r1, r1_is_zero, r1_is_one, r0_is_one, backend, eps=eps
+    )
     return MatchgatePolarParams(
         r0=r0,
         r1=r1,
@@ -314,7 +358,7 @@ def standard_to_polar(params: MatchgateStandardParams, **kwargs) -> MatchgatePol
         theta2=theta2,
         theta3=theta3,
         theta4=theta4,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -350,102 +394,119 @@ _NODE_ORDER = [
     MatchgateHamiltonianCoefficientsParams,
     MatchgateComposedHamiltonianParams,
 ]
-_transfer_adj_matrix = np.asarray([
-    # (i->j)
-    # polar, standard, standard_hamiltonian, hamiltonian_coefficients, composed_hamiltonian
-    [1, 1, 0, 0, 0],  # polar
-    [1, 1, 1, 0, 0],  # standard
-    [0, 1, 1, 1, 0],  # standard_hamiltonian
-    [0, 0, 1, 1, 1],  # hamiltonian_coefficients
-    [0, 0, 0, 1, 1],  # composed_hamiltonian
-])
-_commutative_transfer_adj_matrix = np.asarray([
-    # (i->j)
-    # polar, standard, standard_hamiltonian, hamiltonian_coefficients, composed_hamiltonian
-    [1, 0, 0, 0, 0],  # polar
-    [0, 1, 1, 0, 0],  # standard
-    [0, 0, 1, 0, 0],  # standard_hamiltonian
-    [0, 0, 1, 1, 1],  # hamiltonian_coefficients
-    [0, 0, 0, 1, 1],  # composed_hamiltonian
-])
-all_pairs_dijkstra_paths = dict(nx.all_pairs_dijkstra_path(
-    nx.from_numpy_array(_transfer_adj_matrix, create_using=nx.DiGraph)
-))
-all_pairs_dijkstra_commutative_paths = dict(nx.all_pairs_dijkstra_path(
-    nx.from_numpy_array(_commutative_transfer_adj_matrix, create_using=nx.DiGraph)
-))
+_transfer_adj_matrix = np.asarray(
+    [
+        # (i->j)
+        # polar, standard, standard_hamiltonian, hamiltonian_coefficients, composed_hamiltonian
+        [1, 1, 0, 0, 0],  # polar
+        [1, 1, 1, 0, 0],  # standard
+        [0, 1, 1, 1, 0],  # standard_hamiltonian
+        [0, 0, 1, 1, 1],  # hamiltonian_coefficients
+        [0, 0, 0, 1, 1],  # composed_hamiltonian
+    ]
+)
+_commutative_transfer_adj_matrix = np.asarray(
+    [
+        # (i->j)
+        # polar, standard, standard_hamiltonian, hamiltonian_coefficients, composed_hamiltonian
+        [1, 0, 0, 0, 0],  # polar
+        [0, 1, 1, 0, 0],  # standard
+        [0, 0, 1, 0, 0],  # standard_hamiltonian
+        [0, 0, 1, 1, 1],  # hamiltonian_coefficients
+        [0, 0, 0, 1, 1],  # composed_hamiltonian
+    ]
+)
+all_pairs_dijkstra_paths = dict(
+    nx.all_pairs_dijkstra_path(
+        nx.from_numpy_array(_transfer_adj_matrix, create_using=nx.DiGraph)
+    )
+)
+all_pairs_dijkstra_commutative_paths = dict(
+    nx.all_pairs_dijkstra_path(
+        nx.from_numpy_array(_commutative_transfer_adj_matrix, create_using=nx.DiGraph)
+    )
+)
 
 
-def polar_to_standard_hamiltonian(params: MatchgatePolarParams, **kwargs) -> MatchgateStandardHamiltonianParams:
+def polar_to_standard_hamiltonian(
+    params: MatchgatePolarParams, **kwargs
+) -> MatchgateStandardHamiltonianParams:
     params = polar_to_standard(params, **kwargs)
     return standard_to_standard_hamiltonian(params, **kwargs)
 
 
-def polar_to_hamiltonian_coefficients(params: MatchgatePolarParams, **kwargs) -> MatchgateHamiltonianCoefficientsParams:
+def polar_to_hamiltonian_coefficients(
+    params: MatchgatePolarParams, **kwargs
+) -> MatchgateHamiltonianCoefficientsParams:
     params = polar_to_standard_hamiltonian(params, **kwargs)
     return standard_hamiltonian_to_hamiltonian_coefficients(params, **kwargs)
 
 
-def polar_to_composed_hamiltonian(params: MatchgatePolarParams, **kwargs) -> MatchgateComposedHamiltonianParams:
+def polar_to_composed_hamiltonian(
+    params: MatchgatePolarParams, **kwargs
+) -> MatchgateComposedHamiltonianParams:
     params = polar_to_hamiltonian_coefficients(params, **kwargs)
     return hamiltonian_coefficients_to_composed_hamiltonian(params, **kwargs)
 
 
 def standard_to_hamiltonian_coefficients(
-        params: MatchgateStandardParams,
-        **kwargs
+    params: MatchgateStandardParams, **kwargs
 ) -> MatchgateHamiltonianCoefficientsParams:
     params = standard_to_standard_hamiltonian(params, **kwargs)
     return standard_hamiltonian_to_hamiltonian_coefficients(params, **kwargs)
 
 
-def standard_to_composed_hamiltonian(params: MatchgateStandardParams, **kwargs) -> MatchgateComposedHamiltonianParams:
+def standard_to_composed_hamiltonian(
+    params: MatchgateStandardParams, **kwargs
+) -> MatchgateComposedHamiltonianParams:
     params = standard_to_hamiltonian_coefficients(params, **kwargs)
     return hamiltonian_coefficients_to_composed_hamiltonian(params, **kwargs)
 
 
 def hamiltonian_coefficients_to_standard(
-        params: MatchgateHamiltonianCoefficientsParams,
-        **kwargs
+    params: MatchgateHamiltonianCoefficientsParams, **kwargs
 ) -> MatchgateStandardParams:
     params = hamiltonian_coefficients_to_standard_hamiltonian(params, **kwargs)
     return standard_hamiltonian_to_standard(params, **kwargs)
 
 
-def hamiltonian_coefficients_to_polar(params: MatchgateHamiltonianCoefficientsParams, **kwargs) -> MatchgatePolarParams:
+def hamiltonian_coefficients_to_polar(
+    params: MatchgateHamiltonianCoefficientsParams, **kwargs
+) -> MatchgatePolarParams:
     params = hamiltonian_coefficients_to_standard(params, **kwargs)
     return standard_to_polar(params, **kwargs)
 
 
 def composed_hamiltonian_to_standard_hamiltonian(
-        params: MatchgateComposedHamiltonianParams,
-        **kwargs
+    params: MatchgateComposedHamiltonianParams, **kwargs
 ) -> MatchgateStandardHamiltonianParams:
     params = composed_hamiltonian_to_hamiltonian_coefficients(params, **kwargs)
     return hamiltonian_coefficients_to_standard_hamiltonian(params, **kwargs)
 
 
-def composed_hamiltonian_to_standard(params: MatchgateComposedHamiltonianParams, **kwargs) -> MatchgateStandardParams:
+def composed_hamiltonian_to_standard(
+    params: MatchgateComposedHamiltonianParams, **kwargs
+) -> MatchgateStandardParams:
     params = composed_hamiltonian_to_standard_hamiltonian(params, **kwargs)
     return standard_hamiltonian_to_standard(params, **kwargs)
 
 
-def composed_hamiltonian_to_polar(params: MatchgateComposedHamiltonianParams, **kwargs) -> MatchgatePolarParams:
+def composed_hamiltonian_to_polar(
+    params: MatchgateComposedHamiltonianParams, **kwargs
+) -> MatchgatePolarParams:
     params = composed_hamiltonian_to_standard(params, **kwargs)
     return standard_to_polar(params, **kwargs)
 
 
 def standard_hamiltonian_to_polar(
-        params: MatchgateStandardHamiltonianParams,
-        **kwargs
+    params: MatchgateStandardHamiltonianParams, **kwargs
 ) -> MatchgatePolarParams:
     params = standard_hamiltonian_to_standard(params, **kwargs)
     return standard_to_polar(params, **kwargs)
 
 
 def standard_hamiltonian_to_composed_hamiltonian(
-        params: MatchgateStandardHamiltonianParams,
-        **kwargs
+    params: MatchgateStandardHamiltonianParams, **kwargs
 ) -> MatchgateComposedHamiltonianParams:
     params = standard_hamiltonian_to_hamiltonian_coefficients(params, **kwargs)
     return hamiltonian_coefficients_to_composed_hamiltonian(params, **kwargs)
@@ -486,7 +547,9 @@ _transfer_funcs_by_type = {
 }
 
 
-def infer_transfer_func(from_cls: Type[MatchgateParams], to_cls: Type[MatchgateParams]) -> Callable:
+def infer_transfer_func(
+    from_cls: Type[MatchgateParams], to_cls: Type[MatchgateParams]
+) -> Callable:
     from_cls_idx = _NODE_ORDER.index(from_cls)
     to_cls_idx = _NODE_ORDER.index(to_cls)
     path = all_pairs_dijkstra_paths[from_cls_idx][to_cls_idx]
@@ -495,7 +558,9 @@ def infer_transfer_func(from_cls: Type[MatchgateParams], to_cls: Type[MatchgateP
         if len(path) == 1:
             return params
         for i, j in zip(path[:-1], path[1:]):
-            params = _transfer_funcs_by_type[_NODE_ORDER[i]][_NODE_ORDER[j]](params, **kwargs)
+            params = _transfer_funcs_by_type[_NODE_ORDER[i]][_NODE_ORDER[j]](
+                params, **kwargs
+            )
         return params
 
     return func
@@ -507,19 +572,26 @@ def params_to(params, __cls: Type[MatchgateParams], **kwargs) -> MatchgateParams
     if not isinstance(params, MatchgateParams):
         return __cls(*params, **kwargs)
     _from_cls = type(params)
-    if _from_cls in _transfer_funcs_by_type and __cls in _transfer_funcs_by_type[_from_cls]:
+    if (
+        _from_cls in _transfer_funcs_by_type
+        and __cls in _transfer_funcs_by_type[_from_cls]
+    ):
         return _transfer_funcs_by_type[_from_cls][__cls](params, **kwargs)
     return infer_transfer_func(_from_cls, __cls)(params, **kwargs)
 
 
-def get_closest_cls(cls_list: List[Type[MatchgateParams]], target_cls: Type[MatchgateParams], **kwargs):
+def get_closest_cls(
+    cls_list: List[Type[MatchgateParams]], target_cls: Type[MatchgateParams], **kwargs
+):
     if len(cls_list) == 0:
         raise ValueError("cls_list cannot be empty")
     if len(cls_list) == 1:
         return cls_list[0]
     _target_cls_idx = _NODE_ORDER.index(target_cls)
     _cls_indexes = [_NODE_ORDER.index(cls) for cls in cls_list]
-    path_list = [all_pairs_dijkstra_paths[_cls_idx][_target_cls_idx] for _cls_idx in _cls_indexes]
+    path_list = [
+        all_pairs_dijkstra_paths[_cls_idx][_target_cls_idx] for _cls_idx in _cls_indexes
+    ]
     # pairwise_path_list = [nx.utils.pairwise(path) for path in path_list]
     # cost_list = [
     #     sum(_transfer_adj_matrix[list(path)])
@@ -530,7 +602,9 @@ def get_closest_cls(cls_list: List[Type[MatchgateParams]], target_cls: Type[Matc
     return cls_list[min_cost_idx]
 
 
-def shortest_transfer_to(params_list: List[MatchgateParams], __cls: Type[MatchgateParams], **kwargs):
+def shortest_transfer_to(
+    params_list: List[MatchgateParams], __cls: Type[MatchgateParams], **kwargs
+):
     if len(params_list) == 0:
         raise ValueError("params_list cannot be empty")
     if len(params_list) == 1:
@@ -539,4 +613,3 @@ def shortest_transfer_to(params_list: List[MatchgateParams], __cls: Type[Matchga
     closest_cls = get_closest_cls(_cls_list, __cls, **kwargs)
     _from_params = params_list[_cls_list.index(closest_cls)]
     return params_to(_from_params, __cls, **kwargs)
-

@@ -13,9 +13,9 @@ def recursive_kron(__inputs: List[Any], lib=np, recursive: bool = True) -> Any:
 
 
 def recursive_2in_operator(
-        operator: Callable[[Any, Any], Any],
-        __inputs: List[Any],
-        recursive: bool = True,
+    operator: Callable[[Any, Any], Any],
+    __inputs: List[Any],
+    recursive: bool = True,
 ) -> Any:
     r"""
     Apply an operator recursively to a list of inputs. The operator must accept two inputs. The inputs are applied
@@ -48,8 +48,7 @@ def recursive_2in_operator(
 
 
 def adjoint_generator(
-        op_iterator: Generator[qml.operation.Operation, None, None],
-        **kwargs
+    op_iterator: Generator[qml.operation.Operation, None, None], **kwargs
 ) -> Iterator[qml.operation.Operation]:
     """
     This function will reverse the order of the operations in the iterator and return the adjoint operations.
@@ -60,6 +59,3 @@ def adjoint_generator(
     :return: The iterator of adjoint operations.
     """
     return (op.adjoint() for op in reversed(list(op_iterator)))
-
-
-

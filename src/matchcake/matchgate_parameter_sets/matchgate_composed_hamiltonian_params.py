@@ -43,6 +43,8 @@ class MatchgateComposedHamiltonianParams(MatchgateParams):
     @classmethod
     def to_sympy(cls):
         import sympy as sp
-        n_x, n_y, n_z, m_x, m_y, m_z, epsilon = sp.symbols(r'n_x n_y n_z m_x m_y m_z \epsilon')
-        return sp.Matrix([n_x, n_y, n_z, m_x, m_y, m_z, epsilon])
 
+        n_x, n_y, n_z, m_x, m_y, m_z, epsilon = sp.symbols(
+            r"n_x n_y n_z m_x m_y m_z \epsilon"
+        )
+        return sp.Matrix([n_x, n_y, n_z, m_x, m_y, m_z, epsilon])

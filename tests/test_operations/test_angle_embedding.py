@@ -21,14 +21,22 @@ set_seed(TEST_SEED)
 @pytest.mark.parametrize(
     "initial_binary_string, cls_params_wires_list, is_adjoint",
     [
-        (i_b_string, [(MAngleEmbedding, rn_params, [0, 1], {"rotations": rot})], adjoint)
+        (
+            i_b_string,
+            [(MAngleEmbedding, rn_params, [0, 1], {"rotations": rot})],
+            adjoint,
+        )
         for rot in ["X", "Y", "Z", "X,Y", "X,Z", "Y,Z", "X,Y,Z"]
         for i_b_string in ["00", "01", "10", "11"]
-        for rn_params in np.random.uniform(0.0, np.pi/2, size=(N_RANDOM_TESTS_PER_CASE, 2))
+        for rn_params in np.random.uniform(
+            0.0, np.pi / 2, size=(N_RANDOM_TESTS_PER_CASE, 2)
+        )
         for adjoint in [True, False]
-    ]
+    ],
 )
-def test_m_angle_embedding_with_pennylane(initial_binary_string, cls_params_wires_list, is_adjoint):
+def test_m_angle_embedding_with_pennylane(
+    initial_binary_string, cls_params_wires_list, is_adjoint
+):
     initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
     nif_device, qubit_device = devices_init(wires=len(initial_binary_state))
 
@@ -50,7 +58,8 @@ def test_m_angle_embedding_with_pennylane(initial_binary_string, cls_params_wire
         adjoint=is_adjoint,
     )
     np.testing.assert_allclose(
-        nif_expval, qubit_expval,
+        nif_expval,
+        qubit_expval,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

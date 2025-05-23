@@ -24,22 +24,24 @@ set_seed(TEST_SEED)
     "initial_binary_state,params,wires,target_binary_state",
     [
         (
-                np.random.randint(0, 2, size=n),
-                mps.MatchgatePolarParams.random(),
-                [0, 1],
-                np.random.randint(0, 2, size=n),
+            np.random.randint(0, 2, size=n),
+            mps.MatchgatePolarParams.random(),
+            [0, 1],
+            np.random.randint(0, 2, size=n),
         )
-        for n in [2, ]
+        for n in [
+            2,
+        ]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_single_gate_circuit_probability_lt_vs_es(
-        initial_binary_state, params, wires, target_binary_state
+    initial_binary_state, params, wires, target_binary_state
 ):
     device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
-        MatchgateOperation(params, wires=[0, 1])
+        MatchgateOperation(params, wires=[0, 1]),
     ]
     device.apply(operations)
 
@@ -48,7 +50,8 @@ def test_single_gate_circuit_probability_lt_vs_es(
     device.prob_strategy = get_probability_strategy("ExplicitSum")
     es_probs = device.get_state_probability(target_binary_state, wires)
     np.testing.assert_allclose(
-        lt_probs, es_probs,
+        lt_probs,
+        es_probs,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -60,17 +63,19 @@ def test_single_gate_circuit_probability_lt_vs_es(
     "initial_binary_state,params,wires,target_binary_state",
     [
         (
-                np.random.randint(0, 2, size=n),
-                mps.MatchgatePolarParams.random(),
-                [0, 1],
-                np.random.randint(0, 2, size=n),
+            np.random.randint(0, 2, size=n),
+            mps.MatchgatePolarParams.random(),
+            [0, 1],
+            np.random.randint(0, 2, size=n),
         )
-        for n in [2, ]
+        for n in [
+            2,
+        ]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_single_gate_circuit_probability_lt_vs_es_mp(
-        initial_binary_state, params, wires, target_binary_state
+    initial_binary_state, params, wires, target_binary_state
 ):
     if psutil.cpu_count() < 2:
         pytest.skip("This test requires at least 2 CPUs.")
@@ -78,7 +83,7 @@ def test_single_gate_circuit_probability_lt_vs_es_mp(
     assert device.n_workers == 2
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
-        MatchgateOperation(params, wires=[0, 1])
+        MatchgateOperation(params, wires=[0, 1]),
     ]
     device.apply(operations)
     device.prob_strategy = get_probability_strategy("LookupTable")
@@ -86,7 +91,8 @@ def test_single_gate_circuit_probability_lt_vs_es_mp(
     device.prob_strategy = get_probability_strategy("ExplicitSum")
     es_probs = device.get_state_probability(target_binary_state, wires)
     np.testing.assert_allclose(
-        lt_probs, es_probs,
+        lt_probs,
+        es_probs,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

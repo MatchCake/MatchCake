@@ -16,7 +16,10 @@ class SptmFermionicSuperposition(SingleParticleTransitionMatrixOperation):
         wires = Wires(wires)
         gates = []
         for wire_i, wire_j in zip(wires[:-1], wires[1:]):
-            new_gates = [SptmFSwap(wires=[wire_i, wire_j]), SptmFHH(wires=[wire_i, wire_j])]
+            new_gates = [
+                SptmFSwap(wires=[wire_i, wire_j]),
+                SptmFHH(wires=[wire_i, wire_j]),
+            ]
             gates.extend(new_gates)
         return gates
 

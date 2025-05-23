@@ -6,19 +6,19 @@ import pennylane as qml
 
 class RandomOperationsGenerator:
     def __init__(
-            self,
-            wires: Union[Sequence[int], int],
-            n_ops: Optional[int] = None,
-            batch_size: Optional[int] = None,
-            op_types: List[Type[Any]] = (),
-            *,
-            use_cuda: bool = False,
-            seed: Optional[int] = None,
-            output_type: Optional[str] = None,
-            observable: Optional[Any] = None,
-            output_wires: Optional[Sequence[int]] = None,
-            initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
-            **kwargs
+        self,
+        wires: Union[Sequence[int], int],
+        n_ops: Optional[int] = None,
+        batch_size: Optional[int] = None,
+        op_types: Sequence[Type[Any]] = (),
+        *,
+        use_cuda: bool = False,
+        seed: Optional[int] = None,
+        output_type: Optional[str] = None,
+        observable: Optional[Any] = None,
+        output_wires: Optional[Sequence[int]] = None,
+        initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
+        **kwargs,
     ):
         if isinstance(wires, int):
             wires = np.arange(wires)
@@ -45,7 +45,11 @@ class RandomOperationsGenerator:
 
     @property
     def output_kwargs(self):
-        return dict(output_type=self.output_type, observable=self.observable, output_wires=self.output_wires)
+        return dict(
+            output_type=self.output_type,
+            observable=self.observable,
+            output_wires=self.output_wires,
+        )
 
     def __iter__(self):
         if self.n_ops == 0:
@@ -59,7 +63,9 @@ class RandomOperationsGenerator:
             cls = rn_gen.choice(self.op_types)
             rn_wire0 = rn_gen.choice(wires[:-1])
             rn_wire1 = rn_wire0 + 1
-            op = cls.random(wires=[rn_wire0, rn_wire1], batch_size=self.batch_size, seed=self.seed)
+            op = cls.random(
+                wires=[rn_wire0, rn_wire1], batch_size=self.batch_size, seed=self.seed
+            )
             if self.use_cuda:
                 op = op.to_cuda()
             yield op
@@ -97,7 +103,9 @@ class RandomOperationsGenerator:
         else:
             initial_state = np.asarray(self.initial_state, dtype=int)
             if len(initial_state) != self.n_wires:
-                raise ValueError(f"Initial state has {len(initial_state)} qubits, but {self.n_wires} are required.")
+                raise ValueError(
+                    f"Initial state has {len(initial_state)} qubits, but {self.n_wires} are required."
+                )
         return initial_state
 
     def __repr__(self):

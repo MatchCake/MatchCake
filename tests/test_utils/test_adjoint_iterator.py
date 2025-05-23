@@ -21,6 +21,3 @@ def test_adjoint_generator():
     it = adjoint_generator(DummyOp.iterator(n))
     for i in reversed(range(n)):
         assert next(it).value == DummyOp(i).adjoint().value
-
-
-

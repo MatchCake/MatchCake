@@ -4,7 +4,9 @@ import pytest
 import matchcake as mc
 from matchcake import utils
 from matchcake.operations import (
-    fSWAP, SptmRzRz, SptmFSwapRzRz,
+    fSWAP,
+    SptmRzRz,
+    SptmFSwapRzRz,
 )
 from matchcake.operations.single_particle_transition_matrices import (
     SptmFSwap,
@@ -26,9 +28,11 @@ set_seed(TEST_SEED)
         for n_wires in range(2, 16)
         for wire0 in range(n_wires - 1)
         for wire1 in range(wire0 + 1, n_wires)
-    ]
+    ],
 )
-def test_sptm_fswap_rzrz_chain_equal_to_sptm_fswap_rzrz(wire0, wire1, all_wires, params):
+def test_sptm_fswap_rzrz_chain_equal_to_sptm_fswap_rzrz(
+    wire0, wire1, all_wires, params
+):
     all_wires = list(range(all_wires))
 
     def _gen():
@@ -43,7 +47,8 @@ def test_sptm_fswap_rzrz_chain_equal_to_sptm_fswap_rzrz(wire0, wire1, all_wires,
     sptm = SptmFSwapRzRz(params, wires=[wire0, wire1]).matrix(all_wires)
 
     np.testing.assert_allclose(
-        sptm, chain_sptm,
+        sptm,
+        chain_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -56,7 +61,7 @@ def test_sptm_fswap_rzrz_chain_equal_to_sptm_fswap_rzrz(wire0, wire1, all_wires,
         for n_wires in range(2, 16)
         for wire0 in range(n_wires - 1)
         for wire1 in range(wire0 + 1, n_wires)
-    ]
+    ],
 )
 def test_sptm_fswap_rzrz(wire0, wire1, all_wires, params):
     all_wires = list(range(all_wires))
@@ -73,7 +78,8 @@ def test_sptm_fswap_rzrz(wire0, wire1, all_wires, params):
     sptm = SptmFSwapRzRz(params, wires=[wire0, wire1]).matrix(all_wires)
 
     np.testing.assert_allclose(
-        sptm, chain_sptm,
+        sptm,
+        chain_sptm,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

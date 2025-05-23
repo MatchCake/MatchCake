@@ -20,7 +20,7 @@ def single_line_matchgates_circuit(params_list, initial_state=None, **kwargs):
     all_wires = [0, 1]
     all_wires = np.sort(np.asarray(all_wires))
     if initial_state is None:
-        initial_state = np.zeros(2**len(all_wires))
+        initial_state = np.zeros(2 ** len(all_wires))
     qml.BasisState(initial_state, wires=all_wires)
     for params in params_list:
         mg_params = mps.MatchgatePolarParams.parse_from_any(params)
@@ -38,21 +38,20 @@ def single_line_matchgates_circuit(params_list, initial_state=None, **kwargs):
     "params_list,prob_wires",
     [
         ([mps.MatchgatePolarParams(r0=1, r1=1).to_numpy() for _ in range(num_gates)], 0)
-        for num_gates in 10*np.arange(1, 5)
+        for num_gates in 10 * np.arange(1, 5)
     ]
-    +
-    [
+    + [
         ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], 0)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-        for num_gates in 10*np.arange(1, 5)
-    ]
+        for num_gates in 10 * np.arange(1, 5)
+    ],
 )
 def test_multiples_matchgate_probs_with_qbit_device(params_list, prob_wires):
     nif_device, qubit_device = devices_init(wires=2)
-    
+
     nif_qnode = qml.QNode(single_line_matchgates_circuit, nif_device)
     qubit_qnode = qml.QNode(single_line_matchgates_circuit, qubit_device)
-    
+
     initial_binary_state = np.array([0, 0])
     qubit_probs = qubit_qnode(
         params_list,
@@ -68,10 +67,10 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, prob_wires):
         out_op="probs",
         out_wires=prob_wires,
     )
-    
+
     np.testing.assert_allclose(
-        nif_probs.squeeze(), qubit_probs.squeeze(),
+        nif_probs.squeeze(),
+        qubit_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
-

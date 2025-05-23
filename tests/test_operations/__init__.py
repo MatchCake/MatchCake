@@ -6,7 +6,9 @@ from pennylane.ops.qubit.observables import BasisStateProjector
 def specific_ops_circuit(cls_params_wires_list, initial_state=None, **kwargs):
     all_wires = kwargs.get("all_wires", None)
     if all_wires is None:
-        all_wires = set(sum([list(wires) for _, __, wires in cls_params_wires_list], []))
+        all_wires = set(
+            sum([list(wires) for _, __, wires in cls_params_wires_list], [])
+        )
     all_wires = np.sort(np.asarray(all_wires))
     if initial_state is None:
         initial_state = np.zeros(len(all_wires), dtype=int)

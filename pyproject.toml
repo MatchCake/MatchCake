@@ -26,7 +26,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MatchCake"
-dynamic = ["version", "readme"]
+version = "0.0.4-beta4"
+dynamic = ["readme"]
 description = ""
 authors = [
   { name="Jérémie Gince", email="gincejeremie@gmail.com" },
@@ -67,12 +68,12 @@ dependencies = [
     "pennylane-lightning (>=0.39.0,<=0.41.1)",
     "torchpfaffian (>=0.0.0)",
     "opt-einsum (>=3.4.0)",
+    "importlib-metadata (>=8.7.0,<9.0.0)",
 ]
 license={file="LICENSE"}
 
 
 [tool.setuptools.dynamic]
-version = {attr = "matchcake.__version__"}
 readme = {file = "README.md", content-type = "text/markdown"}
 
 [project.urls]
@@ -87,5 +88,51 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.poetry]
-version = "0.0.1"
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.15.0"
+black = "^25.1.0"
+
+[[tool.mypy.overrides]]
+module = [
+    # PennyLane
+    "pennylane",
+    "pennylane.wires",
+    "pennylane.templates.broadcast",
+    "pennylane.ops.qubit.observables",
+    "pennylane.typing",
+    "pennylane.operation",
+    "pennylane.tape",
+    "pennylane.pulse",
+    "pennylane.measurements",
+    "pennylane.ops",
+    "pennylane.numpy",
+    "pennylane.ops.op_math.linear_combination",
+    # Scikit-learn
+    "sklearn",
+    "sklearn.base",
+    "sklearn.utils.validation",
+    "sklearn.utils.multiclass",
+    "scipy",
+    "scipy.optimize",
+    "sklearn.utils.estimator_checks",
+    # Scipy
+    "scipy.linalg",
+    # Seaborn
+    "seaborn",
+    # PythonBasicTools
+    "pythonbasictools",
+    "pythonbasictools.multiprocessing_tools",
+    # Others
+    "tqdm",
+    "joblib",
+    "psutil",
+    "umap",
+    "tensorflow",
+    "jax.scipy.linalg",
+    "pfapack.pfaffian",
+    "torch_pfaffian",
+    "sympy",
+    "networkx",
+    "opt_einsum",
+]
+ignore_missing_imports = true

@@ -99,7 +99,9 @@ class StdEstimator(BaseEstimator):
                 break
 
         if filepath_ext is None:
-            raise FileNotFoundError(f"Could not find the file: {filepath} with any of the following extensions: {exts}")
+            raise FileNotFoundError(
+                f"Could not find the file: {filepath} with any of the following extensions: {exts}"
+            )
 
         if filepath_ext.endswith(".joblib"):
             return load(filepath_ext)

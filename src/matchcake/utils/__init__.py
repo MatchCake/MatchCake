@@ -51,10 +51,12 @@ def binary_string_to_vector(binary_string: str, encoding: str = "ascii") -> np.n
     :type encoding: str
     :return: Vector
     """
-    return np.frombuffer(binary_string.encode(encoding), dtype='u1') - ord('0')
+    return np.frombuffer(binary_string.encode(encoding), dtype="u1") - ord("0")
 
 
-def binary_state_to_state(binary_state: Union[np.ndarray, List[Union[int, bool]], str]) -> np.ndarray:
+def binary_state_to_state(
+    binary_state: Union[np.ndarray, List[Union[int, bool]], str],
+) -> np.ndarray:
     r"""
     Convert a binary state to a state. The binary state is binary string of length :math:`2^n` where :math:`n` is
     the number of particles. The state is a vector of length :math:`2^n` where :math:`n` is the number of particles.
@@ -73,7 +75,9 @@ def binary_state_to_state(binary_state: Union[np.ndarray, List[Union[int, bool]]
     return state
 
 
-def state_to_binary_string(state: Union[int, np.ndarray, sparse.sparray], n: Optional[int] = None) -> str:
+def state_to_binary_string(
+    state: Union[int, np.ndarray, sparse.sparray], n: Optional[int] = None
+) -> str:
     r"""
     Convert a state to a binary state. The binary state is binary string of length :math:`2^n` where :math:`n` is
     the number of particles. The state is a vector of length :math:`2^n` where :math:`n` is the number of particles.
@@ -86,8 +90,8 @@ def state_to_binary_string(state: Union[int, np.ndarray, sparse.sparray], n: Opt
     :type n: Optional[int]
     :return: Binary state as a binary string.
     :rtype: str
-    
-    
+
+
     .. Example:
     >>> state_to_binary_string(0, n=2)
     '00'
@@ -109,18 +113,26 @@ def state_to_binary_string(state: Union[int, np.ndarray, sparse.sparray], n: Opt
     '000'
     """
     if isinstance(state, int):
-        assert n is not None, "Number of particles must be specified if the state is an integer."
-        assert state < 2 ** n, f"Invalid state: {state}, must be smaller than 2^n = {2 ** n}."
+        assert (
+            n is not None
+        ), "Number of particles must be specified if the state is an integer."
+        assert (
+            state < 2**n
+        ), f"Invalid state: {state}, must be smaller than 2^n = {2 ** n}."
         return np.binary_repr(state, width=n)
     n_states = np.prod(state.shape)
     n = int(np.log2(n_states))
-    assert n_states == 2 ** n, f"Invalid number of states: {n_states}, must be a power of 2."
+    assert (
+        n_states == 2**n
+    ), f"Invalid number of states: {n_states}, must be a power of 2."
     state_number = np.asarray(state.reshape(-1, n_states).argmax(-1)).astype(int).item()
     binary_state = np.binary_repr(state_number, width=n)
     return binary_state
 
 
-def state_to_binary_state(state: Union[int, np.ndarray, sparse.sparray], n: Optional[int] = None) -> np.ndarray:
+def state_to_binary_state(
+    state: Union[int, np.ndarray, sparse.sparray], n: Optional[int] = None
+) -> np.ndarray:
     r"""
     Convert a state to a binary state. The binary state is binary string of length :math:`2^n` where :math:`n` is
     the number of particles. The state is a vector of length :math:`2^n` where :math:`n` is the number of particles.
@@ -172,9 +184,9 @@ def binary_string_to_state_number(binary_string: str) -> int:
 
 
 def get_non_interacting_fermionic_hamiltonian_from_coeffs(
-        hamiltonian_coefficients_matrix,
-        energy_offset=0.0,
-        lib=pnp,
+    hamiltonian_coefficients_matrix,
+    energy_offset=0.0,
+    lib=pnp,
 ):
     r"""
     Compute the non-interacting fermionic Hamiltonian from the coefficients of the Majorana operators.
@@ -204,20 +216,26 @@ def get_non_interacting_fermionic_hamiltonian_from_coeffs(
     ndim = qml.math.ndim(hamiltonian_coefficients_matrix)
     n_particles = int(shape[-2] / 2)
     if ndim == 3:
-        hamiltonian = qml.math.stack([
-            energy_offset * backend.eye(2 ** n_particles, dtype=complex)
-            for _ in range(shape[0])
-        ])
+        hamiltonian = qml.math.stack(
+            [
+                energy_offset * backend.eye(2**n_particles, dtype=complex)
+                for _ in range(shape[0])
+            ]
+        )
     elif ndim == 2:
         hamiltonian = energy_offset * backend.eye(2**n_particles, dtype=complex)
     else:
-        raise ValueError(f"hamiltonian_coefficients_matrix must be of dimension 2 or 3. Got {ndim} dimension.")
+        raise ValueError(
+            f"hamiltonian_coefficients_matrix must be of dimension 2 or 3. Got {ndim} dimension."
+        )
 
     for mu in range(2 * n_particles):
         for nu in range(2 * n_particles):
             c_mu = get_majorana(mu, n_particles)
             c_nu = get_majorana(nu, n_particles)
-            hamiltonian[..., :, :] += -1j * hamiltonian_coefficients_matrix[..., mu, nu] * (c_mu @ c_nu)
+            hamiltonian[..., :, :] += (
+                -1j * hamiltonian_coefficients_matrix[..., mu, nu] * (c_mu @ c_nu)
+            )
     return hamiltonian
 
 
@@ -274,8 +292,7 @@ def check_if_imag_is_zero(__matrix: np.ndarray, eps: float = 1e-5) -> bool:
 
 
 def decompose_matrix_into_majoranas(
-        __matrix: np.ndarray,
-        majorana_getter: Optional[MajoranaGetter] = None
+    __matrix: np.ndarray, majorana_getter: Optional[MajoranaGetter] = None
 ) -> np.ndarray:
     r"""
     Decompose a matrix into Majorana operators. The matrix is decomposed as
@@ -296,20 +313,24 @@ def decompose_matrix_into_majoranas(
     shape = qml.math.shape(__matrix)
     n_states = shape[-2]
     n = int(np.log2(n_states))
-    assert n_states == 2 ** n, f"Invalid number of states: {n_states}, must be a power of 2."
+    assert (
+        n_states == 2**n
+    ), f"Invalid number of states: {n_states}, must be a power of 2."
     assert n == 2, f"Invalid number of particles: {n}, must be 2."
-    assert shape[-2:] == (n_states, n_states), f"Invalid shape for matrix: {shape}, must be square or batched."
+    assert shape[-2:] == (
+        n_states,
+        n_states,
+    ), f"Invalid shape for matrix: {shape}, must be square or batched."
     if majorana_getter is None:
         get_majorana_func = partial(get_majorana, n=n)
     else:
         get_majorana_func = majorana_getter.__getitem__
-    majorana_tensor = qml.math.stack([get_majorana_func(i) for i in range(2*n)])
+    majorana_tensor = qml.math.stack([get_majorana_func(i) for i in range(2 * n)])
     return qml.math.trace(__matrix @ majorana_tensor, axis1=-2, axis2=-1) / n_states
 
 
 def decompose_state_into_majorana_indexes(
-        __state: Union[int, np.ndarray, sparse.sparray],
-        n: Optional[int] = None
+    __state: Union[int, np.ndarray, sparse.sparray], n: Optional[int] = None
 ) -> np.ndarray:
     r"""
     Decompose a state into Majorana operators. The state is decomposed as
@@ -334,7 +355,7 @@ def decompose_state_into_majorana_indexes(
 
 
 def decompose_binary_state_into_majorana_indexes(
-        __binary_state: Union[np.ndarray, List[Union[int, bool]], str]
+    __binary_state: Union[np.ndarray, List[Union[int, bool]], str],
 ) -> np.ndarray:
     r"""
     Decompose a state into Majorana operators. The state is decomposed as
@@ -377,7 +398,7 @@ def make_transition_matrix_from_action_matrix(action_matrix):
     """
     action_matrix_t = qml.math.einsum("...ij->...ji", action_matrix)
     transition_matrix = 0.5 * (
-            action_matrix_t[..., ::2, :] + 1j * action_matrix_t[..., 1::2, :]
+        action_matrix_t[..., ::2, :] + 1j * action_matrix_t[..., 1::2, :]
     )
     return transition_matrix
 
@@ -403,7 +424,9 @@ def get_block_diagonal_matrix(n: int) -> np.ndarray:
     """
     block_diagonal_matrix = np.zeros((2 * n, 2 * n), dtype=complex)
     for i in range(n):
-        block_diagonal_matrix[2 * i:2 * i + 2, 2 * i:2 * i + 2] = np.array([[1, 1j], [-1j, 1]])
+        block_diagonal_matrix[2 * i : 2 * i + 2, 2 * i : 2 * i + 2] = np.array(
+            [[1, 1j], [-1j, 1]]
+        )
     return block_diagonal_matrix
 
 
@@ -437,13 +460,37 @@ def get_4x4_non_interacting_fermionic_hamiltonian_from_params(params):
     :rtype: np.ndarray
     """
     from ..matchgate_parameter_sets import MatchgateHamiltonianCoefficientsParams
+
     params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params)
-    return np.array([
-        [-2j * (params.h0 + params.h5), 0, 0, 2 * (params.h4 - params.h1) + 2j * (params.h2 + params.h3)],
-        [0, 2j * (params.h0 - params.h5), 2j * (params.h3 - params.h2) - 2 * (params.h1 + params.h4), 0],
-        [0, 2 * (params.h1 + params.h4) + 2j * (params.h3 - params.h2), 2j * (params.h5 - params.h0), 0],
-        [2 * (params.h1 - params.h4) + 2j * (params.h2 + params.h3), 0, 0, -2j * (params.h0 + params.h5)],
-    ], dtype=complex)
+    return np.array(
+        [
+            [
+                -2j * (params.h0 + params.h5),
+                0,
+                0,
+                2 * (params.h4 - params.h1) + 2j * (params.h2 + params.h3),
+            ],
+            [
+                0,
+                2j * (params.h0 - params.h5),
+                2j * (params.h3 - params.h2) - 2 * (params.h1 + params.h4),
+                0,
+            ],
+            [
+                0,
+                2 * (params.h1 + params.h4) + 2j * (params.h3 - params.h2),
+                2j * (params.h5 - params.h0),
+                0,
+            ],
+            [
+                2 * (params.h1 - params.h4) + 2j * (params.h2 + params.h3),
+                0,
+                0,
+                -2j * (params.h0 + params.h5),
+            ],
+        ],
+        dtype=complex,
+    )
 
 
 def get_unitary_from_hermitian_matrix(matrix: np.ndarray) -> np.ndarray:
@@ -547,7 +594,9 @@ def make_wires_continuous(wires: Union[Wires, np.ndarray]):
     return Wires(range(min_wire, max_wire + 1))
 
 
-def make_single_particle_transition_matrix_from_gate(u: Any, majorana_getter: Optional[MajoranaGetter] = None) -> Any:
+def make_single_particle_transition_matrix_from_gate(
+    u: Any, majorana_getter: Optional[MajoranaGetter] = None
+) -> Any:
     r"""
     Compute the single particle transition matrix. This matrix is the matrix :math:`R` such that
 
@@ -567,28 +616,32 @@ def make_single_particle_transition_matrix_from_gate(u: Any, majorana_getter: Op
     if majorana_getter is None:
         majorana_getter = MajoranaGetter(n=int(np.log2(u.shape[-1])))
     # majorana_tensor.shape: (2n, 2^n, 2^n)
-    majorana_tensor = qml.math.stack([majorana_getter[i] for i in range(2 * majorana_getter.n)])
+    majorana_tensor = qml.math.stack(
+        [majorana_getter[i] for i in range(2 * majorana_getter.n)]
+    )
     u_c = qml.math.einsum(
-        "...ij,mjq->...miq", u, majorana_tensor,
+        "...ij,mjq->...miq",
+        u,
+        majorana_tensor,
         optimize="optimal",
     )
     u_c_u_dagger = qml.math.einsum(
-        "...miq,...kq->...mik", u_c, qml.math.conjugate(u),
+        "...miq,...kq->...mik",
+        u_c,
+        qml.math.conjugate(u),
         optimize="optimal",
     )
     u_c_u_dagger_c = qml.math.einsum(
-        "...kij,mjq->...kmiq",
-        u_c_u_dagger, majorana_tensor,
-        optimize="optimal"
+        "...kij,mjq->...kmiq", u_c_u_dagger, majorana_tensor, optimize="optimal"
     )
     u_c_u_dagger_c_traced = qml.math.einsum("...ii", u_c_u_dagger_c, optimize="optimal")
     return u_c_u_dagger_c_traced / qml.math.shape(majorana_tensor)[-1]
 
 
 def get_eigvals_on_z_basis(
-        op: Operation,
-        raise_on_failure: bool = False,
-        options_on_failure: Optional[dict] = None
+    op: Operation,
+    raise_on_failure: bool = False,
+    options_on_failure: Optional[dict] = None,
 ) -> TensorLike:
     r"""
     Get the eigenvalues of the operator on the Z basis.
@@ -617,5 +670,3 @@ def get_eigvals_on_z_basis(
         options_on_failure = options_on_failure or {}
         eigvals_on_z_basis = qml.eigvals(op, **options_on_failure)
     return eigvals_on_z_basis
-
-

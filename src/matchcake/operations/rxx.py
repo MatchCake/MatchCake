@@ -28,15 +28,12 @@ class Rxx(MatchgateOperation):
     where :math:`\theta` is a parameter, :math:`X_{j}` is the Pauli-X operator applied on the wire :math:`j`,
     and :math:`i` is the imaginary unit.
     """
+
     num_wires = 2
     num_params = 1
 
     def __init__(
-            self,
-            params: Union[pnp.ndarray, list, tuple],
-            wires=None,
-            id=None,
-            **kwargs
+        self, params: Union[pnp.ndarray, list, tuple], wires=None, id=None, **kwargs
     ):
         shape = qml.math.shape(params)[-1:]
         n_params = shape[0] if shape else 1

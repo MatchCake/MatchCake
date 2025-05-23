@@ -33,11 +33,17 @@ def init_nif_device(*args, **kwargs) -> NonInteractingFermionicDevice:
 
 def init_qubit_device(*args, **kwargs) -> qml.devices.Device:
     wires = kwargs.pop("wires", 2)
-    qubit_device = qml.device(kwargs.pop("name", 'default.qubit'), wires=wires, shots=kwargs.get("shots", None))
+    qubit_device = qml.device(
+        kwargs.pop("name", "default.qubit"),
+        wires=wires,
+        shots=kwargs.get("shots", None),
+    )
     return qubit_device
 
 
-def devices_init(*args, **kwargs) -> Tuple[NonInteractingFermionicDevice, qml.devices.Device]:
+def devices_init(
+    *args, **kwargs
+) -> Tuple[NonInteractingFermionicDevice, qml.devices.Device]:
     qubit_device = init_qubit_device(*args, **kwargs)
     nif_device = init_nif_device(*args, **kwargs)
     return nif_device, qubit_device

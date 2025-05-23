@@ -19,30 +19,36 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
 
     @classmethod
     def compute_extend_probs_to_all(
-            cls,
-            all_states: TensorLike,
-            extended_states: TensorLike,
-            extended_states_probs: TensorLike,
+        cls,
+        all_states: TensorLike,
+        extended_states: TensorLike,
+        extended_states_probs: TensorLike,
     ):
         batch_shape = all_states.shape[:-1]
         k = extended_states.shape[-1] - all_states.shape[-1]
-        bk = int(2 ** k)
+        bk = int(2**k)
         probs = qml.math.full((*batch_shape, bk), 0.0)
         for i, state in enumerate(extended_states):
             # mask = np.isclose(all_states, state[:-k]).all(axis=-1)
             mask = (all_states == state[:-k]).all(axis=-1)
             state_idx = int(state[-k:].dot(2 ** np.arange(k)[::-1]))
-            probs[..., state_idx] = np.where(mask, extended_states_probs[i, ...], probs[..., state_idx])
+            probs[..., state_idx] = np.where(
+                mask, extended_states_probs[i, ...], probs[..., state_idx]
+            )
         return probs
 
     @classmethod
-    def extend_states(cls, states: TensorLike, added_states: TensorLike, unique: bool = True) -> TensorLike:
+    def extend_states(
+        cls, states: TensorLike, added_states: TensorLike, unique: bool = True
+    ) -> TensorLike:
         if unique:
             states = np.unique(states.reshape(-1, states.shape[-1]), axis=0)
         k = added_states.shape[-1]
         states_batch_shape = states.shape[:-1]
         all_states_list = [
-            qml.math.concatenate([states, qml.math.full((*states_batch_shape, k), state)], -1)
+            qml.math.concatenate(
+                [states, qml.math.full((*states_batch_shape, k), state)], -1
+            )
             for state in added_states
         ]
         all_states = qml.math.stack(all_states_list, axis=0)
@@ -50,11 +56,11 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
         return all_states
 
     def batch_generate_samples_by_subsets_of_k(
-            self,
-            device: qml.devices.QubitDevice,
-            states_prob_func: Callable[[TensorLike, Wires], TensorLike],
-            k: int = 1,
-            **kwargs
+        self,
+        device: qml.devices.QubitDevice,
+        states_prob_func: Callable[[TensorLike, Wires], TensorLike],
+        k: int = 1,
+        **kwargs,
     ) -> TensorLike:
         """
         Generate qubit-by-qubit samples.
@@ -73,7 +79,7 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
             disable=not kwargs.get("show_progress", False),
             unit=f"wire",
         )
-        added_states = device.states_to_binary(np.arange(int(2 ** k)), k)
+        added_states = device.states_to_binary(np.arange(int(2**k)), k)
         # pi_0 = pi_0(x_0) = [p_0(0), p_0(1)]
         probs = to_numpy(states_prob_func(added_states, Wires(range(k)))).T
         # Sample x_0 from the probability distribution pi_0(x_0)
@@ -88,13 +94,19 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
         k_list = [j for j in ([k] * n_k) + [n_wires_left] if j > 0]
 
         for k_j in k_list:
-            added_states = device.states_to_binary(np.arange(2 ** k_j), k_j)
+            added_states = device.states_to_binary(np.arange(2**k_j), k_j)
             binaries_array = qml.math.concatenate(binaries, -1)
 
-            extended_states = self.extend_states(binaries_array, added_states, unique=True)
+            extended_states = self.extend_states(
+                binaries_array, added_states, unique=True
+            )
             # compute probs of unique states: pi_j = pi_j(x_0, ..., x_{j-1}, x_j) / pi_{j-1}(x_0, ..., x_{j-1})
-            extended_states_probs = to_numpy(states_prob_func(extended_states, np.arange(extended_states.shape[-1])))
-            probs = self.compute_extend_probs_to_all(binaries_array, extended_states, extended_states_probs)
+            extended_states_probs = to_numpy(
+                states_prob_func(extended_states, np.arange(extended_states.shape[-1]))
+            )
+            probs = self.compute_extend_probs_to_all(
+                binaries_array, extended_states, extended_states_probs
+            )
 
             # Sample x_j from the probability distribution pi_j
             samples = random_index(probs, axis=-1)
@@ -110,10 +122,10 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
         return qml.math.concatenate(binaries, -1)
 
     def batch_generate_samples(
-            self,
-            device: qml.devices.QubitDevice,
-            states_prob_func: Callable[[TensorLike, Wires], TensorLike],
-            **kwargs
+        self,
+        device: qml.devices.QubitDevice,
+        states_prob_func: Callable[[TensorLike, Wires], TensorLike],
+        **kwargs,
     ) -> TensorLike:
         """
         Generate qubit-by-qubit samples.
@@ -126,13 +138,15 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
 
         :return: Samples with shape (shots, num_wires) of probabilities |<x|psi>|^2
         """
-        return self.batch_generate_samples_by_subsets_of_k(device, states_prob_func, k=self.K, **kwargs)
+        return self.batch_generate_samples_by_subsets_of_k(
+            device, states_prob_func, k=self.K, **kwargs
+        )
 
     def generate_samples(
-            self,
-            device: qml.devices.QubitDevice,
-            state_prob_func: Callable[[TensorLike, Wires], TensorLike],
-            **kwargs
+        self,
+        device: qml.devices.QubitDevice,
+        state_prob_func: Callable[[TensorLike, Wires], TensorLike],
+        **kwargs,
     ) -> TensorLike:
         """
         Generate qubit-by-qubit samples.
@@ -145,12 +159,15 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
 
         :return: Samples with shape (shots, num_wires) of probabilities |<x|psi>|^2
         """
+
         def states_prob_func(states: TensorLike, wires: Wires) -> TensorLike:
             wires = np.asarray(wires)
             if wires.ndim == 1:
                 wires = np.expand_dims(wires, axis=0).repeat(len(states), axis=0)
-            return qml.math.stack([state_prob_func(s, w) for s, w in zip(states, wires)], axis=0)
+            return qml.math.stack(
+                [state_prob_func(s, w) for s, w in zip(states, wires)], axis=0
+            )
 
-        return self.batch_generate_samples_by_subsets_of_k(device, states_prob_func, k=self.K, **kwargs)
-
-
+        return self.batch_generate_samples_by_subsets_of_k(
+            device, states_prob_func, k=self.K, **kwargs
+        )

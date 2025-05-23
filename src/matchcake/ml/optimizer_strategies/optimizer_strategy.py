@@ -22,7 +22,9 @@ class OptimizerStrategy(ABC):
 
     def set_optional_hyperparameters(self, hyperparameters, default=None):
         for kwarg in self.OPTIONAL_HYPERPARAMETERS:
-            setattr(self, kwarg, hyperparameters.get(kwarg, getattr(self, kwarg, default)))
+            setattr(
+                self, kwarg, hyperparameters.get(kwarg, getattr(self, kwarg, default))
+            )
         return self
 
     def __init__(self):
@@ -51,7 +53,9 @@ class OptimizerStrategy(ABC):
     def jac(self, vector, closure):
         vector = torch_utils.to_tensor(vector)
         self.parameters = self.vector_to_parameters(vector)
-        return torch_utils.to_numpy(torch.autograd.grad(closure(self.parameters), self.parameters)[0])
+        return torch_utils.to_numpy(
+            torch.autograd.grad(closure(self.parameters), self.parameters)[0]
+        )
 
     def vector_to_parameters(self, vector):
         vector = torch_utils.to_tensor(vector)
@@ -78,19 +82,19 @@ class OptimizerStrategy(ABC):
 
     @abstractmethod
     def step(
-            self,
-            closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
-            callback: Optional[Callable[[], Any]] = None
+        self,
+        closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
+        callback: Optional[Callable[[], Any]] = None,
     ) -> TensorLike:
         raise NotImplementedError(f"{self.NAME}.step() must be implemented.")
 
     def optimize(
-            self,
-            *,
-            n_iterations: int,
-            closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
-            callback: Optional[Callable[[], Any]] = None,
-            **hyperparameters
+        self,
+        *,
+        n_iterations: int,
+        closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
+        callback: Optional[Callable[[], Any]] = None,
+        **hyperparameters,
     ) -> List[torch.nn.Parameter]:
         for _ in range(n_iterations):
             self.step(closure, callback)
@@ -108,9 +112,9 @@ class ScipyOptimizerStrategy(OptimizerStrategy):
         return self
 
     def step(
-            self,
-            closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
-            callback: Optional[Callable[[], Any]] = None
+        self,
+        closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
+        callback: Optional[Callable[[], Any]] = None,
     ) -> TensorLike:
         raise NotImplementedError(f"{self.NAME}.step() must be implemented.")
 
@@ -121,24 +125,27 @@ class ScipyOptimizerStrategy(OptimizerStrategy):
             if self.stop_training_flag:
                 # raise StopIteration
                 return True
+
         return callback
 
     def optimize(
-            self,
-            *,
-            n_iterations: int,
-            closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
-            callback: Optional[Callable[[], Any]] = None,
-            **hyperparameters
+        self,
+        *,
+        n_iterations: int,
+        closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
+        callback: Optional[Callable[[], Any]] = None,
+        **hyperparameters,
     ) -> List[torch.nn.Parameter]:
         result = minimize(
-            fun=lambda x: float(torch_utils.to_numpy(closure(self.vector_to_parameters(x)))),
+            fun=lambda x: float(
+                torch_utils.to_numpy(closure(self.vector_to_parameters(x)))
+            ),
             x0=torch_utils.to_numpy(self.params_vector),
             method=self.NAME,
             callback=self.get_callback_func(callback),
             options={"maxiter": n_iterations},
-            bounds=[(self.init_range_low, self.init_range_high)] * len(self.params_vector),
+            bounds=[(self.init_range_low, self.init_range_high)]
+            * len(self.params_vector),
         )
         self.parameters = self.vector_to_parameters(result.x)
         return self.parameters
-

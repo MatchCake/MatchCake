@@ -37,7 +37,9 @@ class SptmfRxRx(SingleParticleTransitionMatrixOperation):
     def __init__(self, params, wires=None, id=None, **kwargs):
         params_shape = qml.math.shape(params)
         if params_shape[-1] != 2:
-            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
+            raise ValueError(
+                f"Invalid number of parameters: {params_shape[-1]}. Expected 2."
+            )
 
         if len(params_shape) == 1:
             matrix = np.zeros((4, 4), dtype=float)
@@ -47,7 +49,9 @@ class SptmfRxRx(SingleParticleTransitionMatrixOperation):
             raise ValueError(f"Invalid shape for the parameters: {params_shape}")
 
         if params_shape[-1] != 2:
-            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
+            raise ValueError(
+                f"Invalid number of parameters: {params_shape[-1]}. Expected 2."
+            )
 
         matrix = convert_and_cast_like(matrix, params)
         theta, phi = params[..., 0] / 2, params[..., 1] / 2
@@ -61,4 +65,3 @@ class SptmfRxRx(SingleParticleTransitionMatrixOperation):
         matrix[..., 3, 0] = qml.math.sin(phi - theta)
         matrix[..., 3, 3] = qml.math.cos(phi - theta)
         super().__init__(matrix, wires=wires, id=id, **kwargs)
-

@@ -8,7 +8,6 @@ import torch
 from pennylane.typing import TensorLike
 
 
-
 class GeneticStrategy(OptimizerStrategy):
     NAME: str = "Genetic"
     OPTIONAL_HYPERPARAMETERS = [
@@ -20,7 +19,7 @@ class GeneticStrategy(OptimizerStrategy):
         "keep_parents",
         "crossover_type",
         "mutation_type",
-        "mutation_percent_genes"
+        "mutation_percent_genes",
     ]
 
     def __init__(self):
@@ -46,9 +45,9 @@ class GeneticStrategy(OptimizerStrategy):
         return self
 
     def step(
-            self,
-            closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
-            callback: Optional[Callable[[], Any]] = None
+        self,
+        closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
+        callback: Optional[Callable[[], Any]] = None,
     ) -> TensorLike:
         raise NotImplementedError(f"{self.NAME}.step() must be implemented.")
 
@@ -58,23 +57,29 @@ class GeneticStrategy(OptimizerStrategy):
 
     def fitness_func(self, ga_instance, solution, solution_idx):
         if self.closure is None:
-            raise ValueError(f"{self.NAME} Optimizer has not been initialized. Call optimize() first.")
-        return -float(torch_utils.to_numpy(self.closure(self.vector_to_parameters(solution))))
+            raise ValueError(
+                f"{self.NAME} Optimizer has not been initialized. Call optimize() first."
+            )
+        return -float(
+            torch_utils.to_numpy(self.closure(self.vector_to_parameters(solution)))
+        )
 
     def get_initial_population(self):
         main_parent = torch_utils.to_numpy(self.params_vector)
         initial_population = [main_parent]
-        for _ in range(max(0, self.sol_per_pop-1)):
-            initial_population.append(main_parent + torch_utils.to_numpy(torch.randn_like(self.params_vector)))
+        for _ in range(max(0, self.sol_per_pop - 1)):
+            initial_population.append(
+                main_parent + torch_utils.to_numpy(torch.randn_like(self.params_vector))
+            )
         return np.stack(initial_population)
 
     def optimize(
-            self,
-            *,
-            n_iterations: int,
-            closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
-            callback: Optional[Callable[[], Any]] = None,
-            **hyperparameters
+        self,
+        *,
+        n_iterations: int,
+        closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
+        callback: Optional[Callable[[], Any]] = None,
+        **hyperparameters,
     ) -> List[torch.nn.Parameter]:
         try:
             import pygad
@@ -84,7 +89,9 @@ class GeneticStrategy(OptimizerStrategy):
                 "You can install it with `pip install pygad`."
             )
         if self.parameters is None:
-            raise ValueError(f"{self.NAME} Optimizer has not been initialized. Call set_parameters() first.")
+            raise ValueError(
+                f"{self.NAME} Optimizer has not been initialized. Call set_parameters() first."
+            )
 
         self.closure = closure
         self.callback = callback

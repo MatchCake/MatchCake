@@ -24,7 +24,9 @@ rotations_map = {  # TODO: to verify
     "ZY": "X",
 }
 rotations_sign_map = defaultdict(lambda: 1j)
-rotations_sign_map.update({"XY": 1j, "YX": -1j, "XZ": -1j, "ZX": 1j, "YZ": 1j, "ZY": -1j})
+rotations_sign_map.update(
+    {"XY": 1j, "YX": -1j, "XZ": -1j, "ZX": 1j, "YZ": 1j, "ZY": -1j}
+)
 
 
 class MAngleEmbedding(Operation):
@@ -42,11 +44,16 @@ class MAngleEmbedding(Operation):
         contract_rots = hyperparameters.get("contract_rots", False)
 
         if contract_rots:
-            warnings.warn("This method is not tested. Use at your own risk.", DeprecationWarning)
+            warnings.warn(
+                "This method is not tested. Use at your own risk.", DeprecationWarning
+            )
             op = partial(qml.math.einsum, "...ij,...jk->...ik")
             list_of_rots = [
                 [
-                    rot(qml.math.stack([p0, p1], axis=-1), wires=[wires[2 * i], wires[2 * i + 1]])
+                    rot(
+                        qml.math.stack([p0, p1], axis=-1),
+                        wires=[wires[2 * i], wires[2 * i + 1]],
+                    )
                     for rot in rotations
                 ]
                 for i, (p0, p1) in enumerate(zip(params[0::2], params[1::2]))
@@ -54,22 +61,27 @@ class MAngleEmbedding(Operation):
             return [recursive_2in_operator(op, rots) for rots in list_of_rots]
 
         return [
-            rot(qml.math.stack([p0, p1], axis=-1), wires=[wires[2 * i], wires[2 * i + 1]])
+            rot(
+                qml.math.stack([p0, p1], axis=-1),
+                wires=[wires[2 * i], wires[2 * i + 1]],
+            )
             for i, (p0, p1) in enumerate(zip(params[0::2], params[1::2]))
             for rot in rotations
         ]
-    
+
     @staticmethod
     def pad_params(params):
         r"""
         If the number of parameters is odd, pad the parameters with zero to make it even.
-        
+
         :param params: The parameters to pad.
         :return: The padded parameters.
         """
         n_params = qml.math.shape(params)[-1]
         if n_params % 2 != 0:
-            params = qml.math.concatenate([params, qml.math.zeros_like(params[..., :1])], axis=-1)
+            params = qml.math.concatenate(
+                [params, qml.math.zeros_like(params[..., :1])], axis=-1
+            )
         return params
 
     def __repr__(self):
@@ -134,24 +146,24 @@ class MAngleEmbedding(Operation):
 class MAngleEmbeddings(Operation):
     num_wires = AnyWires
     grad_method = None
-    
+
     @staticmethod
     def _get_w0_idx_from_idx(idx, wires):
         return 2 * (idx % (len(wires) // 2))
-    
+
     @staticmethod
     def _get_w0_from_idx(idx, wires):
         return wires[MAngleEmbeddings._get_w0_idx_from_idx(idx, wires)]
-    
+
     @staticmethod
     def _get_w1_from_idx(idx, wires):
         return wires[MAngleEmbeddings._get_w0_idx_from_idx(idx, wires) + 1]
-    
+
     @staticmethod
     def _get_layer_idx_from_idx(idx, wires):
-        n_gates_per_layer = (len(wires) // 2)
+        n_gates_per_layer = len(wires) // 2
         return idx // n_gates_per_layer
-    
+
     @staticmethod
     def compute_decomposition(*params, wires=None, **hyperparameters):
         params = qml.math.concatenate(params, axis=-1)
@@ -167,12 +179,12 @@ class MAngleEmbeddings(Operation):
                     MAngleEmbeddings._get_w0_from_idx(i, wires),
                     MAngleEmbeddings._get_w1_from_idx(i, wires),
                 ],
-                draw_label_params=f"p{i},l{MAngleEmbeddings._get_layer_idx_from_idx(i, wires)}"
+                draw_label_params=f"p{i},l{MAngleEmbeddings._get_layer_idx_from_idx(i, wires)}",
             )
             for i, (p0, p1) in enumerate(zip(params[0::2], params[1::2]))
             for rot in rotations
         ]
-    
+
     @staticmethod
     def pad_params(params):
         r"""
@@ -183,12 +195,14 @@ class MAngleEmbeddings(Operation):
         """
         n_params = qml.math.shape(params)[-1]
         if n_params % 2 != 0:
-            params = qml.math.concatenate([params, qml.math.zeros_like(params[..., :1])], axis=-1)
+            params = qml.math.concatenate(
+                [params, qml.math.zeros_like(params[..., :1])], axis=-1
+            )
         return params
-    
+
     def __repr__(self):
         return f"{self.__class__.__name__}({self.data}, wires={self.wires.tolist()})"
-    
+
     def __init__(self, features, wires, rotations="X", id=None):
         r"""
         Construct a new Matchgate AngleEmbedding operation.
@@ -203,11 +217,11 @@ class MAngleEmbeddings(Operation):
         self._rotations = rotations.split(",")
         self._hyperparameters = {"rotations": [ROT[r] for r in self._rotations]}
         super().__init__(features, wires=wires, id=id)
-    
+
     @property
     def num_params(self):
         return 1
-    
+
     @property
     def ndim_params(self):
         return (1,)
