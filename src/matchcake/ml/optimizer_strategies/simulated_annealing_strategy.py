@@ -27,14 +27,16 @@ class SimulatedAnnealingStrategy(OptimizerStrategy):
 
     def __getstate__(self) -> Dict[str, Any]:
         state = super().__getstate__()
-        state.update({
-            "temperature": self.temperature,
-            "current_temperature": self.current_temperature,
-            "current_loss": self.current_loss,
-            "learning_rate": self.learning_rate,
-            "seed": self.seed,
-            "parameters": to_numpy(self.params_vector).tolist()
-        })
+        state.update(
+            {
+                "temperature": self.temperature,
+                "current_temperature": self.current_temperature,
+                "current_loss": self.current_loss,
+                "learning_rate": self.learning_rate,
+                "seed": self.seed,
+                "parameters": to_numpy(self.params_vector).tolist(),
+            }
+        )
         return state
 
     def __setstate__(self, state: Dict[str, Any]):
@@ -57,19 +59,23 @@ class SimulatedAnnealingStrategy(OptimizerStrategy):
         return self
 
     def step(
-            self,
-            closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
-            callback: Optional[Callable[[], Any]] = None
+        self,
+        closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
+        callback: Optional[Callable[[], Any]] = None,
     ) -> TensorLike:
         if self.parameters is None:
-            raise ValueError(f"{self.NAME} Optimizer has not been initialized. Call set_parameters() first.")
+            raise ValueError(
+                f"{self.NAME} Optimizer has not been initialized. Call set_parameters() first."
+            )
 
         current_params_vector = deepcopy(self.params_vector)
         # candidate_vector = current_params_vector + torch.randn_like(current_params_vector) * self.learning_rate
         # candidate_vector = torch.clamp(candidate_vector, self.init_range_low, self.init_range_high)
         candidate_vector = torch_wrap_circular_bounds(
-            current_params_vector + torch.randn_like(current_params_vector) * self.learning_rate,
-            lower_bound=self.init_range_low, upper_bound=self.init_range_high
+            current_params_vector
+            + torch.randn_like(current_params_vector) * self.learning_rate,
+            lower_bound=self.init_range_low,
+            upper_bound=self.init_range_high,
         )
 
         candidate = deepcopy(self.vector_to_parameters(candidate_vector))
@@ -88,16 +94,20 @@ class SimulatedAnnealingStrategy(OptimizerStrategy):
             self.best_parameters = deepcopy(self.parameters)
             self.best_cost = candidate_loss
         if callback is not None:
-            callback(postfix=dict(temperature=self.current_temperature, metropolis=metropolis))
+            callback(
+                postfix=dict(
+                    temperature=self.current_temperature, metropolis=metropolis
+                )
+            )
         return candidate_loss
 
     def optimize(
-            self,
-            *,
-            n_iterations: int,
-            closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
-            callback: Optional[Callable[[], Any]] = None,
-            **hyperparameters
+        self,
+        *,
+        n_iterations: int,
+        closure: Callable[[Optional[List[torch.nn.Parameter]]], TensorLike],
+        callback: Optional[Callable[[], Any]] = None,
+        **hyperparameters,
     ) -> List[torch.nn.Parameter]:
         for i in range(n_iterations):
             self.current_temperature = self.temperature / (i + 1)

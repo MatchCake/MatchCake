@@ -34,12 +34,14 @@ def pytest_addoption(parser):
 
 def pytest_collection_modifyitems(config, items):
     if config.getoption(f"--{RUN_SLOW_ARG_NAME}"):
-    # if RUN_SLOW_TESTS:
-    #     print("Running slow tests")
+        # if RUN_SLOW_TESTS:
+        #     print("Running slow tests")
         pass
     else:
         # print("Skipping slow tests")
-        skipper = pytest.mark.skip(reason=f"Only run when '--{RUN_SLOW_ARG_NAME}=True' is given")
+        skipper = pytest.mark.skip(
+            reason=f"Only run when '--{RUN_SLOW_ARG_NAME}=True' is given"
+        )
         for item in items:
             if "slow" in item.keywords:
                 item.add_marker(skipper)

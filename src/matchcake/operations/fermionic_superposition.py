@@ -45,5 +45,3 @@ class FermionicSuperposition(Operation):
 
     def to_sptm_operation(self):
         return SptmFermionicSuperposition(wires=self.wires)
-
-

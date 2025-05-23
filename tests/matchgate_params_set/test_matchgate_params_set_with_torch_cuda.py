@@ -31,8 +31,3 @@ def test_matchgate_params_constructor_with_torch_cuda():
     assert params.to_tensor().is_cuda
     assert params.is_cuda
     assert params.to_tensor().shape == (batch_size, mps.MatchgatePolarParams.N_PARAMS)
-
-
-
-
-

@@ -33,6 +33,7 @@ class SptmBlockDiagAngleEmbedding(SingleParticleTransitionMatrixOperation):
     :param params: The parameters of the operation
 
     """
+
     num_wires = AnyWires
 
     def __init__(self, params, wires=None, id=None):
@@ -46,15 +47,17 @@ class SptmBlockDiagAngleEmbedding(SingleParticleTransitionMatrixOperation):
                 f"Number of wires must be at least {n_required_wires} for the given parameters. "
                 f"Got {n_wires} wires."
             )
-        matrix = qml.math.zeros((params_shape[0], 2 * n_wires, 2 * n_wires), dtype=complex)
+        matrix = qml.math.zeros(
+            (params_shape[0], 2 * n_wires, 2 * n_wires), dtype=complex
+        )
         matrix = qml.math.convert_like(matrix, params)
         diag_indexes = np.arange(2 * n_wires, dtype=int)
         matrix[..., diag_indexes, diag_indexes] = 1
 
         for p_idx, i in enumerate(range(0, 2 * n_required_wires, 2)):
             matrix[..., i, i] = qml.math.cos(params_batched_flatten[..., p_idx])
-            matrix[..., i+1, i] = qml.math.sin(params_batched_flatten[..., p_idx])
-            matrix[..., i, i+1] = -qml.math.sin(params_batched_flatten[..., p_idx])
-            matrix[..., i+1, i+1] = qml.math.cos(params_batched_flatten[..., p_idx])
+            matrix[..., i + 1, i] = qml.math.sin(params_batched_flatten[..., p_idx])
+            matrix[..., i, i + 1] = -qml.math.sin(params_batched_flatten[..., p_idx])
+            matrix[..., i + 1, i + 1] = qml.math.cos(params_batched_flatten[..., p_idx])
 
         super().__init__(matrix, wires=wires, id=id, normalize=False)

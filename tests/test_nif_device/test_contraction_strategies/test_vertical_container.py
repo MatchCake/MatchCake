@@ -22,9 +22,12 @@ set_seed(TEST_SEED)
 @pytest.mark.parametrize(
     "op",
     [
-        mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
+        mc.MatchgateOperation(
+            mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+            wires=[wire, wire + 1],
+        )
         for wire in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_vert_matchgates_container_contract_single_op(op):
     strategy = get_contraction_strategy("vertical")
@@ -44,12 +47,12 @@ def test_vert_matchgates_container_contract_single_op(op):
         [
             mc.MatchgateOperation(
                 mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
-                wires=[i, i + 1]
+                wires=[i, i + 1],
             )
             for i in range(0, np.random.randint(1, 20), 2)
         ]
         for _ in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_vert_matchgates_container_contract_single_column(column_operations):
     strategy = get_contraction_strategy("vertical")
@@ -61,9 +64,13 @@ def test_vert_matchgates_container_contract_single_column(column_operations):
     assert len(container) == len(column_operations)
     all_wires = set(wire for op in column_operations for wire in op.wires)
 
-    contract_ops = column_operations[0].get_padded_single_particle_transition_matrix(all_wires)
+    contract_ops = column_operations[0].get_padded_single_particle_transition_matrix(
+        all_wires
+    )
     for op in column_operations[1:]:
-        contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(all_wires)
+        contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(
+            all_wires
+        )
 
     np.testing.assert_allclose(
         container.contract(),
@@ -77,12 +84,15 @@ def test_vert_matchgates_container_contract_single_column(column_operations):
     "operations",
     [
         [
-            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
+            mc.MatchgateOperation(
+                mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+                wires=[wire, wire + 1],
+            )
             for wire in range(0, n_lines, 2)
             for _ in range(n_columns)
         ]
         for n_lines, n_columns in np.random.randint(1, 10, (N_RANDOM_TESTS_PER_CASE, 2))
-    ]
+    ],
 )
 def test_vert_matchgates_container_contract_line_column(operations):
     strategy = get_contraction_strategy("vertical")
@@ -92,7 +102,9 @@ def test_vert_matchgates_container_contract_line_column(operations):
     all_wires = set(wire for op in operations for wire in op.wires)
     contract_ops = operations[0].to_sptm_operation().pad(all_wires)
     for op in operations[1:]:
-        contract_ops = fermionic_operator_matmul(contract_ops, op.to_sptm_operation().pad(all_wires))
+        contract_ops = fermionic_operator_matmul(
+            contract_ops, op.to_sptm_operation().pad(all_wires)
+        )
 
     pred_new_operations = container.contract_operations(operations)
     pred_contract_ops = pred_new_operations[0]
@@ -101,7 +113,9 @@ def test_vert_matchgates_container_contract_line_column(operations):
     for op in pred_new_operations[1:]:
         if isinstance(op, mc.MatchgateOperation):
             op = op.to_sptm_operation()
-        pred_contract_ops = fermionic_operator_matmul(pred_contract_ops.pad(all_wires), op.pad(all_wires))
+        pred_contract_ops = fermionic_operator_matmul(
+            pred_contract_ops.pad(all_wires), op.pad(all_wires)
+        )
 
     pred_contract_matrix = pred_contract_ops.matrix()
     contract_matrix = contract_ops.matrix()
@@ -121,17 +135,22 @@ def test_vert_matchgates_container_contract_line_column(operations):
     "operations",
     [
         [
-            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
+            mc.MatchgateOperation(
+                mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+                wires=[wire, wire + 1],
+            )
             for wire in range(0, n_lines, 2)
             for _ in range(n_columns)
         ]
         for n_lines, n_columns in np.random.randint(1, 10, (N_RANDOM_TESTS_PER_CASE, 2))
-    ]
+    ],
 )
 def test_vert_matchgates_container_contract_line_column_probs(operations):
     all_wires = set(wire for op in operations for wire in op.wires)
     nif_device = init_nif_device(wires=all_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="vertical")
+    nif_device_contracted = init_nif_device(
+        wires=all_wires, contraction_method="vertical"
+    )
 
     nif_device.apply(operations)
     nif_device_contracted.apply(operations)
@@ -150,16 +169,21 @@ def test_vert_matchgates_container_contract_line_column_probs(operations):
 @pytest.mark.parametrize(
     "params_list,n_wires",
     [
-        ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], num_wires)
+        (
+            [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)],
+            num_wires,
+        )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in range(2, 6)
         for num_gates in [1, 10 * num_wires]
-    ]
+    ],
 )
 def test_multiples_matchgate_probs_with_nif_vertical(params_list, n_wires):
     all_wires = np.arange(n_wires)
     nif_device = init_nif_device(wires=all_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="vertical")
+    nif_device_contracted = init_nif_device(
+        wires=all_wires, contraction_method="vertical"
+    )
 
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
     nif_qnode_contracted = qml.QNode(specific_matchgate_circuit, nif_device_contracted)
@@ -187,14 +211,16 @@ def test_multiples_matchgate_probs_with_nif_vertical(params_list, n_wires):
     )
 
     np.testing.assert_allclose(
-        nif_probs.sum(), 1.0,
+        nif_probs.sum(),
+        1.0,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
-        err_msg="The sum of the probabilities should be 1"
+        err_msg="The sum of the probabilities should be 1",
     )
 
     np.testing.assert_allclose(
-        nif_contract_probs.squeeze(), nif_probs.squeeze(),
+        nif_contract_probs.squeeze(),
+        nif_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -203,16 +229,21 @@ def test_multiples_matchgate_probs_with_nif_vertical(params_list, n_wires):
 @pytest.mark.parametrize(
     "params_list,n_wires",
     [
-        ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], num_wires)
+        (
+            [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)],
+            num_wires,
+        )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in range(2, 6)
         for num_gates in [1, 10 * num_wires]
-    ]
+    ],
 )
 def test_multiples_matchgate_probs_with_qubits_device_vertical(params_list, n_wires):
     all_wires = np.arange(n_wires)
     qubit_device = qml.device("default.qubit", wires=len(all_wires), shots=None)
-    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="vertical")
+    nif_device_contracted = init_nif_device(
+        wires=all_wires, contraction_method="vertical"
+    )
 
     qubit_qnode = qml.QNode(specific_matchgate_circuit, qubit_device)
     nif_qnode_contracted = qml.QNode(specific_matchgate_circuit, nif_device_contracted)
@@ -240,14 +271,16 @@ def test_multiples_matchgate_probs_with_qubits_device_vertical(params_list, n_wi
     )
 
     np.testing.assert_allclose(
-        nif_probs.sum(), 1.0,
+        nif_probs.sum(),
+        1.0,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
-        err_msg="The sum of the probabilities should be 1"
+        err_msg="The sum of the probabilities should be 1",
     )
 
     np.testing.assert_allclose(
-        nif_contract_probs.squeeze(), nif_probs.squeeze(),
+        nif_contract_probs.squeeze(),
+        nif_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )

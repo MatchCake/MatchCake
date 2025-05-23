@@ -11,7 +11,9 @@ star_state_finding_strategy_map = {
 }
 
 
-def get_star_state_finding_strategy(name: Union[str, StarStateFindingStrategy]) -> StarStateFindingStrategy:
+def get_star_state_finding_strategy(
+    name: Union[str, StarStateFindingStrategy],
+) -> StarStateFindingStrategy:
     if isinstance(name, StarStateFindingStrategy):
         return name
     name = name.lower().strip()

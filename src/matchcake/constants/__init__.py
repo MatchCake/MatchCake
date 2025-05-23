@@ -32,5 +32,3 @@ _CIRCUIT_MATMUL_DIRECTION: MatmulDirectionType = MatmulDirectionType.LR
 # => U = U_{0} U_{1} ... U_{p-1} U_{p}
 
 _FOP_MATMUL_DIRECTION: MatmulDirectionType = MatmulDirectionType.RL
-
-

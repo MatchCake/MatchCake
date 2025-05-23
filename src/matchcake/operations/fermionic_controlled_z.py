@@ -18,7 +18,7 @@ from .fermionic_paulis import fXX
 class FermionicControlledZ(Operation):
     num_wires = 2
     num_params = 0
-    
+
     @staticmethod
     def compute_decomposition(*params, wires=None, **hyperparameters):
         wires = qml.wires.Wires(wires)

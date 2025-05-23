@@ -19,7 +19,7 @@ from ...configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
     TEST_SEED,
-    set_seed
+    set_seed,
 )
 
 set_seed(TEST_SEED)
@@ -29,16 +29,16 @@ set_seed(TEST_SEED)
     "input_matrix, system_state, target_binary_states",
     [
         (
-                expm(np.random.randn(batch_size, 2 * size, 2 * size)),
-                np.random.choice([0, 1], size=size),
-                np.random.choice([0, 1], size=size),
+            expm(np.random.randn(batch_size, 2 * size, 2 * size)),
+            np.random.choice([0, 1], size=size),
+            np.random.choice([0, 1], size=size),
         )
-        for size in np.arange(1, 1+N_RANDOM_TESTS_PER_CASE, dtype=int)
+        for size in np.arange(1, 1 + N_RANDOM_TESTS_PER_CASE, dtype=int)
         for batch_size in [1, 4]
-    ]
+    ],
 )
 def test_lookup_table_compute_observables_of_target_states_gradients(
-        input_matrix, system_state, target_binary_states
+    input_matrix, system_state, target_binary_states
 ):
 
     def get_output(transition_matrix):
@@ -53,9 +53,10 @@ def test_lookup_table_compute_observables_of_target_states_gradients(
     input_matrix = utils.make_transition_matrix_from_action_matrix(input_matrix)
     init_params_nif = torch.from_numpy(input_matrix).requires_grad_()
     assert gradcheck(
-        get_output, (init_params_nif, ),
+        get_output,
+        (init_params_nif,),
         atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON
+        rtol=RTOL_APPROX_COMPARISON,
     )
 
 
@@ -63,16 +64,16 @@ def test_lookup_table_compute_observables_of_target_states_gradients(
     "input_matrix, system_state, target_binary_states",
     [
         (
-                expm(np.random.randn(batch_size, 2 * size, 2 * size)),
-                np.random.choice([0, 1], size=size),
-                np.random.choice([0, 1], size=size),
+            expm(np.random.randn(batch_size, 2 * size, 2 * size)),
+            np.random.choice([0, 1], size=size),
+            np.random.choice([0, 1], size=size),
         )
-        for size in np.arange(1, 1+N_RANDOM_TESTS_PER_CASE, dtype=int)
+        for size in np.arange(1, 1 + N_RANDOM_TESTS_PER_CASE, dtype=int)
         for batch_size in [1, 4]
-    ]
+    ],
 )
 def test_lookup_table_compute_observables_of_target_states_gradients(
-        input_matrix, system_state, target_binary_states
+    input_matrix, system_state, target_binary_states
 ):
 
     def get_output(transition_matrix):
@@ -90,10 +91,8 @@ def test_lookup_table_compute_observables_of_target_states_gradients(
     input_matrix = utils.make_transition_matrix_from_action_matrix(input_matrix)
     init_params_nif = torch.from_numpy(input_matrix).requires_grad_()
     assert gradcheck(
-        get_output, (init_params_nif, ),
+        get_output,
+        (init_params_nif,),
         atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON
+        rtol=RTOL_APPROX_COMPARISON,
     )
-
-
-

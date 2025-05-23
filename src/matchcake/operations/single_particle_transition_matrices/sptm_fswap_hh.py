@@ -21,4 +21,3 @@ class SptmFSwapHH(SingleParticleTransitionMatrixOperation):
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
         return self
-

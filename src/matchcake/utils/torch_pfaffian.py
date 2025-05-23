@@ -30,8 +30,6 @@ class Pfaffian(torch.autograd.Function):
 
         am1 = torch.pinverse(matrix_clone)
         am1_papx = am1 * grad_outputs_clone.view(-1, 1, 1)
-        trace = torch.einsum('...ii->...', am1_papx)
+        trace = torch.einsum("...ii->...", am1_papx)
         dpf_dx = 0.5 * pf_clone * trace
         return dpf_dx
-
-

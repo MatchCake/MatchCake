@@ -13,9 +13,7 @@ class NoneContractionStrategy(ContractionStrategy):
         return None
 
     def __call__(
-            self,
-            operations: Sequence[Operation],
-            **kwargs
+        self, operations: Sequence[Operation], **kwargs
     ) -> Sequence[Operation]:
         return operations
 

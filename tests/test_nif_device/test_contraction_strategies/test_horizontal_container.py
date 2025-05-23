@@ -6,7 +6,9 @@ from matchcake import utils
 import numpy as np
 import pennylane as qml
 
-from matchcake.devices.contraction_strategies.contraction_container import _ContractionMatchgatesContainerAddException
+from matchcake.devices.contraction_strategies.contraction_container import (
+    _ContractionMatchgatesContainerAddException,
+)
 from .. import init_qubit_device, init_nif_device
 from ..test_specific_circuit import specific_matchgate_circuit
 from ...configs import (
@@ -23,9 +25,12 @@ set_seed(TEST_SEED)
 @pytest.mark.parametrize(
     "op",
     [
-        mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
+        mc.MatchgateOperation(
+            mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+            wires=[wire, wire + 1],
+        )
         for wire in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_horizontal_matchgates_container_contract_single_op(op):
     strategy = get_contraction_strategy("horizontal")
@@ -43,11 +48,14 @@ def test_horizontal_matchgates_container_contract_single_op(op):
     "operations",
     [
         [
-            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
+            mc.MatchgateOperation(
+                mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+                wires=[wire, wire + 1],
+            )
             for wire in range(n_gates)
         ]
-        for n_gates in np.arange(2, N_RANDOM_TESTS_PER_CASE+2)
-    ]
+        for n_gates in np.arange(2, N_RANDOM_TESTS_PER_CASE + 2)
+    ],
 )
 def test_horizontal_matchgates_container_contract_crossing_ops(operations):
     strategy = get_contraction_strategy("horizontal")
@@ -65,16 +73,21 @@ def test_horizontal_matchgates_container_contract_crossing_ops(operations):
     "operations",
     [
         [
-            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
+            mc.MatchgateOperation(
+                mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+                wires=[wire, wire + 1],
+            )
             for wire in range(n_gates)
         ]
-        for n_gates in np.arange(2, N_RANDOM_TESTS_PER_CASE+2)
-    ]
+        for n_gates in np.arange(2, N_RANDOM_TESTS_PER_CASE + 2)
+    ],
 )
 def test_horizontal_matchgates_container_contract_crossing_ops_probs(operations):
     all_wires = set(wire for op in operations for wire in op.wires)
     nif_device = init_nif_device(wires=all_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="horizontal")
+    nif_device_contracted = init_nif_device(
+        wires=all_wires, contraction_method="horizontal"
+    )
 
     nif_device.apply(operations)
     nif_device_contracted.apply(operations)
@@ -96,12 +109,12 @@ def test_horizontal_matchgates_container_contract_crossing_ops_probs(operations)
         [
             mc.MatchgateOperation(
                 mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
-                wires=[i, i + 1]
+                wires=[i, i + 1],
             )
             for i in range(0, np.random.randint(1, 20), 2)
         ]
         for _ in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_horizontal_matchgates_container_contract_single_column(column_operations):
     strategy = get_contraction_strategy("horizontal")
@@ -125,16 +138,20 @@ def test_horizontal_matchgates_container_contract_single_column(column_operation
     "line_operations",
     [
         [
-            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(1), wires=[0, 1])
+            mc.MatchgateOperation(
+                mc.matchgate_parameter_sets.MatchgatePolarParams.random(1), wires=[0, 1]
+            )
             for _ in range(n_gates)
         ]
-        for n_gates in np.arange(1, N_RANDOM_TESTS_PER_CASE+1)
-    ]
+        for n_gates in np.arange(1, N_RANDOM_TESTS_PER_CASE + 1)
+    ],
 )
 def test_horizontal_matchgates_container_contract_single_line_probs(line_operations):
     all_wires = set(wire for op in line_operations for wire in op.wires)
     nif_device = init_nif_device(wires=all_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="horizontal")
+    nif_device_contracted = init_nif_device(
+        wires=all_wires, contraction_method="horizontal"
+    )
 
     nif_device_contracted.apply(line_operations)
     nif_device.apply(line_operations)
@@ -156,17 +173,19 @@ def test_horizontal_matchgates_container_contract_single_line_probs(line_operati
         [
             mc.MatchgateOperation(
                 mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
-                wires=[i, i + 1]
+                wires=[i, i + 1],
             )
             for i in range(0, np.random.randint(1, 10), 2)
         ]
         for _ in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_horizontal_matchgates_container_contract_single_column_probs(operations):
     all_wires = set(wire for op in operations for wire in op.wires)
     nif_device = init_nif_device(wires=all_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="horizontal")
+    nif_device_contracted = init_nif_device(
+        wires=all_wires, contraction_method="horizontal"
+    )
 
     nif_device_contracted.apply(operations)
     nif_device.apply(operations)
@@ -186,17 +205,22 @@ def test_horizontal_matchgates_container_contract_single_column_probs(operations
     "operations",
     [
         [
-            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(10), wires=[wire, wire + 1])
+            mc.MatchgateOperation(
+                mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+                wires=[wire, wire + 1],
+            )
             for wire in range(0, n_lines, 2)
             for _ in range(n_columns)
         ]
         for n_lines, n_columns in np.random.randint(1, 10, (N_RANDOM_TESTS_PER_CASE, 2))
-    ]
+    ],
 )
 def test_horizontal_matchgates_container_contract_line_column_probs(operations):
     all_wires = set(wire for op in operations for wire in op.wires)
     nif_device = init_nif_device(wires=all_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="horizontal")
+    nif_device_contracted = init_nif_device(
+        wires=all_wires, contraction_method="horizontal"
+    )
 
     nif_device.apply(operations)
     nif_device_contracted.apply(operations)
@@ -215,15 +239,20 @@ def test_horizontal_matchgates_container_contract_line_column_probs(operations):
 @pytest.mark.parametrize(
     "params_list,n_wires",
     [
-        ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], num_wires)
+        (
+            [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)],
+            num_wires,
+        )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in range(2, 6)
-        for num_gates in [1, 2 ** num_wires]
-    ]
+        for num_gates in [1, 2**num_wires]
+    ],
 )
 def test_multiples_matchgate_probs_with_nif_horizontal(params_list, n_wires):
     nif_device = init_nif_device(wires=n_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(wires=n_wires, contraction_method="horizontal")
+    nif_device_contracted = init_nif_device(
+        wires=n_wires, contraction_method="horizontal"
+    )
 
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
     nif_qnode_contracted = qml.QNode(specific_matchgate_circuit, nif_device_contracted)
@@ -252,15 +281,16 @@ def test_multiples_matchgate_probs_with_nif_horizontal(params_list, n_wires):
     )
 
     np.testing.assert_allclose(
-        nif_probs.sum(), 1.0,
+        nif_probs.sum(),
+        1.0,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
-        err_msg="The sum of the probabilities should be 1"
+        err_msg="The sum of the probabilities should be 1",
     )
 
     np.testing.assert_allclose(
-        nif_contract_probs.squeeze(), nif_probs.squeeze(),
+        nif_contract_probs.squeeze(),
+        nif_probs.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
-

@@ -23,8 +23,12 @@ from matchcake.operations.single_particle_transition_matrices import (
     SptmRyRy,
     SingleParticleTransitionMatrixOperation,
 )
-from matchcake.utils import MajoranaGetter, recursive_kron, make_single_particle_transition_matrix_from_gate, \
-    torch_utils
+from matchcake.utils import (
+    MajoranaGetter,
+    recursive_kron,
+    make_single_particle_transition_matrix_from_gate,
+    torch_utils,
+)
 from matchcake.utils.math import circuit_matmul
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -37,7 +41,6 @@ from ...configs import (
 set_seed(TEST_SEED)
 
 
-
 @pytest.mark.parametrize(
     "active_wire0, n_wires",
     [
@@ -45,11 +48,13 @@ set_seed(TEST_SEED)
         for n_wires in np.arange(2, 6)
         for active_wire0 in np.arange(n_wires - 1)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ]
+    ],
 )
 def test_matchgate_to_sptm_with_padding(active_wire0, n_wires):
     all_wires = qml.wires.Wires(list(range(n_wires)))
-    mg = MatchgateOperation.random(wires=qml.wires.Wires([active_wire0, active_wire0 + 1]))
+    mg = MatchgateOperation.random(
+        wires=qml.wires.Wires([active_wire0, active_wire0 + 1])
+    )
     padded_sptm = mg.to_sptm_operation().pad(wires=all_wires).matrix()
 
     # compute the sptm from the matchgate explicitly using tensor products
@@ -66,7 +71,8 @@ def test_matchgate_to_sptm_with_padding(active_wire0, n_wires):
     sptm_from_u = make_single_particle_transition_matrix_from_gate(u)
 
     np.testing.assert_allclose(
-        padded_sptm.squeeze(), sptm_from_u.squeeze(),
+        padded_sptm.squeeze(),
+        sptm_from_u.squeeze(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -75,10 +81,10 @@ def test_matchgate_to_sptm_with_padding(active_wire0, n_wires):
 @pytest.mark.parametrize(
     "matrix",
     [
-        np.random.random((batch_size, 2*size, 2*size))
+        np.random.random((batch_size, 2 * size, 2 * size))
         for batch_size in [1, 4]
-        for size in np.arange(2, 2+N_RANDOM_TESTS_PER_CASE)
-    ]
+        for size in np.arange(2, 2 + N_RANDOM_TESTS_PER_CASE)
+    ],
 )
 def test_sptm_trivial_pad_gradient_check(matrix):
     def func(p):
@@ -98,10 +104,10 @@ def test_sptm_trivial_pad_gradient_check(matrix):
 @pytest.mark.parametrize(
     "matrix",
     [
-        np.random.random((batch_size, 2*size, 2*size))
+        np.random.random((batch_size, 2 * size, 2 * size))
         for batch_size in [1, 4]
-        for size in np.arange(2, 2+N_RANDOM_TESTS_PER_CASE)
-    ]
+        for size in np.arange(2, 2 + N_RANDOM_TESTS_PER_CASE)
+    ],
 )
 def test_sptm_pad_gradient_check(matrix):
     w0 = np.random.randint(0, 10)
@@ -120,4 +126,3 @@ def test_sptm_pad_gradient_check(matrix):
         raise_exception=True,
         check_undefined_grad=False,
     )
-

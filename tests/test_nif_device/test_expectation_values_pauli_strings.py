@@ -38,12 +38,12 @@ hand_made_test_data = [
 
 rn_test_data = [
     (
-            np.random.choice([0, 1], size=n_wires),
-            [
-                p0(w) @ p1(w+np.random.randint(1, n_wires-w))
-                for w in np.random.randint(n_wires-1, size=n_wires)
-            ],
-            contraction_strategy,
+        np.random.choice([0, 1], size=n_wires),
+        [
+            p0(w) @ p1(w + np.random.randint(1, n_wires - w))
+            for w in np.random.randint(n_wires - 1, size=n_wires)
+        ],
+        contraction_strategy,
     )
     for n_wires in range(2, 6)
     for i in range(N_RANDOM_TESTS_PER_CASE)
@@ -53,17 +53,19 @@ rn_test_data = [
 ]
 
 
-@pytest.mark.parametrize(
-    "basis_state,pauli_string",
-    hand_made_test_data
-)
-def test_nif_pauli_strings_on_basis_state_against_qubit_device(basis_state, pauli_string):
+@pytest.mark.parametrize("basis_state,pauli_string", hand_made_test_data)
+def test_nif_pauli_strings_on_basis_state_against_qubit_device(
+    basis_state, pauli_string
+):
     def circuit():
         qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
         return qml.expval(sum(pauli_string))
 
     nif_device, qubit_device = devices_init(
-        wires=len(basis_state), shots=None, contraction_strategy=None, name="lightning.qubit"
+        wires=len(basis_state),
+        shots=None,
+        contraction_strategy=None,
+        name="lightning.qubit",
     )
     nif_qnode = qml.QNode(circuit, nif_device)
     qubit_qnode = qml.QNode(circuit, qubit_device)
@@ -74,21 +76,23 @@ def test_nif_pauli_strings_on_basis_state_against_qubit_device(basis_state, paul
         actual_value,
         expected_value,
         atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON
+        rtol=RTOL_APPROX_COMPARISON,
     )
 
 
-@pytest.mark.parametrize(
-    "basis_state,pauli_string",
-    hand_made_test_data
-)
-def test_nif_pauli_strings_on_basis_state_against_qubit_device_outer_sum(basis_state, pauli_string):
+@pytest.mark.parametrize("basis_state,pauli_string", hand_made_test_data)
+def test_nif_pauli_strings_on_basis_state_against_qubit_device_outer_sum(
+    basis_state, pauli_string
+):
     def circuit():
         qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
         return [qml.expval(pauli) for pauli in pauli_string]
 
     nif_device, qubit_device = devices_init(
-        wires=len(basis_state), shots=None, contraction_strategy=None, name="lightning.qubit"
+        wires=len(basis_state),
+        shots=None,
+        contraction_strategy=None,
+        name="lightning.qubit",
     )
     nif_qnode = qml.QNode(circuit, nif_device)
     qubit_qnode = qml.QNode(circuit, qubit_device)
@@ -99,21 +103,23 @@ def test_nif_pauli_strings_on_basis_state_against_qubit_device_outer_sum(basis_s
         actual_value,
         expected_value,
         atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON
+        rtol=RTOL_APPROX_COMPARISON,
     )
 
 
-@pytest.mark.parametrize(
-    "basis_state,pauli_string",
-    hand_made_test_data
-)
-def test_nif_pauli_strings_on_basis_state_against_qubit_device_probs(basis_state, pauli_string):
+@pytest.mark.parametrize("basis_state,pauli_string", hand_made_test_data)
+def test_nif_pauli_strings_on_basis_state_against_qubit_device_probs(
+    basis_state, pauli_string
+):
     def circuit():
         qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
         return qml.probs()
 
     nif_device, qubit_device = devices_init(
-        wires=len(basis_state), shots=None, contraction_strategy=None, name="lightning.qubit"
+        wires=len(basis_state),
+        shots=None,
+        contraction_strategy=None,
+        name="lightning.qubit",
     )
     nif_qnode = qml.QNode(circuit, nif_device)
     qubit_qnode = qml.QNode(circuit, qubit_device)
@@ -124,25 +130,25 @@ def test_nif_pauli_strings_on_basis_state_against_qubit_device_probs(basis_state
         actual_value,
         expected_value,
         atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON
+        rtol=RTOL_APPROX_COMPARISON,
     )
 
 
 @get_slow_test_mark()
 @pytest.mark.slow
-@pytest.mark.parametrize(
-    "basis_state,pauli_string,contraction_strategy",
-    rn_test_data
-)
+@pytest.mark.parametrize("basis_state,pauli_string,contraction_strategy", rn_test_data)
 def test_nif_pauli_strings_on_basis_state_against_qubit_device_rn_data(
-        basis_state, pauli_string, contraction_strategy
+    basis_state, pauli_string, contraction_strategy
 ):
     def circuit():
         qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
         return qml.expval(sum(pauli_string))
 
     nif_device, qubit_device = devices_init(
-        wires=len(basis_state), shots=None, contraction_strategy=contraction_strategy, name="lightning.qubit"
+        wires=len(basis_state),
+        shots=None,
+        contraction_strategy=contraction_strategy,
+        name="lightning.qubit",
     )
     nif_qnode = qml.QNode(circuit, nif_device)
     qubit_qnode = qml.QNode(circuit, qubit_device)
@@ -153,5 +159,5 @@ def test_nif_pauli_strings_on_basis_state_against_qubit_device_rn_data(
         actual_value,
         expected_value,
         atol=ATOL_APPROX_COMPARISON,
-        rtol=RTOL_APPROX_COMPARISON
+        rtol=RTOL_APPROX_COMPARISON,
     )

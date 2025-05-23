@@ -28,17 +28,14 @@ class Rzz(MatchgateOperation):
     where :math:`\theta` is a parameter, :math:`Z_{j}` is the Pauli-Z operator applied on the wire :math:`j`,
     and :math:`i` is the imaginary unit.
     """
+
     num_wires = 2
     num_params = 1
 
     # TODO: Add constraints to the angle as n*pi/2
 
     def __init__(
-            self,
-            params: Union[pnp.ndarray, list, tuple],
-            wires=None,
-            id=None,
-            **kwargs
+        self, params: Union[pnp.ndarray, list, tuple], wires=None, id=None, **kwargs
     ):
         shape = qml.math.shape(params)[-1:]
         n_params = shape[0] if shape else 1

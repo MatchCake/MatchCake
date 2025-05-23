@@ -86,6 +86,7 @@ class Matchgate:
 
 
     """
+
     UNPICKEABLE_ATTRS = []
     DEFAULT_USE_H_FOR_TRANSITION_MATRIX = False
     DEFAULT_USE_LESS_EINSUM_FOR_TRANSITION_MATRIX = False
@@ -93,7 +94,7 @@ class Matchgate:
     SPTM_CONTRACTION_PATH = None
 
     @staticmethod
-    def random() -> 'Matchgate':
+    def random() -> "Matchgate":
         """
         Construct a random Matchgate.
 
@@ -115,11 +116,17 @@ class Matchgate:
     @staticmethod
     def is_matchgate(matrix: np.ndarray) -> bool:
         zeros_indexes_as_array = np.asarray(mps.MatchgateStandardParams.ZEROS_INDEXES)
-        check_zeros = np.allclose(matrix[zeros_indexes_as_array[:, 0], zeros_indexes_as_array[:, 1]], 0.0)
+        check_zeros = np.allclose(
+            matrix[zeros_indexes_as_array[:, 0], zeros_indexes_as_array[:, 1]], 0.0
+        )
         if not check_zeros:
             return False
-        elements_indexes_as_array = np.asarray(mps.MatchgateStandardParams.ELEMENTS_INDEXES)
-        full_params_arr = matrix[elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
+        elements_indexes_as_array = np.asarray(
+            mps.MatchgateStandardParams.ELEMENTS_INDEXES
+        )
+        full_params_arr = matrix[
+            elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]
+        ]
         full_params = mps.MatchgateStandardParams.parse_from_params(full_params_arr)
         params = mps.MatchgatePolarParams.parse_from_params(full_params)
         try:
@@ -130,7 +137,7 @@ class Matchgate:
             return False
 
     @classmethod
-    def from_matrix(cls, matrix: np.ndarray, *args, **kwargs) -> 'Matchgate':
+    def from_matrix(cls, matrix: np.ndarray, *args, **kwargs) -> "Matchgate":
         r"""
         Construct a Matchgate from a matrix if it is possible. The matrix must be a 4x4 matrix.
 
@@ -154,7 +161,9 @@ class Matchgate:
         raise ValueError("The matrix is not a matchgate.")
 
     @staticmethod
-    def from_sub_matrices(outer_matrix: np.ndarray, inner_matrix: np.ndarray) -> Union['Matchgate', np.ndarray]:
+    def from_sub_matrices(
+        outer_matrix: np.ndarray, inner_matrix: np.ndarray
+    ) -> Union["Matchgate", np.ndarray]:
         r"""
         Construct a Matchgate from the sub-matrices :math:`A` (outer matrix) and :math:`W` (inner_matrix) defined as
 
@@ -204,39 +213,40 @@ class Matchgate:
     @staticmethod
     def to_sympy():
         import sympy as sp
+
         a, b, c, d, w, x, y, z = mps.MatchgateStandardParams.to_sympy()
-        return sp.Matrix([
-            [a, 0, 0, b],
-            [0, w, x, 0],
-            [0, y, z, 0],
-            [c, 0, 0, d]
-        ])
+        return sp.Matrix([[a, 0, 0, b], [0, w, x, 0], [0, y, z, 0], [c, 0, 0, d]])
 
     @classmethod
-    def find_single_particle_transition_matrix_contraction_path(cls, *operands, **kwargs):
+    def find_single_particle_transition_matrix_contraction_path(
+        cls, *operands, **kwargs
+    ):
         try:
             import opt_einsum as oe
         except ImportError:
-            raise ImportError("The opt_einsum package is required to find the contraction path.")
+            raise ImportError(
+                "The opt_einsum package is required to find the contraction path."
+            )
         kwargs.setdefault("optimize", "optimal")
-        cls.SPTM_CONTRACTION_PATH = oe.contract_path(
-            *operands,
-            **kwargs
-        )
+        cls.SPTM_CONTRACTION_PATH = oe.contract_path(*operands, **kwargs)
         return cls.SPTM_CONTRACTION_PATH
 
     @classmethod
-    def get_single_particle_transition_matrix_contraction_path(cls, *operands, **kwargs):
+    def get_single_particle_transition_matrix_contraction_path(
+        cls, *operands, **kwargs
+    ):
         if cls.SPTM_CONTRACTION_PATH is None:
-            return cls.find_single_particle_transition_matrix_contraction_path(*operands, **kwargs)
+            return cls.find_single_particle_transition_matrix_contraction_path(
+                *operands, **kwargs
+            )
         return cls.SPTM_CONTRACTION_PATH
 
     def __init__(
-            self,
-            params: Union[mps.MatchgateParams, np.ndarray, list, tuple],
-            *,
-            raise_errors_if_not_matchgate=False,
-            **kwargs
+        self,
+        params: Union[mps.MatchgateParams, np.ndarray, list, tuple],
+        *,
+        raise_errors_if_not_matchgate=False,
+        **kwargs,
     ):
         r"""
         Construct a Matchgate from the parameters. The parameters can be a MatchgateParams object, a list, a tuple or
@@ -258,9 +268,11 @@ class Matchgate:
         self._hamiltonian_coefficients_params = None
         self._composed_hamiltonian_params = None
 
-        self._default_given_params_cls = kwargs.get('default_given_params_cls', mps.MatchgatePolarParams)
+        self._default_given_params_cls = kwargs.get(
+            "default_given_params_cls", mps.MatchgatePolarParams
+        )
         self._initialize_params_(params)
-        
+
         # Basic properties
         self._gate_data = None
         self._hamiltonian_matrix = None
@@ -269,13 +281,14 @@ class Matchgate:
             self.check_asserts()
 
         self.majorana_getter = kwargs.get("majorana_getter", utils.MajoranaGetter(n=2))
-        
+
         # Interaction properties
         self.use_h_for_transition_matrix = kwargs.get(
             "use_h_for_transition_matrix", self.DEFAULT_USE_H_FOR_TRANSITION_MATRIX
         )
         self.use_less_einsum_for_transition_matrix = kwargs.get(
-            "use_less_einsum_for_transition_matrix", self.DEFAULT_USE_LESS_EINSUM_FOR_TRANSITION_MATRIX
+            "use_less_einsum_for_transition_matrix",
+            self.DEFAULT_USE_LESS_EINSUM_FOR_TRANSITION_MATRIX,
         )
         self._single_particle_transition_matrix = None
         self._transition_matrix = None
@@ -293,7 +306,9 @@ class Matchgate:
         return self._standard_params
 
     @property
-    def hamiltonian_coefficients_params(self) -> mps.MatchgateHamiltonianCoefficientsParams:
+    def hamiltonian_coefficients_params(
+        self,
+    ) -> mps.MatchgateHamiltonianCoefficientsParams:
         if self._hamiltonian_coefficients_params is None:
             self._make_hamiltonian_coeffs_params_()
         return self._hamiltonian_coefficients_params
@@ -315,24 +330,24 @@ class Matchgate:
         if self._gate_data is None:
             self._make_gate_data_()
         return self._gate_data
-    
+
     @property
     def batched_gate_data(self):
         gate = self.gate_data
         return qml.math.reshape(gate, (-1, *gate.shape[-2:]))
-    
+
     @property
     def hamiltonian_matrix(self):
         if self._hamiltonian_matrix is None:
             self._make_hamiltonian_matrix_()
         return self._hamiltonian_matrix
-    
+
     @property
     def single_particle_transition_matrix(self):
         if self._single_particle_transition_matrix is None:
             self._make_single_particle_transition_matrix_()
         return self._single_particle_transition_matrix
-    
+
     @property
     def transition_matrix(self):
         # TODO: find a better name for this property
@@ -342,20 +357,24 @@ class Matchgate:
 
     @property
     def thetas(self):
-        return np.asarray([
-            self.polar_params.theta0,
-            self.polar_params.theta1,
-            self.polar_params.theta2,
-            self.polar_params.theta3,
-            self.polar_params.theta4,
-        ])
+        return np.asarray(
+            [
+                self.polar_params.theta0,
+                self.polar_params.theta1,
+                self.polar_params.theta2,
+                self.polar_params.theta3,
+                self.polar_params.theta4,
+            ]
+        )
 
     @property
     def r(self):
-        return np.asarray([
-            self.polar_params.r0,
-            self.polar_params.r1,
-        ])
+        return np.asarray(
+            [
+                self.polar_params.r0,
+                self.polar_params.r1,
+            ]
+        )
 
     @property
     def outer_gate_data(self):
@@ -432,9 +451,7 @@ class Matchgate:
     @property
     def batch_size(self):
         not_none_params = [
-            p for p in
-            self.get_all_params_set(make_params=False)
-            if p is not None
+            p for p in self.get_all_params_set(make_params=False) if p is not None
         ]
         if len(not_none_params) == 0:
             raise ValueError("No params set. Cannot make standard params.")
@@ -442,15 +459,12 @@ class Matchgate:
 
     def __getstate__(self):
         state = {
-            k: v
-            for k, v in self.__dict__.items()
-            if k not in self.UNPICKEABLE_ATTRS
+            k: v for k, v in self.__dict__.items() if k not in self.UNPICKEABLE_ATTRS
         }
         return state
 
     def _initialize_params_(
-            self,
-            given_params: Union[mps.MatchgateParams, np.ndarray, list, tuple]
+        self, given_params: Union[mps.MatchgateParams, np.ndarray, list, tuple]
     ) -> mps.MatchgateParams:
         r"""
         Initialize the parameters of the matchgate. The parameters can be a MatchgateParams object, a list, a tuple or
@@ -484,13 +498,13 @@ class Matchgate:
         else:
             raise ValueError("The given params is not a valid MatchgateParams object.")
         return params
-    
+
     def get_all_params_set(self, make_params: bool = False):
         r"""
         Get all the parameters set in the matchgate. The parameters set are the attributes
         :attr:`polar_params`, :attr:`standard_params`, :attr:`hamiltonian_params` and
         :attr:`composed_hamiltonian_params`.
-        
+
         :param make_params: If True, the parameters will be computed if they are not already computed.
         :type make_params: bool
         :return: A list of the parameters set.
@@ -513,20 +527,18 @@ class Matchgate:
 
     def _make_polar_params_(self):
         not_none_params = [
-            p for p in
-            self.get_all_params_set(make_params=False)
-            if p is not None
+            p for p in self.get_all_params_set(make_params=False) if p is not None
         ]
         if len(not_none_params) == 0:
             raise ValueError("No params set. Cannot make polar params.")
         # self._polar_params = mps.MatchgatePolarParams.parse_from_params(not_none_params[0])
-        self._polar_params = mps.transfer_functions.shortest_transfer_to(not_none_params, mps.MatchgatePolarParams)
+        self._polar_params = mps.transfer_functions.shortest_transfer_to(
+            not_none_params, mps.MatchgatePolarParams
+        )
 
     def _make_standard_params_(self):
         not_none_params = [
-            p for p in
-            self.get_all_params_set(make_params=False)
-            if p is not None
+            p for p in self.get_all_params_set(make_params=False) if p is not None
         ]
         if len(not_none_params) == 0:
             raise ValueError("No params set. Cannot make standard params.")
@@ -537,9 +549,7 @@ class Matchgate:
 
     def _make_standard_hamiltonian_params_(self):
         not_none_params = [
-            p for p in
-            self.get_all_params_set(make_params=False)
-            if p is not None
+            p for p in self.get_all_params_set(make_params=False) if p is not None
         ]
         if len(not_none_params) == 0:
             raise ValueError("No params set. Cannot make standard hamiltonian params.")
@@ -550,24 +560,22 @@ class Matchgate:
 
     def _make_hamiltonian_coeffs_params_(self):
         not_none_params = [
-            p for p in
-            self.get_all_params_set(make_params=False)
-            if p is not None
+            p for p in self.get_all_params_set(make_params=False) if p is not None
         ]
         if len(not_none_params) == 0:
             raise ValueError("No params set. Cannot make hamiltonian params.")
         # self._hamiltonian_coefficients_params = mps.MatchgateHamiltonianCoefficientsParams.parse_from_params(
         #     not_none_params[0]
         # )
-        self._hamiltonian_coefficients_params = mps.transfer_functions.shortest_transfer_to(
-            not_none_params, mps.MatchgateHamiltonianCoefficientsParams
+        self._hamiltonian_coefficients_params = (
+            mps.transfer_functions.shortest_transfer_to(
+                not_none_params, mps.MatchgateHamiltonianCoefficientsParams
+            )
         )
 
     def _make_composed_hamiltonian_params_(self):
         not_none_params = [
-            p for p in
-            self.get_all_params_set(make_params=False)
-            if p is not None
+            p for p in self.get_all_params_set(make_params=False) if p is not None
         ]
         if len(not_none_params) == 0:
             raise ValueError("No params set. Cannot make composed hamiltonian params.")
@@ -581,14 +589,16 @@ class Matchgate:
     def _make_gate_data_(self) -> np.ndarray:
         self._gate_data = self.standard_params.to_matrix()
         return self._gate_data
-    
+
     def _make_hamiltonian_matrix_(self) -> np.ndarray:
-        self._hamiltonian_matrix = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(
-            self.hamiltonian_coeffs_matrix,
-            energy_offset=self.hamiltonian_coefficients_params.epsilon,
+        self._hamiltonian_matrix = (
+            utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(
+                self.hamiltonian_coeffs_matrix,
+                energy_offset=self.hamiltonian_coefficients_params.epsilon,
+            )
         )
         return self._hamiltonian_matrix
-    
+
     def _make_single_particle_transition_matrix_(self) -> np.ndarray:
         r"""
         Compute the single particle transition matrix. This matrix is the matrix :math:`R` such that
@@ -609,31 +619,52 @@ class Matchgate:
 
         if self.use_less_einsum_for_transition_matrix:
             # majorana_tensor.shape: (2n, 2^n, 2^n)
-            majorana_tensor = qml.math.stack([self.majorana_getter[i] for i in range(2 * self.majorana_getter.n)])
-            operands = ["...ij,mjq,...kq,lko->...mlio", u, majorana_tensor, qml.math.conjugate(u), majorana_tensor]
+            majorana_tensor = qml.math.stack(
+                [self.majorana_getter[i] for i in range(2 * self.majorana_getter.n)]
+            )
+            operands = [
+                "...ij,mjq,...kq,lko->...mlio",
+                u,
+                majorana_tensor,
+                qml.math.conjugate(u),
+                majorana_tensor,
+            ]
             try:
                 import opt_einsum as oe
-                sptm_contraction_path = Matchgate.get_single_particle_transition_matrix_contraction_path(
-                    *operands, optimize="optimal"
+
+                sptm_contraction_path = (
+                    Matchgate.get_single_particle_transition_matrix_contraction_path(
+                        *operands, optimize="optimal"
+                    )
                 )
                 # perform the contraction
                 matrix = oe.contract(*operands, optimize=sptm_contraction_path[0])
             except ImportError:
-                raise ImportError("The opt_einsum package is required to use the less einsum for the transition matrix.")
+                raise ImportError(
+                    "The opt_einsum package is required to use the less einsum for the transition matrix."
+                )
                 matrix = qml.math.einsum(
                     "...ij,mjq,...kq,lko->...mlio",
-                    u, majorana_tensor, qml.math.conjugate(u), majorana_tensor,
+                    u,
+                    majorana_tensor,
+                    qml.math.conjugate(u),
+                    majorana_tensor,
                     optimize="optimal",
                 )
-            matrix = qml.math.einsum("...ii", matrix, optimize="optimal") / qml.math.shape(majorana_tensor)[-1]
+            matrix = (
+                qml.math.einsum("...ii", matrix, optimize="optimal")
+                / qml.math.shape(majorana_tensor)[-1]
+            )
         else:
-            matrix = make_single_particle_transition_matrix_from_gate(u, self.majorana_getter)
+            matrix = make_single_particle_transition_matrix_from_gate(
+                u, self.majorana_getter
+            )
 
         if qml.math.ndim(u) > 2:
             matrix = matrix.squeeze()
         self._single_particle_transition_matrix = matrix
         return self._single_particle_transition_matrix
-    
+
     def _make_transition_matrix_(self) -> np.ndarray:
         self._transition_matrix = utils.make_transition_matrix_from_action_matrix(
             self.single_particle_transition_matrix
@@ -647,7 +678,7 @@ class Matchgate:
                 qml.math.dot(gate, qml.math.conj(qml.math.transpose(gate)))
                 for gate in self.batched_gate_data
             ],
-            axis=0
+            axis=0,
         )
 
     def compute_m_dagger_m(self):
@@ -657,7 +688,7 @@ class Matchgate:
                 qml.math.dot(qml.math.conj(qml.math.transpose(gate)), gate)
                 for gate in self.batched_gate_data
             ],
-            axis=0
+            axis=0,
         )
 
     def get_outer_determinant(self) -> float:
@@ -673,15 +704,23 @@ class Matchgate:
         return qml.math.allclose(self.compute_m_dagger_m(), np.eye(4))
 
     def check_det_constraint(self) -> bool:
-        return qml.math.allclose(self.get_outer_determinant(), self.get_inner_determinant())
+        return qml.math.allclose(
+            self.get_outer_determinant(), self.get_inner_determinant()
+        )
 
     def check_asserts(self):
         if not self.check_m_m_dagger_constraint():
-            raise ValueError(r"The matchgate does not satisfy the M M^\dagger constraint.")
+            raise ValueError(
+                r"The matchgate does not satisfy the M M^\dagger constraint."
+            )
         if not self.check_m_dagger_m_constraint():
-            raise ValueError(r"The matchgate does not satisfy the M^\dagger M constraint.")
+            raise ValueError(
+                r"The matchgate does not satisfy the M^\dagger M constraint."
+            )
         if not self.check_det_constraint():
-            raise ValueError(r"The matchgate does not satisfy the determinant constraint.")
+            raise ValueError(
+                r"The matchgate does not satisfy the determinant constraint."
+            )
 
     def __repr__(self):
         return f"Matchgate(params={self._polar_params})"
@@ -690,7 +729,9 @@ class Matchgate:
         return f"Matchgate(params={self._polar_params})"
 
     def __eq__(self, other):
-        return np.allclose(self.standard_params.to_numpy(), other.standard_params.to_numpy())
+        return np.allclose(
+            self.standard_params.to_numpy(), other.standard_params.to_numpy()
+        )
 
     def __hash__(self):
         return hash(self.polar_params)
@@ -700,11 +741,13 @@ class Matchgate:
 
     def __getitem__(self, item):
         return self.gate_data[item]
-    
+
     # def __array__(self):
     #     return self.standard_params.__array__()
 
-    def find_hamiltonian_coefficients(self, order: int = 1, iterations: int = 100) -> np.ndarray:
+    def find_hamiltonian_coefficients(
+        self, order: int = 1, iterations: int = 100
+    ) -> np.ndarray:
         r"""
 
         Find the 2n x 2n matrix :math:`h` of elements :math:`h_{\mu\nu}` such that
@@ -728,7 +771,9 @@ class Matchgate:
 
         def cost_function(coeffs_vector):
             coeffs_matrix = utils.skew_antisymmetric_vector_to_matrix(coeffs_vector)
-            hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs_matrix)
+            hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(
+                coeffs_matrix
+            )
             pred_matchgate = expm(-1j * hamiltonian)
             return np.linalg.norm(pred_matchgate - self.gate_data)
 
@@ -739,12 +784,12 @@ class Matchgate:
         self._hamiltonian_coeffs = result.x
         self._hamiltonian_coeffs_found_order = order
         return self._hamiltonian_coeffs
-    
+
     def compute_all_attrs(self) -> None:
         r"""
         In the constructor of this object, not all the attributes are computed. This method will compute all the
         attributes of the object. The list of attributes computed are:
-        
+
         - :attr:`polar_params`
         - :attr:`standard_params`
         - :attr:`hamiltonian_coefficients_params`
@@ -754,7 +799,7 @@ class Matchgate:
         - :attr:`hamiltonian_matrix`
         - :attr:`action_matrix`
         - :attr:`transition_matrix`
-        
+
         :return: None
         """
         self.get_all_params_set(make_params=True)
@@ -762,4 +807,3 @@ class Matchgate:
         _ = self.hamiltonian_matrix
         _ = self.single_particle_transition_matrix
         _ = self.transition_matrix
-

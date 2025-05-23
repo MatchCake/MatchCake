@@ -23,16 +23,17 @@ from ..configs import (
 set_seed(TEST_SEED)
 
 
-
 @pytest.mark.parametrize(
     "matrix",
     [
         np.random.rand(batch_size, size, size).squeeze()
         for size in range(2, 10)
         for batch_size in [1, 3]
-    ]
+    ],
 )
 def test_orthonormalize(matrix):
     u, s, v = svd(matrix)
     pred_matrix = np.einsum("...ik,...k,...kj->...ij", u, s, v)
-    np.testing.assert_allclose(pred_matrix, matrix, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
+    np.testing.assert_allclose(
+        pred_matrix, matrix, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON
+    )

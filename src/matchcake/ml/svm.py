@@ -12,12 +12,12 @@ from ..utils import torch_utils
 
 class SimpleSVC(StdEstimator):
     def __init__(
-            self,
-            kernel_cls: Union[Type[MLKernel]],
-            kernel_kwargs: Optional[dict] = None,
-            cache_size: int = 1024,
-            random_state: int = 0,
-            **kwargs
+        self,
+        kernel_cls: Union[Type[MLKernel]],
+        kernel_kwargs: Optional[dict] = None,
+        cache_size: int = 1024,
+        random_state: int = 0,
+        **kwargs,
     ) -> None:
         super().__init__(**kwargs)
         self.kernel_cls = kernel_cls
@@ -57,12 +57,18 @@ class SimpleSVC(StdEstimator):
             self.train_gram_matrix = self.kernel.compute_gram_matrix(X, **kwargs)
         else:
             self.train_gram_matrix = train_gram_matrix
-        self.estimator_ = svm.SVC(kernel="precomputed", random_state=self.random_state, cache_size=self.cache_size)
+        self.estimator_ = svm.SVC(
+            kernel="precomputed",
+            random_state=self.random_state,
+            cache_size=self.cache_size,
+        )
         self.estimator_.fit(self.train_gram_matrix, y)
         return self
 
     def get_gram_matrix_from_memory(self, X, **kwargs):
-        if qml.math.shape(X) == qml.math.shape(self.X_) and qml.math.allclose(self.X_, X):
+        if qml.math.shape(X) == qml.math.shape(self.X_) and qml.math.allclose(
+            self.X_, X
+        ):
             return self.train_gram_matrix
         if self.memory is None:
             return None
@@ -118,13 +124,13 @@ class SimpleSVC(StdEstimator):
 
 class FixedSizeSVC(StdEstimator):
     def __init__(
-            self,
-            kernel_cls: Union[Type[MLKernel], str],
-            kernel_kwargs: Optional[dict] = None,
-            max_gram_size: Optional[int] = np.inf,
-            cache_size: int = 1024,
-            random_state: int = 0,
-            **kwargs
+        self,
+        kernel_cls: Union[Type[MLKernel], str],
+        kernel_kwargs: Optional[dict] = None,
+        max_gram_size: Optional[int] = np.inf,
+        cache_size: int = 1024,
+        random_state: int = 0,
+        **kwargs,
     ) -> None:
         super().__init__(**kwargs)
         self.kernel_cls = kernel_cls
@@ -212,7 +218,9 @@ class FixedSizeSVC(StdEstimator):
         x1_splits, _ = self.split_data(x1)
         pairwise_distances = []
         for i, (sub_x0, sub_x1) in enumerate(zip(x0_splits, x1_splits)):
-            pairwise_distances.append(self.kernels[i].pairwise_distances(sub_x0, sub_x1, **kwargs))
+            pairwise_distances.append(
+                self.kernels[i].pairwise_distances(sub_x0, sub_x1, **kwargs)
+            )
         return pairwise_distances
 
     def get_pairwise_distances(self, x0, x1):
@@ -228,15 +236,23 @@ class FixedSizeSVC(StdEstimator):
         ]
         self.train_gram_matrices = self.get_gram_matrices(X, **kwargs)
         self.estimators_ = [
-            svm.SVC(kernel="precomputed", random_state=self.random_state, cache_size=self.cache_size)
+            svm.SVC(
+                kernel="precomputed",
+                random_state=self.random_state,
+                cache_size=self.cache_size,
+            )
             for _ in range(self.n_kernels)
         ]
-        for i, (gram_matrix, sub_y) in enumerate(zip(self.train_gram_matrices, y_splits)):
+        for i, (gram_matrix, sub_y) in enumerate(
+            zip(self.train_gram_matrices, y_splits)
+        ):
             self.estimators_[i].fit(gram_matrix, sub_y)
         return self
 
     def get_gram_matrices_from_memory(self, X, **kwargs):
-        if qml.math.shape(X) == qml.math.shape(self.X_) and qml.math.allclose(self.X_, X):
+        if qml.math.shape(X) == qml.math.shape(self.X_) and qml.math.allclose(
+            self.X_, X
+        ):
             return self.train_gram_matrices
         if getattr(self, "memory", None) is None:
             return None

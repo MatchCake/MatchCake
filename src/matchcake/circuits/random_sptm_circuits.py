@@ -20,23 +20,23 @@ from ..operations import (
 
 # pylint: disable=too-many-arguments
 def random_sptm_operations_generator(
-        n_ops: int,
-        wires: Union[Sequence[int], int],
-        batch_size: Optional[int] = None,
-        op_types: List[Type[SingleParticleTransitionMatrixOperation]] = (
-                SptmfRxRx,
-                SptmFSwap,
-                SptmRzRz,
-                SptmIdentity,
-                SptmFHH,
-                SptmRyRy,
-                SptmFermionicSuperposition,
-                SptmFSwapRzRz,
-        ),
-        *,
-        use_cuda: bool = False,
-        seed: Optional[int] = None,
-        **kwargs
+    n_ops: int,
+    wires: Union[Sequence[int], int],
+    batch_size: Optional[int] = None,
+    op_types: List[Type[SingleParticleTransitionMatrixOperation]] = (
+        SptmfRxRx,
+        SptmFSwap,
+        SptmRzRz,
+        SptmIdentity,
+        SptmFHH,
+        SptmRyRy,
+        SptmFermionicSuperposition,
+        SptmFSwapRzRz,
+    ),
+    *,
+    use_cuda: bool = False,
+    seed: Optional[int] = None,
+    **kwargs,
 ):
     if isinstance(wires, int):
         wires = np.arange(wires)
@@ -55,28 +55,28 @@ def random_sptm_operations_generator(
 
 class RandomSptmOperationsGenerator(RandomOperationsGenerator):
     def __init__(
-            self,
-            wires: Union[Sequence[int], int],
-            n_ops: Optional[int] = None,
-            batch_size: Optional[int] = None,
-            op_types: List[Type[SingleParticleTransitionMatrixOperation]] = (
-                    SptmfRxRx,
-                    SptmFSwap,
-                    SptmRzRz,
-                    SptmIdentity,
-                    SptmFHH,
-                    SptmRyRy,
-                    SptmFermionicSuperposition,
-                    SptmFSwapRzRz,
-            ),
-            *,
-            use_cuda: bool = False,
-            seed: Optional[int] = None,
-            output_type: Optional[str] = None,
-            observable: Optional[Any] = None,
-            output_wires: Optional[Sequence[int]] = None,
-            initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
-            **kwargs
+        self,
+        wires: Union[Sequence[int], int],
+        n_ops: Optional[int] = None,
+        batch_size: Optional[int] = None,
+        op_types: List[Type[SingleParticleTransitionMatrixOperation]] = (
+            SptmfRxRx,
+            SptmFSwap,
+            SptmRzRz,
+            SptmIdentity,
+            SptmFHH,
+            SptmRyRy,
+            SptmFermionicSuperposition,
+            SptmFSwapRzRz,
+        ),
+        *,
+        use_cuda: bool = False,
+        seed: Optional[int] = None,
+        output_type: Optional[str] = None,
+        observable: Optional[Any] = None,
+        output_wires: Optional[Sequence[int]] = None,
+        initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
+        **kwargs,
     ):
         super().__init__(
             wires=wires,
@@ -89,22 +89,22 @@ class RandomSptmOperationsGenerator(RandomOperationsGenerator):
             observable=observable,
             output_wires=output_wires,
             initial_state=initial_state,
-            **kwargs
+            **kwargs,
         )
 
 
 class RandomSptmHaarOperationsGenerator(RandomSptmOperationsGenerator):
     def __init__(
-            self,
-            wires: Union[Sequence[int], int],
-            n_ops: Optional[int] = None,
-            batch_size: Optional[int] = None,
-            *,
-            use_cuda: bool = False,
-            seed: Optional[int] = None,
-            add_swap_noise: bool = True,
-            initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
-            **kwargs
+        self,
+        wires: Union[Sequence[int], int],
+        n_ops: Optional[int] = None,
+        batch_size: Optional[int] = None,
+        *,
+        use_cuda: bool = False,
+        seed: Optional[int] = None,
+        add_swap_noise: bool = True,
+        initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
+        **kwargs,
     ):
         super().__init__(
             wires=wires,
@@ -114,7 +114,7 @@ class RandomSptmHaarOperationsGenerator(RandomSptmOperationsGenerator):
             use_cuda=use_cuda,
             seed=seed,
             initial_state=initial_state,
-            **kwargs
+            **kwargs,
         )
         self.add_swap_noise = add_swap_noise
 
@@ -155,4 +155,3 @@ class RandomSptmHaarOperationsGenerator(RandomSptmOperationsGenerator):
         yield qml.BasisState(self.get_initial_state(rn_gen), wires=self.wires)
         yield from self.haar_circuit_gen()
         return
-

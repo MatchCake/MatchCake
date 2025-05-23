@@ -13,16 +13,11 @@ class FermionicSWAP(MatchgateOperation):
     @classmethod
     def random(cls, wires: Wires, batch_size=None, **kwargs):
         return cls(wires=wires, **kwargs)
-    
-    def __init__(
-            self,
-            wires=None,
-            id=None,
-            *,
-            backend=pnp,
-            **kwargs
-    ):
-        in_params = mps.MatchgatePolarParams.parse_from_params(mps.fSWAP, force_cast_to_real=True)
+
+    def __init__(self, wires=None, id=None, *, backend=pnp, **kwargs):
+        in_params = mps.MatchgatePolarParams.parse_from_params(
+            mps.fSWAP, force_cast_to_real=True
+        )
         kwargs["in_param_type"] = mps.MatchgatePolarParams
         super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
 
@@ -36,7 +31,7 @@ def fswap_chain_gen(wires, **kwargs):
     wire0, wire1 = list(sorted(wires))
     wires_gen = range(wire0, wire1) if is_reverse else reversed(range(wire0, wire1))
     for tmp_wire0 in wires_gen:
-        yield fSWAP(wires=[tmp_wire0, tmp_wire0+1], **kwargs)
+        yield fSWAP(wires=[tmp_wire0, tmp_wire0 + 1], **kwargs)
     return
 
 
