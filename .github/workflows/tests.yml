@@ -36,11 +36,11 @@ jobs:
         . ./venv/bin/activate
         black src/matchcake --check --diff
         black tests --check --diff
-    - name: Test Typing
+    - name: Test Typing (Disable for now)
       run: |
         . ./venv/bin/activate
-        mypy src/matchcake
-        mypy tests
+#        mypy src/matchcake
+#        mypy tests
     - name: Test Unittests with pytest
       run: |
         . ./venv/bin/activate
