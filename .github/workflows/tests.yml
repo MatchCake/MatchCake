@@ -4,10 +4,8 @@
 name: Tests
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
-    branches: ["*"]
+    branches: [ "*" ]
 
 permissions:
   contents: read
@@ -28,19 +26,23 @@ jobs:
         python -m venv ./venv
         . ./venv/bin/activate
         python -m pip install --upgrade pip
-        pip install pytest pytest-cov coverage-lcov pytest_json_report
         pip install poetry
-        poetry install --no-interaction --no-ansi
+        poetry install --with=dev --no-interaction --no-ansi
     - name: Test Linting
       run: |
         . ./venv/bin/activate
-        black src/matchcake --check --diff
+        black src --check --diff
         black tests --check --diff
-    - name: Test Typing (Disable for now)
+    - name: Test Typing
       run: |
         . ./venv/bin/activate
-#        mypy src/matchcake
+#        mypy src
 #        mypy tests
+    - name: Test Notebooks
+      run: |
+        . ./venv/bin/activate
+        pytest --nbmake tutorials --nbmake-timeout=600  # 10 minutes timeout
+
     - name: Test Unittests with pytest
       run: |
         . ./venv/bin/activate
@@ -61,9 +63,8 @@ jobs:
         python -m venv ./venv
         . ./venv/Scripts/activate
         python -m pip install --upgrade pip
-        pip install pytest pytest-cov coverage-lcov pytest_json_report
         pip install poetry
-        poetry install --no-interaction --no-ansi
+        poetry install --with=dev --no-interaction --no-ansi
     - name: Test Unittests with pytest
       run: |
         . ./venv/Scripts/activate

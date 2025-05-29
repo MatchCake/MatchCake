@@ -24,9 +24,8 @@ jobs:
         python -m venv ./venv
         . ./venv/bin/activate
         python -m pip install --upgrade pip
-        pip install wheel build
         pip install poetry
-        poetry install --no-interaction --no-ansi
+        poetry install --with=dev --no-interaction --no-ansi
 
     - name: Gather new package version
       id: version
@@ -87,3 +86,9 @@ jobs:
       with:
         tag_name: ${{ steps.tag.outputs.new_tag }}
         generate_release_notes: true
+
+    - name: Publish distribution to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        skip_existing: true
+        verbose: true
