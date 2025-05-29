@@ -30,7 +30,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest pytest-cov coverage-lcov pytest_json_report
         pip install poetry
-        poetry install --no-interaction --no-ansi
+        poetry install --with=dev --no-interaction --no-ansi
     - name: Test Linting
       run: |
         . ./venv/bin/activate
@@ -63,7 +63,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest pytest-cov coverage-lcov pytest_json_report
         pip install poetry
-        poetry install --no-interaction --no-ansi
+        poetry install --with=dev --no-interaction --no-ansi
     - name: Test Unittests with pytest
       run: |
         . ./venv/Scripts/activate
