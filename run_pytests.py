@@ -1,14 +1,12 @@
+import argparse
 import json
 import os
 
 import pytest
-import pythonbasictools as pbt
 from pytest_jsonreport.plugin import JSONReport
-from pytest_cov.plugin import CovPlugin
 
 from tests import configs
 from tests.conftest import RUN_SLOW_ARG_NAME
-import argparse
 
 
 def get_args_parser():
