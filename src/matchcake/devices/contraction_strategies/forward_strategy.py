@@ -19,11 +19,7 @@ class _ForwardMatchgatesContainer(_ContractionMatchgatesContainer):
         wires = op.cs_wires
         is_any_wire_in_container = any([w in self.all_cs_wires for w in wires.labels])
         if is_any_wire_in_container:
-            w_list = [
-                w
-                for w, op in self.items()
-                if any([lbl in wires.labels for lbl in w.labels])
-            ]
+            w_list = [w for w, op in self.items() if any([lbl in wires.labels for lbl in w.labels])]
             op_list = [self.op_container.pop(w) for w in w_list]
             old_op = SingleParticleTransitionMatrixOperation.from_operations(op_list)
             new_op = circuit_or_fop_matmul(first_matrix=old_op, second_matrix=op)

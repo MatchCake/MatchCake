@@ -22,9 +22,7 @@ from ...configs import (
 )
 
 MatchgatePolarParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
-MatchgateHamiltonianCoefficientsParams.ALLOW_COMPLEX_PARAMS = (
-    True  # TODO: remove this line
-)
+MatchgateHamiltonianCoefficientsParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 MatchgateComposedHamiltonianParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 
 set_seed(TEST_SEED)

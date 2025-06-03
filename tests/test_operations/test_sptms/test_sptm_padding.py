@@ -52,9 +52,7 @@ set_seed(TEST_SEED)
 )
 def test_matchgate_to_sptm_with_padding(active_wire0, n_wires):
     all_wires = qml.wires.Wires(list(range(n_wires)))
-    mg = MatchgateOperation.random(
-        wires=qml.wires.Wires([active_wire0, active_wire0 + 1])
-    )
+    mg = MatchgateOperation.random(wires=qml.wires.Wires([active_wire0, active_wire0 + 1]))
     padded_sptm = mg.to_sptm_operation().pad(wires=all_wires).matrix()
 
     # compute the sptm from the matchgate explicitly using tensor products

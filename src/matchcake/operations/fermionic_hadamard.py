@@ -26,9 +26,7 @@ class FermionicHadamard(MatchgateOperation):
             y=inv_sqrt_2,
             z=-inv_sqrt_2,
         )
-        in_params = mps.MatchgatePolarParams.parse_from_params(
-            m_params, force_cast_to_real=True
-        )
+        in_params = mps.MatchgatePolarParams.parse_from_params(m_params, force_cast_to_real=True)
         kwargs["in_param_type"] = mps.MatchgatePolarParams
         super().__init__(in_params, wires=wires, id=id, **kwargs)
 

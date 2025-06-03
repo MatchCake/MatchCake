@@ -13,9 +13,7 @@ from .simulated_annealing_strategy import *
 # from .fqaoa_simulated_annealing_strategy import *
 # from .grid_search_strategy import *
 
-optimizer_strategy_map = {
-    _cls.NAME.lower().strip(): _cls for _cls in get_all_subclasses(OptimizerStrategy)
-}
+optimizer_strategy_map = {_cls.NAME.lower().strip(): _cls for _cls in get_all_subclasses(OptimizerStrategy)}
 
 
 def get_optimizer_strategy(

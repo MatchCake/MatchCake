@@ -24,15 +24,11 @@ set_seed(TEST_SEED)
         (i_b_string, [(rot, rn_params, [0, 1])], adjoint)
         for rot in [fRXX, fRYY, fRZZ]
         for i_b_string in ["00", "01", "10", "11"]
-        for rn_params in np.random.uniform(
-            0.0, np.pi / 2, size=(N_RANDOM_TESTS_PER_CASE, 2)
-        )
+        for rn_params in np.random.uniform(0.0, np.pi / 2, size=(N_RANDOM_TESTS_PER_CASE, 2))
         for adjoint in [True, False]
     ],
 )
-def test_frot_in_circuit_with_pennylane(
-    initial_binary_string, cls_params_wires_list, is_adjoint
-):
+def test_frot_in_circuit_with_pennylane(initial_binary_string, cls_params_wires_list, is_adjoint):
     initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
     nif_device, qubit_device = devices_init(wires=len(initial_binary_state))
 
@@ -67,9 +63,7 @@ def test_frot_in_circuit_with_pennylane(
         (i_b_string, [(rot, rn_params, [0, 1]), (qml.adjoint(rot), rn_params, [0, 1])])
         for rot in [fRXX, fRYY, fRZZ]
         for i_b_string in ["00", "01", "10", "11"]
-        for rn_params in np.random.uniform(
-            0.0, np.pi / 2, size=(N_RANDOM_TESTS_PER_CASE, 2)
-        )
+        for rn_params in np.random.uniform(0.0, np.pi / 2, size=(N_RANDOM_TESTS_PER_CASE, 2))
     ],
 )
 def test_frot_adj_circuit_with_pennylane(initial_binary_string, cls_params_wires_list):

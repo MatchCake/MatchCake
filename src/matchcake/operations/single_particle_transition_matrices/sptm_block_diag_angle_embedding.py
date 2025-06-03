@@ -47,9 +47,7 @@ class SptmBlockDiagAngleEmbedding(SingleParticleTransitionMatrixOperation):
                 f"Number of wires must be at least {n_required_wires} for the given parameters. "
                 f"Got {n_wires} wires."
             )
-        matrix = qml.math.zeros(
-            (params_shape[0], 2 * n_wires, 2 * n_wires), dtype=complex
-        )
+        matrix = qml.math.zeros((params_shape[0], 2 * n_wires, 2 * n_wires), dtype=complex)
         matrix = qml.math.convert_like(matrix, params)
         diag_indexes = np.arange(2 * n_wires, dtype=int)
         matrix[..., diag_indexes, diag_indexes] = 1

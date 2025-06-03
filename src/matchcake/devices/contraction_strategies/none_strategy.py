@@ -12,9 +12,7 @@ class NoneContractionStrategy(ContractionStrategy):
     def get_container(self):
         return None
 
-    def __call__(
-        self, operations: Sequence[Operation], **kwargs
-    ) -> Sequence[Operation]:
+    def __call__(self, operations: Sequence[Operation], **kwargs) -> Sequence[Operation]:
         return operations
 
     def get_next_operations(self, operation) -> Sequence[Optional[Operation]]:

@@ -129,11 +129,7 @@ def test_single_matchgate_probs_with_qbit_device(params, initial_binary_state):
             mps.MatchgatePolarParams(r0=1, r1=1),
             np.array(
                 [
-                    [
-                        0.25
-                        * np.trace(utils.get_majorana(i, 2) @ utils.get_majorana(j, 2))
-                        for j in range(4)
-                    ]
+                    [0.25 * np.trace(utils.get_majorana(i, 2) @ utils.get_majorana(j, 2)) for j in range(4)]
                     for i in range(4)
                 ]
             ),

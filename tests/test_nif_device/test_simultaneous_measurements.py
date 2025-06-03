@@ -35,9 +35,7 @@ def test_single_gate_circuit_probability_target_state_specific_cases(
         MatchgateOperation(params, wires=wires),
     ]
     device.apply(operations)
-    es_m_prob = device.get_state_probability(
-        target_binary_state=target_binary_state, wires=wires
-    )
+    es_m_prob = device.get_state_probability(target_binary_state=target_binary_state, wires=wires)
     np.testing.assert_allclose(
         es_m_prob.squeeze(),
         prob,
@@ -62,9 +60,7 @@ def test_single_gate_circuit_probability_target_state_specific_cases(
         for n_probs in range(1, num_wires + 1)
     ],
 )
-def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(
-    params_list, n_wires, prob_wires
-):
+def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(params_list, n_wires, prob_wires):
     nif_device, qubit_device = devices_init(wires=n_wires, prob_strategy="ExplicitSum")
 
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
@@ -75,8 +71,7 @@ def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(
     wire0_vector = np.random.choice(all_wires[:-1], size=len(params_list))
     wire1_vector = wire0_vector + 1
     params_wires_list = [
-        (params, [wire0, wire1])
-        for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
+        (params, [wire0, wire1]) for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
     ]
     qubit_state = qubit_qnode(
         params_wires_list,
@@ -116,13 +111,9 @@ def test_multiples_matchgate_probs_with_qbit_device_explicit_sum(
         for n_probs in range(1, num_wires + 1)
     ],
 )
-def test_multiples_matchgate_probs_with_qbit_device_lookup_table(
-    params_list, n_wires, prob_wires
-):
+def test_multiples_matchgate_probs_with_qbit_device_lookup_table(params_list, n_wires, prob_wires):
     all_wires = np.arange(n_wires)
-    nif_device, qubit_device = devices_init(
-        wires=all_wires, prob_strategy="LookupTable"
-    )
+    nif_device, qubit_device = devices_init(wires=all_wires, prob_strategy="LookupTable")
 
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
     qubit_qnode = qml.QNode(specific_matchgate_circuit, qubit_device)
@@ -131,8 +122,7 @@ def test_multiples_matchgate_probs_with_qbit_device_lookup_table(
     wire0_vector = np.random.choice(all_wires[:-1], size=len(params_list))
     wire1_vector = wire0_vector + 1
     params_wires_list = [
-        (params, [wire0, wire1])
-        for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
+        (params, [wire0, wire1]) for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
     ]
     qubit_state = qubit_qnode(
         params_wires_list,

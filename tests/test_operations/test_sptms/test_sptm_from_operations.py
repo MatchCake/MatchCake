@@ -49,24 +49,12 @@ set_seed(TEST_SEED)
 )
 def test_two_matchgates_to_sptm_from_operations(active_wire0, n_wires):
     all_wires = qml.wires.Wires(list(range(n_wires)))
-    mg0 = MatchgateOperation.random(
-        wires=qml.wires.Wires([active_wire0, active_wire0 + 1])
-    )
-    all_wires_wo_mg0 = [
-        w
-        for w in all_wires
-        if w not in list(mg0.wires.labels) + [active_wire0 - 1, n_wires - 1]
-    ]
+    mg0 = MatchgateOperation.random(wires=qml.wires.Wires([active_wire0, active_wire0 + 1]))
+    all_wires_wo_mg0 = [w for w in all_wires if w not in list(mg0.wires.labels) + [active_wire0 - 1, n_wires - 1]]
     active_wire1 = np.random.choice(all_wires_wo_mg0)
-    mg1 = MatchgateOperation.random(
-        wires=qml.wires.Wires([active_wire1, active_wire1 + 1])
-    )
+    mg1 = MatchgateOperation.random(wires=qml.wires.Wires([active_wire1, active_wire1 + 1]))
 
-    padded_sptm = (
-        SingleParticleTransitionMatrixOperation.from_operations([mg0, mg1])
-        .pad(wires=all_wires)
-        .matrix()
-    )
+    padded_sptm = SingleParticleTransitionMatrixOperation.from_operations([mg0, mg1]).pad(wires=all_wires).matrix()
 
     # compute the sptm from the matchgate explicitly using tensor products
     mg0_matrix = mg0.matrix()

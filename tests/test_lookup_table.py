@@ -22,11 +22,7 @@ set_seed(TEST_SEED)
 
 @pytest.mark.parametrize(
     "transition_matrix, binary_state",
-    [
-        (np.random.rand(len(s), 2 * len(s)), s)
-        for s in ["00", "01", "10", "11"]
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [(np.random.rand(len(s), 2 * len(s)), s) for s in ["00", "01", "10", "11"] for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_lookup_table_observable_form(transition_matrix, binary_state):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
@@ -57,11 +53,7 @@ def test_lookup_table_observable_form(transition_matrix, binary_state):
 
 @pytest.mark.parametrize(
     "transition_matrix",
-    [
-        np.random.rand(n, 2 * n)
-        for n in range(2, 5)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.rand(n, 2 * n) for n in range(2, 5) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_lookup_table_item00(transition_matrix):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
@@ -78,11 +70,7 @@ def test_lookup_table_item00(transition_matrix):
 
 @pytest.mark.parametrize(
     "transition_matrix",
-    [
-        np.random.rand(n, 2 * n)
-        for n in range(2, 5)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.rand(n, 2 * n) for n in range(2, 5) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_lookup_table_item01(transition_matrix):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
@@ -99,11 +87,7 @@ def test_lookup_table_item01(transition_matrix):
 
 @pytest.mark.parametrize(
     "transition_matrix",
-    [
-        np.random.rand(n, 2 * n)
-        for n in range(2, 5)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.rand(n, 2 * n) for n in range(2, 5) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_lookup_table_item02(transition_matrix):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
@@ -120,11 +104,7 @@ def test_lookup_table_item02(transition_matrix):
 
 @pytest.mark.parametrize(
     "transition_matrix",
-    [
-        np.random.rand(n, 2 * n)
-        for n in range(2, 5)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.rand(n, 2 * n) for n in range(2, 5) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_lookup_table_item10(transition_matrix):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
@@ -141,11 +121,7 @@ def test_lookup_table_item10(transition_matrix):
 
 @pytest.mark.parametrize(
     "transition_matrix",
-    [
-        np.random.rand(n, 2 * n)
-        for n in range(2, 5)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.rand(n, 2 * n) for n in range(2, 5) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_lookup_table_item11(transition_matrix):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
@@ -162,11 +138,7 @@ def test_lookup_table_item11(transition_matrix):
 
 @pytest.mark.parametrize(
     "transition_matrix",
-    [
-        np.random.rand(n, 2 * n)
-        for n in range(2, 5)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.rand(n, 2 * n) for n in range(2, 5) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_lookup_table_item12(transition_matrix):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
@@ -183,11 +155,7 @@ def test_lookup_table_item12(transition_matrix):
 
 @pytest.mark.parametrize(
     "transition_matrix",
-    [
-        np.random.rand(n, 2 * n)
-        for n in range(2, 5)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.rand(n, 2 * n) for n in range(2, 5) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_lookup_table_item20(transition_matrix):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
@@ -204,11 +172,7 @@ def test_lookup_table_item20(transition_matrix):
 
 @pytest.mark.parametrize(
     "transition_matrix",
-    [
-        np.random.rand(n, 2 * n)
-        for n in range(2, 5)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.rand(n, 2 * n) for n in range(2, 5) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_lookup_table_item21(transition_matrix):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
@@ -225,11 +189,7 @@ def test_lookup_table_item21(transition_matrix):
 
 @pytest.mark.parametrize(
     "transition_matrix",
-    [
-        np.random.rand(n, 2 * n)
-        for n in range(2, 5)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.rand(n, 2 * n) for n in range(2, 5) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_lookup_table_item22(transition_matrix):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
@@ -316,13 +276,9 @@ def test_lookup_table_get_observable(transition_matrix, binary_state, k, observa
         #
     ],
 )
-def test_lookup_table_compute_observable_of_target_state(
-    transition_matrix, binary_state, observable
-):
+def test_lookup_table_compute_observable_of_target_state(transition_matrix, binary_state, observable):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
-    obs = lookup_table.compute_observable_of_target_state(
-        utils.binary_string_to_vector(binary_state)
-    )
+    obs = lookup_table.compute_observable_of_target_state(utils.binary_string_to_vector(binary_state))
     np.testing.assert_allclose(
         obs,
         observable,
@@ -361,13 +317,9 @@ def test_lookup_table_compute_observable_of_target_state(
         #
     ],
 )
-def test_lookup_table_compute_observables_of_target_states(
-    transition_matrix, binary_state, observable
-):
+def test_lookup_table_compute_observables_of_target_states(transition_matrix, binary_state, observable):
     lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
-    obs = lookup_table.compute_observables_of_target_states(
-        utils.binary_string_to_vector(binary_state)
-    )
+    obs = lookup_table.compute_observables_of_target_states(utils.binary_string_to_vector(binary_state))
     np.testing.assert_allclose(
         obs.squeeze(),
         observable,
@@ -382,9 +334,7 @@ def test_lookup_table_compute_observables_of_target_states(
     "operations_generator, num_wires",
     [
         (
-            random_sptm_operations_generator(
-                num_gates, np.arange(num_wires), batch_size=batch_size
-            ),
+            random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size),
             num_wires,
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
@@ -393,9 +343,7 @@ def test_lookup_table_compute_observables_of_target_states(
         for batch_size in [None, 16]
     ],
 )
-def test_lookup_table_compute_observable_of_target_states_rn_circuits(
-    operations_generator, num_wires
-):
+def test_lookup_table_compute_observable_of_target_states_rn_circuits(operations_generator, num_wires):
     nif_device, _ = devices_init(wires=num_wires)
     nif_device.execute_generator(operations_generator)
 
@@ -403,9 +351,7 @@ def test_lookup_table_compute_observable_of_target_states_rn_circuits(
     target_states = np.array(list(itertools.product([0, 1], repeat=num_wires)))
 
     obs_list = [
-        lookup_table.compute_observable_of_target_state(
-            nif_device.get_sparse_or_dense_state(), target_state
-        )
+        lookup_table.compute_observable_of_target_state(nif_device.get_sparse_or_dense_state(), target_state)
         for target_state in target_states.copy()
     ]
     loop_obs = qml.math.stack(obs_list, axis=0)
@@ -426,9 +372,7 @@ def test_lookup_table_compute_observable_of_target_states_rn_circuits(
     "operations_generator, num_wires",
     [
         (
-            random_sptm_operations_generator(
-                num_gates, np.arange(num_wires), batch_size=batch_size
-            ),
+            random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size),
             num_wires,
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
@@ -437,9 +381,7 @@ def test_lookup_table_compute_observable_of_target_states_rn_circuits(
         for batch_size in [None, 16]
     ],
 )
-def test_lookup_table_compute_observable_of_target_states_rn_circuits_one_tstate(
-    operations_generator, num_wires
-):
+def test_lookup_table_compute_observable_of_target_states_rn_circuits_one_tstate(operations_generator, num_wires):
     nif_device, _ = devices_init(wires=num_wires)
     nif_device.execute_generator(operations_generator)
 

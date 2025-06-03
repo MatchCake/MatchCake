@@ -36,19 +36,13 @@ def circuit_or_fop_matmul(
 
     If the type of the operator is not recognized, a ValueError will be raised.
     """
-    if isinstance(first_matrix, MatchgateOperation) and isinstance(
-        second_matrix, MatchgateOperation
-    ):
-        return circuit_matmul(
-            first_matrix, second_matrix, direction=circuit_direction, operator=operator
-        )
+    if isinstance(first_matrix, MatchgateOperation) and isinstance(second_matrix, MatchgateOperation):
+        return circuit_matmul(first_matrix, second_matrix, direction=circuit_direction, operator=operator)
 
     if isinstance(first_matrix, SingleParticleTransitionMatrixOperation) and isinstance(
         second_matrix, SingleParticleTransitionMatrixOperation
     ):
-        return fermionic_operator_matmul(
-            first_matrix, second_matrix, direction=fop_direction, operator=operator
-        )
+        return fermionic_operator_matmul(first_matrix, second_matrix, direction=fop_direction, operator=operator)
 
     if isinstance(first_matrix, MatchgateOperation):
         first_matrix = first_matrix.to_sptm_operation()
@@ -56,13 +50,9 @@ def circuit_or_fop_matmul(
     if isinstance(second_matrix, MatchgateOperation):
         second_matrix = second_matrix.to_sptm_operation()
 
-    if not isinstance(
-        first_matrix, SingleParticleTransitionMatrixOperation
-    ) or not isinstance(second_matrix, SingleParticleTransitionMatrixOperation):
-        raise ValueError(
-            f"Cannot multiply {type(first_matrix)} with {type(second_matrix)}"
-        )
+    if not isinstance(first_matrix, SingleParticleTransitionMatrixOperation) or not isinstance(
+        second_matrix, SingleParticleTransitionMatrixOperation
+    ):
+        raise ValueError(f"Cannot multiply {type(first_matrix)} with {type(second_matrix)}")
 
-    return fermionic_operator_matmul(
-        first_matrix, second_matrix, direction=fop_direction, operator=operator
-    )
+    return fermionic_operator_matmul(first_matrix, second_matrix, direction=fop_direction, operator=operator)

@@ -17,9 +17,7 @@ class _VHMatchgatesContainer(_ContractionMatchgatesContainer):
     def add(self, op: MatchgateOperation):
         wires = op.cs_wires
         if wires in self.op_container:
-            self.op_container[wires] = circuit_or_fop_matmul(
-                first_matrix=self.op_container[wires], second_matrix=op
-            )
+            self.op_container[wires] = circuit_or_fop_matmul(first_matrix=self.op_container[wires], second_matrix=op)
             return True
 
         is_any_wire_in_container = any([w in self.wires_set for w in wires.labels])

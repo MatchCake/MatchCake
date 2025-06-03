@@ -32,15 +32,11 @@ class Rxx(MatchgateOperation):
     num_wires = 2
     num_params = 1
 
-    def __init__(
-        self, params: Union[pnp.ndarray, list, tuple], wires=None, id=None, **kwargs
-    ):
+    def __init__(self, params: Union[pnp.ndarray, list, tuple], wires=None, id=None, **kwargs):
         shape = qml.math.shape(params)[-1:]
         n_params = shape[0] if shape else 1
         if n_params != self.num_params:
-            raise ValueError(
-                f"{self.__class__.__name__} requires {self.num_params} parameters; got {n_params}."
-            )
+            raise ValueError(f"{self.__class__.__name__} requires {self.num_params} parameters; got {n_params}.")
         self._given_params = params
         theta = params
         m_params = mps.MatchgateStandardParams(

@@ -44,14 +44,10 @@ class AdamWStrategy(OptimizerStrategy):
         callback: Optional[Callable[[], Any]] = None,
     ) -> TensorLike:
         if self.optimizer is None:
-            raise ValueError(
-                "Optimizer has not been initialized. Call set_parameters() first."
-            )
+            raise ValueError("Optimizer has not been initialized. Call set_parameters() first.")
         loss = closure()
         if not isinstance(loss, torch.Tensor):
-            raise ValueError(
-                f"Expected closure to return a torch.Tensor, but got {type(loss)}"
-            )
+            raise ValueError(f"Expected closure to return a torch.Tensor, but got {type(loss)}")
         self.optimizer.zero_grad()
         loss.backward()
         if np.isfinite(self.max_grad_norm):

@@ -46,14 +46,10 @@ class __SpecialOrthonormalizedTensor:
 )
 def test_orthonormalize(matrix):
     ortho_matrix = orthonormalize(matrix)
-    expected_eye = qml.math.einsum(
-        "...ij,...jk->...ik", ortho_matrix, dagger(ortho_matrix)
-    )
+    expected_eye = qml.math.einsum("...ij,...jk->...ik", ortho_matrix, dagger(ortho_matrix))
     eye = np.zeros_like(expected_eye)
     eye[..., np.arange(eye.shape[-1]), np.arange(eye.shape[-1])] = 1
-    np.testing.assert_allclose(
-        expected_eye, eye, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
-    )
+    np.testing.assert_allclose(expected_eye, eye, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
 
 
 @pytest.mark.parametrize(

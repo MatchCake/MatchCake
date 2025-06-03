@@ -35,9 +35,7 @@ fSWAP_R = Matchgate(mps.fSWAP).single_particle_transition_matrix
         (mps.HellParams, "00", np.array([-0.5, 0, 0, np.sqrt(0.75) * 1j])),
     ],
 )
-def test_single_matchgate_circuit_output_state(
-    params, initial_binary_state, output_state
-):
+def test_single_matchgate_circuit_output_state(params, initial_binary_state, output_state):
     from .test_nif_device import devices_init
 
     _, qubit_device = devices_init()
@@ -71,9 +69,7 @@ def test_single_matchgate_circuit_output_state(
         (mps.HellParams, "00", np.array([0.25, 0, 0, 0.75])),
     ],
 )
-def test_single_matchgate_circuit_output_probs(
-    params, initial_binary_state, output_probs
-):
+def test_single_matchgate_circuit_output_probs(params, initial_binary_state, output_probs):
     from .test_nif_device import devices_init
 
     _, qubit_device = devices_init()
@@ -134,9 +130,7 @@ def test_single_matchgate_obs_on_specific_cases(params, k, binary_state, observa
 def test_get_padded_single_transition_particle_matrix(wires, n_wires, padded_matrix):
     mgo = MatchgateOperation(mps.fSWAP, wires=wires)
     all_wires = list(range(n_wires))
-    pred_padded_matrix = mgo.get_padded_single_particle_transition_matrix(
-        wires=all_wires
-    )
+    pred_padded_matrix = mgo.get_padded_single_particle_transition_matrix(wires=all_wires)
     np.testing.assert_allclose(
         pred_padded_matrix,
         padded_matrix,
@@ -152,11 +146,7 @@ def test_get_padded_single_transition_particle_matrix(wires, n_wires, padded_mat
             mps.MatchgatePolarParams(r0=1, r1=1),
             np.array(
                 [
-                    [
-                        0.25
-                        * np.trace(utils.get_majorana(i, 2) @ utils.get_majorana(j, 2))
-                        for j in range(4)
-                    ]
+                    [0.25 * np.trace(utils.get_majorana(i, 2) @ utils.get_majorana(j, 2)) for j in range(4)]
                     for i in range(4)
                 ]
             ),
@@ -214,13 +204,7 @@ def test_single_transition_matrix(params, expected):
         (
             MatchgateOperation(mps.HellParams, wires=[0, 1]),
             MatchgateOperation.from_matrix(
-                qml.math.conj(
-                    qml.math.transpose(
-                        MatchgateOperation(mps.HellParams, wires=[0, 1])
-                        .matrix()
-                        .squeeze()
-                    )
-                ),
+                qml.math.conj(qml.math.transpose(MatchgateOperation(mps.HellParams, wires=[0, 1]).matrix().squeeze())),
                 wires=[0, 1],
             ),
         ),

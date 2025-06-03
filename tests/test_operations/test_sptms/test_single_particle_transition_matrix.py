@@ -109,11 +109,7 @@ def test_sptm_rzrz_is_so4(theta, phi):
 
 @pytest.mark.parametrize(
     "theta",
-    [
-        np.full(batch_size, theta)
-        for batch_size in [1, 4]
-        for theta in SptmRzRz.EQUAL_ALLOWED_ANGLES
-    ],
+    [np.full(batch_size, theta) for batch_size in [1, 4] for theta in SptmRzRz.EQUAL_ALLOWED_ANGLES],
 )
 def test_sptm_rzrz_is_so4_equal_angles(theta):
     params = np.asarray([theta, theta]).reshape(-1, 2).squeeze()
@@ -328,11 +324,7 @@ def test_matchgate_equal_to_sptm_ryry_adjoint(theta, phi):
 )
 def test_sptm_sum_gradient_check(matrix):
     def sptm_sum(p):
-        return torch.sum(
-            SingleParticleTransitionMatrixOperation(
-                matrix=p, wires=np.arange(p.shape[-1] // 2)
-            ).matrix()
-        )
+        return torch.sum(SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2)).matrix())
 
     assert torch.autograd.gradcheck(
         sptm_sum,
@@ -352,9 +344,7 @@ def test_sptm_sum_gradient_check(matrix):
 )
 def test_sptm_init_gradient_check(matrix):
     def sptm_init(p):
-        return SingleParticleTransitionMatrixOperation(
-            matrix=p, wires=np.arange(p.shape[-1] // 2)
-        ).matrix()
+        return SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2)).matrix()
 
     assert torch.autograd.gradcheck(
         sptm_init,
@@ -376,9 +366,7 @@ def test_sptm_copy_gradient_check(matrix):
     def func(p):
         wires = np.arange(0, p.shape[-1] // 2, dtype=int)
         op = SingleParticleTransitionMatrixOperation(matrix=p, wires=wires)
-        new_op = SingleParticleTransitionMatrixOperation(
-            matrix=op.matrix(), wires=op.wires
-        )
+        new_op = SingleParticleTransitionMatrixOperation(matrix=op.matrix(), wires=op.wires)
         return new_op.matrix()
 
     assert torch.autograd.gradcheck(

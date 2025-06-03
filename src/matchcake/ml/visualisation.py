@@ -50,9 +50,7 @@ class ClassificationVisualizer(Visualizer):
             return self.transform, self.inverse_transform
         kwargs = {**self.kwargs, **kwargs}
         if self.transform is not None:
-            assert (
-                self.inverse_transform is not None
-            ), "inverse_transform must be given if transform is given."
+            assert self.inverse_transform is not None, "inverse_transform must be given if transform is given."
 
         if need_reducer:
             if self.reducer is None:
@@ -60,15 +58,11 @@ class ClassificationVisualizer(Visualizer):
             if isinstance(self.reducer, str):
                 n_jobs = kwargs.get("n_jobs", max(0, psutil.cpu_count() - 2))
                 if self.reducer.lower() == "pca":
-                    self.reducer = decomposition.PCA(
-                        n_components=2, random_state=self.seed
-                    )
+                    self.reducer = decomposition.PCA(n_components=2, random_state=self.seed)
                 elif self.reducer.lower() == "umap":
                     import umap
 
-                    self.reducer = umap.UMAP(
-                        n_components=2, transform_seed=self.seed, n_jobs=n_jobs
-                    )
+                    self.reducer = umap.UMAP(n_components=2, transform_seed=self.seed, n_jobs=n_jobs)
                 else:
                     raise ValueError(f"Unknown reducer: {self.reducer}")
             if kwargs.get("check_estimators", True):
@@ -90,9 +84,7 @@ class ClassificationVisualizer(Visualizer):
             self.x_reduced = self.transform(self.x)
 
         if self.x_reduced.ndim != 2:
-            raise ValueError(
-                f"x_reduced.ndim = {self.x_reduced.ndim} != 2. The given reducer does not reduce to 2D."
-            )
+            raise ValueError(f"x_reduced.ndim = {self.x_reduced.ndim} != 2. The given reducer does not reduce to 2D.")
         return self.x_reduced
 
     def compute_x_mesh(self, **kwargs):

@@ -49,9 +49,7 @@ class MatchgateStandardHamiltonianParams(MatchgateParams):
 
     def __init__(self, *args, **kwargs):
         # real_attrs = [a for i, a in enumerate(self.ATTRS) if self.PARAMS_TYPES[i] == float]
-        complex_attrs = [
-            a for i, a in enumerate(self.ATTRS) if self.PARAMS_TYPES[i] == complex
-        ]
+        complex_attrs = [a for i, a in enumerate(self.ATTRS) if self.PARAMS_TYPES[i] == complex]
         real_kwargs = {k: kwargs[k] for k in kwargs if k not in complex_attrs}
         args, real_kwargs = self._maybe_cast_inputs_to_real(args, real_kwargs)
         kwargs.update(real_kwargs)

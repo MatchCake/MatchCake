@@ -35,9 +35,7 @@ set_seed(TEST_SEED)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ],
 )
-def test_single_gate_circuit_probability_lt_vs_es(
-    initial_binary_state, params, wires, target_binary_state
-):
+def test_single_gate_circuit_probability_lt_vs_es(initial_binary_state, params, wires, target_binary_state):
     device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
     operations = [
         qml.BasisState(initial_binary_state, wires=device.wires),
@@ -74,9 +72,7 @@ def test_single_gate_circuit_probability_lt_vs_es(
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ],
 )
-def test_single_gate_circuit_probability_lt_vs_es_mp(
-    initial_binary_state, params, wires, target_binary_state
-):
+def test_single_gate_circuit_probability_lt_vs_es_mp(initial_binary_state, params, wires, target_binary_state):
     if psutil.cpu_count() < 2:
         pytest.skip("This test requires at least 2 CPUs.")
     device = NonInteractingFermionicDevice(wires=len(initial_binary_state), n_workers=2)

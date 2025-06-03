@@ -54,9 +54,7 @@ class TorchModel(nn.Module):
     DEFAULT_FIT_PATIENCE = 10
 
     @classmethod
-    def add_model_specific_args(
-        cls, parent_parser: Optional[argparse.ArgumentParser] = None
-    ):
+    def add_model_specific_args(cls, parent_parser: Optional[argparse.ArgumentParser] = None):
         if parent_parser is None:
             parent_parser = argparse.ArgumentParser()
         parser = parent_parser.add_argument_group("Torch Model")
@@ -67,9 +65,7 @@ class TorchModel(nn.Module):
             default=cls.DEFAULT_USE_CUDA,
             help="Whether to use CUDA.",
         )
-        parser.add_argument(
-            "--seed", type=int, default=cls.DEFAULT_SEED, help="The seed to use."
-        )
+        parser.add_argument("--seed", type=int, default=cls.DEFAULT_SEED, help="The seed to use.")
         parser.add_argument(
             "--save_root",
             type=str,
@@ -165,9 +161,7 @@ class TorchModel(nn.Module):
         self.show_progress = kwargs.get("show_progress", False)
 
         self.optimizer_strategy = get_optimizer_strategy(self.optimizer)
-        self.parameters_initialisation_strategy = (
-            get_parameters_initialisation_strategy(self.params_init)
-        )
+        self.parameters_initialisation_strategy = get_parameters_initialisation_strategy(self.params_init)
 
         self.parameters_rng = np.random.default_rng(seed=self.seed)
         self.torch_rng = torch.Generator()
@@ -213,9 +207,7 @@ class TorchModel(nn.Module):
         return torch.device("cuda" if self.use_cuda else "cpu")
 
     def state_dict(self, *args, destination=None, prefix="", keep_vars=False):
-        state = super().state_dict(
-            *args, destination=destination, prefix=prefix, keep_vars=keep_vars
-        )
+        state = super().state_dict(*args, destination=destination, prefix=prefix, keep_vars=keep_vars)
         for attr in self.ATTRS_TO_STATE_DICT:
             state[attr] = getattr(self, attr)
         return state
@@ -310,9 +302,7 @@ class TorchModel(nn.Module):
             setattr(self, attr, value)
         return self
 
-    def load(
-        self, model_path: Optional[str] = None, load_hparams: bool = True, **kwargs
-    ) -> "TorchModel":
+    def load(self, model_path: Optional[str] = None, load_hparams: bool = True, **kwargs) -> "TorchModel":
         if model_path is None:
             model_path = self.model_path
         with warnings.catch_warnings():
@@ -328,9 +318,7 @@ class TorchModel(nn.Module):
         self.load(model_path=self.best_model_path, **kwargs)
         return self
 
-    def load_if_exists(
-        self, model_path: Optional[str] = None, load_hparams: bool = True, **kwargs
-    ) -> "TorchModel":
+    def load_if_exists(self, model_path: Optional[str] = None, load_hparams: bool = True, **kwargs) -> "TorchModel":
         if model_path is None:
             model_path = self.model_path
         if os.path.exists(model_path):
@@ -371,16 +359,10 @@ class TorchModel(nn.Module):
         model.load_if_exists(**kwargs)
         return model
 
-    def draw_mpl(
-        self, fig: Optional[plt.Figure] = None, ax: Optional[plt.Axes] = None, **kwargs
-    ):
-        x0, x1 = np.random.rand(2, *self.input_shape), np.random.rand(
-            2, *self.input_shape
-        )
+    def draw_mpl(self, fig: Optional[plt.Figure] = None, ax: Optional[plt.Axes] = None, **kwargs):
+        x0, x1 = np.random.rand(2, *self.input_shape), np.random.rand(2, *self.input_shape)
         x0, x1 = self.cast_tensor_to_interface(x0), self.cast_tensor_to_interface(x1)
-        _fig, _ax = qml.draw_mpl(
-            self.qnode, expansion_strategy=kwargs.get("expansion_strategy", "device")
-        )(x0, x1)
+        _fig, _ax = qml.draw_mpl(self.qnode, expansion_strategy=kwargs.get("expansion_strategy", "device"))(x0, x1)
         if fig is None or ax is None:
             fig, ax = _fig, _ax
         else:
@@ -441,9 +423,7 @@ class TorchModel(nn.Module):
         y_hat = torch_utils.to_tensor(self(*args, **kwargs))
         return torch.nn.MSELoss()(y_hat, target)
 
-    def fit_closure(
-        self, parameters: Optional[List[torch.nn.Parameter]] = None, *args, **kwargs
-    ) -> TensorLike:
+    def fit_closure(self, parameters: Optional[List[torch.nn.Parameter]] = None, *args, **kwargs) -> TensorLike:
         """
         Assigns the parameters to the model and returns the cost.
 
@@ -463,11 +443,7 @@ class TorchModel(nn.Module):
         return self._cache_last_cost
 
     def fit_callback(self, *args, **kwargs):
-        is_best = (
-            self._cache_last_np_cost <= np.nanmin(self.fit_history)
-            if len(self.fit_history) > 0
-            else True
-        )
+        is_best = self._cache_last_np_cost <= np.nanmin(self.fit_history) if len(self.fit_history) > 0 else True
         self.fit_history.append(self._cache_last_np_cost)
         self.save()
         self.plot_fit_history(show=False, save=True)
@@ -487,9 +463,7 @@ class TorchModel(nn.Module):
             self._fit_p_bar.refresh()
             if self._fit_p_bar.disable:
                 self.log_func("-" * 120)
-                self.log_func(
-                    f"Iteration {len(self.fit_history)}: {self.p_bar_postfix}"
-                )
+                self.log_func(f"Iteration {len(self.fit_history)}: {self.p_bar_postfix}")
                 self.log_func(str(self._fit_p_bar))
                 self.log_func("-" * 120)
         if self.fit_patience is not None:
@@ -511,23 +485,19 @@ class TorchModel(nn.Module):
             total=n_iterations * n_init_iterations,
             initial=len(self.fit_history),
             desc=kwargs.get("desc", "Optimizing"),
-            disable=not kwargs.get(
-                "verbose", getattr(self.q_device, "show_progress", False)
-            ),
+            disable=not kwargs.get("verbose", getattr(self.q_device, "show_progress", False)),
         )
         current_iteration = len(self.fit_history) // n_init_iterations
         current_init_iteration = len(self.fit_history) % n_init_iterations
 
         for i in range(current_init_iteration, n_init_iterations):
             if i > 0:
-                next_parameters = (
-                    self.parameters_initialisation_strategy.get_next_parameters(
-                        step_id=i,
-                        n_layers=self.n_layers,
-                        parameters_rng=self.parameters_rng,
-                        seed=self.seed,
-                        current_named_parameters=list(self.named_parameters()),
-                    )
+                next_parameters = self.parameters_initialisation_strategy.get_next_parameters(
+                    step_id=i,
+                    n_layers=self.n_layers,
+                    parameters_rng=self.parameters_rng,
+                    seed=self.seed,
+                    current_named_parameters=list(self.named_parameters()),
                 )
                 self.update_parameters(next_parameters)
                 self._fit_p_bar.set_postfix(

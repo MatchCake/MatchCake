@@ -44,9 +44,7 @@ def _torch_logm_scipy(A):
 
     if A.ndim == 2:
         return torch.from_numpy(scipy.linalg.logm(A.cpu(), disp=False)[0]).to(A.device)
-    return torch.stack(
-        [torch.from_numpy(scipy.linalg.logm(A_.cpu(), disp=False)[0]) for A_ in A.cpu()]
-    ).to(A.device)
+    return torch.stack([torch.from_numpy(scipy.linalg.logm(A_.cpu(), disp=False)[0]) for A_ in A.cpu()]).to(A.device)
 
 
 class TorchLogm(torch.autograd.Function):
@@ -54,9 +52,7 @@ class TorchLogm(torch.autograd.Function):
     def forward(ctx, A):
         import torch
 
-        assert A.ndim in (2, 3) and A.size(-2) == A.size(
-            -1
-        )  # Square matrix, maybe batched
+        assert A.ndim in (2, 3) and A.size(-2) == A.size(-1)  # Square matrix, maybe batched
         assert A.dtype in (
             torch.float32,
             torch.float64,
@@ -71,9 +67,7 @@ class TorchLogm(torch.autograd.Function):
         (A,) = ctx.saved_tensors
         if A.ndim == 2:
             return _torch_adjoint(A, G, _torch_logm_scipy)
-        return torch.stack(
-            [_torch_adjoint(A_, G_, _torch_logm_scipy) for A_, G_ in zip(A, G)]
-        )
+        return torch.stack([_torch_adjoint(A_, G_, _torch_logm_scipy) for A_, G_ in zip(A, G)])
 
 
 torch_logm = TorchLogm.apply
@@ -249,9 +243,7 @@ def get_like_tensors_of_highest_priority(
     """
     if len(tensors) == 0:
         return None
-    tensors_priorities = [
-        cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors
-    ]
+    tensors_priorities = [cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors]
     highest_priority = max(tensors_priorities)
     like = tensors[tensors_priorities.index(highest_priority)]
     return like
@@ -282,9 +274,7 @@ def convert_tensors_to_same_type_and_cast_to(
     if len(tensors) == 0:
         return []
 
-    tensors_priorities = [
-        cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors
-    ]
+    tensors_priorities = [cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors]
     highest_priority = max(tensors_priorities)
     if all(priority == highest_priority for priority in tensors_priorities):
         return tensors
@@ -316,9 +306,7 @@ def convert_tensors_to_same_type(
     if len(tensors) == 0:
         return []
 
-    tensors_priorities = [
-        cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors
-    ]
+    tensors_priorities = [cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors]
     highest_priority = max(tensors_priorities)
     if all(priority == highest_priority for priority in tensors_priorities):
         return tensors
@@ -350,9 +338,7 @@ def convert_and_cast_tensors_to_same_type(
     if len(tensors) == 0:
         return []
 
-    tensors_priorities = [
-        cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors
-    ]
+    tensors_priorities = [cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors]
     highest_priority = max(tensors_priorities)
     if all(priority == highest_priority for priority in tensors_priorities):
         return tensors
@@ -388,9 +374,7 @@ def convert_and_cast_tensor_from_tensors(
         return tensor
 
     tensor_priority = cast_priorities.index(qml.math.get_interface(tensor))
-    tensors_priorities = [
-        cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors
-    ]
+    tensors_priorities = [cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors]
     highest_priority = max(tensors_priorities)
     if tensor_priority == highest_priority:
         return tensor
@@ -498,9 +482,7 @@ def unique_2d_array(array: TensorLike, sort: bool = False) -> TensorLike:
     return qml.math.array(unique_list, like=array)
 
 
-def convert_2d_to_1d_indexes(
-    indexes: Iterable[Tuple[int, int]], n_rows: Optional[int] = None
-) -> np.ndarray:
+def convert_2d_to_1d_indexes(indexes: Iterable[Tuple[int, int]], n_rows: Optional[int] = None) -> np.ndarray:
     indexes = np.asarray(indexes)
     if n_rows is None:
         n_rows = np.max(indexes[:, 0]) + 1
@@ -508,9 +490,7 @@ def convert_2d_to_1d_indexes(
     return new_indexes
 
 
-def convert_1d_to_2d_indexes(
-    indexes: Iterable[int], n_rows: Optional[int] = None
-) -> np.ndarray:
+def convert_1d_to_2d_indexes(indexes: Iterable[int], n_rows: Optional[int] = None) -> np.ndarray:
     indexes = np.asarray(indexes)
     if n_rows is None:
         n_rows = int(np.sqrt(len(indexes)))
@@ -639,9 +619,7 @@ def svd(tensor: Any) -> Tuple[Any, Any, Any]:
     return qml.math.svd(tensor)
 
 
-def orthonormalize(
-    tensor: Any, check_if_normalize: bool = True, raises_error: bool = False
-) -> Any:
+def orthonormalize(tensor: Any, check_if_normalize: bool = True, raises_error: bool = False) -> Any:
     r"""
     Orthonormalize the tensor.
 

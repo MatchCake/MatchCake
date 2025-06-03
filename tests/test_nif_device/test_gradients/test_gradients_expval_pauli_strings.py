@@ -47,10 +47,7 @@ hand_made_test_data = [
 rn_test_data = [
     (
         np.random.choice([0, 1], size=n_wires),
-        [
-            p0(w) @ p1(w + np.random.randint(1, n_wires - w))
-            for w in np.random.randint(n_wires - 1, size=n_wires)
-        ],
+        [p0(w) @ p1(w + np.random.randint(1, n_wires - w)) for w in np.random.randint(n_wires - 1, size=n_wires)],
         contraction_strategy,
     )
     for n_wires in range(2, 6)

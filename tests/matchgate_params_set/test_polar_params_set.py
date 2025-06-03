@@ -80,9 +80,7 @@ def test_matchgate_polar_params_constructor(r0, r1, theta0, theta1, theta2, thet
 )
 def test_matchgate_polar_params_constructor_batch(params, batch_size):
     matchgate_params = MatchgatePolarParams(params)
-    np.testing.assert_equal(
-        matchgate_params.to_numpy().shape, (batch_size, MatchgatePolarParams.N_PARAMS)
-    )
+    np.testing.assert_equal(matchgate_params.to_numpy().shape, (batch_size, MatchgatePolarParams.N_PARAMS))
 
 
 def test_matchgate_gradient_torch():
@@ -91,9 +89,7 @@ def test_matchgate_gradient_torch():
     except ImportError:
         pytest.skip("PyTorch not installed.")
     batch_size = 2
-    rn_tensor = torch.rand(
-        batch_size, mps.MatchgatePolarParams.N_PARAMS, device="cpu", requires_grad=True
-    )
+    rn_tensor = torch.rand(batch_size, mps.MatchgatePolarParams.N_PARAMS, device="cpu", requires_grad=True)
     params = mps.MatchgatePolarParams(rn_tensor)
     assert isinstance(params.to_tensor(), torch.Tensor)
     assert params.to_tensor().requires_grad

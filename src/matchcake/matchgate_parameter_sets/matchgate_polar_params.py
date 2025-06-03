@@ -24,9 +24,7 @@ class MatchgatePolarParams(MatchgateParams):
     """
 
     N_PARAMS = 7
-    RANGE_OF_PARAMS = [(0.0, 1.0) for _ in range(2)] + [
-        (0, 2 * np.pi) for _ in range(N_PARAMS - 2)
-    ]
+    RANGE_OF_PARAMS = [(0.0, 1.0) for _ in range(2)] + [(0, 2 * np.pi) for _ in range(N_PARAMS - 2)]
     ALLOW_COMPLEX_PARAMS = False
     ATTRS = ["r0", "r1", "theta0", "theta1", "theta2", "theta3", "theta4"]
 
@@ -73,17 +71,13 @@ class MatchgatePolarParams(MatchgateParams):
         import sympy as sp
 
         r0, r1 = sp.symbols("r_0 r_1")
-        theta0, theta1, theta2, theta3, theta4 = sp.symbols(
-            "\\theta_0 \\theta_1 \\theta_2 \\theta_3 \\theta_4"
-        )
+        theta0, theta1, theta2, theta3, theta4 = sp.symbols("\\theta_0 \\theta_1 \\theta_2 \\theta_3 \\theta_4")
         return sp.Matrix([r0, r1, theta0, theta1, theta2, theta3, theta4])
 
     @classmethod
     def compute_r_tilde(cls, r, backend="pennylane.math") -> complex:
         _pkg = MatchgateParams.load_backend_lib(backend)
-        return _pkg.sqrt(
-            1 - qml.math.cast(r, dtype=complex) ** 2 + cls.DIVISION_EPSILON
-        )
+        return _pkg.sqrt(1 - qml.math.cast(r, dtype=complex) ** 2 + cls.DIVISION_EPSILON)
 
     @property
     def r0_tilde(self) -> complex:
@@ -117,9 +111,7 @@ class MatchgatePolarParams(MatchgateParams):
     def __matmul__(self, other):
         if not isinstance(other, MatchgatePolarParams):
             other = MatchgatePolarParams.parse_from_params(other)
-        raise NotImplementedError(
-            "MatchgatePolarParams.__matmul__ is not implemented yet."
-        )
+        raise NotImplementedError("MatchgatePolarParams.__matmul__ is not implemented yet.")
         r0 = self.r0 * other.r0
         r1 = self.r1 * other.r1
         theta0 = self.theta0 + other.theta0

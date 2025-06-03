@@ -2,11 +2,6 @@
 pythonpath = [
   ".", "src",
 ]
-addopts = [
-    "--cov=src",
-    "--no-cov",
-    "--durations=10",
-]
 
 
 [build-system]
@@ -43,7 +38,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Operating System :: OS Independent",
 ]
-requires-python = ">=3.10,<4"
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "numpy (>=1.23,<3.0.0)",
     "setuptools (>=65.5.1,<65.6.0)",
@@ -111,6 +106,18 @@ groundwork-sphinx-theme = "^1.1.1"
 karma-sphinx-theme = "^0.0.8"
 sphinx-mdinclude = "^0.6.2"
 
+[tool.coverage.report]
+exclude_also = [
+    'def __repr__',
+    'if self.debug:',
+    'if settings.DEBUG',
+    'raise AssertionError',
+    'raise NotImplementedError',
+    'if __name__ == .__main__.:',
+    'if TYPE_CHECKING:',
+    '@(abc\.)?abstractmethod',
+]
+
 [[tool.mypy.overrides]]
 module = [
     # PennyLane
@@ -155,3 +162,7 @@ module = [
     "opt_einsum",
 ]
 ignore_missing_imports = true
+
+
+[tool.black]
+line-length = 120

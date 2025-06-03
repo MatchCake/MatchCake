@@ -189,6 +189,4 @@ def test_sptm_fswap_in_so4(wire0, wire1, all_wires):
 def test_sptm_fswap_unitary(wire0, wire1, all_wires):
     all_wires = list(range(all_wires))
     sptm = SptmFSwap(wires=[wire0, wire1]).pad(all_wires)
-    assert sptm.check_is_unitary(
-        atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
-    )
+    assert sptm.check_is_unitary(atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
