@@ -39,10 +39,7 @@ hand_made_test_data = [
 rn_test_data = [
     (
         np.random.choice([0, 1], size=n_wires),
-        [
-            p0(w) @ p1(w + np.random.randint(1, n_wires - w))
-            for w in np.random.randint(n_wires - 1, size=n_wires)
-        ],
+        [p0(w) @ p1(w + np.random.randint(1, n_wires - w)) for w in np.random.randint(n_wires - 1, size=n_wires)],
         contraction_strategy,
     )
     for n_wires in range(2, 6)
@@ -54,9 +51,7 @@ rn_test_data = [
 
 
 @pytest.mark.parametrize("basis_state,pauli_string", hand_made_test_data)
-def test_nif_pauli_strings_on_basis_state_against_qubit_device(
-    basis_state, pauli_string
-):
+def test_nif_pauli_strings_on_basis_state_against_qubit_device(basis_state, pauli_string):
     def circuit():
         qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
         return qml.expval(sum(pauli_string))
@@ -81,9 +76,7 @@ def test_nif_pauli_strings_on_basis_state_against_qubit_device(
 
 
 @pytest.mark.parametrize("basis_state,pauli_string", hand_made_test_data)
-def test_nif_pauli_strings_on_basis_state_against_qubit_device_outer_sum(
-    basis_state, pauli_string
-):
+def test_nif_pauli_strings_on_basis_state_against_qubit_device_outer_sum(basis_state, pauli_string):
     def circuit():
         qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
         return [qml.expval(pauli) for pauli in pauli_string]
@@ -108,9 +101,7 @@ def test_nif_pauli_strings_on_basis_state_against_qubit_device_outer_sum(
 
 
 @pytest.mark.parametrize("basis_state,pauli_string", hand_made_test_data)
-def test_nif_pauli_strings_on_basis_state_against_qubit_device_probs(
-    basis_state, pauli_string
-):
+def test_nif_pauli_strings_on_basis_state_against_qubit_device_probs(basis_state, pauli_string):
     def circuit():
         qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
         return qml.probs()
@@ -137,9 +128,7 @@ def test_nif_pauli_strings_on_basis_state_against_qubit_device_probs(
 @get_slow_test_mark()
 @pytest.mark.slow
 @pytest.mark.parametrize("basis_state,pauli_string,contraction_strategy", rn_test_data)
-def test_nif_pauli_strings_on_basis_state_against_qubit_device_rn_data(
-    basis_state, pauli_string, contraction_strategy
-):
+def test_nif_pauli_strings_on_basis_state_against_qubit_device_rn_data(basis_state, pauli_string, contraction_strategy):
     def circuit():
         qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
         return qml.expval(sum(pauli_string))

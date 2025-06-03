@@ -37,9 +37,7 @@ set_seed(TEST_SEED)
         for batch_size in [1, 4]
     ],
 )
-def test_lookup_table_compute_observables_of_target_states_gradients(
-    input_matrix, system_state, target_binary_states
-):
+def test_lookup_table_compute_observables_of_target_states_gradients(input_matrix, system_state, target_binary_states):
 
     def get_output(transition_matrix):
         lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
@@ -72,9 +70,7 @@ def test_lookup_table_compute_observables_of_target_states_gradients(
         for batch_size in [1, 4]
     ],
 )
-def test_lookup_table_compute_observables_of_target_states_gradients(
-    input_matrix, system_state, target_binary_states
-):
+def test_lookup_table_compute_observables_of_target_states_gradients(input_matrix, system_state, target_binary_states):
 
     def get_output(transition_matrix):
         lookup_table = NonInteractingFermionicLookupTable(transition_matrix)

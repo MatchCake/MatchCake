@@ -64,9 +64,5 @@ class LookupTableStrategyV2(ProbabilityStrategy):
             batch_wires,
             show_progress=show_progress,
         )
-        prob = qml.math.real(
-            utils.pfaffian(
-                batch_obs, method=pfaffian_method, show_progress=show_progress
-            )
-        )
+        prob = qml.math.real(utils.pfaffian(batch_obs, method=pfaffian_method, show_progress=show_progress))
         return prob

@@ -7,8 +7,7 @@ from .random_strategy import *
 from .linear_strategy import *
 
 parameters_initialisation_strategy_map = {
-    _cls.NAME.lower().strip(): _cls
-    for _cls in get_all_subclasses(ParametersInitialisationStrategy)
+    _cls.NAME.lower().strip(): _cls for _cls in get_all_subclasses(ParametersInitialisationStrategy)
 }
 
 

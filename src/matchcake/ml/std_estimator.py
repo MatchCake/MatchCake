@@ -47,11 +47,7 @@ class StdEstimator(BaseEstimator):
         return self
 
     def __getstate__(self):
-        state = {
-            k: v
-            for k, v in self.__dict__.items()
-            if k not in self.UNPICKLABLE_ATTRIBUTES
-        }
+        state = {k: v for k, v in self.__dict__.items() if k not in self.UNPICKLABLE_ATTRIBUTES}
         for attr in self._TO_NUMPY_ON_PICKLE:
             if state.get(attr, None) is not None:
                 state[attr] = torch_utils.to_numpy(state[attr])
@@ -99,9 +95,7 @@ class StdEstimator(BaseEstimator):
                 break
 
         if filepath_ext is None:
-            raise FileNotFoundError(
-                f"Could not find the file: {filepath} with any of the following extensions: {exts}"
-            )
+            raise FileNotFoundError(f"Could not find the file: {filepath} with any of the following extensions: {exts}")
 
         if filepath_ext.endswith(".joblib"):
             return load(filepath_ext)

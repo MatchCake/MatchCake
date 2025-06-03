@@ -30,9 +30,7 @@ class RandomStrategy(OptimizerStrategy):
         callback: Optional[Callable[[], Any]] = None,
     ) -> TensorLike:
         if self.parameters is None:
-            raise ValueError(
-                f"{self.NAME} Optimizer has not been initialized. Call set_parameters() first."
-            )
+            raise ValueError(f"{self.NAME} Optimizer has not been initialized. Call set_parameters() first.")
 
         vec = torch.nn.utils.parameters_to_vector(self.parameters)
         vec += torch.randn_like(vec)

@@ -15,9 +15,7 @@ class FermionicSWAP(MatchgateOperation):
         return cls(wires=wires, **kwargs)
 
     def __init__(self, wires=None, id=None, *, backend=pnp, **kwargs):
-        in_params = mps.MatchgatePolarParams.parse_from_params(
-            mps.fSWAP, force_cast_to_real=True
-        )
+        in_params = mps.MatchgatePolarParams.parse_from_params(mps.fSWAP, force_cast_to_real=True)
         kwargs["in_param_type"] = mps.MatchgatePolarParams
         super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
 

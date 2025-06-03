@@ -6,8 +6,7 @@ from .greedy_strategy import GreedyStrategy
 from ...utils import get_all_subclasses
 
 star_state_finding_strategy_map = {
-    _cls.NAME.lower().strip(): _cls
-    for _cls in get_all_subclasses(StarStateFindingStrategy)
+    _cls.NAME.lower().strip(): _cls for _cls in get_all_subclasses(StarStateFindingStrategy)
 }
 
 

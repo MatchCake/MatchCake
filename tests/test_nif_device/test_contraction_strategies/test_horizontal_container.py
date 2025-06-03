@@ -85,9 +85,7 @@ def test_horizontal_matchgates_container_contract_crossing_ops(operations):
 def test_horizontal_matchgates_container_contract_crossing_ops_probs(operations):
     all_wires = set(wire for op in operations for wire in op.wires)
     nif_device = init_nif_device(wires=all_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(
-        wires=all_wires, contraction_method="horizontal"
-    )
+    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="horizontal")
 
     nif_device.apply(operations)
     nif_device_contracted.apply(operations)
@@ -138,9 +136,7 @@ def test_horizontal_matchgates_container_contract_single_column(column_operation
     "line_operations",
     [
         [
-            mc.MatchgateOperation(
-                mc.matchgate_parameter_sets.MatchgatePolarParams.random(1), wires=[0, 1]
-            )
+            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(1), wires=[0, 1])
             for _ in range(n_gates)
         ]
         for n_gates in np.arange(1, N_RANDOM_TESTS_PER_CASE + 1)
@@ -149,9 +145,7 @@ def test_horizontal_matchgates_container_contract_single_column(column_operation
 def test_horizontal_matchgates_container_contract_single_line_probs(line_operations):
     all_wires = set(wire for op in line_operations for wire in op.wires)
     nif_device = init_nif_device(wires=all_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(
-        wires=all_wires, contraction_method="horizontal"
-    )
+    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="horizontal")
 
     nif_device_contracted.apply(line_operations)
     nif_device.apply(line_operations)
@@ -183,9 +177,7 @@ def test_horizontal_matchgates_container_contract_single_line_probs(line_operati
 def test_horizontal_matchgates_container_contract_single_column_probs(operations):
     all_wires = set(wire for op in operations for wire in op.wires)
     nif_device = init_nif_device(wires=all_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(
-        wires=all_wires, contraction_method="horizontal"
-    )
+    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="horizontal")
 
     nif_device_contracted.apply(operations)
     nif_device.apply(operations)
@@ -218,9 +210,7 @@ def test_horizontal_matchgates_container_contract_single_column_probs(operations
 def test_horizontal_matchgates_container_contract_line_column_probs(operations):
     all_wires = set(wire for op in operations for wire in op.wires)
     nif_device = init_nif_device(wires=all_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(
-        wires=all_wires, contraction_method="horizontal"
-    )
+    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="horizontal")
 
     nif_device.apply(operations)
     nif_device_contracted.apply(operations)
@@ -250,9 +240,7 @@ def test_horizontal_matchgates_container_contract_line_column_probs(operations):
 )
 def test_multiples_matchgate_probs_with_nif_horizontal(params_list, n_wires):
     nif_device = init_nif_device(wires=n_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(
-        wires=n_wires, contraction_method="horizontal"
-    )
+    nif_device_contracted = init_nif_device(wires=n_wires, contraction_method="horizontal")
 
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
     nif_qnode_contracted = qml.QNode(specific_matchgate_circuit, nif_device_contracted)
@@ -262,8 +250,7 @@ def test_multiples_matchgate_probs_with_nif_horizontal(params_list, n_wires):
     wire0_vector = np.random.choice(all_wires[:-1], size=len(params_list))
     wire1_vector = wire0_vector + 1
     params_wires_list = [
-        (params, [wire0, wire1])
-        for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
+        (params, [wire0, wire1]) for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
     ]
     nif_probs = nif_qnode(
         params_wires_list,

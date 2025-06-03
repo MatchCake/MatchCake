@@ -12,7 +12,6 @@
 ![Tests Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/tests.yml/badge.svg)
 ![Dist Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/build_dist.yml/badge.svg)
 ![Doc Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/docs.yml/badge.svg)
-![Publish Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/publish.yml/badge.svg)
 ![Code coverage](https://raw.githubusercontent.com/MatchCake/MatchCake/coverage-badge/coverage.svg)
 
 
@@ -34,12 +33,11 @@ and the Digits dataset in polynomial time with high accuracy.
 
 # Installation
 
-| Method     | Commands                                                                                                                                                                     |
-|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **poetry** | `poetry install`                                                                                                                                                             |
-| **PyPi**   | `pip install MatchCake`                                                                                                                                                      |
-| **source** | `pip install git+https://github.com/MatchCake/MatchCake`                                                                                                                     |
-| **wheel**  | 1.Download the .whl file [here](https://github.com/MatchCake/MatchCake/tree/main/dist);<br> 2. Copy the path of this file on your computer; <br> 3. `pip install [path].whl` |
+| Method     | Commands                                                 |
+|------------|----------------------------------------------------------|
+| **poetry** | `poetry add matchcake`                                   |
+| **PyPi**   | `pip install MatchCake`                                  |
+| **source** | `pip install git+https://github.com/MatchCake/MatchCake` |
 
 
 ### Last unstable version

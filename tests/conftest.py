@@ -39,9 +39,7 @@ def pytest_collection_modifyitems(config, items):
         pass
     else:
         # print("Skipping slow tests")
-        skipper = pytest.mark.skip(
-            reason=f"Only run when '--{RUN_SLOW_ARG_NAME}=True' is given"
-        )
+        skipper = pytest.mark.skip(reason=f"Only run when '--{RUN_SLOW_ARG_NAME}=True' is given")
         for item in items:
             if "slow" in item.keywords:
                 item.add_marker(skipper)

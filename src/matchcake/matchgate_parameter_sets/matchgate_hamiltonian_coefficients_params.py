@@ -107,15 +107,11 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
     def to_sympy(cls):
         import sympy as sp
 
-        h0, h1, h2, h3, h4, h5, epsilon = sp.symbols(
-            r"h_0 h_1 h_2 h_3 h_4 h_5 \epsilon"
-        )
+        h0, h1, h2, h3, h4, h5, epsilon = sp.symbols(r"h_0 h_1 h_2 h_3 h_4 h_5 \epsilon")
         return sp.Matrix([h0, h1, h2, h3, h4, h5, epsilon])
 
     def to_matrix(self, add_epsilon: bool = True):
-        eps = qml.math.array(1j * self.epsilon * int(add_epsilon))[
-            ..., np.newaxis, np.newaxis
-        ]
+        eps = qml.math.array(1j * self.epsilon * int(add_epsilon))[..., np.newaxis, np.newaxis]
         if self.is_batched:
             matrix = pnp.zeros((self.batch_size, 4, 4), dtype=complex)
         else:
@@ -129,9 +125,7 @@ class MatchgateHamiltonianCoefficientsParams(MatchgateParams):
         matrix[..., 1, 3] = qml.math.cast(self.h4, dtype=complex)
         matrix[..., 2, 3] = qml.math.cast(self.h5, dtype=complex)
         matrix[..., :, :] = matrix[..., :, :] - qml.math.swapaxes(matrix, -2, -1)
-        matrix[..., :, :] = (
-            matrix[..., :, :] + eps * qml.math.eye(4, like=matrix)[np.newaxis, ...]
-        )
+        matrix[..., :, :] = matrix[..., :, :] + eps * qml.math.eye(4, like=matrix)[np.newaxis, ...]
         return matrix
 
     def compute_hamiltonian(self):

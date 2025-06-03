@@ -37,21 +37,15 @@ class ContractionStrategy(ABC):
             self.container.clear()
         return self
 
-    def __call__(
-        self, operations: Sequence[Operation], **kwargs
-    ) -> Sequence[Operation]:
+    def __call__(self, operations: Sequence[Operation], **kwargs) -> Sequence[Operation]:
         self.p_bar = kwargs.get("p_bar", None)
         self.show_progress = kwargs.get("show_progress", self.show_progress)
 
         if len(operations) <= 1:
             return operations
 
-        self.initialize_p_bar(
-            total=len(operations), initial=0, desc=f"{self.NAME} contraction"
-        )
-        new_operations = self.container.contract_operations(
-            operations=operations, callback=self.p_bar_set_n_p1
-        )
+        self.initialize_p_bar(total=len(operations), initial=0, desc=f"{self.NAME} contraction")
+        new_operations = self.container.contract_operations(operations=operations, callback=self.p_bar_set_n_p1)
         self.p_bar_set_n(len(operations))
         self.close_p_bar()
         return new_operations

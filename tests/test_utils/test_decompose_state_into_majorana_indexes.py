@@ -17,11 +17,7 @@ set_seed(TEST_SEED)
 
 @pytest.mark.parametrize(
     "state_idx",
-    [
-        np.random.randint(0, 2**n)
-        for n in range(1, 10)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.randint(0, 2**n) for n in range(1, 10) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_binary_state_to_state(state_idx):
     binary_state = np.binary_repr(state_idx)
@@ -68,12 +64,8 @@ def test_binary_state_to_state(state_idx):
         ("1111", [0, 2, 4, 6]),
     ],
 )
-def test_decompose_binary_state_into_majorana_indexes_specific_cases(
-    binary_state, majorana_indexes
-):
-    pred_majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(
-        binary_state
-    )
+def test_decompose_binary_state_into_majorana_indexes_specific_cases(binary_state, majorana_indexes):
+    pred_majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(binary_state)
     np.testing.assert_allclose(
         majorana_indexes,
         pred_majorana_indexes,
@@ -84,11 +76,7 @@ def test_decompose_binary_state_into_majorana_indexes_specific_cases(
 
 @pytest.mark.parametrize(
     "binary_state",
-    [
-        np.random.randint(0, 2, size=n)
-        for n in range(1, 10)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.randint(0, 2, size=n) for n in range(1, 10) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_decompose_binary_state_into_majorana_indexes(binary_state):
     majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(binary_state)

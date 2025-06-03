@@ -19,9 +19,7 @@ from ...configs import (
 )
 
 MatchgatePolarParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
-MatchgateHamiltonianCoefficientsParams.ALLOW_COMPLEX_PARAMS = (
-    True  # TODO: remove this line
-)
+MatchgateHamiltonianCoefficientsParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 MatchgateComposedHamiltonianParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 
 set_seed(TEST_SEED)
@@ -65,19 +63,13 @@ set_seed(TEST_SEED)
                 theta3=0.5j * np.pi,
                 theta4=0.5j * np.pi,
             ),
-            MatchgateStandardParams(
-                a=0.2079, b=0, c=0, d=0.2079, w=0.2079, x=0, y=0, z=0.2079
-            ),
+            MatchgateStandardParams(a=0.2079, b=0, c=0, d=0.2079, w=0.2079, x=0, y=0, z=0.2079),
         ),
     ],
 )
-def test_polar_to_standard(
-    __from_params: MatchgatePolarParams, __to_params: MatchgateStandardParams
-):
+def test_polar_to_standard(__from_params: MatchgatePolarParams, __to_params: MatchgateStandardParams):
     to_params = transfer_functions.polar_to_standard(__from_params)
-    assert (
-        to_params == __to_params
-    ), f"Transfer function from {type(__from_params)} to {type(__to_params)} failed."
+    assert to_params == __to_params, f"Transfer function from {type(__from_params)} to {type(__to_params)} failed."
 
 
 @pytest.mark.parametrize(
@@ -100,9 +92,7 @@ def test_polar_to_standard_requires_grad_torch():
     except ImportError:
         pytest.skip("PyTorch not installed.")
     batch_size = 2
-    rn_tensor = torch.rand(
-        batch_size, MatchgatePolarParams.N_PARAMS, device="cpu", requires_grad=True
-    )
+    rn_tensor = torch.rand(batch_size, MatchgatePolarParams.N_PARAMS, device="cpu", requires_grad=True)
     __from_params = MatchgatePolarParams(rn_tensor)
     assert isinstance(__from_params.to_tensor(), torch.Tensor)
     assert __from_params.to_tensor().requires_grad

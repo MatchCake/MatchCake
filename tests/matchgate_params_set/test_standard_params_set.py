@@ -25,9 +25,7 @@ set_seed(TEST_SEED)
     "params,expected",
     [
         (
-            MatchgateStandardParams(
-                a=1.0, b=1.0, c=1.0, d=1.0, w=1.0, x=1.0, y=1.0, z=1.0
-            ),
+            MatchgateStandardParams(a=1.0, b=1.0, c=1.0, d=1.0, w=1.0, x=1.0, y=1.0, z=1.0),
             np.array(
                 [
                     [1, 0.0, 0.0, 1],
@@ -38,9 +36,7 @@ set_seed(TEST_SEED)
             ),
         ),
         (
-            MatchgateStandardParams(
-                a=1.0, b=1.0, c=1.0, d=1.0, w=-1.0, x=1.0, y=1.0, z=1.0
-            ),
+            MatchgateStandardParams(a=1.0, b=1.0, c=1.0, d=1.0, w=-1.0, x=1.0, y=1.0, z=1.0),
             np.array(
                 [
                     [1, 0.0, 0.0, 1],
@@ -51,9 +47,7 @@ set_seed(TEST_SEED)
             ),
         ),
         (
-            MatchgateStandardParams(
-                a=1.0, b=1.0, c=1.0, d=1.0, w=1.0, x=-1.0, y=1.0, z=-1.0
-            ),
+            MatchgateStandardParams(a=1.0, b=1.0, c=1.0, d=1.0, w=1.0, x=-1.0, y=1.0, z=-1.0),
             np.array(
                 [
                     [1, 0.0, 0.0, 1],
@@ -64,9 +58,7 @@ set_seed(TEST_SEED)
             ),
         ),
         (
-            MatchgateStandardParams(
-                a=1.0, b=1.0, c=1.0, d=1.0, w=1.0, x=1.0, y=1.0, z=-1.0
-            ),
+            MatchgateStandardParams(a=1.0, b=1.0, c=1.0, d=1.0, w=1.0, x=1.0, y=1.0, z=-1.0),
             np.array(
                 [
                     [1, 0.0, 0.0, 1],
@@ -103,9 +95,7 @@ def test_standard_params_to_matrix(
                     [1, 0.0, 0.0, 1],
                 ]
             ),
-            MatchgateStandardParams(
-                a=1.0, b=1.0, c=1.0, d=1.0, w=1.0, x=1.0, y=1.0, z=1.0
-            ),
+            MatchgateStandardParams(a=1.0, b=1.0, c=1.0, d=1.0, w=1.0, x=1.0, y=1.0, z=1.0),
         ),
         (
             np.array(
@@ -116,9 +106,7 @@ def test_standard_params_to_matrix(
                     [1, 0.0, 0.0, 1],
                 ]
             ),
-            MatchgateStandardParams(
-                a=1.0, b=1.0, c=1.0, d=1.0, w=-1.0, x=1.0, y=1.0, z=1.0
-            ),
+            MatchgateStandardParams(a=1.0, b=1.0, c=1.0, d=1.0, w=-1.0, x=1.0, y=1.0, z=1.0),
         ),
         (
             np.array(
@@ -129,9 +117,7 @@ def test_standard_params_to_matrix(
                     [1, 0.0, 0.0, 1],
                 ]
             ),
-            MatchgateStandardParams(
-                a=1.0, b=1.0, c=1.0, d=1.0, w=1.0, x=-1.0, y=1.0, z=-1.0
-            ),
+            MatchgateStandardParams(a=1.0, b=1.0, c=1.0, d=1.0, w=1.0, x=-1.0, y=1.0, z=-1.0),
         ),
         (
             np.array(
@@ -142,9 +128,7 @@ def test_standard_params_to_matrix(
                     [1, 0.0, 0.0, 1],
                 ]
             ),
-            MatchgateStandardParams(
-                a=1.0, b=1.0, c=1.0, d=1.0, w=1.0, x=1.0, y=1.0, z=-1.0
-            ),
+            MatchgateStandardParams(a=1.0, b=1.0, c=1.0, d=1.0, w=1.0, x=1.0, y=1.0, z=-1.0),
         ),
     ],
 )
@@ -159,9 +143,7 @@ def test_standard_params_requires_grad_torch():
     except ImportError:
         pytest.skip("PyTorch not installed.")
     batch_size = 2
-    rn_tensor = torch.rand(
-        batch_size, MatchgateStandardParams.N_PARAMS, device="cpu", requires_grad=True
-    )
+    rn_tensor = torch.rand(batch_size, MatchgateStandardParams.N_PARAMS, device="cpu", requires_grad=True)
     params = MatchgateStandardParams(rn_tensor)
     assert isinstance(params.to_tensor(), torch.Tensor)
     assert params.to_tensor().requires_grad
@@ -187,9 +169,7 @@ def test_standard_params_from_vector_requires_grad_torch():
     except ImportError:
         pytest.skip("PyTorch not installed.")
     batch_size = 2
-    rn_tensor = torch.rand(
-        batch_size, MatchgateStandardParams.N_PARAMS, device="cpu", requires_grad=True
-    )
+    rn_tensor = torch.rand(batch_size, MatchgateStandardParams.N_PARAMS, device="cpu", requires_grad=True)
     params = MatchgateStandardParams.from_vector(rn_tensor)
     assert isinstance(params.to_tensor(), torch.Tensor)
     assert params.to_tensor().requires_grad
@@ -202,9 +182,7 @@ def test_standard_params_from_vector_to_matrix_requires_grad_torch():
     except ImportError:
         pytest.skip("PyTorch not installed.")
     batch_size = 2
-    rn_tensor = torch.rand(
-        batch_size, MatchgateStandardParams.N_PARAMS, device="cpu", requires_grad=True
-    )
+    rn_tensor = torch.rand(batch_size, MatchgateStandardParams.N_PARAMS, device="cpu", requires_grad=True)
     params = MatchgateStandardParams.from_vector(rn_tensor)
     matrix = params.to_matrix()
     assert isinstance(matrix, torch.Tensor)

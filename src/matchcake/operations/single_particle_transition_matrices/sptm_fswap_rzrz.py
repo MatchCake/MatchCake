@@ -21,9 +21,7 @@ class SptmFSwapRzRz(SingleParticleTransitionMatrixOperation):
     def __init__(self, params, wires=None, *, id=None, **kwargs):
         params_shape = qml.math.shape(params)
         if params_shape[-1] != 2:
-            raise ValueError(
-                f"Invalid number of parameters: {params_shape[-1]}. Expected 2."
-            )
+            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
 
         all_wires = make_wires_continuous(wires)
         n_wires = len(all_wires)
@@ -31,16 +29,12 @@ class SptmFSwapRzRz(SingleParticleTransitionMatrixOperation):
         if len(params_shape) == 1:
             matrix = np.zeros((2 * n_wires, 2 * n_wires), dtype=complex)
         elif len(params_shape) == 2:
-            matrix = np.zeros(
-                (params_shape[0], 2 * n_wires, 2 * n_wires), dtype=complex
-            )
+            matrix = np.zeros((params_shape[0], 2 * n_wires, 2 * n_wires), dtype=complex)
         else:
             raise ValueError(f"Invalid shape for the parameters: {params_shape}")
 
         if params_shape[-1] != 2:
-            raise ValueError(
-                f"Invalid number of parameters: {params_shape[-1]}. Expected 2."
-            )
+            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
 
         if self.hyperparameters.get("check_angles", self.DEFAULT_CHECK_ANGLES):
             self.check_angles(params)

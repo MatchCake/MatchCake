@@ -63,12 +63,8 @@ set_seed(TEST_SEED)
         ]
     ],
 )
-def test_global_sptm_unitary(
-    operations_generator: RandomSptmOperationsGenerator, contraction_strategy
-):
-    nif_device = NIFDevice(
-        wires=operations_generator.wires, contraction_strategy=contraction_strategy
-    )
+def test_global_sptm_unitary(operations_generator: RandomSptmOperationsGenerator, contraction_strategy):
+    nif_device = NIFDevice(wires=operations_generator.wires, contraction_strategy=contraction_strategy)
     nif_device.execute_generator(
         operations_generator,
         n_ops=operations_generator.n_ops,
@@ -117,12 +113,8 @@ def test_global_sptm_unitary(
         ]
     ],
 )
-def test_global_sptm_det(
-    operations_generator: RandomSptmOperationsGenerator, contraction_strategy
-):
-    nif_device = NIFDevice(
-        wires=operations_generator.wires, contraction_strategy=contraction_strategy
-    )
+def test_global_sptm_det(operations_generator: RandomSptmOperationsGenerator, contraction_strategy):
+    nif_device = NIFDevice(wires=operations_generator.wires, contraction_strategy=contraction_strategy)
     nif_device.execute_generator(
         operations_generator,
         n_ops=operations_generator.n_ops,
@@ -168,17 +160,11 @@ def test_global_sptm_det(
                 SptmFSwap(wires=[2, 3]),
             ],
             sum(
-                [
-                    [SptmfRxRx.random(wires=[0, 1]), SptmFSwap(wires=[0, 1])]
-                    for _ in range(10)
-                ],
+                [[SptmfRxRx.random(wires=[0, 1]), SptmFSwap(wires=[0, 1])] for _ in range(10)],
                 start=[],
             ),
             sum(
-                [
-                    [SptmfRxRx.random(wires=[i, i + 1]), SptmFSwap(wires=[0, i + 1])]
-                    for i in range(10)
-                ],
+                [[SptmfRxRx.random(wires=[i, i + 1]), SptmFSwap(wires=[0, i + 1])] for i in range(10)],
                 start=[],
             ),
             sum(

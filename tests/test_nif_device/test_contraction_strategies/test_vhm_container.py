@@ -74,9 +74,7 @@ def test_vh_matchgates_container_try_add(new_op0, new_op1, crossing_wires):
     else:
         assert container.try_add(new_op1)
         assert len(container) == 2
-        assert container.wires_set == set(new_op0.wires.labels) | set(
-            new_op1.wires.labels
-        )
+        assert container.wires_set == set(new_op0.wires.labels) | set(new_op1.wires.labels)
         np.testing.assert_allclose(
             container.op_container[new_op0.wires].compute_matrix(),
             new_op0.compute_matrix(),
@@ -117,9 +115,7 @@ def test_vh_matchgates_container_contract_single_op(op):
     "line_operations",
     [
         [
-            mc.MatchgateOperation(
-                mc.matchgate_parameter_sets.MatchgatePolarParams.random(1), wires=[0, 1]
-            )
+            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(1), wires=[0, 1])
             for _ in range(n_gates)
         ]
         for n_gates in np.arange(1, N_RANDOM_TESTS_PER_CASE + 1)
@@ -178,13 +174,9 @@ def test_vh_matchgates_container_contract_single_column(column_operations):
     assert len(container) == len(column_operations)
     all_wires = set(wire for op in column_operations for wire in op.wires)
 
-    contract_ops = column_operations[0].get_padded_single_particle_transition_matrix(
-        all_wires
-    )
+    contract_ops = column_operations[0].get_padded_single_particle_transition_matrix(all_wires)
     for op in column_operations[1:]:
-        contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(
-            all_wires
-        )
+        contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(all_wires)
 
     np.testing.assert_allclose(
         container.contract(),
@@ -244,9 +236,7 @@ def test_vh_matchgates_container_try_add_sptm(new_op0, new_op1, crossing_wires):
     else:
         assert container.try_add(new_op1)
         assert len(container) == 2
-        assert container.wires_set == set(new_op0.wires.labels) | set(
-            new_op1.wires.labels
-        )
+        assert container.wires_set == set(new_op0.wires.labels) | set(new_op1.wires.labels)
         np.testing.assert_allclose(
             container.op_container[new_op0.wires].matrix(),
             new_op0.matrix(),
