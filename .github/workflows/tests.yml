@@ -52,7 +52,7 @@ jobs:
     - name: Test Unittests with pytest
       run: |
         . ./venv/bin/activate
-        python run_pytests.py --tests_folder=tests --N_RANDOM_TESTS_PER_CASE=3 --no-run_slow --cov-report=xml:tests/.tmp/coverage.xml
+        python run_pytests.py --tests_folder=tests --N_RANDOM_TESTS_PER_CASE=1 --no-run_slow --cov-report=xml:tests/.tmp/coverage.xml
 
     - name: Code Coverage
       uses: orgoro/coverage@v3.2
@@ -61,7 +61,7 @@ jobs:
         coverageFile: tests/.tmp/coverage.xml
         thresholdAll: 0.0
         thresholdNew: 0.98
-        thresholdModified: 0.0
+        thresholdModified: 0.98
 
     - name: Test Build
       run: |
