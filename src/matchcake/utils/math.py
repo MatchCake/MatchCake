@@ -136,9 +136,10 @@ def convert_and_cast_like(tensor1, tensor2):
     # new_tensor1 = tensor1
     # if interface1 != interface2:
     #     new_tensor1 = qml.math.convert_like(tensor1, tensor2)
+    #     new_tensor1 = qml.math.convert_like(tensor1, tensor2)
     new_tensor1 = qml.math.convert_like(tensor1, tensor2)
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=np.exceptions.ComplexWarning)
+        warnings.filterwarnings("ignore")
         # get the real if the tensor1 is complex but not tensor2
         if not qml.math.any(qml.math.iscomplex(new_tensor1)):
             new_tensor1 = qml.math.real(new_tensor1)
