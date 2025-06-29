@@ -1,9 +1,10 @@
 from typing import Union
+
 import numpy as np
 import pennylane as qml
 
-from .. import utils
 from .. import matchgate_parameter_sets as mps
+from .. import utils
 from ..constants import _CIRCUIT_MATMUL_DIRECTION
 from ..utils import make_single_particle_transition_matrix_from_gate
 from ..utils.math import dagger
@@ -698,8 +699,8 @@ class Matchgate:
         :return: The matrix of coefficients :math:`h`.
         :rtype: np.ndarray
         """
-        from scipy.optimize import minimize
         from scipy.linalg import expm
+        from scipy.optimize import minimize
 
         n_state = self.gate_data.shape[0]
         n = self.gate_data.shape[0] // 2

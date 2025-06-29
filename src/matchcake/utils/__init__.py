@@ -1,43 +1,25 @@
 import importlib
 from functools import partial
-from typing import List, Union, Optional, Any
+from typing import Any, List, Optional, Union
 
 import numpy as np
-from scipy import sparse
 import pennylane as qml
 import pennylane.numpy as pnp
-from pennylane.wires import Wires
 from pennylane.operation import Operation
+from pennylane.wires import Wires
+from scipy import sparse
 
-from . import (
-    constants,
-    majorana,
-    operators,
-)
-from .constants import (
-    PAULI_I,
-    PAULI_X,
-    PAULI_Y,
-    PAULI_Z,
-)
+from ..templates import TensorLike
+from . import constants, cuda, majorana, math, operators, torch_utils
+from ._pfaffian import batch_pfaffian_ltl, pfaffian
+from .constants import PAULI_I, PAULI_X, PAULI_Y, PAULI_Z
 from .majorana import (
+    MajoranaGetter,
+    get_majorana,
     get_majorana_pauli_list,
     get_majorana_pauli_string,
-    get_majorana,
-    MajoranaGetter,
 )
-from .operators import (
-    recursive_kron,
-    recursive_2in_operator,
-)
-from ._pfaffian import (
-    pfaffian,
-    batch_pfaffian_ltl,
-)
-from . import math
-from . import cuda
-from . import torch_utils
-from ..templates import TensorLike
+from .operators import recursive_2in_operator, recursive_kron
 
 
 def binary_string_to_vector(binary_string: str, encoding: str = "ascii") -> np.ndarray:

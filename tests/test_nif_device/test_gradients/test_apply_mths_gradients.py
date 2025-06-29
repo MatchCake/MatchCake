@@ -12,13 +12,14 @@ from matchcake.operations.single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
 )
 from matchcake.utils import torch_utils
+
 from ... import get_slow_test_mark
 from ...configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    set_seed,
-    TEST_SEED,
     ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
+    TEST_SEED,
+    set_seed,
 )
 
 set_seed(TEST_SEED)

@@ -1,27 +1,26 @@
 import argparse
+import json
 import os
 import time
 import warnings
-from typing import Sequence, Optional, Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import joblib
-import json
-
+import numpy as np
+import pennylane as qml
+import pythonbasictools as pbt
+import torch
 import tqdm
 from matplotlib import pyplot as plt
+from pennylane.wires import Wires
+from torch import nn
 
+from ...templates import TensorLike
+from ...utils import torch_utils
 from ..optimizer_strategies import get_optimizer_strategy
 from ..parameters_initialisation_strategies import (
     get_parameters_initialisation_strategy,
 )
-from ...templates import TensorLike
-from ...utils import torch_utils
-import torch
-import pennylane as qml
-from pennylane.wires import Wires
-from torch import nn
-import numpy as np
-import pythonbasictools as pbt
 
 
 class TorchModel(nn.Module):

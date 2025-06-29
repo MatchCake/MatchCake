@@ -5,13 +5,14 @@ import pytest
 from matchcake import MatchgateOperation, NonInteractingFermionicDevice
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
+
 from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
     ATOL_APPROX_COMPARISON,
-    RTOL_APPROX_COMPARISON,
     ATOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
     RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
 

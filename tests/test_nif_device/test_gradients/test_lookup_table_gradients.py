@@ -1,26 +1,26 @@
 import itertools
 
 import numpy as np
-import pytest
 import pennylane as qml
+import pytest
 import torch
+from scipy.linalg import expm
+from torch.autograd import gradcheck
 
 from matchcake import utils
 from matchcake.base.lookup_table import NonInteractingFermionicLookupTable
 from matchcake.circuits import random_sptm_operations_generator
-from scipy.linalg import expm
-from torch.autograd import gradcheck
-
 from matchcake.devices.probability_strategies import LookupTableStrategy
+
 from ... import get_slow_test_mark
-from ...test_nif_device import devices_init
 from ...configs import (
-    N_RANDOM_TESTS_PER_CASE,
     ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
     TEST_SEED,
     set_seed,
 )
+from ...test_nif_device import devices_init
 
 set_seed(TEST_SEED)
 

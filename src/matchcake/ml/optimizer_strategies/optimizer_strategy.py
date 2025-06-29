@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Callable, Optional, List
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
-from ...utils import torch_utils
+import torch
 from pennylane.typing import TensorLike
 from scipy.optimize import minimize
-import torch
+
+from ...utils import torch_utils
 
 
 class OptimizerStrategy(ABC):

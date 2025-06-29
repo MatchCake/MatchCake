@@ -9,8 +9,8 @@ import pythonbasictools as pbt
 from sklearn.utils.validation import check_array, check_is_fitted
 from tqdm import tqdm
 
-from ..std_estimator import StdEstimator
 from ...utils import torch_utils
+from ..std_estimator import StdEstimator
 
 
 class MLKernel(StdEstimator):

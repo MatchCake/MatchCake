@@ -1,13 +1,12 @@
 from copy import deepcopy
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
-from .optimizer_strategy import OptimizerStrategy
-from typing import Dict, Any, Callable, Optional, List
-
 import torch
 from pennylane.typing import TensorLike
 
-from ...utils.torch_utils import torch_wrap_circular_bounds, to_numpy
+from ...utils.torch_utils import to_numpy, torch_wrap_circular_bounds
+from .optimizer_strategy import OptimizerStrategy
 
 
 class SimulatedAnnealingStrategy(OptimizerStrategy):

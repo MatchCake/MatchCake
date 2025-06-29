@@ -1,18 +1,7 @@
-from .matchgate_operation import MatchgateOperation
-from .single_particle_transition_matrices import (
-    SingleParticleTransitionMatrixOperation,
-    SptmfRxRx,
-    SptmFSwap,
-    SptmFHH,
-    SptmIdentity,
-    SptmRzRz,
-    SptmRyRy,
-    SptmAngleEmbedding,
-    SptmFSwapRzRz,
-    SptmFermionicSuperposition,
-)
-
-
+from .. import matchgate_parameter_sets
+from .angle_embedding import MAngleEmbedding, MAngleEmbeddings
+from .fermionic_controlled_z import FermionicControlledZ, fCZ
+from .fermionic_hadamard import FermionicHadamard, fH
 from .fermionic_rotations import (
     FermionicRotation,
     FermionicRotationXX,
@@ -22,37 +11,23 @@ from .fermionic_rotations import (
     fRYY,
     fRZZ,
 )
-
-from .angle_embedding import (
-    MAngleEmbedding,
-    MAngleEmbeddings,
-)
-
-from .fermionic_hadamard import (
-    FermionicHadamard,
-    fH,
-)
-
-from .fermionic_controlled_z import (
-    FermionicControlledZ,
-    fCZ,
-)
-
-from .fermionic_swap import (
-    FermionicSWAP,
-    fSWAP,
-    fswap_chain_gen,
-    fswap_chain,
-)
-
-from .fermionic_superposition import (
-    FermionicSuperposition,
-)
-
-from .. import matchgate_parameter_sets
-
+from .fermionic_superposition import FermionicSuperposition
+from .fermionic_swap import FermionicSWAP, fSWAP, fswap_chain, fswap_chain_gen
+from .matchgate_operation import MatchgateOperation
 from .rxx import Rxx
 from .rzz import Rzz
+from .single_particle_transition_matrices import (
+    SingleParticleTransitionMatrixOperation,
+    SptmAngleEmbedding,
+    SptmFermionicSuperposition,
+    SptmFHH,
+    SptmfRxRx,
+    SptmFSwap,
+    SptmFSwapRzRz,
+    SptmIdentity,
+    SptmRyRy,
+    SptmRzRz,
+)
 
 
 class ZI(MatchgateOperation):

@@ -1,17 +1,18 @@
 import numpy as np
 import pennylane as qml
-import pytest
 import psutil
+import pytest
 
 from matchcake import MatchgateOperation, NonInteractingFermionicDevice
 from matchcake import matchgate_parameter_sets as mps
 from matchcake.devices.probability_strategies import get_probability_strategy
+
 from .. import get_slow_test_mark
 from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
     ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
 

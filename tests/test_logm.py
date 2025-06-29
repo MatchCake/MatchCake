@@ -1,14 +1,15 @@
 import numpy as np
 import pytest
 from pennylane.math import expm
+
 from matchcake.utils.math import logm
 
 from .configs import (
-    N_RANDOM_TESTS_PER_CASE,
     ATOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_MATRIX_COMPARISON,
-    set_seed,
     TEST_SEED,
+    set_seed,
 )
 
 set_seed(TEST_SEED)

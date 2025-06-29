@@ -4,20 +4,21 @@ import pytest
 from matchcake.matchgate_parameter_sets import transfer_functions
 from matchcake.matchgate_parameter_sets.transfer_functions import (
     _NODE_ORDER,
-    infer_transfer_func,
-    all_pairs_dijkstra_commutative_paths,
-    params_to,
-    MatchgatePolarParams,
-    MatchgateHamiltonianCoefficientsParams,
     MatchgateComposedHamiltonianParams,
+    MatchgateHamiltonianCoefficientsParams,
+    MatchgatePolarParams,
+    all_pairs_dijkstra_commutative_paths,
+    infer_transfer_func,
+    params_to,
 )
+
 from ...configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
-    ATOL_MATRIX_COMPARISON,
-    RTOL_MATRIX_COMPARISON,
     ATOL_APPROX_COMPARISON,
+    ATOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
 

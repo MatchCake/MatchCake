@@ -1,13 +1,13 @@
-from typing import Union, Literal, Optional
-import pennylane as qml
-import numpy as np
 import warnings
+from typing import Literal, Optional, Union
 
+import numpy as np
+import pennylane as qml
 import torch
 import tqdm
 
-from .math import convert_and_cast_like
 from ..templates import TensorLike
+from .math import convert_and_cast_like
 from .torch_pfaffian import Pfaffian
 
 
@@ -319,8 +319,9 @@ def pfaffian_by_det_cuda(
     show_progress: bool = False,
     epsilon: float = 1e-12,
 ):
-    from . import torch_utils
     import torch
+
+    from . import torch_utils
 
     shape = qml.math.shape(__matrix)
     p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)

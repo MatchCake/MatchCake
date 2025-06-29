@@ -1,11 +1,11 @@
+from typing import Any, Callable, Dict, List, Optional
+
 import numpy as np
+import torch
+from pennylane.typing import TensorLike
 
 from .adamw_strategy import AdamWStrategy
 from .optimizer_strategy import OptimizerStrategy
-from typing import Dict, Any, Callable, Optional, List
-
-import torch
-from pennylane.typing import TensorLike
 
 
 class AdamStrategy(AdamWStrategy):

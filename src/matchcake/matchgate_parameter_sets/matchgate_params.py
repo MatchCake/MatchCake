@@ -1,10 +1,10 @@
 import importlib
-from typing import Any, Optional, Literal
 import warnings
-import pennylane as qml
-from pennylane import numpy as pnp
+from typing import Any, Literal, Optional
 
 import numpy as np
+import pennylane as qml
+from pennylane import numpy as pnp
 
 from .. import utils
 from ..templates import TensorLike

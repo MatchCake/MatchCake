@@ -1,9 +1,9 @@
 from pennylane import numpy as pnp
 from pennylane.wires import Wires
 
-from .matchgate_operation import MatchgateOperation
 from .. import matchgate_parameter_sets as mps
 from .. import utils
+from .matchgate_operation import MatchgateOperation
 
 paulis_map = {
     "X": utils.PAULI_X,

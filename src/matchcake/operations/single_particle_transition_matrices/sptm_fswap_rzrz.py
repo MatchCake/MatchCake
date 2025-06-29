@@ -2,10 +2,10 @@ import numpy as np
 import pennylane as qml
 from pennylane.wires import Wires
 
+from ...constants import _CIRCUIT_MATMUL_DIRECTION
 from ...utils import make_wires_continuous
 from ...utils.math import convert_and_cast_like, dagger
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
-from ...constants import _CIRCUIT_MATMUL_DIRECTION
 
 
 class SptmFSwapRzRz(SingleParticleTransitionMatrixOperation):

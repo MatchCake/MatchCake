@@ -1,10 +1,11 @@
 import argparse
 from typing import Optional
-import pennylane as qml
 
-from .torch_model import TorchModel
-from ... import NonInteractingFermionicDevice
+import pennylane as qml
 from pennylane.wires import Wires
+
+from ... import NonInteractingFermionicDevice
+from .torch_model import TorchModel
 
 
 class NIFTorchModel(TorchModel):

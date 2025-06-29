@@ -1,22 +1,23 @@
 import numpy as np
 import pytest
 
-from matchcake.matchgate_parameter_sets import transfer_functions, fSWAP
+from matchcake.matchgate_parameter_sets import fSWAP, transfer_functions
 from matchcake.matchgate_parameter_sets.transfer_functions import (
-    _transfer_funcs_by_type,
-    params_to,
+    MatchgateComposedHamiltonianParams,
+    MatchgateHamiltonianCoefficientsParams,
     MatchgateParams,
     MatchgatePolarParams,
-    MatchgateStandardParams,
-    MatchgateHamiltonianCoefficientsParams,
-    MatchgateComposedHamiltonianParams,
     MatchgateStandardHamiltonianParams,
+    MatchgateStandardParams,
+    _transfer_funcs_by_type,
+    params_to,
 )
+
 from ...configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
     ATOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
 

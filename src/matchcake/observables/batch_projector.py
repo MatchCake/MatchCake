@@ -1,6 +1,6 @@
 import pennylane as qml
-from pennylane.wires import Wires
 from pennylane.operation import Observable
+from pennylane.wires import Wires
 
 
 class BatchProjector(Observable):

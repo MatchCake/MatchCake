@@ -1,12 +1,12 @@
 import warnings
-from typing import Iterable, Union, Optional, Literal, List, Callable
+from typing import Callable, Iterable, List, Literal, Optional, Union
 
 from pennylane.wires import Wires
 
 from ...operations.matchgate_operation import MatchgateOperation
 from ...operations.single_particle_transition_matrices.single_particle_transition_matrix import (
-    _SingleParticleTransitionMatrix,
     SingleParticleTransitionMatrixOperation,
+    _SingleParticleTransitionMatrix,
 )
 
 

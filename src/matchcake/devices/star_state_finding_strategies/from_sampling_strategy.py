@@ -1,11 +1,12 @@
 from typing import Callable, Tuple
+
+import numpy as np
+import pennylane as qml
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
-import pennylane as qml
-import numpy as np
 
-from .star_state_finding_strategy import StarStateFindingStrategy
 from ...utils.torch_utils import to_numpy
+from .star_state_finding_strategy import StarStateFindingStrategy
 
 
 class FromSamplingStrategy(StarStateFindingStrategy):

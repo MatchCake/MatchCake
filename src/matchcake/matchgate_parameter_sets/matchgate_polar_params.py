@@ -1,7 +1,8 @@
 import numpy as np
 import pennylane as qml
-from .matchgate_params import MatchgateParams
+
 from .. import utils
+from .matchgate_params import MatchgateParams
 
 
 class MatchgatePolarParams(MatchgateParams):

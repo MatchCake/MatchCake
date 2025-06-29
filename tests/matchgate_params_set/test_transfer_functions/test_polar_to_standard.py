@@ -3,20 +3,14 @@ import pytest
 
 from matchcake.matchgate_parameter_sets import transfer_functions
 from matchcake.matchgate_parameter_sets.transfer_functions import (
+    MatchgateComposedHamiltonianParams,
+    MatchgateHamiltonianCoefficientsParams,
     MatchgatePolarParams,
     MatchgateStandardParams,
-    MatchgateHamiltonianCoefficientsParams,
-    MatchgateComposedHamiltonianParams,
 )
-from matchcake.utils import (
-    PAULI_X,
-    PAULI_Z,
-)
-from ...configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
-    set_seed,
-)
+from matchcake.utils import PAULI_X, PAULI_Z
+
+from ...configs import N_RANDOM_TESTS_PER_CASE, TEST_SEED, set_seed
 
 MatchgatePolarParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 MatchgateHamiltonianCoefficientsParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line

@@ -4,13 +4,14 @@ import pytest
 from matchcake import (
     MatchgateHamiltonianCoefficientsParams,
     MatchgateStandardHamiltonianParams,
+    utils,
 )
-from matchcake import utils
+
 from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
     ATOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
 

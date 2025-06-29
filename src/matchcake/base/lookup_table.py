@@ -1,13 +1,13 @@
+import itertools
 import numbers
 import warnings
-from typing import Optional, Tuple, Union, Iterable, List, Sized
-import itertools
+from typing import Iterable, List, Optional, Sized, Tuple, Union
 
 import numpy as np
 import pennylane as qml
+import tqdm
 from pennylane import numpy as pnp
 from scipy import sparse
-import tqdm
 
 from .. import utils
 from ..templates import TensorLike

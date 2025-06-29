@@ -2,13 +2,14 @@ import numpy as np
 import pytest
 
 from matchcake import utils
+
 from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
     ATOL_APPROX_COMPARISON,
-    RTOL_APPROX_COMPARISON,
     ATOL_SCALAR_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
     RTOL_SCALAR_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
 

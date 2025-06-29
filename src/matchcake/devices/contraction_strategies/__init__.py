@@ -1,12 +1,12 @@
 from typing import Optional
 
-from .contraction_strategy import ContractionStrategy
-from .none_strategy import NoneContractionStrategy
-from .horizontal_strategy import HorizontalContractionStrategy
-from .vertical_strategy import VerticalContractionStrategy
-from .neighbours_strategy import NeighboursContractionStrategy
-from .forward_strategy import ForwardContractionStrategy
 from ...utils import get_all_subclasses
+from .contraction_strategy import ContractionStrategy
+from .forward_strategy import ForwardContractionStrategy
+from .horizontal_strategy import HorizontalContractionStrategy
+from .neighbours_strategy import NeighboursContractionStrategy
+from .none_strategy import NoneContractionStrategy
+from .vertical_strategy import VerticalContractionStrategy
 
 contraction_strategy_map = {_cls.NAME.lower().strip(): _cls for _cls in get_all_subclasses(ContractionStrategy)}
 

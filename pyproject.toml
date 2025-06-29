@@ -91,6 +91,8 @@ nbmake = "^1.5.5"
 wheel = "^0.45.1"
 build = "^1.2.2.post1"
 twine = "^6.1.0"
+pytest-xdist = "^3.7.0"
+isort = "^6.0.1"
 
 
 [tool.poetry.group.docs.dependencies]
@@ -163,6 +165,8 @@ module = [
 ]
 ignore_missing_imports = true
 
-
 [tool.black]
 line-length = 120
+
+[tool.isort]
+profile = "black"

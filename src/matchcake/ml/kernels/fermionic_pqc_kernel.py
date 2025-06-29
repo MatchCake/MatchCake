@@ -13,15 +13,15 @@ except ImportError:
         "double_odd": lambda wires: [wires.subset([i, i + 1]) for i in range(1, len(wires) - 1, 2)],
     }
 
-from .nif_kernel import NIFKernel
 from ...operations import (
     MAngleEmbedding,
-    fSWAP,
-    fH,
-    SptmFSwap,
     SptmAngleEmbedding,
     SptmFHH,
+    SptmFSwap,
+    fH,
+    fSWAP,
 )
+from .nif_kernel import NIFKernel
 
 
 class FermionicPQCKernel(NIFKernel):

@@ -3,15 +3,13 @@ import pytest
 
 from matchcake.matchgate_parameter_sets import transfer_functions
 from matchcake.matchgate_parameter_sets.transfer_functions import (
+    MatchgateComposedHamiltonianParams,
+    MatchgateHamiltonianCoefficientsParams,
     MatchgatePolarParams,
     MatchgateStandardParams,
-    MatchgateHamiltonianCoefficientsParams,
-    MatchgateComposedHamiltonianParams,
 )
-from ...configs import (
-    TEST_SEED,
-    set_seed,
-)
+
+from ...configs import TEST_SEED, set_seed
 
 MatchgatePolarParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 MatchgateHamiltonianCoefficientsParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line

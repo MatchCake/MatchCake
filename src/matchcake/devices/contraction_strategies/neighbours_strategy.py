@@ -1,16 +1,16 @@
-from .contraction_strategy import ContractionStrategy
-from .contraction_container import (
-    _ContractionMatchgatesContainer,
-    _ContractionMatchgatesContainerAddException,
-)
-from ..device_utils import circuit_or_fop_matmul
+from pennylane.wires import Wires
+
 from ...operations.matchgate_operation import (
     MatchgateOperation,
     SingleParticleTransitionMatrixOperation,
 )
-from pennylane.wires import Wires
-
 from ...utils.math import circuit_matmul
+from ..device_utils import circuit_or_fop_matmul
+from .contraction_container import (
+    _ContractionMatchgatesContainer,
+    _ContractionMatchgatesContainerAddException,
+)
+from .contraction_strategy import ContractionStrategy
 
 
 class _VHMatchgatesContainer(_ContractionMatchgatesContainer):

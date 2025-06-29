@@ -1,18 +1,19 @@
-from typing import Union, Optional, Any
+from typing import Any, Optional, Union
 
 import pennylane as qml
-from pennylane.operation import Operation
 from pennylane import numpy as pnp
 from pennylane.math import TensorLike
+from pennylane.operation import Operation
 from pennylane.wires import Wires, WiresLike
 
+from .. import matchgate_parameter_sets as mps
+from .. import utils
 from ..base.matchgate import Matchgate
-from .. import matchgate_parameter_sets as mps, utils
+from ..utils import make_wires_continuous
+from ..utils.math import fermionic_operator_matmul
 from .single_particle_transition_matrices.single_particle_transition_matrix import (
     SingleParticleTransitionMatrixOperation,
 )
-from ..utils import make_wires_continuous
-from ..utils.math import fermionic_operator_matmul
 
 
 class MatchgateOperation(Matchgate, Operation):

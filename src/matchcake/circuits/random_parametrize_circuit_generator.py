@@ -1,19 +1,18 @@
-from typing import Optional, Type, List, Sequence, Union, Any
+from typing import Any, List, Optional, Sequence, Type, Union
 
 import numpy as np
 import pennylane as qml
 
-from .random_generator import RandomOperationsGenerator
-
 from ..operations import (
-    MatchgateOperation,
-    fRXX,
-    fSWAP,
-    fRZZ,
-    fH,
-    fRYY,
     FermionicSuperposition,
+    MatchgateOperation,
+    fH,
+    fRXX,
+    fRYY,
+    fRZZ,
+    fSWAP,
 )
+from .random_generator import RandomOperationsGenerator
 
 
 class RandomParametrizeGenerator(RandomOperationsGenerator):

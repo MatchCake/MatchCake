@@ -4,16 +4,17 @@ import numpy as np
 import pytest
 
 from matchcake import utils
+
 from .. import get_slow_test_mark
 from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
-    ATOL_SCALAR_COMPARISON,
-    RTOL_SCALAR_COMPARISON,
-    ATOL_MATRIX_COMPARISON,
-    RTOL_MATRIX_COMPARISON,
     ATOL_APPROX_COMPARISON,
+    ATOL_MATRIX_COMPARISON,
+    ATOL_SCALAR_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+    RTOL_SCALAR_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
 

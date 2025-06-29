@@ -1,20 +1,21 @@
-import pytest
-from matchcake.devices.contraction_strategies import get_contraction_strategy
-import matchcake as mc
-from matchcake import matchgate_parameter_sets as mps
 import numpy as np
 import pennylane as qml
+import pytest
 
+import matchcake as mc
+from matchcake import matchgate_parameter_sets as mps
+from matchcake.devices.contraction_strategies import get_contraction_strategy
 from matchcake.utils.math import circuit_matmul, dagger, fermionic_operator_matmul
-from .. import devices_init, init_nif_device
-from ..test_specific_circuit import specific_matchgate_circuit
+
 from ...configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
     ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
+from .. import devices_init, init_nif_device
+from ..test_specific_circuit import specific_matchgate_circuit
 
 set_seed(TEST_SEED)
 

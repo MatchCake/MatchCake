@@ -1,8 +1,8 @@
+import numpy as np
 import pennylane as qml
 import pennylane.numpy as pnp
-import numpy as np
-from .. import utils
 
+from .. import utils
 from .matchgate_params import MatchgateParams
 
 

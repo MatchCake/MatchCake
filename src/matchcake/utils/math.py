@@ -1,14 +1,15 @@
-from typing import Tuple, List, Literal, Any, Optional, Iterable
+from typing import Any, Iterable, List, Literal, Optional, Tuple
 
 import numpy as np
-import scipy
 import pennylane as qml
-from ..templates.tensor_like import TensorLike
+import scipy
+
 from ..constants import (
     _CIRCUIT_MATMUL_DIRECTION,
     _FOP_MATMUL_DIRECTION,
     MatmulDirectionType,
 )
+from ..templates.tensor_like import TensorLike
 
 try:
     import torch
@@ -129,6 +130,7 @@ def convert_and_cast_like(tensor1, tensor2):
     :return: Converted and casted tensor1.
     """
     import warnings
+
     import numpy as np
     import torch
 

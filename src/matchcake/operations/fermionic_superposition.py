@@ -1,8 +1,11 @@
-import numpy as np
-
-from . import fSWAP, fH, SptmFermionicSuperposition
+from pennylane.operation import AnyWires, Operation
 from pennylane.wires import Wires
-from pennylane.operation import Operation, AnyWires
+
+from .fermionic_hadamard import fH
+from .fermionic_swap import fSWAP
+from .single_particle_transition_matrices.sptm_fermionic_superposition import (
+    SptmFermionicSuperposition,
+)
 
 
 class FermionicSuperposition(Operation):

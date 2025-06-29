@@ -2,8 +2,8 @@ from typing import Tuple
 
 import pennylane as qml
 
-from matchcake import MatchgateOperation, NonInteractingFermionicDevice
-from matchcake import utils
+from matchcake import MatchgateOperation, NonInteractingFermionicDevice, utils
+
 from .test_single_matchgate_circuit import single_matchgate_circuit
 
 _majorana_getters = {}
