@@ -1,9 +1,9 @@
-from typing import Sequence, Optional
+from typing import Optional, Sequence
 
-from .contraction_strategy import ContractionStrategy
 from pennylane.operation import Operation
 
 from ...operations import SingleParticleTransitionMatrixOperation
+from .contraction_strategy import ContractionStrategy
 
 
 class NoneContractionStrategy(ContractionStrategy):

@@ -2,21 +2,13 @@ import numpy as np
 import pytest
 import torch
 
-from matchcake.operations import (
-    fRXX,
-)
-from matchcake.operations.single_particle_transition_matrices import (
-    SptmfRxRx,
-)
+from matchcake.operations import fRXX
+from matchcake.operations.single_particle_transition_matrices import SptmfRxRx
 from matchcake.utils import torch_utils
 from matchcake.utils.math import circuit_matmul
-from ...configs import (
-    ATOL_APPROX_COMPARISON,
-    RTOL_APPROX_COMPARISON,
-    N_RANDOM_TESTS_PER_CASE,
-    set_seed,
-    TEST_SEED,
-)
+
+from ...configs import (ATOL_APPROX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
+                        RTOL_APPROX_COMPARISON, TEST_SEED, set_seed)
 
 set_seed(TEST_SEED)
 

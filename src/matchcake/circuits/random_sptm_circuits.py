@@ -1,21 +1,13 @@
-from typing import Optional, Type, List, Sequence, Union, Any
+from typing import Any, List, Optional, Sequence, Type, Union
 
 import numpy as np
 import pennylane as qml
 
+from ..operations import (SingleParticleTransitionMatrixOperation,
+                          SptmFermionicSuperposition, SptmFHH, SptmfRxRx,
+                          SptmFSwap, SptmFSwapRzRz, SptmIdentity, SptmRyRy,
+                          SptmRzRz)
 from .random_generator import RandomOperationsGenerator
-
-from ..operations import (
-    SingleParticleTransitionMatrixOperation,
-    SptmfRxRx,
-    SptmFSwap,
-    SptmRzRz,
-    SptmIdentity,
-    SptmFHH,
-    SptmRyRy,
-    SptmFermionicSuperposition,
-    SptmFSwapRzRz,
-)
 
 
 # pylint: disable=too-many-arguments

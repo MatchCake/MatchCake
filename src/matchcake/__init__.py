@@ -12,31 +12,21 @@ __url__ = "https://github.com/MatchCake/MatchCake"
 __package__ = "matchcake"
 __version__ = importlib_metadata.version(__package__)
 
-from .base import Matchgate
-from .matchgate_parameter_sets import (
-    MatchgateStandardParams,
-    MatchgatePolarParams,
-    MatchgateHamiltonianCoefficientsParams,
-    MatchgateComposedHamiltonianParams,
-    MatchgateStandardHamiltonianParams,
-)
-from matchcake import matchgate_parameter_sets as mps  # Alias
-from .operations import (
-    MatchgateOperation,
-)
-from .devices import (
-    NonInteractingFermionicDevice,
-    NIFDevice,
-)
-from . import utils
-from . import ml
-from .utils import math
-
-from .observables import (
-    BatchHamiltonian,
-)
-
 import warnings
+
+from matchcake import matchgate_parameter_sets as mps  # Alias
+
+from . import ml, utils
+from .base import Matchgate
+from .devices import NIFDevice, NonInteractingFermionicDevice
+from .matchgate_parameter_sets import (MatchgateComposedHamiltonianParams,
+                                       MatchgateHamiltonianCoefficientsParams,
+                                       MatchgatePolarParams,
+                                       MatchgateStandardHamiltonianParams,
+                                       MatchgateStandardParams)
+from .observables import BatchHamiltonian
+from .operations import MatchgateOperation
+from .utils import math
 
 warnings.filterwarnings("ignore", category=Warning, module="docutils")
 warnings.filterwarnings("ignore", category=Warning, module="sphinx")

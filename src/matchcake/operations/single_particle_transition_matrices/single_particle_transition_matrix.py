@@ -1,24 +1,18 @@
-from typing import Union, Iterable, Sequence, Optional, Any, Literal, List
+from typing import Any, Iterable, List, Literal, Optional, Sequence, Union
 
 import numpy as np
 import pennylane as qml
-from pennylane.operation import Operation, AnyWires
 from pennylane import numpy as pnp
+from pennylane.operation import AnyWires, Operation
 from pennylane.wires import Wires
 
 from ... import utils
+from ...constants import _CIRCUIT_MATMUL_DIRECTION
 from ...templates import TensorLike
 from ...utils import make_wires_continuous
-from ...utils.math import (
-    convert_and_cast_like,
-    circuit_matmul,
-    det,
-    fermionic_operator_matmul,
-    orthonormalize,
-    dagger,
-)
+from ...utils.math import (circuit_matmul, convert_and_cast_like, dagger, det,
+                           fermionic_operator_matmul, orthonormalize)
 from ...utils.torch_utils import detach
-from ...constants import _CIRCUIT_MATMUL_DIRECTION
 
 
 class _SingleParticleTransitionMatrix:
@@ -479,8 +473,9 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         return SingleParticleTransitionMatrixOperation(dagger(self.matrix()), wires=self.wires, **self._hyperparameters)
 
     def to_cuda(self):
-        from ...utils import torch_utils
         import torch
+
+        from ...utils import torch_utils
 
         return SingleParticleTransitionMatrixOperation(
             torch_utils.to_cuda(self.matrix(), dtype=torch.complex128),
@@ -489,8 +484,9 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         )
 
     def to_torch(self):
-        from ...utils import torch_utils
         import torch
+
+        from ...utils import torch_utils
 
         return SingleParticleTransitionMatrixOperation(
             torch_utils.to_tensor(self.matrix(), dtype=torch.complex128),

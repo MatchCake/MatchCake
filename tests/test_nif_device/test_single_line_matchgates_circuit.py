@@ -2,16 +2,13 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from matchcake import MatchgateOperation, utils
+from matchcake import MatchgateOperation
 from matchcake import matchgate_parameter_sets as mps
+from matchcake import utils
+
+from ..configs import (ATOL_APPROX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
+                       RTOL_APPROX_COMPARISON, TEST_SEED, set_seed)
 from . import devices_init
-from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
-    ATOL_APPROX_COMPARISON,
-    RTOL_APPROX_COMPARISON,
-    set_seed,
-)
 
 set_seed(TEST_SEED)
 

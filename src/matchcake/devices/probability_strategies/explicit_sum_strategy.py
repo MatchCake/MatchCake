@@ -1,16 +1,16 @@
 import warnings
-
-from .probability_strategy import ProbabilityStrategy
 from typing import Callable
+
 import numpy as np
+import pennylane as qml
+import pythonbasictools as pbt
+from pennylane import numpy as pnp
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
-import pythonbasictools as pbt
-import pennylane as qml
-from pennylane import numpy as pnp
 
-from ...base.lookup_table import NonInteractingFermionicLookupTable
 from ... import utils
+from ...base.lookup_table import NonInteractingFermionicLookupTable
+from .probability_strategy import ProbabilityStrategy
 
 
 class ExplicitSumStrategy(ProbabilityStrategy):

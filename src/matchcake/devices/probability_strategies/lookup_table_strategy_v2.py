@@ -1,12 +1,13 @@
-from .probability_strategy import ProbabilityStrategy
 from typing import Callable
+
 import numpy as np
+import pennylane as qml
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
-import pennylane as qml
 
-from ...base.lookup_table import NonInteractingFermionicLookupTable
 from ... import utils
+from ...base.lookup_table import NonInteractingFermionicLookupTable
+from .probability_strategy import ProbabilityStrategy
 
 
 class LookupTableStrategyV2(ProbabilityStrategy):

@@ -1,4 +1,4 @@
-from typing import Optional, Any, Callable
+from typing import Any, Callable, Optional
 
 import matplotlib
 import matplotlib.pyplot as plt

@@ -1,7 +1,8 @@
 import numpy as np
 from pennylane.wires import Wires
 
-from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
+from .single_particle_transition_matrix import \
+    SingleParticleTransitionMatrixOperation
 
 
 class SptmIdentity(SingleParticleTransitionMatrixOperation):

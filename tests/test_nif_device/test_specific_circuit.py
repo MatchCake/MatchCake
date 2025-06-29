@@ -3,22 +3,18 @@ from functools import partial
 
 import numpy as np
 import pennylane as qml
-from pennylane.wires import Wires
-from pennylane.ops.qubit.observables import BasisStateProjector
 import pytest
+from pennylane.ops.qubit.observables import BasisStateProjector
+from pennylane.wires import Wires
 
-from matchcake import MatchgateOperation, utils
+from matchcake import MatchgateOperation
 from matchcake import matchgate_parameter_sets as mps
-from matchcake import operations
+from matchcake import operations, utils
 from matchcake.utils.torch_utils import to_numpy
+
+from ..configs import (ATOL_APPROX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
+                       RTOL_APPROX_COMPARISON, TEST_SEED, set_seed)
 from . import devices_init
-from ..configs import (
-    TEST_SEED,
-    ATOL_APPROX_COMPARISON,
-    RTOL_APPROX_COMPARISON,
-    set_seed,
-    N_RANDOM_TESTS_PER_CASE,
-)
 
 set_seed(TEST_SEED)
 

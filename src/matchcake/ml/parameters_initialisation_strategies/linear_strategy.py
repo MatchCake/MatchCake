@@ -1,11 +1,12 @@
+from typing import Any, Callable, Dict
+
 import numpy as np
 import torch
-
-from .parameters_initialisation_strategy import ParametersInitialisationStrategy
-from typing import Dict, Any, Callable
+from pennylane.typing import TensorLike
 
 from ...utils import torch_utils
-from pennylane.typing import TensorLike
+from .parameters_initialisation_strategy import \
+    ParametersInitialisationStrategy
 
 
 class LinearStrategy(ParametersInitialisationStrategy):

@@ -5,9 +5,9 @@ import pennylane as qml
 from sklearn import svm
 from tqdm import tqdm
 
+from ..utils import torch_utils
 from .kernels.ml_kernel import MLKernel
 from .std_estimator import StdEstimator
-from ..utils import torch_utils
 
 
 class SimpleSVC(StdEstimator):

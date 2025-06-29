@@ -3,17 +3,14 @@ import pennylane as qml
 import pytest
 from pfapack import pfaffian
 
-from matchcake import MatchgateOperation, NonInteractingFermionicDevice, Matchgate
+from matchcake import (Matchgate, MatchgateOperation,
+                       NonInteractingFermionicDevice)
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
 from matchcake.utils.math import dagger, det
-from .configs import (
-    ATOL_MATRIX_COMPARISON,
-    RTOL_MATRIX_COMPARISON,
-    TEST_SEED,
-    set_seed,
-    N_RANDOM_TESTS_PER_CASE,
-)
+
+from .configs import (ATOL_MATRIX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
+                      RTOL_MATRIX_COMPARISON, TEST_SEED, set_seed)
 from .test_nif_device import single_matchgate_circuit
 
 set_seed(TEST_SEED)

@@ -1,21 +1,17 @@
 import itertools
 
 import numpy as np
-import pytest
 import pennylane as qml
+import pytest
 
 from matchcake import utils
 from matchcake.base.lookup_table import NonInteractingFermionicLookupTable
 from matchcake.circuits import random_sptm_operations_generator
+
 from . import get_slow_test_mark
+from .configs import (ATOL_MATRIX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
+                      RTOL_MATRIX_COMPARISON, TEST_SEED, set_seed)
 from .test_nif_device import devices_init
-from .configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    ATOL_MATRIX_COMPARISON,
-    RTOL_MATRIX_COMPARISON,
-    TEST_SEED,
-    set_seed,
-)
 
 set_seed(TEST_SEED)
 

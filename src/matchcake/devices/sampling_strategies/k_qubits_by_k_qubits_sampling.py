@@ -1,16 +1,15 @@
 import itertools
-
-import tqdm
-
-from .sampling_strategy import SamplingStrategy
-from pennylane.typing import TensorLike
-from pennylane.wires import Wires
 from typing import Callable
+
 import numpy as np
 import pennylane as qml
+import tqdm
+from pennylane.typing import TensorLike
+from pennylane.wires import Wires
 
 from ...utils.math import random_index
 from ...utils.torch_utils import to_numpy
+from .sampling_strategy import SamplingStrategy
 
 
 class KQubitsByKQubitsSampling(SamplingStrategy):

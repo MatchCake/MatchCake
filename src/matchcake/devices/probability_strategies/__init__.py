@@ -1,8 +1,8 @@
-from .probability_strategy import ProbabilityStrategy
-from .lookup_table_strategy import LookupTableStrategy
-from .explicit_sum_strategy import ExplicitSumStrategy
-from .lookup_table_strategy_v2 import LookupTableStrategyV2
 from ...utils import get_all_subclasses
+from .explicit_sum_strategy import ExplicitSumStrategy
+from .lookup_table_strategy import LookupTableStrategy
+from .lookup_table_strategy_v2 import LookupTableStrategyV2
+from .probability_strategy import ProbabilityStrategy
 
 probability_strategy_map = {_cls.NAME.lower().strip(): _cls for _cls in get_all_subclasses(ProbabilityStrategy)}
 

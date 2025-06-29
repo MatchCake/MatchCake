@@ -2,15 +2,15 @@ import warnings
 from collections import defaultdict
 from functools import partial
 
+import numpy as np
 import pennylane as qml
 import torch
+from pennylane.operation import AnyWires, Operation
 from pennylane.wires import Wires
-from pennylane.operation import Operation, AnyWires
-from .sptm_f_rxrx import SptmfRxRx
-from .sptm_rzrz import SptmRzRz
-from .sptm_ryry import SptmRyRy
-import numpy as np
 
+from .sptm_f_rxrx import SptmfRxRx
+from .sptm_ryry import SptmRyRy
+from .sptm_rzrz import SptmRzRz
 
 ROT = {"X": SptmfRxRx, "Y": SptmRyRy, "Z": SptmRzRz}
 

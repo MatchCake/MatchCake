@@ -1,22 +1,16 @@
-import pytest
 import numpy as np
+import pytest
 import torch
 from scipy.linalg import expm
 from torch.autograd import gradcheck
 
-from matchcake import utils
 from matchcake import matchgate_parameter_sets as mps
-from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
-    ATOL_MATRIX_COMPARISON,
-    RTOL_MATRIX_COMPARISON,
-    ATOL_SCALAR_COMPARISON,
-    RTOL_SCALAR_COMPARISON,
-    set_seed,
-    ATOL_APPROX_COMPARISON,
-    RTOL_APPROX_COMPARISON,
-)
+from matchcake import utils
+
+from ..configs import (ATOL_APPROX_COMPARISON, ATOL_MATRIX_COMPARISON,
+                       ATOL_SCALAR_COMPARISON, N_RANDOM_TESTS_PER_CASE,
+                       RTOL_APPROX_COMPARISON, RTOL_MATRIX_COMPARISON,
+                       RTOL_SCALAR_COMPARISON, TEST_SEED, set_seed)
 
 set_seed(TEST_SEED)
 

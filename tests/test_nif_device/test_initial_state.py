@@ -1,23 +1,20 @@
+from functools import partial
 from typing import Tuple
 
 import numpy as np
-import pytest
 import pennylane as qml
-from matchcake import MatchgateOperation, NonInteractingFermionicDevice, Matchgate
+import pytest
+
+from matchcake import (Matchgate, MatchgateOperation,
+                       NonInteractingFermionicDevice)
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
-from functools import partial
+from matchcake.utils import PAULI_X, PAULI_Z
 
-from matchcake.utils import PAULI_Z, PAULI_X
-from . import devices_init
 from .. import get_slow_test_mark
-from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
-    ATOL_MATRIX_COMPARISON,
-    RTOL_MATRIX_COMPARISON,
-    set_seed,
-)
+from ..configs import (ATOL_MATRIX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
+                       RTOL_MATRIX_COMPARISON, TEST_SEED, set_seed)
+from . import devices_init
 
 set_seed(TEST_SEED)
 

@@ -1,5 +1,6 @@
-from typing import Optional, Type, List, Sequence, Union, Any
 import json
+from typing import Any, List, Optional, Sequence, Type, Union
+
 import numpy as np
 import pennylane as qml
 

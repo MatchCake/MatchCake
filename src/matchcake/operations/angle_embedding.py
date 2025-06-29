@@ -2,14 +2,14 @@ import warnings
 from collections import defaultdict
 from functools import partial
 
+import numpy as np
 import pennylane as qml
 import torch
+from pennylane.operation import AnyWires, Operation
 from pennylane.wires import Wires
-from pennylane.operation import Operation, AnyWires
-from .fermionic_rotations import fRXX, fRYY, fRZZ
-from ..utils import recursive_2in_operator
-import numpy as np
 
+from ..utils import recursive_2in_operator
+from .fermionic_rotations import fRXX, fRYY, fRZZ
 
 ROT = {"X": fRXX, "Y": fRYY, "Z": fRZZ}
 rotations_map = {  # TODO: to verify

@@ -1,14 +1,15 @@
 from typing import Callable, Tuple
 
+import numpy as np
+import pennylane as qml
 import tqdm
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
-import pennylane as qml
-import numpy as np
 
-from ..sampling_strategies.k_qubits_by_k_qubits_sampling import KQubitsByKQubitsSampling
-from .star_state_finding_strategy import StarStateFindingStrategy
 from ...utils.torch_utils import to_numpy
+from ..sampling_strategies.k_qubits_by_k_qubits_sampling import \
+    KQubitsByKQubitsSampling
+from .star_state_finding_strategy import StarStateFindingStrategy
 
 
 class GreedyStrategy(StarStateFindingStrategy):

@@ -1,17 +1,12 @@
 import numpy as np
+import pennylane as qml
 import pytest
 
 from matchcake import utils
-from matchcake.operations import fRXX, fRYY, fRZZ, FermionicRotation
-import pennylane as qml
+from matchcake.operations import FermionicRotation, fRXX, fRYY, fRZZ
 
-from ..configs import (
-    ATOL_APPROX_COMPARISON,
-    RTOL_APPROX_COMPARISON,
-    N_RANDOM_TESTS_PER_CASE,
-    set_seed,
-    TEST_SEED,
-)
+from ..configs import (ATOL_APPROX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
+                       RTOL_APPROX_COMPARISON, TEST_SEED, set_seed)
 from ..test_nif_device import devices_init
 from . import specific_ops_circuit
 

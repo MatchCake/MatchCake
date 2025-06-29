@@ -1,4 +1,5 @@
 import pytest
+
 from matchcake.utils.operators import adjoint_generator
 
 

@@ -1,8 +1,8 @@
 import numpy as np
-
-from . import fSWAP, fH, SptmFermionicSuperposition
+from pennylane.operation import AnyWires, Operation
 from pennylane.wires import Wires
-from pennylane.operation import Operation, AnyWires
+
+from . import SptmFermionicSuperposition, fH, fSWAP
 
 
 class FermionicSuperposition(Operation):

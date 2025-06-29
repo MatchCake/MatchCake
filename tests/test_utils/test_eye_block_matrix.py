@@ -1,16 +1,12 @@
 import numpy as np
-import pytest
 import pennylane as qml
+import pytest
+
 from matchcake.utils import math
-from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    ATOL_MATRIX_COMPARISON,
-    RTOL_MATRIX_COMPARISON,
-    ATOL_SHAPE_COMPARISON,
-    RTOL_SHAPE_COMPARISON,
-    set_seed,
-    TEST_SEED,
-)
+
+from ..configs import (ATOL_MATRIX_COMPARISON, ATOL_SHAPE_COMPARISON,
+                       N_RANDOM_TESTS_PER_CASE, RTOL_MATRIX_COMPARISON,
+                       RTOL_SHAPE_COMPARISON, TEST_SEED, set_seed)
 
 set_seed(TEST_SEED)
 

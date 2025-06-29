@@ -2,12 +2,14 @@ import warnings
 from collections import defaultdict
 from functools import partial
 
+import numpy as np
 import pennylane as qml
 import torch
+from pennylane.operation import AnyWires, Operation
 from pennylane.wires import Wires
-from pennylane.operation import Operation, AnyWires
-import numpy as np
-from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
+
+from .single_particle_transition_matrix import \
+    SingleParticleTransitionMatrixOperation
 
 
 class SptmDiagEmbedding(SingleParticleTransitionMatrixOperation):

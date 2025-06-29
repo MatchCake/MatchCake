@@ -1,4 +1,5 @@
 import pytest
+
 from .configs import RUN_SLOW_TESTS
 
 RUN_SLOW_ARG_NAME = "run_slow"

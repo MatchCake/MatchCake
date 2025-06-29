@@ -1,13 +1,14 @@
-from .k_qubits_by_k_qubits_sampling import KQubitsByKQubitsSampling
-from pennylane.typing import TensorLike
-from pennylane.wires import Wires
 from typing import Callable
+
 import numpy as np
 import pennylane as qml
-
-from ...utils.torch_utils import to_numpy
-from ...utils.math import random_index
 import tqdm
+from pennylane.typing import TensorLike
+from pennylane.wires import Wires
+
+from ...utils.math import random_index
+from ...utils.torch_utils import to_numpy
+from .k_qubits_by_k_qubits_sampling import KQubitsByKQubitsSampling
 
 
 class QubitByQubitSampling(KQubitsByKQubitsSampling):

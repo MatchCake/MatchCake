@@ -1,16 +1,14 @@
 from pennylane.wires import Wires
 
-from .contraction_strategy import ContractionStrategy
+from ...operations.matchgate_operation import MatchgateOperation
+from ...operations.single_particle_transition_matrices import \
+    SingleParticleTransitionMatrixOperation
+from ...utils.math import circuit_matmul
+from ..device_utils import circuit_or_fop_matmul
 from .contraction_container import (
     _ContractionMatchgatesContainer,
-    _ContractionMatchgatesContainerAddException,
-)
-from ..device_utils import circuit_or_fop_matmul
-from ...operations.matchgate_operation import MatchgateOperation
-from ...operations.single_particle_transition_matrices import (
-    SingleParticleTransitionMatrixOperation,
-)
-from ...utils.math import circuit_matmul
+    _ContractionMatchgatesContainerAddException)
+from .contraction_strategy import ContractionStrategy
 
 
 class _ForwardMatchgatesContainer(_ContractionMatchgatesContainer):

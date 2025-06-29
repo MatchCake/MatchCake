@@ -15,11 +15,12 @@ except ImportError:
     }
 from pennylane.wires import Wires
 
-from .kernel_utils import mrot_zz_template
-from .ml_kernel import MLKernel
 from matchcake.devices.nif_device import NonInteractingFermionicDevice
 from matchcake.operations import MAngleEmbedding
+
 from ...utils import torch_utils
+from .kernel_utils import mrot_zz_template
+from .ml_kernel import MLKernel
 
 
 class NIFKernel(MLKernel):

@@ -1,4 +1,1 @@
-from .visualisation import (
-    Visualizer,
-    ClassificationVisualizer,
-)
+from .visualisation import ClassificationVisualizer, Visualizer

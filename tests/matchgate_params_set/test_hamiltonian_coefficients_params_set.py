@@ -1,11 +1,10 @@
 import numpy as np
 import pytest
 
-from matchcake import (
-    MatchgateHamiltonianCoefficientsParams,
-    MatchgateComposedHamiltonianParams,
-    MatchgateStandardHamiltonianParams,
-)
+from matchcake import (MatchgateComposedHamiltonianParams,
+                       MatchgateHamiltonianCoefficientsParams,
+                       MatchgateStandardHamiltonianParams)
+
 from ..configs import N_RANDOM_TESTS_PER_CASE, TEST_SEED, set_seed
 
 set_seed(TEST_SEED)

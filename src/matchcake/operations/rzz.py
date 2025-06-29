@@ -2,13 +2,12 @@ from typing import Union
 
 import numpy as np
 import pennylane as qml
-from pennylane.operation import Operation
 from pennylane import numpy as pnp
+from pennylane.operation import Operation
 
-from ..base.matchgate import Matchgate
 from .. import matchgate_parameter_sets as mps
 from .. import utils
-
+from ..base.matchgate import Matchgate
 from .matchgate_operation import MatchgateOperation
 
 

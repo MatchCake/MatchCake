@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Callable
+from typing import Any, Callable, Dict
 
 import numpy as np
-from ...utils import torch_utils
 from pennylane.typing import TensorLike
+
+from ...utils import torch_utils
 
 
 class ParametersInitialisationStrategy(ABC):

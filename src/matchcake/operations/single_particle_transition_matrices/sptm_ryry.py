@@ -3,7 +3,8 @@ import pennylane as qml
 from pennylane.wires import Wires
 
 from ...utils.math import convert_and_cast_like
-from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
+from .single_particle_transition_matrix import \
+    SingleParticleTransitionMatrixOperation
 
 
 class SptmRyRy(SingleParticleTransitionMatrixOperation):
