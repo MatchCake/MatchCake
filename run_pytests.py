@@ -70,7 +70,7 @@ def main():
         f"--cov-report={args.cov_report}",
         f"--cov-report=term-missing",
         f"--durations={args.durations}",
-        # f"-n=1",  # TODO: Should be able to use n=auto, but see issue: https://github.com/pytest-dev/pytest-xdist/issues/432
+        # f"-n=auto",  # TODO: Should be able to use pytest-xdist, but see issue: https://github.com/pytest-dev/pytest-xdist/issues/432
     ]
     pytest.main(pytest_main_args, plugins=[json_plugin])
     json_path = os.path.join(args.tests_folder, ".tmp", f"tests_report_rn{configs.N_RANDOM_TESTS_PER_CASE}.json")
