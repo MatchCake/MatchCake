@@ -1,20 +1,19 @@
-from typing import Callable, Dict, List, Type
+from typing import Callable, List, Type
 
 import networkx as nx
 import numpy as np
 import pennylane as qml
-from pennylane import numpy as pnp
 
 from .. import utils
 from ..utils import math
-from . import (
-    MatchgateComposedHamiltonianParams,
+from .matchgate_composed_hamiltonian_params import MatchgateComposedHamiltonianParams
+from .matchgate_hamiltonian_coefficients_params import (
     MatchgateHamiltonianCoefficientsParams,
-    MatchgateParams,
-    MatchgatePolarParams,
-    MatchgateStandardHamiltonianParams,
-    MatchgateStandardParams,
 )
+from .matchgate_params import MatchgateParams
+from .matchgate_polar_params import MatchgatePolarParams
+from .matchgate_standard_hamiltonian_params import MatchgateStandardHamiltonianParams
+from .matchgate_standard_params import MatchgateStandardParams
 
 
 def polar_to_standard(params: MatchgatePolarParams, **kwargs) -> MatchgateStandardParams:
