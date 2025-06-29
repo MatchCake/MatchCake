@@ -12,8 +12,7 @@
 ![Tests Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/tests.yml/badge.svg)
 ![Dist Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/build_dist.yml/badge.svg)
 ![Doc Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/docs.yml/badge.svg)
-![Code coverage](https://raw.githubusercontent.com/MatchCake/MatchCake/coverage-badge/coverage.svg)
-
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 
 # Description
@@ -121,9 +120,6 @@ viz.plot_2d_decision_boundaries(model=model, y=y, show=True)
 # Notes
 - This package is still in development and some features may not be available yet.
 - The documentation is still in development and may not be complete yet.
-- The package works only with the forked version of PennyLane available 
-[here](https://github.com/JeremieGince/pennylane.git@v0_32_0-dev1). In the future, the package will be compatible with
-the official version of PennyLane.
 
 
 
