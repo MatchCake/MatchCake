@@ -11,8 +11,9 @@ from .. import utils
 from ..base.matchgate import Matchgate
 from ..utils import make_wires_continuous
 from ..utils.math import fermionic_operator_matmul
-from .single_particle_transition_matrices.single_particle_transition_matrix import \
-    SingleParticleTransitionMatrixOperation
+from .single_particle_transition_matrices.single_particle_transition_matrix import (
+    SingleParticleTransitionMatrixOperation,
+)
 
 
 class MatchgateOperation(Matchgate, Operation):

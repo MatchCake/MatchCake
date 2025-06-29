@@ -2,8 +2,7 @@ from typing import Optional
 
 from ...utils import get_all_subclasses
 from .linear_strategy import *
-from .parameters_initialisation_strategy import \
-    ParametersInitialisationStrategy
+from .parameters_initialisation_strategy import ParametersInitialisationStrategy
 from .random_strategy import *
 
 parameters_initialisation_strategy_map = {

@@ -4,18 +4,39 @@ import pytest
 import torch
 
 from matchcake import utils
-from matchcake.operations import (FermionicRotation, MatchgateOperation, fH,
-                                  fRXX, fRYY, fRZZ, fSWAP)
+from matchcake.operations import (
+    FermionicRotation,
+    MatchgateOperation,
+    fH,
+    fRXX,
+    fRYY,
+    fRZZ,
+    fSWAP,
+)
 from matchcake.operations.single_particle_transition_matrices import (
-    SingleParticleTransitionMatrixOperation, SptmFHH, SptmfRxRx, SptmFSwap,
-    SptmIdentity, SptmRyRy, SptmRzRz)
-from matchcake.utils import (MajoranaGetter,
-                             make_single_particle_transition_matrix_from_gate,
-                             recursive_kron, torch_utils)
+    SingleParticleTransitionMatrixOperation,
+    SptmFHH,
+    SptmfRxRx,
+    SptmFSwap,
+    SptmIdentity,
+    SptmRyRy,
+    SptmRzRz,
+)
+from matchcake.utils import (
+    MajoranaGetter,
+    make_single_particle_transition_matrix_from_gate,
+    recursive_kron,
+    torch_utils,
+)
 from matchcake.utils.math import circuit_matmul
 
-from ...configs import (ATOL_APPROX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
-                        RTOL_APPROX_COMPARISON, TEST_SEED, set_seed)
+from ...configs import (
+    ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 
 set_seed(TEST_SEED)
 

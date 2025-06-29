@@ -18,8 +18,9 @@ from torch import nn
 from ...templates import TensorLike
 from ...utils import torch_utils
 from ..optimizer_strategies import get_optimizer_strategy
-from ..parameters_initialisation_strategies import \
-    get_parameters_initialisation_strategy
+from ..parameters_initialisation_strategies import (
+    get_parameters_initialisation_strategy,
+)
 
 
 class TorchModel(nn.Module):

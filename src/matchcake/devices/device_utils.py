@@ -1,12 +1,20 @@
 from typing import Any, Literal
 
-from ..constants import (_CIRCUIT_MATMUL_DIRECTION, _FOP_MATMUL_DIRECTION,
-                         MatmulDirectionType)
+from ..constants import (
+    _CIRCUIT_MATMUL_DIRECTION,
+    _FOP_MATMUL_DIRECTION,
+    MatmulDirectionType,
+)
 from ..operations.matchgate_operation import MatchgateOperation
-from ..operations.single_particle_transition_matrices.single_particle_transition_matrix import \
-    SingleParticleTransitionMatrixOperation
-from ..utils.math import (circuit_matmul, convert_and_cast_like, dagger,
-                          fermionic_operator_matmul)
+from ..operations.single_particle_transition_matrices.single_particle_transition_matrix import (
+    SingleParticleTransitionMatrixOperation,
+)
+from ..utils.math import (
+    circuit_matmul,
+    convert_and_cast_like,
+    dagger,
+    fermionic_operator_matmul,
+)
 
 
 def circuit_or_fop_matmul(

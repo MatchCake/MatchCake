@@ -3,8 +3,13 @@ import pytest
 
 from matchcake import MatchgatePolarParams, mps
 
-from ..configs import (ATOL_SCALAR_COMPARISON, N_RANDOM_TESTS_PER_CASE,
-                       RTOL_SCALAR_COMPARISON, TEST_SEED, set_seed)
+from ..configs import (
+    ATOL_SCALAR_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_SCALAR_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 
 set_seed(TEST_SEED)
 

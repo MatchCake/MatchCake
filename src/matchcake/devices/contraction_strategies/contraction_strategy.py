@@ -5,8 +5,9 @@ import tqdm
 from pennylane.operation import Operation
 
 from ...operations.matchgate_operation import MatchgateOperation
-from ...operations.single_particle_transition_matrices import \
-    SingleParticleTransitionMatrixOperation
+from ...operations.single_particle_transition_matrices import (
+    SingleParticleTransitionMatrixOperation,
+)
 from .contraction_container import _ContractionMatchgatesContainer
 
 

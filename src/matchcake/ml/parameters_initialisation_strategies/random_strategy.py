@@ -5,8 +5,7 @@ import torch
 from pennylane.typing import TensorLike
 
 from ...utils import torch_utils
-from .parameters_initialisation_strategy import \
-    ParametersInitialisationStrategy
+from .parameters_initialisation_strategy import ParametersInitialisationStrategy
 
 
 class RandomStrategy(ParametersInitialisationStrategy):

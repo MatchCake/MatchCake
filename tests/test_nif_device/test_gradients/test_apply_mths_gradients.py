@@ -8,13 +8,19 @@ from scipy.linalg import expm
 from matchcake import NonInteractingFermionicDevice, utils
 from matchcake.base import NonInteractingFermionicLookupTable
 from matchcake.devices.probability_strategies import LookupTableStrategy
-from matchcake.operations.single_particle_transition_matrices import \
-    SingleParticleTransitionMatrixOperation
+from matchcake.operations.single_particle_transition_matrices import (
+    SingleParticleTransitionMatrixOperation,
+)
 from matchcake.utils import torch_utils
 
 from ... import get_slow_test_mark
-from ...configs import (ATOL_APPROX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
-                        RTOL_APPROX_COMPARISON, TEST_SEED, set_seed)
+from ...configs import (
+    ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 
 set_seed(TEST_SEED)
 

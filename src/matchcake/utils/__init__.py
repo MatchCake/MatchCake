@@ -13,8 +13,12 @@ from ..templates import TensorLike
 from . import constants, cuda, majorana, math, operators, torch_utils
 from ._pfaffian import batch_pfaffian_ltl, pfaffian
 from .constants import PAULI_I, PAULI_X, PAULI_Y, PAULI_Z
-from .majorana import (MajoranaGetter, get_majorana, get_majorana_pauli_list,
-                       get_majorana_pauli_string)
+from .majorana import (
+    MajoranaGetter,
+    get_majorana,
+    get_majorana_pauli_list,
+    get_majorana_pauli_string,
+)
 from .operators import recursive_2in_operator, recursive_kron
 
 
@@ -414,8 +418,7 @@ def get_4x4_non_interacting_fermionic_hamiltonian_from_params(params):
     :return: Non-interacting fermionic Hamiltonian
     :rtype: np.ndarray
     """
-    from ..matchgate_parameter_sets import \
-        MatchgateHamiltonianCoefficientsParams
+    from ..matchgate_parameter_sets import MatchgateHamiltonianCoefficientsParams
 
     params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params)
     return np.array(

@@ -8,8 +8,13 @@ from matchcake import matchgate_parameter_sets as mps
 from matchcake.devices.probability_strategies import get_probability_strategy
 
 from .. import get_slow_test_mark
-from ..configs import (ATOL_APPROX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
-                       RTOL_APPROX_COMPARISON, TEST_SEED, set_seed)
+from ..configs import (
+    ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 
 set_seed(TEST_SEED)
 

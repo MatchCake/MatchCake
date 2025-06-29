@@ -13,8 +13,14 @@ except ImportError:
         "double_odd": lambda wires: [wires.subset([i, i + 1]) for i in range(1, len(wires) - 1, 2)],
     }
 
-from ...operations import (MAngleEmbedding, SptmAngleEmbedding, SptmFHH,
-                           SptmFSwap, fH, fSWAP)
+from ...operations import (
+    MAngleEmbedding,
+    SptmAngleEmbedding,
+    SptmFHH,
+    SptmFSwap,
+    fH,
+    fSWAP,
+)
 from .nif_kernel import NIFKernel
 
 

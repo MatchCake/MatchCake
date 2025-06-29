@@ -7,8 +7,13 @@ from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
 
 from .. import get_slow_test_mark
-from ..configs import (ATOL_APPROX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
-                       RTOL_APPROX_COMPARISON, TEST_SEED, set_seed)
+from ..configs import (
+    ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 from . import devices_init
 from .test_specific_circuit import specific_matchgate_circuit
 

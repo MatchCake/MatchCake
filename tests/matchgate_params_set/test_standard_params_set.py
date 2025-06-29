@@ -7,9 +7,15 @@ from torch.autograd import gradcheck
 
 from matchcake import MatchgateStandardParams
 
-from ..configs import (ATOL_APPROX_COMPARISON, ATOL_MATRIX_COMPARISON,
-                       N_RANDOM_TESTS_PER_CASE, RTOL_APPROX_COMPARISON,
-                       RTOL_MATRIX_COMPARISON, TEST_SEED, set_seed)
+from ..configs import (
+    ATOL_APPROX_COMPARISON,
+    ATOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 
 set_seed(TEST_SEED)
 

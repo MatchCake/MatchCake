@@ -3,9 +3,12 @@ import pytest
 
 from matchcake.matchgate_parameter_sets import transfer_functions
 from matchcake.matchgate_parameter_sets.transfer_functions import (
-    MatchgateComposedHamiltonianParams, MatchgateHamiltonianCoefficientsParams,
-    MatchgatePolarParams, MatchgateStandardHamiltonianParams,
-    MatchgateStandardParams)
+    MatchgateComposedHamiltonianParams,
+    MatchgateHamiltonianCoefficientsParams,
+    MatchgatePolarParams,
+    MatchgateStandardHamiltonianParams,
+    MatchgateStandardParams,
+)
 
 from ..configs import TEST_SEED, set_seed
 

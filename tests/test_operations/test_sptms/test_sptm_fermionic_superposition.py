@@ -6,15 +6,27 @@ import pytest
 
 import matchcake as mc
 from matchcake import utils
-from matchcake.operations import (FermionicSuperposition, SptmFHH, SptmFSwap,
-                                  SptmFSwapRzRz, SptmRzRz, fH, fSWAP)
-from matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition import \
-    SptmFermionicSuperposition
+from matchcake.operations import (
+    FermionicSuperposition,
+    SptmFHH,
+    SptmFSwap,
+    SptmFSwapRzRz,
+    SptmRzRz,
+    fH,
+    fSWAP,
+)
+from matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition import (
+    SptmFermionicSuperposition,
+)
 from matchcake.utils import state_to_binary_string
 from matchcake.utils.torch_utils import to_numpy
 
-from ...configs import (ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON,
-                        TEST_SEED, set_seed)
+from ...configs import (
+    ATOL_APPROX_COMPARISON,
+    RTOL_APPROX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 from ...test_nif_device import devices_init
 
 set_seed(TEST_SEED)

@@ -3,9 +3,15 @@ import pytest
 
 from matchcake import utils
 
-from ..configs import (ATOL_APPROX_COMPARISON, ATOL_SCALAR_COMPARISON,
-                       N_RANDOM_TESTS_PER_CASE, RTOL_APPROX_COMPARISON,
-                       RTOL_SCALAR_COMPARISON, TEST_SEED, set_seed)
+from ..configs import (
+    ATOL_APPROX_COMPARISON,
+    ATOL_SCALAR_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
+    RTOL_SCALAR_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 
 set_seed(TEST_SEED)
 HIGH_VALUE = 2 * np.pi

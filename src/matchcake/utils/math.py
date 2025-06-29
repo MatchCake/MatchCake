@@ -4,8 +4,11 @@ import numpy as np
 import pennylane as qml
 import scipy
 
-from ..constants import (_CIRCUIT_MATMUL_DIRECTION, _FOP_MATMUL_DIRECTION,
-                         MatmulDirectionType)
+from ..constants import (
+    _CIRCUIT_MATMUL_DIRECTION,
+    _FOP_MATMUL_DIRECTION,
+    MatmulDirectionType,
+)
 from ..templates.tensor_like import TensorLike
 
 try:

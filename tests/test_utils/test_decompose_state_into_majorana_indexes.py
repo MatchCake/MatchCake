@@ -3,9 +3,15 @@ import pytest
 
 from matchcake import utils
 
-from ..configs import (ATOL_MATRIX_COMPARISON, ATOL_SHAPE_COMPARISON,
-                       N_RANDOM_TESTS_PER_CASE, RTOL_MATRIX_COMPARISON,
-                       RTOL_SHAPE_COMPARISON, TEST_SEED, set_seed)
+from ..configs import (
+    ATOL_MATRIX_COMPARISON,
+    ATOL_SHAPE_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_MATRIX_COMPARISON,
+    RTOL_SHAPE_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 
 set_seed(TEST_SEED)
 

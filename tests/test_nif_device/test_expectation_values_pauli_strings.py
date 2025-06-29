@@ -5,8 +5,13 @@ import pytest
 from matchcake.devices.contraction_strategies import contraction_strategy_map
 
 from .. import get_slow_test_mark
-from ..configs import (ATOL_APPROX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
-                       RTOL_APPROX_COMPARISON, TEST_SEED, set_seed)
+from ..configs import (
+    ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 from . import devices_init
 
 set_seed(TEST_SEED)

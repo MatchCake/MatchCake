@@ -12,8 +12,13 @@ from matchcake import matchgate_parameter_sets as mps
 from matchcake import operations, utils
 from matchcake.utils.torch_utils import to_numpy
 
-from ..configs import (ATOL_APPROX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
-                       RTOL_APPROX_COMPARISON, TEST_SEED, set_seed)
+from ..configs import (
+    ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 from . import devices_init
 
 set_seed(TEST_SEED)

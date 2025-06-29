@@ -1,10 +1,10 @@
 from pennylane.wires import Wires
 
-from ...operations import (MatchgateOperation,
-                           SingleParticleTransitionMatrixOperation)
+from ...operations import MatchgateOperation, SingleParticleTransitionMatrixOperation
 from .contraction_container import (
     _ContractionMatchgatesContainer,
-    _ContractionMatchgatesContainerAddException)
+    _ContractionMatchgatesContainerAddException,
+)
 from .contraction_strategy import ContractionStrategy
 
 

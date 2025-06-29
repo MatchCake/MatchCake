@@ -1,11 +1,19 @@
 import numpy as np
 import pytest
 
-from matchcake import (MatchgateHamiltonianCoefficientsParams,
-                       MatchgateStandardHamiltonianParams, utils)
+from matchcake import (
+    MatchgateHamiltonianCoefficientsParams,
+    MatchgateStandardHamiltonianParams,
+    utils,
+)
 
-from ..configs import (ATOL_MATRIX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
-                       RTOL_MATRIX_COMPARISON, TEST_SEED, set_seed)
+from ..configs import (
+    ATOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 
 set_seed(TEST_SEED)
 

@@ -7,8 +7,7 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 
 from ...utils.torch_utils import to_numpy
-from ..sampling_strategies.k_qubits_by_k_qubits_sampling import \
-    KQubitsByKQubitsSampling
+from ..sampling_strategies.k_qubits_by_k_qubits_sampling import KQubitsByKQubitsSampling
 from .star_state_finding_strategy import StarStateFindingStrategy
 
 

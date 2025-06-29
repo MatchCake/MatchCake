@@ -8,11 +8,15 @@ from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
 from matchcake.operations import SptmfRxRx, SptmIdentity
 
-from ...configs import (ATOL_APPROX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
-                        RTOL_APPROX_COMPARISON, TEST_SEED, set_seed)
+from ...configs import (
+    ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 from .. import devices_init, init_nif_device
-from ..test_single_line_matchgates_circuit import \
-    single_line_matchgates_circuit
+from ..test_single_line_matchgates_circuit import single_line_matchgates_circuit
 
 set_seed(TEST_SEED)
 

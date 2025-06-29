@@ -6,9 +6,14 @@ from matchcake import utils
 from matchcake.operations import fSWAP
 from matchcake.operations.single_particle_transition_matrices import SptmFSwap
 
-from ...configs import (ATOL_APPROX_COMPARISON, ATOL_MATRIX_COMPARISON,
-                        RTOL_APPROX_COMPARISON, RTOL_MATRIX_COMPARISON,
-                        TEST_SEED, set_seed)
+from ...configs import (
+    ATOL_APPROX_COMPARISON,
+    ATOL_MATRIX_COMPARISON,
+    RTOL_APPROX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 
 set_seed(TEST_SEED)
 

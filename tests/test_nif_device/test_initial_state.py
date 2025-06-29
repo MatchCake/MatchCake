@@ -5,15 +5,19 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from matchcake import (Matchgate, MatchgateOperation,
-                       NonInteractingFermionicDevice)
+from matchcake import Matchgate, MatchgateOperation, NonInteractingFermionicDevice
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
 from matchcake.utils import PAULI_X, PAULI_Z
 
 from .. import get_slow_test_mark
-from ..configs import (ATOL_MATRIX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
-                       RTOL_MATRIX_COMPARISON, TEST_SEED, set_seed)
+from ..configs import (
+    ATOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 from . import devices_init
 
 set_seed(TEST_SEED)

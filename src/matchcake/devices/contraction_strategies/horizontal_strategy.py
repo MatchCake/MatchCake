@@ -6,7 +6,8 @@ from ...utils.math import circuit_matmul
 from ..device_utils import circuit_or_fop_matmul
 from .contraction_container import (
     _ContractionMatchgatesContainer,
-    _ContractionMatchgatesContainerAddException)
+    _ContractionMatchgatesContainerAddException,
+)
 from .contraction_strategy import ContractionStrategy
 
 

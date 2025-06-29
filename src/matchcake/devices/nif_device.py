@@ -3,8 +3,7 @@ import warnings
 from collections import defaultdict
 from copy import deepcopy
 from functools import partial
-from typing import (Any, Callable, Iterable, List, Literal, Optional, Tuple,
-                    Union)
+from typing import Any, Callable, Iterable, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import psutil
@@ -19,10 +18,17 @@ except ImportError:
 import pennylane as qml
 import pythonbasictools as pbt
 from pennylane import numpy as pnp
-from pennylane.measurements import (Expectation, MeasurementProcess,
-                                    MeasurementValue, MidMeasureMP,
-                                    Probability, Sample, ShadowExpvalMP, State,
-                                    Variance)
+from pennylane.measurements import (
+    Expectation,
+    MeasurementProcess,
+    MeasurementValue,
+    MidMeasureMP,
+    Probability,
+    Sample,
+    ShadowExpvalMP,
+    State,
+    Variance,
+)
 from pennylane.operation import Operation
 from pennylane.ops import LinearCombination, Prod, SProd, Sum
 from pennylane.ops.qubit.observables import BasisStateProjector
@@ -38,18 +44,28 @@ from ..observables.batch_hamiltonian import BatchHamiltonian
 from ..observables.batch_projector import BatchProjector
 from ..operations.matchgate_operation import MatchgateOperation
 from ..operations.single_particle_transition_matrices.single_particle_transition_matrix import (
-    SingleParticleTransitionMatrixOperation, _SingleParticleTransitionMatrix)
-from ..utils import (binary_state_to_state, binary_string_to_vector,
-                     get_eigvals_on_z_basis, torch_utils)
-from ..utils.math import (circuit_matmul, convert_and_cast_like, dagger,
-                          fermionic_operator_matmul)
-from .contraction_strategies import (ContractionStrategy,
-                                     get_contraction_strategy)
-from .probability_strategies import (ProbabilityStrategy,
-                                     get_probability_strategy)
+    SingleParticleTransitionMatrixOperation,
+    _SingleParticleTransitionMatrix,
+)
+from ..utils import (
+    binary_state_to_state,
+    binary_string_to_vector,
+    get_eigvals_on_z_basis,
+    torch_utils,
+)
+from ..utils.math import (
+    circuit_matmul,
+    convert_and_cast_like,
+    dagger,
+    fermionic_operator_matmul,
+)
+from .contraction_strategies import ContractionStrategy, get_contraction_strategy
+from .probability_strategies import ProbabilityStrategy, get_probability_strategy
 from .sampling_strategies import SamplingStrategy, get_sampling_strategy
-from .star_state_finding_strategies import (StarStateFindingStrategy,
-                                            get_star_state_finding_strategy)
+from .star_state_finding_strategies import (
+    StarStateFindingStrategy,
+    get_star_state_finding_strategy,
+)
 
 
 class NonInteractingFermionicDevice(qml.devices.QubitDevice):

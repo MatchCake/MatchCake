@@ -10,8 +10,14 @@ from ... import utils
 from ...constants import _CIRCUIT_MATMUL_DIRECTION
 from ...templates import TensorLike
 from ...utils import make_wires_continuous
-from ...utils.math import (circuit_matmul, convert_and_cast_like, dagger, det,
-                           fermionic_operator_matmul, orthonormalize)
+from ...utils.math import (
+    circuit_matmul,
+    convert_and_cast_like,
+    dagger,
+    det,
+    fermionic_operator_matmul,
+    orthonormalize,
+)
 from ...utils.torch_utils import detach
 
 

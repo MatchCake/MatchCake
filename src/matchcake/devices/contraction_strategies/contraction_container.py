@@ -5,7 +5,9 @@ from pennylane.wires import Wires
 
 from ...operations.matchgate_operation import MatchgateOperation
 from ...operations.single_particle_transition_matrices.single_particle_transition_matrix import (
-    SingleParticleTransitionMatrixOperation, _SingleParticleTransitionMatrix)
+    SingleParticleTransitionMatrixOperation,
+    _SingleParticleTransitionMatrix,
+)
 
 
 class _ContractionMatchgatesContainerAddException(Exception):

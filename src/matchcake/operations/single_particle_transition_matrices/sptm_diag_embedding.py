@@ -8,8 +8,7 @@ import torch
 from pennylane.operation import AnyWires, Operation
 from pennylane.wires import Wires
 
-from .single_particle_transition_matrix import \
-    SingleParticleTransitionMatrixOperation
+from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
 class SptmDiagEmbedding(SingleParticleTransitionMatrixOperation):

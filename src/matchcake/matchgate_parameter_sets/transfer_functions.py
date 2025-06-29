@@ -7,10 +7,14 @@ from pennylane import numpy as pnp
 
 from .. import utils
 from ..utils import math
-from . import (MatchgateComposedHamiltonianParams,
-               MatchgateHamiltonianCoefficientsParams, MatchgateParams,
-               MatchgatePolarParams, MatchgateStandardHamiltonianParams,
-               MatchgateStandardParams)
+from . import (
+    MatchgateComposedHamiltonianParams,
+    MatchgateHamiltonianCoefficientsParams,
+    MatchgateParams,
+    MatchgatePolarParams,
+    MatchgateStandardHamiltonianParams,
+    MatchgateStandardParams,
+)
 
 
 def polar_to_standard(params: MatchgatePolarParams, **kwargs) -> MatchgateStandardParams:

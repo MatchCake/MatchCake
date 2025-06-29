@@ -8,18 +8,32 @@ from pennylane.wires import Wires
 
 from matchcake import utils
 from matchcake.base.lookup_table import NonInteractingFermionicLookupTable
-from matchcake.circuits import (RandomSptmHaarOperationsGenerator,
-                                RandomSptmOperationsGenerator)
+from matchcake.circuits import (
+    RandomSptmHaarOperationsGenerator,
+    RandomSptmOperationsGenerator,
+)
 from matchcake.devices import NIFDevice
 from matchcake.devices.contraction_strategies import contraction_strategy_map
-from matchcake.operations import (SptmFermionicSuperposition, SptmFHH,
-                                  SptmfRxRx, SptmFSwap, SptmFSwapRzRz,
-                                  SptmIdentity, SptmRyRy, SptmRzRz)
+from matchcake.operations import (
+    SptmFermionicSuperposition,
+    SptmFHH,
+    SptmfRxRx,
+    SptmFSwap,
+    SptmFSwapRzRz,
+    SptmIdentity,
+    SptmRyRy,
+    SptmRzRz,
+)
 from matchcake.utils.math import dagger, det
 
 from .. import get_slow_test_mark
-from ..configs import (ATOL_MATRIX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
-                       RTOL_MATRIX_COMPARISON, TEST_SEED, set_seed)
+from ..configs import (
+    ATOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 from ..test_nif_device import devices_init
 
 set_seed(TEST_SEED)

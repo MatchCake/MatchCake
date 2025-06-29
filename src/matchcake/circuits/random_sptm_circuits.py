@@ -3,10 +3,17 @@ from typing import Any, List, Optional, Sequence, Type, Union
 import numpy as np
 import pennylane as qml
 
-from ..operations import (SingleParticleTransitionMatrixOperation,
-                          SptmFermionicSuperposition, SptmFHH, SptmfRxRx,
-                          SptmFSwap, SptmFSwapRzRz, SptmIdentity, SptmRyRy,
-                          SptmRzRz)
+from ..operations import (
+    SingleParticleTransitionMatrixOperation,
+    SptmFermionicSuperposition,
+    SptmFHH,
+    SptmfRxRx,
+    SptmFSwap,
+    SptmFSwapRzRz,
+    SptmIdentity,
+    SptmRyRy,
+    SptmRzRz,
+)
 from .random_generator import RandomOperationsGenerator
 
 

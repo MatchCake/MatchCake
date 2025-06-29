@@ -6,8 +6,13 @@ from matchcake import matchgate_parameter_sets as mps
 from matchcake.devices.contraction_strategies import get_contraction_strategy
 from matchcake.operations import SptmfRxRx
 
-from ...configs import (ATOL_APPROX_COMPARISON, N_RANDOM_TESTS_PER_CASE,
-                        RTOL_APPROX_COMPARISON, TEST_SEED, set_seed)
+from ...configs import (
+    ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 
 set_seed(TEST_SEED)
 
