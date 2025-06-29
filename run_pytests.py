@@ -70,6 +70,7 @@ def main():
         f"--cov-report={args.cov_report}",
         f"--cov-report=term-missing",
         f"--durations={args.durations}",
+        f"-n=auto",
     ]
     pytest.main(pytest_main_args, plugins=[json_plugin])
     json_path = os.path.join(args.tests_folder, ".tmp", f"tests_report_rn{configs.N_RANDOM_TESTS_PER_CASE}.json")

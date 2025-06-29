@@ -37,17 +37,16 @@ jobs:
     - name: Test Linting
       run: |
         . ./venv/bin/activate
-        black src --check --diff
-        black tests --check --diff
+        black src tests --check --diff
+        isort src tests --check-only --diff
     - name: Test Typing
       run: |
         . ./venv/bin/activate
-#        mypy src
-#        mypy tests
+        mypy src tests
     - name: Test Notebooks
       run: |
         . ./venv/bin/activate
-        pytest --nbmake tutorials --nbmake-timeout=600  # 10 minutes timeout
+        pytest --nbmake notebooks -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
 
     - name: Test Unittests with pytest
       run: |
@@ -59,7 +58,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         coverageFile: tests/.tmp/coverage.xml
-        thresholdAll: 0.0
+        thresholdAll: 0.98
         thresholdNew: 0.98
         thresholdModified: 0.98
 

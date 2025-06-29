@@ -12,6 +12,7 @@ permissions:
   statuses: write
   issues: write
   discussions: write
+  id-token: write
 
 jobs:
   Build-Dist:
