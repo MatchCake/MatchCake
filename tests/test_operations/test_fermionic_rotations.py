@@ -1,16 +1,16 @@
 import numpy as np
+import pennylane as qml
 import pytest
 
 from matchcake import utils
-from matchcake.operations import fRXX, fRYY, fRZZ, FermionicRotation
-import pennylane as qml
+from matchcake.operations import FermionicRotation, fRXX, fRYY, fRZZ
 
 from ..configs import (
     ATOL_APPROX_COMPARISON,
-    RTOL_APPROX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
-    set_seed,
+    RTOL_APPROX_COMPARISON,
     TEST_SEED,
+    set_seed,
 )
 from ..test_nif_device import devices_init
 from . import specific_ops_circuit
@@ -24,15 +24,11 @@ set_seed(TEST_SEED)
         (i_b_string, [(rot, rn_params, [0, 1])], adjoint)
         for rot in [fRXX, fRYY, fRZZ]
         for i_b_string in ["00", "01", "10", "11"]
-        for rn_params in np.random.uniform(
-            0.0, np.pi / 2, size=(N_RANDOM_TESTS_PER_CASE, 2)
-        )
+        for rn_params in np.random.uniform(0.0, np.pi / 2, size=(N_RANDOM_TESTS_PER_CASE, 2))
         for adjoint in [True, False]
     ],
 )
-def test_frot_in_circuit_with_pennylane(
-    initial_binary_string, cls_params_wires_list, is_adjoint
-):
+def test_frot_in_circuit_with_pennylane(initial_binary_string, cls_params_wires_list, is_adjoint):
     initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
     nif_device, qubit_device = devices_init(wires=len(initial_binary_state))
 
@@ -67,9 +63,7 @@ def test_frot_in_circuit_with_pennylane(
         (i_b_string, [(rot, rn_params, [0, 1]), (qml.adjoint(rot), rn_params, [0, 1])])
         for rot in [fRXX, fRYY, fRZZ]
         for i_b_string in ["00", "01", "10", "11"]
-        for rn_params in np.random.uniform(
-            0.0, np.pi / 2, size=(N_RANDOM_TESTS_PER_CASE, 2)
-        )
+        for rn_params in np.random.uniform(0.0, np.pi / 2, size=(N_RANDOM_TESTS_PER_CASE, 2))
     ],
 )
 def test_frot_adj_circuit_with_pennylane(initial_binary_string, cls_params_wires_list):

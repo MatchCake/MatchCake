@@ -1,30 +1,31 @@
 import numpy as np
 import pennylane as qml
-import pytest
 import psutil
-
+import pytest
 from pennylane import PauliZ as Z
 
-from matchcake import MatchgateOperation, utils, BatchHamiltonian
+from matchcake import BatchHamiltonian, MatchgateOperation
+from matchcake import matchgate_parameter_sets as mps
+from matchcake import utils
+from matchcake.circuits import (
+    RandomMatchgateHaarOperationsGenerator,
+    RandomMatchgateOperationsGenerator,
+    random_sptm_operations_generator,
+)
 from matchcake.devices.contraction_strategies import contraction_strategy_map
 from matchcake.operations import SptmfRxRx
 from matchcake.utils import torch_utils
-from matchcake import matchgate_parameter_sets as mps
-from matchcake.circuits import (
-    random_sptm_operations_generator,
-    RandomMatchgateHaarOperationsGenerator,
-    RandomMatchgateOperationsGenerator,
+
+from .. import get_slow_test_mark
+from ..configs import (
+    ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
+    TEST_SEED,
+    set_seed,
 )
 from . import devices_init
 from .test_specific_circuit import specific_matchgate_circuit
-from .. import get_slow_test_mark
-from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
-    ATOL_APPROX_COMPARISON,
-    RTOL_APPROX_COMPARISON,
-    set_seed,
-)
 
 set_seed(TEST_SEED)
 
@@ -46,9 +47,7 @@ set_seed(TEST_SEED)
         ([1, 1, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
     ],
 )
-def test_nif_sum_hamiltonian_expval_zz_on_basis_state_against_qubit_device(
-    basis_state, hamiltonian
-):
+def test_nif_sum_hamiltonian_expval_zz_on_basis_state_against_qubit_device(basis_state, hamiltonian):
     def circuit_gen():
         yield qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
         return
@@ -64,10 +63,7 @@ def test_nif_sum_hamiltonian_expval_zz_on_basis_state_against_qubit_device(
         name="lightning.qubit",
     )
     energy = sum(
-        nif_device.execute_generator(
-            circuit_gen(), observable=obs, output_type="expval"
-        )
-        for obs in hamiltonian
+        nif_device.execute_generator(circuit_gen(), observable=obs, output_type="expval") for obs in hamiltonian
     )
 
     q_node = qml.QNode(circuit, qubit_device)
@@ -98,12 +94,8 @@ def test_nif_sum_hamiltonian_expval_zz_on_basis_state_against_qubit_device(
         ([1, 1, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
     ],
 )
-def test_nif_pennylane_hamiltonian_expval_zz_on_basis_state_against_qubit_device(
-    basis_state, hamiltonian
-):
-    pennylane_hamiltonian = qml.Hamiltonian(
-        coeffs=[1.0] * len(hamiltonian), observables=hamiltonian
-    )
+def test_nif_pennylane_hamiltonian_expval_zz_on_basis_state_against_qubit_device(basis_state, hamiltonian):
+    pennylane_hamiltonian = qml.Hamiltonian(coeffs=[1.0] * len(hamiltonian), observables=hamiltonian)
 
     def circuit_gen():
         yield qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
@@ -119,9 +111,7 @@ def test_nif_pennylane_hamiltonian_expval_zz_on_basis_state_against_qubit_device
         contraction_strategy=None,
         name="lightning.qubit",
     )
-    energy = nif_device.execute_generator(
-        circuit_gen(), observable=pennylane_hamiltonian, output_type="expval"
-    )
+    energy = nif_device.execute_generator(circuit_gen(), observable=pennylane_hamiltonian, output_type="expval")
 
     q_node = qml.QNode(circuit, qubit_device)
     expected_energy = q_node()
@@ -168,9 +158,7 @@ def test_nif_pennylane_hamiltonian_expval_zz_on_basis_state_against_qubit_device
         ([0, 1, 1, 0, 1, 0, 0], [Z(0) @ Z(1), Z(1) @ Z(2), Z(2) @ Z(3)]),
     ],
 )
-def test_nif_batched_hamiltonian_expval_zz_on_basis_state_against_qubit_device(
-    basis_state, hamiltonian
-):
+def test_nif_batched_hamiltonian_expval_zz_on_basis_state_against_qubit_device(basis_state, hamiltonian):
     batched_hamiltonian = BatchHamiltonian(np.ones(len(hamiltonian)), hamiltonian)
 
     def circuit_gen():
@@ -188,9 +176,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_basis_state_against_qubit_device(
         name="lightning.qubit",
     )
     nif_device.reset()
-    energy = nif_device.execute_generator(
-        circuit_gen(), observable=batched_hamiltonian, output_type="expval"
-    )
+    energy = nif_device.execute_generator(circuit_gen(), observable=batched_hamiltonian, output_type="expval")
 
     q_node = qml.QNode(circuit, qubit_device)
     expected_energy = q_node()
@@ -223,9 +209,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_basis_state_against_qubit_devic
     basis_state, hamiltonian, contraction_strategy
 ):
     set_of_wires = set([obs.wires for obs in hamiltonian])
-    dict_of_obs = {
-        w: [obs for obs in hamiltonian if obs.wires == w] for w in set_of_wires
-    }
+    dict_of_obs = {w: [obs for obs in hamiltonian if obs.wires == w] for w in set_of_wires}
     hamiltonian = [obs_list[0] for obs_list in dict_of_obs.values()]
 
     batched_hamiltonian = BatchHamiltonian(np.ones(len(hamiltonian)), hamiltonian)
@@ -244,9 +228,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_basis_state_against_qubit_devic
         contraction_strategy=contraction_strategy,
         name="lightning.qubit",
     )
-    energy = nif_device.execute_generator(
-        circuit_gen(), observable=batched_hamiltonian, output_type="expval"
-    )
+    energy = nif_device.execute_generator(circuit_gen(), observable=batched_hamiltonian, output_type="expval")
 
     q_node = qml.QNode(circuit, qubit_device)
     expected_energy = q_node()
@@ -286,9 +268,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device(
     basis_state, hamiltonian, contraction_strategy, op_gen
 ):
     set_of_wires = set([obs.wires for obs in hamiltonian])
-    dict_of_obs = {
-        w: [obs for obs in hamiltonian if obs.wires == w] for w in set_of_wires
-    }
+    dict_of_obs = {w: [obs for obs in hamiltonian if obs.wires == w] for w in set_of_wires}
     hamiltonian = [obs_list[0] for obs_list in dict_of_obs.values()]
 
     op_gen.initial_state = basis_state
@@ -300,9 +280,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device(
         contraction_strategy=contraction_strategy,
         name="lightning.qubit",
     )
-    energy = nif_device.execute_generator(
-        op_gen, observable=batched_hamiltonian, output_type="expval"
-    )
+    energy = nif_device.execute_generator(op_gen, observable=batched_hamiltonian, output_type="expval")
 
     op_gen.observable = sum(hamiltonian)
     op_gen.output_type = "expval"
@@ -344,9 +322,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device_ha
     basis_state, hamiltonian, contraction_strategy, op_gen
 ):
     set_of_wires = set([obs.wires for obs in hamiltonian])
-    dict_of_obs = {
-        w: [obs for obs in hamiltonian if obs.wires == w] for w in set_of_wires
-    }
+    dict_of_obs = {w: [obs for obs in hamiltonian if obs.wires == w] for w in set_of_wires}
     hamiltonian = [obs_list[0] for obs_list in dict_of_obs.values()]
 
     op_gen.initial_state = basis_state
@@ -358,9 +334,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device_ha
         contraction_strategy=contraction_strategy,
         name="lightning.qubit",
     )
-    energy = nif_device.execute_generator(
-        op_gen, observable=batched_hamiltonian, output_type="expval"
-    )
+    energy = nif_device.execute_generator(op_gen, observable=batched_hamiltonian, output_type="expval")
 
     op_gen.observable = qml.Hamiltonian(np.ones(len(hamiltonian)), hamiltonian)
     op_gen.output_type = "expval"

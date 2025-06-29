@@ -2,8 +2,8 @@ import numpy as np
 from pennylane import numpy as pnp
 from pennylane.wires import Wires
 
-from .matchgate_operation import MatchgateOperation
 from .. import matchgate_parameter_sets as mps
+from .matchgate_operation import MatchgateOperation
 
 
 class FermionicHadamard(MatchgateOperation):
@@ -26,9 +26,7 @@ class FermionicHadamard(MatchgateOperation):
             y=inv_sqrt_2,
             z=-inv_sqrt_2,
         )
-        in_params = mps.MatchgatePolarParams.parse_from_params(
-            m_params, force_cast_to_real=True
-        )
+        in_params = mps.MatchgatePolarParams.parse_from_params(m_params, force_cast_to_real=True)
         kwargs["in_param_type"] = mps.MatchgatePolarParams
         super().__init__(in_params, wires=wires, id=id, **kwargs)
 

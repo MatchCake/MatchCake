@@ -4,16 +4,17 @@ import numpy as np
 import pytest
 
 from matchcake import utils
+
 from .. import get_slow_test_mark
 from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
-    ATOL_SCALAR_COMPARISON,
-    RTOL_SCALAR_COMPARISON,
-    ATOL_MATRIX_COMPARISON,
-    RTOL_MATRIX_COMPARISON,
     ATOL_APPROX_COMPARISON,
+    ATOL_MATRIX_COMPARISON,
+    ATOL_SCALAR_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+    RTOL_SCALAR_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
 
@@ -47,9 +48,7 @@ def test_get_skew_symmetric_matrix_and_det(matrix, det):
     except ImportError:
         pytest.skip("pfapack is not installed.")
     pf = pfaffian(matrix)
-    np.testing.assert_allclose(
-        pf**2, det, atol=ATOL_SCALAR_COMPARISON, rtol=RTOL_SCALAR_COMPARISON
-    )
+    np.testing.assert_allclose(pf**2, det, atol=ATOL_SCALAR_COMPARISON, rtol=RTOL_SCALAR_COMPARISON)
 
 
 @pytest.mark.parametrize(
@@ -64,9 +63,7 @@ def test_get_skew_symmetric_matrix_and_det(matrix, det):
 )
 def test_pfaffian_methods(matrix, det, mth):
     pf = utils.pfaffian(matrix, method=mth)
-    np.testing.assert_allclose(
-        pf**2, det, atol=10 * ATOL_SCALAR_COMPARISON, rtol=10 * RTOL_SCALAR_COMPARISON
-    )
+    np.testing.assert_allclose(pf**2, det, atol=10 * ATOL_SCALAR_COMPARISON, rtol=10 * RTOL_SCALAR_COMPARISON)
 
 
 @pytest.mark.parametrize(
@@ -79,9 +76,7 @@ def test_pfaffian_methods(matrix, det, mth):
 )
 def test_batch_pfaffian_ltl(matrix, det):
     pf = utils._pfaffian.batch_pfaffian_ltl(matrix)
-    np.testing.assert_allclose(
-        pf**2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
-    )
+    np.testing.assert_allclose(pf**2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
 
 
 @pytest.mark.parametrize(
@@ -94,9 +89,7 @@ def test_batch_pfaffian_ltl(matrix, det):
 )
 def test_pfaffian_bltl(matrix, det):
     pf = utils.pfaffian(matrix, method="bLTL")
-    np.testing.assert_allclose(
-        pf**2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
-    )
+    np.testing.assert_allclose(pf**2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
 
 
 @pytest.mark.parametrize(
@@ -110,9 +103,7 @@ def test_pfaffian_bltl(matrix, det):
 )
 def test_pfaffian_bltl_single_item(matrix, det):
     pf = utils.pfaffian(matrix, method="bLTL")
-    np.testing.assert_allclose(
-        pf**2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
-    )
+    np.testing.assert_allclose(pf**2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
 
 
 @get_slow_test_mark()
@@ -121,9 +112,7 @@ def test_pfaffian_bltl_single_item(matrix, det):
     "n, batch_size, mth",
     [
         (i, batch_size, mth)
-        for i in np.linspace(
-            MIN_MATRIX_SIZE, MAX_MATRIX_SIZE, num=N_RANDOM_TESTS_PER_CASE, dtype=int
-        )
+        for i in np.linspace(MIN_MATRIX_SIZE, MAX_MATRIX_SIZE, num=N_RANDOM_TESTS_PER_CASE, dtype=int)
         for mth in RECOMMENDED_METHODS
         for batch_size in [None, BATCH_SIZE]
     ],
@@ -160,9 +149,7 @@ def test_pfaffian_methods_grads(n, batch_size, mth):
 )
 def test_pfaffian_bh(matrix, det):
     pf = utils.pfaffian(matrix, method="bH")
-    np.testing.assert_allclose(
-        pf**2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
-    )
+    np.testing.assert_allclose(pf**2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
 
 
 @pytest.mark.parametrize(
@@ -176,6 +163,4 @@ def test_pfaffian_bh(matrix, det):
 )
 def test_pfaffian_bltl_single_item(matrix, det):
     pf = utils.pfaffian(matrix, method="bH")
-    np.testing.assert_allclose(
-        pf**2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
-    )
+    np.testing.assert_allclose(pf**2, det, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)

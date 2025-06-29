@@ -2,8 +2,8 @@ from typing import Tuple
 
 import pennylane as qml
 
-from matchcake import MatchgateOperation, NonInteractingFermionicDevice
-from matchcake import utils
+from matchcake import MatchgateOperation, NonInteractingFermionicDevice, utils
+
 from .test_single_matchgate_circuit import single_matchgate_circuit
 
 _majorana_getters = {}
@@ -41,9 +41,7 @@ def init_qubit_device(*args, **kwargs) -> qml.devices.Device:
     return qubit_device
 
 
-def devices_init(
-    *args, **kwargs
-) -> Tuple[NonInteractingFermionicDevice, qml.devices.Device]:
+def devices_init(*args, **kwargs) -> Tuple[NonInteractingFermionicDevice, qml.devices.Device]:
     qubit_device = init_qubit_device(*args, **kwargs)
     nif_device = init_nif_device(*args, **kwargs)
     return nif_device, qubit_device

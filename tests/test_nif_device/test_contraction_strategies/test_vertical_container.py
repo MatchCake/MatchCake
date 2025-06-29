@@ -1,20 +1,21 @@
-import pytest
-from matchcake.devices.contraction_strategies import get_contraction_strategy
-import matchcake as mc
-from matchcake import matchgate_parameter_sets as mps
 import numpy as np
 import pennylane as qml
+import pytest
 
+import matchcake as mc
+from matchcake import matchgate_parameter_sets as mps
+from matchcake.devices.contraction_strategies import get_contraction_strategy
 from matchcake.utils.math import circuit_matmul, dagger, fermionic_operator_matmul
-from .. import devices_init, init_nif_device
-from ..test_specific_circuit import specific_matchgate_circuit
+
 from ...configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
     ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
+from .. import devices_init, init_nif_device
+from ..test_specific_circuit import specific_matchgate_circuit
 
 set_seed(TEST_SEED)
 
@@ -64,13 +65,9 @@ def test_vert_matchgates_container_contract_single_column(column_operations):
     assert len(container) == len(column_operations)
     all_wires = set(wire for op in column_operations for wire in op.wires)
 
-    contract_ops = column_operations[0].get_padded_single_particle_transition_matrix(
-        all_wires
-    )
+    contract_ops = column_operations[0].get_padded_single_particle_transition_matrix(all_wires)
     for op in column_operations[1:]:
-        contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(
-            all_wires
-        )
+        contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(all_wires)
 
     np.testing.assert_allclose(
         container.contract(),
@@ -102,9 +99,7 @@ def test_vert_matchgates_container_contract_line_column(operations):
     all_wires = set(wire for op in operations for wire in op.wires)
     contract_ops = operations[0].to_sptm_operation().pad(all_wires)
     for op in operations[1:]:
-        contract_ops = fermionic_operator_matmul(
-            contract_ops, op.to_sptm_operation().pad(all_wires)
-        )
+        contract_ops = fermionic_operator_matmul(contract_ops, op.to_sptm_operation().pad(all_wires))
 
     pred_new_operations = container.contract_operations(operations)
     pred_contract_ops = pred_new_operations[0]
@@ -113,9 +108,7 @@ def test_vert_matchgates_container_contract_line_column(operations):
     for op in pred_new_operations[1:]:
         if isinstance(op, mc.MatchgateOperation):
             op = op.to_sptm_operation()
-        pred_contract_ops = fermionic_operator_matmul(
-            pred_contract_ops.pad(all_wires), op.pad(all_wires)
-        )
+        pred_contract_ops = fermionic_operator_matmul(pred_contract_ops.pad(all_wires), op.pad(all_wires))
 
     pred_contract_matrix = pred_contract_ops.matrix()
     contract_matrix = contract_ops.matrix()
@@ -148,9 +141,7 @@ def test_vert_matchgates_container_contract_line_column(operations):
 def test_vert_matchgates_container_contract_line_column_probs(operations):
     all_wires = set(wire for op in operations for wire in op.wires)
     nif_device = init_nif_device(wires=all_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(
-        wires=all_wires, contraction_method="vertical"
-    )
+    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="vertical")
 
     nif_device.apply(operations)
     nif_device_contracted.apply(operations)
@@ -181,9 +172,7 @@ def test_vert_matchgates_container_contract_line_column_probs(operations):
 def test_multiples_matchgate_probs_with_nif_vertical(params_list, n_wires):
     all_wires = np.arange(n_wires)
     nif_device = init_nif_device(wires=all_wires, contraction_method=None)
-    nif_device_contracted = init_nif_device(
-        wires=all_wires, contraction_method="vertical"
-    )
+    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="vertical")
 
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
     nif_qnode_contracted = qml.QNode(specific_matchgate_circuit, nif_device_contracted)
@@ -192,8 +181,7 @@ def test_multiples_matchgate_probs_with_nif_vertical(params_list, n_wires):
     wire0_vector = np.random.choice(all_wires[:-1], size=len(params_list))
     wire1_vector = wire0_vector + 1
     params_wires_list = [
-        (params, [wire0, wire1])
-        for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
+        (params, [wire0, wire1]) for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
     ]
     nif_probs = nif_qnode(
         params_wires_list,
@@ -241,9 +229,7 @@ def test_multiples_matchgate_probs_with_nif_vertical(params_list, n_wires):
 def test_multiples_matchgate_probs_with_qubits_device_vertical(params_list, n_wires):
     all_wires = np.arange(n_wires)
     qubit_device = qml.device("default.qubit", wires=len(all_wires), shots=None)
-    nif_device_contracted = init_nif_device(
-        wires=all_wires, contraction_method="vertical"
-    )
+    nif_device_contracted = init_nif_device(wires=all_wires, contraction_method="vertical")
 
     qubit_qnode = qml.QNode(specific_matchgate_circuit, qubit_device)
     nif_qnode_contracted = qml.QNode(specific_matchgate_circuit, nif_device_contracted)
@@ -252,8 +238,7 @@ def test_multiples_matchgate_probs_with_qubits_device_vertical(params_list, n_wi
     wire0_vector = np.random.choice(all_wires[:-1], size=len(params_list))
     wire1_vector = wire0_vector + 1
     params_wires_list = [
-        (params, [wire0, wire1])
-        for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
+        (params, [wire0, wire1]) for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
     ]
     nif_probs = qubit_qnode(
         params_wires_list,

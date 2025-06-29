@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Callable, Optional, List
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
-from ...utils import torch_utils
+import torch
 from pennylane.typing import TensorLike
 from scipy.optimize import minimize
-import torch
+
+from ...utils import torch_utils
 
 
 class OptimizerStrategy(ABC):
@@ -22,9 +23,7 @@ class OptimizerStrategy(ABC):
 
     def set_optional_hyperparameters(self, hyperparameters, default=None):
         for kwarg in self.OPTIONAL_HYPERPARAMETERS:
-            setattr(
-                self, kwarg, hyperparameters.get(kwarg, getattr(self, kwarg, default))
-            )
+            setattr(self, kwarg, hyperparameters.get(kwarg, getattr(self, kwarg, default)))
         return self
 
     def __init__(self):
@@ -53,9 +52,7 @@ class OptimizerStrategy(ABC):
     def jac(self, vector, closure):
         vector = torch_utils.to_tensor(vector)
         self.parameters = self.vector_to_parameters(vector)
-        return torch_utils.to_numpy(
-            torch.autograd.grad(closure(self.parameters), self.parameters)[0]
-        )
+        return torch_utils.to_numpy(torch.autograd.grad(closure(self.parameters), self.parameters)[0])
 
     def vector_to_parameters(self, vector):
         vector = torch_utils.to_tensor(vector)
@@ -137,15 +134,12 @@ class ScipyOptimizerStrategy(OptimizerStrategy):
         **hyperparameters,
     ) -> List[torch.nn.Parameter]:
         result = minimize(
-            fun=lambda x: float(
-                torch_utils.to_numpy(closure(self.vector_to_parameters(x)))
-            ),
+            fun=lambda x: float(torch_utils.to_numpy(closure(self.vector_to_parameters(x)))),
             x0=torch_utils.to_numpy(self.params_vector),
             method=self.NAME,
             callback=self.get_callback_func(callback),
             options={"maxiter": n_iterations},
-            bounds=[(self.init_range_low, self.init_range_high)]
-            * len(self.params_vector),
+            bounds=[(self.init_range_low, self.init_range_high)] * len(self.params_vector),
         )
         self.parameters = self.vector_to_parameters(result.x)
         return self.parameters

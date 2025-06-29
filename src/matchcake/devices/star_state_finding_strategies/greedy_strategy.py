@@ -1,14 +1,14 @@
 from typing import Callable, Tuple
 
+import numpy as np
+import pennylane as qml
 import tqdm
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
-import pennylane as qml
-import numpy as np
 
+from ...utils.torch_utils import to_numpy
 from ..sampling_strategies.k_qubits_by_k_qubits_sampling import KQubitsByKQubitsSampling
 from .star_state_finding_strategy import StarStateFindingStrategy
-from ...utils.torch_utils import to_numpy
 
 
 class GreedyStrategy(StarStateFindingStrategy):
@@ -41,13 +41,9 @@ class GreedyStrategy(StarStateFindingStrategy):
         for k_j in k_list:
             added_states = device.states_to_binary(np.arange(2**k_j), k_j)
 
-            extended_states = KQubitsByKQubitsSampling.extend_states(
-                star_states, added_states, unique=False
-            )
+            extended_states = KQubitsByKQubitsSampling.extend_states(star_states, added_states, unique=False)
             # compute probs of unique states: pi_j = pi_j(x_0, ..., x_{j-1}, x_j) / pi_{j-1}(x_0, ..., x_{j-1})
-            extended_states_probs = to_numpy(
-                states_prob_func(extended_states, np.arange(extended_states.shape[-1]))
-            )
+            extended_states_probs = to_numpy(states_prob_func(extended_states, np.arange(extended_states.shape[-1])))
             star_states = extended_states[np.argmax(extended_states_probs, axis=0)]
             star_probs = np.max(extended_states_probs, axis=0)
             p_bar.update(k_j)

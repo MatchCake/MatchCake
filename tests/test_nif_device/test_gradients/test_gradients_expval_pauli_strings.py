@@ -4,21 +4,21 @@ import numpy as np
 import pennylane as qml
 import pytest
 import torch
+from torch.autograd import gradcheck
 
 from matchcake import BatchHamiltonian
 from matchcake.devices.contraction_strategies import contraction_strategy_map
-from torch.autograd import gradcheck
-
 from matchcake.operations import Rxx
-from .. import devices_init
+
 from ... import get_slow_test_mark
 from ...configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
     ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
+from .. import devices_init
 
 set_seed(TEST_SEED)
 
@@ -47,10 +47,7 @@ hand_made_test_data = [
 rn_test_data = [
     (
         np.random.choice([0, 1], size=n_wires),
-        [
-            p0(w) @ p1(w + np.random.randint(1, n_wires - w))
-            for w in np.random.randint(n_wires - 1, size=n_wires)
-        ],
+        [p0(w) @ p1(w + np.random.randint(1, n_wires - w)) for w in np.random.randint(n_wires - 1, size=n_wires)],
         contraction_strategy,
     )
     for n_wires in range(2, 6)

@@ -1,13 +1,12 @@
 from typing import Union
 
-from .star_state_finding_strategy import StarStateFindingStrategy
+from ...utils import get_all_subclasses
 from .from_sampling_strategy import FromSamplingStrategy
 from .greedy_strategy import GreedyStrategy
-from ...utils import get_all_subclasses
+from .star_state_finding_strategy import StarStateFindingStrategy
 
 star_state_finding_strategy_map = {
-    _cls.NAME.lower().strip(): _cls
-    for _cls in get_all_subclasses(StarStateFindingStrategy)
+    _cls.NAME.lower().strip(): _cls for _cls in get_all_subclasses(StarStateFindingStrategy)
 }
 
 

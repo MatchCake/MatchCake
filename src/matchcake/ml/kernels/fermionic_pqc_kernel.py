@@ -9,23 +9,19 @@ try:
 except ImportError:
     # Hotfix for pennylane>0.39.0
     PATTERN_TO_WIRES = {
-        "double": lambda wires: [
-            wires.subset([i, i + 1]) for i in range(0, len(wires) - 1, 2)
-        ],
-        "double_odd": lambda wires: [
-            wires.subset([i, i + 1]) for i in range(1, len(wires) - 1, 2)
-        ],
+        "double": lambda wires: [wires.subset([i, i + 1]) for i in range(0, len(wires) - 1, 2)],
+        "double_odd": lambda wires: [wires.subset([i, i + 1]) for i in range(1, len(wires) - 1, 2)],
     }
 
-from .nif_kernel import NIFKernel
 from ...operations import (
     MAngleEmbedding,
-    fSWAP,
-    fH,
-    SptmFSwap,
     SptmAngleEmbedding,
     SptmFHH,
+    SptmFSwap,
+    fH,
+    fSWAP,
 )
+from .nif_kernel import NIFKernel
 
 
 class FermionicPQCKernel(NIFKernel):
@@ -78,16 +74,12 @@ class FermionicPQCKernel(NIFKernel):
 
     def initialize_parameters(self):
         super().initialize_parameters()
-        self._depth = self.kwargs.get(
-            "depth", int(max(1, np.ceil(self.X_.shape[-1] / self.size)))
-        )
+        self._depth = self.kwargs.get("depth", int(max(1, np.ceil(self.X_.shape[-1] / self.size))))
         self.parameters = self.parameters_rng.uniform(0.0, 1.0, size=self.X_.shape[-1])
         if self.qnode.interface == "torch":
             import torch
 
-            self.parameters = (
-                torch.from_numpy(self.parameters).float().requires_grad_(True)
-            )
+            self.parameters = torch.from_numpy(self.parameters).float().requires_grad_(True)
 
     def ansatz(self, x):
         wires_double = PATTERN_TO_WIRES["double"](self.wires)
@@ -105,9 +97,7 @@ class FermionicPQCKernel(NIFKernel):
                 elif self._entangling_mth == "identity":
                     pass
                 else:
-                    raise ValueError(
-                        f"Unknown entangling method: {self._entangling_mth}"
-                    )
+                    raise ValueError(f"Unknown entangling method: {self._entangling_mth}")
         return
 
     def circuit(self, x0, x1):
@@ -115,9 +105,7 @@ class FermionicPQCKernel(NIFKernel):
         theta_x1 = self._parameter_scaling * self.parameters + self.data_scaling * x1
         self.ansatz(theta_x0)
         qml.adjoint(self.ansatz)(theta_x1)
-        projector: BasisStateProjector = qml.Projector(
-            np.zeros(self.size), wires=self.wires
-        )
+        projector: BasisStateProjector = qml.Projector(np.zeros(self.size), wires=self.wires)
         return qml.expval(projector)
 
 
@@ -128,9 +116,7 @@ class StateVectorFermionicPQCKernel(FermionicPQCKernel):
         self._device_kwargs = kwargs.get("device_kwargs", {})
 
     def pre_initialize(self):
-        self._device = qml.device(
-            self._device_name, wires=self.size, **self._device_kwargs
-        )
+        self._device = qml.device(self._device_name, wires=self.size, **self._device_kwargs)
         self._qnode = qml.QNode(self.circuit, self._device, **self.qnode_kwargs)
         if self.simpify_qnode:
             self._qnode = qml.simplify(self.qnode)
@@ -151,7 +137,5 @@ class StateVectorFermionicPQCKernel(FermionicPQCKernel):
                 elif self._entangling_mth == "identity":
                     pass
                 else:
-                    raise ValueError(
-                        f"Unknown entangling method: {self._entangling_mth}"
-                    )
+                    raise ValueError(f"Unknown entangling method: {self._entangling_mth}")
         return

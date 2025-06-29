@@ -1,21 +1,22 @@
-import pytest
 import numpy as np
+import pytest
 import torch
 from scipy.linalg import expm
 from torch.autograd import gradcheck
 
-from matchcake import utils
 from matchcake import matchgate_parameter_sets as mps
+from matchcake import utils
+
 from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
-    ATOL_MATRIX_COMPARISON,
-    RTOL_MATRIX_COMPARISON,
-    ATOL_SCALAR_COMPARISON,
-    RTOL_SCALAR_COMPARISON,
-    set_seed,
     ATOL_APPROX_COMPARISON,
+    ATOL_MATRIX_COMPARISON,
+    ATOL_SCALAR_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+    RTOL_SCALAR_COMPARISON,
+    TEST_SEED,
+    set_seed,
 )
 
 set_seed(TEST_SEED)
@@ -89,9 +90,7 @@ def test_get_hamming_weight(state, hamming_weight):
     "coeffs,hamiltonian",
     [
         (
-            mps.MatchgateHamiltonianCoefficientsParams(
-                h0=1.0, h1=1.0, h2=1.0, h3=1.0, h4=1.0, h5=1.0
-            ),
+            mps.MatchgateHamiltonianCoefficientsParams(h0=1.0, h1=1.0, h2=1.0, h3=1.0, h4=1.0, h5=1.0),
             -2j
             * np.array(
                 [
@@ -105,9 +104,7 @@ def test_get_hamming_weight(state, hamming_weight):
     ],
 )
 def test_get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs, hamiltonian):
-    out_hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(
-        coeffs.to_matrix()
-    )
+    out_hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs.to_matrix())
     np.testing.assert_allclose(
         out_hamiltonian.squeeze(),
         hamiltonian.squeeze(),
@@ -116,9 +113,7 @@ def test_get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs, hamiltoni
     )
 
 
-@pytest.mark.parametrize(
-    "coefficients", [np.random.rand(4) for _ in range(N_RANDOM_TESTS_PER_CASE)]
-)
+@pytest.mark.parametrize("coefficients", [np.random.rand(4) for _ in range(N_RANDOM_TESTS_PER_CASE)])
 def test_decompose_matrix_into_majoranas(coefficients):
     matrix = np.zeros((coefficients.size, coefficients.size), dtype=complex)
     n = int(np.log2(coefficients.size))
@@ -134,9 +129,7 @@ def test_decompose_matrix_into_majoranas(coefficients):
     )
 
 
-@pytest.mark.parametrize(
-    "matrix", [np.random.rand(4, 4) for _ in range(N_RANDOM_TESTS_PER_CASE)]
-)
+@pytest.mark.parametrize("matrix", [np.random.rand(4, 4) for _ in range(N_RANDOM_TESTS_PER_CASE)])
 def test_make_transition_matrix_from_action_matrix(matrix):
     t_matrix = utils.make_transition_matrix_from_action_matrix(matrix)
 
@@ -175,9 +168,7 @@ def test_make_transition_matrix_from_action_matrix_gradients(matrix):
     [
         ("".join(str(x) for x in vector), vector)
         for vector_length in range(1, 10)
-        for vector in np.random.randint(
-            0, 2, size=(N_RANDOM_TESTS_PER_CASE, vector_length)
-        )
+        for vector in np.random.randint(0, 2, size=(N_RANDOM_TESTS_PER_CASE, vector_length))
     ],
 )
 def test_binary_string_to_vector(binary_string, binary_vector):

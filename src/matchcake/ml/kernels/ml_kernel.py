@@ -9,8 +9,8 @@ import pythonbasictools as pbt
 from sklearn.utils.validation import check_array, check_is_fitted
 from tqdm import tqdm
 
-from ..std_estimator import StdEstimator
 from ...utils import torch_utils
+from ..std_estimator import StdEstimator
 
 
 class MLKernel(StdEstimator):
@@ -90,18 +90,12 @@ class MLKernel(StdEstimator):
         return self.transform(X)
 
     def single_distance(self, x0, x1, **kwargs):
-        raise NotImplementedError(
-            f"This method is not implemented for {self.__class__.__name__}."
-        )
+        raise NotImplementedError(f"This method is not implemented for {self.__class__.__name__}.")
 
     def batch_distance_in_sequence(self, x0, x1, **kwargs):
-        assert (
-            qml.math.ndim(x0) > 1
-        ), f"Expected x0 to be a batch of vectors, got {qml.math.shape(x0)}."
+        assert qml.math.ndim(x0) > 1, f"Expected x0 to be a batch of vectors, got {qml.math.shape(x0)}."
         if qml.math.ndim(x1) == qml.math.ndim(x0):
-            distances = [
-                self.single_distance(_x0, _x1, **kwargs) for _x0, _x1 in zip(x0, x1)
-            ]
+            distances = [self.single_distance(_x0, _x1, **kwargs) for _x0, _x1 in zip(x0, x1)]
         else:
             distances = [self.single_distance(x, x1, **kwargs) for x in x0]
         return qml.math.asarray(distances)
@@ -181,15 +175,11 @@ class MLKernel(StdEstimator):
         gram = np.zeros((qml.math.shape(x0)[0], qml.math.shape(x1)[0]))
         gram = self.cast_tensor_to_interface(gram)
         is_square = gram.shape[0] == gram.shape[1]
-        triu_indices = np.stack(
-            np.triu_indices(n=gram.shape[0], m=gram.shape[1], k=1), axis=-1
-        )
+        triu_indices = np.stack(np.triu_indices(n=gram.shape[0], m=gram.shape[1], k=1), axis=-1)
         if is_square:
             indices = triu_indices
         else:
-            tril_indices = np.stack(
-                np.tril_indices(n=gram.shape[0], m=gram.shape[1], k=-1), axis=-1
-            )
+            tril_indices = np.stack(np.tril_indices(n=gram.shape[0], m=gram.shape[1], k=-1), axis=-1)
             indices = np.concatenate([triu_indices, tril_indices], axis=0)
         start_time = time.perf_counter()
         n_data = qml.math.shape(indices)[0]
@@ -198,17 +188,13 @@ class MLKernel(StdEstimator):
         for i, b_idx in enumerate(batch_gen):
             b_x0, b_x1 = x0[b_idx[:, 0]], x1[b_idx[:, 1]]
             batched_distances = self.batch_distance(b_x0, b_x1, **kwargs)
-            gram[b_idx[:, 0], b_idx[:, 1]] += self.cast_tensor_to_interface(
-                batched_distances
-            )
+            gram[b_idx[:, 0], b_idx[:, 1]] += self.cast_tensor_to_interface(batched_distances)
             if p_bar is not None:
                 n_done += qml.math.shape(b_x0)[0]
                 curr_time = time.perf_counter()
                 eta = (curr_time - start_time) / n_done * (n_data - n_done)
                 eta_fmt = datetime.timedelta(seconds=eta)
-                p_bar.set_postfix_str(
-                    f"{p_bar_postfix_str} (eta: {eta_fmt}, {100 * n_done / n_data:.2f}%)"
-                )
+                p_bar.set_postfix_str(f"{p_bar_postfix_str} (eta: {eta_fmt}, {100 * n_done / n_data:.2f}%)")
         if is_square:
             gram = gram + gram.T
         gram = self.gram_diagonal_fill(gram)

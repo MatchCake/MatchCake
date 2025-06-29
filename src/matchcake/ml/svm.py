@@ -5,9 +5,9 @@ import pennylane as qml
 from sklearn import svm
 from tqdm import tqdm
 
+from ..utils import torch_utils
 from .kernels.ml_kernel import MLKernel
 from .std_estimator import StdEstimator
-from ..utils import torch_utils
 
 
 class SimpleSVC(StdEstimator):
@@ -66,9 +66,7 @@ class SimpleSVC(StdEstimator):
         return self
 
     def get_gram_matrix_from_memory(self, X, **kwargs):
-        if qml.math.shape(X) == qml.math.shape(self.X_) and qml.math.allclose(
-            self.X_, X
-        ):
+        if qml.math.shape(X) == qml.math.shape(self.X_) and qml.math.allclose(self.X_, X):
             return self.train_gram_matrix
         if self.memory is None:
             return None
@@ -218,9 +216,7 @@ class FixedSizeSVC(StdEstimator):
         x1_splits, _ = self.split_data(x1)
         pairwise_distances = []
         for i, (sub_x0, sub_x1) in enumerate(zip(x0_splits, x1_splits)):
-            pairwise_distances.append(
-                self.kernels[i].pairwise_distances(sub_x0, sub_x1, **kwargs)
-            )
+            pairwise_distances.append(self.kernels[i].pairwise_distances(sub_x0, sub_x1, **kwargs))
         return pairwise_distances
 
     def get_pairwise_distances(self, x0, x1):
@@ -243,16 +239,12 @@ class FixedSizeSVC(StdEstimator):
             )
             for _ in range(self.n_kernels)
         ]
-        for i, (gram_matrix, sub_y) in enumerate(
-            zip(self.train_gram_matrices, y_splits)
-        ):
+        for i, (gram_matrix, sub_y) in enumerate(zip(self.train_gram_matrices, y_splits)):
             self.estimators_[i].fit(gram_matrix, sub_y)
         return self
 
     def get_gram_matrices_from_memory(self, X, **kwargs):
-        if qml.math.shape(X) == qml.math.shape(self.X_) and qml.math.allclose(
-            self.X_, X
-        ):
+        if qml.math.shape(X) == qml.math.shape(self.X_) and qml.math.allclose(self.X_, X):
             return self.train_gram_matrices
         if getattr(self, "memory", None) is None:
             return None

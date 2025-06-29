@@ -1,10 +1,10 @@
 import importlib
-from typing import Any, Optional, Literal
 import warnings
-import pennylane as qml
-from pennylane import numpy as pnp
+from typing import Any, Literal, Optional
 
 import numpy as np
+import pennylane as qml
+from pennylane import numpy as pnp
 
 from .. import utils
 from ..templates import TensorLike
@@ -71,9 +71,7 @@ class MatchgateParams:
         return sp.symbols(" ".join([f"p{i}" for i in range(cls.N_PARAMS)]))
 
     @classmethod
-    def parse_from_params(
-        cls, params: "MatchgateParams", **kwargs
-    ) -> "MatchgateParams":
+    def parse_from_params(cls, params: "MatchgateParams", **kwargs) -> "MatchgateParams":
         from . import transfer_functions
 
         return transfer_functions.params_to(params, cls, **kwargs)
@@ -117,9 +115,7 @@ class MatchgateParams:
         :return: The parsed parameters.
         """
         elements_indexes_as_array = np.array(cls.ELEMENTS_INDEXES)
-        params_arr = matrix[
-            ..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]
-        ]
+        params_arr = matrix[..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]]
         return cls.from_tensor(params_arr)
 
     @classmethod
@@ -210,11 +206,7 @@ class MatchgateParams:
         return self
 
     def __getstate__(self):
-        state = {
-            attr: value
-            for attr, value in self.__dict__.copy().items()
-            if attr not in self.UNPICKEABLE_ATTRS
-        }
+        state = {attr: value for attr, value in self.__dict__.copy().items() if attr not in self.UNPICKEABLE_ATTRS}
         return state
 
     def _maybe_cast_inputs_to_real(self, args, kwargs):
@@ -230,9 +222,7 @@ class MatchgateParams:
     def _infer_batch_size_from_input(self, values, **kwargs):
         values = qml.math.reshape(values, (-1, self.N_PARAMS))
         attr_values = [kwargs.get(attr, []) for attr in self.ATTRS]
-        batch_sizes = [values.shape[0]] + [
-            qml.math.reshape(v, (-1,)).shape[0] for v in attr_values
-        ]
+        batch_sizes = [values.shape[0]] + [qml.math.reshape(v, (-1,)).shape[0] for v in attr_values]
         batch_sizes = [s for s in batch_sizes if s > 1]
         if len(set(batch_sizes)) > 1:
             raise ValueError(
@@ -253,10 +243,8 @@ class MatchgateParams:
         for i, attr in enumerate(self.ATTRS):
             attr_values = kwargs.get(attr, values[..., i])
             with warnings.catch_warnings():
-                warnings.simplefilter("ignore", category=np.exceptions.ComplexWarning)
-                ones = utils.math.convert_and_cast_like(
-                    qml.math.ones_like(values[..., i]), attr_values
-                )
+                warnings.simplefilter("ignore")
+                ones = utils.math.convert_and_cast_like(qml.math.ones_like(values[..., i]), attr_values)
             value = attr_values * ones
             attr_str = self._ATTR_FORMAT.format(attr)
             setattr(self, attr_str, value)
@@ -308,10 +296,7 @@ class MatchgateParams:
     def __repr__(self):
         self_np = qml.math.reshape(self.to_numpy(), (-1, self.N_PARAMS)).T
         attrs_str = ", ".join(
-            [
-                f"{attr}={np.array2string(v, precision=4, floatmode='maxprec')}"
-                for attr, v in zip(self.ATTRS, self_np)
-            ]
+            [f"{attr}={np.array2string(v, precision=4, floatmode='maxprec')}" for attr, v in zip(self.ATTRS, self_np)]
         )
         _repr = f"{self.__class__.__name__}({attrs_str}"
         if self.is_batched:
@@ -324,12 +309,7 @@ class MatchgateParams:
         return _repr
 
     def __str__(self):
-        params_as_str = ", ".join(
-            [
-                np.array2string(p, precision=4, floatmode="maxprec")
-                for p in self.to_numpy()
-            ]
-        )
+        params_as_str = ", ".join([np.array2string(p, precision=4, floatmode="maxprec") for p in self.to_numpy()])
         return f"[{params_as_str}]"
 
     def __eq__(self, other):
@@ -383,17 +363,12 @@ class MatchgateParams:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             vector = np.asarray(
-                [
-                    rn_state.uniform(*r, size=2).view(np.complex128).astype(dtype)
-                    for r, dtype in zip(ranges, types)
-                ]
+                [rn_state.uniform(*r, size=2).view(np.complex128).astype(dtype) for r, dtype in zip(ranges, types)]
             ).flatten()
         return vector
 
     @classmethod
-    def random_batch_numpy(
-        cls, batch_size: int = 1, seed: Optional[int] = None, **kwargs
-    ):
+    def random_batch_numpy(cls, batch_size: int = 1, seed: Optional[int] = None, **kwargs):
         if batch_size is None or batch_size == 0:
             return cls.random_numpy(seed=seed)
         rn_state = np.random.RandomState(seed)
@@ -409,9 +384,7 @@ class MatchgateParams:
             batch = (
                 np.asarray(
                     [
-                        rn_state.uniform(*r, size=(batch_size, 2))
-                        .view(np.complex128)
-                        .astype(dtype)
+                        rn_state.uniform(*r, size=(batch_size, 2)).view(np.complex128).astype(dtype)
                         for r, dtype in zip(ranges, types)
                     ]
                 )
@@ -421,9 +394,7 @@ class MatchgateParams:
         return batch
 
     def adjoint(self):
-        raise NotImplementedError(
-            f"{self.__class__.__name__} does not implement adjoint."
-        )
+        raise NotImplementedError(f"{self.__class__.__name__} does not implement adjoint.")
 
     def to_matrix(self) -> TensorLike:
         params_arr = self.to_vector()
@@ -434,9 +405,7 @@ class MatchgateParams:
             matrix = pnp.zeros((4, 4), dtype=dtype)
         matrix = qml.math.convert_like(matrix, params_arr)
         elements_indexes_as_array = np.array(self.ELEMENTS_INDEXES)
-        matrix[
-            ..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]
-        ] = params_arr
+        matrix[..., elements_indexes_as_array[:, 0], elements_indexes_as_array[:, 1]] = params_arr
         # Need to make sure that the grad attribute follows in the new variable
         # with warnings.catch_warnings():
         #     try:
@@ -449,9 +418,7 @@ class MatchgateParams:
         #         matrix.grad = grads
         return matrix
 
-    def to_interface(
-        self, interface: Literal["numpy", "torch"], dtype=None
-    ) -> "MatchgateParams":
+    def to_interface(self, interface: Literal["numpy", "torch"], dtype=None) -> "MatchgateParams":
         if interface == "numpy":
             vec = self.to_numpy(dtype=dtype)
             return self.from_numpy(vec)

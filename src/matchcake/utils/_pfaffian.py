@@ -1,13 +1,13 @@
-from typing import Union, Literal, Optional
-import pennylane as qml
-import numpy as np
 import warnings
+from typing import Literal, Optional, Union
 
+import numpy as np
+import pennylane as qml
 import torch
 import tqdm
 
-from .math import convert_and_cast_like
 from ..templates import TensorLike
+from .math import convert_and_cast_like
 from .torch_pfaffian import Pfaffian
 
 
@@ -105,9 +105,7 @@ def batch_pfaffian_ltl(
         p_bar.n = n // 2
         p_bar.set_description("Odd-sized matrix")
         p_bar.close()
-        return (
-            pfaffian_val * zero_like * matrix[..., 0, 0]
-        )  # 0.0 but with require grad if needed
+        return pfaffian_val * zero_like * matrix[..., 0, 0]  # 0.0 but with require grad if needed
 
     p_bar.set_description(f"Computing Pfaffian of {shape} matrix")
     for k in p_bar:
@@ -118,17 +116,13 @@ def batch_pfaffian_ltl(
         # Check if we need to pivot
         pivot_condition = ~qml.math.isclose(kp, kp1)
         # interchange rows and cols k+1 and kp (pivot if needed)
-        matrix = qml.math.where(
-            pivot_condition[..., None, None], _pivot(matrix, k, kp), matrix
-        )
+        matrix = qml.math.where(pivot_condition[..., None, None], _pivot(matrix, k, kp), matrix)
         # every interchange corresponds to a "-" in det(P)
         pfaffian_val *= qml.math.where(pivot_condition, -1.0, 1.0)
 
         # if we encounter a zero on the super/subdiagonal, the Pfaffian is 0
         zero_ss_condition = qml.math.isclose(matrix[..., k + 1, k], zero_like)
-        pfaffian_val *= qml.math.where(
-            zero_ss_condition, zero_like, matrix[..., k, k + 1]
-        )
+        pfaffian_val *= qml.math.where(zero_ss_condition, zero_like, matrix[..., k, k + 1])
         if qml.math.all(zero_ss_condition):
             p_bar.n = n // 2
             p_bar.set_description("Pfaffian is zero")
@@ -153,9 +147,7 @@ def batch_householder_complex(x: TensorLike):
     where x and v a complex vectors, tau is 0 or 2, and
     alpha a complex number (e_1 is the first unit vector)
     """
-    sigma = qml.math.einsum(
-        "...i,...i->...", qml.math.conjugate(x[..., 1:]), x[..., 1:]
-    )
+    sigma = qml.math.einsum("...i,...i->...", qml.math.conjugate(x[..., 1:]), x[..., 1:])
 
     # if sigma == 0:
     #     return qml.math.zeros_like(x), 0, x[..., 0]
@@ -163,14 +155,10 @@ def batch_householder_complex(x: TensorLike):
     norm_x = qml.math.sqrt(qml.math.conjugate(x[..., 0]) * x[..., 0] + sigma)
 
     v = qml.math.ones_like(x) * x
-    phase = qml.math.exp(
-        1j * qml.math.arctan2(qml.math.imag(x[..., 0]), qml.math.real(x[..., 0]))
-    )
+    phase = qml.math.exp(1j * qml.math.arctan2(qml.math.imag(x[..., 0]), qml.math.real(x[..., 0])))
     v[..., 0] = v[..., 0] + phase * norm_x
 
-    v_frobenius_norm = (
-        qml.math.einsum("...i,...i->...", qml.math.conjugate(v), v) ** 0.5
-    )
+    v_frobenius_norm = qml.math.einsum("...i,...i->...", qml.math.conjugate(v), v) ** 0.5
     v = v / v_frobenius_norm[..., None]
 
     tau = convert_and_cast_like(2.0 + 0.0j, x)
@@ -224,13 +212,11 @@ def _update_matrix_block_householder(matrix, i, v, tau):
     :param tau:
     :return:
     """
-    w = tau * qml.math.einsum(
-        "...ij,...j->...i", matrix[..., i + 1 :, i + 1 :], qml.math.conjugate(v)
-    )
+    w = tau * qml.math.einsum("...ij,...j->...i", matrix[..., i + 1 :, i + 1 :], qml.math.conjugate(v))
     values = qml.math.zeros_like(matrix)
-    values[..., i + 1 :, i + 1 :] += qml.math.einsum(
-        "...i,...j->...ij", v, w
-    ) - qml.math.einsum("...i,...j->...ij", w, v)
+    values[..., i + 1 :, i + 1 :] += qml.math.einsum("...i,...j->...ij", v, w) - qml.math.einsum(
+        "...i,...j->...ij", w, v
+    )
     return matrix + values
 
 
@@ -276,9 +262,7 @@ def batch_pfaffian_householder(
     if n % 2 == 1:
         p_bar.set_description("Odd-sized matrix")
         p_bar.close()
-        return (
-            pfaffian_val * zero_like * matrix[..., 0, 0]
-        )  # 0.0 but with require grad if needed
+        return pfaffian_val * zero_like * matrix[..., 0, 0]  # 0.0 but with require grad if needed
 
     p_bar.set_description(f"Computing Pfaffian of {shape} matrix")
     for i in p_bar:
@@ -287,9 +271,7 @@ def batch_pfaffian_householder(
         matrix = _eliminate_ith_column_householder(matrix, i, alpha)
         matrix = _update_matrix_block_householder(matrix, i, v, tau)
 
-        pfaffian_val = pfaffian_val * qml.math.where(
-            qml.math.isclose(tau, zero_like), 1, 1 - tau
-        )
+        pfaffian_val = pfaffian_val * qml.math.where(qml.math.isclose(tau, zero_like), 1, 1 - tau)
         if i % 2 == 0:
             pfaffian_val = pfaffian_val * -alpha
 
@@ -337,8 +319,9 @@ def pfaffian_by_det_cuda(
     show_progress: bool = False,
     epsilon: float = 1e-12,
 ):
-    from . import torch_utils
     import torch
+
+    from . import torch_utils
 
     shape = qml.math.shape(__matrix)
     p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)
@@ -404,8 +387,7 @@ def pfaffian(
         from pfapack.pfaffian import pfaffian
 
         warnings.warn(
-            "The method 'P' is not implemented yet. "
-            "It is recommended to use the method 'det' instead.",
+            "The method 'P' is not implemented yet. " "It is recommended to use the method 'det' instead.",
             UserWarning,
         )
         return pfaffian(__matrix, overwrite_input, method="P")
@@ -413,27 +395,18 @@ def pfaffian(
         from pfapack.pfaffian import pfaffian_householder
 
         warnings.warn(
-            "The method 'H' is not implemented yet. "
-            "It is recommended to use the method 'det' instead.",
+            "The method 'H' is not implemented yet. " "It is recommended to use the method 'det' instead.",
             UserWarning,
         )
         return pfaffian_householder(__matrix, overwrite_input)
     elif method == "det":
-        return pfaffian_by_det(
-            __matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon
-        )
+        return pfaffian_by_det(__matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon)
     elif method == "cuda_det":
-        return pfaffian_by_det_cuda(
-            __matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon
-        )
+        return pfaffian_by_det_cuda(__matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon)
     elif method == "bLTL":
-        return batch_pfaffian_ltl(
-            __matrix, overwrite_input, show_progress=show_progress, p_bar=p_bar
-        )
+        return batch_pfaffian_ltl(__matrix, overwrite_input, show_progress=show_progress, p_bar=p_bar)
     elif method == "bH":
-        return batch_pfaffian_householder(
-            __matrix, overwrite_input, show_progress=show_progress, p_bar=p_bar
-        )
+        return batch_pfaffian_householder(__matrix, overwrite_input, show_progress=show_progress, p_bar=p_bar)
     elif method == "PfaffianFDBPf":
         try:
             import torch_pfaffian
@@ -444,11 +417,7 @@ def pfaffian(
             )
         from . import torch_utils
 
-        pf = torch_pfaffian.get_pfaffian_function(method)(
-            torch_utils.to_tensor(__matrix, dtype=torch.complex128)
-        )
+        pf = torch_pfaffian.get_pfaffian_function(method)(torch_utils.to_tensor(__matrix, dtype=torch.complex128))
         return convert_and_cast_like(pf, __matrix)
     else:
-        raise ValueError(
-            f"Invalid method. Got {method}, must be 'P', 'H', 'det', 'bLTL', or 'bH'."
-        )
+        raise ValueError(f"Invalid method. Got {method}, must be 'P', 'H', 'det', 'bLTL', or 'bH'.")

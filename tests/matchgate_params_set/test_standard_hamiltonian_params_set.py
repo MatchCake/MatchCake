@@ -4,13 +4,14 @@ import pytest
 from matchcake import (
     MatchgateHamiltonianCoefficientsParams,
     MatchgateStandardHamiltonianParams,
+    utils,
 )
-from matchcake import utils
+
 from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
     ATOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
 
@@ -19,10 +20,7 @@ set_seed(TEST_SEED)
 
 @pytest.mark.parametrize(
     "params",
-    [
-        MatchgateHamiltonianCoefficientsParams.random()
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [MatchgateHamiltonianCoefficientsParams.random() for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_parse_from_hamiltonian_coeffs_with_slow_method(
     params: MatchgateHamiltonianCoefficientsParams,
@@ -39,9 +37,7 @@ def test_parse_from_hamiltonian_coeffs_with_slow_method(
     "params,expected",
     [
         (
-            MatchgateStandardHamiltonianParams(
-                u0=1, u1=1, u2=1, u3=1, u4=1, u5=1, u6=1, u7=1
-            ),
+            MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=1, u3=1, u4=1, u5=1, u6=1, u7=1),
             np.array(
                 [
                     [1, 0.0, 0.0, 1],
@@ -52,9 +48,7 @@ def test_parse_from_hamiltonian_coeffs_with_slow_method(
             ),
         ),
         (
-            MatchgateStandardHamiltonianParams(
-                u0=1, u1=1, u2=-1, u3=1, u4=1, u5=1, u6=1, u7=1
-            ),
+            MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=-1, u3=1, u4=1, u5=1, u6=1, u7=1),
             np.array(
                 [
                     [1, 0.0, 0.0, 1],
@@ -65,9 +59,7 @@ def test_parse_from_hamiltonian_coeffs_with_slow_method(
             ),
         ),
         (
-            MatchgateStandardHamiltonianParams(
-                u0=1, u1=1, u2=1, u3=-1, u4=1, u5=-1, u6=1, u7=1
-            ),
+            MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=1, u3=-1, u4=1, u5=-1, u6=1, u7=1),
             np.array(
                 [
                     [1, 0.0, 0.0, 1],
@@ -78,9 +70,7 @@ def test_parse_from_hamiltonian_coeffs_with_slow_method(
             ),
         ),
         (
-            MatchgateStandardHamiltonianParams(
-                u0=1, u1=1, u2=1, u3=1, u4=1, u5=-1, u6=1, u7=1
-            ),
+            MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=1, u3=1, u4=1, u5=-1, u6=1, u7=1),
             np.array(
                 [
                     [1, 0.0, 0.0, 1],
@@ -117,9 +107,7 @@ def test_standard_hamiltonian_params_to_matrix(
                     [1, 0.0, 0.0, 1],
                 ]
             ),
-            MatchgateStandardHamiltonianParams(
-                u0=1, u1=1, u2=1, u3=1, u4=1, u5=1, u6=1, u7=1
-            ),
+            MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=1, u3=1, u4=1, u5=1, u6=1, u7=1),
         ),
         (
             np.array(
@@ -130,9 +118,7 @@ def test_standard_hamiltonian_params_to_matrix(
                     [1, 0.0, 0.0, 1],
                 ]
             ),
-            MatchgateStandardHamiltonianParams(
-                u0=1, u1=1, u2=-1, u3=1, u4=1, u5=1, u6=1, u7=1
-            ),
+            MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=-1, u3=1, u4=1, u5=1, u6=1, u7=1),
         ),
         (
             np.array(
@@ -143,9 +129,7 @@ def test_standard_hamiltonian_params_to_matrix(
                     [1, 0.0, 0.0, 1],
                 ]
             ),
-            MatchgateStandardHamiltonianParams(
-                u0=1, u1=1, u2=1, u3=-1, u4=1, u5=-1, u6=1, u7=1
-            ),
+            MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=1, u3=-1, u4=1, u5=-1, u6=1, u7=1),
         ),
         (
             np.array(
@@ -156,9 +140,7 @@ def test_standard_hamiltonian_params_to_matrix(
                     [1, 0.0, 0.0, 1],
                 ]
             ),
-            MatchgateStandardHamiltonianParams(
-                u0=1, u1=1, u2=1, u3=1, u4=1, u5=-1, u6=1, u7=1
-            ),
+            MatchgateStandardHamiltonianParams(u0=1, u1=1, u2=1, u3=1, u4=1, u5=-1, u6=1, u7=1),
         ),
     ],
 )

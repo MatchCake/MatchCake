@@ -5,19 +5,21 @@ import pennylane as qml
 import pytest
 
 import matchcake as mc
-from matchcake import MatchgateOperation, utils
+from matchcake import MatchgateOperation
 from matchcake import matchgate_parameter_sets as mps
+from matchcake import utils
 from matchcake.circuits import random_sptm_operations_generator
 from matchcake.operations import SptmfRxRx, SptmIdentity
-from .. import devices_init, init_nif_device
-from ..test_single_line_matchgates_circuit import single_line_matchgates_circuit
+
 from ...configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
     ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
+from .. import devices_init, init_nif_device
+from ..test_single_line_matchgates_circuit import single_line_matchgates_circuit
 
 set_seed(TEST_SEED)
 
@@ -33,14 +35,10 @@ set_seed(TEST_SEED)
 )
 def test_neighbours_contraction(operations, expected_new_operations):
     all_wires = set(wire for op in operations for wire in op.wires)
-    nif_device_nh = init_nif_device(
-        wires=len(all_wires), contraction_method="neighbours"
-    )
+    nif_device_nh = init_nif_device(wires=len(all_wires), contraction_method="neighbours")
     new_operations = nif_device_nh.contraction_strategy(operations)
 
-    assert len(new_operations) == len(
-        expected_new_operations
-    ), "The number of operations is different."
+    assert len(new_operations) == len(expected_new_operations), "The number of operations is different."
     for new_op, expected_op in zip(new_operations, expected_new_operations):
         np.testing.assert_allclose(
             new_op.compute_matrix(),
@@ -55,17 +53,8 @@ def test_neighbours_contraction(operations, expected_new_operations):
     [
         [MatchgateOperation(mps.Identity, wires=[0, 1])],
         [MatchgateOperation(mps.Identity, wires=[0, 1]) for _ in range(10)],
-        [
-            MatchgateOperation(
-                mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1]
-            )
-        ],
-        [
-            MatchgateOperation(
-                mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1]
-            )
-            for _ in range(2)
-        ],
+        [MatchgateOperation(mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1])],
+        [MatchgateOperation(mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1]) for _ in range(2)],
     ],
 )
 def test_neighbours_contraction_device_one_line(operations):
@@ -119,9 +108,7 @@ def test_neighbours_contraction_device_one_line_sptm(operations):
         for num_gates in 2 ** np.arange(1, 5)
     ],
 )
-def test_multiples_matchgate_probs_with_qbit_device_nh_contraction(
-    params_list, prob_wires
-):
+def test_multiples_matchgate_probs_with_qbit_device_nh_contraction(params_list, prob_wires):
     nif_device, qubit_device = devices_init(wires=2, contraction_method="neighbours")
 
     nif_qnode = qml.QNode(single_line_matchgates_circuit, nif_device)
@@ -151,9 +138,7 @@ def test_multiples_matchgate_probs_with_qbit_device_nh_contraction(
     )
 
 
-@pytest.mark.parametrize(
-    "x", [np.random.rand(4) for _ in range(N_RANDOM_TESTS_PER_CASE)]
-)
+@pytest.mark.parametrize("x", [np.random.rand(4) for _ in range(N_RANDOM_TESTS_PER_CASE)])
 def test_nh_contraction_torch_grad(x):
     try:
         import torch
@@ -165,9 +150,7 @@ def test_nh_contraction_torch_grad(x):
     x = torch.from_numpy(x).float()
     x_grad = x.detach().clone().requires_grad_(True)
 
-    dev = mc.NonInteractingFermionicDevice(
-        wires=n_qubits, contraction_method="neighbours"
-    )
+    dev = mc.NonInteractingFermionicDevice(wires=n_qubits, contraction_method="neighbours")
 
     @qml.qnode(dev, interface="torch")
     def circuit(x):
@@ -195,9 +178,7 @@ def test_nh_contraction_torch_grad(x):
     "circuit_gen, n_wires",
     [
         (
-            random_sptm_operations_generator(
-                n_ops=2 + i, wires=n_wires, batch_size=batch_size
-            ),
+            random_sptm_operations_generator(n_ops=2 + i, wires=n_wires, batch_size=batch_size),
             n_wires,
         )
         for n_wires in range(2, 12)
@@ -211,14 +192,10 @@ def test_nh_contraction_with_apply_generator(circuit_gen, n_wires):
 
     circuit_gen_nh, circuit_gen_none = itertools.tee(circuit_gen)
 
-    nif_device_nh.execute_generator(
-        circuit_gen_nh, apply=True, reset=True, cache_global_sptm=True
-    )
+    nif_device_nh.execute_generator(circuit_gen_nh, apply=True, reset=True, cache_global_sptm=True)
     nh_sptm = nif_device_nh.apply_metadata["global_sptm"]
 
-    nif_device_none.execute_generator(
-        circuit_gen_none, apply=True, reset=True, cache_global_sptm=True
-    )
+    nif_device_none.execute_generator(circuit_gen_none, apply=True, reset=True, cache_global_sptm=True)
     none_sptm = nif_device_none.apply_metadata["global_sptm"]
 
     np.testing.assert_allclose(
@@ -247,14 +224,10 @@ def test_nh_contraction_with_apply_generator_sptm_supp(n_wires):
 
     circuit_gen_nh, circuit_gen_none = itertools.tee(circuit_gen())
 
-    nif_device_nh.execute_generator(
-        circuit_gen_nh, apply=True, reset=True, cache_global_sptm=True
-    )
+    nif_device_nh.execute_generator(circuit_gen_nh, apply=True, reset=True, cache_global_sptm=True)
     nh_sptm = nif_device_nh.apply_metadata["global_sptm"]
 
-    nif_device_none.execute_generator(
-        circuit_gen_none, apply=True, reset=True, cache_global_sptm=True
-    )
+    nif_device_none.execute_generator(circuit_gen_none, apply=True, reset=True, cache_global_sptm=True)
     none_sptm = nif_device_none.apply_metadata["global_sptm"]
 
     np.testing.assert_allclose(
@@ -283,14 +256,10 @@ def test_nh_contraction_with_apply_generator_supp(n_wires):
 
     circuit_gen_nh, circuit_gen_none = itertools.tee(circuit_gen())
 
-    nif_device_nh.execute_generator(
-        circuit_gen_nh, apply=True, reset=True, cache_global_sptm=True
-    )
+    nif_device_nh.execute_generator(circuit_gen_nh, apply=True, reset=True, cache_global_sptm=True)
     nh_sptm = nif_device_nh.apply_metadata["global_sptm"]
 
-    nif_device_none.execute_generator(
-        circuit_gen_none, apply=True, reset=True, cache_global_sptm=True
-    )
+    nif_device_none.execute_generator(circuit_gen_none, apply=True, reset=True, cache_global_sptm=True)
     none_sptm = nif_device_none.apply_metadata["global_sptm"]
 
     np.testing.assert_allclose(

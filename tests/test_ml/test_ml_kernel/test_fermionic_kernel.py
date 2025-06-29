@@ -1,17 +1,20 @@
-import pytest
-from typing import Literal, List, Union, Dict
+from typing import Dict, List, Literal, Union
+
 import numpy as np
 import pennylane as qml
+import pytest
 from pennylane.wires import Wires
+
 from matchcake.ml.kernels import FermionicPQCKernel, StateVectorFermionicPQCKernel
 from matchcake.utils.torch_utils import to_numpy
+
 from ... import get_slow_test_mark
 from ...configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    ATOL_MATRIX_COMPARISON,
-    RTOL_MATRIX_COMPARISON,
     ATOL_APPROX_COMPARISON,
+    ATOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
     TEST_SEED,
     set_seed,
 )
@@ -31,12 +34,8 @@ set_seed(TEST_SEED)
 def test_fermionic_pqc_gram_equal_pennylane(x, rotations):
     x = qml.math.array(x)
     y = qml.math.array(np.zeros(x.shape[0]))
-    fkernel = FermionicPQCKernel(
-        rotations=rotations, parameter_scaling=0, data_scaling=1
-    )
-    pkernel = StateVectorFermionicPQCKernel(
-        rotations=rotations, parameter_scaling=0, data_scaling=1
-    )
+    fkernel = FermionicPQCKernel(rotations=rotations, parameter_scaling=0, data_scaling=1)
+    pkernel = StateVectorFermionicPQCKernel(rotations=rotations, parameter_scaling=0, data_scaling=1)
     fkernel.fit(x, y)
     pkernel.fit(x, y)
     pkernel.parameters = to_numpy(fkernel.parameters)
@@ -79,9 +78,7 @@ def test_fermionic_pqc_n_gates(
     :raises AssertionError: If the number of rotations is not as expected
     :raises AssertionError: If the number of gates is not as expected
     """
-    fkernel = FermionicPQCKernel(
-        size=n_qubit, entangling_mth=entangling_mth, parameter_scaling=1, data_scaling=1
-    )
+    fkernel = FermionicPQCKernel(size=n_qubit, entangling_mth=entangling_mth, parameter_scaling=1, data_scaling=1)
 
     x = np.stack([np.arange(n_features) for _ in range(2)])
     y = qml.math.array(np.zeros(x.shape[0]))
@@ -100,9 +97,7 @@ def test_fermionic_pqc_n_gates(
         )
     is_entangling = entangling_mth != "identity"
     half_depth, half_even_qubit = fkernel.depth // 2, n_qubit // 2
-    n_expected_entangling_gates = (half_even_qubit * fkernel.depth - half_depth) * int(
-        is_entangling
-    )
+    n_expected_entangling_gates = (half_even_qubit * fkernel.depth - half_depth) * int(is_entangling)
     n_expected_gates = (n_features // 2) * len(rotations) + n_expected_entangling_gates
     assert n_gates == n_expected_gates, (
         f"n_gates={n_gates}, n_expected_gates={n_expected_gates} "
@@ -277,16 +272,12 @@ def test_fermionic_pqc_arrangement_of_gates(
     qscript = fkernel.qnode._tape.expand()
     n_gates = len(qscript.operations) // 2  # remove the adjoint gates
     gates = [op for op in qscript.operations[:n_gates]]
-    assert len(gates) == len(
-        expected_arrangement
-    ), f"Expected {len(expected_arrangement)} gates but got {len(gates)} "
+    assert len(gates) == len(expected_arrangement), f"Expected {len(expected_arrangement)} gates but got {len(gates)} "
     for gate, expected_gate in zip(gates, expected_arrangement):
         assert (
             expected_gate["gate_subname"].lower() in gate.name.lower()
         ), f"Expected gate {expected_gate['gate_subname']} but got {gate.name} "
-        assert (
-            Wires(expected_gate["wires"]) == gate.wires
-        ), f"Expected wires {expected_gate['wires']} but got {gate} "
+        assert Wires(expected_gate["wires"]) == gate.wires, f"Expected wires {expected_gate['wires']} but got {gate} "
         if hasattr(gate, "_given_params"):
             np.testing.assert_allclose(
                 expected_gate["parameters"],
@@ -450,9 +441,7 @@ def test_fermionic_pqc_single_distance_gradient(x, rotations):
     expval = fkernel.single_distance(x[0], x[-1])
     assert expval.grad_fn is not None, "The gradient is not computed correctly."
     expval.backward()
-    assert (
-        fkernel.parameters.grad is not None
-    ), "The gradient is not computed correctly."
+    assert fkernel.parameters.grad is not None, "The gradient is not computed correctly."
 
 
 @pytest.mark.parametrize(
@@ -488,12 +477,8 @@ def test_fermionic_pqc_compute_gram_matrix_gradient(x, contraction_method):
     expvals = fkernel.compute_gram_matrix(x)
     assert expvals.grad_fn is not None, "The gradient is not computed correctly."
     expvals.sum().backward()
-    assert torch.all(
-        torch.isfinite(fkernel.parameters.grad)
-    ), "The gradient is not computed correctly."
-    assert (
-        fkernel.parameters.grad is not None
-    ), "The gradient is not computed correctly."
+    assert torch.all(torch.isfinite(fkernel.parameters.grad)), "The gradient is not computed correctly."
+    assert fkernel.parameters.grad is not None, "The gradient is not computed correctly."
 
 
 @pytest.mark.parametrize(

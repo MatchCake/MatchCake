@@ -2,15 +2,15 @@ import warnings
 from collections import defaultdict
 from functools import partial
 
+import numpy as np
 import pennylane as qml
 import torch
+from pennylane.operation import AnyWires, Operation
 from pennylane.wires import Wires
-from pennylane.operation import Operation, AnyWires
-from .sptm_f_rxrx import SptmfRxRx
-from .sptm_rzrz import SptmRzRz
-from .sptm_ryry import SptmRyRy
-import numpy as np
 
+from .sptm_f_rxrx import SptmfRxRx
+from .sptm_ryry import SptmRyRy
+from .sptm_rzrz import SptmRzRz
 
 ROT = {"X": SptmfRxRx, "Y": SptmRyRy, "Z": SptmRzRz}
 
@@ -47,9 +47,7 @@ class SptmAngleEmbedding(Operation):
         """
         n_params = qml.math.shape(params)[-1]
         if n_params % 2 != 0:
-            params = qml.math.concatenate(
-                [params, qml.math.zeros_like(params[..., :1])], axis=-1
-            )
+            params = qml.math.concatenate([params, qml.math.zeros_like(params[..., :1])], axis=-1)
         return params
 
     def __repr__(self):
@@ -71,9 +69,7 @@ class SptmAngleEmbedding(Operation):
         shape = qml.math.shape(features)[-1:]
         n_features = shape[0]
         if n_features > len(wires):
-            raise ValueError(
-                f"Features must be of length {len(wires)} or less; got length {n_features}."
-            )
+            raise ValueError(f"Features must be of length {len(wires)} or less; got length {n_features}.")
         self._rotations = rotations.split(",")
         self._hyperparameters = {
             "rotations": [ROT[r] for r in self._rotations],

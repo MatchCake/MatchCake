@@ -98,9 +98,7 @@ class MatchgateStandardParams(MatchgateParams):
     def to_outer_matrix(self):
         matrix = self.to_matrix()
         batched_matrix = qml.math.reshape(matrix, (-1, *matrix.shape[-2:]))
-        outer_matrix = pnp.zeros(
-            (batched_matrix.shape[0], 2, 2), dtype=self.DEFAULT_PARAMS_TYPE
-        )
+        outer_matrix = pnp.zeros((batched_matrix.shape[0], 2, 2), dtype=self.DEFAULT_PARAMS_TYPE)
         outer_matrix[..., 0, 0] = batched_matrix[..., 0, 0]
         outer_matrix[..., 0, 1] = batched_matrix[..., 0, 3]
         outer_matrix[..., 1, 0] = batched_matrix[..., 3, 0]
@@ -112,9 +110,7 @@ class MatchgateStandardParams(MatchgateParams):
     def to_inner_matrix(self):
         matrix = self.to_matrix()
         batched_matrix = qml.math.reshape(matrix, (-1, *matrix.shape[-2:]))
-        inner_matrix = pnp.zeros(
-            (batched_matrix.shape[0], 2, 2), dtype=self.DEFAULT_PARAMS_TYPE
-        )
+        inner_matrix = pnp.zeros((batched_matrix.shape[0], 2, 2), dtype=self.DEFAULT_PARAMS_TYPE)
         inner_matrix[..., 0, 0] = batched_matrix[..., 1, 1]
         inner_matrix[..., 0, 1] = batched_matrix[..., 1, 2]
         inner_matrix[..., 1, 0] = batched_matrix[..., 2, 1]
@@ -128,15 +124,11 @@ class MatchgateStandardParams(MatchgateParams):
         o_ndim, i_ndim = qml.math.ndim(outer_matrix), qml.math.ndim(inner_matrix)
         o_shape, i_shape = qml.math.shape(outer_matrix), qml.math.shape(inner_matrix)
         if o_shape != i_shape:
-            raise ValueError(
-                f"Expected outer_matrix.shape == inner_matrix.shape, got {o_shape} != {i_shape}."
-            )
+            raise ValueError(f"Expected outer_matrix.shape == inner_matrix.shape, got {o_shape} != {i_shape}.")
         if o_ndim not in [2, 3]:
             raise ValueError(f"Expected outer_matrix.ndim in [2, 3], got {o_ndim}.")
         if o_shape[-2:] != (2, 2):
-            raise ValueError(
-                f"Expected outer_matrix of shape (2, 2), got {o_shape[-2:]}."
-            )
+            raise ValueError(f"Expected outer_matrix of shape (2, 2), got {o_shape[-2:]}.")
         batch_size = o_shape[0] if o_ndim == 3 else 1
         matrix = pnp.zeros((batch_size, 4, 4), dtype=cls.DEFAULT_PARAMS_TYPE)
         matrix[..., 0, 0] = outer_matrix[..., 0, 0]

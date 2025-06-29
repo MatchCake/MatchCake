@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Callable, List
+
 import numpy as np
+import pennylane as qml
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
-import pennylane as qml
 from pythonbasictools.multiprocessing_tools import apply_func_multiprocess
 
 

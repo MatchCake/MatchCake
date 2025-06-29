@@ -1,14 +1,15 @@
 import numpy as np
 import pytest
 from pennylane.math import expm
+
 from matchcake.utils.math import logm
 
 from .configs import (
-    N_RANDOM_TESTS_PER_CASE,
     ATOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_MATRIX_COMPARISON,
-    set_seed,
     TEST_SEED,
+    set_seed,
 )
 
 set_seed(TEST_SEED)
@@ -18,10 +19,7 @@ NEAR_ZERO, NEAR_INF = 1e-16, 1e0
 
 @pytest.mark.parametrize(
     "x",
-    [
-        np.random.uniform(-NEAR_INF, NEAR_INF, size=(4, 4))
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.uniform(-NEAR_INF, NEAR_INF, size=(4, 4)) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_logm(x):
     np.testing.assert_allclose(
@@ -40,10 +38,7 @@ def test_logm(x):
 
 @pytest.mark.parametrize(
     "x",
-    [
-        np.random.uniform(-NEAR_INF, NEAR_INF, size=(4, 4))
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.uniform(-NEAR_INF, NEAR_INF, size=(4, 4)) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_logm_torch(x):
     try:
@@ -67,10 +62,7 @@ def test_logm_torch(x):
 
 @pytest.mark.parametrize(
     "x",
-    [
-        np.random.uniform(-NEAR_ZERO, NEAR_ZERO, size=(4, 4))
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.uniform(-NEAR_ZERO, NEAR_ZERO, size=(4, 4)) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_logm_near_0(x):
     np.testing.assert_allclose(
@@ -89,10 +81,7 @@ def test_logm_near_0(x):
 
 @pytest.mark.parametrize(
     "x",
-    [
-        np.random.uniform(NEAR_INF / 10, NEAR_INF, size=(4, 4))
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.uniform(NEAR_INF / 10, NEAR_INF, size=(4, 4)) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_logm_near_inf(x):
     np.testing.assert_allclose(
@@ -111,10 +100,7 @@ def test_logm_near_inf(x):
 
 @pytest.mark.parametrize(
     "x",
-    [
-        np.random.uniform(-NEAR_INF, -NEAR_INF / 10, size=(4, 4))
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.uniform(-NEAR_INF, -NEAR_INF / 10, size=(4, 4)) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_logm_near_minf(x):
     np.testing.assert_allclose(
@@ -134,9 +120,7 @@ def test_logm_near_minf(x):
 @pytest.mark.parametrize(
     "x",
     [
-        np.random.uniform(-NEAR_INF, NEAR_INF, size=(4, 4, 2))
-        .view(np.complex128)
-        .reshape(4, 4)
+        np.random.uniform(-NEAR_INF, NEAR_INF, size=(4, 4, 2)).view(np.complex128).reshape(4, 4)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ],
 )
@@ -158,9 +142,7 @@ def test_logm_complex(x):
 @pytest.mark.parametrize(
     "x",
     [
-        np.random.uniform(-NEAR_ZERO, NEAR_ZERO, size=(4, 4, 2))
-        .view(np.complex128)
-        .reshape(4, 4)
+        np.random.uniform(-NEAR_ZERO, NEAR_ZERO, size=(4, 4, 2)).view(np.complex128).reshape(4, 4)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ],
 )
@@ -182,9 +164,7 @@ def test_logm_complex_near_0(x):
 @pytest.mark.parametrize(
     "x",
     [
-        np.random.uniform(NEAR_INF / 10, NEAR_INF, size=(4, 4, 2))
-        .view(np.complex128)
-        .reshape(4, 4)
+        np.random.uniform(NEAR_INF / 10, NEAR_INF, size=(4, 4, 2)).view(np.complex128).reshape(4, 4)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ],
 )
@@ -206,9 +186,7 @@ def test_logm_complex_near_inf(x):
 @pytest.mark.parametrize(
     "x",
     [
-        np.random.uniform(-NEAR_INF, -NEAR_INF / 10, size=(4, 4, 2))
-        .view(np.complex128)
-        .reshape(4, 4)
+        np.random.uniform(-NEAR_INF, -NEAR_INF / 10, size=(4, 4, 2)).view(np.complex128).reshape(4, 4)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ],
 )

@@ -2,28 +2,23 @@ from typing import Union
 
 import numpy as np
 import pennylane as qml
-from pennylane.operation import Operation
 from pennylane import numpy as pnp
+from pennylane.operation import Operation
 
-from ..base.matchgate import Matchgate
 from .. import matchgate_parameter_sets as mps
 from .. import utils
-
+from ..base.matchgate import Matchgate
 from .matchgate_operation import MatchgateOperation
 
 
-def _make_rot_matrix(
-    param, direction, use_exp_taylor_series: bool = False, taylor_series_terms: int = 10
-):
+def _make_rot_matrix(param, direction, use_exp_taylor_series: bool = False, taylor_series_terms: int = 10):
     param_shape = qml.math.shape(param)
     ndim = len(param_shape)
     if ndim not in [0, 1]:
         raise ValueError(f"Invalid number of dimensions {len(param_shape)}.")
     batch_size = param_shape[0] if ndim == 1 else 1
     param = qml.math.reshape(param, (batch_size,))
-    matrix = qml.math.cast(
-        qml.math.convert_like(pnp.zeros((batch_size, 2, 2)), param), dtype=complex
-    )
+    matrix = qml.math.cast(qml.math.convert_like(pnp.zeros((batch_size, 2, 2)), param), dtype=complex)
 
     if direction == "X":
         matrix[:, 0, 0] = qml.math.cos(param / 2)
@@ -37,12 +32,8 @@ def _make_rot_matrix(
         matrix[:, 1, 1] = qml.math.cos(param / 2)
     elif direction == "Z":
         if use_exp_taylor_series:
-            matrix[:, 0, 0] = utils.math.exp_taylor_series(
-                -1j * param / 2, terms=taylor_series_terms
-            )
-            matrix[:, 1, 1] = utils.math.exp_taylor_series(
-                1j * param / 2, terms=taylor_series_terms
-            )
+            matrix[:, 0, 0] = utils.math.exp_taylor_series(-1j * param / 2, terms=taylor_series_terms)
+            matrix[:, 1, 1] = utils.math.exp_taylor_series(1j * param / 2, terms=taylor_series_terms)
         else:
             matrix[:, 0, 0] = qml.math.exp(-1j * param / 2)
             matrix[:, 1, 1] = qml.math.exp(1j * param / 2)
@@ -64,13 +55,9 @@ def _make_complete_rot_matrix(
     if ndim not in [1, 2]:
         raise ValueError(f"Invalid number of dimensions {ndim}.")
     if params_shape[-1] != len(directions) and params_shape[-1] != 2:
-        raise ValueError(
-            f"Number of parameters ({params_shape[-1]}) and directions ({len(directions)}) must be equal."
-        )
+        raise ValueError(f"Number of parameters ({params_shape[-1]}) and directions ({len(directions)}) must be equal.")
     batch_size = params_shape[0] if ndim == 2 else 1
-    matrix = qml.math.cast(
-        qml.math.convert_like(pnp.zeros((batch_size, 4, 4)), params), dtype=complex
-    )
+    matrix = qml.math.cast(qml.math.convert_like(pnp.zeros((batch_size, 4, 4)), params), dtype=complex)
     outer_matrices = _make_rot_matrix(
         params[..., 0],
         directions[1],
@@ -108,9 +95,7 @@ class FermionicRotation(MatchgateOperation):
 
     @classmethod
     def random_params(cls, batch_size=None, **kwargs):
-        params_shape = ([batch_size] if batch_size is not None else []) + [
-            cls.num_params
-        ]
+        params_shape = ([batch_size] if batch_size is not None else []) + [cls.num_params]
         seed = kwargs.pop("seed", None)
         rn_gen = np.random.default_rng(seed)
         return rn_gen.uniform(0, 2 * np.pi, params_shape)
@@ -128,14 +113,10 @@ class FermionicRotation(MatchgateOperation):
         shape = qml.math.shape(params)[-1:]
         n_params = shape[0]
         if n_params != self.num_params:
-            raise ValueError(
-                f"{self.__class__.__name__} requires {self.num_params} parameters; got {n_params}."
-            )
+            raise ValueError(f"{self.__class__.__name__} requires {self.num_params} parameters; got {n_params}.")
         self._directions = directions.upper()
         if len(self._directions) != 2:
-            raise ValueError(
-                f"{self.__class__.__name__} requires two directions; got {self._directions}."
-            )
+            raise ValueError(f"{self.__class__.__name__} requires two directions; got {self._directions}.")
         self._given_params = params
         m_params = mps.MatchgateStandardParams.from_matrix(
             _make_complete_rot_matrix(
@@ -228,17 +209,11 @@ class FermionicRotation(MatchgateOperation):
             # this holds true for all current operations and templates unless parameter broadcasting
             # is used
             # TODO[dwierichs]: Implement a proper label for broadcasted operators
-            if (
-                cache is None
-                or not isinstance(cache.get("matrices", None), list)
-                or len(params) != 1
-            ):
+            if cache is None or not isinstance(cache.get("matrices", None), list) or len(params) != 1:
                 return op_label
 
             for i, mat in enumerate(cache["matrices"]):
-                if qml.math.shape(params[0]) == qml.math.shape(
-                    mat
-                ) and qml.math.allclose(params[0], mat):
+                if qml.math.shape(params[0]) == qml.math.shape(mat) and qml.math.allclose(params[0], mat):
                     return f"{op_label}(M{i})"
 
             # matrix not in cache
@@ -270,9 +245,7 @@ class FermionicRotationXX(FermionicRotation):
         backend=pnp,
         **kwargs,
     ):
-        super().__init__(
-            params, wires=wires, directions="XX", id=id, backend=backend, **kwargs
-        )
+        super().__init__(params, wires=wires, directions="XX", id=id, backend=backend, **kwargs)
 
 
 class FermionicRotationYY(FermionicRotation):
@@ -285,9 +258,7 @@ class FermionicRotationYY(FermionicRotation):
         backend=pnp,
         **kwargs,
     ):
-        super().__init__(
-            params, wires=wires, directions="YY", id=id, backend=backend, **kwargs
-        )
+        super().__init__(params, wires=wires, directions="YY", id=id, backend=backend, **kwargs)
 
     def adjoint(self):
         return FermionicRotationYY(
@@ -306,9 +277,7 @@ class FermionicRotationZZ(FermionicRotation):
         backend=pnp,
         **kwargs,
     ):
-        super().__init__(
-            params, wires=wires, directions="ZZ", id=id, backend=backend, **kwargs
-        )
+        super().__init__(params, wires=wires, directions="ZZ", id=id, backend=backend, **kwargs)
 
 
 fRXX = FermionicRotationXX

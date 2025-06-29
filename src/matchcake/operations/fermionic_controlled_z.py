@@ -2,17 +2,16 @@ from typing import Union
 
 import numpy as np
 import pennylane as qml
-from pennylane.operation import Operation
 from pennylane import numpy as pnp
+from pennylane.operation import Operation
 
-from ..base.matchgate import Matchgate
 from .. import matchgate_parameter_sets as mps
 from .. import utils
-
-from .matchgate_operation import MatchgateOperation
+from ..base.matchgate import Matchgate
 from .fermionic_hadamard import fH
-from .fermionic_swap import fSWAP
 from .fermionic_paulis import fXX
+from .fermionic_swap import fSWAP
+from .matchgate_operation import MatchgateOperation
 
 
 class FermionicControlledZ(Operation):

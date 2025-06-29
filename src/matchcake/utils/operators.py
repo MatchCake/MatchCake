@@ -1,9 +1,9 @@
-import importlib
-from typing import Any, List, Callable, Union, Iterable, Generator, Iterator
 import functools
-import pennylane as qml
+import importlib
+from typing import Any, Callable, Generator, Iterable, Iterator, List, Union
 
 import numpy as np
+import pennylane as qml
 
 
 def recursive_kron(__inputs: List[Any], lib=np, recursive: bool = True) -> Any:

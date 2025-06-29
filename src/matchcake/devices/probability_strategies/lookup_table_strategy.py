@@ -1,12 +1,13 @@
-from .probability_strategy import ProbabilityStrategy
 from typing import Callable, Optional
+
 import numpy as np
+import pennylane as qml
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
-import pennylane as qml
 
-from ...base.lookup_table import NonInteractingFermionicLookupTable
 from ... import utils
+from ...base.lookup_table import NonInteractingFermionicLookupTable
+from .probability_strategy import ProbabilityStrategy
 
 
 class LookupTableStrategy(ProbabilityStrategy):
@@ -38,9 +39,7 @@ class LookupTableStrategy(ProbabilityStrategy):
             wires_indexes,
             show_progress=show_progress,
         )
-        prob = qml.math.real(
-            utils.pfaffian(obs, method=pfaffian_method, show_progress=show_progress)
-        )
+        prob = qml.math.real(utils.pfaffian(obs, method=pfaffian_method, show_progress=show_progress))
         return prob
 
     def batch_call(
@@ -63,9 +62,5 @@ class LookupTableStrategy(ProbabilityStrategy):
             batch_wires,
             show_progress=show_progress,
         )
-        prob = qml.math.real(
-            utils.pfaffian(
-                batch_obs, method=pfaffian_method, show_progress=show_progress
-            )
-        )
+        prob = qml.math.real(utils.pfaffian(batch_obs, method=pfaffian_method, show_progress=show_progress))
         return prob

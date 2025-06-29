@@ -1,13 +1,10 @@
 import numpy as np
-from pennylane.operation import Operation, AnyWires
-
-from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 from pennylane.wires import Wires
 
-from . import SptmFSwap, SptmFHH
 from ...utils import make_wires_continuous
-from ...constants import _CIRCUIT_MATMUL_DIRECTION
-from ...utils.math import dagger
+from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
+from .sptm_fhh import SptmFHH
+from .sptm_fswap import SptmFSwap
 
 
 class SptmFermionicSuperposition(SingleParticleTransitionMatrixOperation):

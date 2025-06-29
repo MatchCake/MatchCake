@@ -1,8 +1,8 @@
 import numpy as np
 from pennylane.wires import Wires
 
-from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 from ...utils import make_wires_continuous
+from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
 class SptmFSwapHH(SingleParticleTransitionMatrixOperation):

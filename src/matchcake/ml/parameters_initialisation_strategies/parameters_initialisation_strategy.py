@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Callable
+from typing import Any, Callable, Dict
 
 import numpy as np
-from ...utils import torch_utils
 from pennylane.typing import TensorLike
+
+from ...utils import torch_utils
 
 
 class ParametersInitialisationStrategy(ABC):
@@ -19,9 +20,7 @@ class ParametersInitialisationStrategy(ABC):
 
     def set_optional_hyperparameters(self, hyperparameters, default=None):
         for kwarg in self.OPTIONAL_HYPERPARAMETERS:
-            setattr(
-                self, kwarg, hyperparameters.get(kwarg, getattr(self, kwarg, default))
-            )
+            setattr(self, kwarg, hyperparameters.get(kwarg, getattr(self, kwarg, default)))
         return self
 
     def __init__(self):
@@ -41,12 +40,8 @@ class ParametersInitialisationStrategy(ABC):
 
     @abstractmethod
     def initialise_parameters(self, **hyperparameters):
-        raise NotImplementedError(
-            f"{self.NAME}.initialise_parameters() must be implemented."
-        )
+        raise NotImplementedError(f"{self.NAME}.initialise_parameters() must be implemented.")
 
     @abstractmethod
     def get_next_parameters(self, step_id: int, **hyperparameters):
-        raise NotImplementedError(
-            f"{self.NAME}.get_next_parameters() must be implemented."
-        )
+        raise NotImplementedError(f"{self.NAME}.get_next_parameters() must be implemented.")

@@ -1,11 +1,11 @@
+from typing import Any, Callable, Dict
+
 import numpy as np
 import torch
-
-from .parameters_initialisation_strategy import ParametersInitialisationStrategy
-from typing import Dict, Any, Callable
+from pennylane.typing import TensorLike
 
 from ...utils import torch_utils
-from pennylane.typing import TensorLike
+from .parameters_initialisation_strategy import ParametersInitialisationStrategy
 
 
 class LinearStrategy(ParametersInitialisationStrategy):
@@ -52,7 +52,5 @@ class LinearStrategy(ParametersInitialisationStrategy):
 
     def get_next_parameters(self, step_id: int, **hyperparameters):
         parameters_rng = np.random.default_rng(seed=hyperparameters["seed"] + step_id)
-        beta, gamma = self.initialise_parameters(
-            parameters_rng=parameters_rng, **hyperparameters
-        )
+        beta, gamma = self.initialise_parameters(parameters_rng=parameters_rng, **hyperparameters)
         return beta, gamma

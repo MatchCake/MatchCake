@@ -1,9 +1,9 @@
 from pennylane import numpy as pnp
 from pennylane.wires import Wires
 
-from .matchgate_operation import MatchgateOperation
 from .. import matchgate_parameter_sets as mps
 from .. import utils
+from .matchgate_operation import MatchgateOperation
 
 paulis_map = {
     "X": utils.PAULI_X,
@@ -24,15 +24,11 @@ class FermionicPauli(MatchgateOperation):
     def __init__(self, wires=None, paulis="XX", id=None, *, backend=pnp, **kwargs):
         self._paulis = paulis.upper()
         if len(self._paulis) != 2:
-            raise ValueError(
-                f"{self.__class__.__name__} requires two paulis; got {self._paulis}."
-            )
+            raise ValueError(f"{self.__class__.__name__} requires two paulis; got {self._paulis}.")
         m_params = mps.MatchgateStandardParams.from_sub_matrices(
             paulis_map[self._paulis[0]], paulis_map[self._paulis[1]]
         )
-        in_params = mps.MatchgatePolarParams.parse_from_params(
-            m_params, force_cast_to_real=True
-        )
+        in_params = mps.MatchgatePolarParams.parse_from_params(m_params, force_cast_to_real=True)
         kwargs["in_param_type"] = mps.MatchgatePolarParams
         super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
 

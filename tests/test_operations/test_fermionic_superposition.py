@@ -1,23 +1,18 @@
 import numpy as np
+import pennylane as qml
 import pytest
 
 import matchcake as mc
 from matchcake import utils
-from matchcake.operations import (
-    fSWAP,
-    SptmRzRz,
-    SptmFSwapRzRz,
-)
-from matchcake.operations import FermionicSuperposition
-import pennylane as qml
-
+from matchcake.operations import FermionicSuperposition, SptmFSwapRzRz, SptmRzRz, fSWAP
 from matchcake.utils import state_to_binary_string
 from matchcake.utils.torch_utils import to_numpy
+
 from ..configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
-    set_seed,
     TEST_SEED,
+    set_seed,
 )
 from ..test_nif_device import devices_init
 
@@ -38,13 +33,8 @@ def test_fermionic_superposition_even_states(wires):
     qubit_state = to_numpy(qubit_qnode())
 
     # make sure that the state is in superposition of all even parity states
-    binary_indexes = [
-        state_to_binary_string(i, n=len(wires)) for i in range(2 ** len(wires))
-    ]
-    is_even_parity = [
-        np.sum([int(bit) for bit in binary_index]) % 2 == 0
-        for binary_index in binary_indexes
-    ]
+    binary_indexes = [state_to_binary_string(i, n=len(wires)) for i in range(2 ** len(wires))]
+    is_even_parity = [np.sum([int(bit) for bit in binary_index]) % 2 == 0 for binary_index in binary_indexes]
     # make that all even parity states have equal amplitude
     even_states = qubit_state[..., is_even_parity]
     amplitude = 1 / np.sqrt(even_states.shape[-1])
@@ -71,13 +61,8 @@ def test_fermionic_superposition_odd_states(wires):
     qubit_state = to_numpy(qubit_qnode())
 
     # make sure that the state is in superposition of all even parity states
-    binary_indexes = [
-        state_to_binary_string(i, n=len(wires)) for i in range(2 ** len(wires))
-    ]
-    mask_parity = [
-        np.sum([int(bit) for bit in binary_index]) % 2 != 0
-        for binary_index in binary_indexes
-    ]
+    binary_indexes = [state_to_binary_string(i, n=len(wires)) for i in range(2 ** len(wires))]
+    mask_parity = [np.sum([int(bit) for bit in binary_index]) % 2 != 0 for binary_index in binary_indexes]
     # make that all even parity states have equal amplitude
     roi_states = qubit_state[..., mask_parity]
     amplitude = 1 / np.sqrt(roi_states.shape[-1])

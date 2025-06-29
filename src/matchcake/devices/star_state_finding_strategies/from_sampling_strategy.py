@@ -1,11 +1,12 @@
 from typing import Callable, Tuple
+
+import numpy as np
+import pennylane as qml
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
-import pennylane as qml
-import numpy as np
 
-from .star_state_finding_strategy import StarStateFindingStrategy
 from ...utils.torch_utils import to_numpy
+from .star_state_finding_strategy import StarStateFindingStrategy
 
 
 class FromSamplingStrategy(StarStateFindingStrategy):
@@ -29,9 +30,7 @@ class FromSamplingStrategy(StarStateFindingStrategy):
         for bi in range(samples_reshaped.shape[1]):
             batch_samples = samples_reshaped[:, bi, :]
 
-            unique_samples, unique_counts = np.unique(
-                batch_samples, return_counts=True, axis=0
-            )
+            unique_samples, unique_counts = np.unique(batch_samples, return_counts=True, axis=0)
             unique_probs = unique_counts / samples.shape[0]
             star_state = unique_samples[np.argmax(unique_counts)]
             star_prob = unique_probs[np.argmax(unique_counts)]

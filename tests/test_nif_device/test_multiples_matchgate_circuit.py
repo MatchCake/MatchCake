@@ -1,27 +1,29 @@
 import numpy as np
 import pennylane as qml
-import pytest
 import psutil
+import pytest
 
-from matchcake import MatchgateOperation, utils
+from matchcake import MatchgateOperation
 from matchcake import matchgate_parameter_sets as mps
+from matchcake import utils
 from matchcake.circuits import (
-    RandomSptmOperationsGenerator,
-    RandomOperationsGenerator,
-    RandomMatchgateOperationsGenerator,
     RandomMatchgateHaarOperationsGenerator,
+    RandomMatchgateOperationsGenerator,
+    RandomOperationsGenerator,
+    RandomSptmOperationsGenerator,
 )
 from matchcake.devices.contraction_strategies import contraction_strategy_map
-from . import devices_init
-from .test_specific_circuit import specific_matchgate_circuit
+
 from .. import get_slow_test_mark
 from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
     ATOL_APPROX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
+from . import devices_init
+from .test_specific_circuit import specific_matchgate_circuit
 
 set_seed(TEST_SEED)
 
@@ -84,8 +86,7 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
     wire0_vector = np.random.choice(all_wires[:-1], size=len(params_list))
     wire1_vector = wire0_vector + 1
     params_wires_list = [
-        (params, [wire0, wire1])
-        for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
+        (params, [wire0, wire1]) for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
     ]
     qubit_probs = qubit_qnode(
         params_wires_list,
@@ -117,9 +118,7 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
     "op_gen,contraction_strategy",
     [
         (
-            RandomMatchgateHaarOperationsGenerator(
-                wires=num_wires, n_ops=num_gates, output_type="probs", seed=i
-            ),
+            RandomMatchgateHaarOperationsGenerator(wires=num_wires, n_ops=num_gates, output_type="probs", seed=i),
             contraction_strategy,
         )
         for i in range(N_RANDOM_TESTS_PER_CASE)
@@ -128,17 +127,11 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
         for contraction_strategy in contraction_strategy_map.keys()
     ],
 )
-def test_multiples_matchgate_probs_with_qbit_device_op_gen(
-    op_gen, contraction_strategy
-):
-    nif_device, qubit_device = devices_init(
-        wires=op_gen.wires, contraction_strategy=contraction_strategy
-    )
+def test_multiples_matchgate_probs_with_qbit_device_op_gen(op_gen, contraction_strategy):
+    nif_device, qubit_device = devices_init(wires=op_gen.wires, contraction_strategy=contraction_strategy)
     qubit_qnode = qml.QNode(op_gen.circuit, qubit_device)
     qubit_probs = qubit_qnode()
-    nif_probs = nif_device.execute_generator(
-        op_gen, output_type=op_gen.output_type, observable=op_gen.observable
-    )
+    nif_probs = nif_device.execute_generator(op_gen, output_type=op_gen.output_type, observable=op_gen.observable)
     np.testing.assert_allclose(
         nif_probs.squeeze(),
         qubit_probs.squeeze(),
@@ -153,10 +146,7 @@ def test_multiples_matchgate_probs_with_qbit_device_op_gen(
     "params_list,n_wires,prob_wires",
     [
         (
-            [
-                mps.MatchgatePolarParams.random().to_numpy()
-                for _ in range(2 * num_wires)
-            ],
+            [mps.MatchgatePolarParams.random().to_numpy() for _ in range(2 * num_wires)],
             num_wires,
             0,
         )
@@ -164,9 +154,7 @@ def test_multiples_matchgate_probs_with_qbit_device_op_gen(
         for num_wires in range(2, 5)
     ],
 )
-def test_multiples_matchgate_probs_with_qbit_device_mp(
-    params_list, n_wires, prob_wires
-):
+def test_multiples_matchgate_probs_with_qbit_device_mp(params_list, n_wires, prob_wires):
     pytest.skip()  # takes to long
     if psutil.cpu_count() < 2:
         pytest.skip("This test requires at least 2 CPUs.")
@@ -182,8 +170,7 @@ def test_multiples_matchgate_probs_with_qbit_device_mp(
     wire0_vector = np.random.choice(all_wires[:-1], size=len(params_list))
     wire1_vector = wire0_vector + 1
     params_wires_list = [
-        (params, [wire0, wire1])
-        for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
+        (params, [wire0, wire1]) for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
     ]
 
     qubit_state = qubit_qnode(
@@ -234,8 +221,7 @@ def test_multiples_matchgate_apply_vs_apply_gen(params_list, n_wires):
     wire0_vector = np.random.choice(all_wires[:-1], size=len(params_list))
     wire1_vector = wire0_vector + 1
     params_wires_list = [
-        (params, [wire0, wire1])
-        for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
+        (params, [wire0, wire1]) for params, wire0, wire1 in zip(params_list, wire0_vector, wire1_vector)
     ]
     nif_qnode(
         params_wires_list,

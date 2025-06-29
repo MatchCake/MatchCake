@@ -1,10 +1,11 @@
 import argparse
 from typing import Optional
-import pennylane as qml
 
-from .torch_model import TorchModel
-from ... import NonInteractingFermionicDevice
+import pennylane as qml
 from pennylane.wires import Wires
+
+from ... import NonInteractingFermionicDevice
+from .torch_model import TorchModel
 
 
 class NIFTorchModel(TorchModel):
@@ -13,9 +14,7 @@ class NIFTorchModel(TorchModel):
     ATTRS_TO_HPARAMS = TorchModel.ATTRS_TO_HPARAMS + ["n_qubits"]
 
     @classmethod
-    def add_model_specific_args(
-        cls, parent_parser: Optional[argparse.ArgumentParser] = None
-    ):
+    def add_model_specific_args(cls, parent_parser: Optional[argparse.ArgumentParser] = None):
         parent_parser = super().add_model_specific_args(parent_parser)
         if parent_parser is None:
             parent_parser = argparse.ArgumentParser()
@@ -36,9 +35,7 @@ class NIFTorchModel(TorchModel):
         super().__init__(**kwargs)
         self.n_qubits = n_qubits
 
-        self.q_device = NonInteractingFermionicDevice(
-            wires=self.n_qubits, show_progress=False
-        )
+        self.q_device = NonInteractingFermionicDevice(wires=self.n_qubits, show_progress=False)
         self.q_node = qml.QNode(
             self.circuit,
             self.q_device,

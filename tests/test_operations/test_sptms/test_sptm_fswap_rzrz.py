@@ -3,19 +3,14 @@ import pytest
 
 import matchcake as mc
 from matchcake import utils
-from matchcake.operations import (
-    fSWAP,
-    SptmRzRz,
-    SptmFSwapRzRz,
-)
-from matchcake.operations.single_particle_transition_matrices import (
-    SptmFSwap,
-)
+from matchcake.operations import SptmFSwapRzRz, SptmRzRz, fSWAP
+from matchcake.operations.single_particle_transition_matrices import SptmFSwap
+
 from ...configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
-    set_seed,
     TEST_SEED,
+    set_seed,
 )
 
 set_seed(TEST_SEED)
@@ -30,9 +25,7 @@ set_seed(TEST_SEED)
         for wire1 in range(wire0 + 1, n_wires)
     ],
 )
-def test_sptm_fswap_rzrz_chain_equal_to_sptm_fswap_rzrz(
-    wire0, wire1, all_wires, params
-):
+def test_sptm_fswap_rzrz_chain_equal_to_sptm_fswap_rzrz(wire0, wire1, all_wires, params):
     all_wires = list(range(all_wires))
 
     def _gen():

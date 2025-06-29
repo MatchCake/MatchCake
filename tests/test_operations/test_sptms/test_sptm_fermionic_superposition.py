@@ -1,31 +1,31 @@
 from copy import deepcopy
 
 import numpy as np
+import pennylane as qml
 import pytest
 
 import matchcake as mc
 from matchcake import utils
 from matchcake.operations import (
-    fSWAP,
-    SptmRzRz,
-    SptmFSwapRzRz,
-    SptmFSwap,
+    FermionicSuperposition,
     SptmFHH,
+    SptmFSwap,
+    SptmFSwapRzRz,
+    SptmRzRz,
     fH,
+    fSWAP,
 )
-from matchcake.operations import FermionicSuperposition
-import pennylane as qml
-
 from matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition import (
     SptmFermionicSuperposition,
 )
 from matchcake.utils import state_to_binary_string
 from matchcake.utils.torch_utils import to_numpy
+
 from ...configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
-    set_seed,
     TEST_SEED,
+    set_seed,
 )
 from ...test_nif_device import devices_init
 
@@ -54,14 +54,10 @@ def test_sptm_fswap_matmul_fhh():
         yield SptmFHH(wires=wires)
         return
 
-    nif_device.execute_generator(
-        circuit_gen(), apply=True, reset=True, cache_global_sptm=True
-    )
+    nif_device.execute_generator(circuit_gen(), apply=True, reset=True, cache_global_sptm=True)
     global_sptm = deepcopy(nif_device.apply_metadata["global_sptm"]).round(3)
 
-    nif_device_none.execute_generator(
-        sptm_circuit_gen(), apply=True, reset=True, cache_global_sptm=True
-    )
+    nif_device_none.execute_generator(sptm_circuit_gen(), apply=True, reset=True, cache_global_sptm=True)
     sptm_global_sptm = to_numpy(nif_device_none.apply_metadata["global_sptm"]).round(3)
 
     np.testing.assert_allclose(
@@ -93,9 +89,7 @@ def test_sptm_fswap_matmul_fhh_probs():
     qubit_qnode = qml.QNode(circuit, qubit_device)
     qubit_probs = to_numpy(qubit_qnode()).squeeze()
 
-    nif_probs = nif_device.execute_generator(
-        sptm_circuit_gen(), output_type="probs", apply=True, reset=True
-    )
+    nif_probs = nif_device.execute_generator(sptm_circuit_gen(), output_type="probs", apply=True, reset=True)
     nif_probs = to_numpy(nif_probs).squeeze()
 
     np.testing.assert_allclose(
@@ -133,14 +127,10 @@ def test_sptm_fermionic_superposition_decomposition(wires, is_odd):
         yield from SptmFermionicSuperposition.compute_decomposition(wires=wires)
         return
 
-    nif_device.execute_generator(
-        circuit_gen(), apply=True, reset=True, cache_global_sptm=True
-    )
+    nif_device.execute_generator(circuit_gen(), apply=True, reset=True, cache_global_sptm=True)
     global_sptm = deepcopy(nif_device.apply_metadata["global_sptm"]).round(3)
 
-    nif_device_none.execute_generator(
-        sptm_circuit_gen(), apply=True, reset=True, cache_global_sptm=True
-    )
+    nif_device_none.execute_generator(sptm_circuit_gen(), apply=True, reset=True, cache_global_sptm=True)
     sptm_global_sptm = to_numpy(nif_device_none.apply_metadata["global_sptm"]).round(3)
 
     np.testing.assert_allclose(
@@ -178,14 +168,10 @@ def test_sptm_fermionic_superposition(wires, is_odd):
         yield SptmFermionicSuperposition(wires=wires)
         return
 
-    nif_device.execute_generator(
-        circuit_gen(), apply=True, reset=True, cache_global_sptm=True
-    )
+    nif_device.execute_generator(circuit_gen(), apply=True, reset=True, cache_global_sptm=True)
     global_sptm = deepcopy(nif_device.apply_metadata["global_sptm"]).round(3)
 
-    nif_device_none.execute_generator(
-        sptm_circuit_gen(), apply=True, reset=True, cache_global_sptm=True
-    )
+    nif_device_none.execute_generator(sptm_circuit_gen(), apply=True, reset=True, cache_global_sptm=True)
     sptm_global_sptm = to_numpy(nif_device_none.apply_metadata["global_sptm"])
 
     np.testing.assert_allclose(
@@ -220,9 +206,7 @@ def test_sptm_fermionic_superposition_probs(wires, is_odd):
     qubit_qnode = qml.QNode(circuit, qubit_device)
     qubit_probs = to_numpy(qubit_qnode()).squeeze()
 
-    nif_probs = nif_device.execute_generator(
-        sptm_circuit_gen(), output_type="probs", apply=True, reset=True
-    )
+    nif_probs = nif_device.execute_generator(sptm_circuit_gen(), output_type="probs", apply=True, reset=True)
     nif_probs = to_numpy(nif_probs).squeeze()
 
     np.testing.assert_allclose(
@@ -236,6 +220,4 @@ def test_sptm_fermionic_superposition_probs(wires, is_odd):
 @pytest.mark.parametrize("wires", [np.arange(n) for n in range(2, 12)])
 def test_sptm_fermionic_superposition_unitary(wires):
     sptm = SptmFermionicSuperposition(wires=wires)
-    assert sptm.check_is_unitary(
-        atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON
-    )
+    assert sptm.check_is_unitary(atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)

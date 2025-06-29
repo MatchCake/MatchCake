@@ -1,11 +1,11 @@
+from typing import Any, Callable, Dict, List, Optional
+
 import numpy as np
-from ...utils import torch_utils
-
-from .optimizer_strategy import OptimizerStrategy
-from typing import Dict, Any, Callable, Optional, List
-
 import torch
 from pennylane.typing import TensorLike
+
+from ...utils import torch_utils
+from .optimizer_strategy import OptimizerStrategy
 
 
 class GeneticStrategy(OptimizerStrategy):
@@ -57,20 +57,14 @@ class GeneticStrategy(OptimizerStrategy):
 
     def fitness_func(self, ga_instance, solution, solution_idx):
         if self.closure is None:
-            raise ValueError(
-                f"{self.NAME} Optimizer has not been initialized. Call optimize() first."
-            )
-        return -float(
-            torch_utils.to_numpy(self.closure(self.vector_to_parameters(solution)))
-        )
+            raise ValueError(f"{self.NAME} Optimizer has not been initialized. Call optimize() first.")
+        return -float(torch_utils.to_numpy(self.closure(self.vector_to_parameters(solution))))
 
     def get_initial_population(self):
         main_parent = torch_utils.to_numpy(self.params_vector)
         initial_population = [main_parent]
         for _ in range(max(0, self.sol_per_pop - 1)):
-            initial_population.append(
-                main_parent + torch_utils.to_numpy(torch.randn_like(self.params_vector))
-            )
+            initial_population.append(main_parent + torch_utils.to_numpy(torch.randn_like(self.params_vector)))
         return np.stack(initial_population)
 
     def optimize(
@@ -89,9 +83,7 @@ class GeneticStrategy(OptimizerStrategy):
                 "You can install it with `pip install pygad`."
             )
         if self.parameters is None:
-            raise ValueError(
-                f"{self.NAME} Optimizer has not been initialized. Call set_parameters() first."
-            )
+            raise ValueError(f"{self.NAME} Optimizer has not been initialized. Call set_parameters() first.")
 
         self.closure = closure
         self.callback = callback

@@ -1,5 +1,6 @@
-from typing import Optional, Type, List, Sequence, Union, Any
 import json
+from typing import Any, List, Optional, Sequence, Type, Union
+
 import numpy as np
 import pennylane as qml
 
@@ -63,9 +64,7 @@ class RandomOperationsGenerator:
             cls = rn_gen.choice(self.op_types)
             rn_wire0 = rn_gen.choice(wires[:-1])
             rn_wire1 = rn_wire0 + 1
-            op = cls.random(
-                wires=[rn_wire0, rn_wire1], batch_size=self.batch_size, seed=self.seed
-            )
+            op = cls.random(wires=[rn_wire0, rn_wire1], batch_size=self.batch_size, seed=self.seed)
             if self.use_cuda:
                 op = op.to_cuda()
             yield op
@@ -103,9 +102,7 @@ class RandomOperationsGenerator:
         else:
             initial_state = np.asarray(self.initial_state, dtype=int)
             if len(initial_state) != self.n_wires:
-                raise ValueError(
-                    f"Initial state has {len(initial_state)} qubits, but {self.n_wires} are required."
-                )
+                raise ValueError(f"Initial state has {len(initial_state)} qubits, but {self.n_wires} are required.")
         return initial_state
 
     def __repr__(self):

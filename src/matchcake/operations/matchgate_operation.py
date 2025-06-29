@@ -1,18 +1,19 @@
-from typing import Union, Optional, Any
+from typing import Any, Optional, Union
 
 import pennylane as qml
-from pennylane.operation import Operation
 from pennylane import numpy as pnp
 from pennylane.math import TensorLike
+from pennylane.operation import Operation
 from pennylane.wires import Wires, WiresLike
 
+from .. import matchgate_parameter_sets as mps
+from .. import utils
 from ..base.matchgate import Matchgate
-from .. import matchgate_parameter_sets as mps, utils
+from ..utils import make_wires_continuous
+from ..utils.math import fermionic_operator_matmul
 from .single_particle_transition_matrices.single_particle_transition_matrix import (
     SingleParticleTransitionMatrixOperation,
 )
-from ..utils import make_wires_continuous
-from ..utils.math import fermionic_operator_matmul
 
 
 class MatchgateOperation(Matchgate, Operation):
@@ -36,9 +37,7 @@ class MatchgateOperation(Matchgate, Operation):
     @classmethod
     def random_params(cls, batch_size=None, **kwargs):
         seed = kwargs.pop("seed", None)
-        return mps.MatchgatePolarParams.random_batch_numpy(
-            batch_size=batch_size, seed=seed
-        )
+        return mps.MatchgatePolarParams.random_batch_numpy(batch_size=batch_size, seed=seed)
 
     @classmethod
     def random(cls, wires: Wires, batch_size=None, **kwargs) -> "MatchgateOperation":
@@ -84,12 +83,8 @@ class MatchgateOperation(Matchgate, Operation):
     ):
         if wires is not None:
             wires = Wires(wires)
-            assert (
-                len(wires) == 2
-            ), f"MatchgateOperation requires exactly 2 wires, got {len(wires)}."
-            assert (
-                wires[-1] - wires[0] == 1
-            ), f"MatchgateOperation requires consecutive wires, got {wires}."
+            assert len(wires) == 2, f"MatchgateOperation requires exactly 2 wires, got {len(wires)}."
+            assert wires[-1] - wires[0] == 1, f"MatchgateOperation requires consecutive wires, got {wires}."
         in_param_type = kwargs.get("in_param_type", mps.MatchgatePolarParams)
         in_params = in_param_type.parse_from_any(params)
         Matchgate.__init__(self, in_params, **kwargs)
@@ -100,9 +95,7 @@ class MatchgateOperation(Matchgate, Operation):
 
     @property
     def batch_size(self):
-        not_none_params = [
-            p for p in self.get_all_params_set(make_params=False) if p is not None
-        ]
+        not_none_params = [p for p in self.get_all_params_set(make_params=False) if p is not None]
         if len(not_none_params) == 0:
             raise ValueError("No params set. Cannot make standard params.")
         batch_size = not_none_params[0].batch_size
@@ -146,9 +139,7 @@ class MatchgateOperation(Matchgate, Operation):
             raise ValueError(f"Cannot multiply MatchgateOperation with {type(other)}")
 
         if self.wires != other.wires:
-            return fermionic_operator_matmul(
-                self.to_sptm_operation(), other.to_sptm_operation()
-            )
+            return fermionic_operator_matmul(self.to_sptm_operation(), other.to_sptm_operation())
 
         new_params = self.standard_params @ other.standard_params
         return MatchgateOperation(

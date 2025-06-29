@@ -2,14 +2,14 @@ import warnings
 from collections import defaultdict
 from functools import partial
 
+import numpy as np
 import pennylane as qml
 import torch
+from pennylane.operation import AnyWires, Operation
 from pennylane.wires import Wires
-from pennylane.operation import Operation, AnyWires
-from .fermionic_rotations import fRXX, fRYY, fRZZ
-from ..utils import recursive_2in_operator
-import numpy as np
 
+from ..utils import recursive_2in_operator
+from .fermionic_rotations import fRXX, fRYY, fRZZ
 
 ROT = {"X": fRXX, "Y": fRYY, "Z": fRZZ}
 rotations_map = {  # TODO: to verify
@@ -24,9 +24,7 @@ rotations_map = {  # TODO: to verify
     "ZY": "X",
 }
 rotations_sign_map = defaultdict(lambda: 1j)
-rotations_sign_map.update(
-    {"XY": 1j, "YX": -1j, "XZ": -1j, "ZX": 1j, "YZ": 1j, "ZY": -1j}
-)
+rotations_sign_map.update({"XY": 1j, "YX": -1j, "XZ": -1j, "ZX": 1j, "YZ": 1j, "ZY": -1j})
 
 
 class MAngleEmbedding(Operation):
@@ -44,9 +42,7 @@ class MAngleEmbedding(Operation):
         contract_rots = hyperparameters.get("contract_rots", False)
 
         if contract_rots:
-            warnings.warn(
-                "This method is not tested. Use at your own risk.", DeprecationWarning
-            )
+            warnings.warn("This method is not tested. Use at your own risk.", DeprecationWarning)
             op = partial(qml.math.einsum, "...ij,...jk->...ik")
             list_of_rots = [
                 [
@@ -79,9 +75,7 @@ class MAngleEmbedding(Operation):
         """
         n_params = qml.math.shape(params)[-1]
         if n_params % 2 != 0:
-            params = qml.math.concatenate(
-                [params, qml.math.zeros_like(params[..., :1])], axis=-1
-            )
+            params = qml.math.concatenate([params, qml.math.zeros_like(params[..., :1])], axis=-1)
         return params
 
     def __repr__(self):
@@ -103,9 +97,7 @@ class MAngleEmbedding(Operation):
         shape = qml.math.shape(features)[-1:]
         n_features = shape[0]
         if n_features > len(wires):
-            raise ValueError(
-                f"Features must be of length {len(wires)} or less; got length {n_features}."
-            )
+            raise ValueError(f"Features must be of length {len(wires)} or less; got length {n_features}.")
         self._rotations = rotations.split(",")
         self._hyperparameters = {
             "rotations": [ROT[r] for r in self._rotations],
@@ -195,9 +187,7 @@ class MAngleEmbeddings(Operation):
         """
         n_params = qml.math.shape(params)[-1]
         if n_params % 2 != 0:
-            params = qml.math.concatenate(
-                [params, qml.math.zeros_like(params[..., :1])], axis=-1
-            )
+            params = qml.math.concatenate([params, qml.math.zeros_like(params[..., :1])], axis=-1)
         return params
 
     def __repr__(self):

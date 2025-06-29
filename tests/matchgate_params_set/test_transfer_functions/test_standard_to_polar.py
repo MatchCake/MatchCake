@@ -1,30 +1,22 @@
 from typing import Literal
 
 import numpy as np
-import pytest
 import pennylane as qml
+import pytest
 
 from matchcake.matchgate_parameter_sets import transfer_functions
 from matchcake.matchgate_parameter_sets.transfer_functions import (
+    MatchgateComposedHamiltonianParams,
+    MatchgateHamiltonianCoefficientsParams,
     MatchgatePolarParams,
     MatchgateStandardParams,
-    MatchgateHamiltonianCoefficientsParams,
-    MatchgateComposedHamiltonianParams,
 )
-from matchcake.utils import (
-    PAULI_X,
-    PAULI_Z,
-)
-from ...configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
-    set_seed,
-)
+from matchcake.utils import PAULI_X, PAULI_Z
+
+from ...configs import N_RANDOM_TESTS_PER_CASE, TEST_SEED, set_seed
 
 MatchgatePolarParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
-MatchgateHamiltonianCoefficientsParams.ALLOW_COMPLEX_PARAMS = (
-    True  # TODO: remove this line
-)
+MatchgateHamiltonianCoefficientsParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 MatchgateComposedHamiltonianParams.ALLOW_COMPLEX_PARAMS = True  # TODO: remove this line
 
 set_seed(TEST_SEED)
@@ -72,9 +64,7 @@ set_seed(TEST_SEED)
         ),
         (
             MatchgateStandardParams(a=0, b=1, c=1, d=1, w=1, x=1, y=1, z=1),
-            MatchgatePolarParams(
-                r0=0, r1=1, theta0=0, theta1=0, theta2=0, theta3=0, theta4=0
-            ),
+            MatchgatePolarParams(r0=0, r1=1, theta0=0, theta1=0, theta2=0, theta3=0, theta4=0),
         ),
         (
             MatchgateStandardParams(a=0, b=1, c=1, d=1, w=0.5, x=1, y=1, z=1),
@@ -90,13 +80,9 @@ set_seed(TEST_SEED)
         ),
     ],
 )
-def test_standard_to_polar(
-    __from_params: MatchgateStandardParams, __to_params: MatchgatePolarParams
-):
+def test_standard_to_polar(__from_params: MatchgateStandardParams, __to_params: MatchgatePolarParams):
     to_params = transfer_functions.standard_to_polar(__from_params)
-    assert (
-        to_params == __to_params
-    ), f"Transfer function from {type(__from_params)} to {type(__to_params)} failed."
+    assert to_params == __to_params, f"Transfer function from {type(__from_params)} to {type(__to_params)} failed."
 
 
 @pytest.mark.parametrize(
@@ -116,9 +102,7 @@ def test_standard_to_polar_requires_grad_torch():
     except ImportError:
         pytest.skip("PyTorch not installed.")
     batch_size = 2
-    rn_tensor = torch.rand(
-        batch_size, MatchgateStandardParams.N_PARAMS, device="cpu", requires_grad=True
-    )
+    rn_tensor = torch.rand(batch_size, MatchgateStandardParams.N_PARAMS, device="cpu", requires_grad=True)
     __from_params = MatchgateStandardParams(rn_tensor)
     assert isinstance(__from_params.to_tensor(), torch.Tensor)
     assert __from_params.to_tensor().requires_grad
@@ -147,6 +131,4 @@ def test_standard_to_polar_interface(params, interface: Literal["numpy", "torch"
     from_params = params.to_interface(interface)
     to_params = transfer_functions.standard_to_polar(from_params)
     to_params_interface = qml.math.get_interface(to_params.to_vector())
-    assert (
-        to_params_interface == interface
-    ), f"Interface {to_params_interface} is not equal to {interface}."
+    assert to_params_interface == interface, f"Interface {to_params_interface} is not equal to {interface}."

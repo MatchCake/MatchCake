@@ -1,21 +1,18 @@
 from typing import Optional, Union
 
 from ...utils import get_all_subclasses
-
-from .optimizer_strategy import OptimizerStrategy
-from .adamw_strategy import *
 from .adam_strategy import *
+from .adamw_strategy import *
+from .genetic_strategy import *
+from .optimizer_strategy import OptimizerStrategy
 from .random_strategy import *
 from .scipy_strategies import *
-from .genetic_strategy import *
 from .simulated_annealing_strategy import *
 
 # from .fqaoa_simulated_annealing_strategy import *
 # from .grid_search_strategy import *
 
-optimizer_strategy_map = {
-    _cls.NAME.lower().strip(): _cls for _cls in get_all_subclasses(OptimizerStrategy)
-}
+optimizer_strategy_map = {_cls.NAME.lower().strip(): _cls for _cls in get_all_subclasses(OptimizerStrategy)}
 
 
 def get_optimizer_strategy(

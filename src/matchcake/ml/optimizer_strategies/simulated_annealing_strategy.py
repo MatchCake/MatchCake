@@ -1,13 +1,12 @@
 from copy import deepcopy
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
-from .optimizer_strategy import OptimizerStrategy
-from typing import Dict, Any, Callable, Optional, List
-
 import torch
 from pennylane.typing import TensorLike
 
-from ...utils.torch_utils import torch_wrap_circular_bounds, to_numpy
+from ...utils.torch_utils import to_numpy, torch_wrap_circular_bounds
+from .optimizer_strategy import OptimizerStrategy
 
 
 class SimulatedAnnealingStrategy(OptimizerStrategy):
@@ -64,16 +63,13 @@ class SimulatedAnnealingStrategy(OptimizerStrategy):
         callback: Optional[Callable[[], Any]] = None,
     ) -> TensorLike:
         if self.parameters is None:
-            raise ValueError(
-                f"{self.NAME} Optimizer has not been initialized. Call set_parameters() first."
-            )
+            raise ValueError(f"{self.NAME} Optimizer has not been initialized. Call set_parameters() first.")
 
         current_params_vector = deepcopy(self.params_vector)
         # candidate_vector = current_params_vector + torch.randn_like(current_params_vector) * self.learning_rate
         # candidate_vector = torch.clamp(candidate_vector, self.init_range_low, self.init_range_high)
         candidate_vector = torch_wrap_circular_bounds(
-            current_params_vector
-            + torch.randn_like(current_params_vector) * self.learning_rate,
+            current_params_vector + torch.randn_like(current_params_vector) * self.learning_rate,
             lower_bound=self.init_range_low,
             upper_bound=self.init_range_high,
         )
@@ -94,11 +90,7 @@ class SimulatedAnnealingStrategy(OptimizerStrategy):
             self.best_parameters = deepcopy(self.parameters)
             self.best_cost = candidate_loss
         if callback is not None:
-            callback(
-                postfix=dict(
-                    temperature=self.current_temperature, metropolis=metropolis
-                )
-            )
+            callback(postfix=dict(temperature=self.current_temperature, metropolis=metropolis))
         return candidate_loss
 
     def optimize(

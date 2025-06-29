@@ -1,70 +1,95 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
 name: Tests
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
-    branches: ["*"]
+    branches: [ "*" ]
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
+  actions: write
+  checks: write
+  statuses: write
+  issues: write
+  discussions: write
 
 jobs:
   Run-tests-on-Ubuntu:
     name: Run tests on Ubuntu-latest
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.10", "3.11", "3.12", ]
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3.10
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
         python -m venv ./venv
         . ./venv/bin/activate
         python -m pip install --upgrade pip
-        pip install pytest pytest-cov coverage-lcov pytest_json_report
         pip install poetry
-        poetry install --no-interaction --no-ansi
+        poetry install --with=dev --no-interaction --no-ansi
     - name: Test Linting
       run: |
         . ./venv/bin/activate
-        black src/matchcake --check --diff
-        black tests --check --diff
-    - name: Test Typing (Disable for now)
+        black src tests --check --diff
+        isort src tests --check-only --diff
+    - name: Test Typing
+      continue-on-error: true
       run: |
         . ./venv/bin/activate
-#        mypy src/matchcake
-#        mypy tests
+        mypy src tests
+    - name: Test Notebooks
+      run: |
+        . ./venv/bin/activate
+        pytest --nbmake tutorials -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
+
     - name: Test Unittests with pytest
       run: |
         . ./venv/bin/activate
-        python run_pytests.py tests --N_RANDOM_TESTS_PER_CASE=3 --run_slow=False
+        python run_pytests.py --tests_folder=tests --N_RANDOM_TESTS_PER_CASE=1 --no-run_slow --cov-report=xml:tests/.tmp/coverage.xml
+
+    - name: Code Coverage
+      uses: orgoro/coverage@v3.2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        coverageFile: tests/.tmp/coverage.xml
+        thresholdAll: 0.0
+        thresholdNew: 0.98
+        thresholdModified: 0.0
+
+    - name: Test Build
+      run: |
+        . ./venv/bin/activate
+        python -m build
+        twine check dist/*
 
   Run-tests-on-Windows:
     name: Run tests on Windows-latest
     runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: [ "3.10", "3.11", "3.12", ]
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3.10
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
         python -m venv ./venv
         . ./venv/Scripts/activate
         python -m pip install --upgrade pip
-        pip install pytest pytest-cov coverage-lcov pytest_json_report
         pip install poetry
-        poetry install --no-interaction --no-ansi
+        poetry install --with=dev --no-interaction --no-ansi
     - name: Test Unittests with pytest
       run: |
         . ./venv/Scripts/activate
-        python run_pytests.py tests --N_RANDOM_TESTS_PER_CASE=3 --run_slow=False
+        python run_pytests.py --tests_folder=tests --N_RANDOM_TESTS_PER_CASE=1 --no-run_slow

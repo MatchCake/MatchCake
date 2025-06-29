@@ -1,12 +1,12 @@
 import warnings
-from typing import Iterable, Union, Optional, Literal, List, Callable
+from typing import Callable, Iterable, List, Literal, Optional, Union
 
 from pennylane.wires import Wires
 
 from ...operations.matchgate_operation import MatchgateOperation
 from ...operations.single_particle_transition_matrices.single_particle_transition_matrix import (
-    _SingleParticleTransitionMatrix,
     SingleParticleTransitionMatrixOperation,
+    _SingleParticleTransitionMatrix,
 )
 
 
@@ -50,9 +50,7 @@ class _ContractionMatchgatesContainer:
     def sorted_values(self):
         return [self.op_container[key] for key in self.sorted_keys()]
 
-    def add(
-        self, op: Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]
-    ) -> bool:
+    def add(self, op: Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]) -> bool:
         """
         Add an operation to the container. If the operation is not compatible with the operations already in the
         container, an exception will be raised.
@@ -66,9 +64,7 @@ class _ContractionMatchgatesContainer:
         """
         raise NotImplementedError
 
-    def try_add(
-        self, op: Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]
-    ) -> bool:
+    def try_add(self, op: Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]) -> bool:
         try:
             return self.add(op)
         except _ContractionMatchgatesContainerAddException:
@@ -79,18 +75,14 @@ class _ContractionMatchgatesContainer:
 
     def extend(
         self,
-        ops: Iterable[
-            Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]
-        ],
+        ops: Iterable[Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]],
     ) -> None:
         for op in ops:
             self.add(op)
 
     def try_extend(
         self,
-        ops: Iterable[
-            Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]
-        ],
+        ops: Iterable[Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]],
     ) -> int:
         for i, op in enumerate(ops):
             if not self.try_add(op):

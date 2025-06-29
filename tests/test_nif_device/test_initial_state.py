@@ -1,23 +1,24 @@
+from functools import partial
 from typing import Tuple
 
 import numpy as np
-import pytest
 import pennylane as qml
-from matchcake import MatchgateOperation, NonInteractingFermionicDevice, Matchgate
+import pytest
+
+from matchcake import Matchgate, MatchgateOperation, NonInteractingFermionicDevice
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
-from functools import partial
+from matchcake.utils import PAULI_X, PAULI_Z
 
-from matchcake.utils import PAULI_Z, PAULI_X
-from . import devices_init
 from .. import get_slow_test_mark
 from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
-    TEST_SEED,
     ATOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
     set_seed,
 )
+from . import devices_init
 
 set_seed(TEST_SEED)
 
@@ -26,17 +27,11 @@ set_seed(TEST_SEED)
 @pytest.mark.slow
 @pytest.mark.parametrize(
     "initial_binary_state",
-    [
-        np.random.randint(0, 2, size=n)
-        for n in range(2, 10)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [np.random.randint(0, 2, size=n) for n in range(2, 10) for _ in range(N_RANDOM_TESTS_PER_CASE)],
 )
 def test_single_gate_circuit_analytic_probability_lt_vs_es(initial_binary_state):
     device = NonInteractingFermionicDevice(wires=len(initial_binary_state))
-    device.apply(
-        qml.BasisState(initial_binary_state, wires=range(len(initial_binary_state)))
-    )
+    device.apply(qml.BasisState(initial_binary_state, wires=range(len(initial_binary_state))))
     state = device.state
     binary_state = device.binary_state
     initial_state = utils.binary_state_to_state(initial_binary_state)

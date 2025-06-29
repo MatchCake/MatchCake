@@ -3,22 +3,23 @@ from functools import partial
 
 import numpy as np
 import pennylane as qml
-from pennylane.wires import Wires
-from pennylane.ops.qubit.observables import BasisStateProjector
 import pytest
+from pennylane.ops.qubit.observables import BasisStateProjector
+from pennylane.wires import Wires
 
-from matchcake import MatchgateOperation, utils
+from matchcake import MatchgateOperation
 from matchcake import matchgate_parameter_sets as mps
-from matchcake import operations
+from matchcake import operations, utils
 from matchcake.utils.torch_utils import to_numpy
-from . import devices_init
+
 from ..configs import (
-    TEST_SEED,
     ATOL_APPROX_COMPARISON,
-    RTOL_APPROX_COMPARISON,
-    set_seed,
     N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
+    TEST_SEED,
+    set_seed,
 )
+from . import devices_init
 
 set_seed(TEST_SEED)
 
@@ -88,13 +89,9 @@ def specific_matchgate_circuit(params_wires_list, initial_state=None, **kwargs):
         )
     ],
 )
-def test_multiples_matchgate_probs_with_qbit_device(
-    initial_binary_string, params_wires_list, contraction_strategy
-):
+def test_multiples_matchgate_probs_with_qbit_device(initial_binary_string, params_wires_list, contraction_strategy):
     initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
-    nif_device, qubit_device = devices_init(
-        wires=len(initial_binary_state), contraction_strategy=contraction_strategy
-    )
+    nif_device, qubit_device = devices_init(wires=len(initial_binary_state), contraction_strategy=contraction_strategy)
 
     nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
     qubit_qnode = qml.QNode(specific_matchgate_circuit, qubit_device)
@@ -147,9 +144,7 @@ def test_multiples_matchgate_probs_with_qbit_device(
         ("0000", [(mps.fSWAP, [0, 1]), (mps.fSWAP, [1, 2]), (mps.HellParams, [2, 3])]),
     ],
 )
-def test_multiples_matchgate_expval_with_qbit_device(
-    initial_binary_string, params_wires_list
-):
+def test_multiples_matchgate_expval_with_qbit_device(initial_binary_string, params_wires_list):
     initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
     nif_device, qubit_device = devices_init(wires=len(initial_binary_state))
 
@@ -200,9 +195,7 @@ def test_multiples_matchgate_expval_with_qbit_device(
         ("0000", [(mps.fSWAP, [0, 1]), (mps.fSWAP, [1, 2]), (mps.HellParams, [2, 3])]),
     ],
 )
-def test_multiples_matchgate_expval_with_qubit_device_with_h_transition(
-    initial_binary_string, params_wires_list
-):
+def test_multiples_matchgate_expval_with_qubit_device_with_h_transition(initial_binary_string, params_wires_list):
     initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
     nif_device, qubit_device = devices_init(wires=len(initial_binary_state))
 
@@ -255,9 +248,7 @@ def test_multiples_matchgate_expval_with_qubit_device_with_h_transition(
         ("0000", [(mps.fSWAP, [0, 1]), (mps.fSWAP, [1, 2]), (mps.HellParams, [2, 3])]),
     ],
 )
-def test_multiples_matchgate_probs_with_qubit_device_with_h_transition(
-    initial_binary_string, params_wires_list
-):
+def test_multiples_matchgate_probs_with_qubit_device_with_h_transition(initial_binary_string, params_wires_list):
     initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
     nif_device, qubit_device = devices_init(wires=len(initial_binary_state))
 
@@ -305,9 +296,7 @@ def test_multiples_matchgate_probs_with_qubit_device_with_h_transition(
 def test_multiples_matchgate_state_with_qbit_device_zyz(theta, contraction_strategy):
     initial_binary_string = "00"
     initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
-    nif_device, qubit_device = devices_init(
-        wires=len(initial_binary_state), contraction_strategy=contraction_strategy
-    )
+    nif_device, qubit_device = devices_init(wires=len(initial_binary_state), contraction_strategy=contraction_strategy)
 
     def circuit_state():
         operations.fRZZ(np.asarray([theta, theta]), wires=[0, 1])
@@ -322,9 +311,7 @@ def test_multiples_matchgate_state_with_qbit_device_zyz(theta, contraction_strat
         return qml.probs()
 
     qubit_state = qml.QNode(circuit_state, qubit_device)()
-    expected_state = np.asarray(
-        [np.exp(-1j * theta) * np.cos(theta / 2), 0, 0, np.sin(theta / 2)]
-    )
+    expected_state = np.asarray([np.exp(-1j * theta) * np.cos(theta / 2), 0, 0, np.sin(theta / 2)])
 
     np.testing.assert_allclose(
         qubit_state.squeeze(),

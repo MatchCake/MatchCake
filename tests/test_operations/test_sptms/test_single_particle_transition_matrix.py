@@ -1,36 +1,29 @@
 import numpy as np
-import pytest
-
 import pennylane as qml
+import pytest
 import torch
 from pennylane.ops.qubit.observables import BasisStateProjector
 
-from matchcake import utils, NonInteractingFermionicDevice
-from matchcake.operations import (
-    fRXX,
-    fRYY,
-    fRZZ,
-    FermionicRotation,
-    fSWAP,
-    fH,
-)
+from matchcake import NonInteractingFermionicDevice, utils
+from matchcake.operations import FermionicRotation, fH, fRXX, fRYY, fRZZ, fSWAP
 from matchcake.operations.single_particle_transition_matrices import (
+    SingleParticleTransitionMatrixOperation,
+    SptmFHH,
     SptmfRxRx,
     SptmFSwap,
-    SptmFHH,
     SptmIdentity,
-    SptmRzRz,
     SptmRyRy,
-    SingleParticleTransitionMatrixOperation,
+    SptmRzRz,
 )
 from matchcake.utils import torch_utils
 from matchcake.utils.math import circuit_matmul
+
 from ...configs import (
     ATOL_APPROX_COMPARISON,
-    RTOL_APPROX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
-    set_seed,
+    RTOL_APPROX_COMPARISON,
     TEST_SEED,
+    set_seed,
 )
 
 set_seed(TEST_SEED)
@@ -109,11 +102,7 @@ def test_sptm_rzrz_is_so4(theta, phi):
 
 @pytest.mark.parametrize(
     "theta",
-    [
-        np.full(batch_size, theta)
-        for batch_size in [1, 4]
-        for theta in SptmRzRz.EQUAL_ALLOWED_ANGLES
-    ],
+    [np.full(batch_size, theta) for batch_size in [1, 4] for theta in SptmRzRz.EQUAL_ALLOWED_ANGLES],
 )
 def test_sptm_rzrz_is_so4_equal_angles(theta):
     params = np.asarray([theta, theta]).reshape(-1, 2).squeeze()
@@ -328,11 +317,7 @@ def test_matchgate_equal_to_sptm_ryry_adjoint(theta, phi):
 )
 def test_sptm_sum_gradient_check(matrix):
     def sptm_sum(p):
-        return torch.sum(
-            SingleParticleTransitionMatrixOperation(
-                matrix=p, wires=np.arange(p.shape[-1] // 2)
-            ).matrix()
-        )
+        return torch.sum(SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2)).matrix())
 
     assert torch.autograd.gradcheck(
         sptm_sum,
@@ -352,9 +337,7 @@ def test_sptm_sum_gradient_check(matrix):
 )
 def test_sptm_init_gradient_check(matrix):
     def sptm_init(p):
-        return SingleParticleTransitionMatrixOperation(
-            matrix=p, wires=np.arange(p.shape[-1] // 2)
-        ).matrix()
+        return SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2)).matrix()
 
     assert torch.autograd.gradcheck(
         sptm_init,
@@ -376,9 +359,7 @@ def test_sptm_copy_gradient_check(matrix):
     def func(p):
         wires = np.arange(0, p.shape[-1] // 2, dtype=int)
         op = SingleParticleTransitionMatrixOperation(matrix=p, wires=wires)
-        new_op = SingleParticleTransitionMatrixOperation(
-            matrix=op.matrix(), wires=op.wires
-        )
+        new_op = SingleParticleTransitionMatrixOperation(matrix=op.matrix(), wires=op.wires)
         return new_op.matrix()
 
     assert torch.autograd.gradcheck(

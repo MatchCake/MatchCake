@@ -1,41 +1,41 @@
 import numpy as np
-import pytest
-
 import pennylane as qml
+import pytest
 import torch
 
 from matchcake import utils
 from matchcake.operations import (
+    FermionicRotation,
+    MatchgateOperation,
+    fH,
     fRXX,
     fRYY,
     fRZZ,
-    FermionicRotation,
     fSWAP,
-    fH,
-    MatchgateOperation,
 )
 from matchcake.operations.single_particle_transition_matrices import (
+    SingleParticleTransitionMatrixOperation,
+    SptmFHH,
     SptmfRxRx,
     SptmFSwap,
-    SptmFHH,
     SptmIdentity,
-    SptmRzRz,
     SptmRyRy,
-    SingleParticleTransitionMatrixOperation,
+    SptmRzRz,
 )
 from matchcake.utils import (
     MajoranaGetter,
-    recursive_kron,
     make_single_particle_transition_matrix_from_gate,
+    recursive_kron,
     torch_utils,
 )
 from matchcake.utils.math import circuit_matmul
+
 from ...configs import (
     ATOL_APPROX_COMPARISON,
-    RTOL_APPROX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
-    set_seed,
+    RTOL_APPROX_COMPARISON,
     TEST_SEED,
+    set_seed,
 )
 
 set_seed(TEST_SEED)
@@ -52,9 +52,7 @@ set_seed(TEST_SEED)
 )
 def test_matchgate_to_sptm_with_padding(active_wire0, n_wires):
     all_wires = qml.wires.Wires(list(range(n_wires)))
-    mg = MatchgateOperation.random(
-        wires=qml.wires.Wires([active_wire0, active_wire0 + 1])
-    )
+    mg = MatchgateOperation.random(wires=qml.wires.Wires([active_wire0, active_wire0 + 1]))
     padded_sptm = mg.to_sptm_operation().pad(wires=all_wires).matrix()
 
     # compute the sptm from the matchgate explicitly using tensor products

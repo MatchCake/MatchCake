@@ -2,38 +2,39 @@ import itertools
 import random
 
 import numpy as np
-import pytest
 import pennylane as qml
+import pytest
 from pennylane.wires import Wires
 
 from matchcake import utils
 from matchcake.base.lookup_table import NonInteractingFermionicLookupTable
+from matchcake.circuits import (
+    RandomSptmHaarOperationsGenerator,
+    RandomSptmOperationsGenerator,
+)
 from matchcake.devices import NIFDevice
 from matchcake.devices.contraction_strategies import contraction_strategy_map
-from matchcake.circuits import (
-    RandomSptmOperationsGenerator,
-    RandomSptmHaarOperationsGenerator,
-)
 from matchcake.operations import (
+    SptmFermionicSuperposition,
+    SptmFHH,
     SptmfRxRx,
     SptmFSwap,
-    SptmRzRz,
-    SptmIdentity,
-    SptmFHH,
-    SptmRyRy,
-    SptmFermionicSuperposition,
     SptmFSwapRzRz,
+    SptmIdentity,
+    SptmRyRy,
+    SptmRzRz,
 )
 from matchcake.utils.math import dagger, det
+
 from .. import get_slow_test_mark
-from ..test_nif_device import devices_init
 from ..configs import (
-    N_RANDOM_TESTS_PER_CASE,
     ATOL_MATRIX_COMPARISON,
+    N_RANDOM_TESTS_PER_CASE,
     RTOL_MATRIX_COMPARISON,
     TEST_SEED,
     set_seed,
 )
+from ..test_nif_device import devices_init
 
 set_seed(TEST_SEED)
 
@@ -63,12 +64,8 @@ set_seed(TEST_SEED)
         ]
     ],
 )
-def test_global_sptm_unitary(
-    operations_generator: RandomSptmOperationsGenerator, contraction_strategy
-):
-    nif_device = NIFDevice(
-        wires=operations_generator.wires, contraction_strategy=contraction_strategy
-    )
+def test_global_sptm_unitary(operations_generator: RandomSptmOperationsGenerator, contraction_strategy):
+    nif_device = NIFDevice(wires=operations_generator.wires, contraction_strategy=contraction_strategy)
     nif_device.execute_generator(
         operations_generator,
         n_ops=operations_generator.n_ops,
@@ -117,12 +114,8 @@ def test_global_sptm_unitary(
         ]
     ],
 )
-def test_global_sptm_det(
-    operations_generator: RandomSptmOperationsGenerator, contraction_strategy
-):
-    nif_device = NIFDevice(
-        wires=operations_generator.wires, contraction_strategy=contraction_strategy
-    )
+def test_global_sptm_det(operations_generator: RandomSptmOperationsGenerator, contraction_strategy):
+    nif_device = NIFDevice(wires=operations_generator.wires, contraction_strategy=contraction_strategy)
     nif_device.execute_generator(
         operations_generator,
         n_ops=operations_generator.n_ops,
@@ -168,17 +161,11 @@ def test_global_sptm_det(
                 SptmFSwap(wires=[2, 3]),
             ],
             sum(
-                [
-                    [SptmfRxRx.random(wires=[0, 1]), SptmFSwap(wires=[0, 1])]
-                    for _ in range(10)
-                ],
+                [[SptmfRxRx.random(wires=[0, 1]), SptmFSwap(wires=[0, 1])] for _ in range(10)],
                 start=[],
             ),
             sum(
-                [
-                    [SptmfRxRx.random(wires=[i, i + 1]), SptmFSwap(wires=[0, i + 1])]
-                    for i in range(10)
-                ],
+                [[SptmfRxRx.random(wires=[i, i + 1]), SptmFSwap(wires=[0, i + 1])] for i in range(10)],
                 start=[],
             ),
             sum(
