@@ -1,0 +1,29 @@
+matchcake.ml.torch\_models package
+==================================
+
+Submodules
+----------
+
+matchcake.ml.torch\_models.nif\_torch\_model module
+---------------------------------------------------
+
+.. automodule:: matchcake.ml.torch_models.nif_torch_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.ml.torch\_models.torch\_model module
+----------------------------------------------
+
+.. automodule:: matchcake.ml.torch_models.torch_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: matchcake.ml.torch_models
+   :members:
+   :undoc-members:
+   :show-inheritance:

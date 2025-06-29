@@ -1,0 +1,45 @@
+matchcake.ml.kernels package
+============================
+
+Submodules
+----------
+
+matchcake.ml.kernels.fermionic\_pqc\_kernel module
+--------------------------------------------------
+
+.. automodule:: matchcake.ml.kernels.fermionic_pqc_kernel
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.ml.kernels.kernel\_utils module
+-----------------------------------------
+
+.. automodule:: matchcake.ml.kernels.kernel_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.ml.kernels.ml\_kernel module
+--------------------------------------
+
+.. automodule:: matchcake.ml.kernels.ml_kernel
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.ml.kernels.nif\_kernel module
+---------------------------------------
+
+.. automodule:: matchcake.ml.kernels.nif_kernel
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: matchcake.ml.kernels
+   :members:
+   :undoc-members:
+   :show-inheritance:
