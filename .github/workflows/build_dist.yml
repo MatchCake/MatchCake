@@ -26,13 +26,16 @@ jobs:
       with:
         python-version: "3.10"
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.9.2"
+        python-version: "3.10"
+        enable-cache: true
     - name: Install dependencies
       run: |
-        python -m venv ./venv
-        . ./venv/bin/activate
-        python -m pip install --upgrade pip
-        pip install poetry
-        poetry install --with=dev --no-interaction --no-ansi
+        uv venv .venv
+        uv sync --locked --dev --extra cpu
 
     - name: Gather new package version
       id: version
@@ -45,14 +48,12 @@ jobs:
 
     - name: Bump package version in pyproject.toml
       run: |
-        . ./venv/bin/activate
-        poetry version ${{steps.version.outputs.new_tag}}
+        uv version ${{steps.version.outputs.new_tag}}
 
     - name: Build dist
       run: |
-        . ./venv/bin/activate
-        python -m build
-        twine check dist/*
+        uv run python -m build --sdist --wheel --no-isolation --outdir dist/ .
+        uv run twine check dist/*
 
     - name: Commit updated pyproject.toml
       run: |
