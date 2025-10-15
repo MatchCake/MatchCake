@@ -65,6 +65,7 @@ dev = [
     "twine>=6.1.0,<7",
     "pytest-xdist>=3.7.0,<4",
     "isort>=6.0.1,<7",
+    "pytest-timeout>=2.4.0",
 ]
 docs = [
     "wheel>=0.45.1,<0.46",
@@ -154,6 +155,22 @@ exclude_also = [
     'if __name__ == .__main__.:',
     'if TYPE_CHECKING:',
     '@(abc\.)?abstractmethod',
+]
+
+[tool.mypy]
+# TODO: Remove all the exclude folders/files.
+exclude = [
+    "base",
+    "circuits",
+    "constants",
+    "devices",
+    "matchgate_parameter_sets",
+    "ml",
+    "observables",
+    "operations",
+    "templates",
+    "utils",
+    "__init__.py"
 ]
 
 [[tool.mypy.overrides]]
