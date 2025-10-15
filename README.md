@@ -28,6 +28,9 @@ Machine (SVM). In the [benchmark/classification](benchmark/classification/README
 find some scripts that use SVM with matchcircuits as a kernel to classify the Iris dataset, the Breast Cancer dataset, 
 and the Digits dataset in polynomial time with high accuracy.
 
+Note that this package is built on PennyLane and PyTorch. This means that only the NumPy and PyTorch backends are compatible.
+Other backends provided by Autoray, such as JAX and TensorFlow, are not supported.
+We highly recommend using PyTorch as the backend when working with MatchCake.
 
 
 # Installation
@@ -35,12 +38,13 @@ and the Digits dataset in polynomial time with high accuracy.
 | Method     | Commands                                                 |
 |------------|----------------------------------------------------------|
 | **poetry** | `poetry add matchcake`                                   |
+| **uv**     | `uv add matchcake`                                       |
 | **PyPi**   | `pip install MatchCake`                                  |
 | **source** | `pip install git+https://github.com/MatchCake/MatchCake` |
 
 
 ### Last unstable version
-To install the latest unstable version, download the latest version of the .whl file and follow the instructions above.
+To install the latest unstable version, download the latest version from `https://github.com/MatchCake/MatchCake@dev`.
 
 
 

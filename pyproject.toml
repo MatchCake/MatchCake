@@ -22,7 +22,6 @@ dependencies = [
     "scipy (>=1.11.4,<=2)",
     "matplotlib (>=3.8.0)",
     "networkx (>=3.1,<4.0)",
-    "pfapack (>=0.3.1,<0.4.0)",
     "pythonbasictools (>=0.0.1a10)",
     "sympy (>=1.12,<2.0)",
     "tqdm (>=4.66.1)",
@@ -160,6 +159,7 @@ exclude_also = [
 [tool.mypy]
 # TODO: Remove all the exclude folders/files.
 exclude = [
+    # Package
     "base",
     "circuits",
     "constants",
@@ -169,8 +169,24 @@ exclude = [
     "observables",
     "operations",
     "templates",
-    "utils",
-    "__init__.py"
+    "utils/__init__.py",
+    "utils/constants",
+    "utils/cuda",
+    "utils/majorana",
+    "utils/math",
+    "utils/operators",
+    "utils/torch_utils",
+    "__init__.py",
+    # Tests
+    "tests/matchgate_params_set",
+    "tests/test_ml",
+    "tests/test_nif_device",
+    "tests/test_operations",
+    "tests/test_utils/test_orthonormalize.py",
+    "tests/test_logm.py",
+    "tests/test_lookup_table.py",
+    "tests/test_matchgate.py",
+    "tests/test_matchgate_operation.py",
 ]
 
 [[tool.mypy.overrides]]
@@ -188,6 +204,7 @@ module = [
     "pennylane.ops",
     "pennylane.numpy",
     "pennylane.ops.op_math.linear_combination",
+    "pennylane.math",
     # Scikit-learn
     "sklearn",
     "sklearn.base",

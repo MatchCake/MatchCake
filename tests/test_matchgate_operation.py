@@ -1,11 +1,11 @@
 import numpy as np
 import pennylane as qml
 import pytest
-from pfapack import pfaffian
 
 from matchcake import Matchgate, MatchgateOperation, NonInteractingFermionicDevice
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
+from matchcake.utils import pfaffian
 from matchcake.utils.math import dagger, det
 
 from .configs import (
@@ -107,8 +107,8 @@ def test_single_matchgate_obs_on_specific_cases(params, k, binary_state, observa
     nif_device.apply(MatchgateOperation(params, wires=[0, 1]))
     state = utils.binary_state_to_state(binary_state)
     pred_obs = nif_device.lookup_table.get_observable(k, state)
-    pred_pf = pfaffian.pfaffian(pred_obs)
-    pf = pfaffian.pfaffian(observable)
+    pred_pf = pfaffian(pred_obs)
+    pf = pfaffian(observable)
     np.testing.assert_allclose(
         pred_obs,
         observable,

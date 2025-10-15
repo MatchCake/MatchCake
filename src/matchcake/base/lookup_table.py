@@ -7,10 +7,10 @@ import numpy as np
 import pennylane as qml
 import tqdm
 from pennylane import numpy as pnp
+from pennylane.typing import TensorLike
 from scipy import sparse
 
 from .. import utils
-from ..templates import TensorLike
 
 
 class NonInteractingFermionicLookupTable:

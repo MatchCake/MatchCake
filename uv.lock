@@ -1074,7 +1074,6 @@ dependencies = [
     { name = "pandas" },
     { name = "pennylane" },
     { name = "pennylane-lightning" },
-    { name = "pfapack" },
     { name = "psutil" },
     { name = "pylint" },
     { name = "pythonbasictools" },
@@ -1145,7 +1144,6 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.1.0" },
     { name = "pennylane", specifier = ">=0.39.0,<=0.41.1" },
     { name = "pennylane-lightning", specifier = ">=0.39.0,<=0.41.1" },
-    { name = "pfapack", specifier = ">=0.3.1,<0.4.0" },
     { name = "psutil", specifier = ">=5.9.6" },
     { name = "pylint", specifier = ">=3.1.0" },
     { name = "pythonbasictools", specifier = ">=0.0.1a10" },
@@ -1859,19 +1857,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9e/c3/059298687310d527a58bb01f3b1965787ee3b40dce76752eda8b44e9a2c5/pexpect-4.9.0-py2.py3-none-any.whl", hash = "sha256:7236d1e080e4936be2dc3e326cec0af72acf9212a7e1d060210e70a47e253523", size = 63772, upload-time = "2023-11-25T06:56:14.81Z" },
-]
-
-[[package]]
-name = "pfapack"
-version = "0.3.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-    { name = "scipy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/2e/7d0f0b638160e8826c0d233d06439021a358b55d843987f57889d1c31950/pfapack-0.3.1.tar.gz", hash = "sha256:7f2efe474f35f5c51e9c00789c0f0aeaa0d4495e75a3a23fc023914df4f95a51", size = 13008, upload-time = "2021-09-17T17:19:39.672Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/fd/6b/475e7ecc5a66cbc87f7a9f54ba92eea0f7d11a7e39d1d1dcc23eac39bbf3/pfapack-0.3.1-py3-none-any.whl", hash = "sha256:09eac9a2101b8cab99910711e182201f596602733e48255329cb3ff2ae0cbed6", size = 12789, upload-time = "2021-09-17T17:19:37.914Z" },
 ]
 
 [[package]]

@@ -96,32 +96,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     :keyword star_state_finding_strategy: The strategy to find the star state.
     :type star_state_finding_strategy: Union[str, StarStateFindingStrategy]
 
-    :ivar prob_strategy: The strategy to compute the probabilities
-    :vartype prob_strategy: str
-    :ivar majorana_getter: The Majorana getter to use
-    :vartype majorana_getter: MajoranaGetter
-    :ivar contraction_method: The contraction method to use
-    :vartype contraction_method: Optional[str]
-    :ivar pfaffian_method: The method to compute the Pfaffian
-    :vartype pfaffian_method: str
-    :ivar n_workers: The number of workers to use for multiprocessing
-    :vartype n_workers: int
-    :ivar basis_state_index: The index of the basis state
-    :vartype basis_state_index: int
-    :ivar sparse_state: The sparse state of the device
-    :vartype sparse_state: sparse.coo_array
-    :ivar state: The state of the device
-    :vartype state: np.ndarray
-    :ivar is_state_initialized: Whether the state is initialized
-    :vartype is_state_initialized: bool
-    :ivar transition_matrix: The transition matrix of the device
-    :vartype transition_matrix: np.ndarray
-    :ivar lookup_table: The lookup table of the device
-    :vartype lookup_table: NonInteractingFermionicLookupTable
-    :ivar memory_usage: The memory usage of the device
-    :vartype memory_usage: int
-
-
     :Note: This device is a simulator for non-interacting fermions. It is based on the ``default.qubit`` device.
     :Note: This device supports batch execution.
     :Note: This device is in development, and its API is subject to change.
@@ -162,7 +136,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     DEFAULT_CONTRACTION_METHOD = "neighbours"
     DEFAULT_SAMPLING_STRATEGY = "2QubitBy2QubitSampling"
     DEFAULT_STAR_STATE_FINDING_STRATEGY = "FromSampling"
-    pfaffian_methods = {"det", "bLTL", "bH", "cuda_det", "PfaffianFDBPf"}
+    pfaffian_methods = {"det", "cuda_det", "PfaffianFDBPf"}
     DEFAULT_PFAFFIAN_METHOD = "det"
 
     casting_priorities = [
@@ -298,163 +272,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
         self.show_progress = kwargs.get("show_progress", self.p_bar is not None)
         self.apply_metadata = defaultdict()
-
-    @property
-    def binary_state(self) -> np.ndarray:
-        if self._binary_state is not None:
-            return self._binary_state
-        elif self._basis_state_index is not None:
-            return binary_string_to_vector(np.binary_repr(self._basis_state_index, width=self.num_wires))
-        raise ValueError("The state doesn't seem to be initialized.")
-
-    @binary_state.setter
-    def binary_state(self, value):
-        self._basis_state_index = None
-        self._sparse_state = None
-        self._state = None
-        if isinstance(value, str):
-            value = binary_string_to_vector(value)
-        else:
-            value = np.asarray(value)
-        if value.size != self.num_wires:
-            raise ValueError(
-                f"Got state of length {value.size} while setting binary state of the "
-                f"{self.__class__.__name__} device. Expected length of {self.num_wires}."
-            )
-        self._binary_state = value
-
-    @property
-    def basis_state_index(self) -> int:
-        if self._basis_state_index is None:
-            if self._sparse_state is not None:
-                return self._sparse_state.indices[0]
-            assert self._state is not None, "The state is not initialized."
-            return np.argmax(np.abs(self.state))
-        return self._basis_state_index
-
-    @property
-    def sparse_state(self) -> sparse.coo_array:
-        if self._sparse_state is None:
-            if self._basis_state_index is not None:
-                return self._create_basis_sparse_state(self._basis_state_index)
-            assert self._state is not None, "The state is not initialized."
-            return sparse.coo_array(self.state)
-        self._sparse_state.reshape((-1, 2**self.num_wires))
-        # if self._sparse_state.shape[0] == 1:
-        #     self._sparse_state = self._sparse_state.reshape(-1)
-        return self._sparse_state
-
-    @property
-    def state(self) -> np.ndarray:
-        """
-        Return the state of the device.
-
-        :return: state vector of the device
-        :rtype: array[complex]
-
-        :Note: This function comes from the ``default.qubit`` device.
-        """
-        if self._state is None:
-            if self._basis_state_index is not None:
-                pre_state = self._create_basis_state(self._basis_state_index)
-            elif self._binary_state is not None:
-                pre_state = binary_state_to_state(self._binary_state)
-            else:
-                assert self._sparse_state is not None, "The sparse state is not initialized."
-                pre_state = self.sparse_state.toarray()
-        else:
-            pre_state = self._pre_rotated_state
-        dim = 2**self.num_wires
-        batch_size = self._get_batch_size(pre_state, (2,) * self.num_wires, dim)
-        # Do not flatten the state completely but leave the broadcasting dimension if there is one
-        shape = (batch_size, dim) if batch_size is not None else (dim,)
-        return self._reshape(pre_state, shape)
-
-    @property
-    def is_state_initialized(self) -> bool:
-        state_attrs = [
-            self._state,
-            self._sparse_state,
-            self._basis_state_index,
-            self._binary_state,
-        ]
-        return any([s is not None for s in state_attrs])
-
-    @property
-    def transition_matrix(self):
-        if self._transition_matrix is None and self.global_sptm is not None:
-            self._transition_matrix = utils.make_transition_matrix_from_action_matrix(self.global_sptm.matrix())
-        return self._transition_matrix
-
-    @transition_matrix.setter
-    def transition_matrix(self, value):
-        if self._transition_matrix is not None and value is not None:
-            value = convert_and_cast_like(value, self._transition_matrix)
-        self._transition_matrix = value
-        self._lookup_table = None
-
-    @property
-    def global_sptm(self) -> Optional[SingleParticleTransitionMatrixOperation]:
-        if self._global_sptm is None:
-            matrix = np.eye(2 * self.num_wires)[None, ...]
-            if not self._batched:
-                matrix = matrix[0]
-            return SingleParticleTransitionMatrixOperation(matrix, wires=self.wires)
-        return self._global_sptm
-
-    @global_sptm.setter
-    def global_sptm(self, value):
-        if isinstance(value, Operation):
-            value = SingleParticleTransitionMatrixOperation.from_operation(value)
-        if not isinstance(value, SingleParticleTransitionMatrixOperation):
-            value = SingleParticleTransitionMatrixOperation(value, wires=self.wires)
-        self._global_sptm = value
-        self.transition_matrix = None
-
-    @property
-    def lookup_table(self):
-        if self.transition_matrix is None:
-            return None
-        if self._lookup_table is None:
-            self._lookup_table = NonInteractingFermionicLookupTable(self.transition_matrix)
-        return self._lookup_table
-
-    @property
-    def memory_usage(self):
-        mem = 0
-        if self._basis_state_index is not None:
-            arr = np.asarray([self._basis_state_index])
-            mem += arr.size * arr.dtype.itemsize
-        if self._state is not None:
-            mem += self._state.size * self._state.dtype.itemsize
-        if self._sparse_state is not None:
-            mem += self._sparse_state.data.size * self._sparse_state.data.dtype.itemsize
-            mem += self._sparse_state.indices.size * self._sparse_state.indices.dtype.itemsize
-            mem += self._sparse_state.indptr.size * self._sparse_state.indptr.dtype.itemsize
-        if self._pre_rotated_state is not None:
-            mem += self._pre_rotated_state.size * self._pre_rotated_state.dtype.itemsize
-        if self._pre_rotated_sparse_state is not None:
-            mem += self._pre_rotated_sparse_state.data.size * self._pre_rotated_sparse_state.data.dtype.itemsize
-            mem += self._pre_rotated_sparse_state.indices.size * self._pre_rotated_sparse_state.indices.dtype.itemsize
-            mem += self._pre_rotated_sparse_state.indptr.size * self._pre_rotated_sparse_state.indptr.dtype.itemsize
-        if self._transition_matrix is not None:
-            size = qml.math.prod(qml.math.shape(self._transition_matrix))
-            mem += size * self._transition_matrix.dtype.itemsize
-        if self._lookup_table is not None:
-            mem += self._lookup_table.memory_usage
-        return mem
-
-    @property
-    def star_state(self):
-        return self._star_state
-
-    @property
-    def star_probability(self):
-        return self._star_probability
-
-    @property
-    def samples(self):
-        return self._samples
 
     def get_sparse_or_dense_state(
         self,
@@ -730,74 +547,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             is_applied = False
         return is_applied
 
-    def gather_single_particle_transition_matrix(self, operation):
-        """
-        Gather the single particle transition matrix of a given operation.
-
-        :param operation: The operation to gather the single particle transition matrix from
-        :return: The single particle transition matrix of the operation
-        """
-        if isinstance(operation, qml.Identity):
-            return None
-
-        if isinstance(operation, _SingleParticleTransitionMatrix):
-            return operation.pad(self.wires).matrix()
-
-        assert operation.name in self.operations, f"Operation {operation.name} is not supported."
-        op_r = None
-        if isinstance(operation, MatchgateOperation):
-            op_r = operation.get_padded_single_particle_transition_matrix(self.wires)
-        return op_r
-
-    def gather_single_particle_transition_matrices(self, operations) -> list:
-        """
-        Gather the single particle transition matrices of a list of operations.
-
-        :param operations: The operations to gather the single particle transition matrices from
-        :return: The single particle transition matrices of the operations
-        """
-        single_particle_transition_matrices = []
-        for operation in operations:
-            op_r = self.gather_single_particle_transition_matrix(operation)
-            if op_r is not None:
-                single_particle_transition_matrices.append(op_r)
-        return single_particle_transition_matrices
-
-    def gather_single_particle_transition_matrices_mp(self, operations) -> list:
-        """
-        Gather the single particle transition matrices of a list of operations. Will use multiprocessing if the number
-        of workers is different from 0.
-
-        :param operations: The operations to gather the single particle transition matrices from
-        :return: The single particle transition matrices of the operations
-        """
-        if len(operations) == 1:
-            return [self.gather_single_particle_transition_matrix(operations[0])]
-        n_processes = self.n_workers
-        if self.n_workers == -1:
-            n_processes = psutil.cpu_count(logical=True)
-        elif self.n_workers == -2:
-            n_processes = psutil.cpu_count(logical=False)
-        elif self.n_workers < 0:
-            raise ValueError("The number of workers must be greater or equal than 0 or in [0, -2].")
-
-        if n_processes == 0 or n_processes == 1:
-            return self.gather_single_particle_transition_matrices(operations)
-
-        op_indices_splits = np.array_split(range(len(operations)), n_processes)
-        op_splits = [
-            [operations[i] for i in op_indices_split]
-            for op_indices_split in op_indices_splits
-            if len(op_indices_split) > 0
-        ]
-        sptm_outputs = pbt.apply_func_multiprocess(
-            func=self.gather_single_particle_transition_matrices,
-            iterable_of_args=[(op_split,) for op_split in op_splits],
-            nb_workers=n_processes,
-            verbose=False,
-        )
-        return list(itertools.chain(*sptm_outputs))
-
     def apply(self, operations, rotations=None, **kwargs):
         """
         This method applies a list of operations to the device. It will update the ``_transition_matrix`` attribute
@@ -884,6 +633,76 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self.close_p_bar()
         return self
 
+    # START OF MP: TODO: Do we remove the MP methods? Do we really need this?
+
+    def gather_single_particle_transition_matrix(self, operation):
+        """
+        Gather the single particle transition matrix of a given operation.
+
+        :param operation: The operation to gather the single particle transition matrix from
+        :return: The single particle transition matrix of the operation
+        """
+        if isinstance(operation, qml.Identity):
+            return None
+
+        if isinstance(operation, _SingleParticleTransitionMatrix):
+            return operation.pad(self.wires).matrix()
+
+        assert operation.name in self.operations, f"Operation {operation.name} is not supported."
+        op_r = None
+        if isinstance(operation, MatchgateOperation):
+            op_r = operation.get_padded_single_particle_transition_matrix(self.wires)
+        return op_r
+
+    def gather_single_particle_transition_matrices(self, operations) -> list:
+        """
+        Gather the single particle transition matrices of a list of operations.
+
+        :param operations: The operations to gather the single particle transition matrices from
+        :return: The single particle transition matrices of the operations
+        """
+        single_particle_transition_matrices = []
+        for operation in operations:
+            op_r = self.gather_single_particle_transition_matrix(operation)
+            if op_r is not None:
+                single_particle_transition_matrices.append(op_r)
+        return single_particle_transition_matrices
+
+    def gather_single_particle_transition_matrices_mp(self, operations) -> list:
+        """
+        Gather the single particle transition matrices of a list of operations. Will use multiprocessing if the number
+        of workers is different from 0.
+
+        :param operations: The operations to gather the single particle transition matrices from
+        :return: The single particle transition matrices of the operations
+        """
+        if len(operations) == 1:
+            return [self.gather_single_particle_transition_matrix(operations[0])]
+        n_processes = self.n_workers
+        if self.n_workers == -1:
+            n_processes = psutil.cpu_count(logical=True)
+        elif self.n_workers == -2:
+            n_processes = psutil.cpu_count(logical=False)
+        elif self.n_workers < 0:
+            raise ValueError("The number of workers must be greater or equal than 0 or in [0, -2].")
+
+        if n_processes == 0 or n_processes == 1:
+            return self.gather_single_particle_transition_matrices(operations)
+
+        op_indices_splits = np.array_split(range(len(operations)), n_processes)
+        op_splits = [
+            [operations[i] for i in op_indices_split]
+            for op_indices_split in op_indices_splits
+            if len(op_indices_split) > 0
+        ]
+        sptm_outputs = pbt.apply_func_multiprocess(
+            func=self.gather_single_particle_transition_matrices,
+            iterable_of_args=[(op_split,) for op_split in op_splits],
+            nb_workers=n_processes,
+            verbose=False,
+        )
+        return list(itertools.chain(*sptm_outputs))
+
     def prod_single_particle_transition_matrices_mp(self, sptm_list):
         """
         Compute the product of the single particle transition matrices of a list of
@@ -954,6 +773,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
 
         assert rotations is None or np.asarray([rotations]).size == 0, "Rotations are not supported"
         self.global_sptm = global_single_particle_transition_matrix
+
+    # END OF MP
 
     def get_state_probability(self, target_binary_state: TensorLike, wires: Optional[Wires] = None):
         if not self.is_state_initialized:
@@ -1321,3 +1142,160 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     def close_p_bar(self):
         if self.p_bar is not None:
             self.p_bar.close()
+
+    @property
+    def binary_state(self) -> np.ndarray:
+        if self._binary_state is not None:
+            return self._binary_state
+        elif self._basis_state_index is not None:
+            return binary_string_to_vector(np.binary_repr(self._basis_state_index, width=self.num_wires))
+        raise ValueError("The state doesn't seem to be initialized.")
+
+    @binary_state.setter
+    def binary_state(self, value):
+        self._basis_state_index = None
+        self._sparse_state = None
+        self._state = None
+        if isinstance(value, str):
+            value = binary_string_to_vector(value)
+        else:
+            value = np.asarray(value)
+        if value.size != self.num_wires:
+            raise ValueError(
+                f"Got state of length {value.size} while setting binary state of the "
+                f"{self.__class__.__name__} device. Expected length of {self.num_wires}."
+            )
+        self._binary_state = value
+
+    @property
+    def basis_state_index(self) -> int:
+        if self._basis_state_index is None:
+            if self._sparse_state is not None:
+                return self._sparse_state.indices[0]
+            assert self._state is not None, "The state is not initialized."
+            return np.argmax(np.abs(self.state))
+        return self._basis_state_index
+
+    @property
+    def sparse_state(self) -> sparse.coo_array:
+        if self._sparse_state is None:
+            if self._basis_state_index is not None:
+                return self._create_basis_sparse_state(self._basis_state_index)
+            assert self._state is not None, "The state is not initialized."
+            return sparse.coo_array(self.state)
+        self._sparse_state.reshape((-1, 2**self.num_wires))
+        # if self._sparse_state.shape[0] == 1:
+        #     self._sparse_state = self._sparse_state.reshape(-1)
+        return self._sparse_state
+
+    @property
+    def state(self) -> np.ndarray:
+        """
+        Return the state of the device.
+
+        :return: state vector of the device
+        :rtype: array[complex]
+
+        :Note: This function comes from the ``default.qubit`` device.
+        """
+        if self._state is None:
+            if self._basis_state_index is not None:
+                pre_state = self._create_basis_state(self._basis_state_index)
+            elif self._binary_state is not None:
+                pre_state = binary_state_to_state(self._binary_state)
+            else:
+                assert self._sparse_state is not None, "The sparse state is not initialized."
+                pre_state = self.sparse_state.toarray()
+        else:
+            pre_state = self._pre_rotated_state
+        dim = 2**self.num_wires
+        batch_size = self._get_batch_size(pre_state, (2,) * self.num_wires, dim)
+        # Do not flatten the state completely but leave the broadcasting dimension if there is one
+        shape = (batch_size, dim) if batch_size is not None else (dim,)
+        return self._reshape(pre_state, shape)
+
+    @property
+    def is_state_initialized(self) -> bool:
+        state_attrs = [
+            self._state,
+            self._sparse_state,
+            self._basis_state_index,
+            self._binary_state,
+        ]
+        return any([s is not None for s in state_attrs])
+
+    @property
+    def transition_matrix(self):
+        if self._transition_matrix is None and self.global_sptm is not None:
+            self._transition_matrix = utils.make_transition_matrix_from_action_matrix(self.global_sptm.matrix())
+        return self._transition_matrix
+
+    @transition_matrix.setter
+    def transition_matrix(self, value):
+        if self._transition_matrix is not None and value is not None:
+            value = convert_and_cast_like(value, self._transition_matrix)
+        self._transition_matrix = value
+        self._lookup_table = None
+
+    @property
+    def global_sptm(self) -> Optional[SingleParticleTransitionMatrixOperation]:
+        if self._global_sptm is None:
+            matrix = np.eye(2 * self.num_wires)[None, ...]
+            if not self._batched:
+                matrix = matrix[0]
+            return SingleParticleTransitionMatrixOperation(matrix, wires=self.wires)
+        return self._global_sptm
+
+    @global_sptm.setter
+    def global_sptm(self, value):
+        if isinstance(value, Operation):
+            value = SingleParticleTransitionMatrixOperation.from_operation(value)
+        if not isinstance(value, SingleParticleTransitionMatrixOperation):
+            value = SingleParticleTransitionMatrixOperation(value, wires=self.wires)
+        self._global_sptm = value
+        self.transition_matrix = None
+
+    @property
+    def lookup_table(self):
+        if self.transition_matrix is None:
+            return None
+        if self._lookup_table is None:
+            self._lookup_table = NonInteractingFermionicLookupTable(self.transition_matrix)
+        return self._lookup_table
+
+    @property
+    def memory_usage(self):
+        mem = 0
+        if self._basis_state_index is not None:
+            arr = np.asarray([self._basis_state_index])
+            mem += arr.size * arr.dtype.itemsize
+        if self._state is not None:
+            mem += self._state.size * self._state.dtype.itemsize
+        if self._sparse_state is not None:
+            mem += self._sparse_state.data.size * self._sparse_state.data.dtype.itemsize
+            mem += self._sparse_state.indices.size * self._sparse_state.indices.dtype.itemsize
+            mem += self._sparse_state.indptr.size * self._sparse_state.indptr.dtype.itemsize
+        if self._pre_rotated_state is not None:
+            mem += self._pre_rotated_state.size * self._pre_rotated_state.dtype.itemsize
+        if self._pre_rotated_sparse_state is not None:
+            mem += self._pre_rotated_sparse_state.data.size * self._pre_rotated_sparse_state.data.dtype.itemsize
+            mem += self._pre_rotated_sparse_state.indices.size * self._pre_rotated_sparse_state.indices.dtype.itemsize
+            mem += self._pre_rotated_sparse_state.indptr.size * self._pre_rotated_sparse_state.indptr.dtype.itemsize
+        if self._transition_matrix is not None:
+            size = qml.math.prod(qml.math.shape(self._transition_matrix))
+            mem += size * self._transition_matrix.dtype.itemsize
+        if self._lookup_table is not None:
+            mem += self._lookup_table.memory_usage
+        return mem
+
+    @property
+    def star_state(self):
+        return self._star_state
+
+    @property
+    def star_probability(self):
+        return self._star_probability
+
+    @property
+    def samples(self):
+        return self._samples
