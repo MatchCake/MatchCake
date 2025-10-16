@@ -155,6 +155,23 @@ Fund.
 
 
 # Citation
+
+[IEEE Xplore paper](https://ieeexplore.ieee.org/document/10821385):
+```
+@INPROCEEDINGS{10821385,
+  author={Gince, Jérémie and Pagé, Jean-Michel and Armenta, Marco and Sarkar, Ayana and Kourtis, Stefanos},
+  booktitle={2024 IEEE International Conference on Quantum Computing and Engineering (QCE)}, 
+  title={Fermionic Machine Learning}, 
+  year={2024},
+  volume={01},
+  number={},
+  pages={1672-1678},
+  keywords={Runtime;Quantum entanglement;Computational modeling;Benchmark testing;Rendering (computer graphics);Hardware;Kernel;Integrated circuit modeling;Quantum circuit;Standards;Quantum machine learning;quantum kernel methods;matchgate circuits;fermionic quantum computation;data classification},
+  doi={10.1109/QCE60285.2024.00195}
+}
+```
+
+
 [ArXiv paper](https://arxiv.org/abs/2404.19032):
 ```
 @misc{gince2024fermionic,
