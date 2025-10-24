@@ -7,6 +7,7 @@ from .single_particle_transition_matrix import SingleParticleTransitionMatrixOpe
 
 
 class SptmRzRz(SingleParticleTransitionMatrixOperation):
+    # TODO: Name this operation something else since this is U(Rz, Rz) and not Rz \otimes Rz
     ALLOWED_ANGLES = [np.pi, 3 * np.pi]
     EQUAL_ALLOWED_ANGLES = [0, np.pi, 2 * np.pi, 3 * np.pi]
 
