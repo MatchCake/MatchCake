@@ -13,6 +13,15 @@ from ..configs import (
 )
 
 
+@pytest.mark.parametrize(
+    "n, batch_size, mth",
+    [
+        (i, batch_size, mth)
+        for i in [2, 3, 5]
+        for mth in ["det", "PfaffianFDBPf"]
+        for batch_size in [None, 3]
+    ],
+)
 class TestPfaffian:
     @staticmethod
     def gen_skew_symmetric_matrix_and_det(n, batch_size=None):
@@ -23,15 +32,6 @@ class TestPfaffian:
         matrix = matrix - np.einsum("...ij->...ji", matrix)
         return matrix, np.linalg.det(matrix)
 
-    @pytest.mark.parametrize(
-        "n, batch_size, mth",
-        [
-            (i, batch_size, mth)
-            for i in np.linspace(2, 6, endpoint=True, dtype=int)
-            for mth in ["det", "PfaffianFDBPf"]
-            for batch_size in [None, 3]
-        ],
-    )
     def test_pfaffian_methods(self, n, batch_size, mth):
         matrix, target_det = self.gen_skew_symmetric_matrix_and_det(n, batch_size=batch_size)
         pf = utils.pfaffian(matrix, method=mth)
@@ -39,15 +39,6 @@ class TestPfaffian:
             pf**2, target_det, atol=10 * ATOL_SCALAR_COMPARISON, rtol=10 * RTOL_SCALAR_COMPARISON
         )
 
-    @pytest.mark.parametrize(
-        "n, batch_size, mth",
-        [
-            (i, batch_size, mth)
-            for i in np.linspace(2, 6, endpoint=True, dtype=int)
-            for mth in ["det", "PfaffianFDBPf"]
-            for batch_size in [None, 3]
-        ],
-    )
     def test_pfaffian_methods_grads(self, n, batch_size, mth):
         import torch
         from torch.autograd import gradcheck

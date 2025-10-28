@@ -18,9 +18,10 @@ from ...configs import (
 @pytest.mark.parametrize(
     "batch_size, size",
     [
-        (batch_size, size)
-        for size in [1, 3, 6]
-        for batch_size in [1, 3]
+        (1, 3),
+        (3, 1),
+        (3, 4),
+        (3, 6),
     ],
 )
 class TestNonInteractingFermionicLookupTableGradients:

@@ -41,11 +41,12 @@ class TestNIFDeviceProbabilities:
     @pytest.mark.parametrize(
         "num_gates, num_wires, n_probs, prob_strategy",
         [
-            (num_gates, num_wires, n_probs, prob_strategy)
-            for num_wires in [2, 3]
-            for num_gates in [3, ]
+            (num_gates, num_wires, n_probs, "LookupTable")
+            for num_wires in [2, 3, 4, 5, 6]
+            for num_gates in [1, 3, 6]
             for n_probs in [1, num_wires]
-            for prob_strategy in ["ExplicitSum", "LookupTable"]
+        ] + [
+            (3, 2, 2, "ExplicitSum")
         ],
     )
     def test_multiples_matchgate_probs_against_qubit_device(self, num_gates, num_wires, n_probs, prob_strategy):

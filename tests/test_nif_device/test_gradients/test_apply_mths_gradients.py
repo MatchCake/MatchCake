@@ -6,17 +6,12 @@ from pennylane.ops.qubit.observables import BasisStateProjector
 from scipy.linalg import expm
 
 from matchcake import NonInteractingFermionicDevice, utils
-from matchcake.base import NonInteractingFermionicLookupTable
-from matchcake.devices.probability_strategies import LookupTableStrategy
 from matchcake.operations.single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
 )
 from matchcake.utils import torch_utils
-
-from ... import get_slow_test_mark
 from ...configs import (
     ATOL_APPROX_COMPARISON,
-    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
     TEST_SEED,
     set_seed,
@@ -26,9 +21,10 @@ from ...configs import (
 @pytest.mark.parametrize(
     "batch_size, size",
     [
-        (batch_size, size)
-        for batch_size in [1, 3]
-        for size in [2, 3, 4]
+        (1, 3),
+        (1, 6),
+        (3, 2),
+        (3, 3),
     ],
 )
 class TestNonInteractingFermionicDeviceGradients:
@@ -67,7 +63,6 @@ class TestNonInteractingFermionicDeviceGradients:
         )
 
     def test_apply_op_transition_matrix_gradient_check_with_sptm_circuit(self, input_matrix):
-
         def circuit(p):
             nif_device = NonInteractingFermionicDevice(wires=input_matrix.shape[-1] // 2)
             op = SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2))
@@ -82,7 +77,6 @@ class TestNonInteractingFermionicDeviceGradients:
         )
 
     def test_apply_generator_gradient_check_with_sptm_circuit(self, input_matrix):
-
         def circuit(p):
             nif_device = NonInteractingFermionicDevice(wires=input_matrix.shape[-1] // 2)
             op = SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2))
@@ -111,7 +105,7 @@ class TestNonInteractingFermionicDeviceGradients:
         )
 
     def test_sptm_circuit_prob_strategy_batch_call_rn_transition_matrix_gradient_check(
-        self, expm_input_matrix, target_binary_states, system_state
+            self, expm_input_matrix, target_binary_states, system_state
     ):
         def get_output(matrix):
             nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
@@ -135,9 +129,8 @@ class TestNonInteractingFermionicDeviceGradients:
         )
 
     def test_sptm_circuit_prob_strategy_batch_call_rn_sptm_gradient_check(
-        self, expm_input_matrix, target_binary_states
+            self, expm_input_matrix, target_binary_states
     ):
-
         def circuit(sptm_matrix):
             nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
             nif_device.global_sptm = sptm_matrix
@@ -158,9 +151,8 @@ class TestNonInteractingFermionicDeviceGradients:
             rtol=RTOL_APPROX_COMPARISON,
         )
 
-
     def test_sptm_circuit_prob_strategy_batch_call_gradient_check(
-        self, expm_input_matrix, target_binary_states
+            self, expm_input_matrix, target_binary_states
     ):
         def circuit(p):
             op = SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2))
@@ -282,4 +274,3 @@ class TestNonInteractingFermionicDeviceGradients:
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
-

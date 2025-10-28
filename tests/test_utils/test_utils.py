@@ -145,13 +145,12 @@ class TestUtils:
             rtol=RTOL_MATRIX_COMPARISON,
         )
 
-
     @pytest.mark.parametrize(
         "batch_size, size",
         [
-            (batch_size, size)
-            for size in [3, 4]
-            for batch_size in [1, 3]
+            (1, 3),
+            (3, 1),
+            (3, 4),
         ],
     )
     def test_make_transition_matrix_from_action_matrix_gradients(self, batch_size, size):

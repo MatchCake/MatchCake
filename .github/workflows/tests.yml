@@ -52,7 +52,7 @@ jobs:
     - name: Test Unittests with pytest
       run: |
         # TODO: add -n=auto when possible
-        uv run pytest tests --cov=src --cov-report="xml:tests/.tmp/coverage.xml" --cov-report=term-missing --durations=10 --session-timeout=600
+        uv run pytest tests --cov=src --cov-report="xml:tests/.tmp/coverage.xml" --cov-report=term-missing --durations=30 --session-timeout=600
 
     - name: Code Coverage
       uses: orgoro/coverage@v3.2
