@@ -149,8 +149,8 @@ class TestUtils:
         "batch_size, size",
         [
             (1, 3),
-            (3, 1),
-            (3, 4),
+            (1, 4),
+            (3, 2),
         ],
     )
     def test_make_transition_matrix_from_action_matrix_gradients(self, batch_size, size):

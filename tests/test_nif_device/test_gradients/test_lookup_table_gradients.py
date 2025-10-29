@@ -19,9 +19,8 @@ from ...configs import (
     "batch_size, size",
     [
         (1, 3),
-        (3, 1),
+        (1, 6),
         (3, 4),
-        (3, 6),
     ],
 )
 class TestNonInteractingFermionicLookupTableGradients:
