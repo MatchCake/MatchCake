@@ -88,8 +88,8 @@ class FermionicPQCKernel(NIFKernel):
         for layer in range(self.depth):
             sub_x = x[..., layer * self.size : (layer + 1) * self.size]
             SptmAngleEmbedding(sub_x, wires=self.wires, rotations=self.rotations)
-            fcnot_wires = wires_patterns[layer % len(wires_patterns)]
-            for wires in fcnot_wires:
+            wires_list = wires_patterns[layer % len(wires_patterns)]
+            for wires in wires_list:
                 if self._entangling_mth == "fswap":
                     SptmCompZX(wires=wires)
                 elif self._entangling_mth == "hadamard":
