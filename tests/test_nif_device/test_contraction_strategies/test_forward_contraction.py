@@ -9,14 +9,15 @@ from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
 from matchcake.operations import SptmfRxRx, SptmIdentity
 from matchcake.utils import torch_utils
-from .. import devices_init, init_nif_device
-from ..test_single_line_matchgates_circuit import single_line_matchgates_circuit
+
 from ...configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
     TEST_SEED,
     set_seed,
 )
+from .. import devices_init, init_nif_device
+from ..test_single_line_matchgates_circuit import single_line_matchgates_circuit
 
 
 class TestNonInteractingFermionicDeviceForwardContractionStrategy:
@@ -28,8 +29,8 @@ class TestNonInteractingFermionicDeviceForwardContractionStrategy:
         "operations,expected_new_operations",
         [
             (
-                    [MatchgateOperation(mps.Identity, wires=[0, 1])],
-                    [MatchgateOperation(mps.Identity, wires=[0, 1])],
+                [MatchgateOperation(mps.Identity, wires=[0, 1])],
+                [MatchgateOperation(mps.Identity, wires=[0, 1])],
             ),
         ],
     )
@@ -70,9 +71,7 @@ class TestNonInteractingFermionicDeviceForwardContractionStrategy:
 
     @pytest.mark.parametrize(
         "batch_size, num_operations",
-        [
-            (10, 1), (5, 2), (2, 3)
-        ],
+        [(10, 1), (5, 2), (2, 3)],
     )
     def test_forward_contraction_device_one_line_random(self, batch_size, num_operations):
         operations = [
