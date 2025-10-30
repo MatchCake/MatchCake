@@ -268,10 +268,407 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                 self.DEFAULT_STAR_STATE_FINDING_STRATEGY,
             )
         )
-        self.n_workers = kwargs.get("n_workers", 0)
         self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
         self.show_progress = kwargs.get("show_progress", self.p_bar is not None)
         self.apply_metadata = defaultdict()
+
+    def apply(self, operations, rotations=None, **kwargs):
+        """
+        This method applies a list of operations to the device. It will update the ``_transition_matrix`` attribute
+        of the device.
+
+        :Note: if the number of workers is different from 0, this method will use multiprocessing method
+            :py:meth:`apply_mp` to apply the operations.
+
+        :param operations: The operations to apply
+        :param rotations: The rotations to apply
+        :param kwargs: Additional keyword arguments.
+        :return: None
+        """
+        if not isinstance(operations, Iterable):
+            operations = [operations]
+        kwargs.setdefault("n_ops", len(operations))
+        return self.apply_generator(iter(operations), rotations=rotations, **kwargs)
+
+    def execute_generator(
+        self,
+        op_iterator: Iterable[qml.operation.Operation],
+        observable: Optional = None,
+        output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
+        **kwargs,
+    ):
+        """
+        Execute a generator of operations on the device and return the result in the specified output type.
+
+        :param op_iterator: A generator of operations to execute
+        :type op_iterator: Iterable[qml.operation.Operation]
+        :param observable: The observable to measure
+        :type observable: Optional
+        :param output_type: The type of output to return. Supported types are "samples", "expval", and "probs"
+        :type output_type: Optional[Literal["samples", "expval", "probs"]]
+        :param kwargs: Additional keyword arguments
+
+        :keyword reset: Whether to reset the device before applying the operations. Default is False.
+        :keyword apply: Whether to apply the operations. Where "auto" will apply the operations if the transition matrix
+            is None which means that no operations have been applied yet. Default is "auto".
+        :keyword wires: The wires to measure the observable on. Default is None.
+        :keyword shot_range: The range of shots to measure the observable on. Default is None.
+        :keyword bin_size: The size of the bins to measure the observable on. Default is None.
+
+        :return: The result of the execution in the specified output type
+        """
+        if kwargs.get("reset", False):
+            self.reset()
+        apply = kwargs.get("apply", "auto")
+        if apply == "auto" and self._global_sptm is None:
+            apply = True
+        elif apply == "auto":
+            apply = False
+        if apply:
+            self.apply_generator(op_iterator, **kwargs)
+        return self.execute_output(observable=observable, output_type=output_type, **kwargs)
+
+    def execute_output(
+        self,
+        observable: Optional = None,
+        output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
+        **kwargs,
+    ):
+        """
+        Return the result of the execution in the specified output type.
+
+        :param observable: The observable to measure
+        :type observable: Optional
+        :param output_type: The type of output to return. Supported types are "samples", "expval", and "probs"
+        :type output_type: Optional[Literal["samples", "expval", "probs"]]
+        :param kwargs: Additional keyword arguments
+
+        :keyword reset: Whether to reset the device before applying the operations. Default is False.
+        :keyword apply: Whether to apply the operations. Where "auto" will apply the operations if the transition matrix
+            is None which means that no operations have been applied yet. Default is "auto".
+        :keyword wires: The wires to measure the observable on. Default is None.
+        :keyword shot_range: The range of shots to measure the observable on. Default is None.
+        :keyword bin_size: The size of the bins to measure the observable on. Default is None.
+
+        :return: The result of the execution in the specified output type
+        """
+        if output_type is None:
+            return
+        if self.shots is not None and self._samples is None:
+            self._samples = self.generate_samples()
+        if output_type == "samples":
+            if self.shots is None:
+                raise ValueError("The number of shots must be specified to generate samples.")
+            return self._samples
+        if output_type == "expval":
+            return self.expval(observable)
+        if output_type == "probs":
+            return self.probability(
+                wires=kwargs.get("wires", None),
+                shot_range=kwargs.get("shot_range", None),
+                bin_size=kwargs.get("bin_size", None),
+            )
+        if output_type in ["star_state", "*state"]:
+            return self.compute_star_state(**kwargs)
+        raise ValueError(f"Output type {output_type} is not supported.")
+
+    def apply_generator(
+        self, op_iterator: Iterable[qml.operation.Operation], **kwargs
+    ) -> "NonInteractingFermionicDevice":
+        """
+        Apply a generator of gates to the device.
+
+        :param op_iterator: The generator of operations to apply
+        :type op_iterator: Iterable[qml.operation.Operation]
+        :param kwargs: Additional keyword arguments
+        :return: None
+        """
+        n_ops = kwargs.get("n_ops", getattr(op_iterator, "__len__", lambda: None)())
+        total = n_ops or 0
+        self.initialize_p_bar(total=total, desc="Applying operations", unit="op")
+        self.apply_metadata["n_operations"] = self.apply_metadata.get("n_operations", 0)
+        for i, op in enumerate(op_iterator):
+            self.apply_metadata["n_operations"] = i + 1
+            self.p_bar_set_total(max(i + 1, total))
+            if isinstance(op, qml.Identity):
+                continue
+            is_prep = self.apply_state_prep(op, index=i)
+            if is_prep:
+                continue
+            op_list = self.contraction_strategy.get_next_operations(op)
+            for j, op_j in enumerate(op_list):
+                if op_j is None:
+                    continue
+                self.apply_op(op_j)
+                self.apply_metadata["n_contracted_operations"] = (
+                    self.apply_metadata.get("n_contracted_operations", 0) + 1
+                )
+                self.apply_metadata["percentage_contracted"] = (
+                    100 * (i + 1 - self.apply_metadata["n_contracted_operations"]) / (i + 1)
+                )
+            self.p_bar_set_n(i + 1)
+            self.p_bar_set_postfix_str(f"Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%")
+            if kwargs.get("gc_op", True):
+                del op
+
+        self.p_bar_set_total(self.apply_metadata["n_operations"])
+        last_op = self.contraction_strategy.get_reminding()
+        if last_op is not None:
+            self.apply_op(last_op)
+            self.apply_metadata["n_contracted_operations"] = self.apply_metadata.get("n_contracted_operations", 0) + 1
+        self.apply_metadata["percentage_contracted"] = (
+            100
+            * (self.apply_metadata["n_operations"] - self.apply_metadata.get("n_contracted_operations", 0))
+            / max(self.apply_metadata["n_operations"], 1)
+        )
+
+        self.p_bar_set_n(self.apply_metadata["n_operations"])
+        self.p_bar_set_postfix_str("Computing transition matrix")
+        if kwargs.get("cache_global_sptm", False):
+            self.apply_metadata["global_sptm"] = torch_utils.to_numpy(self.global_sptm.matrix())
+        self.p_bar_set_postfix_str(
+            f"Global Sptm matrix computed. Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%"
+        )
+        self.close_p_bar()
+        return self
+
+    def apply_op(self, op: qml.operation.Operation) -> SingleParticleTransitionMatrixOperation:
+        op_sptm = SingleParticleTransitionMatrixOperation.from_operation(op).pad(self.wires).matrix()
+        self._batched = self._batched or (qml.math.ndim(op_sptm) > 2)
+        self.global_sptm = self.update_single_particle_transition_matrix(self._global_sptm, op_sptm)
+        return self.global_sptm
+
+    def compute_star_state(self, **kwargs):
+        """
+        Compute the star state of the device. The star state is the state that has the highest probability.
+
+        :param kwargs:  Additional keyword arguments
+        :return: The star state and its probability
+        """
+        if self._star_state is None or self._star_probability is None:
+            self._star_state, self._star_probability = self.star_state_finding_strategy(
+                self,
+                partial(self.get_states_probability, show_progress=False),
+                show_progress=self.show_progress,
+                samples=self._samples,
+            )
+        return self.star_state, self.star_probability
+
+    def apply_state_prep(self, operation, **kwargs) -> bool:
+        """
+        Apply a state preparation operation to the device. Will set the internal state of the device
+        only if the operation is a state preparation operation and then return True. Otherwise, it will
+        return False.
+
+        :param operation: The operation to apply
+        :param kwargs: Additional keyword arguments
+        :return: True if the operation was applied, False otherwise
+        :rtype: bool
+        """
+
+        if kwargs.get("index", 0) > 0 and isinstance(operation, (qml.StatePrep, qml.BasisState)):
+            raise qml.DeviceError(
+                f"Operation {operation.name} cannot be used after other Operations have already been applied "
+                f"on a {self.short_name} device."
+            )
+
+        is_applied = True
+        if isinstance(operation, qml.StatePrep):
+            self._apply_state_vector(operation.parameters[0], operation.wires)
+        elif isinstance(operation, qml.BasisState):
+            self._apply_basis_state(operation.parameters[0], operation.wires)
+        elif isinstance(operation, qml.Snapshot):
+            if self._debugger and self._debugger.active:
+                state_vector = np.array(self._flatten(self._state))
+                if operation.tag:
+                    self._debugger.snapshots[operation.tag] = state_vector
+                else:
+                    self._debugger.snapshots[len(self._debugger.snapshots)] = state_vector
+        elif isinstance(operation, qml.pulse.ParametrizedEvolution):
+            self._state = self._apply_parametrized_evolution(self._state, operation)
+        else:
+            is_applied = False
+        return is_applied
+
+    def get_state_probability(self, target_binary_state: TensorLike, wires: Optional[Wires] = None):
+        if not self.is_state_initialized:
+            return None
+        if wires is None:
+            wires = self.wires
+
+        wires = Wires(wires)
+        num_wires = len(wires)
+        if isinstance(target_binary_state, int):
+            target_binary_state = utils.binary_string_to_vector(
+                utils.state_to_binary_string(target_binary_state, num_wires)
+            )
+        elif isinstance(target_binary_state, list):
+            target_binary_state = np.array(target_binary_state)
+        elif isinstance(target_binary_state, str):
+            target_binary_state = utils.binary_string_to_vector(target_binary_state)
+        else:
+            target_binary_state = np.asarray(target_binary_state)
+        assert len(target_binary_state) == num_wires, (
+            f"The target binary state must have {num_wires} elements. " f"Got {len(target_binary_state)} instead."
+        )
+        return self.prob_strategy(
+            system_state=self.binary_state,
+            target_binary_state=target_binary_state,
+            wires=wires,
+            all_wires=self.wires,
+            lookup_table=self.lookup_table,
+            transition_matrix=self.transition_matrix,
+            pfaffian_method=self.pfaffian_method,
+            majorana_getter=self.majorana_getter,
+            show_progress=self.show_progress,
+        )
+
+    def get_states_probability(
+        self,
+        target_binary_states: TensorLike,
+        batch_wires: Optional[Wires] = None,
+        **kwargs,
+    ):
+        if not self.is_state_initialized:
+            return None
+
+        if isinstance(target_binary_states, int):
+            target_binary_states = utils.binary_string_to_vector(
+                utils.state_to_binary_string(target_binary_states, self.num_wires)
+            )
+        elif isinstance(target_binary_states, list):
+            target_binary_states = np.array(target_binary_states)
+        elif isinstance(target_binary_states, str):
+            target_binary_states = utils.binary_string_to_vector(target_binary_states)
+        else:
+            target_binary_states = np.asarray(target_binary_states)
+
+        if batch_wires is None:
+            batch_wires = self.wires
+        batch_wires = np.asarray(batch_wires)
+        batch_wires = np.broadcast_to(batch_wires, target_binary_states.shape)
+
+        assert target_binary_states.shape == batch_wires.shape, (
+            f"The target binary states must have the shape {batch_wires.shape}. "
+            f"Got {target_binary_states.shape} instead."
+        )
+        return self.prob_strategy.batch_call(
+            system_state=self.binary_state,
+            target_binary_states=target_binary_states,
+            batch_wires=batch_wires,
+            all_wires=self.wires,
+            lookup_table=self.lookup_table,
+            transition_matrix=self.transition_matrix,
+            pfaffian_method=self.pfaffian_method,
+            majorana_getter=self.majorana_getter,
+            show_progress=kwargs.pop("show_progress", self.show_progress),
+            **kwargs,
+        )
+
+    def analytic_probability(self, wires=None):
+        r"""Return the (marginal) probability of each computational basis
+        state from the last run of the device.
+
+        PennyLane uses the convention
+        :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where :math:`q_0` is the most
+        significant bit.
+
+        If no wires are specified, then all the basis states representable by
+        the device are considered and no marginalization takes place.
+
+
+        .. note::
+
+            :meth:`~.marginal_prob` may be used as a utility method
+            to calculate the marginal probability distribution.
+
+        Args:
+            wires (Iterable[Number, str], Number, str, Wires): wires to return
+                marginal probabilities for. Wires not provided are traced out of the system.
+
+        Returns:
+            array[float]: list of the probabilities
+        """
+        if not self.is_state_initialized:
+            return None
+        if wires is None:
+            wires = self.wires
+        if isinstance(wires, int):
+            wires = [wires]
+        wires = Wires(wires, _override=True)
+        wires_array = wires.toarray()
+        wires_shape = wires_array.shape
+        wires_binary_states = self.states_to_binary(np.arange(2 ** wires_shape[-1]), wires_shape[-1])
+
+        if len(wires_shape) == 2:
+            wires_batched = np.stack([wires_array for _ in range(wires_binary_states.shape[-2])], axis=-2)
+            wires_binary_states = np.stack([wires_binary_states for _ in range(wires_shape[0])])
+            probs = self.get_states_probability(
+                wires_binary_states.reshape(-1, wires_shape[-1]),
+                wires_batched.reshape(-1, wires_shape[-1]),
+            )
+            probs = qml.math.transpose(probs.reshape(*wires_binary_states.shape[:-1], -1), (-1, 0, 1))
+            probs = probs / qml.math.sum(probs, -1)[..., np.newaxis]
+            return probs
+        elif len(wires_shape) > 2:
+            raise ValueError(f"The wires must be a 1D or 2D array. Got a {len(wires_shape)}D array instead.")
+
+        probs = self.get_states_probability(wires_binary_states, wires)
+        probs = qml.math.transpose(probs)
+        probs = probs / qml.math.sum(probs)
+        return probs
+
+    def generate_samples(self):
+        r"""Returns the computational basis samples generated for all wires.
+
+        Note that PennyLane uses the convention :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where
+        :math:`q_0` is the most significant bit.
+
+        .. warning::
+
+            This method should be overwritten on devices that
+            generate their own computational basis samples, with the resulting
+            computational basis samples stored as ``self._samples``.
+
+        Returns:
+             array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
+        """
+        if not self.is_state_initialized:
+            return None
+        self._samples = self.sampling_strategy.batch_generate_samples(
+            self,
+            partial(self.get_states_probability, show_progress=False),
+            show_progress=self.show_progress,
+        )
+        return self.samples
+
+    def exact_expval(self, observable):
+        prob = self.probability(wires=observable.wires)
+        if isinstance(observable, BatchHamiltonian):
+            eigvals_on_z_basis = observable.eigvals_on_z_basis()
+        else:
+            eigvals_on_z_basis = get_eigvals_on_z_basis(observable)
+        return qml.math.einsum("...i,...i->...", prob, eigvals_on_z_basis)
+
+    def expval(self, observable, shot_range=None, bin_size=None):
+        if isinstance(observable, BasisStateProjector):
+            return self.get_state_probability(observable.parameters[0], observable.wires)
+        elif isinstance(observable, qml.Identity):
+            t_shape = qml.math.shape(self.transition_matrix)
+            if len(t_shape) == 2:
+                return convert_and_cast_like(1, self.transition_matrix)
+            return convert_and_cast_like(np.ones(t_shape[0]), self.transition_matrix)
+
+        if isinstance(observable, BatchProjector):
+            return self.get_states_probability(observable.get_states(), observable.get_batch_wires())
+
+        if self.shots is None:
+            output = self.exact_expval(observable)
+        else:
+            output = super().expval(observable, shot_range, bin_size)
+        if isinstance(observable, BatchHamiltonian):
+            return observable.reduce(output)
+        return output
 
     def get_sparse_or_dense_state(
         self,
@@ -284,6 +681,105 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             return self.sparse_state
         else:
             raise RuntimeError("The state is not initialized.")
+
+    def batch_transform(self, circuit: QuantumTape):
+        if len(circuit.observables) == 1:
+            if isinstance(circuit.observables[0], BatchHamiltonian):
+                circuits = [circuit]
+
+                def hamiltonian_fn(res):
+                    return res[0]
+
+                if self.capabilities().get("supports_broadcasting"):
+                    return circuits, hamiltonian_fn
+                if circuit.batch_size is None:
+                    return circuits, hamiltonian_fn
+        return self._patched_super_batch_transform(circuit)
+
+    def reset(self):
+        """Reset the device"""
+        super().reset()
+        self._binary_state = None
+        self._basis_state_index = 0
+        self._sparse_state = None
+        self._pre_rotated_sparse_state = self._sparse_state
+        self._state = None
+        self._pre_rotated_state = self._state
+        self._global_sptm = None
+        self._batched = False
+        self._transition_matrix = None
+        self._lookup_table = None
+        self._star_state = None
+        self._star_probability = None
+        self._samples = None
+        self.apply_metadata = defaultdict()
+        self.contraction_strategy.reset()
+
+    def update_p_bar(self, *args, **kwargs):
+        if self.p_bar is None:
+            return
+        self.p_bar.update(*args, **kwargs)
+        self.p_bar.refresh()
+
+    def p_bar_set_n(self, n: int):
+        if self.p_bar is not None:
+            self.p_bar.n = n
+            self.p_bar.refresh()
+
+    def p_bar_set_total(self, total: int):
+        if self.p_bar is not None:
+            self.p_bar.total = total
+            self.p_bar.refresh()
+
+    def initialize_p_bar(self, *args, **kwargs):
+        kwargs.setdefault("disable", not self.show_progress)
+        if self.p_bar is None and not self.show_progress:
+            return
+        self.p_bar = tqdm.tqdm(*args, **kwargs)
+        return self.p_bar
+
+    def p_bar_set_postfix(self, *args, **kwargs):
+        if self.p_bar is not None:
+            self.p_bar.set_postfix(*args, **kwargs)
+            self.p_bar.refresh()
+
+    def p_bar_set_postfix_str(self, *args, **kwargs):
+        if self.p_bar is not None:
+            self.p_bar.set_postfix_str(*args, **kwargs)
+            self.p_bar.refresh()
+
+    def close_p_bar(self):
+        if self.p_bar is not None:
+            self.p_bar.close()
+
+    def _asarray(self, x, dtype=None):
+        r"""
+        Convert the input to an array of type ``dtype``.
+
+        :Note: If the input is on cuda, it will be copied to cpu.
+
+        :param x: input to be converted
+        :param dtype: type of the output array
+        :return: array of type ``dtype``
+        """
+        is_complex = qml.math.any(qml.math.iscomplex(x))
+        if dtype is None and is_complex:
+            dtype = self.C_DTYPE
+        elif dtype is None:
+            dtype = self.R_DTYPE
+        if not is_complex:
+            x = qml.math.real(x)
+        return qml.math.cast(torch_utils.to_cpu(x, dtype=dtype), dtype=dtype)
+
+    def _dot(self, a, b):
+        r"""
+        Compute the dot product of two arrays.
+
+        :param a: input array
+        :param b: input array
+        :return: dot product of the input arrays
+        """
+        return qml.math.einsum("...i,...i->...", self._asarray(a), self._asarray(b))
 
     def _create_basis_state(self, index):
         """
@@ -326,39 +822,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         raise ValueError(
             f"" f"This {self.__class__.__name__} can only be initialized with BasisState, " f"not with state vector."
         )
-
-        # translate to wire labels used by device
-        device_wires = self.map_wires(device_wires)
-        dim = 2 ** len(device_wires)
-
-        state = self._asarray(state, dtype=self.C_DTYPE)
-        batch_size = self._get_batch_size(state, (dim,), dim)
-        output_shape = [2] * self.num_wires
-        if batch_size is not None:
-            output_shape.insert(0, batch_size)
-
-        if len(device_wires) == self.num_wires and sorted(device_wires) == device_wires:
-            # Initialize the entire device state with the input state
-            self._state = self._reshape(state, output_shape)
-            return
-
-        # generate basis states on subset of qubits via the cartesian product
-        basis_states = np.array(list(itertools.product([0, 1], repeat=len(device_wires))))
-
-        # get basis states to alter on full set of qubits
-        unravelled_indices = np.zeros((2 ** len(device_wires), self.num_wires), dtype=int)
-        unravelled_indices[:, device_wires] = basis_states
-
-        # get indices for which the state is changed to input state vector elements
-        ravelled_indices = np.ravel_multi_index(unravelled_indices.T, [2] * self.num_wires)
-
-        if batch_size is not None:
-            state = self._scatter((slice(None), ravelled_indices), state, [batch_size, 2**self.num_wires])
-        else:
-            state = self._scatter(ravelled_indices, state, [2**self.num_wires])
-        state = self._reshape(state, output_shape)
-        self._state = self._asarray(state, dtype=self.C_DTYPE)
-        self._sparse_state = None
 
     def _apply_basis_state(self, state, wires):
         """Initialize the sparse state vector in a specified computational basis state.
@@ -496,652 +959,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             return processing_fn(expanded_fn(results))
 
         return expanded_tapes, total_processing
-
-    def batch_transform(self, circuit: QuantumTape):
-        if len(circuit.observables) == 1:
-            if isinstance(circuit.observables[0], BatchHamiltonian):
-                circuits = [circuit]
-
-                def hamiltonian_fn(res):
-                    return res[0]
-
-                if self.capabilities().get("supports_broadcasting"):
-                    return circuits, hamiltonian_fn
-                if circuit.batch_size is None:
-                    return circuits, hamiltonian_fn
-        return self._patched_super_batch_transform(circuit)
-
-    def apply_state_prep(self, operation, **kwargs) -> bool:
-        """
-        Apply a state preparation operation to the device. Will set the internal state of the device
-        only if the operation is a state preparation operation and then return True. Otherwise, it will
-        return False.
-
-        :param operation: The operation to apply
-        :param kwargs: Additional keyword arguments
-        :return: True if the operation was applied, False otherwise
-        :rtype: bool
-        """
-
-        if kwargs.get("index", 0) > 0 and isinstance(operation, (qml.StatePrep, qml.BasisState)):
-            raise qml.DeviceError(
-                f"Operation {operation.name} cannot be used after other Operations have already been applied "
-                f"on a {self.short_name} device."
-            )
-
-        is_applied = True
-        if isinstance(operation, qml.StatePrep):
-            self._apply_state_vector(operation.parameters[0], operation.wires)
-        elif isinstance(operation, qml.BasisState):
-            self._apply_basis_state(operation.parameters[0], operation.wires)
-        elif isinstance(operation, qml.Snapshot):
-            if self._debugger and self._debugger.active:
-                state_vector = np.array(self._flatten(self._state))
-                if operation.tag:
-                    self._debugger.snapshots[operation.tag] = state_vector
-                else:
-                    self._debugger.snapshots[len(self._debugger.snapshots)] = state_vector
-        elif isinstance(operation, qml.pulse.ParametrizedEvolution):
-            self._state = self._apply_parametrized_evolution(self._state, operation)
-        else:
-            is_applied = False
-        return is_applied
-
-    def apply(self, operations, rotations=None, **kwargs):
-        """
-        This method applies a list of operations to the device. It will update the ``_transition_matrix`` attribute
-        of the device.
-
-        :Note: if the number of workers is different from 0, this method will use multiprocessing method
-            :py:meth:`apply_mp` to apply the operations.
-
-        :param operations: The operations to apply
-        :param rotations: The rotations to apply
-        :param kwargs: Additional keyword arguments. The keyword arguments are passed to the :py:meth:`apply_mp` method.
-        :return: None
-        """
-        if self.n_workers != 0:
-            return self.apply_mp(operations, rotations, **kwargs)
-        if not isinstance(operations, Iterable):
-            operations = [operations]
-        kwargs.setdefault("n_ops", len(operations))
-        return self.apply_generator(iter(operations), rotations=rotations, **kwargs)
-
-    def apply_op(self, op: qml.operation.Operation) -> SingleParticleTransitionMatrixOperation:
-        op_sptm = SingleParticleTransitionMatrixOperation.from_operation(op).pad(self.wires).matrix()
-        self._batched = self._batched or (qml.math.ndim(op_sptm) > 2)
-        self.global_sptm = self.update_single_particle_transition_matrix(self._global_sptm, op_sptm)
-        return self.global_sptm
-
-    def apply_generator(
-        self, op_iterator: Iterable[qml.operation.Operation], **kwargs
-    ) -> "NonInteractingFermionicDevice":
-        """
-        Apply a generator of gates to the device.
-
-        :param op_iterator: The generator of operations to apply
-        :type op_iterator: Iterable[qml.operation.Operation]
-        :param kwargs: Additional keyword arguments
-        :return: None
-        """
-        n_ops = kwargs.get("n_ops", getattr(op_iterator, "__len__", lambda: None)())
-        total = n_ops or 0
-        self.initialize_p_bar(total=total, desc="Applying operations", unit="op")
-        self.apply_metadata["n_operations"] = self.apply_metadata.get("n_operations", 0)
-        for i, op in enumerate(op_iterator):
-            self.apply_metadata["n_operations"] = i + 1
-            self.p_bar_set_total(max(i + 1, total))
-            if isinstance(op, qml.Identity):
-                continue
-            is_prep = self.apply_state_prep(op, index=i)
-            if is_prep:
-                continue
-            op_list = self.contraction_strategy.get_next_operations(op)
-            for j, op_j in enumerate(op_list):
-                if op_j is None:
-                    continue
-                self.apply_op(op_j)
-                self.apply_metadata["n_contracted_operations"] = (
-                    self.apply_metadata.get("n_contracted_operations", 0) + 1
-                )
-                self.apply_metadata["percentage_contracted"] = (
-                    100 * (i + 1 - self.apply_metadata["n_contracted_operations"]) / (i + 1)
-                )
-            self.p_bar_set_n(i + 1)
-            self.p_bar_set_postfix_str(f"Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%")
-            if kwargs.get("gc_op", True):
-                del op
-
-        self.p_bar_set_total(self.apply_metadata["n_operations"])
-        last_op = self.contraction_strategy.get_reminding()
-        if last_op is not None:
-            self.apply_op(last_op)
-            self.apply_metadata["n_contracted_operations"] = self.apply_metadata.get("n_contracted_operations", 0) + 1
-        self.apply_metadata["percentage_contracted"] = (
-            100
-            * (self.apply_metadata["n_operations"] - self.apply_metadata.get("n_contracted_operations", 0))
-            / max(self.apply_metadata["n_operations"], 1)
-        )
-
-        self.p_bar_set_n(self.apply_metadata["n_operations"])
-        self.p_bar_set_postfix_str("Computing transition matrix")
-        if kwargs.get("cache_global_sptm", False):
-            self.apply_metadata["global_sptm"] = torch_utils.to_numpy(self.global_sptm.matrix())
-        self.p_bar_set_postfix_str(
-            f"Global Sptm matrix computed. Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%"
-        )
-        self.close_p_bar()
-        return self
-
-    # START OF MP: TODO: Do we remove the MP methods? Do we really need this?
-
-    def gather_single_particle_transition_matrix(self, operation):
-        """
-        Gather the single particle transition matrix of a given operation.
-
-        :param operation: The operation to gather the single particle transition matrix from
-        :return: The single particle transition matrix of the operation
-        """
-        if isinstance(operation, qml.Identity):
-            return None
-
-        if isinstance(operation, _SingleParticleTransitionMatrix):
-            return operation.pad(self.wires).matrix()
-
-        assert operation.name in self.operations, f"Operation {operation.name} is not supported."
-        op_r = None
-        if isinstance(operation, MatchgateOperation):
-            op_r = operation.get_padded_single_particle_transition_matrix(self.wires)
-        return op_r
-
-    def gather_single_particle_transition_matrices(self, operations) -> list:
-        """
-        Gather the single particle transition matrices of a list of operations.
-
-        :param operations: The operations to gather the single particle transition matrices from
-        :return: The single particle transition matrices of the operations
-        """
-        single_particle_transition_matrices = []
-        for operation in operations:
-            op_r = self.gather_single_particle_transition_matrix(operation)
-            if op_r is not None:
-                single_particle_transition_matrices.append(op_r)
-        return single_particle_transition_matrices
-
-    def gather_single_particle_transition_matrices_mp(self, operations) -> list:
-        """
-        Gather the single particle transition matrices of a list of operations. Will use multiprocessing if the number
-        of workers is different from 0.
-
-        :param operations: The operations to gather the single particle transition matrices from
-        :return: The single particle transition matrices of the operations
-        """
-        if len(operations) == 1:
-            return [self.gather_single_particle_transition_matrix(operations[0])]
-        n_processes = self.n_workers
-        if self.n_workers == -1:
-            n_processes = psutil.cpu_count(logical=True)
-        elif self.n_workers == -2:
-            n_processes = psutil.cpu_count(logical=False)
-        elif self.n_workers < 0:
-            raise ValueError("The number of workers must be greater or equal than 0 or in [0, -2].")
-
-        if n_processes == 0 or n_processes == 1:
-            return self.gather_single_particle_transition_matrices(operations)
-
-        op_indices_splits = np.array_split(range(len(operations)), n_processes)
-        op_splits = [
-            [operations[i] for i in op_indices_split]
-            for op_indices_split in op_indices_splits
-            if len(op_indices_split) > 0
-        ]
-        sptm_outputs = pbt.apply_func_multiprocess(
-            func=self.gather_single_particle_transition_matrices,
-            iterable_of_args=[(op_split,) for op_split in op_splits],
-            nb_workers=n_processes,
-            verbose=False,
-        )
-        return list(itertools.chain(*sptm_outputs))
-
-    def prod_single_particle_transition_matrices_mp(self, sptm_list):
-        """
-        Compute the product of the single particle transition matrices of a list of
-        single particle transition matrix using multiprocessing.
-
-        :param sptm_list: The list of single particle transition matrices
-        :return: The product of the single particle transition matrices
-        """
-        if len(sptm_list) == 1:
-            return sptm_list[0]
-
-        sptm = pnp.eye(2 * self.num_wires)[None, ...]
-        n_processes = self.n_workers
-        if self.n_workers == -1:
-            n_processes = psutil.cpu_count(logical=True)
-        elif self.n_workers == -2:
-            n_processes = psutil.cpu_count(logical=False)
-        elif self.n_workers < 0:
-            raise ValueError("The number of workers must be greater or equal than 0 or in [0, -2].")
-
-        if n_processes == 0 or n_processes == 1:
-            return self.prod_single_particle_transition_matrices(sptm, sptm_list)
-
-        self.initialize_p_bar(total=len(sptm_list), desc="Computing single particle transition matrices")
-        sptm_splits = np.array_split(sptm_list, n_processes)
-        sptm_outputs = pbt.apply_func_multiprocess(
-            func=self.prod_single_particle_transition_matrices,
-            iterable_of_args=[(deepcopy(sptm), sptm_split) for sptm_split in sptm_splits],
-            nb_workers=n_processes,
-            verbose=False,
-            callbacks=[self.update_p_bar],
-        )
-        self.close_p_bar()
-        if len(sptm_outputs) == 1:
-            return sptm_outputs[0]
-        return self.prod_single_particle_transition_matrices(sptm, sptm_outputs)
-
-    def apply_mp(self, operations, rotations=None, **kwargs):
-        """
-        Apply a list of operations to the device using multiprocessing. This method will update the
-        ``_transition_matrix`` attribute of the device.
-
-        :param operations: The operations to apply
-        :param rotations: The rotations to apply
-        :param kwargs: Additional keyword arguments
-
-        :return: None
-        """
-        rotations = rotations or []
-        if not isinstance(operations, Iterable):
-            operations = [operations]
-
-        operations = self.contraction_strategy(operations, p_bar=self.p_bar, show_progress=self.show_progress)
-
-        remove_first = self.apply_state_prep(operations[0])
-        if remove_first:
-            operations = operations[1:]
-
-        sptm_list = self.gather_single_particle_transition_matrices_mp(operations)
-        batched = any([qml.math.ndim(op_r) > 2 for op_r in sptm_list])
-        global_single_particle_transition_matrix = self.prod_single_particle_transition_matrices_mp(sptm_list)
-
-        if not batched and qml.math.ndim(global_single_particle_transition_matrix) > 2:
-            global_single_particle_transition_matrix = global_single_particle_transition_matrix[0]
-        # store the pre-rotated state
-        self._pre_rotated_sparse_state = self._sparse_state
-        self._pre_rotated_state = self._state
-
-        assert rotations is None or np.asarray([rotations]).size == 0, "Rotations are not supported"
-        self.global_sptm = global_single_particle_transition_matrix
-
-    # END OF MP
-
-    def get_state_probability(self, target_binary_state: TensorLike, wires: Optional[Wires] = None):
-        if not self.is_state_initialized:
-            return None
-        if wires is None:
-            wires = self.wires
-
-        wires = Wires(wires)
-        num_wires = len(wires)
-        if isinstance(target_binary_state, int):
-            target_binary_state = utils.binary_string_to_vector(
-                utils.state_to_binary_string(target_binary_state, num_wires)
-            )
-        elif isinstance(target_binary_state, list):
-            target_binary_state = np.array(target_binary_state)
-        elif isinstance(target_binary_state, str):
-            target_binary_state = utils.binary_string_to_vector(target_binary_state)
-        else:
-            target_binary_state = np.asarray(target_binary_state)
-        assert len(target_binary_state) == num_wires, (
-            f"The target binary state must have {num_wires} elements. " f"Got {len(target_binary_state)} instead."
-        )
-        return self.prob_strategy(
-            system_state=self.binary_state,
-            target_binary_state=target_binary_state,
-            wires=wires,
-            all_wires=self.wires,
-            lookup_table=self.lookup_table,
-            transition_matrix=self.transition_matrix,
-            pfaffian_method=self.pfaffian_method,
-            majorana_getter=self.majorana_getter,
-            show_progress=self.show_progress,
-        )
-
-    def get_states_probability(
-        self,
-        target_binary_states: TensorLike,
-        batch_wires: Optional[Wires] = None,
-        **kwargs,
-    ):
-        if not self.is_state_initialized:
-            return None
-
-        if isinstance(target_binary_states, int):
-            target_binary_states = utils.binary_string_to_vector(
-                utils.state_to_binary_string(target_binary_states, self.num_wires)
-            )
-        elif isinstance(target_binary_states, list):
-            target_binary_states = np.array(target_binary_states)
-        elif isinstance(target_binary_states, str):
-            target_binary_states = utils.binary_string_to_vector(target_binary_states)
-        else:
-            target_binary_states = np.asarray(target_binary_states)
-
-        if batch_wires is None:
-            batch_wires = self.wires
-        batch_wires = np.asarray(batch_wires)
-        batch_wires = np.broadcast_to(batch_wires, target_binary_states.shape)
-
-        assert target_binary_states.shape == batch_wires.shape, (
-            f"The target binary states must have the shape {batch_wires.shape}. "
-            f"Got {target_binary_states.shape} instead."
-        )
-        return self.prob_strategy.batch_call(
-            system_state=self.binary_state,
-            target_binary_states=target_binary_states,
-            batch_wires=batch_wires,
-            all_wires=self.wires,
-            lookup_table=self.lookup_table,
-            transition_matrix=self.transition_matrix,
-            pfaffian_method=self.pfaffian_method,
-            majorana_getter=self.majorana_getter,
-            show_progress=kwargs.pop("show_progress", self.show_progress),
-            nb_workers=kwargs.pop("nb_workers", self.n_workers),
-            **kwargs,
-        )
-
-    def analytic_probability(self, wires=None):
-        r"""Return the (marginal) probability of each computational basis
-        state from the last run of the device.
-
-        PennyLane uses the convention
-        :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where :math:`q_0` is the most
-        significant bit.
-
-        If no wires are specified, then all the basis states representable by
-        the device are considered and no marginalization takes place.
-
-
-        .. note::
-
-            :meth:`~.marginal_prob` may be used as a utility method
-            to calculate the marginal probability distribution.
-
-        Args:
-            wires (Iterable[Number, str], Number, str, Wires): wires to return
-                marginal probabilities for. Wires not provided are traced out of the system.
-
-        Returns:
-            array[float]: list of the probabilities
-        """
-        if not self.is_state_initialized:
-            return None
-        if wires is None:
-            wires = self.wires
-        if isinstance(wires, int):
-            wires = [wires]
-        wires = Wires(wires, _override=True)
-        wires_array = wires.toarray()
-        wires_shape = wires_array.shape
-        wires_binary_states = self.states_to_binary(np.arange(2 ** wires_shape[-1]), wires_shape[-1])
-
-        if len(wires_shape) == 2:
-            wires_batched = np.stack([wires_array for _ in range(wires_binary_states.shape[-2])], axis=-2)
-            wires_binary_states = np.stack([wires_binary_states for _ in range(wires_shape[0])])
-            probs = self.get_states_probability(
-                wires_binary_states.reshape(-1, wires_shape[-1]),
-                wires_batched.reshape(-1, wires_shape[-1]),
-            )
-            probs = qml.math.transpose(probs.reshape(*wires_binary_states.shape[:-1], -1), (-1, 0, 1))
-            probs = probs / qml.math.sum(probs, -1)[..., np.newaxis]
-            return probs
-        elif len(wires_shape) > 2:
-            raise ValueError(f"The wires must be a 1D or 2D array. Got a {len(wires_shape)}D array instead.")
-
-        probs = self.get_states_probability(wires_binary_states, wires)
-        probs = qml.math.transpose(probs)
-        probs = probs / qml.math.sum(probs)
-        return probs
-
-    def generate_samples(self):
-        r"""Returns the computational basis samples generated for all wires.
-
-        Note that PennyLane uses the convention :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where
-        :math:`q_0` is the most significant bit.
-
-        .. warning::
-
-            This method should be overwritten on devices that
-            generate their own computational basis samples, with the resulting
-            computational basis samples stored as ``self._samples``.
-
-        Returns:
-             array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
-        """
-        if not self.is_state_initialized:
-            return None
-        # return self.sampling_strategy.generate_samples(self, self.get_state_probability)
-        self._samples = self.sampling_strategy.batch_generate_samples(
-            self,
-            partial(self.get_states_probability, show_progress=False),
-            nb_workers=self.n_workers,
-            show_progress=self.show_progress,
-        )
-        return self.samples
-
-    def exact_expval(self, observable):
-        prob = self.probability(wires=observable.wires)
-        if isinstance(observable, BatchHamiltonian):
-            eigvals_on_z_basis = observable.eigvals_on_z_basis()
-        else:
-            eigvals_on_z_basis = get_eigvals_on_z_basis(observable)
-        return qml.math.einsum("...i,...i->...", prob, eigvals_on_z_basis)
-
-    def expval(self, observable, shot_range=None, bin_size=None):
-        if isinstance(observable, BasisStateProjector):
-            return self.get_state_probability(observable.parameters[0], observable.wires)
-        elif isinstance(observable, qml.Identity):
-            t_shape = qml.math.shape(self.transition_matrix)
-            if len(t_shape) == 2:
-                return convert_and_cast_like(1, self.transition_matrix)
-            return convert_and_cast_like(np.ones(t_shape[0]), self.transition_matrix)
-
-        if isinstance(observable, BatchProjector):
-            return self.get_states_probability(observable.get_states(), observable.get_batch_wires())
-
-        if self.shots is None:
-            output = self.exact_expval(observable)
-        else:
-            output = super().expval(observable, shot_range, bin_size)
-        if isinstance(observable, BatchHamiltonian):
-            return observable.reduce(output)
-        return output
-
-    def execute_generator(
-        self,
-        op_iterator: Iterable[qml.operation.Operation],
-        observable: Optional = None,
-        output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
-        **kwargs,
-    ):
-        """
-        Execute a generator of operations on the device and return the result in the specified output type.
-
-        :param op_iterator: A generator of operations to execute
-        :type op_iterator: Iterable[qml.operation.Operation]
-        :param observable: The observable to measure
-        :type observable: Optional
-        :param output_type: The type of output to return. Supported types are "samples", "expval", and "probs"
-        :type output_type: Optional[Literal["samples", "expval", "probs"]]
-        :param kwargs: Additional keyword arguments
-
-        :keyword reset: Whether to reset the device before applying the operations. Default is False.
-        :keyword apply: Whether to apply the operations. Where "auto" will apply the operations if the transition matrix
-            is None which means that no operations have been applied yet. Default is "auto".
-        :keyword wires: The wires to measure the observable on. Default is None.
-        :keyword shot_range: The range of shots to measure the observable on. Default is None.
-        :keyword bin_size: The size of the bins to measure the observable on. Default is None.
-
-        :return: The result of the execution in the specified output type
-        """
-        if kwargs.get("reset", False):
-            self.reset()
-        apply = kwargs.get("apply", "auto")
-        if apply == "auto" and self._global_sptm is None:
-            apply = True
-        elif apply == "auto":
-            apply = False
-        if apply:
-            self.apply_generator(op_iterator, **kwargs)
-        return self.execute_output(observable=observable, output_type=output_type, **kwargs)
-
-    def execute_output(
-        self,
-        observable: Optional = None,
-        output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
-        **kwargs,
-    ):
-        """
-        Return the result of the execution in the specified output type.
-
-        :param observable: The observable to measure
-        :type observable: Optional
-        :param output_type: The type of output to return. Supported types are "samples", "expval", and "probs"
-        :type output_type: Optional[Literal["samples", "expval", "probs"]]
-        :param kwargs: Additional keyword arguments
-
-        :keyword reset: Whether to reset the device before applying the operations. Default is False.
-        :keyword apply: Whether to apply the operations. Where "auto" will apply the operations if the transition matrix
-            is None which means that no operations have been applied yet. Default is "auto".
-        :keyword wires: The wires to measure the observable on. Default is None.
-        :keyword shot_range: The range of shots to measure the observable on. Default is None.
-        :keyword bin_size: The size of the bins to measure the observable on. Default is None.
-
-        :return: The result of the execution in the specified output type
-        """
-        if output_type is None:
-            return
-        if self.shots is not None and self._samples is None:
-            self._samples = self.generate_samples()
-        if output_type == "samples":
-            if self.shots is None:
-                raise ValueError("The number of shots must be specified to generate samples.")
-            return self._samples
-        if output_type == "expval":
-            return self.expval(observable)
-        if output_type == "probs":
-            return self.probability(
-                wires=kwargs.get("wires", None),
-                shot_range=kwargs.get("shot_range", None),
-                bin_size=kwargs.get("bin_size", None),
-            )
-        if output_type in ["star_state", "*state"]:
-            return self.compute_star_state(**kwargs)
-        raise ValueError(f"Output type {output_type} is not supported.")
-
-    def compute_star_state(self, **kwargs):
-        """
-        Compute the star state of the device. The star state is the state that has the highest probability.
-
-        :param kwargs:  Additional keyword arguments
-        :return: The star state and its probability
-        """
-        if self._star_state is None or self._star_probability is None:
-            self._star_state, self._star_probability = self.star_state_finding_strategy(
-                self,
-                partial(self.get_states_probability, show_progress=False),
-                nb_workers=self.n_workers,
-                show_progress=self.show_progress,
-                samples=self._samples,
-            )
-        return self.star_state, self.star_probability
-
-    def _asarray(self, x, dtype=None):
-        r"""
-        Convert the input to an array of type ``dtype``.
-
-        :Note: If the input is on cuda, it will be copied to cpu.
-
-        :param x: input to be converted
-        :param dtype: type of the output array
-        :return: array of type ``dtype``
-        """
-        is_complex = qml.math.any(qml.math.iscomplex(x))
-        if dtype is None and is_complex:
-            dtype = self.C_DTYPE
-        elif dtype is None:
-            dtype = self.R_DTYPE
-        if not is_complex:
-            x = qml.math.real(x)
-        return qml.math.cast(torch_utils.to_cpu(x, dtype=dtype), dtype=dtype)
-
-    def _dot(self, a, b):
-        r"""
-        Compute the dot product of two arrays.
-
-        :param a: input array
-        :param b: input array
-        :return: dot product of the input arrays
-        """
-        return qml.math.einsum("...i,...i->...", self._asarray(a), self._asarray(b))
-
-    def reset(self):
-        """Reset the device"""
-        super().reset()
-        self._binary_state = None
-        self._basis_state_index = 0
-        self._sparse_state = None
-        self._pre_rotated_sparse_state = self._sparse_state
-        self._state = None
-        self._pre_rotated_state = self._state
-        self._global_sptm = None
-        self._batched = False
-        self._transition_matrix = None
-        self._lookup_table = None
-        self._star_state = None
-        self._star_probability = None
-        self._samples = None
-        self.apply_metadata = defaultdict()
-        self.contraction_strategy.reset()
-
-    def update_p_bar(self, *args, **kwargs):
-        if self.p_bar is None:
-            return
-        self.p_bar.update(*args, **kwargs)
-        self.p_bar.refresh()
-
-    def p_bar_set_n(self, n: int):
-        if self.p_bar is not None:
-            self.p_bar.n = n
-            self.p_bar.refresh()
-
-    def p_bar_set_total(self, total: int):
-        if self.p_bar is not None:
-            self.p_bar.total = total
-            self.p_bar.refresh()
-
-    def initialize_p_bar(self, *args, **kwargs):
-        kwargs.setdefault("disable", not self.show_progress)
-        if self.p_bar is None and not self.show_progress:
-            return
-        self.p_bar = tqdm.tqdm(*args, **kwargs)
-        return self.p_bar
-
-    def p_bar_set_postfix(self, *args, **kwargs):
-        if self.p_bar is not None:
-            self.p_bar.set_postfix(*args, **kwargs)
-            self.p_bar.refresh()
-
-    def p_bar_set_postfix_str(self, *args, **kwargs):
-        if self.p_bar is not None:
-            self.p_bar.set_postfix_str(*args, **kwargs)
-            self.p_bar.refresh()
-
-    def close_p_bar(self):
-        if self.p_bar is not None:
-            self.p_bar.close()
 
     @property
     def binary_state(self) -> np.ndarray:
