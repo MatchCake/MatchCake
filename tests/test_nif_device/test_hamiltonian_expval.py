@@ -13,7 +13,7 @@ from matchcake.circuits import (
     random_sptm_operations_generator,
 )
 from matchcake.devices.contraction_strategies import contraction_strategy_map
-from matchcake.operations import SptmfRxRx
+from matchcake.operations import SptmCompRxRx
 from matchcake.utils import torch_utils
 
 from .. import get_slow_test_mark

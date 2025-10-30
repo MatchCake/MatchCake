@@ -1,13 +1,9 @@
 from typing import Union
 
-import numpy as np
 import pennylane as qml
 from pennylane import numpy as pnp
-from pennylane.operation import Operation
 
 from .. import matchgate_parameter_sets as mps
-from .. import utils
-from ..base.matchgate import Matchgate
 from .matchgate_operation import MatchgateOperation
 
 
@@ -16,12 +12,12 @@ class Rxx(MatchgateOperation):
     This operation implements the following as a MatchgateOperation:
 
     .. math::
-        U = e^{-i\theta X_{j} \otimes X_{j+1}} \\
+        U = e^{-i\theta/2 X_{j} \otimes X_{j+1}} \\
          = \begin{bmatrix}
-            \cos(\theta) & 0 & 0 & -i\sin(\theta) \\
-            0 & \cos(\theta) & -i\sin(\theta) & 0 \\
-            0 & -i\sin(\theta) & \cos(\theta) & 0 \\
-            -i\sin(\theta) & 0 & 0 & \cos(\theta)
+            \cos(\theta/2) & 0 & 0 & -i\sin(\theta/2) \\
+            0 & \cos(\theta/2) & -i\sin(\theta/2) & 0 \\
+            0 & -i\sin(\theta/2) & \cos(\theta/2) & 0 \\
+            -i\sin(\theta/2) & 0 & 0 & \cos(\theta/2)
         \end{bmatrix}
 
     where :math:`\theta` is a parameter, :math:`X_{j}` is the Pauli-X operator applied on the wire :math:`j`,
@@ -39,14 +35,14 @@ class Rxx(MatchgateOperation):
         self._given_params = params
         theta = params
         m_params = mps.MatchgateStandardParams(
-            a=qml.math.cos(theta),
-            b=-1j * qml.math.sin(theta),
-            w=qml.math.cos(theta),
-            x=-1j * qml.math.sin(theta),
-            y=-1j * qml.math.sin(theta),
-            z=qml.math.cos(theta),
-            c=-1j * qml.math.sin(theta),
-            d=qml.math.cos(theta),
+            a=qml.math.cos(theta / 2),
+            b=-1j * qml.math.sin(theta / 2),
+            w=qml.math.cos(theta / 2),
+            x=-1j * qml.math.sin(theta / 2),
+            y=-1j * qml.math.sin(theta / 2),
+            z=qml.math.cos(theta / 2),
+            c=-1j * qml.math.sin(theta / 2),
+            d=qml.math.cos(theta / 2),
         )
         kwargs["in_param_type"] = mps.MatchgateStandardParams
         super().__init__(m_params, wires=wires, id=id, **kwargs)

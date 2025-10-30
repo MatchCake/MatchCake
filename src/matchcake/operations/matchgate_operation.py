@@ -17,6 +17,46 @@ from .single_particle_transition_matrices.single_particle_transition_matrix impo
 
 
 class MatchgateOperation(Matchgate, Operation):
+    r"""
+    A matchgate is a matrix of the form
+
+    .. math::
+        \begin{pmatrix}
+            a & 0 & 0 & b \\
+            0 & w & x & 0 \\
+            0 & y & z & 0 \\
+            c & 0 & 0 & d
+        \end{pmatrix}
+
+    where :math:`a, b, c, d, w, x, y, z \in \mathbb{C}`. The matrix M can be decomposed as
+
+    .. math::
+        A = \begin{pmatrix}
+            a & b \\
+            c & d
+        \end{pmatrix}
+
+    and
+
+    .. math::
+        W = \begin{pmatrix}
+            w & x \\
+            y & z
+        \end{pmatrix}
+
+    The matchgate is a unitary matrix if and only if the following conditions are satisfied:
+
+    .. math::
+        M^\dagger M = \mathbb{I} \quad \text{and} \quad MM^\dagger = \mathbb{I}
+
+    where :math:`\mathbb{I}` is the identity matrix and :math:`M^\dagger` is the conjugate transpose of :math:`M`,
+    and the following condition is satisfied:
+
+    .. math::
+        \det(A) = \det(W)
+
+    """
+
     num_params = mps.MatchgatePolarParams.N_PARAMS
     num_wires = 2
     par_domain = "A"
@@ -93,25 +133,38 @@ class MatchgateOperation(Matchgate, Operation):
         self.draw_label_params = kwargs.get("draw_label_params", None)
         Operation.__init__(self, *np_params, wires=wires, id=id)
 
-    @property
-    def batch_size(self):
-        not_none_params = [p for p in self.get_all_params_set(make_params=False) if p is not None]
-        if len(not_none_params) == 0:
-            raise ValueError("No params set. Cannot make standard params.")
-        batch_size = not_none_params[0].batch_size
-        if batch_size in [
-            0,
-        ]:
-            return None
-        return batch_size
+    def __matmul__(self, other):
+        if isinstance(other, SingleParticleTransitionMatrixOperation):
+            return fermionic_operator_matmul(self.to_sptm_operation(), other)
 
-    @property
-    def sorted_wires(self):
-        return Wires(sorted(self.wires.tolist()))
+        if not isinstance(other, MatchgateOperation):
+            raise ValueError(f"Cannot multiply MatchgateOperation with {type(other)}")
 
-    @property
-    def cs_wires(self):
-        return Wires(make_wires_continuous(self.wires))
+        if self.wires != other.wires:
+            return fermionic_operator_matmul(self.to_sptm_operation(), other.to_sptm_operation())
+
+        new_params = self.standard_params @ other.standard_params
+        return MatchgateOperation(
+            new_params,
+            wires=self.wires,
+            in_param_type=new_params.__class__,
+        )
+
+    def __repr__(self):
+        return Operation.__repr__(self)
+
+    def __str__(self):
+        return Operation.__str__(self)
+
+    def __copy__(self):
+        return Operation.__copy__(self)
+
+    def to_sptm_operation(self):
+        return SingleParticleTransitionMatrixOperation(
+            self.single_particle_transition_matrix,
+            wires=self.wires,
+            **getattr(self, "_hyperparameters", {}),
+        )
 
     def get_padded_single_particle_transition_matrix(self, wires=None):
         r"""
@@ -131,23 +184,6 @@ class MatchgateOperation(Matchgate, Operation):
             in_param_type=new_params.__class__,
         )
 
-    def __matmul__(self, other):
-        if isinstance(other, SingleParticleTransitionMatrixOperation):
-            return fermionic_operator_matmul(self.to_sptm_operation(), other)
-
-        if not isinstance(other, MatchgateOperation):
-            raise ValueError(f"Cannot multiply MatchgateOperation with {type(other)}")
-
-        if self.wires != other.wires:
-            return fermionic_operator_matmul(self.to_sptm_operation(), other.to_sptm_operation())
-
-        new_params = self.standard_params @ other.standard_params
-        return MatchgateOperation(
-            new_params,
-            wires=self.wires,
-            in_param_type=new_params.__class__,
-        )
-
     def label(self, decimals=None, base_label=None, cache=None):
         if self.draw_label_params is None:
             return super().label(decimals=decimals, base_label=base_label, cache=cache)
@@ -155,18 +191,22 @@ class MatchgateOperation(Matchgate, Operation):
         op_label = base_label or self.__class__.__name__
         return f"{op_label}({self.draw_label_params})"
 
-    def __repr__(self):
-        return Operation.__repr__(self)
+    @property
+    def batch_size(self):
+        not_none_params = [p for p in self.get_all_params_set(make_params=False) if p is not None]
+        if len(not_none_params) == 0:
+            raise ValueError("No params set. Cannot make standard params.")
+        batch_size = not_none_params[0].batch_size
+        if batch_size in [
+            0,
+        ]:
+            return None
+        return batch_size
 
-    def __str__(self):
-        return Operation.__str__(self)
+    @property
+    def sorted_wires(self):
+        return Wires(sorted(self.wires.tolist()))
 
-    def __copy__(self):
-        return Operation.__copy__(self)
-
-    def to_sptm_operation(self):
-        return SingleParticleTransitionMatrixOperation(
-            self.single_particle_transition_matrix,
-            wires=self.wires,
-            **getattr(self, "_hyperparameters", {}),
-        )
+    @property
+    def cs_wires(self):
+        return Wires(make_wires_continuous(self.wires))

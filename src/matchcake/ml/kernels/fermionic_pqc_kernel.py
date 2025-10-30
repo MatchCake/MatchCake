@@ -14,11 +14,11 @@ except ImportError:
     }
 
 from ...operations import (
+    CompHH,
     MAngleEmbedding,
     SptmAngleEmbedding,
-    SptmFHH,
-    SptmFSwap,
-    fH,
+    SptmCompHH,
+    SptmCompZX,
     fSWAP,
 )
 from .nif_kernel import NIFKernel
@@ -91,9 +91,9 @@ class FermionicPQCKernel(NIFKernel):
             fcnot_wires = wires_patterns[layer % len(wires_patterns)]
             for wires in fcnot_wires:
                 if self._entangling_mth == "fswap":
-                    SptmFSwap(wires=wires)
+                    SptmCompZX(wires=wires)
                 elif self._entangling_mth == "hadamard":
-                    SptmFHH(wires=wires)
+                    SptmCompHH(wires=wires)
                 elif self._entangling_mth == "identity":
                     pass
                 else:
@@ -128,12 +128,12 @@ class StateVectorFermionicPQCKernel(FermionicPQCKernel):
         for layer in range(self.depth):
             sub_x = x[..., layer * self.size : (layer + 1) * self.size]
             MAngleEmbedding(sub_x, wires=self.wires, rotations=self.rotations)
-            fcnot_wires = wires_patterns[layer % len(wires_patterns)]
-            for wires in fcnot_wires:
+            wires_list = wires_patterns[layer % len(wires_patterns)]
+            for wires in wires_list:
                 if self._entangling_mth == "fswap":
                     fSWAP(wires=wires)
                 elif self._entangling_mth == "hadamard":
-                    fH(wires=wires)
+                    CompHH(wires=wires)
                 elif self._entangling_mth == "identity":
                     pass
                 else:

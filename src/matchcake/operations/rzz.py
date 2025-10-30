@@ -16,12 +16,12 @@ class Rzz(MatchgateOperation):
     This operation implements the following as a MatchgateOperation:
 
     .. math::
-        U = e^{-i\theta Z_{j} \otimes Z_{j+1}} \\
+        U = e^{-i\theta/2 Z_{j} \otimes Z_{j+1}} \\
          = \begin{bmatrix}
-            e^{-i\theta} & 0 & 0 & 0 \\
-            0 & e^{i\theta} & 0 & 0 \\
-            0 & 0 & e^{i\theta} & 0 \\
-            0 & 0 & 0 & e^{-i\theta}
+            e^{-i\theta/2} & 0 & 0 & 0 \\
+            0 & e^{i\theta/2} & 0 & 0 \\
+            0 & 0 & e^{i\theta/2} & 0 \\
+            0 & 0 & 0 & e^{-i\theta/2}
         \end{bmatrix}
 
     where :math:`\theta` is a parameter, :math:`Z_{j}` is the Pauli-Z operator applied on the wire :math:`j`,
@@ -41,10 +41,10 @@ class Rzz(MatchgateOperation):
         self._given_params = params
         theta = params
         m_params = mps.MatchgateStandardParams(
-            a=qml.math.exp(-1j * theta),
-            w=qml.math.exp(1j * theta),
-            z=qml.math.exp(1j * theta),
-            d=qml.math.exp(-1j * theta),
+            a=qml.math.exp(-1j * theta / 2),
+            w=qml.math.exp(1j * theta / 2),
+            z=qml.math.exp(1j * theta / 2),
+            d=qml.math.exp(-1j * theta / 2),
         )
         kwargs["in_param_type"] = mps.MatchgateStandardParams
         super().__init__(m_params, wires=wires, id=id, **kwargs)

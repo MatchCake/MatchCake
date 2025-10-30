@@ -8,11 +8,11 @@ import torch
 from pennylane.operation import AnyWires, Operation
 from pennylane.wires import Wires
 
-from .sptm_f_rxrx import SptmfRxRx
-from .sptm_ryry import SptmRyRy
-from .sptm_rzrz import SptmRzRz
+from .sptm_comp_rxrx import SptmCompRxRx
+from .sptm_comp_ryry import SptmCompRyRy
+from .sptm_comp_rzrz import SptmCompRzRz
 
-ROT = {"X": SptmfRxRx, "Y": SptmRyRy, "Z": SptmRzRz}
+ROT = {"X": SptmCompRxRx, "Y": SptmCompRyRy, "Z": SptmCompRzRz}
 
 
 class SptmAngleEmbedding(Operation):

@@ -3,13 +3,15 @@ import itertools
 import numpy as np
 import pennylane as qml
 import pytest
+import torch
 
 import matchcake as mc
 from matchcake import MatchgateOperation
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
 from matchcake.circuits import random_sptm_operations_generator
-from matchcake.operations import SptmfRxRx, SptmIdentity
+from matchcake.operations import SptmCompRxRx, SptmIdentity
+from matchcake.utils import torch_utils
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -77,8 +79,8 @@ def test_neighbours_contraction_device_one_line(operations):
     [
         [SptmIdentity(wires=[0, 1])],
         [SptmIdentity(wires=[0, 1]) for _ in range(10)],
-        [SptmfRxRx(np.random.random(2), wires=[0, 1])],
-        [SptmfRxRx(np.random.random(2), wires=[0, 1]) for _ in range(2)],
+        [SptmCompRxRx(np.random.random(2), wires=[0, 1])],
+        [SptmCompRxRx(np.random.random(2), wires=[0, 1]) for _ in range(2)],
     ],
 )
 def test_neighbours_contraction_device_one_line_sptm(operations):
@@ -140,12 +142,6 @@ def test_multiples_matchgate_probs_with_qbit_device_nh_contraction(params_list, 
 
 @pytest.mark.parametrize("x", [np.random.rand(4) for _ in range(N_RANDOM_TESTS_PER_CASE)])
 def test_nh_contraction_torch_grad(x):
-    try:
-        import torch
-    except ImportError:
-        pytest.skip("PyTorch not installed.")
-    from matchcake.utils import torch_utils
-
     n_qubits = 4
     x = torch.from_numpy(x).float()
     x_grad = x.detach().clone().requires_grad_(True)
@@ -154,10 +150,10 @@ def test_nh_contraction_torch_grad(x):
 
     @qml.qnode(dev, interface="torch")
     def circuit(x):
-        mc.operations.fRYY(x[0:2], wires=[0, 1])
-        mc.operations.fRYY(x[2:4], wires=[2, 3])
-        mc.operations.fRYY(x[0:2], wires=[0, 1])
-        mc.operations.fRYY(x[2:4], wires=[2, 3])
+        mc.operations.CompRyRy(x[0:2], wires=[0, 1])
+        mc.operations.CompRyRy(x[2:4], wires=[2, 3])
+        mc.operations.CompRyRy(x[0:2], wires=[0, 1])
+        mc.operations.CompRyRy(x[2:4], wires=[2, 3])
         return qml.expval(qml.Projector([0] * n_qubits, wires=range(n_qubits)))
 
     try:
@@ -214,9 +210,6 @@ def test_nh_contraction_with_apply_generator_sptm_supp(n_wires):
     def circuit_gen():
         for op in mc.operations.SptmFermionicSuperposition(wires=wires).decomposition():
             yield op
-        # for wire_i, wire_j in zip(wires[:-1], wires[1:]):
-        #     yield mc.operations.SptmFSwap(wires=[wire_i, wire_j])
-        #     yield mc.operations.SptmFHH(wires=[wire_i, wire_j])
         return
 
     nif_device_nh = init_nif_device(wires=wires, contraction_method="neighbours")
@@ -246,9 +239,6 @@ def test_nh_contraction_with_apply_generator_supp(n_wires):
     def circuit_gen():
         for op in mc.operations.FermionicSuperposition(wires=wires).decomposition():
             yield op
-        # for wire_i, wire_j in zip(wires[:-1], wires[1:]):
-        #     yield mc.operations.fSWAP(wires=[wire_i, wire_j])
-        #     yield mc.operations.fH(wires=[wire_i, wire_j])
         return
 
     nif_device_nh = init_nif_device(wires=wires, contraction_method="neighbours")

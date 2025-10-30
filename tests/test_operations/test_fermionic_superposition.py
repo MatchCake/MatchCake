@@ -2,9 +2,7 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-import matchcake as mc
-from matchcake import utils
-from matchcake.operations import FermionicSuperposition, SptmFSwapRzRz, SptmRzRz, fSWAP
+from matchcake.operations import FermionicSuperposition
 from matchcake.utils import state_to_binary_string
 from matchcake.utils.torch_utils import to_numpy
 

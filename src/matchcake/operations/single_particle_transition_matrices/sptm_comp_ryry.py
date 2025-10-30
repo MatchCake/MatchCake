@@ -6,7 +6,21 @@ from ...utils.math import convert_and_cast_like
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
-class SptmRyRy(SingleParticleTransitionMatrixOperation):
+class SptmCompRyRy(SingleParticleTransitionMatrixOperation):
+    r"""
+    Single Particle Transition Matrix (Sptm) Composition of rotations YY of a matchgate
+
+    .. math::
+        U = M(R_Y(\theta), R_Y(\phi))
+
+    where M is the matchgate. The current class represent
+
+    .. math::
+        R_{\mu\nu} = \frac{1}{4} \text{Tr}{\left(M c_\mu M^\dagger\right)c_\nu}
+
+    where R is the Sptm and c are the majoranas.
+    """
+
     ALLOWED_ANGLES = [np.pi, 3 * np.pi]
     EQUAL_ALLOWED_ANGLES = [0, np.pi, 2 * np.pi, 3 * np.pi]
 
