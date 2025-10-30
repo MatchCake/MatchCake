@@ -49,6 +49,7 @@ jobs:
     - name: Bump package version in pyproject.toml
       run: |
         uv version ${{steps.version.outputs.new_tag}}
+        uv lock
 
     - name: Build dist
       run: |
@@ -60,6 +61,7 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add pyproject.toml
+        git add uv.lock
         git diff-index --quiet HEAD || git commit -m "Updating version of pyproject.toml"
 
     - name: Push the new pyproject.toml
