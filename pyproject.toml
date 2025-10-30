@@ -1,5 +1,5 @@
 [project]
-name = "MatchCake"
+name = "matchcake"
 version = "0.0.5"
 description = ""
 authors = [{ name = "Jérémie Gince", email = "gincejeremie@gmail.com" }]
