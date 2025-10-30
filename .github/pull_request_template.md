@@ -10,8 +10,8 @@ Please complete the following checklist when submitting a PR. The PR will not be
 
 - [ ] All new features include a unit test.
       Make sure that the tests passed and the coverage is
-      sufficient by running `python run_pytests.py --tests_folder=tests` or 
-      `pytest tests --cov=src --cov-report=term-missing`.
+      sufficient by running 
+      `uv run pytest tests --cov=src --cov-report=term-missing --durations=30 --session-timeout=600`.
 - [ ] All new functions and code are clearly documented.
 - [ ] The code is formatted using Black.
       You can do this by running `black src tests`.
