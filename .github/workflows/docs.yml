@@ -17,21 +17,23 @@ jobs:
       with:
         python-version: "3.10"
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.9.2"
+        python-version: "3.10"
+        enable-cache: true
     - name: Install dependencies
       run: |
-        python -m venv ./venv
-        . ./venv/bin/activate
-        python -m pip install --upgrade pip
-        pip install poetry
-        poetry install --with=docs --no-interaction --no-ansi
+        uv venv .venv
+        uv sync --locked --dev --group docs --extra cpu
 
     - name: Build the sphinx docs
       run: |
-        . ./venv/bin/activate
-        sphinx-apidoc -f -o ./sphinx/source ./src/matchcake
-        make -C sphinx clean
-        python sphinx/clean_html_files.py
-        make -C sphinx html
+        uv run sphinx-apidoc -f -o ./sphinx/source ./src/matchcake
+        uv run make -C sphinx clean
+        uv run python sphinx/clean_html_files.py
+        uv run make -C sphinx html
         touch sphinx/build/html/.nojekyll
 
     - name: Checkout gh-pages branch
@@ -41,9 +43,8 @@ jobs:
 
     - name: Copy build files to docs folder
       run: |
-        . ./venv/bin/activate
         cp -a sphinx/build/html/. docs/
-        python sphinx/make_html_files_list.py
+        uv run python sphinx/make_html_files_list.py
         rm -rf sphinx/build
 
     - name: Commit to gh-pages branch
