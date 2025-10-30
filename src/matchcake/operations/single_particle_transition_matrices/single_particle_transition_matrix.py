@@ -4,11 +4,11 @@ import numpy as np
 import pennylane as qml
 from pennylane import numpy as pnp
 from pennylane.operation import AnyWires, Operation
+from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 
 from ... import utils
 from ...constants import _CIRCUIT_MATMUL_DIRECTION
-from ...templates import TensorLike
 from ...utils import make_wires_continuous
 from ...utils.math import (
     circuit_matmul,

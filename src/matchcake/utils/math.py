@@ -3,13 +3,13 @@ from typing import Any, Iterable, List, Literal, Optional, Tuple
 import numpy as np
 import pennylane as qml
 import scipy
+from pennylane.typing import TensorLike
 
 from ..constants import (
     _CIRCUIT_MATMUL_DIRECTION,
     _FOP_MATMUL_DIRECTION,
     MatmulDirectionType,
 )
-from ..templates.tensor_like import TensorLike
 
 try:
     import torch
@@ -192,9 +192,7 @@ def astensor(tensor, like=None, **kwargs):
     :return: The tensor.
     :rtype: Any
     """
-    from ..templates.tensor_like import TensorLike
-
-    if isinstance(tensor, TensorLike):
+    if isinstance(tensor, (np.ndarray, torch.Tensor)):
         return tensor
     return qml.math.array(tensor, like=like, **kwargs)
 

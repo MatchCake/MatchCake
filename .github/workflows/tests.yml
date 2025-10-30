@@ -27,47 +27,47 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.9.2"
+        python-version: ${{ matrix.python-version }}
+        enable-cache: true
     - name: Install dependencies
       run: |
-        python -m venv ./venv
-        . ./venv/bin/activate
-        python -m pip install --upgrade pip
-        pip install poetry
-        poetry install --with=dev --no-interaction --no-ansi
+        uv venv .venv
+        uv sync --locked --dev --extra cpu
     - name: Test Linting
       run: |
-        . ./venv/bin/activate
-        black src tests --check --diff
-        isort src tests --check-only --diff
+        uv run black src tests --check --diff
+        uv run isort src tests --check-only --diff
     - name: Test Typing
       continue-on-error: true
       run: |
-        . ./venv/bin/activate
-        mypy src tests
+        uv run mypy src tests
     - name: Test Notebooks
       run: |
-        . ./venv/bin/activate
-        pytest --nbmake tutorials -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
+        uv run pytest --nbmake tutorials -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
 
     - name: Test Unittests with pytest
       run: |
-        . ./venv/bin/activate
-        python run_pytests.py --tests_folder=tests --N_RANDOM_TESTS_PER_CASE=1 --no-run_slow --cov-report=xml:tests/.tmp/coverage.xml
+        # TODO: add -n=auto when possible
+        uv run pytest tests --cov=src --cov-report="xml:tests/.tmp/coverage.xml" --cov-report=term-missing --durations=30 --session-timeout=600
 
     - name: Code Coverage
       uses: orgoro/coverage@v3.2
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         coverageFile: tests/.tmp/coverage.xml
-        thresholdAll: 0.0
+        thresholdAll: 0.3
         thresholdNew: 0.98
         thresholdModified: 0.0
 
     - name: Test Build
+      if: ${{ matrix.python-version == '3.10' }}
       run: |
-        . ./venv/bin/activate
-        python -m build
-        twine check dist/*
+        uv run python -m build --sdist --wheel --no-isolation --outdir dist/ .
+        uv run twine check dist/*
 
   Run-tests-on-Windows:
     name: Run tests on Windows-latest
@@ -82,14 +82,17 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.9.2"
+        python-version: ${{ matrix.python-version }}
+        enable-cache: true
     - name: Install dependencies
       run: |
-        python -m venv ./venv
-        . ./venv/Scripts/activate
-        python -m pip install --upgrade pip
-        pip install poetry
-        poetry install --with=dev --no-interaction --no-ansi
+        uv venv .venv
+        uv sync --locked --dev --extra cpu
     - name: Test Unittests with pytest
       run: |
-        . ./venv/Scripts/activate
-        python run_pytests.py --tests_folder=tests --N_RANDOM_TESTS_PER_CASE=1 --no-run_slow
+        # TODO: add -n=auto when possible
+        uv run pytest tests --session-timeout=600

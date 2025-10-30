@@ -40,16 +40,6 @@ HellParams = MatchgatePolarParams(
     theta3=np.pi / 4,
     theta4=np.pi / 5,
 )
-fCNOT = MatchgateStandardParams(
-    a=0,
-    b=1,
-    c=-1,
-    d=0,
-    w=1,
-    x=0,
-    y=0,
-    z=1,
-)
 _inv_sqrt_2 = 1 / np.sqrt(2)
 fHH = MatchgateStandardParams(
     a=_inv_sqrt_2,

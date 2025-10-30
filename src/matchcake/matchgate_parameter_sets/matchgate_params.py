@@ -5,9 +5,9 @@ from typing import Any, Literal, Optional
 import numpy as np
 import pennylane as qml
 from pennylane import numpy as pnp
+from pennylane.typing import TensorLike
 
 from .. import utils
-from ..templates import TensorLike
 from ..utils.torch_utils import to_numpy, to_tensor
 
 

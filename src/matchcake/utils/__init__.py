@@ -6,12 +6,12 @@ import numpy as np
 import pennylane as qml
 import pennylane.numpy as pnp
 from pennylane.operation import Operation
+from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 from scipy import sparse
 
-from ..templates import TensorLike
 from . import constants, cuda, majorana, math, operators, torch_utils
-from ._pfaffian import batch_pfaffian_ltl, pfaffian
+from ._pfaffian import pfaffian
 from .constants import PAULI_I, PAULI_X, PAULI_Y, PAULI_Z
 from .majorana import (
     MajoranaGetter,
