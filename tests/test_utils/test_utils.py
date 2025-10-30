@@ -54,7 +54,6 @@ class TestUtils:
             with pytest.raises(target_matrix):
                 out_matrix = utils.skew_antisymmetric_vector_to_matrix(input_vector)
 
-
     @pytest.mark.parametrize(
         "state,hamming_weight",
         [
@@ -87,7 +86,6 @@ class TestUtils:
             rtol=RTOL_SCALAR_COMPARISON,
         )
 
-
     @pytest.mark.parametrize(
         "coeffs,hamiltonian",
         [
@@ -114,7 +112,12 @@ class TestUtils:
             rtol=RTOL_MATRIX_COMPARISON,
         )
 
-    @pytest.mark.parametrize("coefficients_size", [2**2, ])
+    @pytest.mark.parametrize(
+        "coefficients_size",
+        [
+            2**2,
+        ],
+    )
     def test_decompose_matrix_into_majoranas(self, coefficients_size):
         coefficients = np.random.rand(coefficients_size)
         matrix = np.zeros((coefficients.size, coefficients.size), dtype=complex)
@@ -165,7 +168,8 @@ class TestUtils:
         )
 
     @pytest.mark.parametrize(
-        "vector_length", list(range(1, 10)),
+        "vector_length",
+        list(range(1, 10)),
     )
     def test_binary_string_to_vector(self, vector_length):
         binary_vector = np.random.randint(0, 2, size=vector_length)
@@ -178,7 +182,6 @@ class TestUtils:
             atol=ATOL_MATRIX_COMPARISON,
             rtol=RTOL_MATRIX_COMPARISON,
         )
-
 
     @pytest.mark.parametrize(
         "inputs,out_state",

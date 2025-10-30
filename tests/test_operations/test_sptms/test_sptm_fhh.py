@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from matchcake.operations import fH, SptmFHH
+from matchcake.operations import SptmFHH, fH
 from tests.configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
 
 
@@ -27,5 +27,3 @@ class TestSptmFHH:
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
-
-

@@ -89,27 +89,37 @@ conflicts = [
   [
     { extra = "cpu" },
     { extra = "cu128" },
+    { extra = "cu130" },
   ],
+]
+required-environments = [
+    "sys_platform == 'linux' and platform_machine == 'aarch64'",
 ]
 
 [project.optional-dependencies]
 cpu = [
   "torch (>=2.1.2,<3.0.0)",
-  "torchvision (>=0.21.0,<0.23.0)",
+  "torchvision (>=0.21.0)",
 ]
 cu128 = [
   "torch (>=2.1.2,<3.0.0)",
-  "torchvision (>=0.21.0,<0.23.0)",
+  "torchvision (>=0.21.0)",
+]
+cu130 = [
+  "torch (>=2.1.2,<3.0.0)",
+  "torchvision (>=0.22.0)",
 ]
 
 [tool.uv.sources]
 torch = [
   { index = "pytorch-cpu", extra = "cpu" },
   { index = "pytorch-cu128", extra = "cu128" },
+  { index = "pytorch-cu130", extra = "cu130" },
 ]
 torchvision = [
   { index = "pytorch-cpu", extra = "cpu" },
   { index = "pytorch-cu128", extra = "cu128" },
+  { index = "pytorch-cu130", extra = "cu130" },
 ]
 
 [[tool.uv.index]]
@@ -120,6 +130,11 @@ explicit = true
 [[tool.uv.index]]
 name = "pytorch-cu128"
 url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
 explicit = true
 
 [build-system]
@@ -178,7 +193,7 @@ exclude = [
     "utils/torch_utils",
     "__init__.py",
     # Tests
-    "tests/matchgate_params_set",
+    "tests/test_matchgate_params_set",
     "tests/test_ml",
     "tests/test_nif_device",
     "tests/test_operations",

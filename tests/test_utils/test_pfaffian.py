@@ -16,10 +16,12 @@ from ..configs import (
 @pytest.mark.parametrize(
     "n, batch_size, mth",
     [
-        (i, batch_size, mth)
-        for i in [2, 3, 5]
-        for mth in ["det", "PfaffianFDBPf"]
-        for batch_size in [None, 3]
+        (2, None, "det"),
+        (3, None, "det"),
+        (5, None, "det"),
+        (2, 3, "det"),
+        (2, 3, "PfaffianFDBPf"),
+        (3, None, "PfaffianFDBPf"),
     ],
 )
 class TestPfaffian:

@@ -7,6 +7,7 @@ from torch.autograd import gradcheck
 from matchcake import utils
 from matchcake.base.lookup_table import NonInteractingFermionicLookupTable
 from matchcake.devices.probability_strategies import LookupTableStrategy
+
 from ...configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
@@ -40,9 +41,7 @@ class TestNonInteractingFermionicLookupTableGradients:
     def system_state(self, size):
         return np.random.choice([0, 1], size=size)
 
-    def test_compute_observables_of_target_states_gradients(
-            self, input_matrix, system_state, target_binary_states
-    ):
+    def test_compute_observables_of_target_states_gradients(self, input_matrix, system_state, target_binary_states):
         def get_output(transition_matrix):
             lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
             batch_obs = lookup_table.compute_observables_of_target_states(
@@ -61,8 +60,9 @@ class TestNonInteractingFermionicLookupTableGradients:
             rtol=RTOL_APPROX_COMPARISON,
         )
 
-    def test_compute_observables_of_target_states_gradients_lookup_table_strategy(self, input_matrix, system_state,
-                                                                                  target_binary_states):
+    def test_compute_observables_of_target_states_gradients_lookup_table_strategy(
+        self, input_matrix, system_state, target_binary_states
+    ):
         def get_output(transition_matrix):
             lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
             lookup_table_strategy = LookupTableStrategy()

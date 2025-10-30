@@ -14,7 +14,6 @@ from . import devices_init
 from .test_specific_circuit import specific_matchgate_circuit
 
 
-
 class TestNIFDeviceProbabilities:
     def test_fswap_probabilities_explicitsum(self):
         initial_binary_string = "01"
@@ -45,9 +44,8 @@ class TestNIFDeviceProbabilities:
             for num_wires in [2, 3, 4, 5, 6]
             for num_gates in [1, 3, 6]
             for n_probs in [1, num_wires]
-        ] + [
-            (3, 2, 2, "ExplicitSum")
-        ],
+        ]
+        + [(3, 2, 2, "ExplicitSum")],
     )
     def test_multiples_matchgate_probs_against_qubit_device(self, num_gates, num_wires, n_probs, prob_strategy):
         params_list = [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)]

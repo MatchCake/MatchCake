@@ -14,6 +14,7 @@ from matchcake.utils import (
     recursive_kron,
     torch_utils,
 )
+
 from ...configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
@@ -29,11 +30,7 @@ class TestSingleParticleTransitionMatrixOperationPadding:
 
     @pytest.mark.parametrize(
         "active_wire0, n_wires",
-        [
-            (active_wire0, n_wires)
-            for n_wires in np.arange(2, 6)
-            for active_wire0 in np.arange(n_wires - 1)
-        ],
+        [(active_wire0, n_wires) for n_wires in np.arange(2, 6) for active_wire0 in np.arange(n_wires - 1)],
     )
     def test_matchgate_to_sptm_with_padding(self, active_wire0, n_wires):
         all_wires = qml.wires.Wires(list(range(n_wires)))
@@ -62,11 +59,7 @@ class TestSingleParticleTransitionMatrixOperationPadding:
 
     @pytest.mark.parametrize(
         "batch_size, size",
-        [
-            (batch_size, size)
-            for batch_size in [1, 4]
-            for size in [2, 3, 4]
-        ],
+        [(batch_size, size) for batch_size in [1, 4] for size in [2, 3, 4]],
     )
     def test_sptm_trivial_pad_gradient_check(self, batch_size, size):
         matrix = np.random.random((batch_size, 2 * size, 2 * size))
@@ -86,11 +79,7 @@ class TestSingleParticleTransitionMatrixOperationPadding:
 
     @pytest.mark.parametrize(
         "batch_size, size",
-        [
-            (batch_size, size)
-            for batch_size in [1, 4]
-            for size in [2, 3, 4]
-        ],
+        [(batch_size, size) for batch_size in [1, 4] for size in [2, 3, 4]],
     )
     def test_sptm_pad_gradient_check(self, batch_size, size):
         matrix = np.random.random((batch_size, 2 * size, 2 * size))

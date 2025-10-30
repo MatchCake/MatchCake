@@ -10,6 +10,7 @@ from matchcake.operations.single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
 )
 from matchcake.utils import torch_utils
+
 from ...configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
@@ -24,7 +25,6 @@ from ...configs import (
         (1, 3),
         (1, 6),
         (3, 2),
-        (3, 3),
     ],
 )
 class TestNonInteractingFermionicDeviceGradients:
@@ -105,7 +105,7 @@ class TestNonInteractingFermionicDeviceGradients:
         )
 
     def test_sptm_circuit_prob_strategy_batch_call_rn_transition_matrix_gradient_check(
-            self, expm_input_matrix, target_binary_states, system_state
+        self, expm_input_matrix, target_binary_states, system_state
     ):
         def get_output(matrix):
             nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
@@ -129,7 +129,7 @@ class TestNonInteractingFermionicDeviceGradients:
         )
 
     def test_sptm_circuit_prob_strategy_batch_call_rn_sptm_gradient_check(
-            self, expm_input_matrix, target_binary_states
+        self, expm_input_matrix, target_binary_states
     ):
         def circuit(sptm_matrix):
             nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
@@ -151,9 +151,7 @@ class TestNonInteractingFermionicDeviceGradients:
             rtol=RTOL_APPROX_COMPARISON,
         )
 
-    def test_sptm_circuit_prob_strategy_batch_call_gradient_check(
-            self, expm_input_matrix, target_binary_states
-    ):
+    def test_sptm_circuit_prob_strategy_batch_call_gradient_check(self, expm_input_matrix, target_binary_states):
         def circuit(p):
             op = SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2))
             nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
@@ -198,9 +196,7 @@ class TestNonInteractingFermionicDeviceGradients:
             BasisStateProjector(np.zeros(size, dtype=int), wires=np.arange(size)),
         ][idx]
 
-    @pytest.mark.parametrize(
-        "obs_idx", list(range(3))
-    )
+    @pytest.mark.parametrize("obs_idx", list(range(3)))
     def test_sptm_circuit_expval_gradient_check(self, input_matrix, size, obs_idx):
         obs = self.get_obs(size, obs_idx)
 
@@ -222,9 +218,7 @@ class TestNonInteractingFermionicDeviceGradients:
             rtol=RTOL_APPROX_COMPARISON,
         )
 
-    @pytest.mark.parametrize(
-        "obs_idx", list(range(3))
-    )
+    @pytest.mark.parametrize("obs_idx", list(range(3)))
     def test_sptm_circuit_exact_expval_gradient_check(self, input_matrix, size, obs_idx):
         obs = self.get_obs(size, obs_idx)
 

@@ -5,6 +5,7 @@ from matchcake.operations import fRYY
 from matchcake.operations.single_particle_transition_matrices import (
     SptmRyRy,
 )
+
 from ...configs import (
     ATOL_APPROX_COMPARISON,
     TEST_SEED,
@@ -71,8 +72,8 @@ class TestSptmRyRy:
         "theta, phi",
         [
             (
-                    np.linspace(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
-                    np.linspace(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
+                np.linspace(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
+                np.linspace(-4 * np.pi, 4 * np.pi, batch_size).squeeze(),
             )
             for batch_size in [1, 3]
         ],
@@ -103,7 +104,8 @@ class TestSptmRyRy:
         assert sptm_obj.check_is_in_so4()
 
     @pytest.mark.parametrize(
-        "batch_size", [1, 3, (3, 2)],
+        "batch_size",
+        [1, 3, (3, 2)],
     )
     def test_sptm_clip_angles(self, batch_size):
         angles = np.random.uniform(-10 * np.pi, 10 * np.pi, size=batch_size)

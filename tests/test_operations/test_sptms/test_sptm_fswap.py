@@ -43,7 +43,6 @@ class TestSptmFSwap:
             rtol=RTOL_APPROX_COMPARISON,
         )
 
-
     @pytest.mark.parametrize(
         "wire0, wire1, all_wires",
         [
@@ -72,7 +71,6 @@ class TestSptmFSwap:
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
-
 
     @pytest.mark.parametrize(
         "wire0, wire1, all_wires",
@@ -103,7 +101,6 @@ class TestSptmFSwap:
             rtol=RTOL_APPROX_COMPARISON,
         )
 
-
     @pytest.mark.parametrize(
         "wire0, wire1, all_wires",
         [
@@ -132,7 +129,6 @@ class TestSptmFSwap:
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
-
 
     @pytest.mark.parametrize(
         "wire0, wire1, all_wires",
@@ -163,7 +159,6 @@ class TestSptmFSwap:
             rtol=RTOL_APPROX_COMPARISON,
         )
 
-
     @pytest.mark.parametrize(
         "wire0, wire1, all_wires",
         [
@@ -186,7 +181,6 @@ class TestSptmFSwap:
             atol=ATOL_MATRIX_COMPARISON,
             rtol=RTOL_MATRIX_COMPARISON,
         )
-
 
     @pytest.mark.parametrize(
         "wire0, wire1, all_wires",

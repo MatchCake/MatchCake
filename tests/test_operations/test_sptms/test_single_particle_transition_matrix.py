@@ -29,11 +29,7 @@ from ...configs import (
 
 @pytest.mark.parametrize(
     "batch_size, size",
-    [
-        (batch_size, size)
-        for batch_size in [1, 3]
-        for size in [2, 3, 4]
-    ],
+    [(batch_size, size) for batch_size in [1, 3] for size in [2, 3, 4]],
 )
 class TestSingleParticleTransitionMatrixOperation:
     @classmethod
@@ -47,7 +43,8 @@ class TestSingleParticleTransitionMatrixOperation:
     def test_sptm_sum_gradient_check(self, input_matrix):
         def sptm_sum(p):
             return torch.sum(
-                SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2)).matrix())
+                SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2)).matrix()
+            )
 
         assert torch.autograd.gradcheck(
             sptm_sum,
@@ -80,28 +77,3 @@ class TestSingleParticleTransitionMatrixOperation:
             raise_exception=True,
             check_undefined_grad=False,
         )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
