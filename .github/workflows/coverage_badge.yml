@@ -1,0 +1,52 @@
+name: Update-Coverage-Badge
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+  checks: write
+  statuses: write
+  issues: write
+  discussions: write
+  id-token: write
+
+jobs:
+  Update-Coverage-Badge:
+    name: Update-Coverage-Badge
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.9.2"
+        python-version: "3.10"
+        enable-cache: true
+
+    - name: Install dependencies
+      run: |
+        uv venv .venv
+        uv sync --locked --dev --extra cpu
+
+    - name: Test Unittests with pytest
+      run: |
+        # TODO: add -n=auto when possible
+        uv run pytest tests --cov=src --cov-branch --cov-report="xml:tests/.tmp/coverage.xml" --cov-report=term-missing
+
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        fail_ci_if_error: true
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: tests/.tmp/coverage.xml
+        verbose: true
