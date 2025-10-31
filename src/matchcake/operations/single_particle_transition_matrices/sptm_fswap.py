@@ -1,12 +1,10 @@
 import numpy as np
 from pennylane.wires import Wires
 
-from ...constants import _CIRCUIT_MATMUL_DIRECTION
-from ...utils.math import dagger
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
-class SptmFSwap(SingleParticleTransitionMatrixOperation):
+class SptmCompZX(SingleParticleTransitionMatrixOperation):
     @classmethod
     def random(cls, wires: Wires, batch_size=None, **kwargs):
         return cls(wires=wires, **kwargs)
@@ -30,3 +28,7 @@ class SptmFSwap(SingleParticleTransitionMatrixOperation):
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
         return self
+
+
+SptmFSwap = SptmCompZX
+SptmFSwap.__name__ = "SptmFSwap"

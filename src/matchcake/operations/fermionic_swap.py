@@ -6,7 +6,7 @@ from .. import matchgate_parameter_sets as mps
 from .matchgate_operation import MatchgateOperation
 
 
-class FermionicSWAP(MatchgateOperation):
+class CompZX(MatchgateOperation):
     num_wires = 2
     num_params = 0
 
@@ -19,6 +19,9 @@ class FermionicSWAP(MatchgateOperation):
         kwargs["in_param_type"] = mps.MatchgatePolarParams
         super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
 
+
+FermionicSWAP = CompZX
+FermionicSWAP.__name__ = "FermionicSWAP"
 
 fSWAP = FermionicSWAP
 fSWAP.__name__ = "fSWAP"

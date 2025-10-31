@@ -6,9 +6,9 @@ from ...utils.math import convert_and_cast_like, dagger, det, svd
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
-class SptmfRxRx(SingleParticleTransitionMatrixOperation):
+class SptmCompRxRx(SingleParticleTransitionMatrixOperation):
     r"""
-    This class represents the single-particle transition matrix for the fermionic RxRx rotation gate.
+    This class represents the single-particle transition matrix for the composition Rx, Rx rotation gates.
 
     This matrix is defined as
 
@@ -21,10 +21,6 @@ class SptmfRxRx(SingleParticleTransitionMatrixOperation):
                 \sin(\phi - \theta) & 0 & 0 & \cos(\phi - \theta)
             \end{pmatrix}.
         \end{align}
-
-    :Note: In general, the 'f' in the name of the class stands for fermionic, which means that the gate is defined
-    directly as a matchgate in the form M(A, W) where A is the outer matrix and W is the inner matrix. This is in
-    contrast to a gate defined as AW where A and W are two gates that are tensor-multiplied together.
     """
 
     @classmethod

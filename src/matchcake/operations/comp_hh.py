@@ -6,7 +6,7 @@ from .. import matchgate_parameter_sets as mps
 from .matchgate_operation import MatchgateOperation
 
 
-class FermionicHadamard(MatchgateOperation):
+class CompHH(MatchgateOperation):
     num_wires = 2
     num_params = 0
 
@@ -32,7 +32,3 @@ class FermionicHadamard(MatchgateOperation):
 
     def label(self, decimals=None, base_label=None, cache=None):
         return base_label or self.name
-
-
-fH = FermionicHadamard
-fH.__name__ = "fH"

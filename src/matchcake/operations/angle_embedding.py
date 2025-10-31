@@ -2,16 +2,14 @@ import warnings
 from collections import defaultdict
 from functools import partial
 
-import numpy as np
 import pennylane as qml
-import torch
 from pennylane.operation import AnyWires, Operation
 from pennylane.wires import Wires
 
 from ..utils import recursive_2in_operator
-from .fermionic_rotations import fRXX, fRYY, fRZZ
+from .comp_rotations import CompRxRx, CompRyRy, CompRzRz
 
-ROT = {"X": fRXX, "Y": fRYY, "Z": fRZZ}
+ROT = {"X": CompRxRx, "Y": CompRyRy, "Z": CompRzRz}
 rotations_map = {  # TODO: to verify
     "XX": "I",
     "YY": "I",

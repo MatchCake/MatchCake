@@ -7,7 +7,7 @@ import matchcake as mc
 from matchcake import MatchgateOperation
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
-from matchcake.operations import SptmfRxRx, SptmIdentity
+from matchcake.operations import SptmCompRxRx, SptmIdentity
 from matchcake.utils import torch_utils
 
 from ...configs import (
@@ -114,7 +114,7 @@ class TestNonInteractingFermionicDeviceForwardContractionStrategy:
 
     @pytest.mark.parametrize("num_operations", [1, 3, 10])
     def test_forward_contraction_device_one_line_sptm_random(self, num_operations):
-        operations = [SptmfRxRx(np.random.random(2), wires=[0, 1]) for _ in range(num_operations)]
+        operations = [SptmCompRxRx(np.random.random(2), wires=[0, 1]) for _ in range(num_operations)]
         nif_device_nh = init_nif_device(wires=2, contraction_method="forward")
         nif_device = init_nif_device(wires=2, contraction_method=None)
 
@@ -170,10 +170,10 @@ class TestNonInteractingFermionicDeviceForwardContractionStrategy:
 
         @qml.qnode(dev, interface="torch")
         def circuit(x):
-            mc.operations.fRYY(x[0:2], wires=[0, 1])
-            mc.operations.fRYY(x[2:4], wires=[2, 3])
-            mc.operations.fRYY(x[0:2], wires=[0, 1])
-            mc.operations.fRYY(x[2:4], wires=[2, 3])
+            mc.operations.CompRyRy(x[0:2], wires=[0, 1])
+            mc.operations.CompRyRy(x[2:4], wires=[2, 3])
+            mc.operations.CompRyRy(x[0:2], wires=[0, 1])
+            mc.operations.CompRyRy(x[2:4], wires=[2, 3])
             return qml.expval(qml.Projector([0] * n_qubits, wires=range(n_qubits)))
 
         try:

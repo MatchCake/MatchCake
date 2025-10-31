@@ -4,7 +4,7 @@ import pytest
 import matchcake as mc
 from matchcake import utils
 from matchcake.operations import fSWAP
-from matchcake.operations.single_particle_transition_matrices import SptmFSwap
+from matchcake.operations.single_particle_transition_matrices import SptmCompZX
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -24,7 +24,7 @@ class TestSptmFSwap:
     def test_matchgate_equal_to_sptm(self):
         matchgate = fSWAP(wires=[0, 1])
         m_sptm = matchgate.single_particle_transition_matrix
-        sptm = SptmFSwap(wires=[0, 1]).matrix()
+        sptm = SptmCompZX(wires=[0, 1]).matrix()
         np.testing.assert_allclose(
             sptm,
             m_sptm,
@@ -35,7 +35,7 @@ class TestSptmFSwap:
     def test_matchgate_equal_to_sptm_adjoint(self):
         matchgate = fSWAP(wires=[0, 1]).adjoint()
         m_sptm = matchgate.single_particle_transition_matrix
-        sptm = SptmFSwap(wires=[0, 1]).adjoint().matrix()
+        sptm = SptmCompZX(wires=[0, 1]).adjoint().matrix()
         np.testing.assert_allclose(
             sptm,
             m_sptm,
@@ -57,13 +57,13 @@ class TestSptmFSwap:
 
         def _gen():
             for tmp_wire0 in range(wire0, wire1):
-                yield SptmFSwap(wires=[tmp_wire0, tmp_wire0 + 1])
+                yield SptmCompZX(wires=[tmp_wire0, tmp_wire0 + 1])
             return
 
         device = mc.NIFDevice(wires=all_wires)
         device.execute_generator(_gen(), reset=True, apply=True, cache_global_sptm=True)
         chain_sptm = device.apply_metadata["global_sptm"]
-        sptm = SptmFSwap(wires=[wire0, wire1]).matrix(all_wires)
+        sptm = SptmCompZX(wires=[wire0, wire1]).matrix(all_wires)
 
         np.testing.assert_allclose(
             sptm,
@@ -92,7 +92,7 @@ class TestSptmFSwap:
         device = mc.NIFDevice(wires=all_wires)
         device.execute_generator(_gen(), reset=True, apply=True, cache_global_sptm=True)
         chain_sptm = device.apply_metadata["global_sptm"]
-        sptm = SptmFSwap(wires=[wire0, wire1]).matrix(all_wires)
+        sptm = SptmCompZX(wires=[wire0, wire1]).matrix(all_wires)
 
         np.testing.assert_allclose(
             sptm,
@@ -115,13 +115,13 @@ class TestSptmFSwap:
 
         def _gen():
             for tmp_wire0 in reversed(range(wire0, wire1)):
-                yield SptmFSwap(wires=[tmp_wire0, tmp_wire0 + 1])
+                yield SptmCompZX(wires=[tmp_wire0, tmp_wire0 + 1])
             return
 
         device = mc.NIFDevice(wires=all_wires)
         device.execute_generator(_gen(), reset=True, apply=True, cache_global_sptm=True)
         chain_sptm = device.apply_metadata["global_sptm"]
-        sptm = SptmFSwap(wires=[wire1, wire0]).matrix(all_wires)
+        sptm = SptmCompZX(wires=[wire1, wire0]).matrix(all_wires)
 
         np.testing.assert_allclose(
             sptm,
@@ -150,7 +150,7 @@ class TestSptmFSwap:
         device = mc.NIFDevice(wires=all_wires)
         device.execute_generator(_gen(), reset=True, apply=True, cache_global_sptm=True)
         chain_sptm = device.apply_metadata["global_sptm"]
-        sptm = SptmFSwap(wires=[wire1, wire0]).matrix(all_wires)
+        sptm = SptmCompZX(wires=[wire1, wire0]).matrix(all_wires)
 
         np.testing.assert_allclose(
             sptm,
@@ -170,7 +170,7 @@ class TestSptmFSwap:
     )
     def test_sptm_fswap_in_so4(self, wire0, wire1, all_wires):
         all_wires = list(range(all_wires))
-        sptm = SptmFSwap(wires=[wire0, wire1]).pad(all_wires)
+        sptm = SptmCompZX(wires=[wire0, wire1]).pad(all_wires)
         assert sptm.check_is_in_so4()
         sptm_matrix = sptm.matrix()
         sptm_dagger = np.einsum("...ij->...ji", sptm_matrix).conj()
@@ -193,5 +193,5 @@ class TestSptmFSwap:
     )
     def test_sptm_fswap_unitary(self, wire0, wire1, all_wires):
         all_wires = list(range(all_wires))
-        sptm = SptmFSwap(wires=[wire0, wire1]).pad(all_wires)
+        sptm = SptmCompZX(wires=[wire0, wire1]).pad(all_wires)
         assert sptm.check_is_unitary(atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)

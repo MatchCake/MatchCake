@@ -6,7 +6,7 @@ from ...utils.math import dagger
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
-class SptmFHH(SingleParticleTransitionMatrixOperation):
+class SptmCompHH(SingleParticleTransitionMatrixOperation):
     @classmethod
     def random(cls, wires: Wires, batch_size=None, **kwargs):
         return cls(wires=wires, **kwargs)

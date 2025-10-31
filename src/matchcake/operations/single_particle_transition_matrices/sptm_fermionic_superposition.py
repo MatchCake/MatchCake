@@ -3,8 +3,8 @@ from pennylane.wires import Wires
 
 from ...utils import make_wires_continuous
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
-from .sptm_fhh import SptmFHH
-from .sptm_fswap import SptmFSwap
+from .sptm_comp_hh import SptmCompHH
+from .sptm_fswap import SptmCompZX
 
 
 class SptmFermionicSuperposition(SingleParticleTransitionMatrixOperation):
@@ -14,8 +14,8 @@ class SptmFermionicSuperposition(SingleParticleTransitionMatrixOperation):
         gates = []
         for wire_i, wire_j in zip(wires[:-1], wires[1:]):
             new_gates = [
-                SptmFSwap(wires=[wire_i, wire_j]),
-                SptmFHH(wires=[wire_i, wire_j]),
+                SptmCompZX(wires=[wire_i, wire_j]),
+                SptmCompHH(wires=[wire_i, wire_j]),
             ]
             gates.extend(new_gates)
         return gates
@@ -35,38 +35,3 @@ class SptmFermionicSuperposition(SingleParticleTransitionMatrixOperation):
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
         return self
-
-
-# class SptmFermionicSuperposition(Operation):
-#     num_wires = AnyWires
-#     grad_method = None
-#
-#     @staticmethod
-#     def compute_decomposition(*params, wires=None, **hyperparameters):
-#         wires = Wires(wires)
-#         gates = []
-#         for wire_i, wire_j in zip(wires[:-1], wires[1:]):
-#             gates.append(SptmFSwap(wires=[wire_i, wire_j]))
-#             gates.append(SptmFHH(wires=[wire_i, wire_j]))
-#         return gates
-#
-#     def __repr__(self):
-#         return f"{self.__class__.__name__}(wires={self.wires.tolist()})"
-#
-#     def __init__(self, wires, id=None, **kwargs):
-#         r"""
-#         Construct a new Matchgate Superposition operation.
-#         After applying this operation on the vacuum state each even modes will be in equal superposition.
-#
-#         :Note: The number of wires must be even.
-#
-#         :param wires: The wires to embed the features on.
-#         :param id: The id of the operation.
-#
-#         :keyword contract_rots: If True, contract the rotations. Default is False.
-#         """
-#         super().__init__(wires=wires, id=id)
-#
-#     @property
-#     def num_params(self):
-#         return 0

@@ -86,7 +86,16 @@ def _make_complete_rot_matrix(
     return matrix
 
 
-class FermionicRotation(MatchgateOperation):
+class CompRotation(MatchgateOperation):
+    r"""
+    Composition of rotations
+
+    .. math::
+        U = M(R_{P0}(\theta), R_{P1}(\phi))
+
+    where M is a matchgate, P0 and P1 are the paulis.
+    """
+
     num_wires = 2
     num_params = 2
 
@@ -235,7 +244,14 @@ class FermionicRotation(MatchgateOperation):
         return f"{op_label}\n({param_string})"
 
 
-class FermionicRotationXX(FermionicRotation):
+class CompRxRx(CompRotation):
+    r"""
+    Composition of rotation XX which mean a matchgate
+
+    .. math::
+        U = M(R_X(\theta), R_X(\phi))
+    """
+
     def __init__(
         self,
         params: Union[pnp.ndarray, list, tuple],
@@ -248,7 +264,14 @@ class FermionicRotationXX(FermionicRotation):
         super().__init__(params, wires=wires, directions="XX", id=id, backend=backend, **kwargs)
 
 
-class FermionicRotationYY(FermionicRotation):
+class CompRyRy(CompRotation):
+    r"""
+    Composition of rotation YY which mean a matchgate
+
+    .. math::
+        U = M(R_Y(\theta), R_Y(\phi))
+    """
+
     def __init__(
         self,
         params: Union[pnp.ndarray, list, tuple],
@@ -261,13 +284,20 @@ class FermionicRotationYY(FermionicRotation):
         super().__init__(params, wires=wires, directions="YY", id=id, backend=backend, **kwargs)
 
     def adjoint(self):
-        return FermionicRotationYY(
+        return CompRyRy(
             -utils.math.astensor(self._given_params),
             wires=self.wires,
         )
 
 
-class FermionicRotationZZ(FermionicRotation):
+class CompRzRz(CompRotation):
+    r"""
+    Composition of rotation ZZ which mean a matchgate
+
+    .. math::
+        U = M(R_Z(\theta), R_Z(\phi))
+    """
+
     def __init__(
         self,
         params: Union[pnp.ndarray, list, tuple],
@@ -278,13 +308,3 @@ class FermionicRotationZZ(FermionicRotation):
         **kwargs,
     ):
         super().__init__(params, wires=wires, directions="ZZ", id=id, backend=backend, **kwargs)
-
-
-fRXX = FermionicRotationXX
-fRXX.__name__ = "fRXX"
-
-fRYY = FermionicRotationYY
-fRYY.__name__ = "fRYY"
-
-fRZZ = FermionicRotationZZ
-fRZZ.__name__ = "fRZZ"

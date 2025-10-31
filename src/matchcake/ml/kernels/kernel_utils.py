@@ -3,7 +3,7 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 
-from ...operations import fRZZ
+from ...operations import CompRzRz
 
 
 class GramMatrixKernel:
@@ -141,4 +141,4 @@ class GramMatrixKernel:
 
 
 def mrot_zz_template(param0, param1, wires):
-    fRZZ([param0, param1], wires=wires)
+    CompRzRz([param0, param1], wires=wires)

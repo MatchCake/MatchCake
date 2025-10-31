@@ -2,35 +2,19 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from matchcake import utils
 from matchcake.operations import (
-    FermionicRotation,
     MatchgateOperation,
-    fH,
-    fRXX,
-    fRYY,
-    fRZZ,
-    fSWAP,
 )
 from matchcake.operations.single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
-    SptmFHH,
-    SptmfRxRx,
-    SptmFSwap,
-    SptmIdentity,
-    SptmRyRy,
-    SptmRzRz,
 )
 from matchcake.utils import (
-    MajoranaGetter,
     make_single_particle_transition_matrix_from_gate,
     recursive_kron,
 )
-from matchcake.utils.math import circuit_matmul
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
-    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
     TEST_SEED,
     set_seed,
@@ -41,12 +25,7 @@ set_seed(TEST_SEED)
 
 @pytest.mark.parametrize(
     "active_wire0, n_wires",
-    [
-        (active_wire0, n_wires)
-        for n_wires in np.arange(4, 8)
-        for active_wire0 in np.arange(n_wires - 3)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
-    ],
+    [(active_wire0, n_wires) for n_wires in np.arange(4, 8) for active_wire0 in np.arange(n_wires - 3)],
 )
 def test_two_matchgates_to_sptm_from_operations(active_wire0, n_wires):
     all_wires = qml.wires.Wires(list(range(n_wires)))

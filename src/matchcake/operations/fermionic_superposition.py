@@ -1,7 +1,7 @@
 from pennylane.operation import AnyWires, Operation
 from pennylane.wires import Wires
 
-from .fermionic_hadamard import fH
+from .comp_hh import CompHH
 from .fermionic_swap import fSWAP
 from .single_particle_transition_matrices.sptm_fermionic_superposition import (
     SptmFermionicSuperposition,
@@ -22,7 +22,7 @@ class FermionicSuperposition(Operation):
         gates = []
         for wire_i, wire_j in zip(wires[:-1], wires[1:]):
             gates.append(fSWAP(wires=[wire_i, wire_j]))
-            gates.append(fH(wires=[wire_i, wire_j]))
+            gates.append(CompHH(wires=[wire_i, wire_j]))
         return gates
 
     def __repr__(self):

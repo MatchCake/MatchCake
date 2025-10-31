@@ -15,14 +15,14 @@ from matchcake.circuits import (
 from matchcake.devices import NIFDevice
 from matchcake.devices.contraction_strategies import contraction_strategy_map
 from matchcake.operations import (
+    SptmCompHH,
+    SptmCompRxRx,
+    SptmCompRyRy,
+    SptmCompRzRz,
+    SptmCompZX,
     SptmFermionicSuperposition,
-    SptmFHH,
-    SptmfRxRx,
-    SptmFSwap,
-    SptmFSwapRzRz,
+    SptmFSwapCompRzRz,
     SptmIdentity,
-    SptmRyRy,
-    SptmRzRz,
 )
 from matchcake.utils.math import dagger, det
 
@@ -141,45 +141,45 @@ def test_global_sptm_det(operations_generator: RandomSptmOperationsGenerator, co
         (operations, contraction_strategy)
         for contraction_strategy in contraction_strategy_map.keys()
         for operations in [
-            [SptmfRxRx.random(wires=[0, 1]), SptmFSwap(wires=[0, 1])],
-            [SptmfRxRx.random(wires=[0, 1]), SptmFSwap(wires=[1, 2])],
-            [SptmFSwap(wires=[1, 2]), SptmfRxRx.random(wires=[0, 1])],
-            [SptmFSwap(wires=[0, 1]), SptmfRxRx.random(wires=[0, 1])],
+            [SptmCompRxRx.random(wires=[0, 1]), SptmCompZX(wires=[0, 1])],
+            [SptmCompRxRx.random(wires=[0, 1]), SptmCompZX(wires=[1, 2])],
+            [SptmCompZX(wires=[1, 2]), SptmCompRxRx.random(wires=[0, 1])],
+            [SptmCompZX(wires=[0, 1]), SptmCompRxRx.random(wires=[0, 1])],
             [
-                SptmFSwap(wires=[0, 1]),
-                SptmfRxRx.random(wires=[0, 1]),
-                SptmFSwap(wires=[0, 1]),
+                SptmCompZX(wires=[0, 1]),
+                SptmCompRxRx.random(wires=[0, 1]),
+                SptmCompZX(wires=[0, 1]),
             ],
             [
-                SptmFSwap(wires=[0, 1]),
-                SptmfRxRx.random(wires=[1, 2]),
-                SptmFSwap(wires=[0, 1]),
+                SptmCompZX(wires=[0, 1]),
+                SptmCompRxRx.random(wires=[1, 2]),
+                SptmCompZX(wires=[0, 1]),
             ],
             [
-                SptmFSwap(wires=[0, 1]),
-                SptmfRxRx.random(wires=[1, 2]),
-                SptmFSwap(wires=[2, 3]),
+                SptmCompZX(wires=[0, 1]),
+                SptmCompRxRx.random(wires=[1, 2]),
+                SptmCompZX(wires=[2, 3]),
             ],
             sum(
-                [[SptmfRxRx.random(wires=[0, 1]), SptmFSwap(wires=[0, 1])] for _ in range(10)],
+                [[SptmCompRxRx.random(wires=[0, 1]), SptmCompZX(wires=[0, 1])] for _ in range(10)],
                 start=[],
             ),
             sum(
-                [[SptmfRxRx.random(wires=[i, i + 1]), SptmFSwap(wires=[0, i + 1])] for i in range(10)],
+                [[SptmCompRxRx.random(wires=[i, i + 1]), SptmCompZX(wires=[0, i + 1])] for i in range(10)],
                 start=[],
             ),
             sum(
                 [
                     [
-                        SptmfRxRx.random(wires=[2 * i, 2 * i + 1]),
-                        SptmFSwap(wires=[2 * i + 2, 2 * i + 3]),
+                        SptmCompRxRx.random(wires=[2 * i, 2 * i + 1]),
+                        SptmCompZX(wires=[2 * i + 2, 2 * i + 3]),
                     ]
                     for i in range(10)
                 ],
                 start=[],
             ),
             [
-                random.choice([SptmfRxRx, SptmFSwap]).random(wires=w)
+                random.choice([SptmCompRxRx, SptmCompZX]).random(wires=w)
                 for w in [
                     [0, 1],
                     [0, 1],
