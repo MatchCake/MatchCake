@@ -5,14 +5,14 @@ import pennylane as qml
 
 from ..operations import (
     SingleParticleTransitionMatrixOperation,
+    SptmCompHH,
+    SptmCompRxRx,
+    SptmCompRyRy,
+    SptmCompRzRz,
+    SptmCompZX,
     SptmFermionicSuperposition,
-    SptmFHH,
-    SptmfRxRx,
-    SptmFSwap,
-    SptmFSwapRzRz,
+    SptmFSwapCompRzRz,
     SptmIdentity,
-    SptmRyRy,
-    SptmRzRz,
 )
 from .random_generator import RandomOperationsGenerator
 
@@ -23,14 +23,14 @@ def random_sptm_operations_generator(
     wires: Union[Sequence[int], int],
     batch_size: Optional[int] = None,
     op_types: List[Type[SingleParticleTransitionMatrixOperation]] = (
-        SptmfRxRx,
-        SptmFSwap,
-        SptmRzRz,
+        SptmCompRxRx,
+        SptmCompZX,
+        SptmCompRzRz,
         SptmIdentity,
-        SptmFHH,
-        SptmRyRy,
+        SptmCompHH,
+        SptmCompRyRy,
         SptmFermionicSuperposition,
-        SptmFSwapRzRz,
+        SptmFSwapCompRzRz,
     ),
     *,
     use_cuda: bool = False,
@@ -59,14 +59,14 @@ class RandomSptmOperationsGenerator(RandomOperationsGenerator):
         n_ops: Optional[int] = None,
         batch_size: Optional[int] = None,
         op_types: List[Type[SingleParticleTransitionMatrixOperation]] = (
-            SptmfRxRx,
-            SptmFSwap,
-            SptmRzRz,
+            SptmCompRxRx,
+            SptmCompZX,
+            SptmCompRzRz,
             SptmIdentity,
-            SptmFHH,
-            SptmRyRy,
+            SptmCompHH,
+            SptmCompRyRy,
             SptmFermionicSuperposition,
-            SptmFSwapRzRz,
+            SptmFSwapCompRzRz,
         ),
         *,
         use_cuda: bool = False,
@@ -123,18 +123,18 @@ class RandomSptmHaarOperationsGenerator(RandomSptmOperationsGenerator):
         rn_gen = np.random.default_rng(self.seed)
         while n_ops < self.n_ops:
             i = n_ops % (self.n_qubits - 1)
-            yield SptmRzRz(
-                SptmRzRz.random_params(self.batch_size),
+            yield SptmCompRzRz(
+                SptmCompRzRz.random_params(self.batch_size),
                 wires=[i, i + 1],
             )
             n_ops += 1
-            yield SptmRyRy(
-                SptmRyRy.random_params(self.batch_size),
+            yield SptmCompRyRy(
+                SptmCompRyRy.random_params(self.batch_size),
                 wires=[i, i + 1],
             )
             n_ops += 1
-            yield SptmRzRz(
-                SptmRzRz.random_params(self.batch_size),
+            yield SptmCompRzRz(
+                SptmCompRzRz.random_params(self.batch_size),
                 wires=[i, i + 1],
             )
             n_ops += 1
@@ -143,7 +143,7 @@ class RandomSptmHaarOperationsGenerator(RandomSptmOperationsGenerator):
                 wire0 = rn_gen.choice(self.wires[:-1])
                 wire1 = wire0 + 1
                 # wire1 = rn_gen.choice(self.wires[wire0+1:])
-                yield SptmFSwap(wires=[wire0, wire1])
+                yield SptmCompZX(wires=[wire0, wire1])
                 n_ops += 1
         return
 

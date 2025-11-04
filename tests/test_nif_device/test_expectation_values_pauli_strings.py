@@ -4,7 +4,6 @@ import pytest
 
 from matchcake.devices.contraction_strategies import contraction_strategy_map
 
-from .. import get_slow_test_mark
 from ..configs import (
     ATOL_APPROX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
@@ -126,8 +125,6 @@ def test_nif_pauli_strings_on_basis_state_against_qubit_device_probs(basis_state
     )
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize("basis_state,pauli_string,contraction_strategy", rn_test_data)
 def test_nif_pauli_strings_on_basis_state_against_qubit_device_rn_data(basis_state, pauli_string, contraction_strategy):
     def circuit():

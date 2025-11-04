@@ -1,27 +1,13 @@
 import numpy as np
-import pennylane as qml
 import pytest
 import torch
-from pennylane.ops.qubit.observables import BasisStateProjector
 
-from matchcake import NonInteractingFermionicDevice, utils
-from matchcake.operations import FermionicRotation, fH, fRXX, fRYY, fRZZ, fSWAP
 from matchcake.operations.single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
-    SptmFHH,
-    SptmfRxRx,
-    SptmFSwap,
-    SptmIdentity,
-    SptmRyRy,
-    SptmRzRz,
 )
 from matchcake.utils import torch_utils
-from matchcake.utils.math import circuit_matmul
 
 from ...configs import (
-    ATOL_APPROX_COMPARISON,
-    N_RANDOM_TESTS_PER_CASE,
-    RTOL_APPROX_COMPARISON,
     TEST_SEED,
     set_seed,
 )

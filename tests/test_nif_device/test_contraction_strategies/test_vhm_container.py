@@ -4,7 +4,7 @@ import pytest
 import matchcake as mc
 from matchcake import matchgate_parameter_sets as mps
 from matchcake.devices.contraction_strategies import get_contraction_strategy
-from matchcake.operations import SptmfRxRx
+from matchcake.operations import SptmCompRxRx
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -192,28 +192,28 @@ def test_vh_matchgates_container_contract_single_column(column_operations):
     "new_op0, new_op1, crossing_wires",
     [
         (
-            SptmfRxRx(np.random.random(2), wires=[0, 1]),
-            SptmfRxRx(np.random.random(2), wires=[0, 1]),
+            SptmCompRxRx(np.random.random(2), wires=[0, 1]),
+            SptmCompRxRx(np.random.random(2), wires=[0, 1]),
             False,
         ),
         (
-            SptmfRxRx(np.random.random(2), wires=[0, 1]),
+            SptmCompRxRx(np.random.random(2), wires=[0, 1]),
             mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[1, 2]),
             True,
         ),
         (
-            SptmfRxRx(np.random.random(2), wires=[0, 1]),
-            SptmfRxRx(np.random.random(2), wires=[1, 2]),
+            SptmCompRxRx(np.random.random(2), wires=[0, 1]),
+            SptmCompRxRx(np.random.random(2), wires=[1, 2]),
             True,
         ),
         (
-            SptmfRxRx(np.random.random(2), wires=[0, 1]),
+            SptmCompRxRx(np.random.random(2), wires=[0, 1]),
             mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[2, 3]),
             False,
         ),
         (
-            SptmfRxRx(np.random.random(2), wires=[0, 1]),
-            SptmfRxRx(np.random.random(2), wires=[2, 3]),
+            SptmCompRxRx(np.random.random(2), wires=[0, 1]),
+            SptmCompRxRx(np.random.random(2), wires=[2, 3]),
             False,
         ),
     ],

@@ -4,7 +4,7 @@ import pytest
 
 from matchcake import matchgate_parameter_sets as mps
 from matchcake.circuits import random_sptm_operations_generator
-from matchcake.operations import SptmfRxRx
+from matchcake.operations import SptmCompRxRx
 from matchcake.utils import torch_utils
 
 from ..configs import (
@@ -88,7 +88,7 @@ class TestNonInteractingFermionicDeviceSampling:
             num_gates,
             np.arange(num_wires),
             batch_size=batch_size,
-            op_types=[SptmfRxRx],
+            op_types=[SptmCompRxRx],
         )
         nif_device, _ = devices_init(
             wires=num_wires,
@@ -134,7 +134,7 @@ class TestNonInteractingFermionicDeviceSampling:
             num_gates,
             np.arange(num_wires),
             batch_size=batch_size,
-            op_types=[SptmfRxRx],
+            op_types=[SptmCompRxRx],
         )
 
         nif_device, _ = devices_init(

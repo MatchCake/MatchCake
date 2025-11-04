@@ -4,12 +4,12 @@ import numpy as np
 import pennylane as qml
 
 from ..operations import (
+    CompHH,
+    CompRxRx,
+    CompRyRy,
+    CompRzRz,
     FermionicSuperposition,
     MatchgateOperation,
-    fH,
-    fRXX,
-    fRYY,
-    fRZZ,
     fSWAP,
 )
 from .random_generator import RandomOperationsGenerator
@@ -23,11 +23,11 @@ class RandomMatchgateOperationsGenerator(RandomOperationsGenerator):
         batch_size: Optional[int] = None,
         op_types: List[Type[MatchgateOperation]] = (
             MatchgateOperation,
-            fRXX,
+            CompRxRx,
             fSWAP,
-            fRZZ,
-            fH,
-            fRYY,
+            CompRzRz,
+            CompHH,
+            CompRyRy,
             FermionicSuperposition,
         ),
         *,
@@ -85,18 +85,18 @@ class RandomMatchgateHaarOperationsGenerator(RandomMatchgateOperationsGenerator)
         rn_gen = np.random.default_rng(self.seed)
         while n_ops < self.n_ops:
             i = n_ops % (self.n_qubits - 1)
-            yield fRZZ(
-                fRZZ.random_params(self.batch_size, seed=self.seed),
+            yield CompRzRz(
+                CompRzRz.random_params(self.batch_size, seed=self.seed),
                 wires=[i, i + 1],
             )
             n_ops += 1
-            yield fRYY(
-                fRYY.random_params(self.batch_size, seed=self.seed),
+            yield CompRyRy(
+                CompRyRy.random_params(self.batch_size, seed=self.seed),
                 wires=[i, i + 1],
             )
             n_ops += 1
-            yield fRZZ(
-                fRZZ.random_params(self.batch_size, seed=self.seed),
+            yield CompRzRz(
+                CompRzRz.random_params(self.batch_size, seed=self.seed),
                 wires=[i, i + 1],
             )
             n_ops += 1

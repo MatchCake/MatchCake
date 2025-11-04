@@ -13,7 +13,7 @@ paulis_map = {
 }
 
 
-class FermionicPauli(MatchgateOperation):
+class CompPauli(MatchgateOperation):
     num_wires = 2
     num_params = 0
 
@@ -46,26 +46,16 @@ class FermionicPauli(MatchgateOperation):
         return base_label or self.name
 
 
-class FermionicXX(FermionicPauli):
+class CompXX(CompPauli):
     def __init__(self, wires=None, id=None, *, backend=pnp, **kwargs):
         super().__init__(wires=wires, paulis="XX", id=id, backend=backend, **kwargs)
 
 
-class FermionicYY(FermionicPauli):
+class CompYY(CompPauli):
     def __init__(self, wires=None, id=None, *, backend=pnp, **kwargs):
         super().__init__(wires=wires, paulis="YY", id=id, backend=backend, **kwargs)
 
 
-class FermionicZZ(FermionicPauli):
+class CompZZ(CompPauli):
     def __init__(self, wires=None, id=None, *, backend=pnp, **kwargs):
         super().__init__(wires=wires, paulis="ZZ", id=id, backend=backend, **kwargs)
-
-
-fXX = FermionicXX
-fXX.__name__ = "fXX"
-
-fYY = FermionicYY
-fYY.__name__ = "fYY"
-
-fZZ = FermionicZZ
-fZZ.__name__ = "fZZ"

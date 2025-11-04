@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.10", "3.11", "3.12", ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13", ]
 
     steps:
     - uses: actions/checkout@v3
@@ -59,7 +59,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         coverageFile: tests/.tmp/coverage.xml
-        thresholdAll: 0.3
+        thresholdAll: 0.6
         thresholdNew: 0.98
         thresholdModified: 0.0
 
@@ -74,7 +74,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: [ "3.10", "3.11", "3.12", ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13", ]
 
     steps:
     - uses: actions/checkout@v3

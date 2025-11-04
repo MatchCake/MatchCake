@@ -1,5 +1,3 @@
-import itertools
-
 import numpy as np
 import pennylane as qml
 import pytest
@@ -10,7 +8,6 @@ from matchcake import BatchHamiltonian
 from matchcake.devices.contraction_strategies import contraction_strategy_map
 from matchcake.operations import Rxx
 
-from ... import get_slow_test_mark
 from ...configs import (
     ATOL_APPROX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
@@ -21,7 +18,6 @@ from ...configs import (
 from .. import devices_init
 
 set_seed(TEST_SEED)
-
 
 hand_made_test_data = [
     ([0, 0], [qml.PauliZ(0), qml.PauliZ(1)]),

@@ -299,15 +299,15 @@ def test_multiples_matchgate_state_with_qbit_device_zyz(theta, contraction_strat
     nif_device, qubit_device = devices_init(wires=len(initial_binary_state), contraction_strategy=contraction_strategy)
 
     def circuit_state():
-        operations.fRZZ(np.asarray([theta, theta]), wires=[0, 1])
-        operations.fRYY(np.asarray([theta, theta]), wires=[0, 1])
-        operations.fRZZ(np.asarray([theta, theta]), wires=[0, 1])
+        operations.CompRzRz(np.asarray([theta, theta]), wires=[0, 1])
+        operations.CompRyRy(np.asarray([theta, theta]), wires=[0, 1])
+        operations.CompRzRz(np.asarray([theta, theta]), wires=[0, 1])
         return qml.state()
 
     def circuit_probs():
-        operations.fRZZ(np.asarray([theta, theta]), wires=[0, 1])
-        operations.fRYY(np.asarray([theta, theta]), wires=[0, 1])
-        operations.fRZZ(np.asarray([theta, theta]), wires=[0, 1])
+        operations.CompRzRz(np.asarray([theta, theta]), wires=[0, 1])
+        operations.CompRyRy(np.asarray([theta, theta]), wires=[0, 1])
+        operations.CompRzRz(np.asarray([theta, theta]), wires=[0, 1])
         return qml.probs()
 
     qubit_state = qml.QNode(circuit_state, qubit_device)()

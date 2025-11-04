@@ -72,9 +72,9 @@ def circuit(params, wires, initial_state=None):
     for i, even_wire in enumerate(wires[:-1:2]):
         idx = list(wires).index(even_wire)
         curr_wires = [wires[idx], wires[idx + 1]]
-        mc.operations.fRXX(params, wires=curr_wires)
-        mc.operations.fRYY(params, wires=curr_wires)
-        mc.operations.fRZZ(params, wires=curr_wires)
+        mc.operations.CompRxRx(params, wires=curr_wires)
+        mc.operations.CompRyRy(params, wires=curr_wires)
+        mc.operations.CompRzRz(params, wires=curr_wires)
     for i, odd_wire in enumerate(wires[1:-1:2]):
         idx = list(wires).index(odd_wire)
         mc.operations.fSWAP(wires=[wires[idx], wires[idx + 1]])
