@@ -1171,7 +1171,7 @@ wheels = [
 
 [[package]]
 name = "matchcake"
-version = "0.0.6"
+version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "importlib-metadata" },
