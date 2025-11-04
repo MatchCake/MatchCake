@@ -10,7 +10,6 @@ from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
 from matchcake.utils import PAULI_X, PAULI_Z
 
-from .. import get_slow_test_mark
 from ..configs import (
     ATOL_MATRIX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
@@ -23,8 +22,6 @@ from . import devices_init
 set_seed(TEST_SEED)
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "initial_binary_state",
     [np.random.randint(0, 2, size=n) for n in range(2, 10) for _ in range(N_RANDOM_TESTS_PER_CASE)],

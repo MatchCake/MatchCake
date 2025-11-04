@@ -14,7 +14,6 @@ from matchcake.circuits import (
 )
 from matchcake.devices.contraction_strategies import contraction_strategy_map
 
-from .. import get_slow_test_mark
 from ..configs import (
     ATOL_APPROX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
@@ -50,8 +49,6 @@ def multiples_matchgate_circuit(params_list, initial_state=None, **kwargs):
         raise ValueError(f"Unknown out_op: {out_op}.")
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "params_list,n_wires",
     [([mps.MatchgatePolarParams.random(), mps.MatchgatePolarParams.random()], 4)]
@@ -112,8 +109,6 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
     )
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "op_gen,contraction_strategy",
     [
@@ -140,8 +135,6 @@ def test_multiples_matchgate_probs_with_qbit_device_op_gen(op_gen, contraction_s
     )
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "params_list,n_wires,prob_wires",
     [
@@ -198,8 +191,6 @@ def test_multiples_matchgate_probs_with_qbit_device_mp(params_list, n_wires, pro
     )
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "params_list,n_wires",
     [

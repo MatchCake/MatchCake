@@ -1,13 +1,9 @@
-import itertools
 import random
 
 import numpy as np
-import pennylane as qml
 import pytest
 from pennylane.wires import Wires
 
-from matchcake import utils
-from matchcake.base.lookup_table import NonInteractingFermionicLookupTable
 from matchcake.circuits import (
     RandomSptmHaarOperationsGenerator,
     RandomSptmOperationsGenerator,
@@ -15,18 +11,11 @@ from matchcake.circuits import (
 from matchcake.devices import NIFDevice
 from matchcake.devices.contraction_strategies import contraction_strategy_map
 from matchcake.operations import (
-    SptmCompHH,
     SptmCompRxRx,
-    SptmCompRyRy,
-    SptmCompRzRz,
     SptmCompZX,
-    SptmFermionicSuperposition,
-    SptmFSwapCompRzRz,
-    SptmIdentity,
 )
 from matchcake.utils.math import dagger, det
 
-from .. import get_slow_test_mark
 from ..configs import (
     ATOL_MATRIX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
@@ -34,13 +23,10 @@ from ..configs import (
     TEST_SEED,
     set_seed,
 )
-from ..test_nif_device import devices_init
 
 set_seed(TEST_SEED)
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "operations_generator, contraction_strategy",
     [
@@ -89,8 +75,6 @@ def test_global_sptm_unitary(operations_generator: RandomSptmOperationsGenerator
     )
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "operations_generator, contraction_strategy",
     [
@@ -133,8 +117,6 @@ def test_global_sptm_det(operations_generator: RandomSptmOperationsGenerator, co
     )
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "operations, contraction_strategy",
     [

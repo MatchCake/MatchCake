@@ -8,7 +8,6 @@ from matchcake import utils
 from matchcake.base.lookup_table import NonInteractingFermionicLookupTable
 from matchcake.circuits import random_sptm_operations_generator
 
-from . import get_slow_test_mark
 from .configs import (
     ATOL_MATRIX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
@@ -329,8 +328,6 @@ def test_lookup_table_compute_observables_of_target_states(transition_matrix, bi
     )
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "operations_generator, num_wires",
     [
@@ -367,8 +364,6 @@ def test_lookup_table_compute_observable_of_target_states_rn_circuits(operations
     )
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "operations_generator, num_wires",
     [
