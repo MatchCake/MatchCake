@@ -1,21 +1,10 @@
-from functools import partial
-
 import numpy as np
-import pennylane as qml
 import pytest
 
-from matchcake import utils
 from matchcake.utils.math import svd
-
-from .. import get_slow_test_mark
 from ..configs import (
     ATOL_APPROX_COMPARISON,
-    ATOL_MATRIX_COMPARISON,
-    ATOL_SCALAR_COMPARISON,
-    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
-    RTOL_MATRIX_COMPARISON,
-    RTOL_SCALAR_COMPARISON,
     TEST_SEED,
     set_seed,
 )

@@ -16,7 +16,6 @@ from matchcake.devices.contraction_strategies import contraction_strategy_map
 from matchcake.operations import SptmCompRxRx
 from matchcake.utils import torch_utils
 
-from .. import get_slow_test_mark
 from ..configs import (
     ATOL_APPROX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
@@ -241,8 +240,6 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_basis_state_against_qubit_devic
     )
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "basis_state,hamiltonian,contraction_strategy,op_gen",
     [
@@ -295,8 +292,6 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device(
     )
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "basis_state,hamiltonian,contraction_strategy,op_gen",
     [

@@ -8,7 +8,6 @@ from pennylane.wires import Wires
 from matchcake.ml.kernels import FermionicPQCKernel, StateVectorFermionicPQCKernel
 from matchcake.utils.torch_utils import to_numpy
 
-from ... import get_slow_test_mark
 from ...configs import (
     ATOL_APPROX_COMPARISON,
     ATOL_MATRIX_COMPARISON,
@@ -287,8 +286,6 @@ def test_fermionic_pqc_arrangement_of_gates(
             )
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "n_qubit, x, entangling_mth, rotations",
     [

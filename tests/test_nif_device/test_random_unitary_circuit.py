@@ -1,13 +1,9 @@
-import itertools
 import random
 
 import numpy as np
-import pennylane as qml
 import pytest
 from pennylane.wires import Wires
 
-from matchcake import utils
-from matchcake.base.lookup_table import NonInteractingFermionicLookupTable
 from matchcake.circuits import (
     RandomSptmHaarOperationsGenerator,
     RandomSptmOperationsGenerator,
@@ -15,18 +11,10 @@ from matchcake.circuits import (
 from matchcake.devices import NIFDevice
 from matchcake.devices.contraction_strategies import contraction_strategy_map
 from matchcake.operations import (
-    SptmCompHH,
     SptmCompRxRx,
-    SptmCompRyRy,
-    SptmCompRzRz,
     SptmCompZX,
-    SptmFermionicSuperposition,
-    SptmFSwapCompRzRz,
-    SptmIdentity,
 )
 from matchcake.utils.math import dagger, det
-
-from .. import get_slow_test_mark
 from ..configs import (
     ATOL_MATRIX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
@@ -34,24 +22,21 @@ from ..configs import (
     TEST_SEED,
     set_seed,
 )
-from ..test_nif_device import devices_init
 
 set_seed(TEST_SEED)
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "operations_generator, contraction_strategy",
     [
         (
-            gen_cls(
-                wires=np.arange(num_wires),
-                n_ops=num_gates,
-                batch_size=batch_size,
-                seed=TEST_SEED + i,
-            ),
-            contraction_strategy,
+                gen_cls(
+                    wires=np.arange(num_wires),
+                    n_ops=num_gates,
+                    batch_size=batch_size,
+                    seed=TEST_SEED + i,
+                ),
+                contraction_strategy,
         )
         for i in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in [2, 3, 6]
@@ -59,9 +44,9 @@ set_seed(TEST_SEED)
         for batch_size in [None, 16]
         for contraction_strategy in contraction_strategy_map.keys()
         for gen_cls in [
-            RandomSptmOperationsGenerator,
-            RandomSptmHaarOperationsGenerator,
-        ]
+        RandomSptmOperationsGenerator,
+        RandomSptmHaarOperationsGenerator,
+    ]
     ],
 )
 def test_global_sptm_unitary(operations_generator: RandomSptmOperationsGenerator, contraction_strategy):
@@ -89,19 +74,17 @@ def test_global_sptm_unitary(operations_generator: RandomSptmOperationsGenerator
     )
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "operations_generator, contraction_strategy",
     [
         (
-            gen_cls(
-                wires=np.arange(num_wires),
-                n_ops=num_gates,
-                batch_size=batch_size,
-                seed=TEST_SEED + i,
-            ),
-            contraction_strategy,
+                gen_cls(
+                    wires=np.arange(num_wires),
+                    n_ops=num_gates,
+                    batch_size=batch_size,
+                    seed=TEST_SEED + i,
+                ),
+                contraction_strategy,
         )
         for i in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in [2, 3, 6]
@@ -109,9 +92,9 @@ def test_global_sptm_unitary(operations_generator: RandomSptmOperationsGenerator
         for batch_size in [None, 16]
         for contraction_strategy in contraction_strategy_map.keys()
         for gen_cls in [
-            RandomSptmOperationsGenerator,
-            RandomSptmHaarOperationsGenerator,
-        ]
+        RandomSptmOperationsGenerator,
+        RandomSptmHaarOperationsGenerator,
+    ]
     ],
 )
 def test_global_sptm_det(operations_generator: RandomSptmOperationsGenerator, contraction_strategy):
@@ -133,107 +116,105 @@ def test_global_sptm_det(operations_generator: RandomSptmOperationsGenerator, co
     )
 
 
-@get_slow_test_mark()
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "operations, contraction_strategy",
     [
         (operations, contraction_strategy)
         for contraction_strategy in contraction_strategy_map.keys()
         for operations in [
-            [SptmCompRxRx.random(wires=[0, 1]), SptmCompZX(wires=[0, 1])],
-            [SptmCompRxRx.random(wires=[0, 1]), SptmCompZX(wires=[1, 2])],
-            [SptmCompZX(wires=[1, 2]), SptmCompRxRx.random(wires=[0, 1])],
-            [SptmCompZX(wires=[0, 1]), SptmCompRxRx.random(wires=[0, 1])],
+        [SptmCompRxRx.random(wires=[0, 1]), SptmCompZX(wires=[0, 1])],
+        [SptmCompRxRx.random(wires=[0, 1]), SptmCompZX(wires=[1, 2])],
+        [SptmCompZX(wires=[1, 2]), SptmCompRxRx.random(wires=[0, 1])],
+        [SptmCompZX(wires=[0, 1]), SptmCompRxRx.random(wires=[0, 1])],
+        [
+            SptmCompZX(wires=[0, 1]),
+            SptmCompRxRx.random(wires=[0, 1]),
+            SptmCompZX(wires=[0, 1]),
+        ],
+        [
+            SptmCompZX(wires=[0, 1]),
+            SptmCompRxRx.random(wires=[1, 2]),
+            SptmCompZX(wires=[0, 1]),
+        ],
+        [
+            SptmCompZX(wires=[0, 1]),
+            SptmCompRxRx.random(wires=[1, 2]),
+            SptmCompZX(wires=[2, 3]),
+        ],
+        sum(
+            [[SptmCompRxRx.random(wires=[0, 1]), SptmCompZX(wires=[0, 1])] for _ in range(10)],
+            start=[],
+        ),
+        sum(
+            [[SptmCompRxRx.random(wires=[i, i + 1]), SptmCompZX(wires=[0, i + 1])] for i in range(10)],
+            start=[],
+        ),
+        sum(
             [
-                SptmCompZX(wires=[0, 1]),
-                SptmCompRxRx.random(wires=[0, 1]),
-                SptmCompZX(wires=[0, 1]),
-            ],
-            [
-                SptmCompZX(wires=[0, 1]),
-                SptmCompRxRx.random(wires=[1, 2]),
-                SptmCompZX(wires=[0, 1]),
-            ],
-            [
-                SptmCompZX(wires=[0, 1]),
-                SptmCompRxRx.random(wires=[1, 2]),
-                SptmCompZX(wires=[2, 3]),
-            ],
-            sum(
-                [[SptmCompRxRx.random(wires=[0, 1]), SptmCompZX(wires=[0, 1])] for _ in range(10)],
-                start=[],
-            ),
-            sum(
-                [[SptmCompRxRx.random(wires=[i, i + 1]), SptmCompZX(wires=[0, i + 1])] for i in range(10)],
-                start=[],
-            ),
-            sum(
                 [
-                    [
-                        SptmCompRxRx.random(wires=[2 * i, 2 * i + 1]),
-                        SptmCompZX(wires=[2 * i + 2, 2 * i + 3]),
-                    ]
-                    for i in range(10)
-                ],
-                start=[],
-            ),
-            [
-                random.choice([SptmCompRxRx, SptmCompZX]).random(wires=w)
-                for w in [
-                    [0, 1],
-                    [0, 1],
-                    [2, 3],
-                    [2, 3],
-                    [2, 3],
-                    [2, 3],
-                    [3, 4],
-                    [2, 3],
-                    [0, 1],
-                    [3, 4],
-                    [1, 2],
-                    [2, 3],
-                    [1, 2],
-                    [0, 1],
-                    [3, 4],
-                    [3, 4],
-                    [1, 2],
-                    [0, 1],
-                    [2, 3],
-                    [0, 1],
-                    [1, 2],
-                    [2, 3],
-                    [3, 4],
-                    [1, 2],
-                    [1, 2],
-                    [2, 3],
-                    [2, 3],
-                    [3, 4],
-                    [1, 2],
-                    [1, 2],
-                    [3, 4],
-                    [0, 1],
-                    [3, 4],
-                    [1, 2],
-                    [2, 3],
-                    [1, 2],
-                    [2, 3],
-                    [3, 4],
-                    [0, 1],
-                    [2, 3],
-                    [0, 1],
-                    [3, 4],
-                    [1, 2],
-                    [3, 4],
-                    [3, 4],
-                    [0, 1],
-                    [2, 3],
-                    [3, 4],
-                    [3, 4],
-                    [3, 4],
+                    SptmCompRxRx.random(wires=[2 * i, 2 * i + 1]),
+                    SptmCompZX(wires=[2 * i + 2, 2 * i + 3]),
                 ]
+                for i in range(10)
             ],
+            start=[],
+        ),
+        [
+            random.choice([SptmCompRxRx, SptmCompZX]).random(wires=w)
+            for w in [
+            [0, 1],
+            [0, 1],
+            [2, 3],
+            [2, 3],
+            [2, 3],
+            [2, 3],
+            [3, 4],
+            [2, 3],
+            [0, 1],
+            [3, 4],
+            [1, 2],
+            [2, 3],
+            [1, 2],
+            [0, 1],
+            [3, 4],
+            [3, 4],
+            [1, 2],
+            [0, 1],
+            [2, 3],
+            [0, 1],
+            [1, 2],
+            [2, 3],
+            [3, 4],
+            [1, 2],
+            [1, 2],
+            [2, 3],
+            [2, 3],
+            [3, 4],
+            [1, 2],
+            [1, 2],
+            [3, 4],
+            [0, 1],
+            [3, 4],
+            [1, 2],
+            [2, 3],
+            [1, 2],
+            [2, 3],
+            [3, 4],
+            [0, 1],
+            [2, 3],
+            [0, 1],
+            [3, 4],
+            [1, 2],
+            [3, 4],
+            [3, 4],
+            [0, 1],
+            [2, 3],
+            [3, 4],
+            [3, 4],
+            [3, 4],
         ]
+        ],
+    ]
         for _ in range(N_RANDOM_TESTS_PER_CASE)
     ],
 )

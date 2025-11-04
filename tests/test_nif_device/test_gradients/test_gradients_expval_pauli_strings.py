@@ -1,5 +1,3 @@
-import itertools
-
 import numpy as np
 import pennylane as qml
 import pytest
@@ -9,8 +7,7 @@ from torch.autograd import gradcheck
 from matchcake import BatchHamiltonian
 from matchcake.devices.contraction_strategies import contraction_strategy_map
 from matchcake.operations import Rxx
-
-from ... import get_slow_test_mark
+from .. import devices_init
 from ...configs import (
     ATOL_APPROX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
@@ -18,10 +15,8 @@ from ...configs import (
     TEST_SEED,
     set_seed,
 )
-from .. import devices_init
 
 set_seed(TEST_SEED)
-
 
 hand_made_test_data = [
     ([0, 0], [qml.PauliZ(0), qml.PauliZ(1)]),
@@ -67,7 +62,7 @@ rn_test_data = [
     ],
 )
 def test_nif_pauli_strings_grads_with_random_circuit_against_torch_gradcheck_handmade_batch_hamiltonian(
-    basis_state, pauli_string, init_param
+        basis_state, pauli_string, init_param
 ):
     nif_device, _ = devices_init(
         wires=len(basis_state),
@@ -106,7 +101,7 @@ def test_nif_pauli_strings_grads_with_random_circuit_against_torch_gradcheck_han
     ],
 )
 def test_nif_pauli_strings_grads_with_random_circuit_against_torch_gradcheck_handmade_sum_hamiltonian(
-    basis_state, pauli_string, init_param
+        basis_state, pauli_string, init_param
 ):
     nif_device, _ = devices_init(
         wires=len(basis_state),
