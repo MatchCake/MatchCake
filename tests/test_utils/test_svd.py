@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from matchcake.utils.math import svd
+
 from ..configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,

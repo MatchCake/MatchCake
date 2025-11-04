@@ -7,6 +7,7 @@ import pytest
 from matchcake import utils
 from matchcake.base.lookup_table import NonInteractingFermionicLookupTable
 from matchcake.circuits import random_sptm_operations_generator
+
 from .configs import (
     ATOL_MATRIX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
@@ -207,29 +208,29 @@ def test_lookup_table_item22(transition_matrix):
     [
         #
         (
-                0.5 * np.array([[1, 1j, 0, 0], [0, 0, 1, 1j]]),
-                "00",
-                0,  # binary_state, k
-                np.array(
-                    [
-                        [0, 0],
-                        [0, 0],
-                    ]
-                ),
+            0.5 * np.array([[1, 1j, 0, 0], [0, 0, 1, 1j]]),
+            "00",
+            0,  # binary_state, k
+            np.array(
+                [
+                    [0, 0],
+                    [0, 0],
+                ]
+            ),
         ),
         #
         (
-                0.5 * np.array([[0, 0, 1, 1j], [1, 1j, 0, 0]]),
-                "01",
-                0,  # binary_state, k
-                np.array(
-                    [
-                        [0, 1, 0, 1],
-                        [-1, 0, 0, 0],
-                        [0, 0, 0, 1],
-                        [-1, 0, -1, 0],
-                    ]
-                ),
+            0.5 * np.array([[0, 0, 1, 1j], [1, 1j, 0, 0]]),
+            "01",
+            0,  # binary_state, k
+            np.array(
+                [
+                    [0, 1, 0, 1],
+                    [-1, 0, 0, 0],
+                    [0, 0, 0, 1],
+                    [-1, 0, -1, 0],
+                ]
+            ),
         ),
         #
     ],
@@ -250,27 +251,27 @@ def test_lookup_table_get_observable(transition_matrix, binary_state, k, observa
     [
         #
         (
-                0.5 * np.array([[1, 1j, 0, 0], [0, 0, 1, 1j]]),
-                "00",
-                np.array(
-                    [
-                        [0, 0],
-                        [0, 0],
-                    ]
-                ),
+            0.5 * np.array([[1, 1j, 0, 0], [0, 0, 1, 1j]]),
+            "00",
+            np.array(
+                [
+                    [0, 0],
+                    [0, 0],
+                ]
+            ),
         ),
         #
         (
-                0.5 * np.array([[0, 0, 1, 1j], [1, 1j, 0, 0]]),
-                "01",
-                np.array(
-                    [
-                        [0, 1, 0, 1],
-                        [-1, 0, 0, 0],
-                        [0, 0, 0, 1],
-                        [-1, 0, -1, 0],
-                    ]
-                ),
+            0.5 * np.array([[0, 0, 1, 1j], [1, 1j, 0, 0]]),
+            "01",
+            np.array(
+                [
+                    [0, 1, 0, 1],
+                    [-1, 0, 0, 0],
+                    [0, 0, 0, 1],
+                    [-1, 0, -1, 0],
+                ]
+            ),
         ),
         #
     ],
@@ -291,27 +292,27 @@ def test_lookup_table_compute_observable_of_target_state(transition_matrix, bina
     [
         #
         (
-                0.5 * np.array([[1, 1j, 0, 0], [0, 0, 1, 1j]]),
-                "00",
-                np.array(
-                    [
-                        [0, 0],
-                        [0, 0],
-                    ]
-                ),
+            0.5 * np.array([[1, 1j, 0, 0], [0, 0, 1, 1j]]),
+            "00",
+            np.array(
+                [
+                    [0, 0],
+                    [0, 0],
+                ]
+            ),
         ),
         #
         (
-                0.5 * np.array([[0, 0, 1, 1j], [1, 1j, 0, 0]]),
-                "01",
-                np.array(
-                    [
-                        [0, 1, 0, 1],
-                        [-1, 0, 0, 0],
-                        [0, 0, 0, 1],
-                        [-1, 0, -1, 0],
-                    ]
-                ),
+            0.5 * np.array([[0, 0, 1, 1j], [1, 1j, 0, 0]]),
+            "01",
+            np.array(
+                [
+                    [0, 1, 0, 1],
+                    [-1, 0, 0, 0],
+                    [0, 0, 0, 1],
+                    [-1, 0, -1, 0],
+                ]
+            ),
         ),
         #
     ],
@@ -331,8 +332,8 @@ def test_lookup_table_compute_observables_of_target_states(transition_matrix, bi
     "operations_generator, num_wires",
     [
         (
-                random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size),
-                num_wires,
+            random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size),
+            num_wires,
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in range(2, 6)
@@ -367,8 +368,8 @@ def test_lookup_table_compute_observable_of_target_states_rn_circuits(operations
     "operations_generator, num_wires",
     [
         (
-                random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size),
-                num_wires,
+            random_sptm_operations_generator(num_gates, np.arange(num_wires), batch_size=batch_size),
+            num_wires,
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_wires in range(2, 6)

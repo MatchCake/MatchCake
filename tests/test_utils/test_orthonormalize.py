@@ -3,6 +3,7 @@ import pennylane as qml
 import pytest
 
 from matchcake.utils.math import dagger, orthonormalize
+
 from ..configs import (
     ATOL_MATRIX_COMPARISON,
     RTOL_MATRIX_COMPARISON,
