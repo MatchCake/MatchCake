@@ -170,6 +170,7 @@ class GramMatrix:
         errors are silently ignored.
         """
         try:
+            self._memmap = None
             self._filepath.unlink(missing_ok=True)
         except:  # pragma: no cover
             pass  # pragma: no cover
