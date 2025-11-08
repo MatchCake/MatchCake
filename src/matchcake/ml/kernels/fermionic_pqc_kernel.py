@@ -1,8 +1,12 @@
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import pennylane as qml
-from pennylane.ops.qubit.observables import BasisStateProjector
+import torch
+from numpy._typing import NDArray
+from torch.nn import Parameter
+
+from ...utils.torch_utils import to_tensor
 
 try:
     from pennylane.templates.broadcast import PATTERN_TO_WIRES
@@ -41,72 +45,64 @@ class FermionicPQCKernel(NIFKernel):
         \text{depth} = \max\left(1, \left(\frac{\text{n features}}{\text{size}} - 1\right)\right)
 
     """
-
+    DEFAULT_N_QUBITS = 12
+    DEFAULT_GRAM_BATCH_SIZE = 10_000
     available_entangling_mth = {"fswap", "identity", "hadamard"}
 
-    def __init__(self, size: Optional[int] = None, **kwargs):
-        super().__init__(size=size, **kwargs)
-        self._data_scaling = kwargs.get("data_scaling", np.pi / 2)
-        self._parameter_scaling = kwargs.get("parameter_scaling", np.pi / 2)
-        self._depth = kwargs.get("depth", None)
-        self._rotations = kwargs.get("rotations", "Y,Z")
-        self._entangling_mth = kwargs.get("entangling_mth", "fswap")
-        if self._entangling_mth not in self.available_entangling_mth:
-            raise ValueError(f"Unknown entangling method: {self._entangling_mth}.")
+    def __init__(
+            self,
+            *,
+            gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
+            random_state: int = 0,
+            n_qubits: int = DEFAULT_N_QUBITS,
+            depth: Optional[int] = None,
+            rotations: str = "Y,Z",
+            entangling_mth: str = "fswap",
+    ):
+        super().__init__(
+            gram_batch_size=gram_batch_size,
+            random_state=random_state,
+            n_qubits=n_qubits,
+        )
+        self.depth = depth
+        self.rotations = rotations
+        self.entangling_mth = entangling_mth
+        if self.entangling_mth not in self.available_entangling_mth:
+            raise ValueError(f"Unknown entangling method: {self.entangling_mth}.")
+        self.bias = None
+        self.encoder = torch.nn.Flatten()
+        self.data_scaling = None
 
-    @property
-    def depth(self):
-        return self._depth
-
-    @property
-    def data_scaling(self):
-        return self._data_scaling
-
-    @property
-    def rotations(self):
-        return self._rotations
-
-    def _compute_default_size(self):
-        _size = max(2, int(np.ceil(np.log2(self.X_.shape[-1] + 2) - 1)))
-        if _size % 2 != 0:
-            _size += 1
-        return _size
-
-    def initialize_parameters(self):
-        super().initialize_parameters()
-        self._depth = self.kwargs.get("depth", int(max(1, np.ceil(self.X_.shape[-1] / self.size))))
-        self.parameters = self.parameters_rng.uniform(0.0, 1.0, size=self.X_.shape[-1])
-        if self.qnode.interface == "torch":
-            import torch
-
-            self.parameters = torch.from_numpy(self.parameters).float().requires_grad_(True)
+    def fit(self, x_train: Union[NDArray, torch.Tensor], y_train: Optional[Union[NDArray, torch.Tensor]] = None):
+        super().fit(x_train, y_train)
+        n_inputs = int(np.prod(x_train.shape[1:]))
+        self.bias = Parameter(torch.from_numpy(self.np_rn_gen.random(n_inputs))).to(dtype=self.R_DTYPE)
+        self.data_scaling = torch.pi * Parameter(torch.ones(n_inputs)).to(dtype=self.R_DTYPE)
+        if self.depth is None:
+            self.depth = int(max(1, np.ceil(x_train.shape[-1] / self.n_qubits)))
+        return self
 
     def ansatz(self, x):
+        x = to_tensor(x, dtype=self.R_DTYPE).to(device=self.device)
+        x = self.bias + self.data_scaling * self.encoder(x)
+
         wires_double = PATTERN_TO_WIRES["double"](self.wires)
         wires_double_odd = PATTERN_TO_WIRES["double_odd"](self.wires)
         wires_patterns = [wires_double, wires_double_odd]
         for layer in range(self.depth):
-            sub_x = x[..., layer * self.size : (layer + 1) * self.size]
-            SptmAngleEmbedding(sub_x, wires=self.wires, rotations=self.rotations)
+            sub_x = x[..., layer * self.n_qubits : (layer + 1) * self.n_qubits]
+            yield from SptmAngleEmbedding(sub_x, wires=self.wires, rotations=self.rotations).decomposition()
             wires_list = wires_patterns[layer % len(wires_patterns)]
             for wires in wires_list:
-                if self._entangling_mth == "fswap":
-                    SptmCompZX(wires=wires)
-                elif self._entangling_mth == "hadamard":
-                    SptmCompHH(wires=wires)
-                elif self._entangling_mth == "identity":
+                if self.entangling_mth == "fswap":
+                    yield SptmCompZX(wires=wires)
+                elif self.entangling_mth == "hadamard":
+                    yield SptmCompHH(wires=wires)
+                elif self.entangling_mth == "identity":
                     pass
                 else:
-                    raise ValueError(f"Unknown entangling method: {self._entangling_mth}")
+                    raise ValueError(f"Unknown entangling method: {self.entangling_mth}")
         return
-
-    def circuit(self, x0, x1):
-        theta_x0 = self._parameter_scaling * self.parameters + self.data_scaling * x0
-        theta_x1 = self._parameter_scaling * self.parameters + self.data_scaling * x1
-        self.ansatz(theta_x0)
-        qml.adjoint(self.ansatz)(theta_x1)
-        projector: BasisStateProjector = qml.Projector(np.zeros(self.size), wires=self.wires)
-        return qml.expval(projector)
 
 
 class StateVectorFermionicPQCKernel(FermionicPQCKernel):
