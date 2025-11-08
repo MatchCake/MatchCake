@@ -228,6 +228,8 @@ module = [
     "scipy",
     "scipy.optimize",
     "sklearn.utils.estimator_checks",
+    "sklearn.kernel_approximation",
+    "sklearn.utils",
     # Scipy
     "scipy.linalg",
     # Seaborn

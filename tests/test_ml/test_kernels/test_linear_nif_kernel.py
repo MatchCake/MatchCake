@@ -34,3 +34,19 @@ class TestLinearNIFKernel:
         kernel_instance.fit(x_train)
         kernel_matrix = kernel_instance(x_train)
         torch.testing.assert_close(kernel_matrix, kernel_matrix.T)
+
+    def test_n_qubits_setter(self, kernel_instance):
+        n_qubits = kernel_instance.n_qubits
+        kernel_instance.n_qubits = n_qubits + 1
+        assert kernel_instance.n_qubits == n_qubits + 1
+        assert kernel_instance.encoder[1].out_features == kernel_instance.encoder_out_indices[0].size
+
+    def test_bias_setter(self, kernel_instance):
+        new_bias = not kernel_instance.bias
+        kernel_instance.bias = new_bias
+        assert kernel_instance.bias == new_bias
+
+    def test_encoder_activation_setter(self, kernel_instance):
+        new_activation = "ReLU"
+        kernel_instance.encoder_activation = new_activation
+        assert kernel_instance.encoder_activation == new_activation
