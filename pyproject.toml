@@ -180,7 +180,6 @@ exclude = [
     "constants",
     "devices",
     "matchgate_parameter_sets",
-    "ml/kernels/fermionic_pqc_kernel.py",
     "ml/kernels/linear_nif_kernel.py",
     "ml/kernels/nystroem.py",
     "ml/visualisation.py",
