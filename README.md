@@ -25,9 +25,7 @@ matchgates being classically simulable in polynomial time.
 
 Additionally, this package provides quantum kernels made with [scikit-learn](https://scikit-learn.org/stable/) API allowing the 
 use matchcircuits as kernels in quantum machine learning algorithms. One way to use these kernels could be in a Support Vector 
-Machine (SVM). In the [benchmark/classification](benchmark/classification/README.md) folder, you can 
-find some scripts that use SVM with matchcircuits as a kernel to classify the Iris dataset, the Breast Cancer dataset, 
-and the Digits dataset in polynomial time with high accuracy.
+Machine (SVM).
 
 Note that this package is built on PennyLane and PyTorch. This means that only the NumPy and PyTorch backends are compatible.
 Other backends provided by Autoray, such as JAX and TensorFlow, are not supported.
@@ -94,28 +92,32 @@ print(f"Expectation value: {expval}")
 
 ```python
 from matchcake.ml.kernels import FermionicPQCKernel
-from matchcake.ml.svm import FixedSizeSVC
 from matchcake.ml.visualisation import ClassificationVisualizer
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
 
 # Load the iris dataset
 X, y = datasets.load_iris(return_X_y=True)
-X = MinMaxScaler(feature_range=(0, 1)).fit_transform(X)
 x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
 # Create and fit the model
-model = FixedSizeSVC(kernel_cls=FermionicPQCKernel, kernel_kwargs=dict(size=4), random_state=0)
-model.fit(x_train, y_train)
+pipline = Pipeline([
+    ('scaler', MinMaxScaler(feature_range=(0, 1))),
+    ('kernel', FermionicPQCKernel(n_qubits=4, rotations="X,Z").freeze()),
+    ('classifier', SVC(kernel='precomputed')),
+])
+pipline.fit(x_train, y_train)
 
 # Evaluate the model
-test_accuracy = model.score(x_test, y_test)
+test_accuracy = pipline.score(x_test, y_test)
 print(f"Test accuracy: {test_accuracy * 100:.2f}%")
 
 # Visualize the classification
 viz = ClassificationVisualizer(x=X, n_pts=1_000)
-viz.plot_2d_decision_boundaries(model=model, y=y, show=True)
+viz.plot_2d_decision_boundaries(model=pipline, y=y, show=True)
 
 ```
 
@@ -123,6 +125,7 @@ viz.plot_2d_decision_boundaries(model=model, y=y, show=True)
 # Tutorials
 - [MatchCake Basics](https://github.com/MatchCake/MatchCake/blob/main/tutorials/matchcake_basics.ipynb)
 - [Iris Classification with MatchCake](https://github.com/MatchCake/MatchCake/blob/main/tutorials/iris_classification.ipynb)
+- [Nystroem Kernel Approximation](https://github.com/MatchCake/MatchCake/blob/main/tutorials/nystroem_kernel_approximation.ipynb)
 
 
 

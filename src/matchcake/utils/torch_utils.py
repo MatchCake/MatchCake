@@ -49,7 +49,7 @@ def to_numpy(x: Any, dtype=np.float64):
     if isinstance(x, np.ndarray):
         return np.asarray(x, dtype=dtype)
     elif isinstance(x, torch.Tensor):
-        return x.detach().cpu().numpy()
+        return x.detach().cpu().numpy().astype(dtype)
     elif isinstance(x, numbers.Number):
         return x
     elif isinstance(x, dict):
