@@ -1,20 +1,21 @@
 from typing import Optional, Union
 
 import numpy as np
-from numpy.typing import NDArray
 import torch
+from numpy.typing import NDArray
 from sklearn.base import BaseEstimator, TransformerMixin
-from matchcake.utils.torch_utils import to_tensor, to_numpy
+
+from matchcake.utils.torch_utils import to_numpy, to_tensor
 
 
 class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
     DEFAULT_GRAM_BATCH_SIZE = 10_000
 
     def __init__(
-            self,
-            *,
-            gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
-            random_state: int = 0,
+        self,
+        *,
+        gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
+        random_state: int = 0,
     ):
         super().__init__()
         self.gram_batch_size = gram_batch_size

@@ -1,20 +1,21 @@
 from numbers import Number
 from pathlib import Path
-from typing import Tuple, Callable, Any
+from tempfile import mkstemp
+from typing import Any, Callable, Tuple
 
 import numpy as np
-from numpy.typing import NDArray
 import torch
-from matchcake.utils.torch_utils import to_tensor, to_numpy
-from tempfile import mkstemp
+from numpy.typing import NDArray
+
+from matchcake.utils.torch_utils import to_numpy, to_tensor
 
 
 class GramMatrix:
     def __init__(
-            self,
-            shape: Tuple[int, ...],
-            initial_value: Number = 0.0,
-            requires_grad: bool = False,
+        self,
+        shape: Tuple[int, ...],
+        initial_value: Number = 0.0,
+        requires_grad: bool = False,
     ):
         self._shape = shape
         self._initial_value = initial_value
@@ -27,8 +28,8 @@ class GramMatrix:
         else:
             self._memmap = np.memmap(
                 filename=self._filepath,
-                dtype='float32',
-                mode='r+',
+                dtype="float32",
+                mode="r+",
                 shape=self._shape,
             )
 
@@ -44,10 +45,10 @@ class GramMatrix:
             self._memmap[key] = to_numpy(value, dtype=np.float32)
 
     def apply_(
-            self,
-            func: Callable[[NDArray], Any],
-            batch_size: int = 32,
-            symmetrize: bool = True,
+        self,
+        func: Callable[[NDArray], Any],
+        batch_size: int = 32,
+        symmetrize: bool = True,
     ):
         for indices in self.indices_batch_generator(batch_size):
             self[indices[:, 0], indices[:, 1]] = func(indices)
@@ -101,4 +102,3 @@ class GramMatrix:
     @property
     def requires_grad(self):
         return self._requires_grad
-

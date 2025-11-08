@@ -1,20 +1,20 @@
 import numpy as np
+from scipy.linalg import svd
 from sklearn.kernel_approximation import Nystroem as sk_Nystroem
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_is_fitted
 
-from .kernel import Kernel
-from scipy.linalg import svd
 from ...utils.torch_utils import to_numpy
+from .kernel import Kernel
 
 
 class Nystroem(sk_Nystroem):
     def __init__(
-            self,
-            kernel: Kernel,
-            *,
-            n_components=100,
-            random_state=None,
+        self,
+        kernel: Kernel,
+        *,
+        n_components=100,
+        random_state=None,
     ):
         super().__init__(
             kernel=kernel,
@@ -93,4 +93,3 @@ class Nystroem(sk_Nystroem):
     def freeze(self):
         self.kernel.freeze()
         return self
-

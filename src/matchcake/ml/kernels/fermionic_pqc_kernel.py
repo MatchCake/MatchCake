@@ -45,19 +45,20 @@ class FermionicPQCKernel(NIFKernel):
         \text{depth} = \max\left(1, \left(\frac{\text{n features}}{\text{size}} - 1\right)\right)
 
     """
+
     DEFAULT_N_QUBITS = 12
     DEFAULT_GRAM_BATCH_SIZE = 10_000
     available_entangling_mth = {"fswap", "identity", "hadamard"}
 
     def __init__(
-            self,
-            *,
-            gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
-            random_state: int = 0,
-            n_qubits: int = DEFAULT_N_QUBITS,
-            depth: Optional[int] = None,
-            rotations: str = "Y,Z",
-            entangling_mth: str = "fswap",
+        self,
+        *,
+        gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
+        random_state: int = 0,
+        n_qubits: int = DEFAULT_N_QUBITS,
+        depth: Optional[int] = None,
+        rotations: str = "Y,Z",
+        entangling_mth: str = "fswap",
     ):
         super().__init__(
             gram_batch_size=gram_batch_size,

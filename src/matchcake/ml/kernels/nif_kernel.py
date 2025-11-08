@@ -1,8 +1,9 @@
-from typing import Optional, Tuple, Iterator
+from typing import Iterator, Optional, Tuple
 
 import numpy as np
-import torch
 import pennylane as qml
+import torch
+
 from matchcake import NonInteractingFermionicDevice
 from matchcake.utils.operators import adjoint_generator
 from matchcake.utils.torch_utils import to_tensor
@@ -16,11 +17,11 @@ class NIFKernel(Kernel):
     DEFAULT_GRAM_BATCH_SIZE = 10_000
 
     def __init__(
-            self,
-            *,
-            gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
-            random_state: int = 0,
-            n_qubits: int = DEFAULT_N_QUBITS,
+        self,
+        *,
+        gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
+        random_state: int = 0,
+        n_qubits: int = DEFAULT_N_QUBITS,
     ):
         super().__init__(
             gram_batch_size=gram_batch_size,
