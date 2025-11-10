@@ -1231,6 +1231,8 @@ dev = [
     { name = "pytest-json-report" },
     { name = "pytest-timeout" },
     { name = "pytest-xdist" },
+    { name = "scipy-stubs", version = "1.15.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')" },
+    { name = "scipy-stubs", version = "1.16.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')" },
     { name = "twine" },
     { name = "wheel" },
 ]
@@ -1292,6 +1294,7 @@ dev = [
     { name = "pytest-json-report", specifier = ">=1.5.0,<2" },
     { name = "pytest-timeout", specifier = ">=2.4.0" },
     { name = "pytest-xdist", specifier = ">=3.7.0,<4" },
+    { name = "scipy-stubs", specifier = ">=1.15.3.0" },
     { name = "twine", specifier = ">=6.1.0,<7" },
     { name = "wheel", specifier = ">=0.45.1,<0.46" },
 ]
@@ -1626,6 +1629,18 @@ wheels = [
 ]
 
 [[package]]
+name = "numpy-typing-compat"
+version = "20250818.2.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", marker = "python_full_version >= '3.11' or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d5/2c/6312cfc304b141bf9fa25a73dcd37d74a96cf411f0aa0f6df11f83e0b0ee/numpy_typing_compat-20250818.2.2.tar.gz", hash = "sha256:84f50c86908bf796857180856f1acb7da3c5bf22f461558de1cd225128c028ba", size = 4981, upload-time = "2025-08-18T23:46:42.17Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f3/36/4093816a4614df4d99ba71010736f1122acc2dbae316373575f17aaa2f8e/numpy_typing_compat-20250818.2.2-py3-none-any.whl", hash = "sha256:8b6c551952fd46e887ee905e75b6e4977d97defe1c63ae1b516343e9913e1534", size = 6292, upload-time = "2025-08-18T23:46:34.175Z" },
+]
+
+[[package]]
 name = "nvidia-cublas"
 version = "13.0.0.19"
 source = { registry = "https://pypi.org/simple" }
@@ -1954,6 +1969,64 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/8c/b9/2ac072041e899a52f20cf9510850ff58295003aa75525e58343591b0cbfb/opt_einsum-3.4.0.tar.gz", hash = "sha256:96ca72f1b886d148241348783498194c577fa30a8faac108586b14f1ba4473ac", size = 63004, upload-time = "2024-09-26T14:33:24.483Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/23/cd/066e86230ae37ed0be70aae89aabf03ca8d9f39c8aea0dec8029455b5540/opt_einsum-3.4.0-py3-none-any.whl", hash = "sha256:69bb92469f86a1565195ece4ac0323943e83477171b91d24c35afe028a90d7cd", size = 71932, upload-time = "2024-09-26T14:33:23.039Z" },
+]
+
+[[package]]
+name = "optype"
+version = "0.9.3"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "(python_full_version < '3.11' and platform_machine != 'aarch64' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130') or (python_full_version < '3.11' and sys_platform != 'linux' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')",
+    "python_full_version < '3.11' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130'",
+    "(python_full_version < '3.11' and platform_machine != 'aarch64' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130') or (python_full_version < '3.11' and sys_platform != 'linux' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130')",
+    "python_full_version < '3.11' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "(python_full_version < '3.11' and platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130') or (python_full_version < '3.11' and sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130')",
+    "python_full_version < '3.11' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "python_full_version < '3.11' and sys_platform == 'darwin' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "python_full_version < '3.11' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+]
+dependencies = [
+    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/88/3c/9d59b0167458b839273ad0c4fc5f62f787058d8f5aed7f71294963a99471/optype-0.9.3.tar.gz", hash = "sha256:5f09d74127d316053b26971ce441a4df01f3a01943601d3712dd6f34cdfbaf48", size = 96143, upload-time = "2025-03-31T17:00:08.392Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/73/d8/ac50e2982bdc2d3595dc2bfe3c7e5a0574b5e407ad82d70b5f3707009671/optype-0.9.3-py3-none-any.whl", hash = "sha256:2935c033265938d66cc4198b0aca865572e635094e60e6e79522852f029d9e8d", size = 84357, upload-time = "2025-03-31T17:00:06.464Z" },
+]
+
+[[package]]
+name = "optype"
+version = "0.14.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "(python_full_version >= '3.12' and platform_machine != 'aarch64' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130') or (python_full_version >= '3.12' and sys_platform != 'linux' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')",
+    "python_full_version >= '3.12' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130'",
+    "(python_full_version == '3.11.*' and platform_machine != 'aarch64' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130') or (python_full_version == '3.11.*' and sys_platform != 'linux' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')",
+    "python_full_version == '3.11.*' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130'",
+    "(python_full_version >= '3.12' and platform_machine != 'aarch64' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130') or (python_full_version >= '3.12' and sys_platform != 'linux' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130')",
+    "python_full_version >= '3.12' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "(python_full_version == '3.11.*' and platform_machine != 'aarch64' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130') or (python_full_version == '3.11.*' and sys_platform != 'linux' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130')",
+    "python_full_version == '3.11.*' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "(python_full_version >= '3.12' and platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130') or (python_full_version >= '3.12' and sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130')",
+    "python_full_version >= '3.12' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "python_full_version >= '3.12' and sys_platform == 'darwin' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "(python_full_version == '3.11.*' and platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130')",
+    "python_full_version == '3.11.*' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "python_full_version == '3.11.*' and sys_platform == 'darwin' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "python_full_version >= '3.12' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "python_full_version == '3.11.*' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+]
+dependencies = [
+    { name = "typing-extensions", marker = "(python_full_version >= '3.11' and python_full_version < '3.13') or (python_full_version < '3.11' and extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (python_full_version < '3.11' and extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (python_full_version < '3.11' and extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130') or (python_full_version >= '3.13' and extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (python_full_version >= '3.13' and extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (python_full_version >= '3.13' and extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/94/ca/d3a2abcf12cc8c18ccac1178ef87ab50a235bf386d2401341776fdad18aa/optype-0.14.0.tar.gz", hash = "sha256:925cf060b7d1337647f880401f6094321e7d8e837533b8e159b9a92afa3157c6", size = 100880, upload-time = "2025-10-01T04:49:56.232Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/84/a6/11b0eb65eeafa87260d36858b69ec4e0072d09e37ea6714280960030bc93/optype-0.14.0-py3-none-any.whl", hash = "sha256:50d02edafd04edf2e5e27d6249760a51b2198adb9f6ffd778030b3d2806b026b", size = 89465, upload-time = "2025-10-01T04:49:54.674Z" },
+]
+
+[package.optional-dependencies]
+numpy = [
+    { name = "numpy", marker = "python_full_version >= '3.11' or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')" },
+    { name = "numpy-typing-compat", marker = "python_full_version >= '3.11' or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')" },
 ]
 
 [[package]]
@@ -2900,6 +2973,58 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/cf/95a90bb785a1b7bf7b9c3d89d3251f33036e97d2d6dfc2a9ec78f060a29d/scipy_openblas32-0.3.29.0.0-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:768352307e56873538222526b7dbcfd3dcd8615451741d15eef9af718ac93750", size = 9172187, upload-time = "2025-01-21T23:09:19.191Z" },
     { url = "https://files.pythonhosted.org/packages/ef/6b/e81e658bb52b81a9bd2a9415a1b84c1c1dbb785043e307787aaf1f8eb6f3/scipy_openblas32-0.3.29.0.0-py3-none-win32.whl", hash = "sha256:e56c9c8e5e41d91d357b0d514fc59ca25467fbd68e5bdffa1f3dfa96f3249eb2", size = 5554954, upload-time = "2025-01-21T23:09:41.838Z" },
     { url = "https://files.pythonhosted.org/packages/65/e3/5e0cd0945aba54312849dac3bca06b6e3dee725c7abb73e854cf79709838/scipy_openblas32-0.3.29.0.0-py3-none-win_amd64.whl", hash = "sha256:8b21c803bdc344a383a1d5d392d3cfe5366d9b89d2aeee963705156000cbbc7a", size = 7077538, upload-time = "2025-01-21T23:09:54.827Z" },
+]
+
+[[package]]
+name = "scipy-stubs"
+version = "1.15.3.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "(python_full_version < '3.11' and platform_machine != 'aarch64' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130') or (python_full_version < '3.11' and sys_platform != 'linux' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')",
+    "python_full_version < '3.11' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130'",
+    "(python_full_version < '3.11' and platform_machine != 'aarch64' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130') or (python_full_version < '3.11' and sys_platform != 'linux' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130')",
+    "python_full_version < '3.11' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "(python_full_version < '3.11' and platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130') or (python_full_version < '3.11' and sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130')",
+    "python_full_version < '3.11' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "python_full_version < '3.11' and sys_platform == 'darwin' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "python_full_version < '3.11' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+]
+dependencies = [
+    { name = "optype", version = "0.9.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0b/5f/35c43bd7d412add4adcd68475702571b2489b50c40b6564f808b2355e452/scipy_stubs-1.15.3.0.tar.gz", hash = "sha256:e8f76c9887461cf9424c1e2ad78ea5dac71dd4cbb383dc85f91adfe8f74d1e17", size = 275699, upload-time = "2025-05-08T16:58:35.139Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6c/42/cd8dc81f8060de1f14960885ad5b2d2651f41de8b93d09f3f919d6567a5a/scipy_stubs-1.15.3.0-py3-none-any.whl", hash = "sha256:a251254cf4fd6e7fb87c55c1feee92d32ddbc1f542ecdf6a0159cdb81c2fb62d", size = 459062, upload-time = "2025-05-08T16:58:33.356Z" },
+]
+
+[[package]]
+name = "scipy-stubs"
+version = "1.16.3.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "(python_full_version >= '3.12' and platform_machine != 'aarch64' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130') or (python_full_version >= '3.12' and sys_platform != 'linux' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')",
+    "python_full_version >= '3.12' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130'",
+    "(python_full_version == '3.11.*' and platform_machine != 'aarch64' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130') or (python_full_version == '3.11.*' and sys_platform != 'linux' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')",
+    "python_full_version == '3.11.*' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130'",
+    "(python_full_version >= '3.12' and platform_machine != 'aarch64' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130') or (python_full_version >= '3.12' and sys_platform != 'linux' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130')",
+    "python_full_version >= '3.12' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "(python_full_version == '3.11.*' and platform_machine != 'aarch64' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130') or (python_full_version == '3.11.*' and sys_platform != 'linux' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130')",
+    "python_full_version == '3.11.*' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "(python_full_version >= '3.12' and platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130') or (python_full_version >= '3.12' and sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130')",
+    "python_full_version >= '3.12' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "python_full_version >= '3.12' and sys_platform == 'darwin' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "(python_full_version == '3.11.*' and platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130') or (python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130')",
+    "python_full_version == '3.11.*' and platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "python_full_version == '3.11.*' and sys_platform == 'darwin' and extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "python_full_version >= '3.12' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+    "python_full_version == '3.11.*' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130'",
+]
+dependencies = [
+    { name = "optype", version = "0.14.0", source = { registry = "https://pypi.org/simple" }, extra = ["numpy"], marker = "python_full_version >= '3.11' or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bd/68/c53c3bce6bd069a164015be1be2671c968b526be4af1e85db64c88f04546/scipy_stubs-1.16.3.0.tar.gz", hash = "sha256:d6943c085e47a1ed431309f9ca582b6a206a9db808a036132a0bf01ebc34b506", size = 356462, upload-time = "2025-10-28T22:05:31.198Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/86/1c/0ba7305fa01cfe7a6f1b8c86ccdd1b7a0d43fa9bd769c059995311e291a2/scipy_stubs-1.16.3.0-py3-none-any.whl", hash = "sha256:90e5d82ced2183ef3c5c0a28a77df8cc227458624364fa0ff975ad24fa89d6ad", size = 557713, upload-time = "2025-10-28T22:05:29.454Z" },
 ]
 
 [[package]]

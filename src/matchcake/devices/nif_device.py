@@ -1081,31 +1081,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         return self._lookup_table
 
     @property
-    def memory_usage(self):
-        mem = 0
-        if self._basis_state_index is not None:
-            arr = np.asarray([self._basis_state_index])
-            mem += arr.size * arr.dtype.itemsize
-        if self._state is not None:
-            mem += self._state.size * self._state.dtype.itemsize
-        if self._sparse_state is not None:
-            mem += self._sparse_state.data.size * self._sparse_state.data.dtype.itemsize
-            mem += self._sparse_state.indices.size * self._sparse_state.indices.dtype.itemsize
-            mem += self._sparse_state.indptr.size * self._sparse_state.indptr.dtype.itemsize
-        if self._pre_rotated_state is not None:
-            mem += self._pre_rotated_state.size * self._pre_rotated_state.dtype.itemsize
-        if self._pre_rotated_sparse_state is not None:
-            mem += self._pre_rotated_sparse_state.data.size * self._pre_rotated_sparse_state.data.dtype.itemsize
-            mem += self._pre_rotated_sparse_state.indices.size * self._pre_rotated_sparse_state.indices.dtype.itemsize
-            mem += self._pre_rotated_sparse_state.indptr.size * self._pre_rotated_sparse_state.indptr.dtype.itemsize
-        if self._transition_matrix is not None:
-            size = qml.math.prod(qml.math.shape(self._transition_matrix))
-            mem += size * self._transition_matrix.dtype.itemsize
-        if self._lookup_table is not None:
-            mem += self._lookup_table.memory_usage
-        return mem
-
-    @property
     def star_state(self):
         return self._star_state
 

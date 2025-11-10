@@ -198,7 +198,7 @@ def astensor(tensor, like=None, **kwargs):
 
 
 def eye_block_matrix(matrix: TensorLike, n: int, index: int):
-    """
+    r"""
 
     Take a matrix and insert it into a bigger eye matrix like this:
 

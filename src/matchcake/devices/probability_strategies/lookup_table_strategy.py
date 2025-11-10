@@ -33,7 +33,7 @@ class LookupTableStrategy(ProbabilityStrategy):
         pfaffian_method: str = kwargs["pfaffian_method"]
 
         show_progress = kwargs.get("show_progress", False)
-        obs = lookup_table.get_observable_of_target_state(
+        obs = lookup_table.compute_observable_of_target_state(
             system_state,
             target_binary_state,
             wires_indexes,
@@ -56,7 +56,7 @@ class LookupTableStrategy(ProbabilityStrategy):
         pfaffian_method: str = kwargs["pfaffian_method"]
 
         show_progress = kwargs.get("show_progress", False)
-        batch_obs = lookup_table.compute_observables_of_target_states(
+        batch_obs = lookup_table(
             system_state,
             target_binary_states,
             batch_wires,

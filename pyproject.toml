@@ -65,6 +65,7 @@ dev = [
     "isort>=6.0.1,<7",
     "pytest-timeout>=2.4.0",
     "pip>=25.3",
+    "scipy-stubs>=1.15.3.0",
 ]
 docs = [
     "wheel>=0.45.1,<0.46",
@@ -180,7 +181,7 @@ exclude = [
     "constants",
     "devices",
     "matchgate_parameter_sets",
-    "ml",
+    "ml/visualisation.py",
     "observables",
     "operations",
     "templates",
@@ -228,8 +229,8 @@ module = [
     "scipy",
     "scipy.optimize",
     "sklearn.utils.estimator_checks",
-    # Scipy
-    "scipy.linalg",
+    "sklearn.kernel_approximation",
+    "sklearn.utils",
     # Seaborn
     "seaborn",
     # PythonBasicTools
@@ -242,7 +243,6 @@ module = [
     "umap",
     "tensorflow",
     "jax.scipy.linalg",
-    "pfapack.pfaffian",
     "torch_pfaffian",
     "sympy",
     "networkx",
