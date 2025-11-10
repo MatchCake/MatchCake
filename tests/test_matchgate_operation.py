@@ -106,7 +106,9 @@ def test_single_matchgate_obs_on_specific_cases(params, k, binary_state, observa
     nif_device = NonInteractingFermionicDevice(wires=2)
     nif_device.apply(MatchgateOperation(params, wires=[0, 1]))
     state = utils.binary_state_to_state(binary_state)
-    pred_obs = nif_device.lookup_table.get_observable(k, state)
+    pred_obs = nif_device.lookup_table.compute_observable_of_target_state(
+        state, target_binary_state=[1], indexes_of_target_state=[k]
+    )
     pred_pf = pfaffian(pred_obs)
     pf = pfaffian(observable)
     np.testing.assert_allclose(

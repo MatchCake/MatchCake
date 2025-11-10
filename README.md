@@ -50,6 +50,11 @@ To install the latest unstable version, download the latest version from `https:
 To use MatchCake with cuda, you can add `--extra cu128` to the installation commands above.
 This will install pytorch with CUDA 12.8.
 
+Extra options:
+- `--extra cpu`: Install MatchCake with PyTorch CPU only.
+- `--extra cu128`: Install MatchCake with PyTorch CUDA 12.8.
+- `--extra cu130`: Install MatchCake with PyTorch CUDA 13.0.
+
 
 # Quick Usage Preview
 
@@ -149,7 +154,7 @@ Fund.
 
 
 # Found a bug or have a feature request?
-- [Click here to create a new issue.](https://github.com/MatchCake/MatchCake/issues/new)
+- [Click here to create a new issue.](https://github.com/MatchCake/MatchCake/issues/new/choose)
 
 
 
