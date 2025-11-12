@@ -2,9 +2,10 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from matchcake import Matchgate, MatchgateOperation, NonInteractingFermionicDevice
+from matchcake import Matchgate, NonInteractingFermionicDevice
 from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
+from matchcake.operations.__matchgate_operation import MatchgateOperation
 from matchcake.utils import pfaffian
 from matchcake.utils.math import dagger, det
 

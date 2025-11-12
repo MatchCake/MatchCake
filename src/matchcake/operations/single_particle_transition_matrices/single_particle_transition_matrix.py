@@ -296,12 +296,12 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     ) -> "SingleParticleTransitionMatrixOperation":
         if isinstance(op, SingleParticleTransitionMatrixOperation):
             return op
+        if hasattr(op, "to_sptm_operation") and callable(op.to_sptm_operation):
+            return op.to_sptm_operation()
         if hasattr(op, "single_particle_transition_matrix"):
             return SingleParticleTransitionMatrixOperation(
                 op.single_particle_transition_matrix, wires=op.wires, **kwargs
             )
-        if hasattr(op, "to_sptm_operation") and callable(op.to_sptm_operation):
-            return op.to_sptm_operation()
         raise ValueError(
             f"Cannot convert {type(op)} to {cls.__name__} "
             f"without the attribute 'single_particle_transition_matrix' or the method 'to_sptm_operation'."
