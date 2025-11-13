@@ -19,6 +19,8 @@ from .devices import NIFDevice, NonInteractingFermionicDevice
 from .observables import BatchHamiltonian
 from .operations import MatchgateOperation
 from .utils import math
+from .matchgate_parameter_sets.matchgate_polar_params import MatchgatePolarParams
+from .matchgate_parameter_sets.matchgate_standard_params import MatchgateStandardParams
 
 warnings.filterwarnings("ignore", category=Warning, module="docutils")
 warnings.filterwarnings("ignore", category=Warning, module="sphinx")

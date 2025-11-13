@@ -9,6 +9,7 @@ from pennylane.wires import Wires, WiresLike
 from .single_particle_transition_matrices.single_particle_transition_matrix import (
     SingleParticleTransitionMatrixOperation,
 )
+from ..matchgate_parameter_sets import MatchgateParams
 from ..typing import TensorLike
 from ..utils import (
     make_single_particle_transition_matrix_from_gate,
@@ -341,13 +342,15 @@ class MatchgateOperation(Operation):
 
     def __init__(
             self,
-            matrix: TensorLike,
+            matrix: Union[TensorLike, MatchgateParams],
             wires=None,
             id=None,
             default_dtype: torch.dtype = torch.complex128,
             default_device: Optional[torch.device] = None,
             **kwargs,
     ):
+        if isinstance(matrix, MatchgateParams):
+            matrix = matrix.matrix(dtype=default_dtype, device=default_device)
         if wires is not None:
             wires = Wires(wires)
             assert len(wires) == 2, f"MatchgateOperation requires exactly 2 wires, got {len(wires)}."
