@@ -1,9 +1,13 @@
+from typing import Optional
+
+import torch
 from pennylane.wires import Wires
 
 from .single_particle_transition_matrices.single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 from .single_particle_transition_matrices.sptm_fswap import SptmCompZX
 from .matchgate_operation import MatchgateOperation
 from ..utils import PAULI_Z, PAULI_X
+from .. import matchgate_parameter_sets as mgp
 
 
 class CompZX(MatchgateOperation):
@@ -22,18 +26,24 @@ class CompZX(MatchgateOperation):
         \end{bmatrix}
 
     """
-    num_wires = 2
-    num_params = 0
-
     @classmethod
     def random(cls, wires: Wires, batch_size=None, **kwargs):
         return cls(wires=wires, **kwargs)
 
-    def __new__(cls, wires=None, id=None, **kwargs):
-        return cls.from_sub_matrices(
-            PAULI_Z, PAULI_X,
+    def __init__(
+            self,
+            wires=None,
+            id=None,
+            default_dtype: torch.dtype = torch.complex128,
+            default_device: Optional[torch.device] = None,
+            **kwargs,
+    ):
+        super().__init__(
+            mgp.MatchgateStandardParams.from_sub_matrices(PAULI_Z, PAULI_X),
             wires=wires,
             id=id,
+            default_dtype=default_dtype,
+            default_device=default_device,
             **kwargs
         )
 

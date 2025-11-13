@@ -1,7 +1,11 @@
+from typing import Optional
+
 import pennylane as qml
+import torch
 from pennylane.typing import TensorLike
 
 from .matchgate_operation import MatchgateOperation
+from .. import matchgate_parameter_sets as mgp
 
 
 class Rzz(MatchgateOperation):
@@ -24,14 +28,26 @@ class Rzz(MatchgateOperation):
     num_wires = 2
     num_params = 1
 
-    def __new__(cls, theta: TensorLike, wires=None, id=None, **kwargs):
-        return cls.from_std_params(
-            a=qml.math.exp(-1j * theta / 2),
-            w=qml.math.exp(1j * theta / 2),
-            z=qml.math.exp(1j * theta / 2),
-            d=qml.math.exp(-1j * theta / 2),
+    def __init__(
+            self,
+            theta: TensorLike,
+            wires=None,
+            id=None,
+            default_dtype: torch.dtype = torch.complex128,
+            default_device: Optional[torch.device] = None,
+            **kwargs,
+    ):
+        super().__init__(
+            mgp.MatchgateStandardParams(
+                a=qml.math.exp(-1j * theta / 2),
+                w=qml.math.exp(1j * theta / 2),
+                z=qml.math.exp(1j * theta / 2),
+                d=qml.math.exp(-1j * theta / 2),
+            ),
             wires=wires,
             id=id,
+            default_dtype=default_dtype,
+            default_device=default_device,
             **kwargs
         )
 
