@@ -1,24 +1,27 @@
-from typing import Union
+from typing import Literal, Sequence, Optional
 
 import numpy as np
 import pennylane as qml
-from pennylane import numpy as pnp
-from pennylane.operation import Operation
+import torch
+from pennylane.wires import Wires
 
-from .. import matchgate_parameter_sets as mps
-from .. import utils
-from ..base.matchgate import Matchgate
+from .single_particle_transition_matrices.single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
+from .single_particle_transition_matrices.sptm_comp_rzrz import SptmCompRzRz
+from .single_particle_transition_matrices.sptm_comp_rxrx import SptmCompRxRx
+from .single_particle_transition_matrices.sptm_comp_ryry import SptmCompRyRy
+
 from .matchgate_operation import MatchgateOperation
+from .. import utils
 
 
-def _make_rot_matrix(param, direction, use_exp_taylor_series: bool = False, taylor_series_terms: int = 10):
+def _make_rot_matrix(param, direction: Literal["X", "Y", "Z"]):
     param_shape = qml.math.shape(param)
     ndim = len(param_shape)
     if ndim not in [0, 1]:
         raise ValueError(f"Invalid number of dimensions {len(param_shape)}.")
     batch_size = param_shape[0] if ndim == 1 else 1
     param = qml.math.reshape(param, (batch_size,))
-    matrix = qml.math.cast(qml.math.convert_like(pnp.zeros((batch_size, 2, 2)), param), dtype=complex)
+    matrix = qml.math.cast(qml.math.convert_like(np.zeros((batch_size, 2, 2)), param), dtype=complex)
 
     if direction == "X":
         matrix[:, 0, 0] = qml.math.cos(param / 2)
@@ -31,12 +34,8 @@ def _make_rot_matrix(param, direction, use_exp_taylor_series: bool = False, tayl
         matrix[:, 1, 0] = qml.math.sin(param / 2)
         matrix[:, 1, 1] = qml.math.cos(param / 2)
     elif direction == "Z":
-        if use_exp_taylor_series:
-            matrix[:, 0, 0] = utils.math.exp_taylor_series(-1j * param / 2, terms=taylor_series_terms)
-            matrix[:, 1, 1] = utils.math.exp_taylor_series(1j * param / 2, terms=taylor_series_terms)
-        else:
-            matrix[:, 0, 0] = qml.math.exp(-1j * param / 2)
-            matrix[:, 1, 1] = qml.math.exp(1j * param / 2)
+        matrix[:, 0, 0] = qml.math.exp(-1j * param / 2)
+        matrix[:, 1, 1] = qml.math.exp(1j * param / 2)
     else:
         raise ValueError(f"Invalid direction {direction}.")
     if ndim == 0:
@@ -45,10 +44,8 @@ def _make_rot_matrix(param, direction, use_exp_taylor_series: bool = False, tayl
 
 
 def _make_complete_rot_matrix(
-    params,
-    directions,
-    use_exp_taylor_series: bool = False,
-    taylor_series_terms: int = 10,
+        params,
+        directions: Sequence[Literal["X", "Y", "Z"]],
 ):
     params_shape = qml.math.shape(params)
     ndim = len(params_shape)
@@ -57,19 +54,15 @@ def _make_complete_rot_matrix(
     if params_shape[-1] != len(directions) and params_shape[-1] != 2:
         raise ValueError(f"Number of parameters ({params_shape[-1]}) and directions ({len(directions)}) must be equal.")
     batch_size = params_shape[0] if ndim == 2 else 1
-    matrix = qml.math.cast(qml.math.convert_like(pnp.zeros((batch_size, 4, 4)), params), dtype=complex)
+    matrix = qml.math.cast(qml.math.convert_like(np.zeros((batch_size, 4, 4)), params), dtype=complex)
     outer_matrices = _make_rot_matrix(
         params[..., 0],
         directions[1],
-        use_exp_taylor_series=use_exp_taylor_series,
-        taylor_series_terms=taylor_series_terms,
     )
     outer_matrices = qml.math.reshape(outer_matrices, (batch_size, 2, 2))
     inner_matrices = _make_rot_matrix(
         params[..., 1],
         directions[0],
-        use_exp_taylor_series=use_exp_taylor_series,
-        taylor_series_terms=taylor_series_terms,
     )
     inner_matrices = qml.math.reshape(inner_matrices, (batch_size, 2, 2))
     matrix[:, 0, 0] = outer_matrices[:, 0, 0]
@@ -93,59 +86,64 @@ class CompRotation(MatchgateOperation):
     .. math::
         U = M(R_{P0}(\theta), R_{P1}(\phi))
 
-    where M is a matchgate, P0 and P1 are the paulis.
+    where :math:`M` is a matchgate, :math:`P0` and :math:`P1` are the paulis.
     """
 
     num_wires = 2
-    num_params = 2
-
-    USE_EXP_TAYLOR_SERIES = False
-    TAYLOR_SERIES_TERMS = 10
+    num_params = 1
 
     @classmethod
     def random_params(cls, batch_size=None, **kwargs):
-        params_shape = ([batch_size] if batch_size is not None else []) + [cls.num_params]
+        params_shape = ([batch_size] if batch_size is not None else []) + [2]
         seed = kwargs.pop("seed", None)
         rn_gen = np.random.default_rng(seed)
         return rn_gen.uniform(0, 2 * np.pi, params_shape)
 
+    @classmethod
+    def random(
+            cls,
+            wires: Wires,
+            *,
+            batch_size: Optional[int] = None,
+            dtype: torch.dtype = torch.complex128,
+            device: Optional[torch.device] = None,
+            seed: Optional[int] = None,
+            **kwargs
+    ) -> "CompRotation":
+        params = cls.random_params(batch_size=batch_size, dtype=dtype, device=device, seed=seed, **kwargs)
+        return cls(params, wires=wires, dtype=dtype, device=device, **kwargs)
+
     def __init__(
-        self,
-        params: Union[pnp.ndarray, list, tuple],
-        wires=None,
-        directions="XX",
-        id=None,
-        *,
-        backend=pnp,
-        **kwargs,
+            self,
+            params,
+            directions: Sequence[Literal["X", "Y", "Z"]],
+            wires=None,
+            id=None,
+            **kwargs
     ):
         shape = qml.math.shape(params)[-1:]
-        n_params = shape[0]
-        if n_params != self.num_params:
-            raise ValueError(f"{self.__class__.__name__} requires {self.num_params} parameters; got {n_params}.")
-        self._directions = directions.upper()
-        if len(self._directions) != 2:
-            raise ValueError(f"{self.__class__.__name__} requires two directions; got {self._directions}.")
+        n_angles = shape[0]
+        if n_angles != 2:
+            raise ValueError(f"{self.__class__.__name__} requires 2 angles; got {n_angles}.")
+        if len(directions) != 2:
+            raise ValueError(f"{self.__class__.__name__} requires two directions; got {directions}.")
+        super().__init__(
+            _make_complete_rot_matrix(params, directions),
+            wires=wires,
+            id=id,
+            _given_params=params,
+            _directions=''.join(directions),
+            **kwargs
+        )
         self._given_params = params
-        m_params = mps.MatchgateStandardParams.from_matrix(
-            _make_complete_rot_matrix(
-                params,
-                self._directions,
-                use_exp_taylor_series=self.USE_EXP_TAYLOR_SERIES,
-                taylor_series_terms=self.TAYLOR_SERIES_TERMS,
-            )
-        )
-        in_params = mps.MatchgatePolarParams.parse_from_params(
-            m_params, force_cast_to_real=kwargs.pop("force_cast_to_real", True)
-        )
-        kwargs["in_param_type"] = mps.MatchgatePolarParams
-        super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
+        self._directions = ''.join(directions)
 
     def get_implicit_parameters(self):
-        params = self._given_params
-        is_real = utils.check_if_imag_is_zero(params)
-        if is_real:
-            params = qml.math.cast(params, dtype=float)
+        with torch.no_grad():
+            params = self._given_params
+            is_real = utils.check_if_imag_is_zero(params)
+            if is_real:
+                params = qml.math.cast(params, dtype=float)
         return params
 
     def __repr__(self):
@@ -253,15 +251,16 @@ class CompRxRx(CompRotation):
     """
 
     def __init__(
-        self,
-        params: Union[pnp.ndarray, list, tuple],
-        wires=None,
-        id=None,
-        *,
-        backend=pnp,
-        **kwargs,
+            self,
+            params,
+            wires=None,
+            id=None,
+            **kwargs
     ):
-        super().__init__(params, wires=wires, directions="XX", id=id, backend=backend, **kwargs)
+        super().__init__(params, directions=["X", "X"], wires=wires, id=id, **kwargs)
+
+    def to_sptm_operation(self) -> SingleParticleTransitionMatrixOperation:
+        return SptmCompRxRx(self._given_params, wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs)
 
 
 class CompRyRy(CompRotation):
@@ -273,21 +272,16 @@ class CompRyRy(CompRotation):
     """
 
     def __init__(
-        self,
-        params: Union[pnp.ndarray, list, tuple],
-        wires=None,
-        id=None,
-        *,
-        backend=pnp,
-        **kwargs,
+            self,
+            params,
+            wires=None,
+            id=None,
+            **kwargs
     ):
-        super().__init__(params, wires=wires, directions="YY", id=id, backend=backend, **kwargs)
+        super().__init__(params, directions=["Y", "Y"], wires=wires, id=id, **kwargs)
 
-    def adjoint(self):
-        return CompRyRy(
-            -utils.math.astensor(self._given_params),
-            wires=self.wires,
-        )
+    # def to_sptm_operation(self) -> SingleParticleTransitionMatrixOperation:
+    #     return SptmCompRyRy(self._given_params, wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs)
 
 
 class CompRzRz(CompRotation):
@@ -299,12 +293,13 @@ class CompRzRz(CompRotation):
     """
 
     def __init__(
-        self,
-        params: Union[pnp.ndarray, list, tuple],
-        wires=None,
-        id=None,
-        *,
-        backend=pnp,
-        **kwargs,
+            self,
+            params,
+            wires=None,
+            id=None,
+            **kwargs
     ):
-        super().__init__(params, wires=wires, directions="ZZ", id=id, backend=backend, **kwargs)
+        super().__init__(params, directions=["Z", "Z"], wires=wires, id=id, **kwargs)
+
+    def to_sptm_operation(self) -> SingleParticleTransitionMatrixOperation:
+        return SptmCompRzRz(self._given_params, wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs)

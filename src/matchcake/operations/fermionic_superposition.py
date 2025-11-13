@@ -9,6 +9,15 @@ from .single_particle_transition_matrices.sptm_fermionic_superposition import (
 
 
 class FermionicSuperposition(Operation):
+    """
+    Represents a Fermionic Superposition operation.
+
+    This class implements a quantum operation where, when applied to the vacuum state,
+    each even mode will be in an equal superposition. It allows for operations over
+    arbitrary numbers of qubits and is specifically designed to work with even numbers of wires.
+    The operation is configured with a set of wires and optional parameters. Additionally,
+    it supports features such as decomposition into fundamental gates.
+    """
     num_wires = AnyWires
     grad_method = None
 
@@ -28,23 +37,9 @@ class FermionicSuperposition(Operation):
     def __repr__(self):
         return f"{self.__class__.__name__}(wires={self.wires.tolist()})"
 
-    def __init__(self, wires, id=None, **kwargs):
-        r"""
-        Construct a new Matchgate Superposition operation.
-        After applying this operation on the vacuum state each even modes will be in equal superposition.
-
-        :Note: The number of wires must be even.
-
-        :param wires: The wires to embed the features on.
-        :param id: The id of the operation.
-
-        :keyword contract_rots: If True, contract the rotations. Default is False.
-        """
-        super().__init__(wires=wires, id=id)
-
     @property
     def num_params(self):
         return 0
 
-    def to_sptm_operation(self):
-        return SptmFermionicSuperposition(wires=self.wires)
+    def to_sptm_operation(self) -> SptmFermionicSuperposition:
+        return SptmFermionicSuperposition(wires=self.wires, id=self.id, **self.hyperparameters)

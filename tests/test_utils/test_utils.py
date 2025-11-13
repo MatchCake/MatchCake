@@ -4,7 +4,6 @@ import torch
 from scipy.linalg import expm
 from torch.autograd import gradcheck
 
-from matchcake import matchgate_parameter_sets as mps
 from matchcake import utils
 
 from ..configs import (
@@ -90,7 +89,7 @@ class TestUtils:
         "coeffs,hamiltonian",
         [
             (
-                mps.MatchgateHamiltonianCoefficientsParams(h0=1.0, h1=1.0, h2=1.0, h3=1.0, h4=1.0, h5=1.0),
+                dict(h0=1.0, h1=1.0, h2=1.0, h3=1.0, h4=1.0, h5=1.0),
                 -2j
                 * np.array(
                     [
@@ -104,7 +103,13 @@ class TestUtils:
         ],
     )
     def test_get_non_interacting_fermionic_hamiltonian_from_coeffs(self, coeffs, hamiltonian):
-        out_hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs.to_matrix())
+        coeffs_matrix =  np.array([
+            [0, coeffs["h0"], coeffs["h1"], coeffs["h2"]],
+            [-coeffs["h0"], 0, coeffs["h3"], coeffs["h4"]],
+            [-coeffs["h1"], -coeffs["h3"], 0, coeffs["h4"]],
+            [-coeffs["h2"], -coeffs["h4"], -coeffs["h5"], 0]
+        ])
+        out_hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs_matrix)
         np.testing.assert_allclose(
             out_hamiltonian.squeeze(),
             hamiltonian.squeeze(),

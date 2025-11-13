@@ -4,19 +4,17 @@ from typing import Any, Optional, Tuple, Union
 import pennylane as qml
 import torch
 from pennylane.operation import Operation
-from pennylane.typing import TensorLike
 from pennylane.wires import Wires, WiresLike
 
-from .. import matchgate_parameter_sets as mps
-from ..utils import (
-    make_single_particle_transition_matrix_from_gate,
-    make_wires_continuous,
-)
-from ..utils.math import fermionic_operator_matmul
-from ..utils.torch_utils import to_tensor
 from .single_particle_transition_matrices.single_particle_transition_matrix import (
     SingleParticleTransitionMatrixOperation,
 )
+from ..typing import TensorLike
+from ..utils import (
+    make_single_particle_transition_matrix_from_gate,
+    make_wires_continuous, )
+from ..utils.math import fermionic_operator_matmul
+from ..utils.torch_utils import to_tensor
 
 
 class MatchgateOperation(Operation):
@@ -71,20 +69,20 @@ class MatchgateOperation(Operation):
 
     @classmethod
     def from_std_params(
-        cls,
-        a: Optional[TensorLike] = None,
-        b: Optional[TensorLike] = None,
-        c: Optional[TensorLike] = None,
-        d: Optional[TensorLike] = None,
-        w: Optional[TensorLike] = None,
-        x: Optional[TensorLike] = None,
-        y: Optional[TensorLike] = None,
-        z: Optional[TensorLike] = None,
-        *,
-        wires=None,
-        dtype: torch.dtype = torch.complex128,
-        device: Optional[torch.device] = None,
-        **kwargs,
+            cls,
+            a: Optional[TensorLike] = None,
+            b: Optional[TensorLike] = None,
+            c: Optional[TensorLike] = None,
+            d: Optional[TensorLike] = None,
+            w: Optional[TensorLike] = None,
+            x: Optional[TensorLike] = None,
+            y: Optional[TensorLike] = None,
+            z: Optional[TensorLike] = None,
+            *,
+            wires=None,
+            dtype: torch.dtype = torch.complex128,
+            device: Optional[torch.device] = None,
+            **kwargs,
     ) -> "MatchgateOperation":
         shapes = [qml.math.shape(p) for p in [a, b, c, d, w, x, y, z] if p is not None]
         batch_sizes = list(set([s[0] for s in shapes if len(s) > 0]))
@@ -113,14 +111,14 @@ class MatchgateOperation(Operation):
 
     @classmethod
     def from_sub_matrices(
-        cls,
-        outer_matrix: TensorLike,
-        inner_matrix: TensorLike,
-        *,
-        wires=None,
-        dtype: torch.dtype = torch.complex128,
-        device: Optional[torch.device] = None,
-        **kwargs,
+            cls,
+            outer_matrix: TensorLike,
+            inner_matrix: TensorLike,
+            *,
+            wires=None,
+            dtype: torch.dtype = torch.complex128,
+            device: Optional[torch.device] = None,
+            **kwargs,
     ):
         return cls.from_std_params(
             a=outer_matrix[..., 0, 0],
@@ -139,25 +137,193 @@ class MatchgateOperation(Operation):
 
     @classmethod
     def from_polar_params(
-        cls,
-        r: Optional[TensorLike] = None,
-        *,
-        wires=None,
-        dtype: torch.dtype = torch.float64,
-        device: Optional[torch.device] = None,
-        **kwargs,
-    ) -> "MatchgateOperation": ...
+            cls,
+            r0: Optional[TensorLike] = None,
+            r1: Optional[TensorLike] = None,
+            theta0: Optional[TensorLike] = None,
+            theta1: Optional[TensorLike] = None,
+            theta2: Optional[TensorLike] = None,
+            theta3: Optional[TensorLike] = None,
+            theta4: Optional[TensorLike] = None,
+            *,
+            wires=None,
+            dtype: torch.dtype = torch.complex128,
+            device: Optional[torch.device] = None,
+            division_epsilon: float = 1e-12,
+            **kwargs,
+    ) -> "MatchgateOperation":
+        r"""
+        Matchgate from polar parameters.
 
-    @classmethod
-    def random_params(cls, batch_size=None, **kwargs):
-        seed = kwargs.pop("seed", None)
-        ...
+        They are the parameters of a Matchgate operation in the standard form which is a 4x4 matrix
 
-    @classmethod
-    def random(cls, wires: Wires, batch_size=None, **kwargs) -> "MatchgateOperation":
-        return cls(
-            cls.random_params(batch_size=batch_size, wires=wires, **kwargs),
+        .. math::
+
+                \begin{bmatrix}
+                    r_0 e^{i\theta_0} & 0 & 0 & (\sqrt{1 - r_0^2}) e^{-i(\theta_1+\pi)} \\
+                    0 & r_1 e^{i\theta_2} & (\sqrt{1 - r_1^2}) e^{-i(\theta_3+\pi)} & 0 \\
+                    0 & (\sqrt{1 - r_1^2}) e^{i\theta_3} & r_1 e^{-i\theta_2} & 0 \\
+                    (\sqrt{1 - r_0^2}) e^{i\theta_1} & 0 & 0 & r_0 e^{-i\theta_0}
+                \end{bmatrix}
+
+            where :math:`r_0, r_1, \theta_0, \theta_1, \theta_2, \theta_3, \theta_4` are the parameters.
+
+        The polar parameters will be converted to standard parameterization. The conversion is given by
+
+        .. math::
+            \begin{align}
+                a &= r_0 e^{i\theta_0} \\
+                b &= (\sqrt{1 - r_0^2}) e^{i(\theta_2+\theta_4-(\theta_1+\pi))} \\
+                c &= (\sqrt{1 - r_0^2}) e^{i\theta_1} \\
+                d &= r_0 e^{i(\theta_2+\theta_4-\theta_0)} \\
+                w &= r_1 e^{i\theta_2} \\
+                x &= (\sqrt{1 - r_1^2}) e^{i(\theta_2+\theta_4-(\theta_3+\pi))} \\
+                y &= (\sqrt{1 - r_1^2}) e^{i\theta_3} \\
+                z &= r_1 e^{i\theta_4}
+            \end{align}
+        """
+        if theta4 is None and theta2 is not None:
+            theta4 = -theta2
+
+        shapes = [qml.math.shape(p) for p in [r0, r1, theta0, theta1, theta2, theta3, theta4] if p is not None]
+        batch_sizes = list(set([s[0] for s in shapes if len(s) > 0]))
+        assert len(batch_sizes) <= 1, f"Expect the same batch size for every parameters. Got: {batch_sizes}."
+        batch_size = batch_sizes[0] if len(batch_sizes) > 0 else 1
+        r0, r1 = [
+            (
+                to_tensor(p, dtype=dtype, device=device)
+                if p is not None
+                else torch.ones((batch_size,), dtype=dtype, device=device)
+            )
+            for p in [r0, r1]
+        ]
+        theta0, theta1, theta2, theta3, theta4 = [
+            (
+                to_tensor(p, dtype=dtype, device=device)
+                if p is not None
+                else torch.zeros((batch_size,), dtype=dtype, device=device)
+            )
+            for p in [theta0, theta1, theta2, theta3, theta4]
+        ]
+
+        r0_tilde = torch.sqrt(1 - r0 ** 2 + division_epsilon)
+        r1_tilde = torch.sqrt(1 - r1 ** 2 + division_epsilon)
+        return cls.from_std_params(
+            a=r0 * torch.exp(1j * theta0),
+            b=r0_tilde * torch.exp(1j * (theta2 + theta4 - (theta1 + torch.pi))),
+            c=r0_tilde * torch.exp(1j * theta1),
+            d=r0 * torch.exp(1j * (theta2 + theta4 - theta0)),
+            w=r1 * torch.exp(1j * theta2),
+            x=r1_tilde * torch.exp(1j * (theta2 + theta4 - (theta3 + torch.pi))),
+            y=r1_tilde * torch.exp(1j * theta3),
+            z=r1 * torch.exp(1j * theta4),
             wires=wires,
+            dtype=dtype,
+            device=device,
+            **kwargs
+        )
+
+    @classmethod
+    def random_params(
+            cls,
+            *,
+            batch_size: Optional[int] = None,
+            dtype: torch.dtype = torch.float64,
+            device: Optional[torch.device] = None,
+            seed: Optional[int] = None,
+            **kwargs
+    ) -> torch.Tensor:
+        """
+        Generates a tensor of random parameters. This method allows creating a tensor
+        with random elements drawn from uniform (0, 1] for the two first elements
+        and drawn from a uniform distribution [0, :math:`2\pi`).
+        If ``batch_size`` is None, a single parameter set is
+        returned instead of a batch.
+
+        :param batch_size: The number of parameter sets to generate. If None, only a
+                           single parameter set is generated.
+        :type batch_size: Optional[int]
+        :param dtype: The data type of the output tensor. Defaults to torch.float64.
+        :param device: The device where the tensor will be allocated. Defaults to
+                       the current default device if not specified.
+        :param seed: A manual seed for reproducible random generation. If None, the
+                     random generator is not seeded manually.
+        :type seed: Optional[int]
+        :param kwargs: Additional keyword arguments for extended configuration.
+        :return: A tensor containing the generated random parameters. If ``batch_size``
+                 is specified, the shape will be ``(batch_size, 7)``. Otherwise, the
+                 returned tensor has shape ``(7,)``.
+        :rtype: torch.Tensor
+        """
+        eff_batch_size = batch_size if batch_size is not None else 1
+        params = torch.zeros((eff_batch_size, 7), dtype=torch.float64, device=device)
+        rn_generator = torch.Generator(device=device or "cpu")
+        if seed is not None:
+            rn_generator.manual_seed(seed)
+        params[..., 0:2] = torch.clip(
+            torch.rand((eff_batch_size, 2), generator=rn_generator, dtype=torch.float64, device=device) + 1e-12,
+            min=torch.tensor(1e-12, dtype=torch.float64, device=device),
+            max=torch.tensor(1.0, dtype=torch.float64, device=device),
+        )
+        params[..., 2:] = (
+                (2 * torch.pi)
+                * torch.rand((eff_batch_size, 5), generator=rn_generator, dtype=torch.float64, device=device)
+        )
+        params = params.to(dtype=dtype, device=device)
+        if batch_size is None:
+            params = params[0]
+        return params
+
+    @classmethod
+    def random(
+            cls,
+            wires: Wires,
+            *,
+            batch_size: Optional[int] = None,
+            dtype: torch.dtype = torch.complex128,
+            device: Optional[torch.device] = None,
+            seed: Optional[int] = None,
+            **kwargs
+    ) -> "MatchgateOperation":
+        """
+        Generate a random `MatchgateOperation` instance.
+
+        This class method creates a new instance of `MatchgateOperation` with
+        randomly initialized parameters. The generated object can be used
+        for testing, experimentation, or random state initialization.
+
+        The random values for the parameters can be controlled using the provided
+        seed. Additional configuration can be done using various optional parameters
+        such as the batch size, data type, device, and any implementation-specific
+        keyword arguments.
+
+        :param wires: Wires that the operation acts on. Can be a sequence or scalar.
+        :type wires: Wires
+        :param batch_size: Optional size of generated random batches. If None,
+            a single gate is returned.
+        :param dtype: Torch data type used for the random parameters. Defaults to
+            `torch.complex128`.
+        :param device: Optional Torch device on which the parameters will be created.
+            If None, parameters are created on the default device.
+        :param seed: Optional integer seed for controlling randomness. If None,
+            the seed is not fixed.
+        :param kwargs: Additional keyword arguments for specific configuration or
+            compatibility.
+        :return: A new `MatchgateOperation` instance with randomly initialized parameters.
+        :rtype: MatchgateOperation
+        """
+        params = cls.random_params(batch_size=batch_size, dtype=dtype, device=device, seed=seed, **kwargs)
+        return cls.from_polar_params(
+            r0=params[..., 0],
+            r1=params[..., 1],
+            theta0=params[..., 2],
+            theta1=params[..., 3],
+            theta2=params[..., 4],
+            theta3=params[..., 5],
+            theta4=params[..., 6],
+            wires=wires,
+            dtype=dtype,
+            device=device,
             **kwargs,
         )
 
@@ -167,20 +333,20 @@ class MatchgateOperation(Operation):
 
     @staticmethod
     def compute_decomposition(
-        *params: TensorLike,
-        wires: Optional[WiresLike] = None,
-        **hyperparameters: dict[str, Any],
+            *params: TensorLike,
+            wires: Optional[WiresLike] = None,
+            **hyperparameters: dict[str, Any],
     ):
         return [qml.QubitUnitary(params[0], wires=wires)]
 
     def __init__(
-        self,
-        matrix: TensorLike,
-        wires=None,
-        id=None,
-        default_dtype: torch.dtype = torch.complex128,
-        default_device: Optional[torch.device] = None,
-        **kwargs,
+            self,
+            matrix: TensorLike,
+            wires=None,
+            id=None,
+            default_dtype: torch.dtype = torch.complex128,
+            default_device: Optional[torch.device] = None,
+            **kwargs,
     ):
         if wires is not None:
             wires = Wires(wires)
@@ -190,6 +356,7 @@ class MatchgateOperation(Operation):
         if qml.math.get_interface(matrix) != "torch":
             matrix = to_tensor(matrix, dtype=default_dtype, device=default_device)
         self.draw_label_params = kwargs.get("draw_label_params", None)
+        self.kwargs = kwargs
         super().__init__(matrix, wires=wires, id=id)
         self._check_is_matchgate()
 
@@ -223,7 +390,7 @@ class MatchgateOperation(Operation):
             **self.hyperparameters,
         )
 
-    def get_padded_single_particle_transition_matrix(self, wires=None):
+    def get_padded_single_particle_transition_matrix(self, wires=None) -> SingleParticleTransitionMatrixOperation:
         r"""
         Return the padded single particle transition matrix in order to have the block diagonal form where
         the block is the single particle transition matrix at the corresponding wires.
@@ -231,7 +398,7 @@ class MatchgateOperation(Operation):
         :param wires: The wires of the whole system.
         :return: padded single particle transition matrix
         """
-        return self.to_sptm_operation().pad(wires=wires).matrix()
+        return self.to_sptm_operation().pad(wires=wires)
 
     def adjoint(self):
         return MatchgateOperation.from_std_params(
@@ -260,27 +427,40 @@ class MatchgateOperation(Operation):
         with torch.no_grad():
             m_m_dagger = torch.einsum("...ij,...kj->...ik", self.matrix(), torch.conj(self.matrix()))
             expected_zero = m_m_dagger - torch.eye(4)
-            return torch.allclose(expected_zero, torch.zeros_like(expected_zero), atol=1e-5)
+            check = torch.allclose(expected_zero, torch.zeros_like(expected_zero), atol=1e-5)
+        if not check:
+            raise ValueError(
+                rf"The matchgate does not satisfy the M M^\dagger constraint. Expected zeros. Got {expected_zero}"
+            )
+        return check
 
     def _check_m_dagger_m_constraint(self) -> bool:
         with torch.no_grad():
             m_dagger_m = torch.einsum("...ji,...jk->...ik", torch.conj(self.matrix()), self.matrix())
             expected_zero = m_dagger_m - torch.eye(4)
-            return torch.allclose(expected_zero, torch.zeros_like(expected_zero), atol=1e-5)
+            check = torch.allclose(expected_zero, torch.zeros_like(expected_zero), atol=1e-5)
+        if not check:
+            raise ValueError(
+                rf"The matchgate does not satisfy the M^\dagger M constraint. Expected zeros. Got {expected_zero}"
+            )
+        return check
 
     def _check_det_constraint(self) -> bool:
         with torch.no_grad():
             outer_determinant = torch.linalg.det(self.outer_gate_data)
             inner_determinant = torch.linalg.det(self.inner_gate_data)
-            return qml.math.allclose(outer_determinant, inner_determinant, atol=1e-5)
+            check = qml.math.allclose(outer_determinant, inner_determinant, atol=1e-5)
+        if not check:
+            raise ValueError(
+                rf"The matchgate does not satisfy the determinant constraint. "
+                rf"Expected equal. Got {outer_determinant} != {inner_determinant}"
+            )
+        return check
 
     def _check_is_matchgate(self):
-        if not self._check_m_m_dagger_constraint():
-            raise ValueError(r"The matchgate does not satisfy the M M^\dagger constraint.")
-        if not self._check_m_dagger_m_constraint():
-            raise ValueError(r"The matchgate does not satisfy the M^\dagger M constraint.")  # pragma: no cover
-        if not self._check_det_constraint():
-            raise ValueError(r"The matchgate does not satisfy the determinant constraint.")
+        self._check_m_m_dagger_constraint()
+        self._check_m_dagger_m_constraint()  # pragma: no cover
+        self._check_det_constraint()
 
     @cached_property
     def single_particle_transition_matrix(self):
