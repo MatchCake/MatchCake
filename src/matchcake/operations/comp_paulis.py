@@ -1,7 +1,7 @@
-from pennylane import numpy as pnp
+from typing import Literal, Sequence
+
 from pennylane.wires import Wires
 
-from .. import matchgate_parameter_sets as mps
 from .. import utils
 from .matchgate_operation import MatchgateOperation
 
@@ -14,6 +14,16 @@ paulis_map = {
 
 
 class CompPauli(MatchgateOperation):
+    r"""
+    Represents a matchgate composition of paulis gates
+
+    .. math::
+        U = M(P_0, P_1)
+
+    where :math:`M` is a matchgate, :math:`P_0` and :math:`P_1` are the paulis.
+
+    """
+
     num_wires = 2
     num_params = 0
 
@@ -21,16 +31,16 @@ class CompPauli(MatchgateOperation):
     def random(cls, wires: Wires, batch_size=None, **kwargs):
         return cls(wires=wires, **kwargs)
 
-    def __init__(self, wires=None, paulis="XX", id=None, *, backend=pnp, **kwargs):
-        self._paulis = paulis.upper()
-        if len(self._paulis) != 2:
-            raise ValueError(f"{self.__class__.__name__} requires two paulis; got {self._paulis}.")
-        m_params = mps.MatchgateStandardParams.from_sub_matrices(
-            paulis_map[self._paulis[0]], paulis_map[self._paulis[1]]
+    def __new__(cls, paulis: Sequence[Literal["X", "Y", "Z", "I"]], wires=None, id=None, **kwargs):
+        if len(paulis) != 2:
+            raise ValueError(f"{cls.__name__} requires two paulis; got {paulis}.")
+        return cls.from_sub_matrices(
+            paulis_map[paulis[0]], paulis_map[paulis[1]], wires=wires, id=id, _paulis="".join(paulis), **kwargs
         )
-        in_params = mps.MatchgatePolarParams.parse_from_params(m_params, force_cast_to_real=True)
-        kwargs["in_param_type"] = mps.MatchgatePolarParams
-        super().__init__(in_params, wires=wires, id=id, backend=backend, **kwargs)
+
+    def __init__(self, *args, **kwargs):
+        self._paulis = kwargs.pop("_paulis", None)
+        super().__init__(*args, **kwargs)
 
     def get_implicit_parameters(self):
         return self._paulis
@@ -47,15 +57,15 @@ class CompPauli(MatchgateOperation):
 
 
 class CompXX(CompPauli):
-    def __init__(self, wires=None, id=None, *, backend=pnp, **kwargs):
-        super().__init__(wires=wires, paulis="XX", id=id, backend=backend, **kwargs)
+    def __new__(cls, wires=None, id=None, **kwargs):
+        return super().__new__(cls, paulis=["X", "X"], wires=wires, id=id, **kwargs)
 
 
 class CompYY(CompPauli):
-    def __init__(self, wires=None, id=None, *, backend=pnp, **kwargs):
-        super().__init__(wires=wires, paulis="YY", id=id, backend=backend, **kwargs)
+    def __new__(cls, wires=None, id=None, **kwargs):
+        return super().__new__(cls, paulis=["Y", "Y"], wires=wires, id=id, **kwargs)
 
 
 class CompZZ(CompPauli):
-    def __init__(self, wires=None, id=None, *, backend=pnp, **kwargs):
-        super().__init__(wires=wires, paulis="ZZ", id=id, backend=backend, **kwargs)
+    def __new__(cls, wires=None, id=None, **kwargs):
+        return super().__new__(cls, paulis=["Z", "Z"], wires=wires, id=id, **kwargs)

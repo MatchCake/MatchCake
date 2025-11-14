@@ -1,12 +1,24 @@
-import numpy as np
-from pennylane import numpy as pnp
 from pennylane.wires import Wires
 
-from .. import matchgate_parameter_sets as mps
+from ..utils.constants import CLIFFORD_H
 from .matchgate_operation import MatchgateOperation
+from .single_particle_transition_matrices.single_particle_transition_matrix import (
+    SingleParticleTransitionMatrixOperation,
+)
+from .single_particle_transition_matrices.sptm_comp_hh import SptmCompHH
 
 
 class CompHH(MatchgateOperation):
+    r"""
+    Represents a matchgate composition of two hadamard gates
+
+    .. math::
+        U = M(H, H)
+
+    where :math:`M` is a matchgate, :math:`H` is the hadamard gate.
+    It's also called the fermionic hadamard.
+    """
+
     num_wires = 2
     num_params = 0
 
@@ -14,21 +26,11 @@ class CompHH(MatchgateOperation):
     def random(cls, wires: Wires, batch_size=None, **kwargs):
         return cls(wires=wires, **kwargs)
 
-    def __init__(self, wires=None, id=None, **kwargs):
-        inv_sqrt_2 = 1 / np.sqrt(2)
-        m_params = mps.MatchgateStandardParams(
-            a=inv_sqrt_2,
-            b=inv_sqrt_2,
-            c=inv_sqrt_2,
-            d=-inv_sqrt_2,
-            w=inv_sqrt_2,
-            x=inv_sqrt_2,
-            y=inv_sqrt_2,
-            z=-inv_sqrt_2,
-        )
-        in_params = mps.MatchgatePolarParams.parse_from_params(m_params, force_cast_to_real=True)
-        kwargs["in_param_type"] = mps.MatchgatePolarParams
-        super().__init__(in_params, wires=wires, id=id, **kwargs)
+    def __new__(cls, wires=None, id=None, **kwargs):
+        return cls.from_sub_matrices(CLIFFORD_H, CLIFFORD_H, wires=wires, id=id, **kwargs)
 
     def label(self, decimals=None, base_label=None, cache=None):
         return base_label or self.name
+
+    def to_sptm_operation(self) -> SingleParticleTransitionMatrixOperation:
+        return SptmCompHH(wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs)

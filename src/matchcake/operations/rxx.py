@@ -1,9 +1,10 @@
-from typing import Union
+from typing import Optional
 
 import pennylane as qml
-from pennylane import numpy as pnp
+import torch
+from pennylane.typing import TensorLike
 
-from .. import matchgate_parameter_sets as mps
+from .. import matchgate_parameter_sets as mgp
 from .matchgate_operation import MatchgateOperation
 
 
@@ -27,22 +28,29 @@ class Rxx(MatchgateOperation):
     num_wires = 2
     num_params = 1
 
-    def __init__(self, params: Union[pnp.ndarray, list, tuple], wires=None, id=None, **kwargs):
-        shape = qml.math.shape(params)[-1:]
-        n_params = shape[0] if shape else 1
-        if n_params != self.num_params:
-            raise ValueError(f"{self.__class__.__name__} requires {self.num_params} parameters; got {n_params}.")
-        self._given_params = params
-        theta = params
-        m_params = mps.MatchgateStandardParams(
-            a=qml.math.cos(theta / 2),
-            b=-1j * qml.math.sin(theta / 2),
-            w=qml.math.cos(theta / 2),
-            x=-1j * qml.math.sin(theta / 2),
-            y=-1j * qml.math.sin(theta / 2),
-            z=qml.math.cos(theta / 2),
-            c=-1j * qml.math.sin(theta / 2),
-            d=qml.math.cos(theta / 2),
+    def __init__(
+        self,
+        theta: TensorLike,
+        wires=None,
+        id=None,
+        default_dtype: torch.dtype = torch.complex128,
+        default_device: Optional[torch.device] = None,
+        **kwargs,
+    ):
+        super().__init__(
+            mgp.MatchgateStandardParams(
+                a=qml.math.cos(theta / 2),
+                b=-1j * qml.math.sin(theta / 2),
+                w=qml.math.cos(theta / 2),
+                x=-1j * qml.math.sin(theta / 2),
+                y=-1j * qml.math.sin(theta / 2),
+                z=qml.math.cos(theta / 2),
+                c=-1j * qml.math.sin(theta / 2),
+                d=qml.math.cos(theta / 2),
+            ),
+            wires=wires,
+            id=id,
+            default_dtype=default_dtype,
+            default_device=default_device,
+            **kwargs,
         )
-        kwargs["in_param_type"] = mps.MatchgateStandardParams
-        super().__init__(m_params, wires=wires, id=id, **kwargs)

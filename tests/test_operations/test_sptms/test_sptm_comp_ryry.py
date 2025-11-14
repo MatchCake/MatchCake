@@ -5,6 +5,7 @@ from matchcake.operations import CompRyRy
 from matchcake.operations.single_particle_transition_matrices import (
     SptmCompRyRy,
 )
+from matchcake.utils import make_single_particle_transition_matrix_from_gate
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -23,21 +24,23 @@ class TestSptmRyRy:
         [
             (np.full(batch_size, theta), np.full(batch_size, phi))
             for batch_size in [1, 3]
-            for theta in SptmCompRyRy.ALLOWED_ANGLES
-            for phi in SptmCompRyRy.ALLOWED_ANGLES
+            # for theta in SptmCompRyRy.ALLOWED_ANGLES
+            # for phi in SptmCompRyRy.ALLOWED_ANGLES
+            for theta in np.linspace(0, 2 * np.pi, num=10)
+            for phi in np.linspace(0, 2 * np.pi, num=10)
         ]
         + [
             (np.full(batch_size, theta), np.full(batch_size, theta))
             for batch_size in [1, 3]
-            for theta in SptmCompRyRy.EQUAL_ALLOWED_ANGLES
+            # for theta in SptmCompRyRy.EQUAL_ALLOWED_ANGLES
+            for theta in np.linspace(0, 2 * np.pi, num=10)
         ],
     )
     def test_matchgate_equal_to_sptm(self, theta, phi):
         params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
-        params = SptmCompRyRy.clip_angles(params)
         matchgate = CompRyRy(params, wires=[0, 1])
-        m_sptm = matchgate.single_particle_transition_matrix
-        sptm = SptmCompRyRy(params, wires=[0, 1]).matrix()
+        m_sptm = make_single_particle_transition_matrix_from_gate(matchgate.matrix())
+        sptm = SptmCompRyRy(params, wires=[0, 1], clip_angles=False).matrix()
         np.testing.assert_allclose(
             sptm,
             m_sptm,
@@ -50,8 +53,10 @@ class TestSptmRyRy:
         [
             (np.full(batch_size, theta), np.full(batch_size, phi))
             for batch_size in [1, 3]
-            for theta in SptmCompRyRy.ALLOWED_ANGLES
-            for phi in SptmCompRyRy.ALLOWED_ANGLES
+            # for theta in SptmCompRyRy.ALLOWED_ANGLES
+            # for phi in SptmCompRyRy.ALLOWED_ANGLES
+            for theta in np.linspace(0, 2 * np.pi, num=10)
+            for phi in np.linspace(0, 2 * np.pi, num=10)
         ],
     )
     def test_sptm_is_so4(self, theta, phi):
@@ -119,15 +124,17 @@ class TestSptmRyRy:
         [
             (np.full(batch_size, theta), np.full(batch_size, phi))
             for batch_size in [1, 3]
-            for theta in SptmCompRyRy.ALLOWED_ANGLES
-            for phi in SptmCompRyRy.ALLOWED_ANGLES
+            # for theta in SptmCompRyRy.ALLOWED_ANGLES
+            # for phi in SptmCompRyRy.ALLOWED_ANGLES
+            for theta in np.linspace(0, 2 * np.pi, num=10)
+            for phi in np.linspace(0, 2 * np.pi, num=10)
         ],
     )
     def test_matchgate_equal_to_sptm_adjoint(self, theta, phi):
         params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
         params = SptmCompRyRy.clip_angles(params)
         matchgate = CompRyRy(params, wires=[0, 1]).adjoint()
-        m_sptm = matchgate.single_particle_transition_matrix
+        m_sptm = make_single_particle_transition_matrix_from_gate(matchgate.matrix())
         sptm = SptmCompRyRy(params, wires=[0, 1]).adjoint().matrix()
         np.testing.assert_allclose(
             sptm,

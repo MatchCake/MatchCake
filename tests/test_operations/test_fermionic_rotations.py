@@ -12,7 +12,7 @@ from ..configs import (
     TEST_SEED,
     set_seed,
 )
-from ..test_nif_device import devices_init
+from ..test_devices import devices_init
 from . import specific_ops_circuit
 
 
@@ -22,16 +22,17 @@ class TestCompRotation:
         set_seed(TEST_SEED)
 
     @pytest.mark.parametrize(
-        "initial_binary_string, rot, is_adjoint",
+        "initial_binary_string, rot, is_adjoint, seed",
         [
-            (i_b_string, rot, adjoint)
+            (i_b_string, rot, adjoint, seed)
             for rot in [CompRxRx, CompRyRy, CompRzRz]
             for i_b_string in ["00", "01", "10", "11"]
             for adjoint in [True, False]
+            for seed in [0, 1, 2]
         ],
     )
-    def test_frot_in_circuit_with_pennylane(self, initial_binary_string, rot, is_adjoint):
-        rn_params = np.random.uniform(0.0, np.pi / 2, size=2)
+    def test_frot_in_circuit_with_pennylane(self, initial_binary_string, rot, is_adjoint, seed):
+        rn_params = rot.random_params(seed=seed)
         cls_params_wires_list = [(rot, rn_params, [0, 1])]
 
         initial_binary_state = utils.binary_string_to_vector(initial_binary_string)

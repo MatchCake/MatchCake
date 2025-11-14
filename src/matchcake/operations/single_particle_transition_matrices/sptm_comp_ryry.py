@@ -1,8 +1,10 @@
 import numpy as np
 import pennylane as qml
+import torch
 from pennylane.wires import Wires
 
 from ...utils.math import convert_and_cast_like
+from ...utils.torch_utils import to_tensor
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
@@ -16,11 +18,12 @@ class SptmCompRyRy(SingleParticleTransitionMatrixOperation):
     where M is the matchgate. The current class represent
 
     .. math::
-        R_{\mu\nu} = \frac{1}{4} \text{Tr}{\left(M c_\mu M^\dagger\right)c_\nu}
+        R_{\mu\nu} = \frac{1}{4} \text{Tr}{\left(U c_\mu U^\dagger\right)c_\nu}
 
     where R is the Sptm and c are the majoranas.
     """
 
+    DEFAULT_CLIP_ANGLES = False
     ALLOWED_ANGLES = [np.pi, 3 * np.pi]
     EQUAL_ALLOWED_ANGLES = [0, np.pi, 2 * np.pi, 3 * np.pi]
 
@@ -45,9 +48,9 @@ class SptmCompRyRy(SingleParticleTransitionMatrixOperation):
 
         if params_shape[-1] != 2:
             raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
-        if self.hyperparameters.get("check_angles", self.DEFAULT_CHECK_ANGLES):
+        if kwargs.get("check_angles", self.DEFAULT_CHECK_ANGLES):
             self.check_angles(params)
-        if self.hyperparameters.get("clip_angles", self.DEFAULT_CLIP_ANGLES):
+        if kwargs.get("clip_angles", self.DEFAULT_CLIP_ANGLES):
             params = self.clip_angles(params)
         matrix = convert_and_cast_like(matrix, params)
         theta, phi = params[..., 0], params[..., 1]
@@ -58,11 +61,11 @@ class SptmCompRyRy(SingleParticleTransitionMatrixOperation):
         matrix[..., 0, 2] = -qml.math.sin(theta_plus_phi)
 
         matrix[..., 1, 1] = qml.math.cos(theta_minus_phi)
-        matrix[..., 1, 2] = -qml.math.sin(theta_minus_phi)
+        matrix[..., 3, 1] = -qml.math.sin(theta_minus_phi)
 
         matrix[..., 2, 0] = qml.math.sin(theta_plus_phi)
         matrix[..., 2, 2] = qml.math.cos(theta_plus_phi)
 
-        matrix[..., 3, 0] = qml.math.sin(theta_minus_phi)
+        matrix[..., 1, 3] = qml.math.sin(theta_minus_phi)
         matrix[..., 3, 3] = qml.math.cos(theta_minus_phi)
         super().__init__(matrix, wires=wires, id=id, **kwargs)

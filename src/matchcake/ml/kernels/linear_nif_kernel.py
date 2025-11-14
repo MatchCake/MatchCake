@@ -84,7 +84,7 @@ class LinearNIFKernel(NIFKernel):
         :return: A generator yielding a single-particle transition matrix operation.
         :rtype: Generator[SingleParticleTransitionMatrixOperation, None, None]
         """
-        x = to_tensor(x, dtype=self.R_DTYPE).to(device=self.device)
+        x = to_tensor(x, dtype=self.R_DTYPE).to(device=self.device)  # type: ignore
         h = torch.zeros((x.shape[0], 2 * self.n_qubits, 2 * self.n_qubits), dtype=self.R_DTYPE, device=self.device)
         h[:, self.encoder_out_indices[0], self.encoder_out_indices[1]] = self.encoder(x)
         h[:, self.encoder_out_tril_indices[0], self.encoder_out_tril_indices[1]] = (

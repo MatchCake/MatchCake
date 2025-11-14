@@ -1,13 +1,19 @@
-import numpy as np
+from dataclasses import dataclass
+from typing import List, Optional
+
 import pennylane as qml
+import torch
 
-from .. import utils
+from ..typing import TensorLike
+from ..utils.torch_utils import to_tensor
 from .matchgate_params import MatchgateParams
+from .matchgate_standard_params import MatchgateStandardParams
 
 
+@dataclass
 class MatchgatePolarParams(MatchgateParams):
     r"""
-    Matchgate polar parameters.
+    Matchgate from polar parameters.
 
     They are the parameters of a Matchgate operation in the standard form which is a 4x4 matrix
 
@@ -22,110 +28,82 @@ class MatchgatePolarParams(MatchgateParams):
 
         where :math:`r_0, r_1, \theta_0, \theta_1, \theta_2, \theta_3, \theta_4` are the parameters.
 
+    The polar parameters will be converted to standard parameterization. The conversion is given by
+
+    .. math::
+        \begin{align}
+            a &= r_0 e^{i\theta_0} \\
+            b &= (\sqrt{1 - r_0^2}) e^{i(\theta_2+\theta_4-(\theta_1+\pi))} \\
+            c &= (\sqrt{1 - r_0^2}) e^{i\theta_1} \\
+            d &= r_0 e^{i(\theta_2+\theta_4-\theta_0)} \\
+            w &= r_1 e^{i\theta_2} \\
+            x &= (\sqrt{1 - r_1^2}) e^{i(\theta_2+\theta_4-(\theta_3+\pi))} \\
+            y &= (\sqrt{1 - r_1^2}) e^{i\theta_3} \\
+            z &= r_1 e^{i\theta_4}
+        \end{align}
     """
 
-    N_PARAMS = 7
-    RANGE_OF_PARAMS = [(0.0, 1.0) for _ in range(2)] + [(0, 2 * np.pi) for _ in range(N_PARAMS - 2)]
-    ALLOW_COMPLEX_PARAMS = False
-    ATTRS = ["r0", "r1", "theta0", "theta1", "theta2", "theta3", "theta4"]
+    r0: Optional[TensorLike] = None
+    r1: Optional[TensorLike] = None
+    theta0: Optional[TensorLike] = None
+    theta1: Optional[TensorLike] = None
+    theta2: Optional[TensorLike] = None
+    theta3: Optional[TensorLike] = None
+    theta4: Optional[TensorLike] = None
 
-    def __init__(self, *args, **kwargs):
-        if "theta2" in kwargs:
-            kwargs.setdefault("theta4", -utils.math.astensor(kwargs["theta2"]))
-        args, kwargs = self._maybe_cast_inputs_to_real(args, kwargs)
-        super().__init__(*args, **kwargs)
+    def __post_init__(self):
+        if self.theta4 is None and self.theta2 is not None:
+            self.theta4 = -self.theta2
 
-    @property
-    def r0(self) -> float:
-        return self._r0
+    def get_params_list(self) -> List[Optional[TensorLike]]:
+        return [self.r0, self.r1, self.theta0, self.theta1, self.theta2, self.theta3, self.theta4]
 
-    @property
-    def r1(self) -> float:
-        return self._r1
+    def get_modules_params_list(self) -> List[Optional[TensorLike]]:
+        return [self.r0, self.r1]
 
-    @property
-    def theta0(self) -> float:
-        return self._theta0
+    def get_angles_params_list(self) -> List[Optional[TensorLike]]:
+        return [self.theta0, self.theta1, self.theta2, self.theta3, self.theta4]
 
-    @property
-    def theta1(self) -> float:
-        return self._theta1
+    def matrix(
+        self,
+        dtype: torch.dtype = torch.complex128,
+        device: Optional[torch.device] = None,
+    ) -> torch.Tensor:
+        division_epsilon = 1e-12
 
-    @property
-    def theta2(self) -> float:
-        return self._theta2
+        shapes = [qml.math.shape(p) for p in self.get_params_list() if p is not None]
+        batch_sizes = list(set([s[0] for s in shapes if len(s) > 0]))
+        assert len(batch_sizes) <= 1, f"Expect the same batch size for every parameters. Got: {batch_sizes}."
+        batch_size = batch_sizes[0] if len(batch_sizes) > 0 else 1
+        r0, r1 = [
+            (
+                to_tensor(p, dtype=dtype, device=device)
+                if p is not None
+                else torch.ones((batch_size,), dtype=dtype, device=device)
+            )
+            for p in self.get_modules_params_list()
+        ]
+        theta0, theta1, theta2, theta3, theta4 = [
+            (
+                to_tensor(p, dtype=dtype, device=device)
+                if p is not None
+                else torch.zeros((batch_size,), dtype=dtype, device=device)
+            )
+            for p in self.get_angles_params_list()
+        ]
 
-    @property
-    def theta3(self) -> float:
-        return self._theta3
-
-    @property
-    def theta4(self) -> float:
-        return self._theta4
-
-    @property
-    def theta4_is_relevant(self) -> bool:
-        return not np.isclose(self.theta4, -self.theta2)
-
-    @classmethod
-    def to_sympy(cls):
-        import sympy as sp
-
-        r0, r1 = sp.symbols("r_0 r_1")
-        theta0, theta1, theta2, theta3, theta4 = sp.symbols("\\theta_0 \\theta_1 \\theta_2 \\theta_3 \\theta_4")
-        return sp.Matrix([r0, r1, theta0, theta1, theta2, theta3, theta4])
-
-    @classmethod
-    def compute_r_tilde(cls, r, backend="pennylane.math") -> complex:
-        _pkg = MatchgateParams.load_backend_lib(backend)
-        return _pkg.sqrt(1 - qml.math.cast(r, dtype=complex) ** 2 + cls.DIVISION_EPSILON)
-
-    @property
-    def r0_tilde(self) -> complex:
-        """
-        Return :math:`\\Tilde{r}_0 = \\sqrt{1 - r_0^2}`
-
-        :return: :math:`\\Tilde{r}_0`
-        """
-        return self.compute_r_tilde(self.r0)
-
-    @property
-    def r1_tilde(self) -> complex:
-        """
-        Return :math:`\\Tilde{r}_1 = \\sqrt{1 - r_1^2}`
-
-        :return: :math:`\\Tilde{r}_1`
-        """
-        return self.compute_r_tilde(self.r1)
-
-    def adjoint(self):
-        return MatchgatePolarParams(
-            r0=self.r0,
-            r1=self.r1,
-            theta0=-self.theta0,
-            theta1=-self.theta1,
-            theta2=-self.theta2,
-            theta3=-self.theta3,
-            theta4=-self.theta4,
-        )
-
-    def __matmul__(self, other):
-        if not isinstance(other, MatchgatePolarParams):
-            other = MatchgatePolarParams.parse_from_params(other)
-        raise NotImplementedError("MatchgatePolarParams.__matmul__ is not implemented yet.")
-        r0 = self.r0 * other.r0
-        r1 = self.r1 * other.r1
-        theta0 = self.theta0 + other.theta0
-        theta1 = self.theta1 + other.theta1
-        theta2 = self.theta2 + other.theta2
-        theta3 = self.theta3 + other.theta3
-        theta4 = self.theta4 + other.theta4
-        return MatchgatePolarParams(
-            r0=r0,
-            r1=r1,
-            theta0=theta0,
-            theta1=theta1,
-            theta2=theta2,
-            theta3=theta3,
-            theta4=theta4,
-        )
+        r0_tilde = torch.sqrt(1 - r0**2 + division_epsilon)
+        r1_tilde = torch.sqrt(1 - r1**2 + division_epsilon)
+        matrix = MatchgateStandardParams(
+            a=r0 * torch.exp(1j * theta0),
+            b=r0_tilde * torch.exp(1j * (theta2 + theta4 - (theta1 + torch.pi))),
+            c=r0_tilde * torch.exp(1j * theta1),
+            d=r0 * torch.exp(1j * (theta2 + theta4 - theta0)),
+            w=r1 * torch.exp(1j * theta2),
+            x=r1_tilde * torch.exp(1j * (theta2 + theta4 - (theta3 + torch.pi))),
+            y=r1_tilde * torch.exp(1j * theta3),
+            z=r1 * torch.exp(1j * theta4),
+        ).matrix(dtype=dtype, device=device)
+        if self.batch_size is None and matrix.ndim > 2:
+            matrix = matrix[0]
+        return matrix

@@ -6,6 +6,5 @@ from .sptm_comp_ryry import SptmCompRyRy
 from .sptm_comp_rzrz import SptmCompRzRz
 from .sptm_fermionic_superposition import SptmFermionicSuperposition
 from .sptm_fswap import SptmCompZX
-from .sptm_fswap_comp_rzrz import SptmFSwapCompRzRz
 from .sptm_fswap_hh import SptmFSwapHH
 from .sptm_identity import SptmIdentity
