@@ -1,0 +1,537 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>matchcake.base package &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="matchcake.circuits package" href="matchcake.circuits.html" />
+    <link rel="prev" title="matchcake package" href="matchcake.html" /> 
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="index.html">Docs</a></li>
+        
+          <li><a href="matchcake.html">matchcake package</a></li>
+        
+      <li>matchcake.base package</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="sources/matchcake.base.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#cuda-installation">CUDA installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#quick-usage-preview">Quick Usage Preview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#citation">Citation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="matchcake.html">matchcake package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="matchcake.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section id="matchcake-base-package">
+<h1>matchcake.base package<a class="headerlink" href="#matchcake-base-package" title="Permalink to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-matchcake.base.lookup_table">
+<span id="matchcake-base-lookup-table-module"></span><h2>matchcake.base.lookup_table module<a class="headerlink" href="#module-matchcake.base.lookup_table" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.base.lookup_table.</span></span><span class="sig-name descname"><span class="pre">NonInteractingFermionicLookupTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transition_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Represents a lookup table for computations related to non-interacting fermionic systems.</p>
+<p>This class is designed to handle the Lookup table describe in <span id="id1">[]</span> . More specifically, it is design to
+find the tensor that represents the contraction of the summation</p>
+<div class="math notranslate nohighlight">
+\[p(y^{*}|x) &amp;= \prod_{\gamma = 1}^{k}\sum_{m_{\gamma},n_{\gamma} = 1}^{2N} T_{j_\gamma,m_\gamma}T_{j_\gamma,n_\gamma}^*
+ \left\langle \boldsymbol{0} \left|c_{2p_{\ell}}..c_{2p_1}\left(\prod_{\gamma = 1}^{k} c_{m_{\gamma}}c_{n_{\gamma}}\right)c_{2p_1}..c_{2p_{\ell}} \right|\boldsymbol{0}\right\rangle.\]</div>
+<p>where <span class="math notranslate nohighlight">\(c\)</span> are the majoranas fermions, <span class="math notranslate nohighlight">\(y^*\)</span> is the target output state, <span class="math notranslate nohighlight">\(x\)</span> is the system state
+and <span class="math notranslate nohighlight">\(T\)</span> is the given transition matrix of the circuit or of the system evolution.</p>
+<p># TODO: Make it a torch function to output the analytical grad instead of creating a huge computational graph
+# TODO:     during the current computation.
+# TODO: Tips for optimization: Maybe there is a way to use the sparsity of the block diagonal matrix to reduce
+# TODO:     the number of operations in the lookup table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ALL_2D_INDEXES</strong> – Stores all possible 2D indexes for a system with three rows.</p></li>
+<li><p><strong>ALL_1D_INDEXES</strong> – Contains converted 1D indexes corresponding to the 2D indexes.</p></li>
+<li><p><strong>p_bar</strong> – Progress bar object used for tracking computation, can be None if disabled.</p></li>
+<li><p><strong>show_progress</strong> – Indicates if progress tracking through a progress bar should be enabled.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.ALL_1D_INDEXES">
+<span class="sig-name descname"><span class="pre">ALL_1D_INDEXES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">array([0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3,</span> <span class="pre">4,</span> <span class="pre">5,</span> <span class="pre">6,</span> <span class="pre">7,</span> <span class="pre">8])</span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.ALL_1D_INDEXES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.ALL_2D_INDEXES">
+<span class="sig-name descname"><span class="pre">ALL_2D_INDEXES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">array([[0,</span> <span class="pre">0],</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">[0,</span> <span class="pre">1],</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">[0,</span> <span class="pre">2],</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">[1,</span> <span class="pre">0],</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">[1,</span> <span class="pre">1],</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">[1,</span> <span class="pre">2],</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">[2,</span> <span class="pre">0],</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">[2,</span> <span class="pre">1],</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">[2,</span> <span class="pre">2]])</span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.ALL_2D_INDEXES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">sparray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_binary_states</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes_of_target_states</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TensorLike</span></span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the contracted tensor corresponding to target_binary_state and the system_state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system_state</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>np.ndarray</em><em>, </em><em>sparse.sparray</em><em>]</em>) – State of the system</p></li>
+<li><p><strong>target_binary_states</strong> (<em>Optional</em><em>[</em><em>np.ndarray</em><em>]</em>) – Target state of the system</p></li>
+<li><p><strong>indexes_of_target_states</strong> (<em>Optional</em><em>[</em><em>np.ndarray</em><em>]</em>) – Indexes of the target state of the system</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The tensor of shape (2(h + k), 2(h + k)) where h is the hamming weight of the system state
+representing the action of the transition matrix on the system.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transition_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a class that contract the action of the given transition matrix on a free fermionic
+system into a tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>transition_matrix</strong> – A tensor or array-like structure representing
+the transition matrix for the system.</p></li>
+<li><p><strong>kwargs</strong> – <p>Additional keyword arguments.
+Optional argument:
+- <code class="docutils literal notranslate"><span class="pre">show_progress</span></code> (bool): Indicates whether to show progress during</p>
+<blockquote>
+<div><p>operations. Default is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.batch_size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_size</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.batch_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_bm_transition_dagger_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">block_bm_transition_dagger_matrix</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_bm_transition_dagger_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_bm_transition_transpose_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">block_bm_transition_transpose_matrix</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_bm_transition_transpose_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_diagonal_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">block_diagonal_matrix</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_diagonal_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>The block diasgonal matrix <span class="math notranslate nohighlight">\(B\)</span> is a <span class="math notranslate nohighlight">\(2N \times 2N\)</span> Hermitian matrix block diagonal matrix containing
+<span class="math notranslate nohighlight">\(N\)</span> number of <span class="math notranslate nohighlight">\(2 \times 2\)</span> blocks</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}B = \left(
+    \begin{matrix}
+        1 &amp; i &amp; &amp; &amp; &amp;\\
+        -i &amp; 1 &amp; &amp; &amp; &amp;\\
+         &amp; &amp; &amp; \ddots &amp; &amp; \\
+         &amp; &amp; &amp; &amp; 1 &amp; i
+    \end{matrix}
+\right)
+= \bigoplus_{l = 1}^{N} \left(
+\begin{matrix}
+    1 &amp; i \\
+    -i &amp; 1
+\end{matrix}
+\right).\end{split}\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>the <span class="math notranslate nohighlight">\(B\)</span> matrix.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_2p_beta_m1">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_2p_alpha_m1__c_2p_beta_m1</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TensorLike</span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_2p_beta_m1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_d_beta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_2p_alpha_m1__c_d_beta</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TensorLike</span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_d_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_e_beta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_2p_alpha_m1__c_e_beta</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TensorLike</span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_e_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_2p_beta_m1">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_d_alpha__c_2p_beta_m1</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TensorLike</span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_2p_beta_m1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_d_beta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_d_alpha__c_d_beta</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TensorLike</span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_d_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_e_beta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_d_alpha__c_e_beta</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TensorLike</span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_e_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_2p_beta_m1">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_e_alpha__c_2p_beta_m1</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TensorLike</span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_2p_beta_m1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_d_beta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_e_alpha__c_d_beta</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TensorLike</span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_d_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_e_beta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">c_e_alpha__c_e_beta</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TensorLike</span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_e_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.close_p_bar">
+<span class="sig-name descname"><span class="pre">close_p_bar</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.close_p_bar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.compute_observable_of_target_state">
+<span class="sig-name descname"><span class="pre">compute_observable_of_target_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">sparray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_binary_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes_of_target_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TensorLike</span></span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.compute_observable_of_target_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the observable of a target state from the given system state.</p>
+<p>This method calculates the quantum observable corresponding to a specific target
+state defined by the binary representation or the specified indices. If the
+resulting observable has multiple dimensions beyond the expected output shape,
+it will be reshaped accordingly. This accounts for scenarios where batch
+processing is not specified or when multi-dimensional shapes arise.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system_state</strong> – The current state of the system, which can be an integer,
+a Numpy array, or a sparse array.</p></li>
+<li><p><strong>target_binary_state</strong> – Optional Numpy array representing the binary
+configuration of the target state.</p></li>
+<li><p><strong>indexes_of_target_state</strong> – Optional Numpy array containing the indices
+corresponding to the target state.</p></li>
+<li><p><strong>kwargs</strong> – Arbitrary keyword arguments for additional configurations or
+parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tensor-like object representing the observable(s) of the target
+state. The shape of the output may vary depending on the dimensional nature
+of the input and batch configurations.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.compute_observables_of_target_states">
+<span class="sig-name descname"><span class="pre">compute_observables_of_target_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">sparray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_binary_states</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes_of_target_states</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TensorLike</span></span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.compute_observables_of_target_states" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes observables for target quantum states based on the provided system state and configuration.</p>
+<p>This function processes the system state and a set of target binary states or their respective
+indexes to calculate observables. It constructs the necessary indices, computes intermediary terms
+required for observables, and combines them into the final observable tensor. The resulting
+observables capture quantum correlations and measurements over the target states.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system_state</strong> – The state of the system, which can be an integer, a numpy array, or a sparse array.</p></li>
+<li><p><strong>target_binary_states</strong> – Optional numpy array of the target binary states. Represents the
+configurations of the target quantum states.</p></li>
+<li><p><strong>indexes_of_target_states</strong> – Optional numpy array of indices corresponding to target states. If
+provided, these indices specify which states to compute observables for.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments to configure or modify the behavior of the computations.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The computed tensor-like object representing the observables for the target states.
+The tensor reflects quantum measurements and correlations for the given configurations.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_2p_beta_m1">
+<span class="sig-name descname"><span class="pre">get_c_2p_alpha_m1__c_2p_beta_m1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_2p_beta_m1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_d_beta">
+<span class="sig-name descname"><span class="pre">get_c_2p_alpha_m1__c_d_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_d_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_e_beta">
+<span class="sig-name descname"><span class="pre">get_c_2p_alpha_m1__c_e_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_e_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_2p_beta_m1">
+<span class="sig-name descname"><span class="pre">get_c_d_alpha__c_2p_beta_m1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_2p_beta_m1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_d_beta">
+<span class="sig-name descname"><span class="pre">get_c_d_alpha__c_d_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_d_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_e_beta">
+<span class="sig-name descname"><span class="pre">get_c_d_alpha__c_e_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_e_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_2p_beta_m1">
+<span class="sig-name descname"><span class="pre">get_c_e_alpha__c_2p_beta_m1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_2p_beta_m1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_d_beta">
+<span class="sig-name descname"><span class="pre">get_c_e_alpha__c_d_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_d_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_e_beta">
+<span class="sig-name descname"><span class="pre">get_c_e_alpha__c_e_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_e_beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.getter_table">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">getter_table</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">callable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.getter_table" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.initialize_p_bar">
+<span class="sig-name descname"><span class="pre">initialize_p_bar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.initialize_p_bar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.n_particles">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_particles</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.n_particles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_n">
+<span class="sig-name descname"><span class="pre">p_bar_set_n</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_n" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_postfix">
+<span class="sig-name descname"><span class="pre">p_bar_set_postfix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_postfix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_postfix_str">
+<span class="sig-name descname"><span class="pre">p_bar_set_postfix_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_postfix_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.stacked_items">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">stacked_items</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.stacked_items" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.transition_bm_block_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transition_bm_block_matrix</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.transition_bm_block_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.transition_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transition_matrix</span></span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.transition_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.base.lookup_table.NonInteractingFermionicLookupTable.update_p_bar">
+<span class="sig-name descname"><span class="pre">update_p_bar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.update_p_bar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the progress bar with the given arguments and refreshes its state. This method
+safeguards the operation if the progress bar is not initialized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> – Positional arguments to pass to the progress bar’s update method.</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments to pass to the progress bar’s update method.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.base">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-matchcake.base" title="Permalink to this heading">¶</a></h2>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="static/documentation_options.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>

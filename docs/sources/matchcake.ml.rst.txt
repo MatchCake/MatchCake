@@ -1,0 +1,29 @@
+matchcake.ml package
+====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   matchcake.ml.kernels
+
+Submodules
+----------
+
+matchcake.ml.visualisation module
+---------------------------------
+
+.. automodule:: matchcake.ml.visualisation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: matchcake.ml
+   :members:
+   :undoc-members:
+   :show-inheritance:
