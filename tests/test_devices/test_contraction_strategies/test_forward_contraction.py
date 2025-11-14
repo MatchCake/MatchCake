@@ -17,7 +17,7 @@ from ...configs import (
     set_seed,
 )
 from .. import devices_init, init_nif_device
-from ..test_single_line_matchgates_circuit import single_line_matchgates_circuit
+from .. import single_line_matchgates_circuit
 
 
 class TestNonInteractingFermionicDeviceForwardContractionStrategy:

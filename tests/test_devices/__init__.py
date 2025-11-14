@@ -67,6 +67,23 @@ def init_nif_device(*args, **kwargs) -> NonInteractingFermionicDevice:
     return nif_device
 
 
+def single_line_matchgates_circuit(params_list, initial_state=None, **kwargs):
+    all_wires = [0, 1]
+    all_wires = np.sort(np.asarray(all_wires))
+    if initial_state is None:
+        initial_state = np.zeros(2 ** len(all_wires))
+    qml.BasisState(initial_state, wires=all_wires)
+    for params in params_list:
+        MatchgateOperation(params, wires=all_wires)
+    out_op = kwargs.get("out_op", "state")
+    if out_op == "state":
+        return qml.state()
+    elif out_op == "probs":
+        return qml.probs(wires=kwargs.get("out_wires", None))
+    else:
+        raise ValueError(f"Unknown out_op: {out_op}.")
+
+
 def init_qubit_device(*args, **kwargs) -> qml.devices.Device:
     wires = kwargs.pop("wires", 2)
     qubit_device = qml.device(
