@@ -11,7 +11,6 @@ from ..operations import (
     SptmCompRzRz,
     SptmCompZX,
     SptmFermionicSuperposition,
-    SptmFSwapCompRzRz,
     SptmIdentity,
 )
 from .random_generator import RandomOperationsGenerator
@@ -30,7 +29,6 @@ def random_sptm_operations_generator(
         SptmCompHH,
         SptmCompRyRy,
         SptmFermionicSuperposition,
-        SptmFSwapCompRzRz,
     ),
     *,
     use_cuda: bool = False,
@@ -66,7 +64,6 @@ class RandomSptmOperationsGenerator(RandomOperationsGenerator):
             SptmCompHH,
             SptmCompRyRy,
             SptmFermionicSuperposition,
-            SptmFSwapCompRzRz,
         ),
         *,
         use_cuda: bool = False,

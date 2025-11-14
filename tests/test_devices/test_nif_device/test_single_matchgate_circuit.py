@@ -3,9 +3,8 @@ import pennylane as qml
 import pytest
 
 from matchcake import MatchgateOperation, NonInteractingFermionicDevice
-from matchcake import utils
 from matchcake import matchgate_parameter_sets as mgp
-from .. import single_matchgate_circuit, devices_init
+from matchcake import utils
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -16,6 +15,7 @@ from ...configs import (
     TEST_SEED,
     set_seed,
 )
+from .. import devices_init, single_matchgate_circuit
 
 set_seed(TEST_SEED)
 
@@ -41,15 +41,13 @@ def test_single_gate_circuit_analytic_probability(params, target_expectation_val
     )
 
 
-
 @pytest.mark.parametrize(
     "params,initial_binary_state",
     [
         (mgp.MatchgatePolarParams(r0=1, r1=1), [0, 0]),
         (mgp.MatchgatePolarParams(r0=0, r1=1, theta1=0), [0, 0]),
     ]
-    +
-    [
+    + [
         (mgp.MatchgatePolarParams(r0=1, theta2=np.pi / 2, theta4=np.pi / 2), [0, 0]),
         (mgp.fSWAP, [0, 0]),
         (mgp.fSWAP, [0, 1]),
@@ -57,15 +55,15 @@ def test_single_gate_circuit_analytic_probability(params, target_expectation_val
     ]
     + [
         (
-                mgp.MatchgatePolarParams(
-                    r0=np.random.uniform(0.09, 0.13),
-                    r1=np.random.uniform(0.0, 1.0),
-                    theta0=np.random.uniform(-np.pi, np.pi) * 2,
-                    theta1=np.random.uniform(-np.pi, np.pi) * 2,
-                    theta2=np.random.uniform(-np.pi, np.pi) * 2,
-                    theta3=np.random.uniform(-np.pi, np.pi) * 2,
-                ),
-                i_state,
+            mgp.MatchgatePolarParams(
+                r0=np.random.uniform(0.09, 0.13),
+                r1=np.random.uniform(0.0, 1.0),
+                theta0=np.random.uniform(-np.pi, np.pi) * 2,
+                theta1=np.random.uniform(-np.pi, np.pi) * 2,
+                theta2=np.random.uniform(-np.pi, np.pi) * 2,
+                theta3=np.random.uniform(-np.pi, np.pi) * 2,
+            ),
+            i_state,
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for i_state in [[0, 0], [0, 1], [1, 0], [1, 1]]
@@ -105,8 +103,8 @@ def test_single_matchgate_probs_with_qubit_device(params, initial_binary_state):
     "params,expected",
     [
         (
-                mgp.MatchgatePolarParams(r0=1, r1=1),
-                np.array(
+            mgp.MatchgatePolarParams(r0=1, r1=1),
+            np.array(
                 [
                     [0.25 * np.trace(utils.get_majorana(i, 2) @ utils.get_majorana(j, 2)) for j in range(4)]
                     for i in range(4)
@@ -114,8 +112,8 @@ def test_single_matchgate_probs_with_qubit_device(params, initial_binary_state):
             ),
         ),
         (
-                mgp.MatchgatePolarParams(r0=1, r1=1),
-                np.array(
+            mgp.MatchgatePolarParams(r0=1, r1=1),
+            np.array(
                 [
                     [1, 0, 0, 0],
                     [0, 1, 0, 0],
@@ -125,8 +123,8 @@ def test_single_matchgate_probs_with_qubit_device(params, initial_binary_state):
             ),
         ),
         (
-                mgp.fSWAP,
-                np.array(
+            mgp.fSWAP,
+            np.array(
                 [
                     [0, 0, 1, 0],
                     [0, 0, 0, 1],

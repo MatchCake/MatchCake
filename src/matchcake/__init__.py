@@ -14,15 +14,16 @@ __version__ = importlib_metadata.version(__package__)
 
 import warnings
 
-from . import ml, utils, matchgate_parameter_sets
+from . import matchgate_parameter_sets  # Alias
+from . import matchgate_parameter_sets as mgp
+from . import ml, utils
 from .devices import NIFDevice, NonInteractingFermionicDevice
 from .matchgate_parameter_sets import matchgate_params
+from .matchgate_parameter_sets.matchgate_polar_params import MatchgatePolarParams
+from .matchgate_parameter_sets.matchgate_standard_params import MatchgateStandardParams
 from .observables import BatchHamiltonian
 from .operations import MatchgateOperation
 from .utils import math
-from .matchgate_parameter_sets.matchgate_polar_params import MatchgatePolarParams
-from .matchgate_parameter_sets.matchgate_standard_params import MatchgateStandardParams
-from . import matchgate_parameter_sets as mgp  # Alias
 
 warnings.filterwarnings("ignore", category=Warning, module="docutils")
 warnings.filterwarnings("ignore", category=Warning, module="sphinx")

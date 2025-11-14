@@ -4,8 +4,8 @@ import pennylane as qml
 import torch
 from pennylane.typing import TensorLike
 
-from .matchgate_operation import MatchgateOperation
 from .. import matchgate_parameter_sets as mgp
+from .matchgate_operation import MatchgateOperation
 
 
 class Rxx(MatchgateOperation):
@@ -24,17 +24,18 @@ class Rxx(MatchgateOperation):
     where :math:`\theta` is a parameter, :math:`X_{j}` is the Pauli-X operator applied on the wire :math:`j`,
     and :math:`i` is the imaginary unit.
     """
+
     num_wires = 2
     num_params = 1
 
     def __init__(
-            self,
-            theta: TensorLike,
-            wires=None,
-            id=None,
-            default_dtype: torch.dtype = torch.complex128,
-            default_device: Optional[torch.device] = None,
-            **kwargs,
+        self,
+        theta: TensorLike,
+        wires=None,
+        id=None,
+        default_dtype: torch.dtype = torch.complex128,
+        default_device: Optional[torch.device] = None,
+        **kwargs,
     ):
         super().__init__(
             mgp.MatchgateStandardParams(
@@ -51,5 +52,5 @@ class Rxx(MatchgateOperation):
             id=id,
             default_dtype=default_dtype,
             default_device=default_device,
-            **kwargs
+            **kwargs,
         )

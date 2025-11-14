@@ -20,14 +20,8 @@ set_seed(TEST_SEED)
 
 @pytest.mark.parametrize(
     "params_list,prob_wires",
-    [
-        ([mgp.MatchgatePolarParams(r0=1, r1=1) for _ in range(num_gates)], 0)
-        for num_gates in 10 * np.arange(1, 5)
-    ]
-    + [
-        ([MatchgateOperation.random_params(seed=i) for i in range(num_gates)], 0)
-        for num_gates in 10 * np.arange(1, 5)
-    ],
+    [([mgp.MatchgatePolarParams(r0=1, r1=1) for _ in range(num_gates)], 0) for num_gates in 10 * np.arange(1, 5)]
+    + [([MatchgateOperation.random_params(seed=i) for i in range(num_gates)], 0) for num_gates in 10 * np.arange(1, 5)],
 )
 def test_multiples_matchgate_probs_with_qbit_device(params_list, prob_wires):
     nif_device, qubit_device = devices_init(wires=2)

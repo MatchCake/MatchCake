@@ -2,8 +2,8 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from matchcake import NonInteractingFermionicDevice
-from matchcake import utils
+from matchcake import NonInteractingFermionicDevice, utils
+
 from ...configs import (
     ATOL_MATRIX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,

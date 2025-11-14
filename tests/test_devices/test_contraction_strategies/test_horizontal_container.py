@@ -17,8 +17,7 @@ from ...configs import (
     TEST_SEED,
     set_seed,
 )
-from .. import init_nif_device, init_qubit_device
-from .. import specific_matchgate_circuit
+from .. import init_nif_device, init_qubit_device, specific_matchgate_circuit
 
 set_seed(TEST_SEED)
 
@@ -136,10 +135,7 @@ def test_horizontal_matchgates_container_contract_single_column(column_operation
 @pytest.mark.parametrize(
     "line_operations",
     [
-        [
-            mc.MatchgateOperation.random(batch_size=1, wires=[0, 1])
-            for _ in range(n_gates)
-        ]
+        [mc.MatchgateOperation.random(batch_size=1, wires=[0, 1]) for _ in range(n_gates)]
         for n_gates in np.arange(1, N_RANDOM_TESTS_PER_CASE + 1)
     ],
 )

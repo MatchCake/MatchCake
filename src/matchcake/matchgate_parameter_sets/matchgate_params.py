@@ -1,8 +1,9 @@
-from functools import cached_property
-from typing import Optional, Union, Tuple
 from dataclasses import dataclass, fields
-import torch
+from functools import cached_property
+from typing import Optional, Tuple, Union
+
 import pennylane as qml
+import torch
 
 
 @dataclass
@@ -21,7 +22,7 @@ class MatchgateParams:
     def compute_shape(self) -> Union[Tuple[int], Tuple[int, int]]:
         n_fields = len(fields(self))
         if self.batch_size is None:
-            return n_fields,
+            return (n_fields,)
         return self.batch_size, n_fields
 
     @cached_property

@@ -116,10 +116,7 @@ def test_vh_matchgates_container_contract_single_op(op):
 @pytest.mark.parametrize(
     "line_operations",
     [
-        [
-            mc.MatchgateOperation.random(batch_size=1, wires=[0, 1])
-            for _ in range(n_gates)
-        ]
+        [mc.MatchgateOperation.random(batch_size=1, wires=[0, 1]) for _ in range(n_gates)]
         for n_gates in np.arange(1, N_RANDOM_TESTS_PER_CASE + 1)
     ],
 )

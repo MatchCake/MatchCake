@@ -14,8 +14,7 @@ from ...configs import (
     TEST_SEED,
     set_seed,
 )
-from .. import devices_init, init_nif_device
-from .. import specific_matchgate_circuit
+from .. import devices_init, init_nif_device, specific_matchgate_circuit
 
 set_seed(TEST_SEED)
 

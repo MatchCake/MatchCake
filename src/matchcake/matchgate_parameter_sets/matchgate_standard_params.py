@@ -1,11 +1,12 @@
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import List, Optional
 
-import torch
 import pennylane as qml
-from .matchgate_params import MatchgateParams
+import torch
+
 from ..typing import TensorLike
 from ..utils.torch_utils import to_tensor
+from .matchgate_params import MatchgateParams
 
 
 @dataclass
@@ -37,6 +38,7 @@ class MatchgateStandardParams(MatchgateParams):
             y & z
         \end{pmatrix}
     """
+
     a: Optional[TensorLike] = None
     b: Optional[TensorLike] = None
     c: Optional[TensorLike] = None
@@ -48,9 +50,9 @@ class MatchgateStandardParams(MatchgateParams):
 
     @classmethod
     def from_sub_matrices(
-            cls,
-            outer_matrix: TensorLike,
-            inner_matrix: TensorLike,
+        cls,
+        outer_matrix: TensorLike,
+        inner_matrix: TensorLike,
     ):
         return cls(
             a=outer_matrix[..., 0, 0],

@@ -4,8 +4,8 @@ import pennylane as qml
 import torch
 from pennylane.typing import TensorLike
 
-from .matchgate_operation import MatchgateOperation
 from .. import matchgate_parameter_sets as mgp
+from .matchgate_operation import MatchgateOperation
 
 
 class Rzz(MatchgateOperation):
@@ -29,13 +29,13 @@ class Rzz(MatchgateOperation):
     num_params = 1
 
     def __init__(
-            self,
-            theta: TensorLike,
-            wires=None,
-            id=None,
-            default_dtype: torch.dtype = torch.complex128,
-            default_device: Optional[torch.device] = None,
-            **kwargs,
+        self,
+        theta: TensorLike,
+        wires=None,
+        id=None,
+        default_dtype: torch.dtype = torch.complex128,
+        default_device: Optional[torch.device] = None,
+        **kwargs,
     ):
         super().__init__(
             mgp.MatchgateStandardParams(
@@ -48,7 +48,7 @@ class Rzz(MatchgateOperation):
             id=id,
             default_dtype=default_dtype,
             default_device=default_device,
-            **kwargs
+            **kwargs,
         )
 
     # TODO: Add constraints to the angle as n*pi/2

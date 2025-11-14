@@ -190,41 +190,41 @@ class TestMatchgateOperation:
         "polar_params,std_params",
         [
             (
-                    dict(r0=1, r1=1, theta0=0, theta1=0, theta2=0, theta3=0),
-                    dict(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
+                dict(r0=1, r1=1, theta0=0, theta1=0, theta2=0, theta3=0),
+                dict(a=1, b=0, c=0, d=1, w=1, x=0, y=0, z=1),
             ),
             (
-                    dict(
-                        r0=1,
-                        r1=0,
-                        theta0=0,
-                        theta1=0,
-                        theta2=np.pi / 2,
-                        theta3=0,
-                        theta4=np.pi / 2,
-                    ),
-                    dict(
-                        a=PAULI_Z[0, 0],
-                        b=PAULI_Z[0, 1],
-                        c=PAULI_Z[1, 0],
-                        d=PAULI_Z[1, 1],
-                        w=PAULI_X[0, 0],
-                        x=PAULI_X[0, 1],
-                        y=PAULI_X[1, 0],
-                        z=PAULI_X[1, 1],
-                    ),  # fSWAP
+                dict(
+                    r0=1,
+                    r1=0,
+                    theta0=0,
+                    theta1=0,
+                    theta2=np.pi / 2,
+                    theta3=0,
+                    theta4=np.pi / 2,
+                ),
+                dict(
+                    a=PAULI_Z[0, 0],
+                    b=PAULI_Z[0, 1],
+                    c=PAULI_Z[1, 0],
+                    d=PAULI_Z[1, 1],
+                    w=PAULI_X[0, 0],
+                    x=PAULI_X[0, 1],
+                    y=PAULI_X[1, 0],
+                    z=PAULI_X[1, 1],
+                ),  # fSWAP
             ),
             (
-                    dict(
-                        r0=1,
-                        r1=1,
-                        theta0=0.5 * np.pi,
-                        theta1=0.5 * np.pi,
-                        theta2=0.5 * np.pi,
-                        theta3=0.5 * np.pi,
-                        theta4=0.5 * np.pi,
-                    ),
-                    dict(a=0.2079, b=0, c=0, d=0.2079, w=0.2079, x=0, y=0, z=0.2079),
+                dict(
+                    r0=1,
+                    r1=1,
+                    theta0=0.5 * np.pi,
+                    theta1=0.5 * np.pi,
+                    theta2=0.5 * np.pi,
+                    theta3=0.5 * np.pi,
+                    theta4=0.5 * np.pi,
+                ),
+                dict(a=0.2079, b=0, c=0, d=0.2079, w=0.2079, x=0, y=0, z=0.2079),
             ),
         ],
     )
@@ -233,7 +233,7 @@ class TestMatchgateOperation:
         for k, v in std_params.items():
             assert (
                 torch.allclose(getattr(mgo, k), torch.tensor(v, dtype=getattr(mgo, k).dtype)),
-                f"Convertion from polar to std doesnt work. For {k=}, Got: {getattr(mgo, k)}, expected: {v}."
+                f"Convertion from polar to std doesnt work. For {k=}, Got: {getattr(mgo, k)}, expected: {v}.",
             )
 
     def test_grads(self, comp_hh01):
@@ -245,20 +245,13 @@ class TestMatchgateOperation:
 
     def test_random_parameters(self):
         rn_params = MatchgateOperation.random_params(batch_size=None, seed=0)
-        assert rn_params.shape == (7, )
+        assert rn_params.shape == (7,)
 
     def test_random_parameters_with_batch_size(self):
         rn_params = MatchgateOperation.random_params(batch_size=3, seed=0)
         assert rn_params.shape == (3, 7)
 
-    @pytest.mark.parametrize(
-        "batch_size, seed",
-        [
-            (b, s)
-            for b in [None, 3]
-            for s in range(3)
-        ]
-    )
+    @pytest.mark.parametrize("batch_size, seed", [(b, s) for b in [None, 3] for s in range(3)])
     def test_random(self, batch_size, seed):
         mgo = MatchgateOperation.random(batch_size=batch_size, seed=seed, wires=[0, 1])
         if batch_size is None:

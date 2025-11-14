@@ -79,11 +79,7 @@ def test_nif_pauli_strings_grads_with_random_circuit_against_torch_gradcheck_han
         Rxx(params, wires=[0, 1])
         return qml.expval(hamiltonian)
 
-    init_params_nif = torch.Tensor(
-        [
-            init_param,
-        ]
-    ).requires_grad_()
+    init_params_nif = torch.tensor([init_param], dtype=torch.float64).requires_grad_()
     assert gradcheck(
         circuit,
         (init_params_nif,),
@@ -118,11 +114,7 @@ def test_nif_pauli_strings_grads_with_random_circuit_against_torch_gradcheck_han
         Rxx(params, wires=[0, 1])
         return qml.expval(hamiltonian)
 
-    init_params_nif = torch.Tensor(
-        [
-            init_param,
-        ]
-    ).requires_grad_()
+    init_params_nif = torch.tensor([init_param], dtype=torch.float64).requires_grad_()
     assert gradcheck(
         circuit,
         (init_params_nif,),

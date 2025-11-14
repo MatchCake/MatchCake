@@ -4,12 +4,13 @@ import pytest
 
 from matchcake import operations, utils
 from matchcake.utils.torch_utils import to_numpy
-from .. import devices_init
+
 from ...configs import (
     ATOL_APPROX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
 )
+from .. import devices_init
 
 
 @pytest.mark.parametrize(
@@ -18,12 +19,12 @@ from ...configs import (
         (theta, contraction_strategy)
         for theta in np.linspace(0, 2 * np.pi, num=N_RANDOM_TESTS_PER_CASE)
         for contraction_strategy in [
-        None,
-        "neighbours",
-        "forward",
-        "horizontal",
-        "vertical",
-    ]
+            None,
+            "neighbours",
+            "forward",
+            "horizontal",
+            "vertical",
+        ]
     ],
 )
 def test_multiples_matchgate_state_with_qubit_device_zyz(theta, contraction_strategy):

@@ -6,12 +6,11 @@ import torch
 from pennylane.operation import Operation
 from pennylane.wires import Wires, WiresLike
 
-from .single_particle_transition_matrices.single_particle_transition_matrix import (
-    SingleParticleTransitionMatrixOperation,
-)
-from ..matchgate_parameter_sets.matchgate_standard_params import MatchgateStandardParams
 from ..matchgate_parameter_sets.matchgate_polar_params import MatchgatePolarParams
-from ..matchgate_parameter_sets.matchgate_standard_params import MatchgateParams
+from ..matchgate_parameter_sets.matchgate_standard_params import (
+    MatchgateParams,
+    MatchgateStandardParams,
+)
 from ..typing import TensorLike
 from ..utils import (
     make_single_particle_transition_matrix_from_gate,
@@ -19,6 +18,9 @@ from ..utils import (
 )
 from ..utils.math import fermionic_operator_matmul
 from ..utils.torch_utils import to_tensor
+from .single_particle_transition_matrices.single_particle_transition_matrix import (
+    SingleParticleTransitionMatrixOperation,
+)
 
 
 class MatchgateOperation(Operation):
@@ -73,20 +75,20 @@ class MatchgateOperation(Operation):
 
     @classmethod
     def from_std_params(
-            cls,
-            a: Optional[TensorLike] = None,
-            b: Optional[TensorLike] = None,
-            c: Optional[TensorLike] = None,
-            d: Optional[TensorLike] = None,
-            w: Optional[TensorLike] = None,
-            x: Optional[TensorLike] = None,
-            y: Optional[TensorLike] = None,
-            z: Optional[TensorLike] = None,
-            *,
-            wires=None,
-            dtype: torch.dtype = torch.complex128,
-            device: Optional[torch.device] = None,
-            **kwargs,
+        cls,
+        a: Optional[TensorLike] = None,
+        b: Optional[TensorLike] = None,
+        c: Optional[TensorLike] = None,
+        d: Optional[TensorLike] = None,
+        w: Optional[TensorLike] = None,
+        x: Optional[TensorLike] = None,
+        y: Optional[TensorLike] = None,
+        z: Optional[TensorLike] = None,
+        *,
+        wires=None,
+        dtype: torch.dtype = torch.complex128,
+        device: Optional[torch.device] = None,
+        **kwargs,
     ) -> "MatchgateOperation":
         std_params = MatchgateStandardParams(a=a, b=b, c=c, d=d, w=w, x=x, y=y, z=z)
         matrix = std_params.matrix(dtype=dtype, device=device)
@@ -94,14 +96,14 @@ class MatchgateOperation(Operation):
 
     @classmethod
     def from_sub_matrices(
-            cls,
-            outer_matrix: TensorLike,
-            inner_matrix: TensorLike,
-            *,
-            wires=None,
-            dtype: torch.dtype = torch.complex128,
-            device: Optional[torch.device] = None,
-            **kwargs,
+        cls,
+        outer_matrix: TensorLike,
+        inner_matrix: TensorLike,
+        *,
+        wires=None,
+        dtype: torch.dtype = torch.complex128,
+        device: Optional[torch.device] = None,
+        **kwargs,
     ):
         std_params = MatchgateStandardParams.from_sub_matrices(outer_matrix, inner_matrix)
         matrix = std_params.matrix(dtype=dtype, device=device)
@@ -109,19 +111,19 @@ class MatchgateOperation(Operation):
 
     @classmethod
     def from_polar_params(
-            cls,
-            r0: Optional[TensorLike] = None,
-            r1: Optional[TensorLike] = None,
-            theta0: Optional[TensorLike] = None,
-            theta1: Optional[TensorLike] = None,
-            theta2: Optional[TensorLike] = None,
-            theta3: Optional[TensorLike] = None,
-            theta4: Optional[TensorLike] = None,
-            *,
-            wires=None,
-            dtype: torch.dtype = torch.complex128,
-            device: Optional[torch.device] = None,
-            **kwargs,
+        cls,
+        r0: Optional[TensorLike] = None,
+        r1: Optional[TensorLike] = None,
+        theta0: Optional[TensorLike] = None,
+        theta1: Optional[TensorLike] = None,
+        theta2: Optional[TensorLike] = None,
+        theta3: Optional[TensorLike] = None,
+        theta4: Optional[TensorLike] = None,
+        *,
+        wires=None,
+        dtype: torch.dtype = torch.complex128,
+        device: Optional[torch.device] = None,
+        **kwargs,
     ) -> "MatchgateOperation":
         r"""
         Matchgate from polar parameters.
@@ -167,13 +169,13 @@ class MatchgateOperation(Operation):
 
     @classmethod
     def random_params(
-            cls,
-            *,
-            batch_size: Optional[int] = None,
-            dtype: torch.dtype = torch.float64,
-            device: Optional[torch.device] = None,
-            seed: Optional[int] = None,
-            **kwargs
+        cls,
+        *,
+        batch_size: Optional[int] = None,
+        dtype: torch.dtype = torch.float64,
+        device: Optional[torch.device] = None,
+        seed: Optional[int] = None,
+        **kwargs,
     ) -> Union[TensorLike, MatchgateParams]:
         """
         Generates a tensor of random parameters. This method allows creating a tensor
@@ -207,9 +209,8 @@ class MatchgateOperation(Operation):
             min=torch.tensor(1e-12, dtype=torch.float64, device=device),
             max=torch.tensor(1.0, dtype=torch.float64, device=device),
         )
-        params[..., 2:] = (
-                (2 * torch.pi)
-                * torch.rand((eff_batch_size, 5), generator=rn_generator, dtype=torch.float64, device=device)
+        params[..., 2:] = (2 * torch.pi) * torch.rand(
+            (eff_batch_size, 5), generator=rn_generator, dtype=torch.float64, device=device
         )
         params = params.to(dtype=dtype, device=device)
         if batch_size is None:
@@ -226,14 +227,14 @@ class MatchgateOperation(Operation):
 
     @classmethod
     def random(
-            cls,
-            wires: Wires,
-            *,
-            batch_size: Optional[int] = None,
-            dtype: torch.dtype = torch.complex128,
-            device: Optional[torch.device] = None,
-            seed: Optional[int] = None,
-            **kwargs
+        cls,
+        wires: Wires,
+        *,
+        batch_size: Optional[int] = None,
+        dtype: torch.dtype = torch.complex128,
+        device: Optional[torch.device] = None,
+        seed: Optional[int] = None,
+        **kwargs,
     ) -> "MatchgateOperation":
         """
         Generate a random `MatchgateOperation` instance.
@@ -271,20 +272,20 @@ class MatchgateOperation(Operation):
 
     @staticmethod
     def compute_decomposition(
-            *params: TensorLike,
-            wires: Optional[WiresLike] = None,
-            **hyperparameters: dict[str, Any],
+        *params: TensorLike,
+        wires: Optional[WiresLike] = None,
+        **hyperparameters: dict[str, Any],
     ):
         return [qml.QubitUnitary(params[0], wires=wires)]
 
     def __init__(
-            self,
-            matrix: Union[TensorLike, MatchgateParams],
-            wires=None,
-            id=None,
-            default_dtype: torch.dtype = torch.complex128,
-            default_device: Optional[torch.device] = None,
-            **kwargs,
+        self,
+        matrix: Union[TensorLike, MatchgateParams],
+        wires=None,
+        id=None,
+        default_dtype: torch.dtype = torch.complex128,
+        default_device: Optional[torch.device] = None,
+        **kwargs,
     ):
         if isinstance(matrix, MatchgateParams):
             matrix = matrix.matrix(dtype=default_dtype, device=default_device)

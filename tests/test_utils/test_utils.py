@@ -103,12 +103,14 @@ class TestUtils:
         ],
     )
     def test_get_non_interacting_fermionic_hamiltonian_from_coeffs(self, coeffs, hamiltonian):
-        coeffs_matrix =  np.array([
-            [0, coeffs["h0"], coeffs["h1"], coeffs["h2"]],
-            [-coeffs["h0"], 0, coeffs["h3"], coeffs["h4"]],
-            [-coeffs["h1"], -coeffs["h3"], 0, coeffs["h4"]],
-            [-coeffs["h2"], -coeffs["h4"], -coeffs["h5"], 0]
-        ])
+        coeffs_matrix = np.array(
+            [
+                [0, coeffs["h0"], coeffs["h1"], coeffs["h2"]],
+                [-coeffs["h0"], 0, coeffs["h3"], coeffs["h4"]],
+                [-coeffs["h1"], -coeffs["h3"], 0, coeffs["h4"]],
+                [-coeffs["h2"], -coeffs["h4"], -coeffs["h5"], 0],
+            ]
+        )
         out_hamiltonian = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs_matrix)
         np.testing.assert_allclose(
             out_hamiltonian.squeeze(),

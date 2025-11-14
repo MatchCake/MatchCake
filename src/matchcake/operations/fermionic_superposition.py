@@ -18,12 +18,13 @@ class FermionicSuperposition(Operation):
     The operation is configured with a set of wires and optional parameters. Additionally,
     it supports features such as decomposition into fundamental gates.
     """
+
     num_wires = AnyWires
     grad_method = None
 
     @classmethod
-    def random(cls, wires: Wires, batch_size=None, **kwargs):
-        return cls(wires=wires, **kwargs)
+    def random(cls, wires: Wires, **kwargs):
+        return cls(wires=wires, id=kwargs.get("id", None))
 
     @staticmethod
     def compute_decomposition(*params, wires=None, **hyperparameters):

@@ -5,7 +5,6 @@ from .matchgate_params import MatchgateParams
 from .matchgate_polar_params import MatchgatePolarParams
 from .matchgate_standard_params import MatchgateStandardParams
 
-
 Identity = MatchgateStandardParams(
     a=1,
     b=0,

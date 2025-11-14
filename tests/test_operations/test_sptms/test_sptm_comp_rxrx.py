@@ -4,7 +4,10 @@ import torch
 
 from matchcake.operations import CompRxRx
 from matchcake.operations.single_particle_transition_matrices import SptmCompRxRx
-from matchcake.utils import torch_utils, make_single_particle_transition_matrix_from_gate
+from matchcake.utils import (
+    make_single_particle_transition_matrix_from_gate,
+    torch_utils,
+)
 from matchcake.utils.math import circuit_matmul
 
 from ...configs import (

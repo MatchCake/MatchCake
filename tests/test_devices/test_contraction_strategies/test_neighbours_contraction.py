@@ -20,8 +20,7 @@ from ...configs import (
     TEST_SEED,
     set_seed,
 )
-from .. import devices_init, init_nif_device
-from .. import single_line_matchgates_circuit
+from .. import devices_init, init_nif_device, single_line_matchgates_circuit
 
 set_seed(TEST_SEED)
 
@@ -100,13 +99,10 @@ def test_neighbours_contraction_device_one_line_sptm(operations):
 
 @pytest.mark.parametrize(
     "params_list,prob_wires",
-    [
-        ([mgp.MatchgatePolarParams(r0=1, r1=1) for _ in range(num_gates)], 0)
-        for num_gates in 2 ** np.arange(1, 5)
-    ]
+    [([mgp.MatchgatePolarParams(r0=1, r1=1) for _ in range(num_gates)], 0) for num_gates in 2 ** np.arange(1, 5)]
     + [
-        ([MatchgateOperation.random_params(seed=i) for i in range(num_gates)], 0)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        ([MatchgateOperation.random_params(seed=i * j + j) for i in range(num_gates)], 0)
+        for j in range(3)
         for num_gates in 2 ** np.arange(1, 5)
     ],
 )

@@ -9,10 +9,10 @@ from .comp_rotations import (
 from .fermionic_controlled_z import FermionicControlledZ, fCZ
 from .fermionic_superposition import FermionicSuperposition
 from .fermionic_swap import CompZX, fSWAP, fswap_chain, fswap_chain_gen
+from .matchgate_identity import MatchgateIdentity
 from .matchgate_operation import MatchgateOperation
 from .rxx import Rxx
 from .rzz import Rzz
-from .matchgate_identity import MatchgateIdentity
 from .single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
     SptmAngleEmbedding,
@@ -22,7 +22,5 @@ from .single_particle_transition_matrices import (
     SptmCompRzRz,
     SptmCompZX,
     SptmFermionicSuperposition,
-    SptmFSwapCompRzRz,
     SptmIdentity,
 )
-

@@ -35,7 +35,7 @@ class TestFermionicPQCKernel:
 
     @pytest.fixture
     def x_train(self):
-        return np.linspace(0.0, 0.05, num=80).reshape(10, 8)
+        return np.linspace(0.0, 1.0, num=80).reshape(10, 8)
 
     @pytest.fixture
     def state_vector_kernel(self, n_qubits, rotations, entangling_mth):
@@ -108,11 +108,9 @@ class TestFermionicPQCKernel:
         torch.testing.assert_close(kernel_matrix, kernel_matrix.T)
 
     def test_kernel_against_state_vector_kernel(self, kernel_instance, state_vector_kernel, x_train):
-        pytest.skip(
-            "Skipping test temporarily. Not sure if this test is supposed to fail due the "
-            "contraints on the parameters of the fermionic rotation gates."
-        )
         kernel_instance.fit(x_train)
+        kernel_instance.bias_.data = torch.zeros_like(kernel_instance.bias_.data)
+        kernel_instance.data_scaling_.data = torch.ones_like(kernel_instance.data_scaling_.data)
         state_vector_kernel.fit(x_train)
         kernel_matrix = kernel_instance(x_train)
         sts_kernel_matrix = state_vector_kernel(x_train)

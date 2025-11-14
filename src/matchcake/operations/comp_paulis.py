@@ -1,9 +1,9 @@
-from typing import Sequence, Literal
+from typing import Literal, Sequence
 
 from pennylane.wires import Wires
 
-from .matchgate_operation import MatchgateOperation
 from .. import utils
+from .matchgate_operation import MatchgateOperation
 
 paulis_map = {
     "X": utils.PAULI_X,
@@ -23,6 +23,7 @@ class CompPauli(MatchgateOperation):
     where :math:`M` is a matchgate, :math:`P_0` and :math:`P_1` are the paulis.
 
     """
+
     num_wires = 2
     num_params = 0
 
@@ -34,11 +35,7 @@ class CompPauli(MatchgateOperation):
         if len(paulis) != 2:
             raise ValueError(f"{cls.__name__} requires two paulis; got {paulis}.")
         return cls.from_sub_matrices(
-            paulis_map[paulis[0]], paulis_map[paulis[1]],
-            wires=wires,
-            id=id,
-            _paulis=''.join(paulis),
-            **kwargs
+            paulis_map[paulis[0]], paulis_map[paulis[1]], wires=wires, id=id, _paulis="".join(paulis), **kwargs
         )
 
     def __init__(self, *args, **kwargs):

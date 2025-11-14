@@ -5,10 +5,10 @@ import torch
 
 import matchcake as mc
 from matchcake import MatchgateOperation
-from matchcake import utils
-from matchcake.operations import SptmCompRxRx, SptmIdentity, MatchgateIdentity
-from matchcake.utils import torch_utils
 from matchcake import matchgate_parameter_sets as mgp
+from matchcake import utils
+from matchcake.operations import MatchgateIdentity, SptmCompRxRx, SptmIdentity
+from matchcake.utils import torch_utils
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -16,8 +16,7 @@ from ...configs import (
     TEST_SEED,
     set_seed,
 )
-from .. import devices_init, init_nif_device
-from .. import single_line_matchgates_circuit
+from .. import devices_init, init_nif_device, single_line_matchgates_circuit
 
 
 class TestNonInteractingFermionicDeviceForwardContractionStrategy:
@@ -74,10 +73,7 @@ class TestNonInteractingFermionicDeviceForwardContractionStrategy:
         [(10, 1), (5, 2), (2, 3)],
     )
     def test_forward_contraction_device_one_line_random(self, batch_size, num_operations):
-        operations = [
-            MatchgateOperation.random(batch_size=batch_size, wires=[0, 1])
-            for _ in range(num_operations)
-        ]
+        operations = [MatchgateOperation.random(batch_size=batch_size, wires=[0, 1]) for _ in range(num_operations)]
         nif_device_nh = init_nif_device(wires=2, contraction_method="forward")
         nif_device = init_nif_device(wires=2, contraction_method=None)
 

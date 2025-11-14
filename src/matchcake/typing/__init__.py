@@ -1,7 +1,7 @@
-from typing import Union
 from numbers import Number
-from pennylane.typing import TensorLike as PennylaneTensorLike
-import torch
+from typing import Union
 
+import torch
+from pennylane.typing import TensorLike as PennylaneTensorLike
 
 TensorLike = Union[PennylaneTensorLike, torch.Tensor, Number]

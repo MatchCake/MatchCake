@@ -1,12 +1,13 @@
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import List, Optional
 
-import torch
 import pennylane as qml
-from .matchgate_params import MatchgateParams
-from .matchgate_standard_params import MatchgateStandardParams
+import torch
+
 from ..typing import TensorLike
 from ..utils.torch_utils import to_tensor
+from .matchgate_params import MatchgateParams
+from .matchgate_standard_params import MatchgateStandardParams
 
 
 @dataclass
@@ -41,6 +42,7 @@ class MatchgatePolarParams(MatchgateParams):
             z &= r_1 e^{i\theta_4}
         \end{align}
     """
+
     r0: Optional[TensorLike] = None
     r1: Optional[TensorLike] = None
     theta0: Optional[TensorLike] = None
@@ -63,9 +65,9 @@ class MatchgatePolarParams(MatchgateParams):
         return [self.theta0, self.theta1, self.theta2, self.theta3, self.theta4]
 
     def matrix(
-            self,
-            dtype: torch.dtype = torch.complex128,
-            device: Optional[torch.device] = None,
+        self,
+        dtype: torch.dtype = torch.complex128,
+        device: Optional[torch.device] = None,
     ) -> torch.Tensor:
         division_epsilon = 1e-12
 
@@ -90,8 +92,8 @@ class MatchgatePolarParams(MatchgateParams):
             for p in self.get_angles_params_list()
         ]
 
-        r0_tilde = torch.sqrt(1 - r0 ** 2 + division_epsilon)
-        r1_tilde = torch.sqrt(1 - r1 ** 2 + division_epsilon)
+        r0_tilde = torch.sqrt(1 - r0**2 + division_epsilon)
+        r1_tilde = torch.sqrt(1 - r1**2 + division_epsilon)
         matrix = MatchgateStandardParams(
             a=r0 * torch.exp(1j * theta0),
             b=r0_tilde * torch.exp(1j * (theta2 + theta4 - (theta1 + torch.pi))),
@@ -105,7 +107,3 @@ class MatchgatePolarParams(MatchgateParams):
         if self.batch_size is None and matrix.ndim > 2:
             matrix = matrix[0]
         return matrix
-
-
-
-

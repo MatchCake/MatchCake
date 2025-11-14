@@ -9,14 +9,15 @@ from matchcake.circuits import (
     RandomMatchgateOperationsGenerator,
 )
 from matchcake.devices.contraction_strategies import contraction_strategy_map
-from . import devices_init
-from ..configs import (
+
+from ...configs import (
     ATOL_APPROX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
     TEST_SEED,
     set_seed,
 )
+from .. import devices_init
 
 set_seed(TEST_SEED)
 
@@ -131,20 +132,20 @@ def test_nif_pennylane_hamiltonian_expval_zz_on_basis_state_against_qubit_device
         ([1, 0, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
         ([1, 1, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
         (
-                [0, 1, 0, 1, 1],
-                [
-                    qml.PauliZ(2) @ qml.PauliZ(3),
-                    qml.PauliZ(1) @ qml.PauliZ(2),
-                    qml.PauliZ(0) @ qml.PauliZ(1),
-                ],
+            [0, 1, 0, 1, 1],
+            [
+                qml.PauliZ(2) @ qml.PauliZ(3),
+                qml.PauliZ(1) @ qml.PauliZ(2),
+                qml.PauliZ(0) @ qml.PauliZ(1),
+            ],
         ),
         (
-                [0, 1, 1, 0],
-                [
-                    qml.PauliZ(2) @ qml.PauliZ(3),
-                    qml.PauliZ(1) @ qml.PauliZ(2),
-                    qml.PauliZ(0) @ qml.PauliZ(1),
-                ],
+            [0, 1, 1, 0],
+            [
+                qml.PauliZ(2) @ qml.PauliZ(3),
+                qml.PauliZ(1) @ qml.PauliZ(2),
+                qml.PauliZ(0) @ qml.PauliZ(1),
+            ],
         ),
         ([0, 1, 1, 0, 1, 0, 0], [Z(0) @ Z(1), Z(1) @ Z(2), Z(2) @ Z(3)]),
     ],
@@ -184,12 +185,12 @@ def test_nif_batched_hamiltonian_expval_zz_on_basis_state_against_qubit_device(b
     "basis_state,hamiltonian,contraction_strategy",
     [
         (
-                np.random.choice([0, 1], size=n_wires),
-                [
-                    qml.PauliZ(w) @ qml.PauliZ(w + np.random.randint(1, n_wires - w))
-                    for w in np.random.randint(n_wires - 1, size=n_wires)
-                ],
-                contraction_strategy,
+            np.random.choice([0, 1], size=n_wires),
+            [
+                qml.PauliZ(w) @ qml.PauliZ(w + np.random.randint(1, n_wires - w))
+                for w in np.random.randint(n_wires - 1, size=n_wires)
+            ],
+            contraction_strategy,
         )
         for n_wires in range(2, 12)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
@@ -197,7 +198,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_basis_state_against_qubit_device(b
     ],
 )
 def test_nif_batched_hamiltonian_expval_zz_on_rn_basis_state_against_qubit_device(
-        basis_state, hamiltonian, contraction_strategy
+    basis_state, hamiltonian, contraction_strategy
 ):
     set_of_wires = set([obs.wires for obs in hamiltonian])
     dict_of_obs = {w: [obs for obs in hamiltonian if obs.wires == w] for w in set_of_wires}
@@ -236,13 +237,13 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_basis_state_against_qubit_devic
     "basis_state,hamiltonian,contraction_strategy,op_gen",
     [
         (
-                np.random.choice([0, 1], size=n_wires),
-                [
-                    qml.PauliZ(w) @ qml.PauliZ(w + np.random.randint(1, n_wires - w))
-                    for w in np.random.randint(n_wires - 1, size=n_wires)
-                ],
-                contraction_strategy,
-                gen_cls(wires=n_wires, n_ops=2 * n_wires, seed=i),
+            np.random.choice([0, 1], size=n_wires),
+            [
+                qml.PauliZ(w) @ qml.PauliZ(w + np.random.randint(1, n_wires - w))
+                for w in np.random.randint(n_wires - 1, size=n_wires)
+            ],
+            contraction_strategy,
+            gen_cls(wires=n_wires, n_ops=2 * n_wires, seed=i),
         )
         for n_wires in range(2, 6)
         for i in range(N_RANDOM_TESTS_PER_CASE)
@@ -254,7 +255,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_basis_state_against_qubit_devic
     ],
 )
 def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device(
-        basis_state, hamiltonian, contraction_strategy, op_gen
+    basis_state, hamiltonian, contraction_strategy, op_gen
 ):
     set_of_wires = set([obs.wires for obs in hamiltonian])
     dict_of_obs = {w: [obs for obs in hamiltonian if obs.wires == w] for w in set_of_wires}
@@ -287,13 +288,13 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device(
     "basis_state,hamiltonian,contraction_strategy,op_gen",
     [
         (
-                np.random.choice([0, 1], size=n_wires),
-                [
-                    qml.PauliZ(w) @ qml.PauliZ(w + np.random.randint(1, n_wires - w))
-                    for w in np.random.randint(n_wires - 1, size=n_wires)
-                ],
-                contraction_strategy,
-                gen_cls(wires=n_wires, n_ops=2 * n_wires, seed=i),
+            np.random.choice([0, 1], size=n_wires),
+            [
+                qml.PauliZ(w) @ qml.PauliZ(w + np.random.randint(1, n_wires - w))
+                for w in np.random.randint(n_wires - 1, size=n_wires)
+            ],
+            contraction_strategy,
+            gen_cls(wires=n_wires, n_ops=2 * n_wires, seed=i),
         )
         for n_wires in range(2, 6)
         for i in range(N_RANDOM_TESTS_PER_CASE)
@@ -305,7 +306,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device(
     ],
 )
 def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device_ham(
-        basis_state, hamiltonian, contraction_strategy, op_gen
+    basis_state, hamiltonian, contraction_strategy, op_gen
 ):
     set_of_wires = set([obs.wires for obs in hamiltonian])
     dict_of_obs = {w: [obs for obs in hamiltonian if obs.wires == w] for w in set_of_wires}

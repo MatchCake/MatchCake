@@ -1,8 +1,10 @@
 import numbers
+import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
+from numpy.exceptions import ComplexWarning
 
 DTYPES_TO_TORCH_TYPES = {
     # Natives
@@ -29,21 +31,23 @@ def to_tensor(
 ) -> Union[torch.Tensor, List[torch.Tensor], Tuple[torch.Tensor, ...], Dict[str, torch.Tensor]]:
     dtype = DTYPES_TO_TORCH_TYPES.get(dtype, dtype)
 
-    if isinstance(x, np.ndarray):
-        return torch.from_numpy(x).to(dtype=dtype, device=device)
-    elif isinstance(x, torch.Tensor):
-        return x.to(dtype=dtype, device=device)
-    elif isinstance(x, numbers.Number):
-        return torch.tensor(x, dtype=dtype, device=device)
-    elif isinstance(x, dict):
-        return {k: to_tensor(v, dtype=dtype, device=device) for k, v in x.items()}
-    elif isinstance(x, (list, tuple)):
-        return type(x)([to_tensor(v, dtype=dtype, device=device) for v in x])
-    elif not isinstance(x, torch.Tensor):
-        try:
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning)
+        if isinstance(x, np.ndarray):
+            return torch.from_numpy(x).to(dtype=dtype, device=device)
+        elif isinstance(x, torch.Tensor):
+            return x.to(dtype=dtype, device=device)
+        elif isinstance(x, numbers.Number):
             return torch.tensor(x, dtype=dtype, device=device)
-        except Exception as e:
-            raise ValueError(f"Unsupported type {type(x)}") from e
+        elif isinstance(x, dict):
+            return {k: to_tensor(v, dtype=dtype, device=device) for k, v in x.items()}
+        elif isinstance(x, (list, tuple)):
+            return type(x)([to_tensor(v, dtype=dtype, device=device) for v in x])
+        elif not isinstance(x, torch.Tensor):
+            try:
+                return torch.tensor(x, dtype=dtype, device=device)
+            except Exception as e:
+                raise ValueError(f"Unsupported type {type(x)}") from e
     raise ValueError(f"Unsupported type {type(x)}")
 
 
@@ -56,19 +60,21 @@ def to_cpu(x: Any, dtype=torch.float64):
 
 
 def to_numpy(x: Any, dtype=np.float64):
-    if isinstance(x, np.ndarray):
-        return np.asarray(x, dtype=dtype)
-    elif isinstance(x, torch.Tensor):
-        return x.detach().cpu().numpy().astype(dtype)
-    elif isinstance(x, numbers.Number):
-        return x
-    elif isinstance(x, dict):
-        return {k: to_numpy(v, dtype=dtype) for k, v in x.items()}
-    elif not isinstance(x, torch.Tensor):
-        try:
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=ComplexWarning)
+        if isinstance(x, np.ndarray):
             return np.asarray(x, dtype=dtype)
-        except Exception as e:
-            raise ValueError(f"Unsupported type {type(x)}") from e
+        elif isinstance(x, torch.Tensor):
+            return x.detach().cpu().numpy().astype(dtype)
+        elif isinstance(x, numbers.Number):
+            return x
+        elif isinstance(x, dict):
+            return {k: to_numpy(v, dtype=dtype) for k, v in x.items()}
+        elif not isinstance(x, torch.Tensor):
+            try:
+                return np.asarray(x, dtype=dtype)
+            except Exception as e:
+                raise ValueError(f"Unsupported type {type(x)}") from e
     raise ValueError(f"Unsupported type {type(x)}")
 
 

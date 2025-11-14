@@ -1,17 +1,18 @@
-from typing import Literal, Sequence, Optional
+from typing import Literal, Optional, Sequence
 
 import numpy as np
 import pennylane as qml
 import torch
 from pennylane.wires import Wires
 
-from .single_particle_transition_matrices.single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
-from .single_particle_transition_matrices.sptm_comp_rzrz import SptmCompRzRz
+from .. import utils
+from .matchgate_operation import MatchgateOperation
+from .single_particle_transition_matrices.single_particle_transition_matrix import (
+    SingleParticleTransitionMatrixOperation,
+)
 from .single_particle_transition_matrices.sptm_comp_rxrx import SptmCompRxRx
 from .single_particle_transition_matrices.sptm_comp_ryry import SptmCompRyRy
-
-from .matchgate_operation import MatchgateOperation
-from .. import utils
+from .single_particle_transition_matrices.sptm_comp_rzrz import SptmCompRzRz
 
 
 def _make_rot_matrix(param, direction: Literal["X", "Y", "Z"]):
@@ -44,8 +45,8 @@ def _make_rot_matrix(param, direction: Literal["X", "Y", "Z"]):
 
 
 def _make_complete_rot_matrix(
-        params,
-        directions: Sequence[Literal["X", "Y", "Z"]],
+    params,
+    directions: Sequence[Literal["X", "Y", "Z"]],
 ):
     params_shape = qml.math.shape(params)
     ndim = len(params_shape)
@@ -101,26 +102,19 @@ class CompRotation(MatchgateOperation):
 
     @classmethod
     def random(
-            cls,
-            wires: Wires,
-            *,
-            batch_size: Optional[int] = None,
-            dtype: torch.dtype = torch.complex128,
-            device: Optional[torch.device] = None,
-            seed: Optional[int] = None,
-            **kwargs
+        cls,
+        wires: Wires,
+        *,
+        batch_size: Optional[int] = None,
+        dtype: torch.dtype = torch.complex128,
+        device: Optional[torch.device] = None,
+        seed: Optional[int] = None,
+        **kwargs,
     ) -> "CompRotation":
         params = cls.random_params(batch_size=batch_size, dtype=dtype, device=device, seed=seed, **kwargs)
         return cls(params, wires=wires, dtype=dtype, device=device, **kwargs)
 
-    def __init__(
-            self,
-            params,
-            directions: Sequence[Literal["X", "Y", "Z"]],
-            wires=None,
-            id=None,
-            **kwargs
-    ):
+    def __init__(self, params, directions: Sequence[Literal["X", "Y", "Z"]], wires=None, id=None, **kwargs):
         shape = qml.math.shape(params)[-1:]
         n_angles = shape[0]
         if n_angles != 2:
@@ -132,11 +126,11 @@ class CompRotation(MatchgateOperation):
             wires=wires,
             id=id,
             _given_params=params,
-            _directions=''.join(directions),
-            **kwargs
+            _directions="".join(directions),
+            **kwargs,
         )
         self._given_params = params
-        self._directions = ''.join(directions)
+        self._directions = "".join(directions)
 
     def get_implicit_parameters(self):
         with torch.no_grad():
@@ -250,17 +244,13 @@ class CompRxRx(CompRotation):
         U = M(R_X(\theta), R_X(\phi))
     """
 
-    def __init__(
-            self,
-            params,
-            wires=None,
-            id=None,
-            **kwargs
-    ):
+    def __init__(self, params, wires=None, id=None, **kwargs):
         super().__init__(params, directions=["X", "X"], wires=wires, id=id, **kwargs)
 
     def to_sptm_operation(self) -> SingleParticleTransitionMatrixOperation:
-        return SptmCompRxRx(self._given_params, wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs)
+        return SptmCompRxRx(
+            self._given_params, wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs, clip_angles=False
+        )
 
 
 class CompRyRy(CompRotation):
@@ -270,17 +260,14 @@ class CompRyRy(CompRotation):
     .. math::
         U = M(R_Y(\theta), R_Y(\phi))
     """
-    def __init__(
-            self,
-            params,
-            wires=None,
-            id=None,
-            **kwargs
-    ):
+
+    def __init__(self, params, wires=None, id=None, **kwargs):
         super().__init__(params, directions=["Y", "Y"], wires=wires, id=id, **kwargs)
 
-    # def to_sptm_operation(self) -> SingleParticleTransitionMatrixOperation:
-    #     return SptmCompRyRy(self._given_params, wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs)
+    def to_sptm_operation(self) -> SingleParticleTransitionMatrixOperation:
+        return SptmCompRyRy(
+            self._given_params, wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs, clip_angles=False
+        )
 
 
 class CompRzRz(CompRotation):
@@ -291,14 +278,10 @@ class CompRzRz(CompRotation):
         U = M(R_Z(\theta), R_Z(\phi))
     """
 
-    def __init__(
-            self,
-            params,
-            wires=None,
-            id=None,
-            **kwargs
-    ):
+    def __init__(self, params, wires=None, id=None, **kwargs):
         super().__init__(params, directions=["Z", "Z"], wires=wires, id=id, **kwargs)
 
     def to_sptm_operation(self) -> SingleParticleTransitionMatrixOperation:
-        return SptmCompRzRz(self._given_params, wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs)
+        return SptmCompRzRz(
+            self._given_params, wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs, clip_angles=False
+        )

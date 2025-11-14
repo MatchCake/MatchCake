@@ -3,8 +3,8 @@ import pennylane as qml
 import pytest
 
 from matchcake import MatchgateOperation, NonInteractingFermionicDevice
-from matchcake import utils
 from matchcake import matchgate_parameter_sets as mgp
+from matchcake import utils
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
