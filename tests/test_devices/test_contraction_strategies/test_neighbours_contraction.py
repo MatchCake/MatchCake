@@ -7,7 +7,7 @@ import torch
 
 import matchcake as mc
 from matchcake import MatchgateOperation
-from matchcake import matchgate_parameter_sets as mps
+from matchcake import matchgate_parameter_sets as mgp
 from matchcake import utils
 from matchcake.circuits import random_sptm_operations_generator
 from matchcake.operations import SptmCompRxRx, SptmIdentity
@@ -30,8 +30,8 @@ set_seed(TEST_SEED)
     "operations,expected_new_operations",
     [
         (
-            [MatchgateOperation(mps.Identity, wires=[0, 1])],
-            [MatchgateOperation(mps.Identity, wires=[0, 1])],
+            [MatchgateOperation(mgp.Identity, wires=[0, 1])],
+            [MatchgateOperation(mgp.Identity, wires=[0, 1])],
         ),
     ],
 )
@@ -43,8 +43,8 @@ def test_neighbours_contraction(operations, expected_new_operations):
     assert len(new_operations) == len(expected_new_operations), "The number of operations is different."
     for new_op, expected_op in zip(new_operations, expected_new_operations):
         np.testing.assert_allclose(
-            new_op.compute_matrix(),
-            expected_op.compute_matrix(),
+            new_op.matrix(),
+            expected_op.matrix(),
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
@@ -53,10 +53,10 @@ def test_neighbours_contraction(operations, expected_new_operations):
 @pytest.mark.parametrize(
     "operations",
     [
-        [MatchgateOperation(mps.Identity, wires=[0, 1])],
-        [MatchgateOperation(mps.Identity, wires=[0, 1]) for _ in range(10)],
-        [MatchgateOperation(mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1])],
-        [MatchgateOperation(mps.MatchgatePolarParams.random_batch_numpy(10), wires=[0, 1]) for _ in range(2)],
+        [MatchgateOperation(mgp.Identity, wires=[0, 1])],
+        [MatchgateOperation(mgp.Identity, wires=[0, 1]) for _ in range(10)],
+        [MatchgateOperation.random(batch_size=10, wires=[0, 1], seed=42)],
+        [MatchgateOperation.random(batch_size=10, wires=[0, 1], seed=i) for i in range(2)],
     ],
 )
 def test_neighbours_contraction_device_one_line(operations):
@@ -101,11 +101,11 @@ def test_neighbours_contraction_device_one_line_sptm(operations):
 @pytest.mark.parametrize(
     "params_list,prob_wires",
     [
-        ([mps.MatchgatePolarParams(r0=1, r1=1).to_numpy() for _ in range(num_gates)], 0)
+        ([mgp.MatchgatePolarParams(r0=1, r1=1) for _ in range(num_gates)], 0)
         for num_gates in 2 ** np.arange(1, 5)
     ]
     + [
-        ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], 0)
+        ([MatchgateOperation.random_params(seed=i) for i in range(num_gates)], 0)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
         for num_gates in 2 ** np.arange(1, 5)
     ],
@@ -120,14 +120,14 @@ def test_multiples_matchgate_probs_with_qbit_device_nh_contraction(params_list, 
     qubit_state = qubit_qnode(
         params_list,
         initial_binary_state,
-        in_param_type=mps.MatchgatePolarParams,
+        in_param_type=mgp.MatchgatePolarParams,
         out_op="state",
     )
     qubit_probs = utils.get_probabilities_from_state(qubit_state, wires=prob_wires)
     nif_probs = nif_qnode(
         params_list,
         initial_binary_state,
-        in_param_type=mps.MatchgatePolarParams,
+        in_param_type=mgp.MatchgatePolarParams,
         out_op="probs",
         out_wires=prob_wires,
     )

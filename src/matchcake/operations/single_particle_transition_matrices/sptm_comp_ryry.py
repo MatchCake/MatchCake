@@ -16,7 +16,7 @@ class SptmCompRyRy(SingleParticleTransitionMatrixOperation):
     where M is the matchgate. The current class represent
 
     .. math::
-        R_{\mu\nu} = \frac{1}{4} \text{Tr}{\left(M c_\mu M^\dagger\right)c_\nu}
+        R_{\mu\nu} = \frac{1}{4} \text{Tr}{\left(U c_\mu U^\dagger\right)c_\nu}
 
     where R is the Sptm and c are the majoranas.
     """

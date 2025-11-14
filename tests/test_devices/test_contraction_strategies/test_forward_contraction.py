@@ -8,6 +8,7 @@ from matchcake import MatchgateOperation
 from matchcake import utils
 from matchcake.operations import SptmCompRxRx, SptmIdentity, MatchgateIdentity
 from matchcake.utils import torch_utils
+from matchcake import matchgate_parameter_sets as mgp
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -41,8 +42,8 @@ class TestNonInteractingFermionicDeviceForwardContractionStrategy:
         assert len(new_operations) == len(expected_new_operations), "The number of operations is different."
         for new_op, expected_op in zip(new_operations, expected_new_operations):
             np.testing.assert_allclose(
-                new_op.compute_matrix(),
-                expected_op.compute_matrix(),
+                new_op.matrix(),
+                expected_op.matrix(),
                 atol=ATOL_APPROX_COMPARISON,
                 rtol=RTOL_APPROX_COMPARISON,
             )
@@ -129,7 +130,7 @@ class TestNonInteractingFermionicDeviceForwardContractionStrategy:
 
     @pytest.mark.parametrize("num_gates", list(2 ** np.arange(1, 5)))
     def test_multiples_matchgate_probs_with_qbit_device_forward_contraction(self, num_gates):
-        params_list = [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)]
+        params_list = [MatchgateOperation.random_params(seed=i) for i in range(num_gates)]
         prob_wires = 0
         nif_device, qubit_device = devices_init(wires=2, contraction_method="forward")
 
@@ -140,14 +141,14 @@ class TestNonInteractingFermionicDeviceForwardContractionStrategy:
         qubit_state = qubit_qnode(
             params_list,
             initial_binary_state,
-            in_param_type=mps.MatchgatePolarParams,
+            in_param_type=mgp.MatchgatePolarParams,
             out_op="state",
         )
         qubit_probs = utils.get_probabilities_from_state(qubit_state, wires=prob_wires)
         nif_probs = nif_qnode(
             params_list,
             initial_binary_state,
-            in_param_type=mps.MatchgatePolarParams,
+            in_param_type=mgp.MatchgatePolarParams,
             out_op="probs",
             out_wires=prob_wires,
         )

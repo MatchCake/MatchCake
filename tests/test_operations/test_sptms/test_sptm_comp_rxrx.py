@@ -4,7 +4,7 @@ import torch
 
 from matchcake.operations import CompRxRx
 from matchcake.operations.single_particle_transition_matrices import SptmCompRxRx
-from matchcake.utils import torch_utils
+from matchcake.utils import torch_utils, make_single_particle_transition_matrix_from_gate
 from matchcake.utils.math import circuit_matmul
 
 from ...configs import (
@@ -28,7 +28,7 @@ class TestCompRxRx:
         params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
         params = SptmCompRxRx.clip_angles(params)
         matchgate = CompRxRx(params, wires=[0, 1])
-        m_sptm = matchgate.single_particle_transition_matrix
+        m_sptm = make_single_particle_transition_matrix_from_gate(matchgate.matrix())
         sptm = SptmCompRxRx(params, wires=[0, 1]).matrix()
         np.testing.assert_allclose(
             sptm,

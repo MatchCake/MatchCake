@@ -246,6 +246,8 @@ class TestMatchgateOperation:
     def test_random_parameters(self):
         rn_params = MatchgateOperation.random_params(batch_size=None, seed=0)
         assert rn_params.shape == (7, )
+
+    def test_random_parameters_with_batch_size(self):
         rn_params = MatchgateOperation.random_params(batch_size=3, seed=0)
         assert rn_params.shape == (3, 7)
 

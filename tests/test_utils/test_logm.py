@@ -4,7 +4,7 @@ from pennylane.math import expm
 
 from matchcake.utils.math import logm
 
-from .configs import (
+from ..configs import (
     ATOL_MATRIX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
     RTOL_MATRIX_COMPARISON,

@@ -3,17 +3,17 @@ import pennylane as qml
 import pytest
 
 from matchcake import MatchgateOperation
-from matchcake import matchgate_parameter_sets as mps
+from matchcake import matchgate_parameter_sets as mgp
 from matchcake import utils
 
-from ..configs import (
+from ...configs import (
     ATOL_APPROX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
     TEST_SEED,
     set_seed,
 )
-from . import devices_init
+from .. import devices_init
 
 set_seed(TEST_SEED)
 
@@ -25,8 +25,7 @@ def single_line_matchgates_circuit(params_list, initial_state=None, **kwargs):
         initial_state = np.zeros(2 ** len(all_wires))
     qml.BasisState(initial_state, wires=all_wires)
     for params in params_list:
-        mg_params = mps.MatchgatePolarParams.parse_from_any(params)
-        MatchgateOperation(mg_params, wires=all_wires)
+        MatchgateOperation(params, wires=all_wires)
     out_op = kwargs.get("out_op", "state")
     if out_op == "state":
         return qml.state()
@@ -39,12 +38,11 @@ def single_line_matchgates_circuit(params_list, initial_state=None, **kwargs):
 @pytest.mark.parametrize(
     "params_list,prob_wires",
     [
-        ([mps.MatchgatePolarParams(r0=1, r1=1).to_numpy() for _ in range(num_gates)], 0)
+        ([mgp.MatchgatePolarParams(r0=1, r1=1) for _ in range(num_gates)], 0)
         for num_gates in 10 * np.arange(1, 5)
     ]
     + [
-        ([mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)], 0)
-        for _ in range(N_RANDOM_TESTS_PER_CASE)
+        ([MatchgateOperation.random_params(seed=i) for i in range(num_gates)], 0)
         for num_gates in 10 * np.arange(1, 5)
     ],
 )
@@ -58,14 +56,14 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, prob_wires):
     qubit_probs = qubit_qnode(
         params_list,
         initial_binary_state,
-        in_param_type=mps.MatchgatePolarParams,
+        in_param_type=mgp.MatchgatePolarParams,
         out_op="probs",
         out_wires=prob_wires,
     )
     nif_probs = nif_qnode(
         params_list,
         initial_binary_state,
-        in_param_type=mps.MatchgatePolarParams,
+        in_param_type=mgp.MatchgatePolarParams,
         out_op="probs",
         out_wires=prob_wires,
     )

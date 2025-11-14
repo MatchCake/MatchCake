@@ -11,7 +11,8 @@ class MatchgateParams:
         raise NotImplementedError()
 
     def compute_batch_size(self) -> Optional[int]:
-        shapes = [qml.math.shape(p) for p in fields(self) if p is not None]
+        params = [getattr(self, f.name) for f in fields(self)]
+        shapes = [qml.math.shape(p) for p in params if p is not None]
         batch_sizes = list(set([s[0] for s in shapes if len(s) > 0]))
         assert len(batch_sizes) <= 1, f"Expect the same batch size for every parameters. Got: {batch_sizes}."
         batch_size = batch_sizes[0] if len(batch_sizes) > 0 else None

@@ -3,7 +3,7 @@ import pennylane as qml
 import pytest
 
 import matchcake as mc
-from matchcake import matchgate_parameter_sets as mps
+from matchcake import matchgate_parameter_sets as mgp
 from matchcake import utils
 from matchcake.devices.contraction_strategies import get_contraction_strategy
 from matchcake.devices.contraction_strategies.contraction_container import (
@@ -18,7 +18,7 @@ from ...configs import (
     set_seed,
 )
 from .. import init_nif_device, init_qubit_device
-from ..test_rotations_zyz_circuit import specific_matchgate_circuit
+from .. import specific_matchgate_circuit
 
 set_seed(TEST_SEED)
 
@@ -26,8 +26,8 @@ set_seed(TEST_SEED)
 @pytest.mark.parametrize(
     "op",
     [
-        mc.MatchgateOperation(
-            mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+        mc.MatchgateOperation.random(
+            batch_size=10,
             wires=[wire, wire + 1],
         )
         for wire in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
@@ -38,7 +38,7 @@ def test_horizontal_matchgates_container_contract_single_op(op):
     container = strategy.get_container()
     container.add(op)
     np.testing.assert_allclose(
-        container.contract(),
+        container.contract().matrix(),
         op.single_particle_transition_matrix,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
@@ -49,8 +49,8 @@ def test_horizontal_matchgates_container_contract_single_op(op):
     "operations",
     [
         [
-            mc.MatchgateOperation(
-                mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+            mc.MatchgateOperation.random(
+                batch_size=10,
                 wires=[wire, wire + 1],
             )
             for wire in range(n_gates)
@@ -74,8 +74,8 @@ def test_horizontal_matchgates_container_contract_crossing_ops(operations):
     "operations",
     [
         [
-            mc.MatchgateOperation(
-                mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+            mc.MatchgateOperation.random(
+                batch_size=10,
                 wires=[wire, wire + 1],
             )
             for wire in range(n_gates)
@@ -106,8 +106,8 @@ def test_horizontal_matchgates_container_contract_crossing_ops_probs(operations)
     "column_operations",
     [
         [
-            mc.MatchgateOperation(
-                mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+            mc.MatchgateOperation.random(
+                batch_size=10,
                 wires=[i, i + 1],
             )
             for i in range(0, np.random.randint(1, 20), 2)
@@ -126,8 +126,8 @@ def test_horizontal_matchgates_container_contract_single_column(column_operation
         if isinstance(new_op, mc.MatchgateOperation):
             new_op = new_op.get_padded_single_particle_transition_matrix(op.wires)
         np.testing.assert_allclose(
-            new_op,
-            op.get_padded_single_particle_transition_matrix(op.wires),
+            new_op.matrix(),
+            op.get_padded_single_particle_transition_matrix(op.wires).matrix(),
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
@@ -137,7 +137,7 @@ def test_horizontal_matchgates_container_contract_single_column(column_operation
     "line_operations",
     [
         [
-            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(1), wires=[0, 1])
+            mc.MatchgateOperation.random(batch_size=1, wires=[0, 1])
             for _ in range(n_gates)
         ]
         for n_gates in np.arange(1, N_RANDOM_TESTS_PER_CASE + 1)
@@ -166,8 +166,8 @@ def test_horizontal_matchgates_container_contract_single_line_probs(line_operati
     "operations",
     [
         [
-            mc.MatchgateOperation(
-                mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+            mc.MatchgateOperation.random(
+                batch_size=10,
                 wires=[i, i + 1],
             )
             for i in range(0, np.random.randint(1, 10), 2)
@@ -198,8 +198,8 @@ def test_horizontal_matchgates_container_contract_single_column_probs(operations
     "operations",
     [
         [
-            mc.MatchgateOperation(
-                mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+            mc.MatchgateOperation.random(
+                batch_size=10,
                 wires=[wire, wire + 1],
             )
             for wire in range(0, n_lines, 2)
@@ -231,7 +231,7 @@ def test_horizontal_matchgates_container_contract_line_column_probs(operations):
     "params_list,n_wires",
     [
         (
-            [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)],
+            [mc.MatchgateOperation.random_params(seed=i) for i in range(num_gates)],
             num_wires,
         )
         for _ in range(N_RANDOM_TESTS_PER_CASE)
@@ -257,14 +257,14 @@ def test_multiples_matchgate_probs_with_nif_horizontal(params_list, n_wires):
         params_wires_list,
         initial_binary_state,
         all_wires=nif_device.wires,
-        in_param_type=mps.MatchgatePolarParams,
+        in_param_type=mgp.MatchgatePolarParams,
         out_op="probs",
     )
     nif_contract_probs = nif_qnode_contracted(
         params_wires_list,
         initial_binary_state,
         all_wires=nif_device_contracted.wires,
-        in_param_type=mps.MatchgatePolarParams,
+        in_param_type=mgp.MatchgatePolarParams,
         out_op="probs",
     )
 

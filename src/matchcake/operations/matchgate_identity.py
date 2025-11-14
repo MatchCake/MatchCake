@@ -3,18 +3,20 @@ from typing import Optional
 import torch
 
 from .matchgate_operation import MatchgateOperation
+from ..matchgate_parameter_sets.matchgate_standard_params import MatchgateStandardParams
 
 
 class MatchgateIdentity(MatchgateOperation):
-    def __new__(
-            cls,
+    def __init__(
+            self,
             wires=None,
             dtype: torch.dtype = torch.complex128,
             device: Optional[torch.device] = None,
             **kwargs
     ):
-        return cls.from_std_params(
-            a=1, w=1, z=1, d=1,
+        super().__init__(
+            MatchgateStandardParams(a=1, w=1, z=1, d=1),
+            wires=wires,
             dtype=dtype,
             device=device,
             **kwargs

@@ -270,7 +270,6 @@ class CompRyRy(CompRotation):
     .. math::
         U = M(R_Y(\theta), R_Y(\phi))
     """
-
     def __init__(
             self,
             params,

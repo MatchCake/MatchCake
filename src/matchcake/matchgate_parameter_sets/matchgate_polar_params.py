@@ -92,7 +92,7 @@ class MatchgatePolarParams(MatchgateParams):
 
         r0_tilde = torch.sqrt(1 - r0 ** 2 + division_epsilon)
         r1_tilde = torch.sqrt(1 - r1 ** 2 + division_epsilon)
-        return MatchgateStandardParams(
+        matrix = MatchgateStandardParams(
             a=r0 * torch.exp(1j * theta0),
             b=r0_tilde * torch.exp(1j * (theta2 + theta4 - (theta1 + torch.pi))),
             c=r0_tilde * torch.exp(1j * theta1),
@@ -102,6 +102,9 @@ class MatchgatePolarParams(MatchgateParams):
             y=r1_tilde * torch.exp(1j * theta3),
             z=r1 * torch.exp(1j * theta4),
         ).matrix(dtype=dtype, device=device)
+        if self.batch_size is None and matrix.ndim > 2:
+            matrix = matrix[0]
+        return matrix
 
 
 

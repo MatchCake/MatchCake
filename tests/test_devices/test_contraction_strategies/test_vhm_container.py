@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import matchcake as mc
-from matchcake import matchgate_parameter_sets as mps
+from matchcake import matchgate_parameter_sets as mgp
 from matchcake.devices.contraction_strategies import get_contraction_strategy
 from matchcake.operations import SptmCompRxRx
 
@@ -20,8 +20,8 @@ set_seed(TEST_SEED)
 @pytest.mark.parametrize(
     "new_op",
     [
-        mc.MatchgateOperation(
-            mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+        mc.MatchgateOperation.random(
+            batch_size=10,
             wires=[wire, wire + 1],
         )
         for wire in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
@@ -40,18 +40,18 @@ def test_vh_matchgates_container_add(new_op):
     "new_op0, new_op1, crossing_wires",
     [
         (
-            mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[0, 1]),
-            mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[0, 1]),
+            mc.MatchgateOperation.random(batch_size=10, wires=[0, 1]),
+            mc.MatchgateOperation.random(batch_size=10, wires=[0, 1]),
             False,
         ),
         (
-            mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[0, 1]),
-            mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[1, 2]),
+            mc.MatchgateOperation.random(batch_size=10, wires=[0, 1]),
+            mc.MatchgateOperation.random(batch_size=10, wires=[1, 2]),
             True,
         ),
         (
-            mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[0, 1]),
-            mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[2, 3]),
+            mc.MatchgateOperation.random(batch_size=10, wires=[0, 1]),
+            mc.MatchgateOperation.random(batch_size=10, wires=[2, 3]),
             False,
         ),
     ],
@@ -68,8 +68,8 @@ def test_vh_matchgates_container_try_add(new_op0, new_op1, crossing_wires):
         assert len(container) == 1
         assert container.wires_set == set(new_op0.wires.labels)
         np.testing.assert_allclose(
-            container.op_container[new_op0.wires].compute_matrix(),
-            (new_op0 @ new_op1).compute_matrix(),
+            container.op_container[new_op0.wires].matrix(),
+            (new_op0 @ new_op1).matrix(),
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
@@ -78,14 +78,14 @@ def test_vh_matchgates_container_try_add(new_op0, new_op1, crossing_wires):
         assert len(container) == 2
         assert container.wires_set == set(new_op0.wires.labels) | set(new_op1.wires.labels)
         np.testing.assert_allclose(
-            container.op_container[new_op0.wires].compute_matrix(),
-            new_op0.compute_matrix(),
+            container.op_container[new_op0.wires].matrix(),
+            new_op0.matrix(),
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
         np.testing.assert_allclose(
-            container.op_container[new_op1.wires].compute_matrix(),
-            new_op1.compute_matrix(),
+            container.op_container[new_op1.wires].matrix(),
+            new_op1.matrix(),
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
@@ -94,8 +94,8 @@ def test_vh_matchgates_container_try_add(new_op0, new_op1, crossing_wires):
 @pytest.mark.parametrize(
     "op",
     [
-        mc.MatchgateOperation(
-            mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+        mc.MatchgateOperation.random(
+            batch_size=10,
             wires=[wire, wire + 1],
         )
         for wire in np.random.randint(0, 2, N_RANDOM_TESTS_PER_CASE)
@@ -106,7 +106,7 @@ def test_vh_matchgates_container_contract_single_op(op):
     container = strategy.get_container()
     container.add(op)
     np.testing.assert_allclose(
-        container.contract(),
+        container.contract().matrix(),
         op.single_particle_transition_matrix,
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
@@ -117,7 +117,7 @@ def test_vh_matchgates_container_contract_single_op(op):
     "line_operations",
     [
         [
-            mc.MatchgateOperation(mc.matchgate_parameter_sets.MatchgatePolarParams.random(1), wires=[0, 1])
+            mc.MatchgateOperation.random(batch_size=1, wires=[0, 1])
             for _ in range(n_gates)
         ]
         for n_gates in np.arange(1, N_RANDOM_TESTS_PER_CASE + 1)
@@ -137,8 +137,8 @@ def test_vh_matchgates_container_contract_single_line(line_operations):
     wires = line_operations[0].wires
 
     np.testing.assert_allclose(
-        container.op_container[wires].compute_matrix(),
-        contract_ops.compute_matrix(),
+        container.op_container[wires].matrix(),
+        contract_ops.matrix(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -157,8 +157,8 @@ def test_vh_matchgates_container_contract_single_line(line_operations):
     "column_operations",
     [
         [
-            mc.MatchgateOperation(
-                mc.matchgate_parameter_sets.MatchgatePolarParams.random(10),
+            mc.MatchgateOperation.random(
+                batch_size=10,
                 wires=[i, i + 1],
             )
             for i in range(0, np.random.randint(1, 20), 2)
@@ -181,8 +181,8 @@ def test_vh_matchgates_container_contract_single_column(column_operations):
         contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(all_wires)
 
     np.testing.assert_allclose(
-        container.contract(),
-        contract_ops,
+        container.contract().matrix(),
+        contract_ops.matrix(),
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
@@ -198,7 +198,7 @@ def test_vh_matchgates_container_contract_single_column(column_operations):
         ),
         (
             SptmCompRxRx(np.random.random(2), wires=[0, 1]),
-            mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[1, 2]),
+            mc.MatchgateOperation.random(batch_size=10, wires=[1, 2]),
             True,
         ),
         (
@@ -208,7 +208,7 @@ def test_vh_matchgates_container_contract_single_column(column_operations):
         ),
         (
             SptmCompRxRx(np.random.random(2), wires=[0, 1]),
-            mc.MatchgateOperation(mps.MatchgatePolarParams.random(10), wires=[2, 3]),
+            mc.MatchgateOperation.random(batch_size=10, wires=[2, 3]),
             False,
         ),
         (

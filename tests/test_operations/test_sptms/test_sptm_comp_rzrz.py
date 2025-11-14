@@ -5,6 +5,7 @@ from matchcake.operations import CompRzRz
 from matchcake.operations.single_particle_transition_matrices import (
     SptmCompRzRz,
 )
+from matchcake.utils import make_single_particle_transition_matrix_from_gate
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -36,7 +37,7 @@ class TestSptmRzRz:
         params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
         params = SptmCompRzRz.clip_angles(params)
         matchgate = CompRzRz(params, wires=[0, 1])
-        m_sptm = matchgate.single_particle_transition_matrix
+        m_sptm = make_single_particle_transition_matrix_from_gate(matchgate.matrix())
         sptm = SptmCompRzRz(params, wires=[0, 1]).matrix()
         np.testing.assert_allclose(
             sptm,

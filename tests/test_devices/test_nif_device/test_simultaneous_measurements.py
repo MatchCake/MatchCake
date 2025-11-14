@@ -4,18 +4,19 @@ import pytest
 
 from matchcake import MatchgateOperation, NonInteractingFermionicDevice
 from matchcake import utils
+from matchcake import matchgate_parameter_sets as mgp
 
-from ..configs import (
+from ...configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
 )
-from . import devices_init
+from .. import devices_init, specific_matchgate_circuit
 
 
 class TestNIFDeviceProbabilities:
     def test_fswap_probabilities_explicitsum(self):
         initial_binary_string = "01"
-        params = mps.fSWAP
+        params = mgp.fSWAP
         wires = [0, 1]
         target_binary_state = "10"
         prob = 1.0
@@ -46,7 +47,7 @@ class TestNIFDeviceProbabilities:
         + [(3, 2, 2, "ExplicitSum")],
     )
     def test_multiples_matchgate_probs_against_qubit_device(self, num_gates, num_wires, n_probs, prob_strategy):
-        params_list = [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)]
+        params_list = [MatchgateOperation.random_params(seed=i) for i in range(num_gates)]
         prob_wires = np.random.choice(num_wires, replace=False, size=n_probs)
 
         nif_device, qubit_device = devices_init(wires=num_wires, prob_strategy=prob_strategy)
@@ -64,7 +65,7 @@ class TestNIFDeviceProbabilities:
             params_wires_list,
             initial_binary_state,
             all_wires=qubit_device.wires,
-            in_param_type=mps.MatchgatePolarParams,
+            in_param_type=mgp.MatchgatePolarParams,
             out_op="state",
         )
         qubit_probs = utils.get_probabilities_from_state(qubit_state, wires=prob_wires)
@@ -72,7 +73,7 @@ class TestNIFDeviceProbabilities:
             params_wires_list,
             initial_binary_state,
             all_wires=nif_device.wires,
-            in_param_type=mps.MatchgatePolarParams,
+            in_param_type=mgp.MatchgatePolarParams,
             out_op="probs",
             out_wires=prob_wires,
         )

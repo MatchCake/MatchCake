@@ -2,17 +2,18 @@ import numpy as np
 import pennylane as qml
 import pytest
 
+from matchcake import MatchgateOperation
 from matchcake.circuits import random_sptm_operations_generator
 from matchcake.operations import SptmCompRxRx
 from matchcake.utils import torch_utils
 
-from ..configs import (
+from ...configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
     TEST_SEED,
     set_seed,
 )
-from . import devices_init
+from .. import devices_init, specific_matchgate_circuit
 
 
 class TestNonInteractingFermionicDeviceSampling:
@@ -30,7 +31,7 @@ class TestNonInteractingFermionicDeviceSampling:
         ],
     )
     def test_qubit_by_qubit_sampling_with_probs(self, num_gates, num_wires):
-        params_list = [mps.MatchgatePolarParams.random().to_numpy() for _ in range(num_gates)]
+        params_list = [MatchgateOperation.random_params(seed=i) for i in range(num_gates)]
 
         nif_device, _ = devices_init(
             wires=num_wires,
@@ -51,7 +52,6 @@ class TestNonInteractingFermionicDeviceSampling:
                 params_wires_list,
                 initial_binary_state,
                 all_wires=nif_device.wires,
-                in_param_type=mps.MatchgatePolarParams,
                 out_op="sample",
             )
         ).astype(int)
