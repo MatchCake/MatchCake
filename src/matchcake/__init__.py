@@ -14,18 +14,13 @@ __version__ = importlib_metadata.version(__package__)
 
 import warnings
 
-from matchcake import matchgate_parameter_sets as mps  # Alias
-
+from . import matchgate_parameter_sets  # Alias
+from . import matchgate_parameter_sets as mgp
 from . import ml, utils
-from .base import Matchgate
 from .devices import NIFDevice, NonInteractingFermionicDevice
-from .matchgate_parameter_sets import (
-    MatchgateComposedHamiltonianParams,
-    MatchgateHamiltonianCoefficientsParams,
-    MatchgatePolarParams,
-    MatchgateStandardHamiltonianParams,
-    MatchgateStandardParams,
-)
+from .matchgate_parameter_sets import matchgate_params
+from .matchgate_parameter_sets.matchgate_polar_params import MatchgatePolarParams
+from .matchgate_parameter_sets.matchgate_standard_params import MatchgateStandardParams
 from .observables import BatchHamiltonian
 from .operations import MatchgateOperation
 from .utils import math

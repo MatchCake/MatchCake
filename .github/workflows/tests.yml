@@ -45,21 +45,20 @@ jobs:
       continue-on-error: true
       run: |
         uv run mypy src tests
-    - name: Test Notebooks
-      run: |
-        uv run pytest --nbmake tutorials -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
-
     - name: Test Unittests with pytest
       run: |
         # TODO: add -n=auto when possible
         uv run pytest tests --cov=src --cov-report="xml:tests/.tmp/coverage.xml" --cov-report=term-missing --durations=30 --session-timeout=600
+    - name: Test Notebooks
+      run: |
+        uv run pytest --nbmake tutorials -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
 
     - name: Code Coverage
       uses: orgoro/coverage@v3.2
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         coverageFile: tests/.tmp/coverage.xml
-        thresholdAll: 0.77
+        thresholdAll: 0.78
         thresholdNew: 0.98
         thresholdModified: 0.0
 

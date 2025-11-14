@@ -67,7 +67,7 @@ class NIFKernel(Kernel):
         """
         if x1 is None:
             x1 = x0
-        x0, x1 = to_tensor(x0, dtype=self.R_DTYPE), to_tensor(x1, dtype=self.R_DTYPE)
+        x0, x1 = to_tensor(x0, dtype=self.R_DTYPE), to_tensor(x1, dtype=self.R_DTYPE)  # type: ignore
         kernel = self.compute_similarities(x0, x1)  # type: ignore
         return kernel
 

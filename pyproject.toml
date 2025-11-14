@@ -226,8 +226,6 @@ module = [
     "sklearn.base",
     "sklearn.utils.validation",
     "sklearn.utils.multiclass",
-    "scipy",
-    "scipy.optimize",
     "sklearn.utils.estimator_checks",
     "sklearn.kernel_approximation",
     "sklearn.utils",

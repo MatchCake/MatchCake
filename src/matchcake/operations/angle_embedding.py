@@ -6,23 +6,9 @@ import pennylane as qml
 from pennylane.operation import AnyWires, Operation
 from pennylane.wires import Wires
 
-from ..utils import recursive_2in_operator
 from .comp_rotations import CompRxRx, CompRyRy, CompRzRz
 
 ROT = {"X": CompRxRx, "Y": CompRyRy, "Z": CompRzRz}
-rotations_map = {  # TODO: to verify
-    "XX": "I",
-    "YY": "I",
-    "ZZ": "I",
-    "XY": "Z",
-    "XZ": "Y",
-    "YX": "Z",
-    "YZ": "X",
-    "ZX": "Y",
-    "ZY": "X",
-}
-rotations_sign_map = defaultdict(lambda: 1j)
-rotations_sign_map.update({"XY": 1j, "YX": -1j, "XZ": -1j, "ZX": 1j, "YZ": 1j, "ZY": -1j})
 
 
 class MAngleEmbedding(Operation):
@@ -37,22 +23,6 @@ class MAngleEmbedding(Operation):
         params = qml.math.T(params) if batched else params
         wires = Wires(wires)
         rotations = hyperparameters.get("rotations", [ROT["X"]])
-        contract_rots = hyperparameters.get("contract_rots", False)
-
-        if contract_rots:
-            warnings.warn("This method is not tested. Use at your own risk.", DeprecationWarning)
-            op = partial(qml.math.einsum, "...ij,...jk->...ik")
-            list_of_rots = [
-                [
-                    rot(
-                        qml.math.stack([p0, p1], axis=-1),
-                        wires=[wires[2 * i], wires[2 * i + 1]],
-                    )
-                    for rot in rotations
-                ]
-                for i, (p0, p1) in enumerate(zip(params[0::2], params[1::2]))
-            ]
-            return [recursive_2in_operator(op, rots) for rots in list_of_rots]
 
         return [
             rot(
@@ -99,7 +69,6 @@ class MAngleEmbedding(Operation):
         self._rotations = rotations.split(",")
         self._hyperparameters = {
             "rotations": [ROT[r] for r in self._rotations],
-            "contract_rots": kwargs.get("contract_rots", False),
         }
         wires = wires[:n_features]
         super().__init__(features, wires=wires, id=id)
@@ -111,26 +80,6 @@ class MAngleEmbedding(Operation):
     @property
     def ndim_params(self):
         return (1,)
-
-    def simplify(self) -> "Operation":
-        # TODO: to be tested
-        # TODO: verify the correctness of the simplification
-        # TODO: take a look at https://docs.pennylane.ai/en/stable/_modules/pennylane/transforms/optimization/merge_rotations.html
-        rotations = self._rotations
-        while len(rotations) > 1:
-            new_rotations = []
-            for i in range(0, len(rotations), 2):
-                if i == len(rotations) - 1:
-                    new_rotations.append(rotations[i])
-                else:
-                    new_rotations.append(rotations_map[rotations[i] + rotations[i + 1]])
-            rotations = new_rotations
-        if rotations[0] == "I":
-            return qml.Identity(wires=self.wires)
-        sign = rotations_sign_map[rotations[0]]
-        # import torch
-        # torch.allclose((self.decomposition()[0].gate_data @ self.decomposition()[1].gate_data, self.__class__(1j * self.data[0], wires=self.wires).decomposition()[0].gate_data))
-        return self.__class__(sign * self.data[0], wires=self.wires)
 
 
 class MAngleEmbeddings(Operation):

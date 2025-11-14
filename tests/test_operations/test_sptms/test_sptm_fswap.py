@@ -5,6 +5,7 @@ import matchcake as mc
 from matchcake import utils
 from matchcake.operations import fSWAP
 from matchcake.operations.single_particle_transition_matrices import SptmCompZX
+from matchcake.utils import make_single_particle_transition_matrix_from_gate
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -23,7 +24,7 @@ class TestSptmFSwap:
 
     def test_matchgate_equal_to_sptm(self):
         matchgate = fSWAP(wires=[0, 1])
-        m_sptm = matchgate.single_particle_transition_matrix
+        m_sptm = make_single_particle_transition_matrix_from_gate(matchgate.matrix())
         sptm = SptmCompZX(wires=[0, 1]).matrix()
         np.testing.assert_allclose(
             sptm,

@@ -12,7 +12,7 @@ from ..configs import (
     TEST_SEED,
     set_seed,
 )
-from ..test_nif_device import devices_init
+from ..test_devices import devices_init
 
 set_seed(TEST_SEED)
 
