@@ -3,13 +3,13 @@ from typing import Optional
 import torch
 from pennylane.wires import Wires
 
+from .. import matchgate_parameter_sets as mgp
 from ..utils.constants import CLIFFORD_H
 from .matchgate_operation import MatchgateOperation
 from .single_particle_transition_matrices.single_particle_transition_matrix import (
     SingleParticleTransitionMatrixOperation,
 )
 from .single_particle_transition_matrices.sptm_comp_hh import SptmCompHH
-from .. import matchgate_parameter_sets as mgp
 
 
 class CompHH(MatchgateOperation):

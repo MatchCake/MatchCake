@@ -177,7 +177,7 @@ class MatchgateOperation(Operation):
         seed: Optional[int] = None,
         **kwargs,
     ) -> Union[TensorLike, MatchgateParams]:
-        """
+        r"""
         Generates a tensor of random parameters. This method allows creating a tensor
         with random elements drawn from uniform (0, 1] for the two first elements
         and drawn from a uniform distribution [0, :math:`2\pi`).

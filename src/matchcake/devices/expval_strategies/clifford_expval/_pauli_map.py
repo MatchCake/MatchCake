@@ -12,28 +12,43 @@ class _PauliMap(OrderedDict):
         for key, value in self.items():
             if key in pauli_str:
                 return key, value
-        raise KeyError(f'Pauli {pauli} not found in map')
+        raise KeyError(f"Pauli {pauli} not found in map")
 
     def __getitem__(self, item):
-        if item in self:
+        if super().__contains__(item):
             return super().__getitem__(item)
         return self.find_item(item)[1]
 
+    def __contains__(self, item):
+        if super().__contains__(item):
+            return True
+        try:
+            self.find_item(item)
+            return True
+        except KeyError:
+            return False
 
-_MAJORANA_INDICES_LAMBDAS = _PauliMap({
-    "ZI": (lambda k: (2 * k, 2 * k + 1)),
-    "XX": (lambda k: (2 * k + 1, 2 * k + 2)),
-    "YY": (lambda k: (2 * k, 2 * k + 3)),
-    "YX": (lambda k: (2 * k, 2 * k + 2)),
-    "XY": (lambda k: (2 * k + 1, 2 * k + 3)),
-    "IZ": (lambda k: (2 * k + 2, 2 * k + 3)),
-})
 
-_MAJORANA_COEFFS_MAP = _PauliMap({
-    "ZI": -1j,
-    "XX": 1j,
-    "YY": 1j,
-    "YX": 1j,
-    "XY": -1j,
-    "IZ": -1j,
-})
+_MAJORANA_INDICES_LAMBDAS = _PauliMap(
+    {
+        "XX": (lambda k: (2 * k + 1, 2 * k + 2)),
+        "YY": (lambda k: (2 * k, 2 * k + 3)),
+        "YX": (lambda k: (2 * k, 2 * k + 2)),
+        "XY": (lambda k: (2 * k + 1, 2 * k + 3)),
+        # TODO: Need to debug for ZI and IZ before adding them.
+        # "ZI": (lambda k: (2 * k, 2 * k + 1)),
+        # "IZ": (lambda k: (2 * k + 2, 2 * k + 3)),
+    }
+)
+
+_MAJORANA_COEFFS_MAP = _PauliMap(
+    {
+        "XX": 1j,
+        "YY": 1j,
+        "YX": 1j,
+        "XY": -1j,
+        # TODO: Need to debug for ZI and IZ before adding them.
+        # "ZI": -1j,
+        # "IZ": -1j,
+    }
+)

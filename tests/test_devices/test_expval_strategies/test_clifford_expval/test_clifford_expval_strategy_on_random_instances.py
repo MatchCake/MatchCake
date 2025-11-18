@@ -1,23 +1,21 @@
+import numpy as np
+import pennylane as qml
 import pytest
 
+from matchcake import NIFDevice
 from matchcake.circuits import RandomMatchgateHaarOperationsGenerator
+from matchcake.devices.expval_strategies.clifford_expval._pauli_map import (
+    _MAJORANA_COEFFS_MAP,
+)
+from matchcake.devices.expval_strategies.clifford_expval.clifford_expval_strategy import (
+    CliffordExpvalStrategy,
+)
 from matchcake.operations import CompHH
+
 from ....configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
 
-from matchcake.devices.expval_strategies.clifford_expval.clifford_expval_strategy import CliffordExpvalStrategy
-from matchcake.devices.expval_strategies.clifford_expval._pauli_map import _MAJORANA_COEFFS_MAP
-from matchcake import NIFDevice
-import pennylane as qml
-import numpy as np
 
-
-@pytest.mark.parametrize(
-    "n_qubits, seed", [
-        (n, s)
-        for n in range(2, 6)
-        for s in range(3)
-    ]
-)
+@pytest.mark.parametrize("n_qubits, seed", [(n, s) for n in range(2, 6) for s in range(3)])
 class TestCliffordExpvalStrategyOnRandomInstances:
     @pytest.fixture
     def strategy(self):
@@ -29,7 +27,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
 
     @pytest.fixture
     def qubit_device(self, n_qubits):
-        return qml.device('default.qubit', wires=n_qubits)
+        return qml.device("default.qubit", wires=n_qubits)
 
     @pytest.fixture
     def rn_gen(self, seed):
@@ -41,7 +39,6 @@ class TestCliffordExpvalStrategyOnRandomInstances:
             getattr(qml, p[0])(w0) @ getattr(qml, p[1])(w1)
             for w0, w1 in zip(nif_device.wires[:-1], nif_device.wires[1:])
             for p in _MAJORANA_COEFFS_MAP.keys()
-            if p in ["IZ", "ZI"]  # TODO: fix for those instances
         ]
         hamiltonian_coeffs = rn_gen.random(len(hamiltonian_ops))
         hamiltonian = qml.Hamiltonian(hamiltonian_coeffs, hamiltonian_ops)
@@ -65,7 +62,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
             return qml.expval(random_hamiltonian)
 
         ground_truth_energy = ground_truth_circuit()
-        clifford_energy = strategy(sptm, state_prep_op, random_hamiltonian)
+        clifford_energy = strategy(state_prep_op, random_hamiltonian, global_sptm=sptm)
         np.testing.assert_allclose(
             clifford_energy,
             ground_truth_energy,
@@ -84,7 +81,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
 
         ground_truth_energy = ground_truth_circuit()
         sptm = nif_device.apply_generator(random_op_gen).global_sptm.matrix()
-        clifford_energy = strategy(sptm, state_prep_op, random_hamiltonian)
+        clifford_energy = strategy(state_prep_op, random_hamiltonian, global_sptm=sptm)
         np.testing.assert_allclose(
             clifford_energy,
             ground_truth_energy,

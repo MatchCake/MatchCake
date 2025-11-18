@@ -120,8 +120,11 @@ def get_majorana_pair(i: int, j: int, n: int) -> np.ndarray:
     return get_majorana(i, n) @ get_majorana(j, n)
 
 
-def majorana_to_pauli(i: int, n: int):
-    return string_to_pauli_word(get_majorana_pauli_string(i, n, join_char=''))
+def majorana_to_pauli(i: int) -> qml.pauli.PauliWord:
+    k = int(i // 2)
+    gate = "X" if i % 2 == 0 else "Y"
+    majorana_str = "".join(["Z"] * k + [gate])
+    return string_to_pauli_word(majorana_str)
 
 
 class MajoranaGetter:

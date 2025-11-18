@@ -10,6 +10,11 @@ import psutil
 import torch
 import tqdm
 
+from .expval_strategies.clifford_expval.clifford_expval_strategy import (
+    CliffordExpvalStrategy,
+)
+from .expval_strategies.expval_from_probabilities import ExpvalFromProbabilitiesStrategy
+
 try:
     from pennylane.ops import Hamiltonian
 except ImportError:
@@ -271,6 +276,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
         self.show_progress = kwargs.get("show_progress", self.p_bar is not None)
         self.apply_metadata = defaultdict()
+        self.clifford_expval_strategy = CliffordExpvalStrategy()
+        self.expval_from_probabilities_strategy = ExpvalFromProbabilitiesStrategy()
+        self._state_prep_op = qml.BasisState(np.zeros(self.num_wires, dtype=int), wires=self.wires)
 
     def apply(self, operations, rotations=None, **kwargs):
         """
@@ -472,6 +480,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                 f"on a {self.short_name} device."
             )
 
+        self._state_prep_op = operation
         is_applied = True
         if isinstance(operation, qml.StatePrep):
             self._apply_state_vector(operation.parameters[0], operation.wires)
@@ -643,21 +652,21 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         return self.samples
 
     def exact_expval(self, observable):
-        prob = self.probability(wires=observable.wires)
-        if isinstance(observable, BatchHamiltonian):
-            eigvals_on_z_basis = observable.eigvals_on_z_basis()
-        else:
-            eigvals_on_z_basis = get_eigvals_on_z_basis(observable)
-        return qml.math.einsum("...i,...i->...", prob, eigvals_on_z_basis)
+        if self.clifford_expval_strategy.can_execute(self._state_prep_op, observable):
+            return self.clifford_expval_strategy(self._state_prep_op, observable, global_sptm=self.global_sptm.matrix())
+        if self.expval_from_probabilities_strategy.can_execute(self._state_prep_op, observable):
+            prob = self.probability(wires=observable.wires)
+            return self.expval_from_probabilities_strategy(self._state_prep_op, observable, prob=prob)
+
+        raise qml.DeviceError(
+            f"The expectation value of the observable {observable} "
+            f"cannot be computed on a {self.short_name} device."
+            "Please check the device's capabilities."
+        )
 
     def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):
             return self.get_state_probability(observable.parameters[0], observable.wires)
-        elif isinstance(observable, qml.Identity):
-            t_shape = qml.math.shape(self.transition_matrix)
-            if len(t_shape) == 2:
-                return convert_and_cast_like(1, self.transition_matrix)
-            return convert_and_cast_like(np.ones(t_shape[0]), self.transition_matrix)
 
         if isinstance(observable, BatchProjector):
             return self.get_states_probability(observable.get_states(), observable.get_batch_wires())
