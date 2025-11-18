@@ -1,7 +1,9 @@
+from collections import OrderedDict
+
 from pennylane.pauli import PauliWord, pauli_word_to_string
 
 
-class _PauliMap(dict):
+class _PauliMap(OrderedDict):
     def find_item(self, pauli):
         if isinstance(pauli, PauliWord):
             pauli_str = pauli_word_to_string(pauli)

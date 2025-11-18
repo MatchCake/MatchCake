@@ -4,6 +4,7 @@ from pennylane.pauli import pauli_word_to_string
 from ....typing import TensorLike
 from ..expval_strategy import ExpvalStrategy
 import pennylane as qml
+from pennylane.ops.op_math import Prod, SProd
 import numpy as np
 
 from ._pauli_map import _MAJORANA_COEFFS_MAP, _MAJORANA_INDICES_LAMBDAS
@@ -37,9 +38,19 @@ class CliffordExpvalStrategy(ExpvalStrategy):
             dtype=global_sptm.dtype, device=global_sptm.device
         )
 
+        if isinstance(observable, Prod):
+            ops = [observable]
+            observable_coeffs = torch.ones((1, ))
+        elif isinstance(observable, SProd):
+            ops = [observable.base]
+            observable_coeffs = observable.scalar
+        else:
+            ops = observable.ops
+            observable_coeffs = observable.coeffs
+
         pauli_kinds = [
             pauli_word_to_string(op, wire_map={w: i for i, w in enumerate(op.wires)})
-            for op in observable.ops
+            for op in ops
         ]
         majorana_coeffs = np.asarray([_MAJORANA_COEFFS_MAP[p] for p in pauli_kinds])
         majorana_indices = np.asarray([
@@ -52,7 +63,7 @@ class CliffordExpvalStrategy(ExpvalStrategy):
         result = qml.math.einsum(
             "k,k,...kij,ij->...",
             to_tensor(majorana_coeffs, dtype=global_sptm.dtype, device=global_sptm.device),
-            to_tensor(observable.coeffs, dtype=global_sptm.dtype, device=global_sptm.device),
+            to_tensor(observable_coeffs, dtype=global_sptm.dtype, device=global_sptm.device),
             transition_tensor,
             expvals,
         )
