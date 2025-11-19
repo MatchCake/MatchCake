@@ -11,7 +11,7 @@ from matchcake.devices.expval_strategies.clifford_expval._pauli_map import (
 from matchcake.devices.expval_strategies.clifford_expval.clifford_expval_strategy import (
     CliffordExpvalStrategy,
 )
-from matchcake.operations import CompHH
+from matchcake.operations import CompHH, CompZX
 
 from ....configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
 
@@ -27,6 +27,10 @@ class TestCliffordExpvalStrategy:
             (
                 [CompHH(wires=[0, 1])],
                 qml.X(0) @ qml.X(1),
+            ),
+            (
+                    [CompZX(wires=[0, 1])],
+                    qml.X(0) @ qml.X(1),
             )
         ],
     )

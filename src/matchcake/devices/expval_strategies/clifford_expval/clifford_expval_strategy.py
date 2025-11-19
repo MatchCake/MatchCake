@@ -28,20 +28,23 @@ class CliffordExpvalStrategy(ExpvalStrategy):
         n_qubits = len(wires)
         global_sptm = to_tensor(global_sptm, dtype=torch.complex128)
         clifford_device = qml.device("default.clifford", wires=wires)
+        triu_indices = np.triu_indices(2 * n_qubits, k=1)
 
         @qml.qnode(clifford_device)
         def clifford_circuit():
             state_prep_op.queue()
             return [
                 qml.expval(majorana_to_pauli(mu) @ majorana_to_pauli(nu))
-                for mu, nu in np.ndindex(2 * n_qubits, 2 * n_qubits)
+                for mu, nu in zip(triu_indices[0], triu_indices[1])
             ]
 
-        expvals = to_tensor(
-            qml.math.stack(clifford_circuit()).reshape(2 * n_qubits, 2 * n_qubits),
+        expvals = torch.zeros((2 * n_qubits, 2 * n_qubits), dtype=global_sptm.dtype, device=global_sptm.device)
+        expvals[triu_indices] = to_tensor(
+            qml.math.stack(clifford_circuit()),
             dtype=global_sptm.dtype,
             device=global_sptm.device,
         )
+        expvals[np.tril_indices(2 * n_qubits, k=-1)] = -expvals[triu_indices]
         hamiltonian = self._format_observable(observable)
         pauli_kinds = self._hamiltonian_to_pauli_str(hamiltonian)
 
