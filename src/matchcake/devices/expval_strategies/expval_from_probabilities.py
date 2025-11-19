@@ -16,7 +16,7 @@ class ExpvalFromProbabilitiesStrategy(ExpvalStrategy):
         self, state_prep_op: Union[qml.StatePrep, qml.BasisState], observable: Operator, **kwargs
     ) -> TensorLike:
         if not self.can_execute(state_prep_op, observable):
-            raise ValueError(f"Cannot execute {self.NAME} strategy for {observable}.")
+            raise ValueError(f"Cannot execute {self.NAME} strategy for {observable}.")  # pragma: no cover
         assert "prob" in kwargs, "The probabilities 'prob' must be provided as a keyword argument."
         prob = kwargs["prob"]
         if isinstance(observable, BatchHamiltonian):

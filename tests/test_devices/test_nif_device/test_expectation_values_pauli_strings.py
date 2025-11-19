@@ -18,9 +18,17 @@ set_seed(TEST_SEED)
 
 hand_made_test_data = [
     ([0, 0], [qml.PauliZ(0) @ qml.PauliZ(1)]),
+    ([0, 0], [qml.PauliZ(0) @ qml.Identity(1)]),
     ([0, 1], [qml.PauliZ(0) @ qml.PauliZ(1)]),
+    ([0, 1], [qml.Identity(0) @ qml.PauliZ(1)]),
     ([1, 0], [qml.PauliZ(0) @ qml.PauliZ(1)]),
     ([1, 1], [qml.PauliZ(0) @ qml.PauliZ(1)]),
+    ([1, 1], [qml.PauliX(0) @ qml.PauliX(1)]),
+    ([1, 0], [qml.PauliX(0) @ qml.PauliX(1)]),
+    ([1, 0], [qml.PauliX(0) @ qml.PauliY(1)]),
+    ([1, 1], [qml.PauliX(0) @ qml.PauliY(1)]),
+    ([1, 1], [qml.PauliY(0) @ qml.PauliX(1)]),
+    ([1, 1], [qml.PauliY(0) @ qml.PauliY(1)]),
     ([0, 0, 0], [qml.PauliZ(0) @ qml.PauliZ(1)]),
     ([0, 0, 0], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(0) @ qml.PauliZ(1)]),
     ([0, 0, 0], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),

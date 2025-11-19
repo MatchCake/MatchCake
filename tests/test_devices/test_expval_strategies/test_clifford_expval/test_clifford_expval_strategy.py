@@ -4,10 +4,6 @@ import pytest
 from pennylane.wires import Wires
 
 from matchcake import NIFDevice
-from matchcake.circuits import RandomMatchgateHaarOperationsGenerator
-from matchcake.devices.expval_strategies.clifford_expval._pauli_map import (
-    _MAJORANA_COEFFS_MAP,
-)
 from matchcake.devices.expval_strategies.clifford_expval.clifford_expval_strategy import (
     CliffordExpvalStrategy,
 )
@@ -29,9 +25,9 @@ class TestCliffordExpvalStrategy:
                 qml.X(0) @ qml.X(1),
             ),
             (
-                    [CompZX(wires=[0, 1])],
-                    qml.X(0) @ qml.X(1),
-            )
+                [CompZX(wires=[0, 1])],
+                qml.X(0) @ qml.X(1),
+            ),
         ],
     )
     def test_expval_on_circuits(self, circuit, hamiltonian, strategy):
@@ -58,3 +54,11 @@ class TestCliffordExpvalStrategy:
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
+
+    def test_call_on_something_cant_execute(self):
+        strategy = CliffordExpvalStrategy()
+        with pytest.raises(TypeError):
+            strategy(
+                qml.BasisState([0, 0], [0, 1]),
+                qml.PauliX(0) @ qml.PauliX(1),
+            )

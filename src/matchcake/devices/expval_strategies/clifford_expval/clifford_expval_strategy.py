@@ -38,7 +38,7 @@ class CliffordExpvalStrategy(ExpvalStrategy):
                 for mu, nu in zip(triu_indices[0], triu_indices[1])
             ]
 
-        expvals = torch.zeros((2 * n_qubits, 2 * n_qubits), dtype=global_sptm.dtype, device=global_sptm.device)
+        expvals = torch.eye(2 * n_qubits, dtype=global_sptm.dtype, device=global_sptm.device)
         expvals[triu_indices] = to_tensor(
             qml.math.stack(clifford_circuit()),
             dtype=global_sptm.dtype,
