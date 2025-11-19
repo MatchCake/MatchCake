@@ -36,6 +36,10 @@ _MAJORANA_INDICES_LAMBDAS = _PauliMap(
         "YY": (lambda k: (2 * k, 2 * k + 3)),
         "YX": (lambda k: (2 * k, 2 * k + 2)),
         "XY": (lambda k: (2 * k + 1, 2 * k + 3)),
+        # "XX": (lambda k: (2 * k + 1, 2 * k + 2)),
+        # "YY": (lambda k: (2 * k, 2 * k + 3)),
+        # "YX": (lambda k: (2 * k, 2 * k + 2)),
+        # "XY": (lambda k: (2 * k + 1, 2 * k + 3)),
         # TODO: Need to debug for ZI and IZ before adding them.
         # "ZI": (lambda k: (2 * k, 2 * k + 1)),
         # "IZ": (lambda k: (2 * k + 2, 2 * k + 3)),

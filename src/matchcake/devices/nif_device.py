@@ -480,12 +480,13 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                 f"on a {self.short_name} device."
             )
 
-        self._state_prep_op = operation
         is_applied = True
         if isinstance(operation, qml.StatePrep):
             self._apply_state_vector(operation.parameters[0], operation.wires)
+            self._state_prep_op = operation
         elif isinstance(operation, qml.BasisState):
             self._apply_basis_state(operation.parameters[0], operation.wires)
+            self._state_prep_op = operation
         elif isinstance(operation, qml.Snapshot):
             if self._debugger and self._debugger.active:
                 state_vector = np.array(self._flatten(self._state))
@@ -495,6 +496,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                     self._debugger.snapshots[len(self._debugger.snapshots)] = state_vector
         elif isinstance(operation, qml.pulse.ParametrizedEvolution):
             self._state = self._apply_parametrized_evolution(self._state, operation)
+            self._state_prep_op = operation
         else:
             is_applied = False
         return is_applied
