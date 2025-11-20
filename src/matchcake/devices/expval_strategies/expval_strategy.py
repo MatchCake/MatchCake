@@ -11,7 +11,6 @@ class ExpvalStrategy:
 
     def __call__(
         self,
-        global_sptm: TensorLike,
         state_prep_op: Union[qml.StatePrep, qml.BasisState],
         observable: Operator,
         **kwargs,

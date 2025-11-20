@@ -4,29 +4,41 @@ import pytest
 from pennylane.wires import Wires
 
 from matchcake import NIFDevice
-from matchcake.devices.expval_strategies.clifford_expval.clifford_expval_strategy import (
-    CliffordExpvalStrategy,
+from matchcake.devices.expval_strategies.expval_from_probabilities import (
+    ExpvalFromProbabilitiesStrategy,
 )
 from matchcake.operations import CompHH, CompZX
 
-from ....configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
+from ...configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
 
 
-class TestCliffordExpvalStrategy:
+class TestExpvalFromProbabilities:
     @pytest.fixture
     def strategy(self):
-        return CliffordExpvalStrategy()
+        return ExpvalFromProbabilitiesStrategy()
 
     @pytest.mark.parametrize(
         "circuit, hamiltonian",
         [
             (
                 [CompHH(wires=[0, 1])],
-                qml.X(0) @ qml.X(1),
+                qml.Z(0) @ qml.Z(1),
             ),
             (
                 [CompZX(wires=[0, 1])],
-                qml.X(0) @ qml.X(1),
+                qml.Z(0) @ qml.Z(1),
+            ),
+            (
+                [CompZX(wires=[0, 1])],
+                qml.Z(0) @ qml.I(1),
+            ),
+            (
+                [CompZX(wires=[0, 1])],
+                qml.I(0) @ qml.Z(1),
+            ),
+            (
+                [CompZX(wires=[0, 1])],
+                qml.I(0) @ qml.I(1),
             ),
         ],
     )
@@ -46,8 +58,8 @@ class TestCliffordExpvalStrategy:
             return qml.expval(hamiltonian)
 
         ground_truth_energy = ground_truth_circuit()
-        sptm = nif_device.apply_generator(circuit).global_sptm.matrix()
-        clifford_energy = strategy(state_prep_op, hamiltonian, global_sptm=sptm)
+        nif_device.apply_generator(circuit)
+        clifford_energy = strategy(state_prep_op, hamiltonian, prob=nif_device.probability(hamiltonian.wires))
         np.testing.assert_allclose(
             clifford_energy,
             ground_truth_energy,
@@ -60,5 +72,5 @@ class TestCliffordExpvalStrategy:
             strategy(
                 qml.BasisState([0, 0], [0, 1]),
                 qml.Z(0) @ qml.X(1),
-                global_sptm=np.eye(4),
+                prob=np.random.random(4),
             )

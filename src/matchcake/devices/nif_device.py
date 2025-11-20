@@ -23,6 +23,7 @@ except ImportError:
 import pennylane as qml
 import pythonbasictools as pbt
 from pennylane import numpy as pnp
+from pennylane.devices._legacy_device import _local_tape_expand
 from pennylane.measurements import (
     Expectation,
     MeasurementProcess,
@@ -36,9 +37,10 @@ from pennylane.measurements import (
 )
 from pennylane.operation import Operation
 from pennylane.ops import LinearCombination, Prod, SProd, Sum
-from pennylane.ops.qubit.observables import BasisStateProjector
+from pennylane.ops.qubit.observables import BasisStateProjector, Projector
 from pennylane.pulse import ParametrizedEvolution
 from pennylane.tape import QuantumScript, QuantumTape
+from pennylane.transforms.core import TransformProgram
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 from scipy import sparse
@@ -65,6 +67,7 @@ from ..utils.math import (
     fermionic_operator_matmul,
 )
 from .contraction_strategies import ContractionStrategy, get_contraction_strategy
+from .expval_strategies.terms_splitter import TermsSplitter
 from .probability_strategies import ProbabilityStrategy, get_probability_strategy
 from .sampling_strategies import SamplingStrategy, get_sampling_strategy
 from .star_state_finding_strategies import (
@@ -126,7 +129,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         "PauliX",
         "PauliY",
         "PauliZ",
-        "Hadamard",
         "BatchHamiltonian",
         "Hermitian",
         "Identity",
@@ -654,11 +656,20 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         return self.samples
 
     def exact_expval(self, observable):
+        if isinstance(observable, BasisStateProjector):
+            return self.get_state_probability(observable.parameters[0], observable.wires)
+        if isinstance(observable, BatchProjector):
+            return self.get_states_probability(observable.get_states(), observable.get_batch_wires())
         if self.clifford_expval_strategy.can_execute(self._state_prep_op, observable):
             return self.clifford_expval_strategy(self._state_prep_op, observable, global_sptm=self.global_sptm.matrix())
         if self.expval_from_probabilities_strategy.can_execute(self._state_prep_op, observable):
             prob = self.probability(wires=observable.wires)
             return self.expval_from_probabilities_strategy(self._state_prep_op, observable, prob=prob)
+        terms_splitter = TermsSplitter([self.clifford_expval_strategy, self.expval_from_probabilities_strategy])
+        if terms_splitter.can_execute(self._state_prep_op, observable):
+            return terms_splitter(
+                self._state_prep_op, observable, global_sptm=self.global_sptm.matrix(), prob_func=self.probability
+            )
 
         raise qml.DeviceError(
             f"The expectation value of the observable {observable} "
@@ -667,12 +678,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         )
 
     def expval(self, observable, shot_range=None, bin_size=None):
-        if isinstance(observable, BasisStateProjector):
-            return self.get_state_probability(observable.parameters[0], observable.wires)
-
-        if isinstance(observable, BatchProjector):
-            return self.get_states_probability(observable.get_states(), observable.get_batch_wires())
-
         if self.shots is None:
             output = self.exact_expval(observable)
         else:
@@ -706,6 +711,12 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                 if circuit.batch_size is None:
                     return circuits, hamiltonian_fn
         return self._patched_super_batch_transform(circuit)
+
+    def default_expand_fn(self, circuit: QuantumTape, max_expansion=10):
+        ops_not_supported = not all(self.stopping_condition(op) for op in circuit.operations)
+        if ops_not_supported:
+            circuit = _local_tape_expand(circuit, depth=max_expansion, stop_at=self.stopping_condition)
+        return circuit
 
     def reset(self):
         """Reset the device"""

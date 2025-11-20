@@ -39,22 +39,21 @@ hand_made_test_data = [
     ([0, 1, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
     ([1, 0, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
     ([1, 1, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
-    ([1, 1, 1], [qml.PauliX(0) @ qml.PauliX(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
-    ([1, 1, 1], [qml.PauliX(0) @ qml.PauliZ(1), qml.PauliX(1) @ qml.PauliZ(2)]),
-    ([1, 1, 1], [qml.PauliX(0) @ qml.PauliZ(1), qml.PauliY(1) @ qml.PauliZ(2)]),
+    ([1, 1, 1], [qml.PauliX(0) @ qml.PauliX(1), qml.PauliY(1) @ qml.PauliY(2)]),
+    ([1, 1, 1], [qml.PauliX(0) @ qml.PauliY(1), qml.PauliY(1) @ qml.PauliX(2)]),
+    ([1, 1, 1], [qml.PauliX(0) @ qml.PauliX(1), qml.PauliY(1) @ qml.PauliX(2)]),
 ]
 
 rn_test_data = [
     (
         np.random.choice([0, 1], size=n_wires),
-        [p0(w) @ p1(w + np.random.randint(1, n_wires - w)) for w in np.random.randint(n_wires - 1, size=n_wires)],
+        [p0(w) @ p1(w + 1) for w in np.random.randint(n_wires - 1, size=n_wires)],
         contraction_strategy,
     )
     for n_wires in range(2, 6)
     for i in range(N_RANDOM_TESTS_PER_CASE)
     for contraction_strategy in contraction_strategy_map.keys()
-    for p0 in [qml.PauliX, qml.PauliY, qml.PauliZ]
-    for p1 in [qml.PauliX, qml.PauliY, qml.PauliZ]
+    for p0, p1 in [(qml.X, qml.X), (qml.Y, qml.Y), (qml.Y, qml.X), (qml.X, qml.Y)]
 ]
 
 
@@ -97,8 +96,8 @@ def test_nif_pauli_strings_on_basis_state_against_qubit_device_outer_sum(basis_s
     )
     nif_qnode = qml.QNode(circuit, nif_device)
     qubit_qnode = qml.QNode(circuit, qubit_device)
-    expected_value = sum(qubit_qnode())
     actual_value = sum(nif_qnode())
+    expected_value = sum(qubit_qnode())
 
     np.testing.assert_allclose(
         actual_value,

@@ -3,8 +3,9 @@ from typing import Union
 import numpy as np
 import pennylane as qml
 import torch
-from pennylane.operation import Operator
-from pennylane.ops.op_math import Prod, SProd
+from pennylane.operation import Operator, TermsUndefinedError
+from pennylane.ops.op_math import Prod, SProd, Sum
+from pennylane.ops.qubit import Projector
 from pennylane.pauli import pauli_word_to_string
 
 from ....typing import TensorLike
@@ -50,7 +51,7 @@ class CliffordExpvalStrategy(ExpvalStrategy):
 
         majorana_coeffs = np.asarray([_MAJORANA_COEFFS_MAP[p] for p in pauli_kinds])
         majorana_indices = np.asarray(
-            [_MAJORANA_INDICES_LAMBDAS[p](op.wires[0]) for p, op in zip(pauli_kinds, hamiltonian.ops)]
+            [_MAJORANA_INDICES_LAMBDAS[p](min(op.wires)) for p, op in zip(pauli_kinds, hamiltonian.ops)]
         )
 
         transition_matrices = qml.math.einsum("...kij->i...kj", global_sptm[..., majorana_indices, :])
@@ -69,7 +70,7 @@ class CliffordExpvalStrategy(ExpvalStrategy):
         state_prep_op: Union[qml.StatePrep, qml.BasisState],
         observable: Operator,
     ) -> bool:
-        if not isinstance(observable, (qml.Hamiltonian, Prod, SProd)):
+        if isinstance(observable, (Projector,)):
             return False
         hamiltonian = self._format_observable(observable)
         pauli_kinds = self._hamiltonian_to_pauli_str(hamiltonian)
@@ -81,16 +82,11 @@ class CliffordExpvalStrategy(ExpvalStrategy):
 
     @staticmethod
     def _format_observable(observable):
-        if isinstance(observable, Prod):
-            ops = [observable]
-            observable_coeffs = torch.ones((1,))
-        elif isinstance(observable, SProd):
-            ops = [observable.base]
-            observable_coeffs = observable.scalar
-        else:
-            ops = observable.ops
-            observable_coeffs = observable.coeffs
-        return qml.Hamiltonian(observable_coeffs, ops)
+        try:
+            terms = observable.terms()
+        except TermsUndefinedError:
+            terms = torch.ones((1,)), [observable]
+        return qml.Hamiltonian(*terms)
 
     @staticmethod
     def _hamiltonian_to_pauli_str(hamiltonian: qml.Hamiltonian):
