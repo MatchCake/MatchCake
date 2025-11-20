@@ -50,7 +50,7 @@ class CliffordExpvalStrategy(ExpvalStrategy):
 
         majorana_coeffs = np.asarray([_MAJORANA_COEFFS_MAP[p] for p in pauli_kinds])
         majorana_indices = np.asarray(
-            [_MAJORANA_INDICES_LAMBDAS[p](op.wires[0]) for p, op in zip(pauli_kinds, observable.ops)]
+            [_MAJORANA_INDICES_LAMBDAS[p](op.wires[0]) for p, op in zip(pauli_kinds, hamiltonian.ops)]
         )
 
         transition_matrices = qml.math.einsum("...kij->i...kj", global_sptm[..., majorana_indices, :])
@@ -73,7 +73,11 @@ class CliffordExpvalStrategy(ExpvalStrategy):
             return False
         hamiltonian = self._format_observable(observable)
         pauli_kinds = self._hamiltonian_to_pauli_str(hamiltonian)
-        return all([p in _MAJORANA_COEFFS_MAP for p in pauli_kinds])
+        conditions = [
+            all([p in _MAJORANA_COEFFS_MAP for p in pauli_kinds]),
+            all(len(p.replace("I", "")) <= 2 for p in pauli_kinds),
+        ]
+        return all(conditions)
 
     @staticmethod
     def _format_observable(observable):

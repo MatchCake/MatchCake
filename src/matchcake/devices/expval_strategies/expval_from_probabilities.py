@@ -2,6 +2,7 @@ from typing import Union
 
 import pennylane as qml
 from pennylane.operation import Operator
+from pennylane.pauli import pauli_sentence, pauli_word_to_string
 
 from ...observables.batch_hamiltonian import BatchHamiltonian
 from ...typing import TensorLike
@@ -30,5 +31,5 @@ class ExpvalFromProbabilitiesStrategy(ExpvalStrategy):
         state_prep_op: Union[qml.StatePrep, qml.BasisState],
         observable: Operator,
     ) -> bool:
-        # TODO: Need to check if the observable is diagonal on the Z basis.
-        return True
+        pauli_kinds = [pauli_word_to_string(op) for op in pauli_sentence(observable)]
+        return all((len(set(p) - {"Z", "I"}) == 0) for p in pauli_kinds)
