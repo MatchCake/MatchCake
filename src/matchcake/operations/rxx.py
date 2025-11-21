@@ -3,6 +3,7 @@ from typing import Optional
 import pennylane as qml
 import torch
 from pennylane.typing import TensorLike
+import numpy as np
 
 from .. import matchgate_parameter_sets as mgp
 from .matchgate_operation import MatchgateOperation
@@ -25,8 +26,12 @@ class Rxx(MatchgateOperation):
     and :math:`i` is the imaginary unit.
     """
 
-    num_wires = 2
-    num_params = 1
+    @classmethod
+    def random_params(cls, batch_size=None, **kwargs):
+        params_shape = ([batch_size] if batch_size is not None else []) + [1]
+        seed = kwargs.pop("seed", None)
+        rn_gen = np.random.default_rng(seed)
+        return rn_gen.uniform(0, 2 * np.pi, params_shape)
 
     def __init__(
         self,

@@ -36,7 +36,7 @@ class CliffordExpvalStrategy(ExpvalStrategy):
             state_prep_op.queue()
             return [
                 qml.expval(majorana_to_pauli(mu) @ majorana_to_pauli(nu))
-                for mu, nu in zip(triu_indices[0], triu_indices[1])
+                for mu, nu in zip(*triu_indices)
             ]
 
         expvals = torch.eye(2 * n_qubits, dtype=global_sptm.dtype, device=global_sptm.device)
@@ -45,7 +45,7 @@ class CliffordExpvalStrategy(ExpvalStrategy):
             dtype=global_sptm.dtype,
             device=global_sptm.device,
         )
-        expvals[np.tril_indices(2 * n_qubits, k=-1)] = -expvals[triu_indices]
+        expvals[triu_indices[1], triu_indices[0]] = -expvals[triu_indices]
         hamiltonian = self._format_observable(observable)
         pauli_kinds = self._hamiltonian_to_pauli_str(hamiltonian)
 

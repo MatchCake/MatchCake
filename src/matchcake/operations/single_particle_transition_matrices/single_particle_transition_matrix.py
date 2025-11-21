@@ -3,6 +3,7 @@ from typing import Any, Iterable, List, Literal, Optional, Sequence, Union
 import numpy as np
 import pennylane as qml
 from pennylane import numpy as pnp
+from pennylane.operation import Operator
 from pennylane.operation import AnyWires, Operation
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
@@ -292,8 +293,9 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
 
     @classmethod
     def from_operation(
-        cls, op: Union[Any, "SingleParticleTransitionMatrixOperation"], **kwargs
+        cls, op: Union[Operator, "SingleParticleTransitionMatrixOperation"], **kwargs
     ) -> "SingleParticleTransitionMatrixOperation":
+        from ..matchgate_operation import MatchgateOperation
         if isinstance(op, SingleParticleTransitionMatrixOperation):
             return op
         if hasattr(op, "to_sptm_operation") and callable(op.to_sptm_operation):
@@ -302,10 +304,13 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             return SingleParticleTransitionMatrixOperation(
                 op.single_particle_transition_matrix, wires=op.wires, **kwargs
             )
-        raise ValueError(
-            f"Cannot convert {type(op)} to {cls.__name__} "
-            f"without the attribute 'single_particle_transition_matrix' or the method 'to_sptm_operation'."
-        )
+        try:
+            return MatchgateOperation(op.matrix(), wires=op.wires, **kwargs).to_sptm_operation()
+        except Exception as e:
+            raise ValueError(
+                f"Cannot convert {type(op)} to {cls.__name__} "
+                f"without the attribute 'single_particle_transition_matrix' or the method 'to_sptm_operation'."
+            ) from e
 
     @classmethod
     def from_operations(

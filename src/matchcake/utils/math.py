@@ -563,6 +563,7 @@ def fermionic_operator_matmul(
     :type second_matrix: Any
     :param direction: Direction of the matrix multiplication. "rl" for right to left and "lr" for left to right.
         That means the result will be first_matrix @ second_matrix if direction is "rl" and second_matrix @ first_matrix
+        if direction is "lr".
     :type direction: Literal["rl", "lr"]
     :param operator: Operator to use for the matrix multiplication.
         "einsum" for einsum, "matmul" for matmul, "@" for __matmul__.

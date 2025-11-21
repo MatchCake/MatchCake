@@ -418,7 +418,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                 )
             self.p_bar_set_n(i + 1)
             self.p_bar_set_postfix_str(f"Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%")
-            if kwargs.get("gc_op", True):
+            if kwargs.get("gc_op", False):
                 del op
 
         self.p_bar_set_total(self.apply_metadata["n_operations"])

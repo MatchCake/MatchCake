@@ -3,7 +3,7 @@ import pennylane as qml
 import pytest
 
 from matchcake import NIFDevice
-from matchcake.circuits import RandomMatchgateHaarOperationsGenerator
+from matchcake.circuits import RandomMatchgateOperationsGenerator, RandomMatchgateHaarOperationsGenerator
 from matchcake.devices.expval_strategies.clifford_expval._pauli_map import (
     _MAJORANA_COEFFS_MAP,
 )
@@ -46,6 +46,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
 
     @pytest.fixture
     def random_op_gen(self, nif_device, seed):
+        # return RandomMatchgateOperationsGenerator(
         return RandomMatchgateHaarOperationsGenerator(
             wires=nif_device.wires,
             seed=seed,
@@ -73,18 +74,27 @@ class TestCliffordExpvalStrategyOnRandomInstances:
     def test_random_sptm(self, strategy, rn_gen, qubit_device, random_op_gen, random_hamiltonian, nif_device):
         initial_state = random_op_gen.get_initial_state(rn_gen)
         state_prep_op = qml.BasisState(initial_state, qubit_device.wires)
+        assert strategy.can_execute(state_prep_op, random_hamiltonian)
 
         @qml.qnode(qubit_device)
         def ground_truth_circuit():
-            random_op_gen.circuit()
+            for op in random_op_gen:
+                op.queue()
             return qml.expval(random_hamiltonian)
 
         ground_truth_energy = ground_truth_circuit()
+        nif_device.reset()
         sptm = nif_device.apply_generator(random_op_gen).global_sptm.matrix()
+        # circuit = random_op_gen.get_ops()
+        # sptm = circuit[1].to_sptm_operation()
+        # for op in circuit[2:]:
+        #     sptm = sptm @ op.to_sptm_operation()
+        # sptm = sptm.matrix()
         clifford_energy = strategy(state_prep_op, random_hamiltonian, global_sptm=sptm)
         np.testing.assert_allclose(
             clifford_energy,
             ground_truth_energy,
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
+            err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }"
         )
