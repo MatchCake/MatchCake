@@ -78,6 +78,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
 
         @qml.qnode(qubit_device)
         def ground_truth_circuit():
+            state_prep_op.queue()
             for op in random_op_gen:
                 op.queue()
             return qml.expval(random_hamiltonian)

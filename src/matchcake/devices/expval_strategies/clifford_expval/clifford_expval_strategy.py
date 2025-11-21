@@ -45,7 +45,7 @@ class CliffordExpvalStrategy(ExpvalStrategy):
             dtype=global_sptm.dtype,
             device=global_sptm.device,
         )
-        expvals[triu_indices[1], triu_indices[0]] = -expvals[triu_indices]
+        expvals[triu_indices[1], triu_indices[0]] = -expvals[triu_indices[0], triu_indices[1]]
         hamiltonian = self._format_observable(observable)
         pauli_kinds = self._hamiltonian_to_pauli_str(hamiltonian)
 
