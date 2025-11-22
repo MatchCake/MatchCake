@@ -17,7 +17,7 @@ from ..utils import (
     make_wires_continuous,
 )
 from ..utils.math import fermionic_operator_matmul
-from ..utils.torch_utils import to_tensor
+from ..utils.torch_utils import to_tensor, to_cpu
 from .single_particle_transition_matrices.single_particle_transition_matrix import (
     SingleParticleTransitionMatrixOperation,
 )
@@ -367,7 +367,7 @@ class MatchgateOperation(Operation):
     def _check_m_m_dagger_constraint(self) -> bool:
         with torch.no_grad():
             m_m_dagger = torch.einsum("...ij,...kj->...ik", self.matrix(), torch.conj(self.matrix()))
-            expected_zero = m_m_dagger - torch.eye(4)
+            expected_zero = to_cpu(m_m_dagger) - torch.eye(4)
             check = torch.allclose(expected_zero, torch.zeros_like(expected_zero), atol=1e-5)
         if not check:
             raise ValueError(
@@ -378,7 +378,7 @@ class MatchgateOperation(Operation):
     def _check_m_dagger_m_constraint(self) -> bool:
         with torch.no_grad():
             m_dagger_m = torch.einsum("...ji,...jk->...ik", torch.conj(self.matrix()), self.matrix())
-            expected_zero = m_dagger_m - torch.eye(4)
+            expected_zero = to_cpu(m_dagger_m) - torch.eye(4)
             check = torch.allclose(expected_zero, torch.zeros_like(expected_zero), atol=1e-5)
         if not check:
             raise ValueError(
