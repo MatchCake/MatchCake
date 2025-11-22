@@ -41,7 +41,6 @@ class CliffordExpvalStrategy(ExpvalStrategy):
             return [
                 qml.expval(majorana_to_pauli(mu) @ majorana_to_pauli(nu))
                 for mu, nu in zip(*triu_indices)
-                # for mu, nu in np.ndindex(2 * n_qubits, 2 * n_qubits)
             ]
 
         expvals = torch.eye(2 * n_qubits, dtype=global_sptm.dtype, device=global_sptm.device)
@@ -51,11 +50,7 @@ class CliffordExpvalStrategy(ExpvalStrategy):
             device=global_sptm.device,
         )
         expvals[triu_indices[1], triu_indices[0]] = -expvals[triu_indices[0], triu_indices[1]]
-        # expvals = to_tensor(
-        #     qml.math.stack(clifford_circuit()).reshape(2 * n_qubits, 2 * n_qubits),
-        #     dtype=global_sptm.dtype,
-        #     device=global_sptm.device,
-        # )
+
         hamiltonian = self._format_observable(observable)
         pauli_kinds = self._hamiltonian_to_pauli_str(hamiltonian)
 
@@ -73,15 +68,6 @@ class CliffordExpvalStrategy(ExpvalStrategy):
             transition_tensor,
             expvals,
         )
-        # result = 0
-        # for k, i, j in np.ndindex(majorana_indices.shape[0], 2 * n_qubits, 2 * n_qubits):
-        #     result += (
-        #             majorana_coeffs[k]
-        #             * hamiltonian.coeffs[k]
-        #             * global_sptm[..., majorana_indices[k, 0], i]
-        #             * global_sptm[..., majorana_indices[k, 1], j]
-        #             * expvals[i, j]
-        #     )
         return result
 
     def can_execute(
