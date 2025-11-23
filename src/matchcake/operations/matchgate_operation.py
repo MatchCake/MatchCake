@@ -278,6 +278,23 @@ class MatchgateOperation(Operation):
     ):
         return [qml.QubitUnitary(params[0], wires=wires)]
 
+    def __new__(
+            cls,
+            *params: TensorLike,
+            wires: Optional[WiresLike] = None,
+            id: Optional[str] = None,
+    ):
+        is_matchgate = False
+        if len(params) == 1 and isinstance(params[0], MatchgateParams):
+            is_matchgate = True
+        elif len(params) == 1 and qml.math.ndim(params[0]) >= 2:
+            shape = qml.math.shape(params[0])
+            if shape[-2:] == (4, 4):
+                is_matchgate = True
+        if is_matchgate:
+            return super().__new__(cls, params[0], wires=wires, id=id)
+        return cls(*params, wires=wires, id=id)
+
     def __init__(
         self,
         matrix: Union[TensorLike, MatchgateParams],
