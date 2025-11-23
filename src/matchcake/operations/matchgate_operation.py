@@ -64,7 +64,7 @@ class MatchgateOperation(Operation):
     """
 
     num_params = 1
-    ndim_params = 2
+    ndim_params = (2,)
     num_wires = 2
     par_domain = "A"
 
