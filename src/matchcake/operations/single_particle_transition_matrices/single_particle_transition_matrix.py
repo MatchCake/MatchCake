@@ -3,8 +3,7 @@ from typing import Any, Iterable, List, Literal, Optional, Sequence, Union
 import numpy as np
 import pennylane as qml
 from pennylane import numpy as pnp
-from pennylane.operation import Operator
-from pennylane.operation import AnyWires, Operation
+from pennylane.operation import AnyWires, Operation, Operator
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 
@@ -296,6 +295,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         cls, op: Union[Operator, "SingleParticleTransitionMatrixOperation"], **kwargs
     ) -> "SingleParticleTransitionMatrixOperation":
         from ..matchgate_operation import MatchgateOperation
+
         if isinstance(op, SingleParticleTransitionMatrixOperation):
             return op
         if hasattr(op, "to_sptm_operation") and callable(op.to_sptm_operation):

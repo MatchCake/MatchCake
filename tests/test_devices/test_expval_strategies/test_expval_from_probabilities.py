@@ -1,10 +1,10 @@
 import numpy as np
 import pennylane as qml
 import pytest
-from matchcake.circuits import RandomMatchgateHaarOperationsGenerator
 from pennylane.wires import Wires
 
 from matchcake import NIFDevice
+from matchcake.circuits import RandomMatchgateHaarOperationsGenerator
 from matchcake.devices.expval_strategies.expval_from_probabilities import (
     ExpvalFromProbabilitiesStrategy,
 )
@@ -114,5 +114,5 @@ class TestExpvalFromProbabilities:
             ground_truth_energy,
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
-            err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }"
+            err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }",
         )

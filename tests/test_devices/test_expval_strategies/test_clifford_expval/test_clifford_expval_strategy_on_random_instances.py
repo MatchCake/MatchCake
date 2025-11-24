@@ -3,7 +3,10 @@ import pennylane as qml
 import pytest
 
 from matchcake import NIFDevice
-from matchcake.circuits import RandomMatchgateOperationsGenerator, RandomMatchgateHaarOperationsGenerator
+from matchcake.circuits import (
+    RandomMatchgateHaarOperationsGenerator,
+    RandomMatchgateOperationsGenerator,
+)
 from matchcake.devices.expval_strategies.clifford_expval._pauli_map import (
     _MAJORANA_COEFFS_MAP,
 )
@@ -47,7 +50,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
     @pytest.fixture
     def random_op_gen(self, nif_device, seed):
         return RandomMatchgateOperationsGenerator(
-        # return RandomMatchgateHaarOperationsGenerator(
+            # return RandomMatchgateHaarOperationsGenerator(
             wires=nif_device.wires,
             seed=seed,
         )
@@ -72,13 +75,13 @@ class TestCliffordExpvalStrategyOnRandomInstances:
         )
 
     def test_random_sptm_zeros_init(
-            self,
-            strategy,
-            rn_gen,
-            qubit_device,
-            random_op_gen,
-            random_hamiltonian,
-            nif_device,
+        self,
+        strategy,
+        rn_gen,
+        qubit_device,
+        random_op_gen,
+        random_hamiltonian,
+        nif_device,
     ):
         initial_state = np.zeros(random_op_gen.n_qubits, dtype=int)
         random_op_gen.initial_state = initial_state
@@ -101,18 +104,10 @@ class TestCliffordExpvalStrategyOnRandomInstances:
             ground_truth_energy,
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
-            err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }"
+            err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }",
         )
 
-    def test_random_sptm_ones_init(
-            self,
-            strategy,
-            rn_gen,
-            qubit_device,
-            random_op_gen,
-            random_hamiltonian,
-            nif_device
-    ):
+    def test_random_sptm_ones_init(self, strategy, rn_gen, qubit_device, random_op_gen, random_hamiltonian, nif_device):
         initial_state = np.ones(random_op_gen.n_qubits, dtype=int)
         random_op_gen.initial_state = initial_state
         state_prep_op = qml.BasisState(initial_state, qubit_device.wires)
@@ -134,7 +129,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
             ground_truth_energy,
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
-            err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }"
+            err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }",
         )
 
     def test_random_sptm(self, strategy, rn_gen, qubit_device, random_op_gen, random_hamiltonian, nif_device):
@@ -163,5 +158,5 @@ class TestCliffordExpvalStrategyOnRandomInstances:
             ground_truth_energy,
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
-            err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }"
+            err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }",
         )

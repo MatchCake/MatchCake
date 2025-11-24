@@ -10,9 +10,9 @@ from ..operations import (
     CompRzRz,
     FermionicSuperposition,
     MatchgateOperation,
-    fSWAP,
     Rxx,
-    Rzz
+    Rzz,
+    fSWAP,
 )
 from .random_generator import RandomOperationsGenerator
 

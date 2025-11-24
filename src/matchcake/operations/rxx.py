@@ -1,9 +1,9 @@
 from typing import Optional
 
+import numpy as np
 import pennylane as qml
 import torch
 from pennylane.typing import TensorLike
-import numpy as np
 
 from .. import matchgate_parameter_sets as mgp
 from .matchgate_operation import MatchgateOperation

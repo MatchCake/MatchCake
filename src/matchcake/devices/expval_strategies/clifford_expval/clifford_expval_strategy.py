@@ -10,8 +10,8 @@ from pennylane.pauli import pauli_word_to_string
 
 from ....typing import TensorLike
 from ....utils.majorana import majorana_to_pauli
-from ....utils.torch_utils import to_tensor
 from ....utils.math import dagger
+from ....utils.torch_utils import to_tensor
 from ..expval_strategy import ExpvalStrategy
 from ._pauli_map import _MAJORANA_COEFFS_MAP, _MAJORANA_INDICES_LAMBDAS
 
@@ -20,10 +20,7 @@ class CliffordExpvalStrategy(ExpvalStrategy):
     NAME = "CliffordExpvalStrategy"
 
     def __call__(
-        self,
-        state_prep_op: Union[qml.StatePrep, qml.BasisState],
-        observable: Operator,
-        **kwargs
+        self, state_prep_op: Union[qml.StatePrep, qml.BasisState], observable: Operator, **kwargs
     ) -> TensorLike:
         if not self.can_execute(state_prep_op, observable):
             raise ValueError(f"Cannot execute {self.NAME} strategy for {observable}.")
@@ -38,10 +35,7 @@ class CliffordExpvalStrategy(ExpvalStrategy):
         @qml.qnode(qml.device("default.clifford", wires=wires))
         def clifford_circuit():
             state_prep_op.queue()
-            return [
-                qml.expval(majorana_to_pauli(mu) @ majorana_to_pauli(nu))
-                for mu, nu in zip(*triu_indices)
-            ]
+            return [qml.expval(majorana_to_pauli(mu) @ majorana_to_pauli(nu)) for mu, nu in zip(*triu_indices)]
 
         expvals = torch.eye(2 * n_qubits, dtype=global_sptm.dtype, device=global_sptm.device)
         expvals[triu_indices[0], triu_indices[1]] = to_tensor(

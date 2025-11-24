@@ -46,7 +46,7 @@ _MAJORANA_COEFFS_MAP = _PauliMap(
     {
         "XX": -1j,
         "YY": 1j,
-        "YX": -1j,
+        "YX": 1j,
         "XY": -1j,
         # TODO: Need to debug for ZI and IZ before adding them.
         # "ZI": -1j,
