@@ -1,6 +1,8 @@
 import numpy as np
 import pennylane as qml
 import pytest
+import torch
+from IPython.utils.path import target_update
 from pennylane import X, Y
 from pennylane.wires import Wires
 
@@ -15,6 +17,7 @@ from matchcake.operations import (
     SingleParticleTransitionMatrixOperation,
 )
 from matchcake.utils import get_block_diagonal_matrix
+from matchcake.utils.torch_utils import to_tensor
 
 from ....configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
 
@@ -174,3 +177,37 @@ class TestCliffordExpvalStrategy:
     def test_hamiltonian_to_pauli_str(self, hamiltonian, target, strategy):
         output = strategy._hamiltonian_to_pauli_str(hamiltonian)
         assert output == target
+
+    def test_compute_sum(self, strategy):
+        n_qubits = 2
+        majorana_indices = np.arange(2 * n_qubits).reshape(-1, 2)
+        majorana_coeffs = np.ones(majorana_indices.shape[0]) * (-1) ** np.arange(majorana_indices.shape[0])
+        coeffs = np.arange(majorana_indices.shape[0]) / majorana_indices.shape[0]
+
+        triu_indices = np.triu_indices(2 * n_qubits, k=1)
+        h = np.zeros((2 * n_qubits, 2 * n_qubits))
+        h[triu_indices] = np.arange(triu_indices[0].size) + 1
+        h[triu_indices[1], triu_indices[0]] = -h[triu_indices]
+        global_sptm = to_tensor(qml.math.expm(h), dtype=torch.complex128)
+
+        state_prep_op = qml.BasisState(np.ones(n_qubits), np.arange(n_qubits).tolist())
+        expvals = strategy._compute_full_clifford_expvals(state_prep_op, global_sptm)
+
+        target_result = 0
+        for k, i, j in np.ndindex((majorana_indices.shape[0], 2 * n_qubits, 2 * n_qubits)):
+            target_result += (
+                    majorana_coeffs[k]
+                    * coeffs[k]
+                    * global_sptm[..., majorana_indices[k, 0], i]
+                    * global_sptm[..., majorana_indices[k, 1], j]
+                    * expvals[i, j]
+            )
+
+        result = strategy._compute_sum(
+            majorana_coeffs=majorana_coeffs,
+            coeffs=coeffs,
+            global_sptm=global_sptm,
+            majorana_indices=majorana_indices,
+            expvals=expvals,
+        )
+        np.testing.assert_allclose(result, target_result)
