@@ -19,6 +19,18 @@ from ._pauli_map import _MAJORANA_COEFFS_MAP, _MAJORANA_INDICES_LAMBDAS
 class CliffordExpvalStrategy(ExpvalStrategy):
     NAME = "CliffordExpvalStrategy"
 
+    @staticmethod
+    def compute_clifford_expvals(state_prep_op: Operator):
+        wires = state_prep_op.wires
+        triu_indices = np.triu_indices(2 * len(wires), k=1)
+
+        def clifford_circuit():
+            state_prep_op.queue()
+            return [qml.expval(majorana_to_pauli(mu) @ majorana_to_pauli(nu)) for mu, nu in zip(*triu_indices)]
+
+        clifford_q_node = qml.QNode(clifford_circuit, device=qml.device("default.clifford", wires=wires))
+        return clifford_q_node()
+
     def __call__(
         self, state_prep_op: Union[qml.StatePrep, qml.BasisState], observable: Operator, **kwargs
     ) -> TensorLike:
@@ -27,27 +39,19 @@ class CliffordExpvalStrategy(ExpvalStrategy):
         assert "global_sptm" in kwargs, "The global SPTM `global_sptm` must be provided as a keyword argument."
         global_sptm: TensorLike = kwargs["global_sptm"]
         global_sptm = dagger(global_sptm)
-        wires = state_prep_op.wires
-        n_qubits = len(wires)
         global_sptm = to_tensor(global_sptm, dtype=torch.complex128)
+        n_qubits = len(state_prep_op.wires)
         triu_indices = np.triu_indices(2 * n_qubits, k=1)
-
-        @qml.qnode(qml.device("default.clifford", wires=wires))
-        def clifford_circuit():
-            state_prep_op.queue()
-            return [qml.expval(majorana_to_pauli(mu) @ majorana_to_pauli(nu)) for mu, nu in zip(*triu_indices)]
 
         expvals = torch.eye(2 * n_qubits, dtype=global_sptm.dtype, device=global_sptm.device)
         expvals[triu_indices[0], triu_indices[1]] = to_tensor(
-            qml.math.stack(clifford_circuit()),
-            dtype=global_sptm.dtype,
-            device=global_sptm.device,
+            qml.math.stack(self.compute_clifford_expvals(state_prep_op)),
+            dtype=global_sptm.dtype, device=global_sptm.device
         )
         expvals[triu_indices[1], triu_indices[0]] = -expvals[triu_indices[0], triu_indices[1]]
 
         hamiltonian = self._format_observable(observable)
         pauli_kinds = self._hamiltonian_to_pauli_str(hamiltonian)
-
         majorana_coeffs = np.asarray([_MAJORANA_COEFFS_MAP[p] for p in pauli_kinds])
         majorana_indices = np.asarray(
             [_MAJORANA_INDICES_LAMBDAS[p](min(op.wires)) for p, op in zip(pauli_kinds, hamiltonian.ops)]
@@ -62,6 +66,15 @@ class CliffordExpvalStrategy(ExpvalStrategy):
             transition_tensor,
             expvals,
         )
+        # result = 0
+        # for k, i, j in np.ndindex((majorana_indices.shape[0], 2 * n_qubits, 2 * n_qubits)):
+        #     result += (
+        #             majorana_coeffs[k]
+        #             * hamiltonian.coeffs[k]
+        #             * global_sptm[..., majorana_indices[k, 0], i]
+        #             * global_sptm[..., majorana_indices[k, 1], j]
+        #             * expvals[i, j]
+        #     )
         return result
 
     def can_execute(
