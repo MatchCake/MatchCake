@@ -14,6 +14,7 @@ from matchcake.devices.expval_strategies.clifford_expval.clifford_expval_strateg
     CliffordExpvalStrategy,
 )
 from matchcake.operations import CompHH
+from matchcake.utils.majorana import majorana_to_pauli
 
 from ....configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
 
@@ -147,11 +148,6 @@ class TestCliffordExpvalStrategyOnRandomInstances:
         ground_truth_energy = ground_truth_circuit()
         nif_device.reset()
         sptm = nif_device.apply_generator(random_op_gen).global_sptm.matrix()
-        # circuit = random_op_gen.get_ops()
-        # sptm = circuit[1].to_sptm_operation()
-        # for op in circuit[2:]:
-        #     sptm = sptm @ op.to_sptm_operation()
-        # sptm = sptm.matrix()
         clifford_energy = strategy(state_prep_op, random_hamiltonian, global_sptm=sptm)
         np.testing.assert_allclose(
             clifford_energy,
@@ -160,3 +156,17 @@ class TestCliffordExpvalStrategyOnRandomInstances:
             rtol=RTOL_APPROX_COMPARISON,
             err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }",
         )
+
+    def test_compute_clifford_expvals_rn_init(self, n_qubits, rn_gen, qubit_device, strategy):
+        wires = np.arange(n_qubits).tolist()
+        state_prep_op = qml.BasisState(rn_gen.choice([0, 1], n_qubits), wires)
+        triu_indices = np.triu_indices(2 * n_qubits, k=1)
+
+        @qml.qnode(qubit_device)
+        def ground_truth_circuit():
+            state_prep_op.queue()
+            return [qml.expval(majorana_to_pauli(mu) @ majorana_to_pauli(nu)) for mu, nu in zip(*triu_indices)]
+
+        expvals = strategy.compute_clifford_expvals(state_prep_op)
+        targets = ground_truth_circuit()
+        np.testing.assert_allclose(expvals, targets)

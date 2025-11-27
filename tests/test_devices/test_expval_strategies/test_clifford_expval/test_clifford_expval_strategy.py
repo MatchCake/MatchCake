@@ -14,6 +14,7 @@ from matchcake.operations import (
     MatchgateIdentity,
     SingleParticleTransitionMatrixOperation,
 )
+from matchcake.utils import get_block_diagonal_matrix
 
 from ....configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
 
@@ -79,18 +80,7 @@ class TestCliffordExpvalStrategy:
                     CompHH(wires=[0, 1]),
                     CompHH(wires=[1, 2]),
                 ],
-                (
-                    X(0)
-                    @ X(1)
-                    # + 0.71518937 * Y(0) @ Y(1)
-                    # + 0.60276338 * Y(0) @ X(1)
-                    # + X(0) @ Y(1)
-                    # + 0.54488318 * X(0) @ Y(1)
-                    # + 0.4236548 * X(1) @ X(2)
-                    # + 0.64589411* Y(1) @ Y(2)
-                    # + 0.43758721* Y(1) @ X(2)
-                    # + 0.891773* X(1) @ Y(2)
-                ),
+                X(0) @ X(1),
             ),
         ],
     )
@@ -129,3 +119,58 @@ class TestCliffordExpvalStrategy:
                 qml.Z(0) @ qml.X(1),
                 global_sptm=np.eye(4),
             )
+
+    @pytest.mark.parametrize("n_qubits", np.linspace(2, 10, num=8, dtype=int))
+    def test_compute_clifford_expvals_zero_init(self, n_qubits, strategy):
+        wires = np.arange(n_qubits).tolist()
+        state_prep_op = qml.BasisState(np.zeros(n_qubits), wires)
+        triu_indices = np.triu_indices(2 * n_qubits, k=1)
+
+        expvals = strategy.compute_clifford_expvals(state_prep_op)
+        targets = get_block_diagonal_matrix(n_qubits)[triu_indices]
+        np.testing.assert_allclose(expvals, targets)
+
+    @pytest.mark.parametrize("n_qubits", np.linspace(2, 10, num=8, dtype=int))
+    def test_compute_clifford_expvals_ones_init(self, n_qubits, strategy):
+        wires = np.arange(n_qubits).tolist()
+        state_prep_op = qml.BasisState(np.ones(n_qubits), wires)
+        triu_indices = np.triu_indices(2 * n_qubits, k=1)
+
+        expvals = strategy.compute_clifford_expvals(state_prep_op)
+        targets = get_block_diagonal_matrix(n_qubits).T[triu_indices]
+        np.testing.assert_allclose(expvals, targets)
+
+    @pytest.mark.parametrize(
+        "hamiltonian, target",
+        [
+            (qml.Hamiltonian([1.0], [qml.X(0) @ qml.X(1)]), ["XX"]),
+            (qml.Hamiltonian([1.0], [qml.X(1) @ qml.X(2)]), ["XX"]),
+            (
+                    qml.Hamiltonian(
+                        [1, 1, 1, 1],
+                        [
+                            qml.X(1) @ qml.X(2),
+                            qml.X(0) @ qml.Y(1),
+                            qml.Y(0) @ qml.X(1),
+                            qml.Y(0) @ qml.Y(1),
+                        ]
+                    ),
+                    ["XX", "XY", "YX", "YY"]
+            ),
+            (
+                    qml.Hamiltonian(
+                        [1, 1, 1, 1],
+                        [
+                            qml.X(1) @ qml.X(2),
+                            qml.X(2) @ qml.Y(3),
+                            qml.Y(3) @ qml.X(4),
+                            qml.Y(4) @ qml.Y(5),
+                        ]
+                    ),
+                    ["XX", "XY", "YX", "YY"]
+            ),
+        ]
+    )
+    def test_hamiltonian_to_pauli_str(self, hamiltonian, target, strategy):
+        output = strategy._hamiltonian_to_pauli_str(hamiltonian)
+        assert output == target
