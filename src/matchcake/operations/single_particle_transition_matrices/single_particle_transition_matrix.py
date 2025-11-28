@@ -5,9 +5,10 @@ import pennylane as qml
 from pennylane import numpy as pnp
 from pennylane.operation import AnyWires, Operation, Operator
 from pennylane.typing import TensorLike
-from pennylane.wires import Wires
+from pennylane.wires import Wires, WiresLike
 
 from ... import utils
+from ...utils.majorana import MajoranaGetter
 from ...constants import _CIRCUIT_MATMUL_DIRECTION
 from ...utils import make_wires_continuous
 from ...utils.math import (
@@ -17,6 +18,7 @@ from ...utils.math import (
     det,
     fermionic_operator_matmul,
     orthonormalize,
+    logm,
 )
 from ...utils.torch_utils import detach
 
@@ -222,6 +224,15 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     DEFAULT_CLIP_ANGLES = True
     DEFAULT_NORMALIZE = False
 
+    @staticmethod
+    def compute_decomposition(
+            *params: TensorLike,
+            wires: Optional[WiresLike] = None,
+            **hyperparameters: dict[str, Any],
+    ):
+        unitary = SingleParticleTransitionMatrixOperation.to_unitary_matrix(params[0])
+        return [qml.QubitUnitary(unitary, wires=wires)]
+
     @classmethod
     def clip_angles(cls, angles):
         """
@@ -394,11 +405,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         if normalize:
             matrix = orthonormalize(matrix)
         _SingleParticleTransitionMatrix.__init__(self, matrix, wires=wires)
-        if self.batch_size is None:
-            params = matrix.reshape(-1)
-        else:
-            params = matrix.reshape(self.batch_size, -1)
-        Operation.__init__(self, params, wires=wires, id=id)
+        Operation.__init__(self, matrix, wires=wires, id=id)
         self._hyperparameters = {
             "clip_angles": clip_angles,
             "check_angles": check_angles,
@@ -519,3 +526,21 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         return SingleParticleTransitionMatrixOperation(
             qml.math.trunc(self.matrix()), wires=self.wires, **self._hyperparameters
         )
+
+    def to_matchgate(self):
+        from ..matchgate_operation import MatchgateOperation
+
+        unitary = self.to_unitary_matrix(self.matrix())
+        return MatchgateOperation(unitary, wires=self.wires, id=self.id, **self.hyperparameters)
+
+    @staticmethod
+    def to_unitary_matrix(matrix: TensorLike) -> TensorLike:
+        wires = np.arange(matrix.shape[-1] // 2)
+        majorana_getter = MajoranaGetter(n=len(wires))
+        majorana_tensor = qml.math.stack([majorana_getter[i] for i in range(2 * majorana_getter.n)])
+        m = 2 * majorana_getter.n
+        h = (1 / m) * logm(matrix)
+        unitary = qml.math.expm(
+            -qml.math.einsum("...ij,ikq,jqp->...kp", h, majorana_tensor, majorana_tensor)
+        )
+        return unitary
