@@ -1,6 +1,7 @@
 import numpy as np
 import pennylane as qml
 import pytest
+import torch
 
 from matchcake import NIFDevice
 from matchcake.circuits import (
@@ -13,8 +14,9 @@ from matchcake.devices.expval_strategies.clifford_expval._pauli_map import (
 from matchcake.devices.expval_strategies.clifford_expval.clifford_expval_strategy import (
     CliffordExpvalStrategy,
 )
-from matchcake.operations import CompHH
-from matchcake.utils.majorana import majorana_to_pauli
+from matchcake.operations import CompHH, SingleParticleTransitionMatrixOperation
+from matchcake.utils.majorana import majorana_to_pauli, MajoranaGetter
+from matchcake.utils.torch_utils import to_tensor
 
 from ....configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
 
@@ -170,3 +172,57 @@ class TestCliffordExpvalStrategyOnRandomInstances:
         expvals = strategy.compute_clifford_expvals(state_prep_op)
         targets = ground_truth_circuit()
         np.testing.assert_allclose(expvals, targets)
+
+    def test_compute_sum(self, rn_gen, n_qubits, strategy):
+        majorana_indices = np.arange(2 * n_qubits).reshape(-1, 2)
+        majorana_coeffs = np.ones(majorana_indices.shape[0]) * (-1j) ** np.arange(majorana_indices.shape[0])
+        coeffs = np.arange(majorana_indices.shape[0]) / majorana_indices.shape[0]
+
+        triu_indices = np.triu_indices(2 * n_qubits, k=1)
+        h = np.zeros((2 * n_qubits, 2 * n_qubits))
+        h[triu_indices] = np.arange(triu_indices[0].size) + 1
+        h[triu_indices[1], triu_indices[0]] = -h[triu_indices]
+        global_sptm = to_tensor(qml.math.expm(4 * h), dtype=torch.complex128)
+
+        state_prep_op = qml.BasisState(rn_gen.choice([0, 1], size=n_qubits), np.arange(n_qubits).tolist())
+        expvals = strategy._compute_full_clifford_expvals(state_prep_op, global_sptm)
+
+        target_result = 0
+        for k, i, j in np.ndindex((majorana_indices.shape[0], 2 * n_qubits, 2 * n_qubits)):
+            target_result += (
+                    majorana_coeffs[k]
+                    * coeffs[k]
+                    * global_sptm[..., majorana_indices[k, 0], i]
+                    * global_sptm[..., majorana_indices[k, 1], j]
+                    * expvals[i, j]
+            )
+
+        result = strategy._compute_sum(
+            majorana_coeffs=majorana_coeffs,
+            coeffs=coeffs,
+            global_sptm=global_sptm,
+            majorana_indices=majorana_indices,
+            expvals=expvals,
+        )
+        np.testing.assert_allclose(result, target_result)
+
+    def test_random_sptm_unitary(self, strategy, n_qubits, rn_gen, qubit_device, random_hamiltonian):
+        wires = np.arange(n_qubits).tolist()
+        global_sptm = SingleParticleTransitionMatrixOperation.random(wires=wires)
+        state_prep_op = qml.BasisState(rn_gen.choice([0, 1], size=n_qubits), wires=wires)
+
+        @qml.qnode(qubit_device)
+        def ground_truth_circuit():
+            state_prep_op.queue()
+            global_sptm.queue()
+            return qml.expval(random_hamiltonian)
+
+        ground_truth_energy = ground_truth_circuit()
+        clifford_energy = strategy(state_prep_op, random_hamiltonian, global_sptm=global_sptm.matrix())
+        np.testing.assert_allclose(
+            clifford_energy,
+            ground_truth_energy,
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=RTOL_APPROX_COMPARISON,
+            err_msg=f"{state_prep_op = }"
+        )

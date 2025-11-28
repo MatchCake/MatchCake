@@ -90,7 +90,7 @@ class TestCliffordExpvalStrategy:
     def test_expval_on_circuits(self, circuit, hamiltonian, strategy):
         wires = Wires.all_wires([op.wires for op in circuit])
         qubit_device = qml.device("default.qubit", wires=wires)
-        nif_device = NIFDevice(wires=wires)
+        nif_device = NIFDevice(wires=wires, contraction_strategy=None)
 
         initial_state = np.zeros(len(qubit_device.wires))
         state_prep_op = qml.BasisState(initial_state, qubit_device.wires)
@@ -104,9 +104,6 @@ class TestCliffordExpvalStrategy:
 
         ground_truth_energy = ground_truth_circuit()
         sptm = nif_device.apply_generator(circuit).global_sptm.matrix()
-        # sptm = SingleParticleTransitionMatrixOperation.from_operation(circuit[0])
-        # for op in circuit[1:]:
-        #     sptm = SingleParticleTransitionMatrixOperation.from_operation(op) @ sptm
         clifford_energy = strategy(state_prep_op, hamiltonian, global_sptm=sptm)
         np.testing.assert_allclose(
             clifford_energy,
@@ -179,9 +176,9 @@ class TestCliffordExpvalStrategy:
         assert output == target
 
     def test_compute_sum(self, strategy):
-        n_qubits = 2
+        n_qubits = 12
         majorana_indices = np.arange(2 * n_qubits).reshape(-1, 2)
-        majorana_coeffs = np.ones(majorana_indices.shape[0]) * (-1) ** np.arange(majorana_indices.shape[0])
+        majorana_coeffs = np.ones(majorana_indices.shape[0]) * (-1j) ** np.arange(majorana_indices.shape[0])
         coeffs = np.arange(majorana_indices.shape[0]) / majorana_indices.shape[0]
 
         triu_indices = np.triu_indices(2 * n_qubits, k=1)
