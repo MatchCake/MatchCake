@@ -6,7 +6,7 @@ from IPython.utils.path import target_update
 from pennylane import X, Y
 from pennylane.wires import Wires
 
-from matchcake import NIFDevice
+from matchcake import NIFDevice, utils
 from matchcake.devices.expval_strategies.clifford_expval.clifford_expval_strategy import (
     CliffordExpvalStrategy,
 )
@@ -179,7 +179,7 @@ class TestCliffordExpvalStrategy:
         assert output == target
 
     def test_compute_sum(self, strategy):
-        n_qubits = 2
+        n_qubits = 10
         majorana_indices = np.arange(2 * n_qubits).reshape(-1, 2)
         majorana_coeffs = np.ones(majorana_indices.shape[0]) * (-1) ** np.arange(majorana_indices.shape[0])
         coeffs = np.arange(majorana_indices.shape[0]) / majorana_indices.shape[0]
@@ -211,3 +211,25 @@ class TestCliffordExpvalStrategy:
             expvals=expvals,
         )
         np.testing.assert_allclose(result, target_result)
+
+    @pytest.mark.parametrize(
+        "sptm, initial_string, hamiltonian, expval_target",
+        [
+            (
+                    np.array([
+                        [0.4193, 0.0369, -0.6896, 0.5894],
+                        [-0.8909, -0.1005, -0.4154, 0.1541],
+                        [0.1698, -0.7728, -0.3604, -0.4941],
+                        [0.0418, 0.6256, -0.4713, -0.6203]
+                    ]),
+                    "01",
+                    qml.Hamiltonian([0.13], [qml.X(0) @ qml.X(1)]),
+                    0.5
+            ),
+        ]
+    )
+    def test_on_specific_sptm(self, sptm, initial_string, hamiltonian, expval_target, strategy):
+        initial_state = utils.binary_string_to_vector(initial_string)
+        state_prep = qml.BasisState(initial_state, wires=np.arange(initial_state.size))
+        expval = strategy(state_prep_op=state_prep, observable=hamiltonian, global_sptm=sptm)
+        np.testing.assert_allclose(expval, expval_target)

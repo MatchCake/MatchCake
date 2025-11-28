@@ -1,6 +1,7 @@
 import numpy as np
 import pennylane as qml
 import pytest
+from pennylane.pauli import string_to_pauli_word
 
 from matchcake import NIFDevice
 from matchcake.circuits import (
@@ -134,6 +135,33 @@ class TestCliffordExpvalStrategyOnRandomInstances:
         )
 
     def test_random_sptm(self, strategy, rn_gen, qubit_device, random_op_gen, random_hamiltonian, nif_device):
+        initial_state = random_op_gen.get_initial_state(rn_gen)
+        state_prep_op = qml.BasisState(initial_state, qubit_device.wires)
+        assert strategy.can_execute(state_prep_op, random_hamiltonian)
+
+        @qml.qnode(qubit_device)
+        def ground_truth_circuit():
+            state_prep_op.queue()
+            for op in random_op_gen:
+                op.queue()
+            return qml.expval(random_hamiltonian)
+
+        ground_truth_energy = ground_truth_circuit()
+        nif_device.reset()
+        sptm = nif_device.apply_generator(random_op_gen).global_sptm.matrix()
+        clifford_energy = strategy(state_prep_op, random_hamiltonian, global_sptm=sptm)
+        np.testing.assert_allclose(
+            clifford_energy,
+            ground_truth_energy,
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=RTOL_APPROX_COMPARISON,
+            err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }",
+        )
+
+    @pytest.mark.parametrize("hamiltonian_term", ["XX", "YY", "XY", "YX"])
+    def test_random_sptm_on_specific_hamiltonian(self, hamiltonian_term, strategy, rn_gen, qubit_device, random_op_gen, nif_device):
+        random_hamiltonian = qml.Hamiltonian([1.0], [string_to_pauli_word(hamiltonian_term)])
+
         initial_state = random_op_gen.get_initial_state(rn_gen)
         state_prep_op = qml.BasisState(initial_state, qubit_device.wires)
         assert strategy.can_execute(state_prep_op, random_hamiltonian)
