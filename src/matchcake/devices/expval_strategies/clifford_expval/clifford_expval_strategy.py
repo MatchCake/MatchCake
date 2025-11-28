@@ -38,7 +38,6 @@ class CliffordExpvalStrategy(ExpvalStrategy):
             raise ValueError(f"Cannot execute {self.NAME} strategy for {observable}.")
         assert "global_sptm" in kwargs, "The global SPTM `global_sptm` must be provided as a keyword argument."
         global_sptm: TensorLike = kwargs["global_sptm"]
-        global_sptm = dagger(global_sptm)
         global_sptm = to_tensor(global_sptm, dtype=torch.complex128)
         expvals = self._compute_full_clifford_expvals(state_prep_op, global_sptm)
         hamiltonian = self._format_observable(observable)
