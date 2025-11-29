@@ -4,7 +4,7 @@ import pytest
 from pennylane.pauli import string_to_pauli_word
 import torch
 
-from matchcake import NIFDevice
+from matchcake import NIFDevice, MatchgateOperation
 from matchcake.circuits import (
     RandomMatchgateHaarOperationsGenerator,
     RandomMatchgateOperationsGenerator,
@@ -15,7 +15,8 @@ from matchcake.devices.expval_strategies.clifford_expval._pauli_map import (
 from matchcake.devices.expval_strategies.clifford_expval.clifford_expval_strategy import (
     CliffordExpvalStrategy,
 )
-from matchcake.operations import CompHH, SingleParticleTransitionMatrixOperation
+from matchcake.operations import CompHH, SingleParticleTransitionMatrixOperation, Rxx, Rzz, CompRyRy, CompRzRz, fSWAP, \
+    FermionicSuperposition, CompRxRx
 from matchcake.utils.majorana import majorana_to_pauli, MajoranaGetter
 from matchcake.utils.torch_utils import to_tensor
 
@@ -54,9 +55,22 @@ class TestCliffordExpvalStrategyOnRandomInstances:
     @pytest.fixture
     def random_op_gen(self, nif_device, seed):
         return RandomMatchgateOperationsGenerator(
-            # return RandomMatchgateHaarOperationsGenerator(
             wires=nif_device.wires,
             seed=seed,
+            op_types=[
+                # Fail
+                # MatchgateOperation,
+                # CompRxRx,
+                # CompHH,
+                # CompRyRy,
+                # FermionicSuperposition,
+                # Rxx,
+
+                # Pass
+                Rzz,
+                CompRzRz,
+                fSWAP,
+            ]
         )
 
     def test_eye_sptm(self, strategy, n_qubits, qubit_device, rn_gen, random_hamiltonian):

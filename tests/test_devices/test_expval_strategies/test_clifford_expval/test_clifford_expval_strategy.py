@@ -2,7 +2,6 @@ import numpy as np
 import pennylane as qml
 import pytest
 import torch
-from IPython.utils.path import target_update
 from pennylane import X, Y
 from pennylane.wires import Wires
 
