@@ -533,14 +533,20 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         unitary = self.to_unitary_matrix(self.matrix())
         return MatchgateOperation(unitary, wires=self.wires, id=self.id, **self.hyperparameters)
 
+    def to_qubit_unitary(self) -> qml.QubitUnitary:
+        return qml.QubitUnitary(self.to_unitary_matrix(self.matrix()), wires=self.wires, id=self.id, unitary_check=True)
+
     @staticmethod
     def to_unitary_matrix(matrix: TensorLike) -> TensorLike:
         wires = np.arange(matrix.shape[-1] // 2)
         majorana_getter = MajoranaGetter(n=len(wires))
         majorana_tensor = qml.math.stack([majorana_getter[i] for i in range(2 * majorana_getter.n)])
-        m = 2 * majorana_getter.n
-        h = (1 / m) * logm(matrix)
+        h = (1 / 4) * logm(matrix)
         unitary = qml.math.expm(
-            -qml.math.einsum("...ij,ikq,jqp->...kp", h, majorana_tensor, majorana_tensor)
+            -qml.math.einsum(
+                "...ij,ikq,jqp->...kp",
+                h, majorana_tensor, majorana_tensor,
+                optimize="optimal",
+            )
         )
         return unitary
