@@ -43,6 +43,25 @@ class CliffordSumStrategy(ProbabilityStrategy):
         clifford_q_node = qml.QNode(clifford_circuit, device=qml.device("default.clifford", wires=wires))
         return clifford_q_node()
 
+    @staticmethod
+    def _basis_state_to_fermi_ops(basis_state: TensorLike, wires: Wires) -> Operator:
+        """
+        ... :math:
+            a_j a_j^\dagger = |0\rangle\langle 0|
+            a_j^\dagger a_j = |1\rangle\langle 1|
+
+        where :math:`a_j^\dagger` is the jth fermionic creation operator and
+        :math:`a_j` is the jth fermionic annihilation operator.
+
+        """
+        ops  = []
+        for w, b in zip(wires, basis_state):
+            if qml.math.isclose(b, 0):
+                ops.append(qml.fermi.FermiA(int(w)) * qml.fermi.FermiC(int(w)))
+            else:
+                ops.append(qml.fermi.FermiC(int(w)) * qml.fermi.FermiA(int(w)))
+        return qml.math.prod(ops)
+
     def __init__(self):
         self.majorana_getter = None
 
@@ -79,8 +98,12 @@ class CliffordSumStrategy(ProbabilityStrategy):
         num_wires = len(all_wires)
         global_sptm = kwargs["global_sptm"]
         state_prep_op: Operator = kwargs["state_prep_op"]
+        fermi_ops = self._basis_state_to_fermi_ops(target_binary_state, wires)
+        non_zero_indexes = np.nonzero(target_binary_state)[0]
         majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(target_binary_state)
         # np_iterator = np.ndindex(tuple([2 * num_wires for _ in range(2 * len(target_binary_state))]))
-        expval_indexes = np.ndindex(tuple([2 * num_wires for _ in range(len(majorana_indexes))]))
-        expvals = self.compute_clifford_expvals(state_prep_op, list(expval_indexes))
+        indexes_shape = tuple([2 * num_wires for _ in range(len(majorana_indexes))])
+        expval_indexes = np.asarray(list(np.ndindex(indexes_shape)))
+        expvals = self.compute_clifford_expvals(state_prep_op, expval_indexes)
+        expvals = qml.math.stack(expvals).reshape(indexes_shape)
         print(expvals)
