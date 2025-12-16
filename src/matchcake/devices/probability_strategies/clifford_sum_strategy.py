@@ -11,11 +11,37 @@ from pennylane.wires import Wires
 from ... import utils
 from ...base.lookup_table import NonInteractingFermionicLookupTable
 from .probability_strategy import ProbabilityStrategy
+from typing import Union
+
+import numpy as np
+import pennylane as qml
+import torch
+from pennylane.operation import Operator, TermsUndefinedError
+from pennylane.ops.op_math import Prod, SProd, Sum
+from pennylane.ops.qubit import Projector
+from pennylane.pauli import pauli_word_to_string
+
+from ...typing import TensorLike
+from ...utils.majorana import majorana_to_pauli
 
 
 class CliffordSumStrategy(ProbabilityStrategy):
     NAME: str = "CliffordSum"
-    REQUIRES_KWARGS = ["transition_matrix", "all_wires"]
+    REQUIRES_KWARGS = ["global_sptm", "all_wires", "state_prep_op"]
+
+    @staticmethod
+    def compute_clifford_expvals(state_prep_op: Operator, majorana_indexes: np.ndarray) -> np.ndarray:
+        wires = state_prep_op.wires
+
+        def clifford_circuit():
+            state_prep_op.queue()
+            return [
+                qml.expval(qml.prod(*[majorana_to_pauli(i) for i in indices]))
+                for indices in majorana_indexes
+            ]
+
+        clifford_q_node = qml.QNode(clifford_circuit, device=qml.device("default.clifford", wires=wires))
+        return clifford_q_node()
 
     def __init__(self):
         self.majorana_getter = None
@@ -51,7 +77,10 @@ class CliffordSumStrategy(ProbabilityStrategy):
         wires = Wires(wires)
         all_wires = kwargs["all_wires"]
         num_wires = len(all_wires)
-        transition_matrix = kwargs["transition_matrix"]
-        self.majorana_getter = kwargs.get("majorana_getter", utils.MajoranaGetter(num_wires, maxsize=256))
-
-        ...
+        global_sptm = kwargs["global_sptm"]
+        state_prep_op: Operator = kwargs["state_prep_op"]
+        majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(target_binary_state)
+        # np_iterator = np.ndindex(tuple([2 * num_wires for _ in range(2 * len(target_binary_state))]))
+        expval_indexes = np.ndindex(tuple([2 * num_wires for _ in range(len(majorana_indexes))]))
+        expvals = self.compute_clifford_expvals(state_prep_op, list(expval_indexes))
+        print(expvals)
