@@ -79,10 +79,12 @@ class CliffordSumStrategy(ProbabilityStrategy):
 
     @staticmethod
     def _create_transition_tensor(transition_vectors: List[TensorLike]) -> TensorLike:
-        sublists = [[Ellipsis, i] for i in range(len(transition_vectors))]
-        operands = list(itertools.chain(*list(zip(transition_vectors, sublists))))
-        sublistout = [Ellipsis, list(range(len(transition_vectors)))]
-        return qml.math.einsum(*operands, sublistout)
+        # sublists = [[Ellipsis, i] for i in range(len(transition_vectors))]
+        # operands = list(itertools.chain(*list(zip(transition_vectors, sublists))))
+        # sublistout = [Ellipsis, list(range(len(transition_vectors)))]
+        # return qml.math.einsum(*operands, sublistout)
+        outer_prod = lambda x, y: qml.math.einsum("...i,...j->...ij", x, y)
+        return utils.recursive_2in_operator(outer_prod, transition_vectors)
 
     def __init__(self):
         self.majorana_getter = None
