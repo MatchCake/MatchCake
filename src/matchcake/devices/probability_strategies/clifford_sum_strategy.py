@@ -1,5 +1,6 @@
+import itertools
 import warnings
-from typing import Callable
+from typing import Callable, List
 
 import numpy as np
 import pennylane as qml
@@ -27,7 +28,7 @@ from ...utils.majorana import majorana_to_pauli
 
 class CliffordSumStrategy(ProbabilityStrategy):
     NAME: str = "CliffordSum"
-    REQUIRES_KWARGS = ["global_sptm", "all_wires", "state_prep_op"]
+    REQUIRES_KWARGS = ["global_sptm", "all_wires", "state_prep_op", "transition_matrix"]
 
     @staticmethod
     def compute_clifford_expvals(state_prep_op: Operator, majorana_indexes: np.ndarray) -> np.ndarray:
@@ -44,7 +45,7 @@ class CliffordSumStrategy(ProbabilityStrategy):
         return clifford_q_node()
 
     @staticmethod
-    def _basis_state_to_fermi_ops(basis_state: TensorLike, wires: Wires) -> Operator:
+    def _basis_state_to_fermi_ops(basis_state: TensorLike, wires: Wires) -> qml.fermi.FermiWord:
         """
         ... :math:
             a_j a_j^\dagger = |0\rangle\langle 0|
@@ -52,7 +53,6 @@ class CliffordSumStrategy(ProbabilityStrategy):
 
         where :math:`a_j^\dagger` is the jth fermionic creation operator and
         :math:`a_j` is the jth fermionic annihilation operator.
-
         """
         ops  = []
         for w, b in zip(wires, basis_state):
@@ -61,6 +61,28 @@ class CliffordSumStrategy(ProbabilityStrategy):
             else:
                 ops.append(qml.fermi.FermiC(int(w)) * qml.fermi.FermiA(int(w)))
         return qml.math.prod(ops)
+
+    @staticmethod
+    def _apply_wicks_contraction(fermi_ops: qml.fermi.FermiWord) -> qml.math.FermiWord:
+        return fermi_ops
+
+    @staticmethod
+    def _gather_transition_vectors(fermi_ops: qml.fermi.FermiWord, transition_matrix: TensorLike) -> List[TensorLike]:
+        transition_vectors = []
+        for key in fermi_ops:
+            orbital, position = key
+            if fermi_ops[key] == '+':
+                transition_vectors.append(qml.math.conjugate(transition_matrix[..., position, :]))
+            else:
+                transition_vectors.append(transition_matrix[..., position, :])
+        return transition_vectors
+
+    @staticmethod
+    def _create_transition_tensor(transition_vectors: List[TensorLike]) -> TensorLike:
+        sublists = [[Ellipsis, i] for i in range(len(transition_vectors))]
+        operands = list(itertools.chain(*list(zip(transition_vectors, sublists))))
+        sublistout = [Ellipsis, list(range(len(transition_vectors)))]
+        return qml.math.einsum(*operands, sublistout)
 
     def __init__(self):
         self.majorana_getter = None
@@ -97,8 +119,14 @@ class CliffordSumStrategy(ProbabilityStrategy):
         all_wires = kwargs["all_wires"]
         num_wires = len(all_wires)
         global_sptm = kwargs["global_sptm"]
+        transition_matrix = kwargs["transition_matrix"]
         state_prep_op: Operator = kwargs["state_prep_op"]
         fermi_ops = self._basis_state_to_fermi_ops(target_binary_state, wires)
+        fermi_ops = self._apply_wicks_contraction(fermi_ops)
+        transition_vectors = self._gather_transition_vectors(fermi_ops, transition_matrix)
+        transition_tensor = self._create_transition_tensor(transition_vectors)
+
+
         non_zero_indexes = np.nonzero(target_binary_state)[0]
         majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(target_binary_state)
         # np_iterator = np.ndindex(tuple([2 * num_wires for _ in range(2 * len(target_binary_state))]))
