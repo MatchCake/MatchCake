@@ -58,7 +58,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
             wires=nif_device.wires,
             seed=seed,
             op_types=[
-                # Fail
+                # TODO: Fail
                 # MatchgateOperation,
                 # CompRxRx,
                 # CompHH,

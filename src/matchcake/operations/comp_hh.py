@@ -47,6 +47,5 @@ class CompHH(MatchgateOperation):
     def label(self, decimals=None, base_label=None, cache=None):
         return base_label or self.name
 
-    #
     def to_sptm_operation(self) -> SingleParticleTransitionMatrixOperation:
         return SptmCompHH(wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs)

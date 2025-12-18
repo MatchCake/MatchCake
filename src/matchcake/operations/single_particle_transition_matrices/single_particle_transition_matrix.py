@@ -3,6 +3,7 @@ from typing import Any, Iterable, List, Literal, Optional, Sequence, Union
 import numpy as np
 import pennylane as qml
 from pennylane import numpy as pnp
+from pennylane.math import expm
 from pennylane.operation import AnyWires, Operation, Operator
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires, WiresLike
@@ -380,7 +381,13 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         assert wires is not None, "wires kwarg must be set."
         seed = kwargs.pop("seed", None)
         rn_gen = np.random.default_rng(seed)
-        return rn_gen.normal(size=(([batch_size] if batch_size is not None else []) + [2 * len(wires), 2 * len(wires)]))
+        params_indexes = np.triu_indices(2 * len(wires), k=1)
+        rn_params = rn_gen.normal(size=(([batch_size] if batch_size is not None else []) + [params_indexes[0].size]))
+        matrix = np.zeros(([batch_size] if batch_size is not None else []) + [2 * len(wires), 2 * len(wires)], dtype=complex)
+        matrix[..., params_indexes[0], params_indexes[1]] = rn_params
+        matrix[..., params_indexes[1], params_indexes[0]] = -rn_params
+        exp_matrix = expm(4 * matrix)
+        return exp_matrix
 
     @classmethod
     def random(cls, wires: Wires, batch_size=None, **kwargs):
@@ -538,12 +545,21 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
 
     @staticmethod
     def to_unitary_matrix(matrix: TensorLike) -> TensorLike:
+        r"""
+
+        ... :math:
+            U = \exp(-\sum\limits_{i,j=0}^{2N-1} h_{ij} c_i c_j)
+            R = \exp(4 h) \implies h = \frac{1}{4} \log(R)
+
+        where :math:`c_i` are the Majorana operators, :math:`R` is the current single particle transition matrix.
+
+        """
         wires = np.arange(matrix.shape[-1] // 2)
         majorana_getter = MajoranaGetter(n=len(wires))
         majorana_tensor = qml.math.stack([majorana_getter[i] for i in range(2 * majorana_getter.n)])
         h = (1 / 4) * logm(matrix)
         unitary = qml.math.expm(
-            -qml.math.einsum(
+            -1.0 * qml.math.einsum(
                 "...ij,ikq,jqp->...kp",
                 h, majorana_tensor, majorana_tensor,
                 optimize="optimal",

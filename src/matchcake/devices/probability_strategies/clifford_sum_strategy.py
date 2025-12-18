@@ -1,6 +1,6 @@
 import itertools
 import warnings
-from typing import Callable, List
+from typing import Callable, List, Iterable, Tuple
 
 import numpy as np
 import pennylane as qml
@@ -31,18 +31,19 @@ class CliffordSumStrategy(ProbabilityStrategy):
     REQUIRES_KWARGS = ["global_sptm", "all_wires", "state_prep_op", "transition_matrix"]
 
     @staticmethod
-    def compute_clifford_expvals(state_prep_op: Operator, majorana_indexes: np.ndarray) -> np.ndarray:
+    def compute_clifford_expvals(state_prep_op: Operator, indexes_shape: Tuple[int, ...]) -> np.ndarray:
         wires = state_prep_op.wires
 
         def clifford_circuit():
             state_prep_op.queue()
             return [
                 qml.expval(qml.prod(*[majorana_to_pauli(i) for i in indices]))
-                for indices in majorana_indexes
+                for indices in np.ndindex(indexes_shape)
             ]
 
         clifford_q_node = qml.QNode(clifford_circuit, device=qml.device("default.clifford", wires=wires))
-        return clifford_q_node()
+        expvals = clifford_q_node()
+        return qml.math.stack(expvals).reshape(indexes_shape)
 
     @staticmethod
     def _basis_state_to_fermi_ops(basis_state: TensorLike, wires: Wires) -> qml.fermi.FermiWord:
@@ -128,12 +129,11 @@ class CliffordSumStrategy(ProbabilityStrategy):
         transition_vectors = self._gather_transition_vectors(fermi_ops, transition_matrix)
         transition_tensor = self._create_transition_tensor(transition_vectors)
 
-
-        non_zero_indexes = np.nonzero(target_binary_state)[0]
-        majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(target_binary_state)
+        # non_zero_indexes = np.nonzero(target_binary_state)[0]
+        # majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(target_binary_state)
         # np_iterator = np.ndindex(tuple([2 * num_wires for _ in range(2 * len(target_binary_state))]))
-        indexes_shape = tuple([2 * num_wires for _ in range(len(majorana_indexes))])
-        expval_indexes = np.asarray(list(np.ndindex(indexes_shape)))
-        expvals = self.compute_clifford_expvals(state_prep_op, expval_indexes)
-        expvals = qml.math.stack(expvals).reshape(indexes_shape)
-        print(expvals)
+        indexes_shape = tuple([2 * num_wires for _ in range(len(transition_vectors))])
+        expvals = self.compute_clifford_expvals(state_prep_op, indexes_shape)
+        summands_indices = [Ellipsis, *list(range(len(transition_vectors)))]
+        probs = qml.math.einsum(transition_tensor, summands_indices, expvals, summands_indices, [Ellipsis])
+        return probs

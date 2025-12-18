@@ -78,3 +78,8 @@ class TestSingleParticleTransitionMatrixOperation:
         target_phased_identity = torch.zeros_like(phased_identity)
         target_phased_identity[..., np.arange(2 * n_qubits), np.arange(2 * n_qubits)] = torch.exp(1j * phase)
         torch.testing.assert_close(phased_identity, target_phased_identity, msg=f"exp(i * p) != U^(-1) V")
+
+    def test_to_qubit_unitary(self, batch_size, size):
+        sptm = SingleParticleTransitionMatrixOperation.random(batch_size=batch_size, wires=np.arange(size), seed=size)
+        unitary = sptm.to_qubit_unitary()
+        assert unitary._unitary_check(unitary.matrix(), int(2 ** len(unitary.wires)))

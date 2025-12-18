@@ -1,10 +1,16 @@
 import numpy as np
 import pennylane as qml
 import pytest
+from pennylane.ops.qubit import BasisStateProjector
 
 from matchcake import MatchgateOperation, NonInteractingFermionicDevice
 from matchcake import matchgate_parameter_sets as mgp
 from matchcake import utils
+from matchcake.circuits import RandomMatchgateOperationsGenerator
+from matchcake.devices.contraction_strategies import contraction_strategy_map
+from matchcake.devices.probability_strategies import get_probability_strategy
+from matchcake.operations import SingleParticleTransitionMatrixOperation, CompRxRx, CompRyRy, FermionicSuperposition, \
+    Rxx, Rzz, CompRzRz, CompHH, fSWAP
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -77,6 +83,70 @@ class TestNIFDeviceProbabilities:
             out_op="probs",
             out_wires=prob_wires,
         )
+        np.testing.assert_allclose(
+            nif_probs.squeeze(),
+            qubit_probs.squeeze(),
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=RTOL_APPROX_COMPARISON,
+        )
+
+    @pytest.mark.parametrize(
+        "num_wires, num_gates, contraction_strategy, prob_strategy, seed",
+        [
+            (num_wires, num_gates, contraction_strategy, prob_strategy, seed)
+            for seed in range(3)
+            for num_wires in [2, 3]
+            for num_gates in [
+                # 1,
+                10,
+                10 * num_wires
+            ]
+            for contraction_strategy in contraction_strategy_map.keys()
+            for prob_strategy in [
+                "LookupTable",
+                "CliffordSum",
+            ]
+        ],
+    )
+    def test_multiples_matchgate_probs_with_qubit_device_op_gen_sptm_unitary(
+            self, num_wires, num_gates, contraction_strategy, prob_strategy, seed
+    ):
+        op_gen = RandomMatchgateOperationsGenerator(
+            wires=num_wires,
+            n_ops=num_gates,
+            output_type="probs",
+            seed=seed,
+            op_types=[
+                # Pass
+                MatchgateOperation,
+                CompRxRx,
+                CompRyRy,
+                FermionicSuperposition,
+                Rxx,
+                Rzz,
+                CompRzRz,
+
+                # TODO: Fail
+                CompHH,
+                fSWAP,
+            ]
+        )
+        nif_device, qubit_device = devices_init(
+            wires=op_gen.wires, contraction_strategy=contraction_strategy, prob_strategy=prob_strategy
+        )
+        rn_gen = np.random.default_rng(op_gen.seed)
+        initial_state = rn_gen.choice([0, 1], size=op_gen.n_qubits)
+        op_gen.initial_state = initial_state
+        state_prep_op = qml.BasisState(initial_state, qubit_device.wires)
+        nif_probs = nif_device.execute_generator(op_gen, output_type=op_gen.output_type, observable=op_gen.observable)
+
+        @qml.qnode(qubit_device)
+        def ground_truth_circuit():
+            state_prep_op.queue()
+            nif_device.global_sptm.to_qubit_unitary()
+            return qml.probs(wires=op_gen.wires)
+
+        qubit_probs = ground_truth_circuit()
         np.testing.assert_allclose(
             nif_probs.squeeze(),
             qubit_probs.squeeze(),
