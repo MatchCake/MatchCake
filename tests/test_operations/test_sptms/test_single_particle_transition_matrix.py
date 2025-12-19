@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import torch
+
 from matchcake.operations import MatchgateOperation
 from matchcake.operations.single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,

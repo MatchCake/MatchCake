@@ -13,7 +13,6 @@ from ...base.lookup_table import NonInteractingFermionicLookupTable
 from .probability_strategy import ProbabilityStrategy
 
 
-
 class ExplicitSumStrategy(ProbabilityStrategy):
     NAME: str = "ExplicitSum"
     REQUIRES_KWARGS = ["transition_matrix", "all_wires"]

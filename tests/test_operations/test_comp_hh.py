@@ -8,12 +8,14 @@ from matchcake.utils import make_single_particle_transition_matrix_from_gate
 class TestCompHH:
     def test_form(self):
         mg = CompHH(wires=[0, 1])
-        mg_matrix = (1 / np.sqrt(2)) * np.array([
-            [1, 0, 0, 1],
-            [0, 1, 1, 0],
-            [0, 1, -1, 0],
-            [1, 0, 0, -1],
-        ])
+        mg_matrix = (1 / np.sqrt(2)) * np.array(
+            [
+                [1, 0, 0, 1],
+                [0, 1, 1, 0],
+                [0, 1, -1, 0],
+                [1, 0, 0, -1],
+            ]
+        )
         np.testing.assert_allclose(mg.matrix(), mg_matrix)
 
     def test_to_sptm_operation(self):

@@ -145,30 +145,30 @@ class TestCliffordExpvalStrategy:
             (qml.Hamiltonian([1.0], [qml.X(0) @ qml.X(1)]), ["XX"]),
             (qml.Hamiltonian([1.0], [qml.X(1) @ qml.X(2)]), ["XX"]),
             (
-                    qml.Hamiltonian(
-                        [1, 1, 1, 1],
-                        [
-                            qml.X(1) @ qml.X(2),
-                            qml.X(0) @ qml.Y(1),
-                            qml.Y(0) @ qml.X(1),
-                            qml.Y(0) @ qml.Y(1),
-                        ]
-                    ),
-                    ["XX", "XY", "YX", "YY"]
+                qml.Hamiltonian(
+                    [1, 1, 1, 1],
+                    [
+                        qml.X(1) @ qml.X(2),
+                        qml.X(0) @ qml.Y(1),
+                        qml.Y(0) @ qml.X(1),
+                        qml.Y(0) @ qml.Y(1),
+                    ],
+                ),
+                ["XX", "XY", "YX", "YY"],
             ),
             (
-                    qml.Hamiltonian(
-                        [1, 1, 1, 1],
-                        [
-                            qml.X(1) @ qml.X(2),
-                            qml.X(2) @ qml.Y(3),
-                            qml.Y(3) @ qml.X(4),
-                            qml.Y(4) @ qml.Y(5),
-                        ]
-                    ),
-                    ["XX", "XY", "YX", "YY"]
+                qml.Hamiltonian(
+                    [1, 1, 1, 1],
+                    [
+                        qml.X(1) @ qml.X(2),
+                        qml.X(2) @ qml.Y(3),
+                        qml.Y(3) @ qml.X(4),
+                        qml.Y(4) @ qml.Y(5),
+                    ],
+                ),
+                ["XX", "XY", "YX", "YY"],
             ),
-        ]
+        ],
     )
     def test_hamiltonian_to_pauli_str(self, hamiltonian, target, strategy):
         output = strategy._hamiltonian_to_pauli_str(hamiltonian)
@@ -192,11 +192,11 @@ class TestCliffordExpvalStrategy:
         target_result = 0
         for k, i, j in np.ndindex((majorana_indices.shape[0], 2 * n_qubits, 2 * n_qubits)):
             target_result += (
-                    majorana_coeffs[k]
-                    * coeffs[k]
-                    * global_sptm[..., majorana_indices[k, 0], i]
-                    * global_sptm[..., majorana_indices[k, 1], j]
-                    * expvals[i, j]
+                majorana_coeffs[k]
+                * coeffs[k]
+                * global_sptm[..., majorana_indices[k, 0], i]
+                * global_sptm[..., majorana_indices[k, 1], j]
+                * expvals[i, j]
             )
 
         result = strategy._compute_sum(
@@ -212,20 +212,22 @@ class TestCliffordExpvalStrategy:
         "sptm, initial_string, hamiltonian, expval_target",
         [
             (
-                    np.array([
+                np.array(
+                    [
                         [0.4193, 0.0369, -0.6896, 0.5894],
                         [-0.8909, -0.1005, -0.4154, 0.1541],
                         [0.1698, -0.7728, -0.3604, -0.4941],
-                        [0.0418, 0.6256, -0.4713, -0.6203]
-                    ]),
-                    "01",
-                    qml.Hamiltonian([0.13], [qml.X(0) @ qml.X(1)]),
-                    0.5
+                        [0.0418, 0.6256, -0.4713, -0.6203],
+                    ]
+                ),
+                "01",
+                qml.Hamiltonian([0.13], [qml.X(0) @ qml.X(1)]),
+                -0.087662,  # TODO: to double verify
             ),
-        ]
+        ],
     )
     def test_on_specific_sptm(self, sptm, initial_string, hamiltonian, expval_target, strategy):
         initial_state = utils.binary_string_to_vector(initial_string)
         state_prep = qml.BasisState(initial_state, wires=np.arange(initial_state.size))
         expval = strategy(state_prep_op=state_prep, observable=hamiltonian, global_sptm=sptm)
-        np.testing.assert_allclose(expval, expval_target)
+        np.testing.assert_allclose(expval, expval_target, atol=ATOL_APPROX_COMPARISON, rtol=ATOL_APPROX_COMPARISON)

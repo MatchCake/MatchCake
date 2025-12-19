@@ -35,7 +35,7 @@ from pennylane.measurements import (
     State,
     Variance,
 )
-from pennylane.operation import Operation
+from pennylane.operation import Operation, StatePrepBase
 from pennylane.ops import LinearCombination, Prod, SProd, Sum
 from pennylane.ops.qubit.observables import BasisStateProjector, Projector
 from pennylane.pulse import ParametrizedEvolution
@@ -476,7 +476,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         :rtype: bool
         """
 
-        if kwargs.get("index", 0) > 0 and isinstance(operation, (qml.StatePrep, qml.BasisState)):
+        if kwargs.get("index", 0) > 0 and isinstance(operation, (StatePrepBase, qml.BasisState)):
             raise qml.DeviceError(
                 f"Operation {operation.name} cannot be used after other Operations have already been applied "
                 f"on a {self.short_name} device."
@@ -488,6 +488,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             self._state_prep_op = operation
         elif isinstance(operation, qml.BasisState):
             self._apply_basis_state(operation.parameters[0], operation.wires)
+            self._state_prep_op = operation
+        elif isinstance(operation, StatePrepBase):
             self._state_prep_op = operation
         elif isinstance(operation, qml.Snapshot):
             if self._debugger and self._debugger.active:

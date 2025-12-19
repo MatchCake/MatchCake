@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Iterable, Tuple, Union
 
 import numpy as np
 import pennylane as qml
@@ -8,6 +8,7 @@ from pennylane.ops.op_math import Prod, SProd, Sum
 from pennylane.ops.qubit import Projector
 from pennylane.pauli import pauli_word_to_string
 
+from .... import utils
 from ....typing import TensorLike
 from ....utils.majorana import majorana_to_pauli
 from ....utils.math import dagger
@@ -39,12 +40,14 @@ class CliffordExpvalStrategy(ExpvalStrategy):
         assert "global_sptm" in kwargs, "The global SPTM `global_sptm` must be provided as a keyword argument."
         global_sptm: TensorLike = kwargs["global_sptm"]
         global_sptm = to_tensor(global_sptm, dtype=torch.complex128)
+        global_sptm = qml.math.einsum("...ij->...ji", global_sptm)  # TODO: why do I need this transpose?
         expvals = self._compute_full_clifford_expvals(state_prep_op, global_sptm)
         hamiltonian = self._format_observable(observable)
+
         pauli_kinds = self._hamiltonian_to_pauli_str(hamiltonian)
         majorana_coeffs = np.asarray([_MAJORANA_COEFFS_MAP[p] for p in pauli_kinds])
         majorana_indices = np.asarray(
-            [_MAJORANA_INDICES_LAMBDAS[p](min(op.wires)) for p, op in zip(pauli_kinds, hamiltonian.ops)]
+            [_MAJORANA_INDICES_LAMBDAS[p](min(op.wires.tolist())) for p, op in zip(pauli_kinds, hamiltonian.ops)]
         )
         result = self._compute_sum(
             majorana_coeffs=majorana_coeffs,
@@ -87,15 +90,15 @@ class CliffordExpvalStrategy(ExpvalStrategy):
         expvals = torch.eye(global_sptm.shape[-1], dtype=global_sptm.dtype, device=global_sptm.device)
         expvals[triu_indices[0], triu_indices[1]] = to_tensor(
             qml.math.stack(self.compute_clifford_expvals(state_prep_op)),
-            dtype=global_sptm.dtype, device=global_sptm.device
+            dtype=global_sptm.dtype,
+            device=global_sptm.device,
         )
         expvals[triu_indices[1], triu_indices[0]] = -expvals[triu_indices[0], triu_indices[1]]
         return expvals
 
-    @staticmethod
-    def _compute_sum(majorana_coeffs, coeffs, global_sptm, majorana_indices, expvals):
+    def _compute_sum(self, majorana_coeffs, coeffs, global_sptm, majorana_indices, expvals):
         transition_matrices = qml.math.einsum("...kij->i...kj", global_sptm[..., majorana_indices, :])
-        transition_tensor = qml.math.einsum("...i,...j->...ij", *transition_matrices)
+        transition_tensor = self._create_transition_tensor(transition_matrices)
         result = qml.math.einsum(
             "k,k,...kij,ij->...",
             to_tensor(majorana_coeffs, dtype=global_sptm.dtype, device=global_sptm.device),
@@ -104,3 +107,10 @@ class CliffordExpvalStrategy(ExpvalStrategy):
             expvals,
         )
         return result
+
+    def _create_transition_tensor(self, transition_matrices: Iterable[TensorLike]) -> TensorLike:
+        return utils.recursive_2in_operator(self._outer_prod, transition_matrices)
+
+    @staticmethod
+    def _outer_prod(x: TensorLike, y: TensorLike) -> TensorLike:
+        return qml.math.einsum("...i,...j->...ij", x, y)

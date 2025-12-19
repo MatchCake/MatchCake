@@ -1,6 +1,6 @@
 import numpy as np
-import pytest
 import pennylane as qml
+import pytest
 from pennylane.ops.qubit import BasisStateProjector
 
 from matchcake import utils
@@ -16,15 +16,9 @@ class TestCliffordSumStrategy:
 
     @pytest.mark.parametrize(
         "num_wires, seed",
-        [
-            (num_wires, seed)
-            for seed in range(3)
-            for num_wires in range(2, 3)
-        ],
+        [(num_wires, seed) for seed in range(3) for num_wires in [2, 3]],
     )
-    def test_sptm_unitary_probabilities(
-            self, strategy, num_wires, seed
-    ):
+    def test_sptm_unitary_probabilities(self, strategy, num_wires, seed):
         rn_gen = np.random.RandomState(seed=seed)
 
         system_state = rn_gen.choice([0, 1], size=num_wires)
@@ -46,7 +40,7 @@ class TestCliffordSumStrategy:
             wires=wires,
             all_wires=wires,
             global_sptm=global_sptm.matrix(),
-            transition_matrix=utils.make_transition_matrix_from_action_matrix(global_sptm.matrix())
+            transition_matrix=utils.make_transition_matrix_from_action_matrix(global_sptm.matrix()),
         )
 
         qubit_probs = ground_truth_circuit()

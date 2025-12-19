@@ -1,34 +1,19 @@
-import itertools
-import warnings
-from typing import Callable, List, Iterable, Tuple
+from typing import List, Tuple
 
 import numpy as np
 import pennylane as qml
-import pythonbasictools as pbt
-from pennylane import numpy as pnp
-from pennylane.typing import TensorLike
+from pennylane.operation import Operator
 from pennylane.wires import Wires
 
 from ... import utils
-from ...base.lookup_table import NonInteractingFermionicLookupTable
-from .probability_strategy import ProbabilityStrategy
-from typing import Union
-
-import numpy as np
-import pennylane as qml
-import torch
-from pennylane.operation import Operator, TermsUndefinedError
-from pennylane.ops.op_math import Prod, SProd, Sum
-from pennylane.ops.qubit import Projector
-from pennylane.pauli import pauli_word_to_string
-
 from ...typing import TensorLike
 from ...utils.majorana import majorana_to_pauli
+from .probability_strategy import ProbabilityStrategy
 
 
 class CliffordSumStrategy(ProbabilityStrategy):
     NAME: str = "CliffordSum"
-    REQUIRES_KWARGS = ["global_sptm", "all_wires", "state_prep_op", "transition_matrix"]
+    REQUIRES_KWARGS = ["all_wires", "state_prep_op", "transition_matrix"]
 
     @staticmethod
     def compute_clifford_expvals(state_prep_op: Operator, indexes_shape: Tuple[int, ...]) -> np.ndarray:
@@ -37,8 +22,7 @@ class CliffordSumStrategy(ProbabilityStrategy):
         def clifford_circuit():
             state_prep_op.queue()
             return [
-                qml.expval(qml.prod(*[majorana_to_pauli(i) for i in indices]))
-                for indices in np.ndindex(indexes_shape)
+                qml.expval(qml.prod(*[majorana_to_pauli(i) for i in indices])) for indices in np.ndindex(indexes_shape)
             ]
 
         clifford_q_node = qml.QNode(clifford_circuit, device=qml.device("default.clifford", wires=wires))
@@ -47,7 +31,7 @@ class CliffordSumStrategy(ProbabilityStrategy):
 
     @staticmethod
     def _basis_state_to_fermi_ops(basis_state: TensorLike, wires: Wires) -> qml.fermi.FermiWord:
-        """
+        r"""
         ... :math:
             a_j a_j^\dagger = |0\rangle\langle 0|
             a_j^\dagger a_j = |1\rangle\langle 1|
@@ -55,7 +39,7 @@ class CliffordSumStrategy(ProbabilityStrategy):
         where :math:`a_j^\dagger` is the jth fermionic creation operator and
         :math:`a_j` is the jth fermionic annihilation operator.
         """
-        ops  = []
+        ops = []
         for w, b in zip(wires, basis_state):
             if qml.math.isclose(b, 0):
                 ops.append(qml.fermi.FermiA(int(w)) * qml.fermi.FermiC(int(w)))
@@ -65,6 +49,20 @@ class CliffordSumStrategy(ProbabilityStrategy):
 
     @staticmethod
     def _apply_wicks_contraction(fermi_ops: qml.fermi.FermiWord) -> qml.math.FermiWord:
+        # from sympy.physics.secondquant import wicks, AnnihilateFermion, CreateFermion
+        # from sympy import lambdify
+        # sympy_ops = [
+        #     (CreateFermion(position) if kind == '+' else AnnihilateFermion(position))
+        #     for (orbital, position), kind in fermi_ops.items()
+        # ]
+        # fermi_product = qml.math.prod(sympy_ops)
+        # contracted_product = wicks(
+        #     fermi_product,
+        #     simplify_kronecker_deltas=True,
+        #     simplify_dummies=True,
+        #     keep_only_fully_contracted=True
+        # )
+        # lambdify(contracted_product.free_symbols, contracted_product, modules="numpy")(0, 1)
         return fermi_ops
 
     @staticmethod
@@ -72,7 +70,7 @@ class CliffordSumStrategy(ProbabilityStrategy):
         transition_vectors = []
         for key in fermi_ops:
             orbital, position = key
-            if fermi_ops[key] == '+':
+            if fermi_ops[key] == "+":
                 transition_vectors.append(qml.math.conjugate(transition_matrix[..., position, :]))
             else:
                 transition_vectors.append(transition_matrix[..., position, :])
@@ -86,25 +84,6 @@ class CliffordSumStrategy(ProbabilityStrategy):
         # return qml.math.einsum(*operands, sublistout)
         outer_prod = lambda x, y: qml.math.einsum("...i,...j->...ij", x, y)
         return utils.recursive_2in_operator(outer_prod, transition_vectors)
-
-    def __init__(self):
-        self.majorana_getter = None
-
-    def _create_basis_state(self, index, num_wires):
-        """
-        Create a computational basis state over all wires.
-
-        :param index: integer representing the computational basis state
-        :type index: int
-        :return: complex array of shape ``[2]*self.num_wires`` representing the statevector of the basis state
-
-        :Note: This function does not support broadcasted inputs yet.
-        :Note: This function comes from the ``default.qubit`` device.
-        """
-        state = np.zeros(2**num_wires, dtype=np.complex128)
-        state[index] = 1
-        state = qml.math.cast(state, dtype=complex)
-        return np.reshape(state, [2] * num_wires)
 
     def __call__(
         self,
@@ -121,7 +100,6 @@ class CliffordSumStrategy(ProbabilityStrategy):
         wires = Wires(wires)
         all_wires = kwargs["all_wires"]
         num_wires = len(all_wires)
-        global_sptm = kwargs["global_sptm"]
         transition_matrix = kwargs["transition_matrix"]
         state_prep_op: Operator = kwargs["state_prep_op"]
         fermi_ops = self._basis_state_to_fermi_ops(target_binary_state, wires)
@@ -129,9 +107,6 @@ class CliffordSumStrategy(ProbabilityStrategy):
         transition_vectors = self._gather_transition_vectors(fermi_ops, transition_matrix)
         transition_tensor = self._create_transition_tensor(transition_vectors)
 
-        # non_zero_indexes = np.nonzero(target_binary_state)[0]
-        # majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(target_binary_state)
-        # np_iterator = np.ndindex(tuple([2 * num_wires for _ in range(2 * len(target_binary_state))]))
         indexes_shape = tuple([2 * num_wires for _ in range(len(transition_vectors))])
         expvals = self.compute_clifford_expvals(state_prep_op, indexes_shape)
         summands_indices = [Ellipsis, *list(range(len(transition_vectors)))]

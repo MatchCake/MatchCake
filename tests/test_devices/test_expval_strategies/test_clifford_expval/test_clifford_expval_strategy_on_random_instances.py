@@ -1,10 +1,10 @@
 import numpy as np
 import pennylane as qml
 import pytest
-from pennylane.pauli import string_to_pauli_word
 import torch
+from pennylane.pauli import string_to_pauli_word
 
-from matchcake import NIFDevice, MatchgateOperation
+from matchcake import MatchgateOperation, NIFDevice
 from matchcake.circuits import (
     RandomMatchgateHaarOperationsGenerator,
     RandomMatchgateOperationsGenerator,
@@ -15,9 +15,18 @@ from matchcake.devices.expval_strategies.clifford_expval._pauli_map import (
 from matchcake.devices.expval_strategies.clifford_expval.clifford_expval_strategy import (
     CliffordExpvalStrategy,
 )
-from matchcake.operations import CompHH, SingleParticleTransitionMatrixOperation, Rxx, Rzz, CompRyRy, CompRzRz, fSWAP, \
-    FermionicSuperposition, CompRxRx
-from matchcake.utils.majorana import majorana_to_pauli, MajoranaGetter
+from matchcake.operations import (
+    CompHH,
+    CompRxRx,
+    CompRyRy,
+    CompRzRz,
+    FermionicSuperposition,
+    Rxx,
+    Rzz,
+    SingleParticleTransitionMatrixOperation,
+    fSWAP,
+)
+from matchcake.utils.majorana import MajoranaGetter, majorana_to_pauli
 from matchcake.utils.torch_utils import to_tensor
 
 from ....configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
@@ -65,12 +74,11 @@ class TestCliffordExpvalStrategyOnRandomInstances:
                 # CompRyRy,
                 # FermionicSuperposition,
                 # Rxx,
-
                 # Pass
                 Rzz,
                 CompRzRz,
                 fSWAP,
-            ]
+            ],
         )
 
     def test_eye_sptm(self, strategy, n_qubits, qubit_device, rn_gen, random_hamiltonian):
@@ -174,8 +182,10 @@ class TestCliffordExpvalStrategyOnRandomInstances:
             err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }",
         )
 
-    @pytest.mark.parametrize("hamiltonian_term", ["XX", "YY", "XY", "YX"])
-    def test_random_sptm_on_specific_hamiltonian(self, hamiltonian_term, strategy, rn_gen, qubit_device, random_op_gen, nif_device):
+    @pytest.mark.parametrize("hamiltonian_term", list(_MAJORANA_COEFFS_MAP.keys()))
+    def test_random_sptm_on_specific_hamiltonian(
+        self, hamiltonian_term, strategy, rn_gen, qubit_device, random_op_gen, nif_device
+    ):
         random_hamiltonian = qml.Hamiltonian([1.0], [string_to_pauli_word(hamiltonian_term)])
 
         initial_state = random_op_gen.get_initial_state(rn_gen)
@@ -232,11 +242,11 @@ class TestCliffordExpvalStrategyOnRandomInstances:
         target_result = 0
         for k, i, j in np.ndindex((majorana_indices.shape[0], 2 * n_qubits, 2 * n_qubits)):
             target_result += (
-                    majorana_coeffs[k]
-                    * coeffs[k]
-                    * global_sptm[..., majorana_indices[k, 0], i]
-                    * global_sptm[..., majorana_indices[k, 1], j]
-                    * expvals[i, j]
+                majorana_coeffs[k]
+                * coeffs[k]
+                * global_sptm[..., majorana_indices[k, 0], i]
+                * global_sptm[..., majorana_indices[k, 1], j]
+                * expvals[i, j]
             )
 
         result = strategy._compute_sum(
@@ -256,7 +266,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
         @qml.qnode(qubit_device)
         def ground_truth_circuit():
             state_prep_op.queue()
-            global_sptm.to_qubit_unitary().queue()
+            global_sptm.to_qubit_unitary()
             return qml.expval(random_hamiltonian)
 
         ground_truth_energy = ground_truth_circuit()
@@ -266,5 +276,5 @@ class TestCliffordExpvalStrategyOnRandomInstances:
             ground_truth_energy,
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
-            err_msg=f"{state_prep_op = }"
+            err_msg=f"{state_prep_op = }",
         )

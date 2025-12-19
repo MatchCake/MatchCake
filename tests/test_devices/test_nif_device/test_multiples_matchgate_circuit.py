@@ -178,4 +178,3 @@ def test_multiples_matchgate_apply_vs_apply_gen(params_list, n_wires):
         atol=ATOL_APPROX_COMPARISON,
         rtol=RTOL_APPROX_COMPARISON,
     )
-

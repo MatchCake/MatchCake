@@ -9,17 +9,17 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires, WiresLike
 
 from ... import utils
-from ...utils.majorana import MajoranaGetter
 from ...constants import _CIRCUIT_MATMUL_DIRECTION
 from ...utils import make_wires_continuous
+from ...utils.majorana import MajoranaGetter
 from ...utils.math import (
     circuit_matmul,
     convert_and_cast_like,
     dagger,
     det,
     fermionic_operator_matmul,
-    orthonormalize,
     logm,
+    orthonormalize,
 )
 from ...utils.torch_utils import detach
 
@@ -227,9 +227,9 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
 
     @staticmethod
     def compute_decomposition(
-            *params: TensorLike,
-            wires: Optional[WiresLike] = None,
-            **hyperparameters: dict[str, Any],
+        *params: TensorLike,
+        wires: Optional[WiresLike] = None,
+        **hyperparameters: dict[str, Any],
     ):
         unitary = SingleParticleTransitionMatrixOperation.to_unitary_matrix(params[0])
         return [qml.QubitUnitary(unitary, wires=wires)]
@@ -383,7 +383,9 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         rn_gen = np.random.default_rng(seed)
         params_indexes = np.triu_indices(2 * len(wires), k=1)
         rn_params = rn_gen.normal(size=(([batch_size] if batch_size is not None else []) + [params_indexes[0].size]))
-        matrix = np.zeros(([batch_size] if batch_size is not None else []) + [2 * len(wires), 2 * len(wires)], dtype=complex)
+        matrix = np.zeros(
+            ([batch_size] if batch_size is not None else []) + [2 * len(wires), 2 * len(wires)], dtype=complex
+        )
         matrix[..., params_indexes[0], params_indexes[1]] = rn_params
         matrix[..., params_indexes[1], params_indexes[0]] = -rn_params
         exp_matrix = expm(4 * matrix)
@@ -559,9 +561,12 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         majorana_tensor = qml.math.stack([majorana_getter[i] for i in range(2 * majorana_getter.n)])
         h = (1 / 4) * logm(matrix)
         unitary = qml.math.expm(
-            -1.0 * qml.math.einsum(
+            -1.0
+            * qml.math.einsum(
                 "...ij,ikq,jqp->...kp",
-                h, majorana_tensor, majorana_tensor,
+                h,
+                majorana_tensor,
+                majorana_tensor,
                 optimize="optimal",
             )
         )

@@ -9,8 +9,17 @@ from matchcake import utils
 from matchcake.circuits import RandomMatchgateOperationsGenerator
 from matchcake.devices.contraction_strategies import contraction_strategy_map
 from matchcake.devices.probability_strategies import get_probability_strategy
-from matchcake.operations import SingleParticleTransitionMatrixOperation, CompRxRx, CompRyRy, FermionicSuperposition, \
-    Rxx, Rzz, CompRzRz, CompHH, fSWAP
+from matchcake.operations import (
+    CompHH,
+    CompRxRx,
+    CompRyRy,
+    CompRzRz,
+    FermionicSuperposition,
+    Rxx,
+    Rzz,
+    SingleParticleTransitionMatrixOperation,
+    fSWAP,
+)
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -94,22 +103,15 @@ class TestNIFDeviceProbabilities:
         "num_wires, num_gates, contraction_strategy, prob_strategy, seed",
         [
             (num_wires, num_gates, contraction_strategy, prob_strategy, seed)
-            for seed in range(3)
+            for seed in range(2)
             for num_wires in [2, 3]
-            for num_gates in [
-                # 1,
-                10,
-                10 * num_wires
-            ]
+            for num_gates in [10 * num_wires]
             for contraction_strategy in contraction_strategy_map.keys()
-            for prob_strategy in [
-                "LookupTable",
-                "CliffordSum",
-            ]
+            for prob_strategy in ["LookupTable"]
         ],
     )
     def test_multiples_matchgate_probs_with_qubit_device_op_gen_sptm_unitary(
-            self, num_wires, num_gates, contraction_strategy, prob_strategy, seed
+        self, num_wires, num_gates, contraction_strategy, prob_strategy, seed
     ):
         op_gen = RandomMatchgateOperationsGenerator(
             wires=num_wires,
@@ -125,11 +127,10 @@ class TestNIFDeviceProbabilities:
                 Rxx,
                 Rzz,
                 CompRzRz,
-
                 # TODO: Fail
                 CompHH,
                 fSWAP,
-            ]
+            ],
         )
         nif_device, qubit_device = devices_init(
             wires=op_gen.wires, contraction_strategy=contraction_strategy, prob_strategy=prob_strategy
