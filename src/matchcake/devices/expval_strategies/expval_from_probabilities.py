@@ -24,7 +24,7 @@ class ExpvalFromProbabilitiesStrategy(ExpvalStrategy):
         prob = kwargs["prob"]
         if isinstance(observable, BatchHamiltonian):
             eigvals_on_z_basis = observable.eigvals_on_z_basis()
-            return qml.math.einsum("k,...i,...ki->...k", observable.coeffs, prob, eigvals_on_z_basis)
+            return qml.math.einsum("k,...ki,...ki->...k", observable.coeffs, prob, eigvals_on_z_basis)
         eigvals_on_z_basis = get_eigvals_on_z_basis(observable)
         return qml.math.einsum("...i,...i->...", prob, eigvals_on_z_basis)
 

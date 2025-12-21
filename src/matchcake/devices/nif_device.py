@@ -687,8 +687,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             output = self.exact_expval(observable)
         else:
             output = super().expval(observable, shot_range, bin_size)
-        if isinstance(observable, BatchHamiltonian):
-            return observable.reduce(output)
         return output
 
     def get_sparse_or_dense_state(

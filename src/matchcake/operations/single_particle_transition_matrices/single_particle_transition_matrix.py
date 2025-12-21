@@ -227,6 +227,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
 
     where :math:`R_{\mu\nu}` are the matrix elements of the SPTM and :math:`U` is a matchgate.
     """
+
     num_wires = AnyWires
     num_params = 1
     par_domain = "A"

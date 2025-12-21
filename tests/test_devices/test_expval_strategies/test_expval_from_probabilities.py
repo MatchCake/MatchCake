@@ -4,7 +4,7 @@ import pytest
 from pennylane.ops.qubit import BasisStateProjector
 from pennylane.wires import Wires
 
-from matchcake import NIFDevice, BatchHamiltonian
+from matchcake import BatchHamiltonian, NIFDevice
 from matchcake.circuits import RandomMatchgateHaarOperationsGenerator
 from matchcake.devices.expval_strategies.expval_from_probabilities import (
     ExpvalFromProbabilitiesStrategy,
@@ -87,26 +87,21 @@ class TestExpvalFromProbabilities:
 
     def test_call_on_batch_hamiltonian(self, strategy):
         batch_hamiltonian = BatchHamiltonian(
-            [0.1, 0.2, 0.3],
-            [qml.Z(0) @ qml.Z(1), qml.Z(0) @ qml.I(1), qml.I(0) @ qml.Z(1)]
+            [0.1, 0.2, 0.3], [qml.Z(0) @ qml.Z(1), qml.Z(0) @ qml.I(1), qml.I(0) @ qml.Z(1)]
         )
         expvals = strategy(
-            qml.BasisState([0, 0], [0, 1]),
-            batch_hamiltonian,
-            prob=np.asarray([1, 0, 0, 0])
+            qml.BasisState([0, 0], [0, 1]), batch_hamiltonian, prob=np.broadcast_to(np.asarray([1, 0, 0, 0]), (3, 4))
         )
 
         @qml.qnode(qml.device("default.qubit", wires=2))
         def ground_truth_circuit():
             qml.BasisState([0, 0], [0, 1])
-            return [
-                qml.expval(c*h)
-                for c, h in zip(batch_hamiltonian.coeffs, batch_hamiltonian.ops)
-            ]
+            return [qml.expval(c * h) for c, h in zip(batch_hamiltonian.coeffs, batch_hamiltonian.ops)]
 
         expected_expvals = ground_truth_circuit()
         np.testing.assert_allclose(
-            expvals, expected_expvals,
+            expvals,
+            expected_expvals,
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
