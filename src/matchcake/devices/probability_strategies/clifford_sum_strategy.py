@@ -32,7 +32,7 @@ class CliffordSumStrategy(ProbabilityStrategy):
     @staticmethod
     def _basis_state_to_fermi_ops(basis_state: TensorLike, wires: Wires) -> qml.fermi.FermiWord:
         r"""
-        ... :math:
+        .. math::
             a_j a_j^\dagger = |0\rangle\langle 0|
             a_j^\dagger a_j = |1\rangle\langle 1|
 

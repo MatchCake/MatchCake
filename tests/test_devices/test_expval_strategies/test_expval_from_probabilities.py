@@ -1,14 +1,15 @@
 import numpy as np
 import pennylane as qml
 import pytest
+from pennylane.ops.qubit import BasisStateProjector
 from pennylane.wires import Wires
 
-from matchcake import NIFDevice
+from matchcake import NIFDevice, BatchHamiltonian
 from matchcake.circuits import RandomMatchgateHaarOperationsGenerator
 from matchcake.devices.expval_strategies.expval_from_probabilities import (
     ExpvalFromProbabilitiesStrategy,
 )
-from matchcake.operations import CompHH, CompZX
+from matchcake.operations import CompHH, CompZX, SingleParticleTransitionMatrixOperation
 
 from ...configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
 
@@ -76,6 +77,40 @@ class TestExpvalFromProbabilities:
                 prob=np.random.random(4),
             )
 
+    def test_call_on_projector_cant_execute(self, strategy):
+        with pytest.raises(ValueError):
+            strategy(
+                qml.BasisState([0, 0], [0, 1]),
+                BasisStateProjector([1, 0], wires=[0, 1]),
+                prob=np.random.random(4),
+            )
+
+    def test_call_on_batch_hamiltonian(self, strategy):
+        batch_hamiltonian = BatchHamiltonian(
+            [0.1, 0.2, 0.3],
+            [qml.Z(0) @ qml.Z(1), qml.Z(0) @ qml.I(1), qml.I(0) @ qml.Z(1)]
+        )
+        expvals = strategy(
+            qml.BasisState([0, 0], [0, 1]),
+            batch_hamiltonian,
+            prob=np.asarray([1, 0, 0, 0])
+        )
+
+        @qml.qnode(qml.device("default.qubit", wires=2))
+        def ground_truth_circuit():
+            qml.BasisState([0, 0], [0, 1])
+            return [
+                qml.expval(c*h)
+                for c, h in zip(batch_hamiltonian.coeffs, batch_hamiltonian.ops)
+            ]
+
+        expected_expvals = ground_truth_circuit()
+        np.testing.assert_allclose(
+            expvals, expected_expvals,
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=RTOL_APPROX_COMPARISON,
+        )
+
     def get_random_hamiltonian(self, nif_device, rn_gen):
         hamiltonian_ops = [
             getattr(qml, p[0])(w0) @ getattr(qml, p[1])(w1)
@@ -88,31 +123,29 @@ class TestExpvalFromProbabilities:
 
     @pytest.mark.parametrize("n_qubits, seed", [(n, s) for n in range(2, 6) for s in range(3)])
     def test_random_sptm(self, strategy, n_qubits, seed):
-        nif_device = NIFDevice(wires=n_qubits)
-        random_op_gen = RandomMatchgateHaarOperationsGenerator(
-            wires=nif_device.wires,
-            seed=seed,
-        )
-        qubit_device = qml.device("default.qubit", wires=n_qubits)
         rn_gen = np.random.RandomState(seed=seed)
-        random_hamiltonian = self.get_random_hamiltonian(nif_device, rn_gen)
+        qubit_device = qml.device("default.qubit", wires=n_qubits)
 
-        initial_state = random_op_gen.get_initial_state(rn_gen)
+        rn_global_sptm = SingleParticleTransitionMatrixOperation.random(np.arange(n_qubits), seed=seed)
+        initial_state = rn_gen.choice([0, 1], size=n_qubits)
         state_prep_op = qml.BasisState(initial_state, qubit_device.wires)
+        nif_device = NIFDevice(wires=n_qubits)
+        nif_device.global_sptm = rn_global_sptm
+        random_hamiltonian = self.get_random_hamiltonian(nif_device, rn_gen)
+        nif_device.apply_state_prep(state_prep_op)
+        energy = strategy(state_prep_op, random_hamiltonian, prob=nif_device.probability(random_hamiltonian.wires))
 
         @qml.qnode(qubit_device)
         def ground_truth_circuit():
-            for op in random_op_gen:
-                op.queue()
+            state_prep_op.queue()
+            nif_device.global_sptm.to_qubit_unitary()
             return qml.expval(random_hamiltonian)
 
         ground_truth_energy = ground_truth_circuit()
-        nif_device.apply_generator(random_op_gen)
-        energy = strategy(state_prep_op, random_hamiltonian, prob=nif_device.probability())
         np.testing.assert_allclose(
             energy,
             ground_truth_energy,
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
-            err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }",
+            err_msg=f"{random_hamiltonian.terms() = }",
         )

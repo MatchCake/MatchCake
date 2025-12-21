@@ -60,7 +60,7 @@ jobs:
         coverageFile: tests/.tmp/coverage.xml
         thresholdAll: 0.79
         thresholdNew: 0.98
-        thresholdModified: 0.0
+        thresholdModified: 0.5
 
     - name: Test Build
       if: ${{ matrix.python-version == '3.10' }}

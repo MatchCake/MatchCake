@@ -1,7 +1,8 @@
 from typing import Union
 
 import pennylane as qml
-from pennylane.operation import Operator
+import torch
+from pennylane.operation import Operator, TermsUndefinedError
 from pennylane.ops.qubit import Projector
 from pennylane.pauli import pauli_sentence, pauli_word_to_string
 
@@ -23,8 +24,8 @@ class ExpvalFromProbabilitiesStrategy(ExpvalStrategy):
         prob = kwargs["prob"]
         if isinstance(observable, BatchHamiltonian):
             eigvals_on_z_basis = observable.eigvals_on_z_basis()
-        else:
-            eigvals_on_z_basis = get_eigvals_on_z_basis(observable)
+            return qml.math.einsum("k,...i,...ki->...k", observable.coeffs, prob, eigvals_on_z_basis)
+        eigvals_on_z_basis = get_eigvals_on_z_basis(observable)
         return qml.math.einsum("...i,...i->...", prob, eigvals_on_z_basis)
 
     def can_execute(
@@ -36,3 +37,11 @@ class ExpvalFromProbabilitiesStrategy(ExpvalStrategy):
             return False
         pauli_kinds = [pauli_word_to_string(op) for op in pauli_sentence(observable)]
         return all((len(set(p) - {"Z", "I"}) == 0) for p in pauli_kinds)
+
+    @staticmethod
+    def _format_observable(observable):
+        try:
+            terms = observable.terms()
+        except TermsUndefinedError:
+            terms = torch.ones((1,)), [observable]
+        return qml.Hamiltonian(*terms)

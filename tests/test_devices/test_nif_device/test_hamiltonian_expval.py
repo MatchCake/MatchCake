@@ -159,7 +159,10 @@ def test_nif_batched_hamiltonian_expval_zz_on_basis_state_against_qubit_device(b
 
     def circuit():
         qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
-        return qml.expval(sum(hamiltonian))
+        return [
+            qml.expval(c * h)
+            for c, h in zip(batched_hamiltonian.coeffs, batched_hamiltonian.ops)
+        ]
 
     nif_device, qubit_device = devices_init(
         wires=len(basis_state),
@@ -212,7 +215,10 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_basis_state_against_qubit_devic
 
     def circuit():
         qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
-        return qml.expval(sum(hamiltonian))
+        return [
+            qml.expval(c * h)
+            for c, h in zip(batched_hamiltonian.coeffs, batched_hamiltonian.ops)
+        ]
 
     nif_device, qubit_device = devices_init(
         wires=len(basis_state),
