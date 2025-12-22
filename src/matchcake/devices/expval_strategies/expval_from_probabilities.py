@@ -37,11 +37,3 @@ class ExpvalFromProbabilitiesStrategy(ExpvalStrategy):
             return False
         pauli_kinds = [pauli_word_to_string(op) for op in pauli_sentence(observable)]
         return all((len(set(p) - {"Z", "I"}) == 0) for p in pauli_kinds)
-
-    @staticmethod
-    def _format_observable(observable):
-        try:
-            terms = observable.terms()
-        except TermsUndefinedError:
-            terms = torch.ones((1,)), [observable]
-        return qml.Hamiltonian(*terms)

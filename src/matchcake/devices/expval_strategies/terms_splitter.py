@@ -2,7 +2,8 @@ from copy import deepcopy
 from typing import Sequence, Union
 
 import pennylane as qml
-from pennylane.operation import Operator
+import torch
+from pennylane.operation import Operator, TermsUndefinedError
 from pennylane.ops.op_math import SProd
 
 from ...typing import TensorLike
