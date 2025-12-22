@@ -1,8 +1,10 @@
-import pytest
-import pennylane as qml
 import numpy as np
+import pennylane as qml
+import pytest
 
-from matchcake.devices.expval_strategies.expval_from_probabilities import ExpvalFromProbabilitiesStrategy
+from matchcake.devices.expval_strategies.expval_from_probabilities import (
+    ExpvalFromProbabilitiesStrategy,
+)
 from matchcake.devices.expval_strategies.terms_splitter import TermsSplitter
 
 
