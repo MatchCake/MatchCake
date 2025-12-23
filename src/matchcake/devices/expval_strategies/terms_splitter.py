@@ -3,7 +3,7 @@ from typing import Sequence, Union
 
 import pennylane as qml
 import torch
-from pennylane.operation import Operator, TermsUndefinedError
+from pennylane.operation import Operator, StatePrepBase, TermsUndefinedError
 from pennylane.ops.op_math import SProd
 
 from ...typing import TensorLike
@@ -20,7 +20,7 @@ class TermsSplitter(ExpvalStrategy):
 
     def __call__(
         self,
-        state_prep_op: Union[qml.StatePrep, qml.BasisState],
+        state_prep_op: StatePrepBase,
         observable: Operator,
         **kwargs,
     ) -> TensorLike:
@@ -35,7 +35,7 @@ class TermsSplitter(ExpvalStrategy):
 
     def split(
         self,
-        state_prep_op: Union[qml.StatePrep, qml.BasisState],
+        state_prep_op: StatePrepBase,
         observable: Operator,
     ) -> Sequence[Sequence[SProd]]:
         hamiltonian = self._format_observable(observable)
@@ -47,7 +47,7 @@ class TermsSplitter(ExpvalStrategy):
 
     def can_execute(
         self,
-        state_prep_op: Union[qml.StatePrep, qml.BasisState],
+        state_prep_op: StatePrepBase,
         observable: Operator,
     ) -> bool:
         hamiltonian = self._format_observable(observable)

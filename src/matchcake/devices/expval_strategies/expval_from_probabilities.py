@@ -2,7 +2,7 @@ from typing import Union
 
 import pennylane as qml
 import torch
-from pennylane.operation import Operator, TermsUndefinedError
+from pennylane.operation import Operator, StatePrepBase, TermsUndefinedError
 from pennylane.ops.qubit import Projector
 from pennylane.pauli import pauli_sentence, pauli_word_to_string
 
@@ -15,9 +15,7 @@ from .expval_strategy import ExpvalStrategy
 class ExpvalFromProbabilitiesStrategy(ExpvalStrategy):
     NAME: str = "ExpvalFromProbabilities"
 
-    def __call__(
-        self, state_prep_op: Union[qml.StatePrep, qml.BasisState], observable: Operator, **kwargs
-    ) -> TensorLike:
+    def __call__(self, state_prep_op: StatePrepBase, observable: Operator, **kwargs) -> TensorLike:
         if not self.can_execute(state_prep_op, observable):
             raise ValueError(f"Cannot execute {self.NAME} strategy for {observable}.")  # pragma: no cover
         assert "prob" in kwargs, "The probabilities 'prob' must be provided as a keyword argument."
@@ -30,7 +28,7 @@ class ExpvalFromProbabilitiesStrategy(ExpvalStrategy):
 
     def can_execute(
         self,
-        state_prep_op: Union[qml.StatePrep, qml.BasisState],
+        state_prep_op: StatePrepBase,
         observable: Operator,
     ) -> bool:
         if isinstance(observable, (Projector,)):

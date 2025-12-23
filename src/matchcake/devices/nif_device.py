@@ -1,12 +1,8 @@
-import itertools
-import warnings
 from collections import defaultdict
-from copy import deepcopy
 from functools import partial
-from typing import Any, Callable, Iterable, List, Literal, Optional, Tuple, Union
+from typing import Iterable, List, Literal, Optional, Union
 
 import numpy as np
-import psutil
 import torch
 import tqdm
 
@@ -21,26 +17,15 @@ except ImportError:
     from pennylane.ops.op_math.linear_combination import Hamiltonian
 
 import pennylane as qml
-import pythonbasictools as pbt
-from pennylane import numpy as pnp
 from pennylane.devices._legacy_device import _local_tape_expand
 from pennylane.measurements import (
-    Expectation,
-    MeasurementProcess,
-    MeasurementValue,
-    MidMeasureMP,
-    Probability,
-    Sample,
     ShadowExpvalMP,
-    State,
-    Variance,
 )
 from pennylane.operation import Operation, StatePrepBase
 from pennylane.ops import LinearCombination, Prod, SProd, Sum
-from pennylane.ops.qubit.observables import BasisStateProjector, Projector
+from pennylane.ops.qubit.observables import BasisStateProjector
 from pennylane.pulse import ParametrizedEvolution
 from pennylane.tape import QuantumScript, QuantumTape
-from pennylane.transforms.core import TransformProgram
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 from scipy import sparse
@@ -52,18 +37,14 @@ from ..observables.batch_projector import BatchProjector
 from ..operations.matchgate_operation import MatchgateOperation
 from ..operations.single_particle_transition_matrices.single_particle_transition_matrix import (
     SingleParticleTransitionMatrixOperation,
-    _SingleParticleTransitionMatrix,
 )
 from ..utils import (
     binary_state_to_state,
     binary_string_to_vector,
-    get_eigvals_on_z_basis,
     torch_utils,
 )
 from ..utils.math import (
-    circuit_matmul,
     convert_and_cast_like,
-    dagger,
     fermionic_operator_matmul,
 )
 from .contraction_strategies import ContractionStrategy, get_contraction_strategy
@@ -665,15 +646,15 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             return self.get_state_probability(observable.parameters[0], observable.wires)
         if isinstance(observable, BatchProjector):
             return self.get_states_probability(observable.get_states(), observable.get_batch_wires())
-        if self.clifford_expval_strategy.can_execute(self._state_prep_op, observable):
-            return self.clifford_expval_strategy(self._state_prep_op, observable, global_sptm=self.global_sptm.matrix())
-        if self.expval_from_probabilities_strategy.can_execute(self._state_prep_op, observable):
+        if self.clifford_expval_strategy.can_execute(self.state_prep_op, observable):
+            return self.clifford_expval_strategy(self.state_prep_op, observable, global_sptm=self.global_sptm.matrix())
+        if self.expval_from_probabilities_strategy.can_execute(self.state_prep_op, observable):
             prob = self.probability(wires=observable.wires)
-            return self.expval_from_probabilities_strategy(self._state_prep_op, observable, prob=prob)
+            return self.expval_from_probabilities_strategy(self.state_prep_op, observable, prob=prob)
         terms_splitter = TermsSplitter([self.clifford_expval_strategy, self.expval_from_probabilities_strategy])
-        if terms_splitter.can_execute(self._state_prep_op, observable):
+        if terms_splitter.can_execute(self.state_prep_op, observable):
             return terms_splitter(
-                self._state_prep_op, observable, global_sptm=self.global_sptm.matrix(), prob_func=self.probability
+                self.state_prep_op, observable, global_sptm=self.global_sptm.matrix(), prob_func=self.probability
             )
 
         raise qml.DeviceError(
@@ -1116,3 +1097,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     @property
     def samples(self):
         return self._samples
+
+    @property
+    def state_prep_op(self) -> StatePrepBase:
+        return self._state_prep_op
