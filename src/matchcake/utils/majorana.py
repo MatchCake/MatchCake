@@ -5,6 +5,7 @@ from typing import Any, Callable, List, Optional, Tuple, Union
 
 import numpy as np
 import pennylane as qml
+from pennylane.pauli import string_to_pauli_word
 from pennylane.wires import Wires
 
 from .constants import PAULI_I, PAULI_X, PAULI_Y, PAULI_Z
@@ -117,6 +118,13 @@ def get_majorana_pair(i: int, j: int, n: int) -> np.ndarray:
     if i == j:
         return np.eye(2**n)
     return get_majorana(i, n) @ get_majorana(j, n)
+
+
+def majorana_to_pauli(i: int) -> qml.pauli.PauliWord:
+    k = int(i // 2)
+    gate = "X" if i % 2 == 0 else "Y"
+    majorana_str = "".join(["Z"] * k + [gate])
+    return string_to_pauli_word(majorana_str)
 
 
 class MajoranaGetter:

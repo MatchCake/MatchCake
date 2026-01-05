@@ -1,4 +1,5 @@
 from ...utils import get_all_subclasses
+from .clifford_sum_strategy import CliffordSumStrategy
 from .explicit_sum_strategy import ExplicitSumStrategy
 from .lookup_table_strategy import LookupTableStrategy
 from .probability_strategy import ProbabilityStrategy

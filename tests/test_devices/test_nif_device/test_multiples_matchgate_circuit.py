@@ -6,6 +6,7 @@ from matchcake import MatchgateOperation
 from matchcake import matchgate_parameter_sets as mgp
 from matchcake.circuits import (
     RandomMatchgateHaarOperationsGenerator,
+    RandomMatchgateOperationsGenerator,
 )
 from matchcake.devices.contraction_strategies import contraction_strategy_map
 

@@ -159,7 +159,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_basis_state_against_qubit_device(b
 
     def circuit():
         qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
-        return qml.expval(sum(hamiltonian))
+        return [qml.expval(c * h) for c, h in zip(batched_hamiltonian.coeffs, batched_hamiltonian.ops)]
 
     nif_device, qubit_device = devices_init(
         wires=len(basis_state),
@@ -171,7 +171,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_basis_state_against_qubit_device(b
     energy = nif_device.execute_generator(circuit_gen(), observable=batched_hamiltonian, output_type="expval")
 
     q_node = qml.QNode(circuit, qubit_device)
-    expected_energy = q_node()
+    expected_energy = np.broadcast_to(q_node(), energy.shape)
 
     np.testing.assert_allclose(
         energy,
@@ -212,7 +212,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_basis_state_against_qubit_devic
 
     def circuit():
         qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
-        return qml.expval(sum(hamiltonian))
+        return [qml.expval(c * h) for c, h in zip(batched_hamiltonian.coeffs, batched_hamiltonian.ops)]
 
     nif_device, qubit_device = devices_init(
         wires=len(basis_state),
@@ -223,7 +223,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_basis_state_against_qubit_devic
     energy = nif_device.execute_generator(circuit_gen(), observable=batched_hamiltonian, output_type="expval")
 
     q_node = qml.QNode(circuit, qubit_device)
-    expected_energy = q_node()
+    expected_energy = np.broadcast_to(q_node(), energy.shape)
 
     np.testing.assert_allclose(
         energy,
@@ -271,10 +271,13 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device(
     )
     energy = nif_device.execute_generator(op_gen, observable=batched_hamiltonian, output_type="expval")
 
-    op_gen.observable = sum(hamiltonian)
-    op_gen.output_type = "expval"
-    q_node = qml.QNode(op_gen.circuit, qubit_device)
-    expected_energy = q_node()
+    def circuit():
+        qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
+        nif_device.global_sptm.to_qubit_unitary()
+        return [qml.expval(c * h) for c, h in zip(batched_hamiltonian.coeffs, batched_hamiltonian.ops)]
+
+    q_node = qml.QNode(circuit, qubit_device)
+    expected_energy = np.reshape(q_node(), energy.shape)
 
     np.testing.assert_allclose(
         energy,
@@ -323,10 +326,13 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device_ha
     )
     energy = nif_device.execute_generator(op_gen, observable=batched_hamiltonian, output_type="expval")
 
-    op_gen.observable = qml.Hamiltonian(np.ones(len(hamiltonian)), hamiltonian)
-    op_gen.output_type = "expval"
-    q_node = qml.QNode(op_gen.circuit, qubit_device)
-    expected_energy = q_node()
+    def circuit():
+        qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
+        nif_device.global_sptm.to_qubit_unitary()
+        return [qml.expval(c * h) for c, h in zip(batched_hamiltonian.coeffs, batched_hamiltonian.ops)]
+
+    q_node = qml.QNode(circuit, qubit_device)
+    expected_energy = np.reshape(q_node(), energy.shape)
 
     np.testing.assert_allclose(
         energy,

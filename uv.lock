@@ -1189,6 +1189,7 @@ dependencies = [
     { name = "scipy" },
     { name = "seaborn" },
     { name = "setuptools" },
+    { name = "stim" },
     { name = "sympy" },
     { name = "torch", version = "2.7.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-9-matchcake-cpu') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130')" },
     { name = "torch", version = "2.7.1", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130') or (extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130')" },
@@ -1267,6 +1268,7 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.11.4,<=2" },
     { name = "seaborn", specifier = ">=0.13.0" },
     { name = "setuptools", specifier = ">=65.5.1" },
+    { name = "stim", specifier = ">=1.15.0" },
     { name = "sympy", specifier = ">=1.12,<2.0" },
     { name = "torch", specifier = ">=2.1.2,<3.0.0" },
     { name = "torch", marker = "extra == 'cpu'", specifier = ">=2.1.2,<3.0.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "matchcake", extra = "cpu" } },
@@ -3239,6 +3241,32 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/28/e3/55dcc2cfbc3ca9c29519eb6884dd1415ecb53b0e934862d3559ddcb7e20b/stack_data-0.6.3.tar.gz", hash = "sha256:836a778de4fec4dcd1dcd89ed8abff8a221f58308462e1c4aa2a3cf30148f0b9", size = 44707, upload-time = "2023-09-30T13:58:05.479Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f1/7b/ce1eafaf1a76852e2ec9b22edecf1daa58175c090266e9f6c64afcd81d91/stack_data-0.6.3-py3-none-any.whl", hash = "sha256:d5558e0c25a4cb0853cddad3d77da9891a08cb85dd9f9f91b9f8cd66e511e695", size = 24521, upload-time = "2023-09-30T13:58:03.53Z" },
+]
+
+[[package]]
+name = "stim"
+version = "1.15.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/77/15/0218eacd61cda992daf398bc36daf9830c8b430157a3ac0c06379598d24a/stim-1.15.0.tar.gz", hash = "sha256:95236006859d6754be99629d4fb44788e742e962ac8c59caad421ca088f7350e", size = 853226, upload-time = "2025-05-07T06:19:30.452Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/30/e8/5d0c058e59ba156c6f1bfd8569a889dec80154e95d7903bf50bea31814ec/stim-1.15.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:4c10d2022b3c4c245f5f421dbf01b012a4d04901df697d9aca69eaea329c8532", size = 1952385, upload-time = "2025-05-07T06:18:29.003Z" },
+    { url = "https://files.pythonhosted.org/packages/16/85/e82bd61413db51c92642620340c9175f0e1e93d2afc5274e8fa775831326/stim-1.15.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:6f240c196f23126bfed79bd78de5baa1fdde9c8fbfe56de032a12657fc42da37", size = 1824039, upload-time = "2025-05-07T06:18:31.537Z" },
+    { url = "https://files.pythonhosted.org/packages/d8/06/b267359c50d735ca718dd487ec57842d0ed34865b62b0d8e6bdc3381d611/stim-1.15.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:31c55fad7529d6ee508f268534eeca1433017f2e83082f88275bea362b94f30f", size = 4982908, upload-time = "2025-05-07T06:18:33.035Z" },
+    { url = "https://files.pythonhosted.org/packages/c6/2c/84b07f2fe78f382c3514ce3863554ae47019536293d366e80e57598fe9cb/stim-1.15.0-cp310-cp310-win_amd64.whl", hash = "sha256:d94638feaac9d037690779c383592bb898eda9db460d23fc0652d10030d570c9", size = 2624472, upload-time = "2025-05-07T06:18:34.678Z" },
+    { url = "https://files.pythonhosted.org/packages/94/5f/82a80a3b0e494af4723737ea2109e64edbedc25fe05dcee8918e70d3a060/stim-1.15.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:48525d92965cc65b61399a9e1fe1d7a8925981bb4430ef69866d4e5c67a77d16", size = 1956537, upload-time = "2025-05-07T06:18:36.685Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/82/0a01580071c6d50107298e93faa88250fc30f1538117ec887ec48de7816d/stim-1.15.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:0bb3757c69c9b16fd24ff7400b5cddb22017c4cae84fc4b7b73f84373cb03c00", size = 1826988, upload-time = "2025-05-07T06:18:38.598Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/c1/1dfa90b0622070eb39b4260eca26814d6fbac0f278e23b156072d9fac86b/stim-1.15.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f0fb249f1a2897a22cbe4e0c2627abf49188cbbf19b942d4749972d1c3bdf12c", size = 4989254, upload-time = "2025-05-07T06:18:40.628Z" },
+    { url = "https://files.pythonhosted.org/packages/cb/27/5b8e8155e7fb75a9313e70f77a62233e0b9041c5acb60f6cf5a908d221e8/stim-1.15.0-cp311-cp311-win_amd64.whl", hash = "sha256:6e3b61a2d9dc4b4312f5cf2ccf9c9f7175fe13a12e5c08df99835c5275680919", size = 2625370, upload-time = "2025-05-07T06:18:42.65Z" },
+    { url = "https://files.pythonhosted.org/packages/65/99/da44f1fde8692deb74e291899699ee166e5726b975addff50f0f68bfc4c1/stim-1.15.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:d426e00afe21478828369df3aaa82905e710c5b1f72582ec45244e3739d6183d", size = 1974467, upload-time = "2025-05-07T06:18:44.665Z" },
+    { url = "https://files.pythonhosted.org/packages/46/f3/5aa6a7b31bcc9fb2540f65954b99dbf1e8c5fcd8d0aa164857b74e5eae9a/stim-1.15.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:fc613f78bc88b4318d7f34f9fddacec52638c11b72cc618f911bdd7ca153f938", size = 1838840, upload-time = "2025-05-07T06:18:46.025Z" },
+    { url = "https://files.pythonhosted.org/packages/5b/25/f3b56b07c0c3fb31cb973a5c47ef88da022a859940dd46c910b706fc74aa/stim-1.15.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fdd9e5ab85ba2fb113b8834422518f6e46a4aea2e0f6f7305cfc2ad0fcd07086", size = 4968123, upload-time = "2025-05-07T06:18:48.197Z" },
+    { url = "https://files.pythonhosted.org/packages/81/7e/abfed103a045a6ee8c7f3f00cd820d1cf9127304066aec42ea9fb89ee9c0/stim-1.15.0-cp312-cp312-win_amd64.whl", hash = "sha256:e92d5be90f6c92bada6b5aea64dfe9c80813a06e1316a71d5a36203dd24492f5", size = 2625908, upload-time = "2025-05-07T06:18:49.681Z" },
+    { url = "https://files.pythonhosted.org/packages/28/7f/825d745dc128321dd2f41da75d18111121a90e7bb711da24f28b1e003c9e/stim-1.15.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:673a323402c266b1a1225565d69d31816c3d4a4c259383ed4fa9c15cacd12411", size = 1974528, upload-time = "2025-05-07T06:18:51.125Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/99/10604264cd7159573d6d01cdf5f9675c71580dcc3df5c533fccabad59cda/stim-1.15.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:35e36d0479015b4dcb4261b8b68be85067cbd4bac5632bdfdb3ee3f8671d05a9", size = 1838700, upload-time = "2025-05-07T06:18:52.95Z" },
+    { url = "https://files.pythonhosted.org/packages/25/97/1bf3bf16129667eff1c0d0f3bb95262a2bec8c8d1227aa973b8e2a1935b6/stim-1.15.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fb9465ab120837ecbd26b5af216a00715f04da087ddcfa09646892c8de720d09", size = 4967782, upload-time = "2025-05-07T06:18:54.94Z" },
 ]
 
 [[package]]

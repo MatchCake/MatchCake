@@ -17,7 +17,7 @@ from ..utils import (
     make_wires_continuous,
 )
 from ..utils.math import fermionic_operator_matmul
-from ..utils.torch_utils import to_tensor
+from ..utils.torch_utils import to_cpu, to_tensor
 from .single_particle_transition_matrices.single_particle_transition_matrix import (
     SingleParticleTransitionMatrixOperation,
 )
@@ -64,7 +64,7 @@ class MatchgateOperation(Operation):
     """
 
     num_params = 1
-    ndim_params = 2
+    ndim_params = (2,)
     num_wires = 2
     par_domain = "A"
 
@@ -177,7 +177,7 @@ class MatchgateOperation(Operation):
         seed: Optional[int] = None,
         **kwargs,
     ) -> Union[TensorLike, MatchgateParams]:
-        """
+        r"""
         Generates a tensor of random parameters. This method allows creating a tensor
         with random elements drawn from uniform (0, 1] for the two first elements
         and drawn from a uniform distribution [0, :math:`2\pi`).
@@ -278,6 +278,18 @@ class MatchgateOperation(Operation):
     ):
         return [qml.QubitUnitary(params[0], wires=wires)]
 
+    def __new__(cls, *params: TensorLike, wires: Optional[WiresLike] = None, id: Optional[str] = None, **kwargs):
+        is_matchgate = False
+        if len(params) == 1 and isinstance(params[0], MatchgateParams):
+            is_matchgate = True
+        elif len(params) == 1 and qml.math.ndim(params[0]) >= 2:
+            shape = qml.math.shape(params[0])
+            if shape[-2:] == (4, 4):
+                is_matchgate = True
+        if is_matchgate:
+            return super().__new__(MatchgateOperation)
+        return super().__new__(cls)
+
     def __init__(
         self,
         matrix: Union[TensorLike, MatchgateParams],
@@ -367,7 +379,7 @@ class MatchgateOperation(Operation):
     def _check_m_m_dagger_constraint(self) -> bool:
         with torch.no_grad():
             m_m_dagger = torch.einsum("...ij,...kj->...ik", self.matrix(), torch.conj(self.matrix()))
-            expected_zero = m_m_dagger - torch.eye(4)
+            expected_zero = to_cpu(m_m_dagger) - torch.eye(4)
             check = torch.allclose(expected_zero, torch.zeros_like(expected_zero), atol=1e-5)
         if not check:
             raise ValueError(
@@ -378,7 +390,7 @@ class MatchgateOperation(Operation):
     def _check_m_dagger_m_constraint(self) -> bool:
         with torch.no_grad():
             m_dagger_m = torch.einsum("...ji,...jk->...ik", torch.conj(self.matrix()), self.matrix())
-            expected_zero = m_dagger_m - torch.eye(4)
+            expected_zero = to_cpu(m_dagger_m) - torch.eye(4)
             check = torch.allclose(expected_zero, torch.zeros_like(expected_zero), atol=1e-5)
         if not check:
             raise ValueError(

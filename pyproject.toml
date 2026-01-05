@@ -36,6 +36,7 @@ dependencies = [
     "torchpfaffian (>=0.0.0)",
     "opt-einsum (>=3.4.0)",
     "importlib-metadata (>=8.7.0,<9.0.0)",
+    "stim>=1.15.0",
 ]
 dynamic = ["readme"]
 

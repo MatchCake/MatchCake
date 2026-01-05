@@ -1,5 +1,6 @@
 from typing import Optional
 
+import numpy as np
 import pennylane as qml
 import torch
 from pennylane.typing import TensorLike
@@ -22,11 +23,16 @@ class Rzz(MatchgateOperation):
         \end{bmatrix}
 
     where :math:`\theta` is a parameter, :math:`Z_{j}` is the Pauli-Z operator applied on the wire :math:`j`,
-    and :math:`i` is the imaginary unit.
+    and :math:`i` is the imaginary unit. Since the determinant constraint needs to be fulfilled, theta needs to be
+    :math:`\theta = k\pi` for :math:`k \in \mathbf{Z}`.
     """
 
-    num_wires = 2
-    num_params = 1
+    @classmethod
+    def random_params(cls, batch_size=None, **kwargs):
+        params_shape = ([batch_size] if batch_size is not None else []) + [1]
+        seed = kwargs.pop("seed", None)
+        rn_gen = np.random.default_rng(seed)
+        return np.pi * rn_gen.choice([0, 1], size=params_shape)
 
     def __init__(
         self,

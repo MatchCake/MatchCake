@@ -3,19 +3,22 @@ from typing import Any, Iterable, List, Literal, Optional, Sequence, Union
 import numpy as np
 import pennylane as qml
 from pennylane import numpy as pnp
-from pennylane.operation import AnyWires, Operation
+from pennylane.math import expm
+from pennylane.operation import AnyWires, Operation, Operator
 from pennylane.typing import TensorLike
-from pennylane.wires import Wires
+from pennylane.wires import Wires, WiresLike
 
 from ... import utils
 from ...constants import _CIRCUIT_MATMUL_DIRECTION
 from ...utils import make_wires_continuous
+from ...utils.majorana import MajoranaGetter
 from ...utils.math import (
     circuit_matmul,
     convert_and_cast_like,
     dagger,
     det,
     fermionic_operator_matmul,
+    logm,
     orthonormalize,
 )
 from ...utils.torch_utils import detach
@@ -200,6 +203,31 @@ class _SingleParticleTransitionMatrix:
 
 
 class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, Operation):
+    r"""
+    Represents a single-particle transition matrix (SPTM) operation.
+
+    This class defines and implements the behavior of single-particle transition
+    matrix operations in a quantum computation framework. A SPTM is defined as
+
+    .. math::
+        R = \exp(4 h)
+
+    where :math:`R` is the SPTM and :math:`h` is the free fermionic integrals, or transition energies between
+    orbitals. The free fermions hamiltonian is then defines as
+
+    .. math::
+        H = i \sum_{i,j=0}^{2N - 1} h_{i,j} c_i c_j
+
+    where :math:`c_k` is the k-th majorana operator and :math:`N` is the number of orbitals/qubits/wires.
+
+    In terms of matchgate, the SPTM is defined as
+
+    .. math::
+        R_{\mu\nu} = \frac{1}{4} \text{Tr}((U c_\mu U^\dagger)c_\nu)
+
+    where :math:`R_{\mu\nu}` are the matrix elements of the SPTM and :math:`U` is a matchgate.
+    """
+
     num_wires = AnyWires
     num_params = 1
     par_domain = "A"
@@ -221,6 +249,15 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
     DEFAULT_CHECK_ANGLES = False
     DEFAULT_CLIP_ANGLES = True
     DEFAULT_NORMALIZE = False
+
+    @staticmethod
+    def compute_decomposition(
+        *params: TensorLike,
+        wires: Optional[WiresLike] = None,
+        **hyperparameters: dict[str, Any],
+    ):
+        unitary = SingleParticleTransitionMatrixOperation.to_unitary_matrix(params[0])
+        return [qml.QubitUnitary(unitary, wires=wires)]
 
     @classmethod
     def clip_angles(cls, angles):
@@ -292,8 +329,32 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
 
     @classmethod
     def from_operation(
-        cls, op: Union[Any, "SingleParticleTransitionMatrixOperation"], **kwargs
+        cls, op: Union[Operator, "SingleParticleTransitionMatrixOperation"], **kwargs
     ) -> "SingleParticleTransitionMatrixOperation":
+        """
+        Creates an instance of SingleParticleTransitionMatrixOperation from the given operation.
+
+        This class method allows the construction of a
+        SingleParticleTransitionMatrixOperation instance from various types of
+        operators. If the input operator is already an instance of
+        SingleParticleTransitionMatrixOperation, it is directly returned.
+        It also checks if the provided operator has the `to_sptm_operation` method or
+        the `single_particle_transition_matrix` attribute. If it's the case, the SPTM will be
+        constructed from `to_sptm_operation` or from `single_particle_transition_matrix` if the first
+        doesn't exist. When none of the required attributes or
+        methods are present, we try to build a MatchGateOperation from the given operation matrix.
+        If nothing works, a ValueError is raised.
+
+        :param op: The input operator to be converted. It can be an instance of
+                   `Operator` or `SingleParticleTransitionMatrixOperation`.
+        :param kwargs: Any additional keyword arguments passed to the method.
+        :return: A new instance of SingleParticleTransitionMatrixOperation.
+        :rtype: SingleParticleTransitionMatrixOperation
+        :raises ValueError: When the input operator cannot be converted due to
+                            missing attributes or methods.
+        """
+        from ..matchgate_operation import MatchgateOperation
+
         if isinstance(op, SingleParticleTransitionMatrixOperation):
             return op
         if hasattr(op, "to_sptm_operation") and callable(op.to_sptm_operation):
@@ -302,10 +363,13 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             return SingleParticleTransitionMatrixOperation(
                 op.single_particle_transition_matrix, wires=op.wires, **kwargs
             )
-        raise ValueError(
-            f"Cannot convert {type(op)} to {cls.__name__} "
-            f"without the attribute 'single_particle_transition_matrix' or the method 'to_sptm_operation'."
-        )
+        try:
+            return MatchgateOperation(op.matrix(), wires=op.wires, **kwargs).to_sptm_operation()
+        except Exception as e:
+            raise ValueError(
+                f"Cannot convert {type(op)} to {cls.__name__} "
+                f"without the attribute 'single_particle_transition_matrix' or the method 'to_sptm_operation'."
+            ) from e
 
     @classmethod
     def from_operations(
@@ -351,11 +415,6 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
             slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + op_matrix.shape[-2])
             slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + op_matrix.shape[-1])
             matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(op_matrix, matrix)
-            # matrix[..., slice_0, slice_1] = fermionic_operator_matmul(
-            #     first_matrix=detach(matrix[..., slice_0, slice_1]),
-            #     second_matrix=utils.math.convert_and_cast_like(op_matrix, matrix)
-            # )
-        # kwargs.setdefault("normalize", True)
         return SingleParticleTransitionMatrixOperation(matrix, wires=all_wires, **kwargs)
 
     @classmethod
@@ -364,7 +423,15 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         assert wires is not None, "wires kwarg must be set."
         seed = kwargs.pop("seed", None)
         rn_gen = np.random.default_rng(seed)
-        return rn_gen.normal(size=(([batch_size] if batch_size is not None else []) + [2 * len(wires), 2 * len(wires)]))
+        params_indexes = np.triu_indices(2 * len(wires), k=1)
+        rn_params = rn_gen.normal(size=(([batch_size] if batch_size is not None else []) + [params_indexes[0].size]))
+        matrix = np.zeros(
+            ([batch_size] if batch_size is not None else []) + [2 * len(wires), 2 * len(wires)], dtype=complex
+        )
+        matrix[..., params_indexes[0], params_indexes[1]] = rn_params
+        matrix[..., params_indexes[1], params_indexes[0]] = -rn_params
+        exp_matrix = expm(4 * matrix)
+        return exp_matrix
 
     @classmethod
     def random(cls, wires: Wires, batch_size=None, **kwargs):
@@ -376,7 +443,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
 
     def __init__(
         self,
-        matrix,
+        matrix: TensorLike,
         wires: Optional[Union[Sequence[int], Wires]] = None,
         *,
         id=None,
@@ -386,14 +453,31 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         normalize: bool = DEFAULT_NORMALIZE,
         **kwargs,
     ):
+        """
+        Initialize an operation that applies a single-particle transition represented by the
+        specified matrix with optional parameters for clipping angles, checking matrix and
+        angle validity, and normalization.
+
+        :param matrix: A tensor-like object defining the transition matrix.
+        :param wires: Optional; Specifies the wires or subsystems the operation acts on. Can
+            be a sequence of integers or a `Wires` object.
+        :param id: Optional; The operation's unique identifier.
+        :param clip_angles: Boolean flag indicating whether to clip angles in the matrix.
+            Defaults to `DEFAULT_CLIP_ANGLES`.
+        :param check_angles: Boolean flag indicating whether to validate the angles in the
+            matrix. Defaults to `DEFAULT_CHECK_ANGLES`.
+        :param check_matrix: Boolean flag indicating whether to check if the matrix lies
+            within the SO(4) group. Defaults to `DEFAULT_CHECK_MATRIX`.
+        :param normalize: Boolean flag indicating whether to orthonormalize the matrix
+            prior to initialization. Defaults to `DEFAULT_NORMALIZE`.
+        :param kwargs: Additional keyword arguments passed to parent classes or methods.
+        :raises ValueError: If `check_matrix` is True and the provided matrix does not belong
+            to the SO(4) group.
+        """
         if normalize:
             matrix = orthonormalize(matrix)
         _SingleParticleTransitionMatrix.__init__(self, matrix, wires=wires)
-        if self.batch_size is None:
-            params = matrix.reshape(-1)
-        else:
-            params = matrix.reshape(self.batch_size, -1)
-        Operation.__init__(self, params, wires=wires, id=id)
+        Operation.__init__(self, matrix, wires=wires, id=id)
         self._hyperparameters = {
             "clip_angles": clip_angles,
             "check_angles": check_angles,
@@ -514,3 +598,39 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         return SingleParticleTransitionMatrixOperation(
             qml.math.trunc(self.matrix()), wires=self.wires, **self._hyperparameters
         )
+
+    def to_matchgate(self):
+        from ..matchgate_operation import MatchgateOperation
+
+        unitary = self.to_unitary_matrix(self.matrix())
+        return MatchgateOperation(unitary, wires=self.wires, id=self.id, **self.hyperparameters)
+
+    def to_qubit_unitary(self) -> qml.QubitUnitary:
+        return qml.QubitUnitary(self.to_unitary_matrix(self.matrix()), wires=self.wires, id=self.id, unitary_check=True)
+
+    @staticmethod
+    def to_unitary_matrix(matrix: TensorLike) -> TensorLike:
+        r"""
+
+        ... :math:
+            U = \exp(-\sum\limits_{i,j=0}^{2N-1} h_{ij} c_i c_j)
+            R = \exp(4 h) \implies h = \frac{1}{4} \log(R)
+
+        where :math:`c_i` are the Majorana operators, :math:`R` is the current single particle transition matrix.
+
+        """
+        wires = np.arange(matrix.shape[-1] // 2)
+        majorana_getter = MajoranaGetter(n=len(wires))
+        majorana_tensor = qml.math.stack([majorana_getter[i] for i in range(2 * majorana_getter.n)])
+        h = (1 / 4) * logm(matrix)
+        unitary = qml.math.expm(
+            -1.0
+            * qml.math.einsum(
+                "...ij,ikq,jqp->...kp",
+                h,
+                majorana_tensor,
+                majorana_tensor,
+                optimize="optimal",
+            )
+        )
+        return unitary

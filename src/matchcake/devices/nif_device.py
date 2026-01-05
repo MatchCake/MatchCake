@@ -1,14 +1,15 @@
-import itertools
-import warnings
 from collections import defaultdict
-from copy import deepcopy
 from functools import partial
-from typing import Any, Callable, Iterable, List, Literal, Optional, Tuple, Union
+from typing import Iterable, List, Literal, Optional, Union
 
 import numpy as np
-import psutil
 import torch
 import tqdm
+
+from .expval_strategies.clifford_expval.clifford_expval_strategy import (
+    CliffordExpvalStrategy,
+)
+from .expval_strategies.expval_from_probabilities import ExpvalFromProbabilitiesStrategy
 
 try:
     from pennylane.ops import Hamiltonian
@@ -16,20 +17,11 @@ except ImportError:
     from pennylane.ops.op_math.linear_combination import Hamiltonian
 
 import pennylane as qml
-import pythonbasictools as pbt
-from pennylane import numpy as pnp
+from pennylane.devices._legacy_device import _local_tape_expand
 from pennylane.measurements import (
-    Expectation,
-    MeasurementProcess,
-    MeasurementValue,
-    MidMeasureMP,
-    Probability,
-    Sample,
     ShadowExpvalMP,
-    State,
-    Variance,
 )
-from pennylane.operation import Operation
+from pennylane.operation import Operation, StatePrepBase
 from pennylane.ops import LinearCombination, Prod, SProd, Sum
 from pennylane.ops.qubit.observables import BasisStateProjector
 from pennylane.pulse import ParametrizedEvolution
@@ -45,21 +37,18 @@ from ..observables.batch_projector import BatchProjector
 from ..operations.matchgate_operation import MatchgateOperation
 from ..operations.single_particle_transition_matrices.single_particle_transition_matrix import (
     SingleParticleTransitionMatrixOperation,
-    _SingleParticleTransitionMatrix,
 )
 from ..utils import (
     binary_state_to_state,
     binary_string_to_vector,
-    get_eigvals_on_z_basis,
     torch_utils,
 )
 from ..utils.math import (
-    circuit_matmul,
     convert_and_cast_like,
-    dagger,
     fermionic_operator_matmul,
 )
 from .contraction_strategies import ContractionStrategy, get_contraction_strategy
+from .expval_strategies.terms_splitter import TermsSplitter
 from .probability_strategies import ProbabilityStrategy, get_probability_strategy
 from .sampling_strategies import SamplingStrategy, get_sampling_strategy
 from .star_state_finding_strategies import (
@@ -121,7 +110,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         "PauliX",
         "PauliY",
         "PauliZ",
-        "Hadamard",
         "BatchHamiltonian",
         "Hermitian",
         "Identity",
@@ -271,6 +259,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
         self.show_progress = kwargs.get("show_progress", self.p_bar is not None)
         self.apply_metadata = defaultdict()
+        self.clifford_expval_strategy = CliffordExpvalStrategy()
+        self.expval_from_probabilities_strategy = ExpvalFromProbabilitiesStrategy()
+        self._state_prep_op = qml.BasisState(np.zeros(self.num_wires, dtype=int), wires=self.wires)
 
     def apply(self, operations, rotations=None, **kwargs):
         """
@@ -408,7 +399,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                 )
             self.p_bar_set_n(i + 1)
             self.p_bar_set_postfix_str(f"Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%")
-            if kwargs.get("gc_op", True):
+            if kwargs.get("gc_op", False):
                 del op
 
         self.p_bar_set_total(self.apply_metadata["n_operations"])
@@ -466,7 +457,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         :rtype: bool
         """
 
-        if kwargs.get("index", 0) > 0 and isinstance(operation, (qml.StatePrep, qml.BasisState)):
+        if kwargs.get("index", 0) > 0 and isinstance(operation, (StatePrepBase, qml.BasisState)):
             raise qml.DeviceError(
                 f"Operation {operation.name} cannot be used after other Operations have already been applied "
                 f"on a {self.short_name} device."
@@ -475,8 +466,12 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         is_applied = True
         if isinstance(operation, qml.StatePrep):
             self._apply_state_vector(operation.parameters[0], operation.wires)
+            self._state_prep_op = operation
         elif isinstance(operation, qml.BasisState):
             self._apply_basis_state(operation.parameters[0], operation.wires)
+            self._state_prep_op = operation
+        elif isinstance(operation, StatePrepBase):
+            self._state_prep_op = operation
         elif isinstance(operation, qml.Snapshot):
             if self._debugger and self._debugger.active:
                 state_vector = np.array(self._flatten(self._state))
@@ -486,6 +481,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                     self._debugger.snapshots[len(self._debugger.snapshots)] = state_vector
         elif isinstance(operation, qml.pulse.ParametrizedEvolution):
             self._state = self._apply_parametrized_evolution(self._state, operation)
+            self._state_prep_op = operation
         else:
             is_applied = False
         return is_applied
@@ -518,6 +514,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             all_wires=self.wires,
             lookup_table=self.lookup_table,
             transition_matrix=self.transition_matrix,
+            global_sptm=self.global_sptm,
             pfaffian_method=self.pfaffian_method,
             majorana_getter=self.majorana_getter,
             show_progress=self.show_progress,
@@ -559,6 +556,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             all_wires=self.wires,
             lookup_table=self.lookup_table,
             transition_matrix=self.transition_matrix,
+            global_sptm=self.global_sptm.matrix(),
+            state_prep_op=self._state_prep_op,
             pfaffian_method=self.pfaffian_method,
             majorana_getter=self.majorana_getter,
             show_progress=kwargs.pop("show_progress", self.show_progress),
@@ -643,31 +642,32 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         return self.samples
 
     def exact_expval(self, observable):
-        prob = self.probability(wires=observable.wires)
-        if isinstance(observable, BatchHamiltonian):
-            eigvals_on_z_basis = observable.eigvals_on_z_basis()
-        else:
-            eigvals_on_z_basis = get_eigvals_on_z_basis(observable)
-        return qml.math.einsum("...i,...i->...", prob, eigvals_on_z_basis)
-
-    def expval(self, observable, shot_range=None, bin_size=None):
         if isinstance(observable, BasisStateProjector):
             return self.get_state_probability(observable.parameters[0], observable.wires)
-        elif isinstance(observable, qml.Identity):
-            t_shape = qml.math.shape(self.transition_matrix)
-            if len(t_shape) == 2:
-                return convert_and_cast_like(1, self.transition_matrix)
-            return convert_and_cast_like(np.ones(t_shape[0]), self.transition_matrix)
-
         if isinstance(observable, BatchProjector):
             return self.get_states_probability(observable.get_states(), observable.get_batch_wires())
+        if self.clifford_expval_strategy.can_execute(self.state_prep_op, observable):
+            return self.clifford_expval_strategy(self.state_prep_op, observable, global_sptm=self.global_sptm.matrix())
+        if self.expval_from_probabilities_strategy.can_execute(self.state_prep_op, observable):
+            prob = self.probability(wires=observable.wires)
+            return self.expval_from_probabilities_strategy(self.state_prep_op, observable, prob=prob)
+        terms_splitter = TermsSplitter([self.clifford_expval_strategy, self.expval_from_probabilities_strategy])
+        if terms_splitter.can_execute(self.state_prep_op, observable):
+            return terms_splitter(
+                self.state_prep_op, observable, global_sptm=self.global_sptm.matrix(), prob_func=self.probability
+            )
 
+        raise qml.DeviceError(
+            f"The expectation value of the observable {observable} "
+            f"cannot be computed on a {self.short_name} device."
+            "Please check the device's capabilities."
+        )
+
+    def expval(self, observable, shot_range=None, bin_size=None):
         if self.shots is None:
             output = self.exact_expval(observable)
         else:
             output = super().expval(observable, shot_range, bin_size)
-        if isinstance(observable, BatchHamiltonian):
-            return observable.reduce(output)
         return output
 
     def get_sparse_or_dense_state(
@@ -695,6 +695,12 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                 if circuit.batch_size is None:
                     return circuits, hamiltonian_fn
         return self._patched_super_batch_transform(circuit)
+
+    def default_expand_fn(self, circuit: QuantumTape, max_expansion=10):
+        ops_not_supported = not all(self.stopping_condition(op) for op in circuit.operations)
+        if ops_not_supported:
+            circuit = _local_tape_expand(circuit, depth=max_expansion, stop_at=self.stopping_condition)
+        return circuit
 
     def reset(self):
         """Reset the device"""
@@ -1091,3 +1097,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     @property
     def samples(self):
         return self._samples
+
+    @property
+    def state_prep_op(self) -> StatePrepBase:
+        return self._state_prep_op
