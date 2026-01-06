@@ -1174,6 +1174,7 @@ name = "matchcake"
 version = "0.1.2"
 source = { editable = "." }
 dependencies = [
+    { name = "autoray" },
     { name = "importlib-metadata" },
     { name = "matplotlib" },
     { name = "networkx" },
@@ -1253,6 +1254,7 @@ docs = [
 
 [package.metadata]
 requires-dist = [
+    { name = "autoray", specifier = "<=0.7.2" },
     { name = "importlib-metadata", specifier = ">=8.7.0,<9.0.0" },
     { name = "matplotlib", specifier = ">=3.8.0" },
     { name = "networkx", specifier = ">=3.1,<4.0" },
