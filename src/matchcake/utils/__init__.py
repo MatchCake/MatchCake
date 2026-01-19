@@ -20,6 +20,7 @@ from .majorana import (
     get_majorana_pauli_string,
 )
 from .operators import recursive_2in_operator, recursive_kron
+from .logm import logm
 
 
 def binary_string_to_vector(binary_string: str, encoding: str = "ascii") -> np.ndarray:

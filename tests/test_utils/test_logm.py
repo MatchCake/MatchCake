@@ -1,15 +1,18 @@
 import numpy as np
 import pytest
+import torch
 from pennylane.math import expm
+from torch.autograd import gradcheck
 
-from matchcake.utils.math import logm
+from matchcake.utils.logm import logm, torch_logm
+from matchcake.utils.torch_utils import to_tensor
 
 from ..configs import (
     ATOL_MATRIX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
     RTOL_MATRIX_COMPARISON,
     TEST_SEED,
-    set_seed,
+    set_seed, ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON,
 )
 
 set_seed(TEST_SEED)
@@ -203,3 +206,23 @@ def test_logm_complex_near_minf(x):
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
+
+
+class TestLogm:
+    def test_forward(self):
+        x = np.linspace(0, 100, num=6**2).reshape(6, 6)
+        x = to_tensor(x)
+        res = expm(logm(x))
+        torch.testing.assert_close(res, x, check_dtype=False)
+
+    def test_backward(self):
+        x = np.linspace(0, 100, num=6 ** 2).reshape(6, 6)
+        torch_x = torch.from_numpy(x).requires_grad_()
+        assert gradcheck(
+            torch_logm,
+            (torch_x,),
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=10 * RTOL_APPROX_COMPARISON,
+        )
+
+

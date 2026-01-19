@@ -9,19 +9,14 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires, WiresLike
 
 from ... import utils
-from ...constants import _CIRCUIT_MATMUL_DIRECTION
 from ...utils import make_wires_continuous
+from ...utils.logm import logm
 from ...utils.majorana import MajoranaGetter
 from ...utils.math import (
-    circuit_matmul,
     convert_and_cast_like,
     dagger,
-    det,
-    fermionic_operator_matmul,
-    logm,
     orthonormalize,
 )
-from ...utils.torch_utils import detach
 
 
 class _SingleParticleTransitionMatrix:
@@ -41,7 +36,7 @@ class _SingleParticleTransitionMatrix:
 
     @classmethod
     def from_operation(
-        cls, op: Union[Any, "_SingleParticleTransitionMatrix"], **kwargs
+            cls, op: Union[Any, "_SingleParticleTransitionMatrix"], **kwargs
     ) -> "_SingleParticleTransitionMatrix":
         if isinstance(op, cls):
             return op
@@ -49,7 +44,7 @@ class _SingleParticleTransitionMatrix:
 
     @classmethod
     def from_operations(
-        cls, ops: Iterable[Union[Any, "_SingleParticleTransitionMatrix"]]
+            cls, ops: Iterable[Union[Any, "_SingleParticleTransitionMatrix"]]
     ) -> "_SingleParticleTransitionMatrix":
         from ..matchgate_operation import MatchgateOperation
 
@@ -90,7 +85,7 @@ class _SingleParticleTransitionMatrix:
 
     @classmethod
     def from_spt_matrices(
-        cls, matrices: Iterable["_SingleParticleTransitionMatrix"]
+            cls, matrices: Iterable["_SingleParticleTransitionMatrix"]
     ) -> "_SingleParticleTransitionMatrix":
         matrices = list(matrices)
         if len(matrices) == 0:
@@ -252,9 +247,9 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
 
     @staticmethod
     def compute_decomposition(
-        *params: TensorLike,
-        wires: Optional[WiresLike] = None,
-        **hyperparameters: dict[str, Any],
+            *params: TensorLike,
+            wires: Optional[WiresLike] = None,
+            **hyperparameters: dict[str, Any],
     ):
         unitary = SingleParticleTransitionMatrixOperation.to_unitary_matrix(params[0])
         return [qml.QubitUnitary(unitary, wires=wires)]
@@ -329,7 +324,7 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
 
     @classmethod
     def from_operation(
-        cls, op: Union[Operator, "SingleParticleTransitionMatrixOperation"], **kwargs
+            cls, op: Union[Operator, "SingleParticleTransitionMatrixOperation"], **kwargs
     ) -> "SingleParticleTransitionMatrixOperation":
         """
         Creates an instance of SingleParticleTransitionMatrixOperation from the given operation.
@@ -373,9 +368,9 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
 
     @classmethod
     def from_operations(
-        cls,
-        ops: Iterable[Union[Any, "SingleParticleTransitionMatrixOperation"]],
-        **kwargs,
+            cls,
+            ops: Iterable[Union[Any, "SingleParticleTransitionMatrixOperation"]],
+            **kwargs,
     ) -> "SingleParticleTransitionMatrixOperation":
         """
         This method will contract multiple SingleParticleTransitionMatrixOperations into a single one.
@@ -442,16 +437,16 @@ class SingleParticleTransitionMatrixOperation(_SingleParticleTransitionMatrix, O
         )
 
     def __init__(
-        self,
-        matrix: TensorLike,
-        wires: Optional[Union[Sequence[int], Wires]] = None,
-        *,
-        id=None,
-        clip_angles: bool = DEFAULT_CLIP_ANGLES,
-        check_angles: bool = DEFAULT_CHECK_ANGLES,
-        check_matrix: bool = DEFAULT_CHECK_MATRIX,
-        normalize: bool = DEFAULT_NORMALIZE,
-        **kwargs,
+            self,
+            matrix: TensorLike,
+            wires: Optional[Union[Sequence[int], Wires]] = None,
+            *,
+            id=None,
+            clip_angles: bool = DEFAULT_CLIP_ANGLES,
+            check_angles: bool = DEFAULT_CHECK_ANGLES,
+            check_matrix: bool = DEFAULT_CHECK_MATRIX,
+            normalize: bool = DEFAULT_NORMALIZE,
+            **kwargs,
     ):
         """
         Initialize an operation that applies a single-particle transition represented by the
