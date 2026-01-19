@@ -129,6 +129,7 @@ viz.plot_2d_decision_boundaries(model=pipline, y=y, show=True)
 
 # Tutorials
 - [MatchCake Basics](https://github.com/MatchCake/MatchCake/blob/main/tutorials/matchcake_basics.ipynb)
+- [Compute Expectation Values with MatchCake](https://github.com/MatchCake/MatchCake/blob/main/tutorials/expectation_values.ipynb)
 - [Iris Classification with MatchCake](https://github.com/MatchCake/MatchCake/blob/main/tutorials/iris_classification.ipynb)
 - [Nystroem Kernel Approximation](https://github.com/MatchCake/MatchCake/blob/main/tutorials/nystroem_kernel_approximation.ipynb)
 
@@ -165,6 +166,25 @@ Fund.
 
 # Citation
 
+Repository:
+```
+@misc{matchcake_Gince2023,
+  title={MatchCake},
+  author={Jérémie Gince},
+  year={2023},
+  publisher={Université de Sherbrooke},
+  url={https://github.com/MatchCake/MatchCake},
+}
+```
+
+## Fermionic Machine Learning Paper
+
+[Fermionic Machine Learning](https://ieeexplore.ieee.org/document/10821385) is a work presented at the 2024 IEEE 
+International Conference on Quantum Computing and Engineering (QCE). The paper compares unconstrained quantum kernel 
+methods with constraint-based kernels derived from matchgate (free-fermionic) circuits, and benchmarks their 
+performance on supervised classification tasks. All free-fermionic kernels considered in this work were simulated 
+using MatchCake.
+
 [IEEE Xplore paper](https://ieeexplore.ieee.org/document/10821385):
 ```
 @INPROCEEDINGS{10821385,
@@ -192,15 +212,3 @@ Fund.
       primaryClass={quant-ph}
 }
 ```
-
-Repository:
-```
-@misc{matchcake_Gince2023,
-  title={Fermionic Machine learning},
-  author={Jérémie Gince},
-  year={2023},
-  publisher={Université de Sherbrooke},
-  url={https://github.com/MatchCake/MatchCake},
-}
-```
-
