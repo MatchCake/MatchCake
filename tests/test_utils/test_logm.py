@@ -8,11 +8,13 @@ from matchcake.utils.logm import logm, torch_logm
 from matchcake.utils.torch_utils import to_tensor
 
 from ..configs import (
+    ATOL_APPROX_COMPARISON,
     ATOL_MATRIX_COMPARISON,
     N_RANDOM_TESTS_PER_CASE,
+    RTOL_APPROX_COMPARISON,
     RTOL_MATRIX_COMPARISON,
     TEST_SEED,
-    set_seed, ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON,
+    set_seed,
 )
 
 set_seed(TEST_SEED)
@@ -216,7 +218,7 @@ class TestLogm:
         torch.testing.assert_close(res, x, check_dtype=False)
 
     def test_backward(self):
-        x = np.linspace(0, 100, num=6 ** 2).reshape(6, 6)
+        x = np.linspace(0, 100, num=6**2).reshape(6, 6)
         torch_x = torch.from_numpy(x).requires_grad_()
         assert gradcheck(
             torch_logm,
@@ -224,5 +226,3 @@ class TestLogm:
             atol=ATOL_APPROX_COMPARISON,
             rtol=10 * RTOL_APPROX_COMPARISON,
         )
-
-

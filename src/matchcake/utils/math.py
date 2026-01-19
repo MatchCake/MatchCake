@@ -47,8 +47,8 @@ def convert_and_cast_like(tensor1, tensor2):
         if not qml.math.any(qml.math.iscomplex(new_tensor1)):
             new_tensor1 = qml.math.real(new_tensor1)
         if (
-                "complex" in qml.math.get_dtype_name(new_tensor1).lower()
-                and not "complex" in qml.math.get_dtype_name(tensor2).lower()
+            "complex" in qml.math.get_dtype_name(new_tensor1).lower()
+            and not "complex" in qml.math.get_dtype_name(tensor2).lower()
         ):
             new_tensor1 = qml.math.real(new_tensor1)
         try:
@@ -102,15 +102,15 @@ def eye_block_matrix(matrix: TensorLike, n: int, index: int):
 
 
 def convert_tensors_to_same_type_and_cast_to(
-        tensors: List[TensorLike],
-        cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
-                "numpy",
-                "autograd",
-                "jax",
-                "tf",
-                "torch",
-        ),
-        dtype=None,
+    tensors: List[TensorLike],
+    cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+        "numpy",
+        "autograd",
+        "jax",
+        "tf",
+        "torch",
+    ),
+    dtype=None,
 ) -> List[TensorLike]:
     r"""
     Convert the tensors to the same type using the given priorities.
@@ -135,14 +135,14 @@ def convert_tensors_to_same_type_and_cast_to(
 
 
 def convert_tensors_to_same_type(
-        tensors: List[TensorLike],
-        cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
-                "numpy",
-                "autograd",
-                "jax",
-                "tf",
-                "torch",
-        ),
+    tensors: List[TensorLike],
+    cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+        "numpy",
+        "autograd",
+        "jax",
+        "tf",
+        "torch",
+    ),
 ) -> List[TensorLike]:
     r"""
     Convert the tensors to the same type using the given priorities.
@@ -167,15 +167,15 @@ def convert_tensors_to_same_type(
 
 
 def convert_and_cast_tensor_from_tensors(
-        tensor: TensorLike,
-        tensors: List[TensorLike],
-        cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
-                "numpy",
-                "autograd",
-                "jax",
-                "tf",
-                "torch",
-        ),
+    tensor: TensorLike,
+    tensors: List[TensorLike],
+    cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+        "numpy",
+        "autograd",
+        "jax",
+        "tf",
+        "torch",
+    ),
 ) -> TensorLike:
     r"""
     Convert and cast the tensor to the same type as the tensors using the given priorities.
@@ -222,11 +222,11 @@ def exp_taylor_series(x: Any, terms: int = 18) -> Any:
 
 
 def random_index(
-        probs,
-        n: Optional[int] = None,
-        axis=-1,
-        normalize_probs: bool = True,
-        eps: float = 1e-12,
+    probs,
+    n: Optional[int] = None,
+    axis=-1,
+    normalize_probs: bool = True,
+    eps: float = 1e-12,
 ):
     _n = n or 1
     axis = np.mod(axis, probs.ndim)
@@ -282,10 +282,10 @@ def matmul(left: Any, right: Any, operator: Literal["einsum", "matmul", "@"] = "
 
 
 def circuit_matmul(
-        first_matrix: Any,
-        second_matrix: Any,
-        direction: MatmulDirectionType = _CIRCUIT_MATMUL_DIRECTION,
-        operator: Literal["einsum", "matmul", "@"] = "@",
+    first_matrix: Any,
+    second_matrix: Any,
+    direction: MatmulDirectionType = _CIRCUIT_MATMUL_DIRECTION,
+    operator: Literal["einsum", "matmul", "@"] = "@",
 ) -> Any:
     r"""
     Perform a matrix multiplication of two matrices with the given direction.
@@ -309,10 +309,10 @@ def circuit_matmul(
 
 
 def fermionic_operator_matmul(
-        first_matrix: Any,
-        second_matrix: Any,
-        direction: MatmulDirectionType = _FOP_MATMUL_DIRECTION,
-        operator: Literal["einsum", "matmul", "@"] = "@",
+    first_matrix: Any,
+    second_matrix: Any,
+    direction: MatmulDirectionType = _FOP_MATMUL_DIRECTION,
+    operator: Literal["einsum", "matmul", "@"] = "@",
 ):
     r"""
     Perform a matrix multiplication of two fermionic operator matrices with the given direction.
@@ -403,7 +403,7 @@ def orthonormalize(tensor: Any, check_if_normalize: bool = True, raises_error: b
                 return tensor
         u, s, v = svd(tensor)
         # test if the tensor is already orthonormalized with the eigenvalues
-        if qml.math.allclose(s ** 1, 1):
+        if qml.math.allclose(s**1, 1):
             return tensor
         return matmul(u, v, "einsum")
     except Exception as e:

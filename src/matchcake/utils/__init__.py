@@ -13,6 +13,7 @@ from scipy import sparse
 from . import constants, cuda, majorana, math, operators, torch_utils
 from ._pfaffian import pfaffian
 from .constants import PAULI_I, PAULI_X, PAULI_Y, PAULI_Z
+from .logm import logm
 from .majorana import (
     MajoranaGetter,
     get_majorana,
@@ -20,7 +21,6 @@ from .majorana import (
     get_majorana_pauli_string,
 )
 from .operators import recursive_2in_operator, recursive_kron
-from .logm import logm
 
 
 def binary_string_to_vector(binary_string: str, encoding: str = "ascii") -> np.ndarray:

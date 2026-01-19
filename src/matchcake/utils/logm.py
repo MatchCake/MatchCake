@@ -16,12 +16,14 @@ class TorchLogm(torch.autograd.Function):
     provided by SciPy for numerical stability. This implementation supports real
     and complex data types.
     """
+
     @staticmethod
     def _torch_logm_scipy(tensor: TensorLike):
         if tensor.ndim == 2:
             return torch.from_numpy(scipy.linalg.logm(tensor.cpu(), disp=False)[0]).to(tensor.device)
         return torch.stack([torch.from_numpy(scipy.linalg.logm(A_.cpu(), disp=False)[0]) for A_ in tensor.cpu()]).to(
-            tensor.device)
+            tensor.device
+        )
 
     @staticmethod
     def _torch_adjoint(tensor0, tensor1, f):
@@ -51,7 +53,8 @@ class TorchLogm(torch.autograd.Function):
         if inputs.ndim == 2:
             return TorchLogm._torch_adjoint(inputs, grads, TorchLogm._torch_logm_scipy)
         return torch.stack(
-            [TorchLogm._torch_adjoint(A_, G_, TorchLogm._torch_logm_scipy) for A_, G_ in zip(inputs, grads)])
+            [TorchLogm._torch_adjoint(A_, G_, TorchLogm._torch_logm_scipy) for A_, G_ in zip(inputs, grads)]
+        )
 
 
 torch_logm = TorchLogm.apply
