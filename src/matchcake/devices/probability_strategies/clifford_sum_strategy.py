@@ -2,6 +2,7 @@ from typing import List, Tuple
 
 import numpy as np
 import pennylane as qml
+from pennylane import BasisState, qnode
 from pennylane.operation import Operator
 from pennylane.wires import Wires
 
@@ -17,16 +18,19 @@ class CliffordSumStrategy(ProbabilityStrategy):
 
     @staticmethod
     def compute_clifford_expvals(state_prep_op: Operator, indexes_shape: Tuple[int, ...]) -> np.ndarray:
-        wires = state_prep_op.wires
 
+        @qnode(qml.device("default.clifford", tableau=True))
         def clifford_circuit():
-            state_prep_op.queue()
+            if isinstance(state_prep_op, BasisState):
+                for op in state_prep_op.decomposition():
+                    op.queue()
+            else:
+                raise NotImplementedError("Only BasisState is implemented for Clifford subroutine.")
             return [
                 qml.expval(qml.prod(*[majorana_to_pauli(i) for i in indices])) for indices in np.ndindex(indexes_shape)
             ]
 
-        clifford_q_node = qml.QNode(clifford_circuit, device=qml.device("default.clifford", wires=wires))
-        expvals = clifford_q_node()
+        expvals = clifford_circuit()
         return qml.math.stack(expvals).reshape(indexes_shape)
 
     @staticmethod

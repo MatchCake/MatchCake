@@ -142,14 +142,10 @@ explicit = true
 
 [build-system]
 requires = [
-    "numpy (>=1.23,<3.0.0)",
     "setuptools>=57.0.0",
-    "pytest>=7.4.2",
-    "pytest-cov>=4.1.0",
-    "scipy>=1.11.2",
-    "wheel",
-    "pythonbasictools>=0.0.1a10",
-    "matplotlib>=3.8.0",
+    "wheel>=0.45.1,<0.46",
+    "build>=1.2.2.post1,<2",
+    "twine>=6.1.0,<7",
 ]
 build-backend = "setuptools.build_meta"
 

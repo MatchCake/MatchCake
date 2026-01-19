@@ -1,17 +1,14 @@
-from typing import Iterable, Tuple, Union
-
 import numpy as np
 import pennylane as qml
 import torch
+from pennylane import BasisState, qnode
 from pennylane.operation import Operator, StatePrepBase, TermsUndefinedError
-from pennylane.ops.op_math import Prod, SProd, Sum
 from pennylane.ops.qubit import Projector
 from pennylane.pauli import pauli_word_to_string
 
 from .... import utils
 from ....typing import TensorLike
 from ....utils.majorana import majorana_to_pauli
-from ....utils.math import dagger
 from ....utils.torch_utils import to_tensor
 from ..expval_strategy import ExpvalStrategy
 from ._pauli_map import _MAJORANA_COEFFS_MAP, _MAJORANA_INDICES_LAMBDAS
@@ -25,12 +22,16 @@ class CliffordExpvalStrategy(ExpvalStrategy):
         wires = state_prep_op.wires
         triu_indices = np.triu_indices(2 * len(wires), k=1)
 
+        @qnode(qml.device("default.clifford", tableau=True))
         def clifford_circuit():
-            state_prep_op.queue()
+            if isinstance(state_prep_op, BasisState):
+                for op in state_prep_op.decomposition():
+                    op.queue()
+            else:
+                raise NotImplementedError("Only BasisState is implemented for Clifford subroutine.")
             return [qml.expval(majorana_to_pauli(mu) @ majorana_to_pauli(nu)) for mu, nu in zip(*triu_indices)]
 
-        clifford_q_node = qml.QNode(clifford_circuit, device=qml.device("default.clifford", wires=wires))
-        return clifford_q_node()
+        return clifford_circuit()
 
     def __call__(self, state_prep_op: StatePrepBase, observable: Operator, **kwargs) -> TensorLike:
         if not self.can_execute(state_prep_op, observable):
