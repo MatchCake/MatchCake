@@ -15,6 +15,8 @@ class TorchLogm(torch.autograd.Function):
     forward and backward passes are explicitly defined, utilizing functions
     provided by SciPy for numerical stability. This implementation supports real
     and complex data types.
+
+    See: https://github.com/pytorch/pytorch/issues/9983#issuecomment-891777620
     """
 
     @staticmethod
