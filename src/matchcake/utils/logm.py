@@ -1,6 +1,8 @@
+from typing import Callable
+
 import pennylane as qml
-import scipy
 import torch
+from scipy.linalg import logm as scipy_logm
 
 from ..typing import TensorLike
 
@@ -20,16 +22,16 @@ class TorchLogm(torch.autograd.Function):
     """
 
     @staticmethod
-    def _torch_logm_scipy(tensor: TensorLike):
+    def _torch_logm_scipy(tensor: torch.Tensor):
         if tensor.ndim == 2:
-            return torch.from_numpy(scipy.linalg.logm(tensor.cpu(), disp=False)[0]).to(tensor.device)
-        return torch.stack([torch.from_numpy(scipy.linalg.logm(A_.cpu(), disp=False)[0]) for A_ in tensor.cpu()]).to(
+            return torch.from_numpy(scipy_logm(tensor.cpu(), disp=False)[0]).to(tensor.device)
+        return torch.stack([torch.from_numpy(scipy_logm(A_.cpu(), disp=False)[0]) for A_ in tensor.cpu()]).to(
             tensor.device
         )
 
     @staticmethod
-    def _torch_adjoint(tensor0, tensor1, f):
-        A_H = tensor0.T.conj().to(tensor1.dtype)
+    def _torch_adjoint(tensor0: torch.Tensor, tensor1: torch.Tensor, f: Callable[[torch.Tensor], torch.Tensor]):
+        A_H = tensor0.mH.to(tensor1.dtype)
         n = tensor0.size(0)
         M = torch.zeros(2 * n, 2 * n, dtype=tensor1.dtype, device=tensor1.device)
         M[:n, :n] = A_H
@@ -62,7 +64,7 @@ class TorchLogm(torch.autograd.Function):
 torch_logm = TorchLogm.apply
 
 
-@qml.math.multi_dispatch()
+@qml.math.multi_dispatch(argnum=0, tensor_list=0)
 def logm(tensor: TensorLike, like=None):
     """Compute the matrix exponential of an array :math:`\\ln{X}`.
 
@@ -72,15 +74,8 @@ def logm(tensor: TensorLike, like=None):
     """
     if like == "torch":
         return torch_logm(tensor)
-    if like == "jax":
-        from jax.scipy.linalg import logm as jax_logm
-
-        return jax_logm(tensor)
-    if like == "tensorflow":
-        import tensorflow as tf
-
-        return tf.linalg.logm(tensor)
-    from scipy.linalg import logm as scipy_logm
+    if like in ["jax", "tensorflow"]:  # pragma: no cover
+        return qml.math.logm(tensor)  # pragma: no cover
 
     as_arr = qml.math.array(tensor, dtype=complex)
     tensor_shape = qml.math.shape(as_arr)
