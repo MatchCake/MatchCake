@@ -4,7 +4,7 @@ import torch
 from pennylane.math import expm
 from torch.autograd import gradcheck
 
-from matchcake.utils.logm import logm, torch_logm
+from matchcake.utils.logm import TorchLogm, logm, torch_logm
 from matchcake.utils.torch_utils import to_tensor
 
 from ..configs import (
@@ -224,3 +224,10 @@ class TestLogm:
         x = np.linspace(0, 1, num=6**2).reshape(6, 6)
         torch_x = torch.from_numpy(x).requires_grad_().to(torch.complex128)
         gradcheck(logm, (torch_x,))
+
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.float64, torch.complex64, torch.complex128])
+    def test_adjoint_dtype(self, dtype):
+        x = np.linspace(0, 1, num=6**2).reshape(6, 6)
+        torch_x = torch.from_numpy(x).to(dtype)
+        res = TorchLogm._torch_adjoint(torch_x, torch.rand_like(torch_x), TorchLogm._torch_logm_scipy)
+        assert res.dtype == dtype

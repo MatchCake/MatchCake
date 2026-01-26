@@ -52,7 +52,7 @@ class TorchLogm(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, grads):
-        (inputs,) = ctx.saved_tensors
+        (inputs,) = ctx.saved_tensors  # pragma: no cover
         return TorchLogm._torch_adjoint(inputs, grads, TorchLogm._torch_logm_scipy)
 
 

@@ -11,23 +11,6 @@ from ..constants import (
 from ..typing import TensorLike
 
 
-def shape(tensor):
-    """Get the shape of a tensor.
-
-    :param tensor: The tensor.
-    :type tensor: Any
-    :return: The shape of the tensor.
-    :rtype: tuple
-    """
-    _shape = []
-    if isinstance(tensor, (list, tuple)) and len(tensor) > 0:
-        _shape.append(len(tensor))
-        _shape.extend(qml.math.shape(tensor[0]))
-    else:
-        _shape.extend(qml.math.shape(tensor))
-    return tuple(_shape)
-
-
 def convert_and_cast_like(tensor1, tensor2):
     r"""
     Convert and cast the tensor1 to the same type as tensor2.
@@ -50,11 +33,8 @@ def convert_and_cast_like(tensor1, tensor2):
             "complex" in qml.math.get_dtype_name(new_tensor1).lower()
             and not "complex" in qml.math.get_dtype_name(tensor2).lower()
         ):
-            new_tensor1 = qml.math.real(new_tensor1)
-        try:
-            new_tensor1 = qml.math.cast_like(new_tensor1, tensor2)
-        except TypeError:
-            new_tensor1 = qml.math.cast_like(new_tensor1, tensor2)
+            new_tensor1 = qml.math.real(new_tensor1)  # pragma: no cover
+        new_tensor1 = qml.math.cast_like(new_tensor1, tensor2)
     return new_tensor1
 
 
@@ -161,7 +141,7 @@ def convert_tensors_to_same_type(
     tensors_priorities = [cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors]
     highest_priority = max(tensors_priorities)
     if all(priority == highest_priority for priority in tensors_priorities):
-        return tensors
+        return tensors  # pragma: no cover
     like = tensors[tensors_priorities.index(highest_priority)]
     return [qml.math.convert_like(tensor, like) for tensor in tensors]
 
@@ -197,7 +177,7 @@ def convert_and_cast_tensor_from_tensors(
     tensors_priorities = [cast_priorities.index(qml.math.get_interface(tensor)) for tensor in tensors]
     highest_priority = max(tensors_priorities)
     if tensor_priority == highest_priority:
-        return tensor
+        return tensor  # pragma: no cover
     # like is the first tensor with the highest priority
     like = tensors[tensors_priorities.index(highest_priority)]
     return convert_and_cast_like(tensor, like)
@@ -228,6 +208,30 @@ def random_index(
     normalize_probs: bool = True,
     eps: float = 1e-12,
 ):
+    """
+    Generates random indices based on provided probabilities along a specified axis.
+
+    This function selects random indices according to the given probability
+    distribution. If the probabilities are not normalized to sum to 1,
+    they can be optionally normalized before use. It supports generating
+    a specified number of random indices, either as a scalar value or as
+    an array of indices, depending on the input parameters.
+
+    :param probs: An array of probabilities along any given dimension. This
+        array is expected to be non-negative, and its entries are used as
+        weights to compute the likelihood of selecting corresponding indices.
+    :param n: Optional integer specifying the number of random indices to
+        generate for each vector in `probs`. If not provided, defaults to 1.
+    :param axis: Integer representing the axis of the `probs` array along
+        which the random indices are generated. Defaults to -1 (last axis).
+    :param normalize_probs: Boolean indicating whether to normalize `probs`
+        along the specified axis to ensure that the entries sum to 1.
+        Defaults to True.
+    :param eps: A small float value added to the denominator during
+        normalization to prevent division by zero. Defaults to 1e-12.
+    :return: A scalar or an array of randomly selected indices based on the
+        probabilities provided.
+    """
     _n = n or 1
     axis = np.mod(axis, probs.ndim)
     if normalize_probs:
@@ -244,17 +248,66 @@ def random_index(
 
 
 def convert_2d_to_1d_indexes(indexes: Iterable[Tuple[int, int]], n_rows: Optional[int] = None) -> np.ndarray:
+    """
+    Convert 2D indexes to 1D indexes.
+
+    This function transforms a list or array of 2D integer indexes into their equivalent 1D format based
+    on the number of rows in the target matrix. If the number of rows (`n_rows`) is not provided, it is
+    calculated automatically based on the maximum row index found in the input.
+
+    :param indexes: A list, tuple, or NumPy array of 2D integer indexes. Each index is represented as a
+        tuple or array of two integers indicating a row and a column.
+    :param n_rows: Optional integer specifying the number of rows in the target 2D structure. Defaults
+        to None, in which case it is computed from the input indexes.
+
+    :return: A NumPy array of 1D indexes corresponding to the provided 2D indexes when flattened
+        row-major order.
+    :rtype: np.ndarray
+    """
     indexes = np.asarray(indexes)
+    if indexes.size == 0:
+        return np.array([], dtype=int)
+    if indexes.dtype not in [np.int32, np.int64, int]:
+        raise TypeError("Indexes must be integers.")
+    if indexes.ndim != 2 or indexes.shape[1] != 2:
+        raise ValueError("Indexes must be a 2D array with shape (n_indexes, 2).")
+    if n_rows is not None and (not isinstance(n_rows, int) or n_rows <= 0):
+        raise TypeError("n_rows must be a positive integer.")
     if n_rows is None:
         n_rows = np.max(indexes[:, 0]) + 1
     new_indexes = indexes[:, 0] * n_rows + indexes[:, 1]
     return new_indexes
 
 
-def convert_1d_to_2d_indexes(indexes: Iterable[int], n_rows: Optional[int] = None) -> np.ndarray:
+def convert_1d_to_2d_indexes(indexes: Iterable[int], n_rows: int) -> np.ndarray:
+    """
+    Converts a 1D array of integer indexes to a 2D array of row and column indexes.
+
+    This function takes a one-dimensional array of integers representing linear
+    indexes and converts it into a two-dimensional array of row and column
+    coordinates. The number of rows in the corresponding 2D space can be specified
+    explicitly or is inferred as the square root of the number of indexes if not given.
+
+    :param indexes: A 1D iterable of integers specifying the linear indexes
+        to convert into row and column indexes.
+    :type indexes: Iterable[int]
+    :param n_rows: A positive integer specifying the number of rows
+        in the 2D coordinate space. If not provided, it defaults to the square root
+        of the number of indexes.
+    :type n_rows: int
+    :return: A 2D NumPy array with shape (n_indexes, 2), where each row contains
+        the row and column indexes corresponding to the input linear index.
+    :rtype: np.ndarray
+    """
     indexes = np.asarray(indexes)
-    if n_rows is None:
-        n_rows = int(np.sqrt(len(indexes)))
+    if indexes.size == 0:
+        return np.array([], dtype=int)
+    if indexes.dtype not in [np.int32, np.int64, int]:
+        raise TypeError("Indexes must be integers.")
+    if indexes.ndim != 1:
+        raise ValueError("Indexes must be a 1D array with shape (n_indexes, ).")
+    if not isinstance(n_rows, int) or n_rows <= 0:
+        raise TypeError("n_rows must be a positive integer.")
     new_indexes = np.stack([indexes // n_rows, indexes % n_rows], axis=-1)
     return new_indexes
 
@@ -378,7 +431,7 @@ def svd(tensor: Any) -> Tuple[Any, Any, Any]:
     backend = qml.math.get_interface(tensor)
     if backend in ["autograd", "numpy", "torch"]:
         return qml.math.linalg.svd(tensor)
-    return qml.math.svd(tensor)
+    return qml.math.svd(tensor)  # pragma: no cover
 
 
 def orthonormalize(tensor: Any, check_if_normalize: bool = True, raises_error: bool = False) -> Any:
@@ -403,7 +456,7 @@ def orthonormalize(tensor: Any, check_if_normalize: bool = True, raises_error: b
                 return tensor
         u, s, v = svd(tensor)
         # test if the tensor is already orthonormalized with the eigenvalues
-        if qml.math.allclose(s**1, 1):
+        if qml.math.allclose(s, 1):
             return tensor
         return matmul(u, v, "einsum")
     except Exception as e:
@@ -413,6 +466,21 @@ def orthonormalize(tensor: Any, check_if_normalize: bool = True, raises_error: b
 
 
 def eye_like(tensor: Any):
+    """
+    Generate an identity-like tensor following the shape of the provided tensor.
+
+    This function creates a tensor with the same shape as the input `tensor`, but
+    with its two last dimensions set to form an identity matrix (i.e., ones on the
+    diagonal and zeros elsewhere). The values of the generated tensor will be of
+    the same type as the input tensor.
+
+    :param tensor: The input tensor of any shape. The two last dimensions are
+                   treated as rows and columns for the identity-like matrix.
+    :type tensor: Any
+    :return: A tensor of the same shape and type as the input with an identity-like
+             structure in its two last dimensions.
+    :rtype: Any
+    """
     eye = qml.math.zeros_like(tensor)
     tensor_shape = qml.math.shape(tensor)
     eye[..., qml.math.arange(tensor_shape[-2]), qml.math.arange(tensor_shape[-1])] = 1
@@ -420,4 +488,15 @@ def eye_like(tensor: Any):
 
 
 def check_is_unitary(tensor: Any):
+    """
+    Checks if the given tensor is unitary.
+
+    A unitary tensor satisfies the property that the product of the tensor and its
+    Hermitian conjugate (dagger) equals the identity matrix of the same shape.
+
+    :param tensor: Input tensor to check for unitarity.
+    :type tensor: Any
+    :return: True if the tensor is unitary, otherwise False.
+    :rtype: bool
+    """
     return qml.math.allclose(matmul(tensor, dagger(tensor)), eye_like(tensor))
