@@ -25,19 +25,18 @@ class TorchLogm(torch.autograd.Function):
     def _torch_logm_scipy(tensor: torch.Tensor):
         if tensor.ndim == 2:
             return torch.from_numpy(scipy_logm(tensor.cpu(), disp=False)[0]).to(tensor.device)
-        return torch.stack([torch.from_numpy(scipy_logm(A_.cpu(), disp=False)[0]) for A_ in tensor.cpu()]).to(
-            tensor.device
-        )
+        return torch.stack([TorchLogm._torch_logm_scipy(mat) for mat in tensor]).to(tensor.device)
 
     @staticmethod
-    def _torch_adjoint(tensor0: torch.Tensor, tensor1: torch.Tensor, f: Callable[[torch.Tensor], torch.Tensor]):
-        A_H = tensor0.mH.to(tensor1.dtype)
-        n = tensor0.size(0)
-        M = torch.zeros(2 * n, 2 * n, dtype=tensor1.dtype, device=tensor1.device)
-        M[:n, :n] = A_H
-        M[n:, n:] = A_H
-        M[:n, n:] = tensor1
-        return f(M)[:n, n:].to(tensor0.dtype)
+    def _torch_adjoint(inputs: torch.Tensor, grads: torch.Tensor, f: Callable[[torch.Tensor], torch.Tensor]):
+        A_H = inputs.mH.to(grads.dtype)
+        n = inputs.size(-2)
+        shape = [*inputs.shape[:-2], 2 * n, 2 * n]
+        M = torch.zeros(*shape, dtype=grads.dtype, device=grads.device)
+        M[..., :n, :n] = A_H
+        M[..., n:, n:] = A_H
+        M[..., :n, n:] = grads
+        return f(M)[..., :n, n:].to(inputs.dtype)
 
     @staticmethod
     def forward(ctx, tensor):
@@ -54,11 +53,7 @@ class TorchLogm(torch.autograd.Function):
     @staticmethod
     def backward(ctx, grads):
         (inputs,) = ctx.saved_tensors
-        if inputs.ndim == 2:
-            return TorchLogm._torch_adjoint(inputs, grads, TorchLogm._torch_logm_scipy)
-        return torch.stack(
-            [TorchLogm._torch_adjoint(A_, G_, TorchLogm._torch_logm_scipy) for A_, G_ in zip(inputs, grads)]
-        )
+        return TorchLogm._torch_adjoint(inputs, grads, TorchLogm._torch_logm_scipy)
 
 
 torch_logm = TorchLogm.apply

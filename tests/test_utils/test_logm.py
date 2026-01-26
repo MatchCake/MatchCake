@@ -223,4 +223,4 @@ class TestLogm:
         )
         x = np.linspace(0, 1, num=6**2).reshape(6, 6)
         torch_x = torch.from_numpy(x).requires_grad_().to(torch.complex128)
-        assert gradcheck(logm, (torch_x,))
+        gradcheck(logm, (torch_x,))
