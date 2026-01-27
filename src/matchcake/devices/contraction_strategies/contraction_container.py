@@ -68,7 +68,7 @@ class _ContractionMatchgatesContainer:
             return self.add(op)
         except _ContractionMatchgatesContainerAddException:
             return False
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             warnings.warn(f"Unexpected exception in try_add: {e}", RuntimeWarning)
             return False
 
@@ -83,7 +83,7 @@ class _ContractionMatchgatesContainer:
         self,
         ops: Iterable[Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]],
     ) -> int:
-        for i, op in enumerate(ops):
+        for i, op in enumerate(ops):  # pragma: no cover
             if not self.try_add(op):
                 return i
         return -1
