@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from matchcake import utils
+from matchcake.utils import get_majorana_pauli_string
 
 from ..configs import (
     ATOL_MATRIX_COMPARISON,
@@ -113,3 +114,20 @@ def test_get_majorana_product(i, j, c_ij):
         atol=ATOL_MATRIX_COMPARISON,
         rtol=RTOL_MATRIX_COMPARISON,
     )
+
+
+class TestMajorana:
+    @pytest.mark.parametrize(
+        "i, n, join_char, expected",
+        [
+            (0, 3, "⊗", "X⊗I⊗I"),
+            (1, 3, "⊗", "Y⊗I⊗I"),
+            (2, 3, "⊗", "Z⊗X⊗I"),
+            (3, 3, "⊗", "Z⊗Y⊗I"),
+            (4, 3, "⊗", "Z⊗Z⊗X"),
+            (5, 3, "⊗", "Z⊗Z⊗Y"),
+        ],
+    )
+    def test_get_majorana_pauli_string(self, i, n, join_char, expected):
+        result = get_majorana_pauli_string(i, n, join_char)
+        assert result == expected, f"Expected {expected} but got {result} for i={i}, n={n}, join_char='{join_char}'"
