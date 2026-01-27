@@ -13,6 +13,7 @@ from scipy import sparse
 from . import constants, cuda, majorana, math, operators, torch_utils
 from ._pfaffian import pfaffian
 from .constants import PAULI_I, PAULI_X, PAULI_Y, PAULI_Z
+from .logm import logm
 from .majorana import (
     MajoranaGetter,
     get_majorana,
