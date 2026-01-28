@@ -68,12 +68,12 @@ class TestCliffordExpvalStrategyOnRandomInstances:
             seed=seed,
             op_types=[
                 # TODO: Fail
-                # MatchgateOperation,
-                # CompRxRx,
-                # CompHH,
-                # CompRyRy,
-                # FermionicSuperposition,
-                # Rxx,
+                MatchgateOperation,
+                CompRxRx,
+                CompHH,
+                CompRyRy,
+                FermionicSuperposition,
+                Rxx,
                 # Pass
                 Rzz,
                 CompRzRz,
