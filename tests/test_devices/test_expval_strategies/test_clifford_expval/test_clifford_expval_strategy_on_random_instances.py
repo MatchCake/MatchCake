@@ -5,9 +5,8 @@ import torch
 from pennylane.operation import StatePrepBase
 from pennylane.pauli import string_to_pauli_word
 
-from matchcake import MatchgateOperation, NIFDevice
+from matchcake import NIFDevice
 from matchcake.circuits import (
-    RandomMatchgateHaarOperationsGenerator,
     RandomMatchgateOperationsGenerator,
     RandomSptmOperationsGenerator,
 )
@@ -18,17 +17,9 @@ from matchcake.devices.expval_strategies.clifford_expval.clifford_expval_strateg
     CliffordExpvalStrategy,
 )
 from matchcake.operations import (
-    CompHH,
-    CompRxRx,
-    CompRyRy,
-    CompRzRz,
-    FermionicSuperposition,
-    Rxx,
-    Rzz,
     SingleParticleTransitionMatrixOperation,
-    fSWAP,
 )
-from matchcake.utils.majorana import MajoranaGetter, majorana_to_pauli
+from matchcake.utils.majorana import majorana_to_pauli
 from matchcake.utils.torch_utils import to_tensor
 
 from ....configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
