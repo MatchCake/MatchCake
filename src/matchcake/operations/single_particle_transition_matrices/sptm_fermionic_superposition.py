@@ -35,3 +35,8 @@ class SptmFermionicSuperposition(SingleParticleTransitionMatrixOperation):
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
         return self
+
+    def to_matchgate(self):
+        from ..fermionic_superposition import FermionicSuperposition
+
+        return FermionicSuperposition(wires=self.wires)

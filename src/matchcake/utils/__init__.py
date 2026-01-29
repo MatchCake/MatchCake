@@ -574,7 +574,7 @@ def make_single_particle_transition_matrix_from_gate(u: Any, majorana_getter: Op
     if majorana_getter is None:
         majorana_getter = MajoranaGetter(n=int(np.log2(u.shape[-1])))
     # majorana_tensor.shape: (2n, 2^n, 2^n)
-    majorana_tensor = qml.math.stack([majorana_getter[i] for i in range(2 * majorana_getter.n)])
+    majorana_tensor = majorana_getter.majorana_tensor
     u_c = qml.math.einsum(
         "...ij,mjq->...miq",
         u,

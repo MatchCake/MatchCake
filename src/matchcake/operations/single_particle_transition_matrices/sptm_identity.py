@@ -16,3 +16,8 @@ class SptmIdentity(SingleParticleTransitionMatrixOperation):
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
         return self
+
+    def to_matchgate(self):
+        from ..matchgate_identity import MatchgateIdentity
+
+        return MatchgateIdentity(wires=self.wires)

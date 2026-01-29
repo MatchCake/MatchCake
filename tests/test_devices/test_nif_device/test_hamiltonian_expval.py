@@ -273,7 +273,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device(
 
     def circuit():
         qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
-        nif_device.global_sptm.to_qubit_unitary()
+        nif_device.global_sptm.to_qubit_operation()
         return [qml.expval(c * h) for c, h in zip(batched_hamiltonian.coeffs, batched_hamiltonian.ops)]
 
     q_node = qml.QNode(circuit, qubit_device)
@@ -328,7 +328,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device_ha
 
     def circuit():
         qml.BasisState(np.asarray(basis_state), wires=np.arange(len(basis_state)))
-        nif_device.global_sptm.to_qubit_unitary()
+        nif_device.global_sptm.to_qubit_operation()
         return [qml.expval(c * h) for c, h in zip(batched_hamiltonian.coeffs, batched_hamiltonian.ops)]
 
     q_node = qml.QNode(circuit, qubit_device)

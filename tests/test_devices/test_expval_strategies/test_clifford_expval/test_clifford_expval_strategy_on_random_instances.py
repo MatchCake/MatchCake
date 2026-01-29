@@ -2,12 +2,14 @@ import numpy as np
 import pennylane as qml
 import pytest
 import torch
+from pennylane.operation import StatePrepBase
 from pennylane.pauli import string_to_pauli_word
 
 from matchcake import MatchgateOperation, NIFDevice
 from matchcake.circuits import (
     RandomMatchgateHaarOperationsGenerator,
     RandomMatchgateOperationsGenerator,
+    RandomSptmOperationsGenerator,
 )
 from matchcake.devices.expval_strategies.clifford_expval._pauli_map import (
     _MAJORANA_COEFFS_MAP,
@@ -66,19 +68,13 @@ class TestCliffordExpvalStrategyOnRandomInstances:
         return RandomMatchgateOperationsGenerator(
             wires=nif_device.wires,
             seed=seed,
-            op_types=[
-                # TODO: Fail
-                MatchgateOperation,
-                CompRxRx,
-                CompHH,
-                CompRyRy,
-                FermionicSuperposition,
-                Rxx,
-                # Pass
-                Rzz,
-                CompRzRz,
-                fSWAP,
-            ],
+        )
+
+    @pytest.fixture
+    def random_sptm_gen(self, nif_device, seed):
+        return RandomSptmOperationsGenerator(
+            wires=nif_device.wires,
+            seed=seed,
         )
 
     def test_eye_sptm(self, strategy, n_qubits, qubit_device, rn_gen, random_hamiltonian):
@@ -134,15 +130,15 @@ class TestCliffordExpvalStrategyOnRandomInstances:
         )
 
     def test_random_sptm_ones_init(self, strategy, rn_gen, qubit_device, random_op_gen, random_hamiltonian, nif_device):
-        initial_state = np.ones(random_op_gen.n_qubits, dtype=int)
-        random_op_gen.initial_state = initial_state
-        state_prep_op = qml.BasisState(initial_state, qubit_device.wires)
+        random_op_gen.initial_state = np.ones(random_op_gen.n_qubits, dtype=int)
+        state_prep_op = qml.BasisState(random_op_gen.initial_state, qubit_device.wires)
         assert strategy.can_execute(state_prep_op, random_hamiltonian)
 
         @qml.qnode(qubit_device)
         def ground_truth_circuit():
-            state_prep_op.queue()
-            for op in random_op_gen:
+            for i, op in enumerate(random_op_gen):
+                if i == 0:
+                    assert isinstance(op, StatePrepBase)
                 op.queue()
             return qml.expval(random_hamiltonian)
 
@@ -158,14 +154,15 @@ class TestCliffordExpvalStrategyOnRandomInstances:
             err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }",
         )
 
-    def test_random_sptm(self, strategy, rn_gen, qubit_device, random_op_gen, random_hamiltonian, nif_device):
-        initial_state = random_op_gen.get_initial_state(rn_gen)
-        state_prep_op = qml.BasisState(initial_state, qubit_device.wires)
+    def test_random_circuits_on_random_hamiltonian(
+        self, strategy, rn_gen, qubit_device, random_op_gen, random_hamiltonian, nif_device
+    ):
+        random_op_gen.initial_state = random_op_gen.get_initial_state(rn_gen)
+        state_prep_op = qml.BasisState(random_op_gen.initial_state, qubit_device.wires)
         assert strategy.can_execute(state_prep_op, random_hamiltonian)
 
         @qml.qnode(qubit_device)
         def ground_truth_circuit():
-            state_prep_op.queue()
             for op in random_op_gen:
                 op.queue()
             return qml.expval(random_hamiltonian)
@@ -183,32 +180,57 @@ class TestCliffordExpvalStrategyOnRandomInstances:
         )
 
     @pytest.mark.parametrize("hamiltonian_term", list(_MAJORANA_COEFFS_MAP.keys()))
-    def test_random_sptm_on_specific_hamiltonian(
+    def test_random_circuit_on_specific_hamiltonian(
         self, hamiltonian_term, strategy, rn_gen, qubit_device, random_op_gen, nif_device
     ):
-        random_hamiltonian = qml.Hamiltonian([1.0], [string_to_pauli_word(hamiltonian_term)])
+        hamiltonian = qml.Hamiltonian([1.0], [string_to_pauli_word(hamiltonian_term)])
 
-        initial_state = random_op_gen.get_initial_state(rn_gen)
-        state_prep_op = qml.BasisState(initial_state, qubit_device.wires)
-        assert strategy.can_execute(state_prep_op, random_hamiltonian)
+        random_op_gen.initial_state = random_op_gen.get_initial_state(rn_gen)
+        state_prep_op = qml.BasisState(random_op_gen.initial_state, qubit_device.wires)
+        assert strategy.can_execute(state_prep_op, hamiltonian)
 
         @qml.qnode(qubit_device)
         def ground_truth_circuit():
-            state_prep_op.queue()
             for op in random_op_gen:
                 op.queue()
-            return qml.expval(random_hamiltonian)
+            return qml.expval(hamiltonian)
 
         ground_truth_energy = ground_truth_circuit()
         nif_device.reset()
         sptm = nif_device.apply_generator(random_op_gen).global_sptm.matrix()
-        clifford_energy = strategy(state_prep_op, random_hamiltonian, global_sptm=sptm)
+        clifford_energy = strategy(state_prep_op, hamiltonian, global_sptm=sptm)
         np.testing.assert_allclose(
             clifford_energy,
             ground_truth_energy,
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
-            err_msg=f"{random_op_gen.tolist() = }, {random_hamiltonian.terms() = }",
+            err_msg=f"{random_op_gen.tolist() = }, {hamiltonian.terms() = }",
+        )
+
+    @pytest.mark.parametrize("hamiltonian_term", list(_MAJORANA_COEFFS_MAP.keys()))
+    def test_random_sptm_on_specific_hamiltonian(
+        self, hamiltonian_term, strategy, rn_gen, qubit_device, seed, nif_device
+    ):
+        hamiltonian = qml.Hamiltonian([1.0], [string_to_pauli_word(hamiltonian_term)])
+        state_prep_op = qml.BasisState(rn_gen.choice([0, 1], size=len(qubit_device.wires)), wires=qubit_device.wires)
+        assert strategy.can_execute(state_prep_op, hamiltonian)
+        global_sptm = SingleParticleTransitionMatrixOperation.random(qubit_device.wires, seed=seed)
+
+        @qml.qnode(qubit_device)
+        def ground_truth_circuit():
+            state_prep_op.queue()
+            global_sptm.to_qubit_operation().queue()
+            return qml.expval(hamiltonian)
+
+        ground_truth_energy = ground_truth_circuit()
+        nif_device.reset()
+        clifford_energy = strategy(state_prep_op, hamiltonian, global_sptm=global_sptm.matrix())
+        np.testing.assert_allclose(
+            clifford_energy,
+            ground_truth_energy,
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=RTOL_APPROX_COMPARISON,
+            err_msg=f"{hamiltonian.terms() = }",
         )
 
     def test_compute_clifford_expvals_rn_init(self, n_qubits, rn_gen, qubit_device, strategy):
@@ -258,7 +280,9 @@ class TestCliffordExpvalStrategyOnRandomInstances:
         )
         np.testing.assert_allclose(result, target_result)
 
-    def test_random_sptm_unitary(self, strategy, n_qubits, rn_gen, qubit_device, random_hamiltonian):
+    def test_random_sptm_unitary_on_random_hamiltonian(
+        self, strategy, n_qubits, rn_gen, qubit_device, random_hamiltonian
+    ):
         wires = np.arange(n_qubits).tolist()
         global_sptm = SingleParticleTransitionMatrixOperation.random(wires=wires)
         state_prep_op = qml.BasisState(rn_gen.choice([0, 1], size=n_qubits), wires=wires)
@@ -266,7 +290,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
         @qml.qnode(qubit_device)
         def ground_truth_circuit():
             state_prep_op.queue()
-            global_sptm.to_qubit_unitary()
+            global_sptm.to_qubit_operation()
             return qml.expval(random_hamiltonian)
 
         ground_truth_energy = ground_truth_circuit()

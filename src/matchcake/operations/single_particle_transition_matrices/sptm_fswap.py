@@ -29,6 +29,11 @@ class SptmCompZX(SingleParticleTransitionMatrixOperation):
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
         return self
 
+    def to_matchgate(self):
+        from ..fermionic_swap import CompZX
+
+        return CompZX(wires=self.wires)
+
 
 SptmFSwap = SptmCompZX
 SptmFSwap.__name__ = "SptmFSwap"

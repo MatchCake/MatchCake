@@ -30,7 +30,7 @@ class TestCliffordSumStrategy:
         @qml.qnode(qml.device("default.qubit", wires=wires))
         def ground_truth_circuit():
             state_prep_op.queue()
-            global_sptm.to_qubit_unitary()
+            global_sptm.to_qubit_operation()
             return qml.expval(BasisStateProjector(target_state, wires=wires))
 
         nif_probs = strategy(

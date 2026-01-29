@@ -57,3 +57,9 @@ class SptmCompRxRx(SingleParticleTransitionMatrixOperation):
         matrix[..., 3, 0] = qml.math.sin(phi - theta)
         matrix[..., 3, 3] = qml.math.cos(phi - theta)
         super().__init__(matrix, wires=wires, id=id, **kwargs)
+        self._given_params = params
+
+    def to_matchgate(self):
+        from ..comp_rotations import CompRxRx
+
+        return CompRxRx(params=self._given_params, wires=self.wires)

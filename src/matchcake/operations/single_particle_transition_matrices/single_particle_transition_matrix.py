@@ -300,7 +300,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
             matrix = orthonormalize(matrix)
         self._matrix = matrix
         self._wires = wires
-        Operation.__init__(self, matrix, wires=wires, id=id)
+        super().__init__(matrix, wires=wires, id=id)
         self._hyperparameters = {
             "clip_angles": clip_angles,
             "check_angles": check_angles,
@@ -309,6 +309,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
         if check_matrix:
             if not self.check_is_in_so4():
                 raise ValueError(f"Matrix is not in SO(4): {matrix}")
+        self.kwargs = kwargs
 
     def matrix(self, wire_order=None) -> TensorLike:
         wires = Wires(self.wires) if wire_order is None else Wires(wire_order)
@@ -431,6 +432,23 @@ class SingleParticleTransitionMatrixOperation(Operation):
         """
         return qml.QubitUnitary(self.to_unitary_matrix(self.matrix()), wires=self.wires, id=self.id, unitary_check=True)
 
+    def to_qubit_operation(self) -> Operation:
+        """
+        Converts the current object into a qubit operation.
+
+        This method determines the appropriate qubit operation based on the number
+        of wires in the object. If the number of wires is two, it converts the object to
+        a matchgate operation. Otherwise, it falls back to converting the object into
+        a generic qubit unitary operation.
+
+        :return: An instance of `Operation` representing either a match gate or a
+            qubit unitary operation, depending on the number of wires.
+        :rtype: Operation
+        """
+        if len(self.wires) == 2:
+            return self.to_matchgate()
+        return self.to_qubit_unitary()
+
     @staticmethod
     def to_unitary_matrix(matrix: TensorLike) -> TensorLike:
         r"""
@@ -441,11 +459,9 @@ class SingleParticleTransitionMatrixOperation(Operation):
             R = \exp(4 h) \implies h = \frac{1}{4} \log(R)
 
         where :math:`c_i` are the Majorana operators, :math:`R` is the current single particle transition matrix.
-
         """
         wires = np.arange(matrix.shape[-1] // 2)
-        majorana_getter = MajoranaGetter(n=len(wires))
-        majorana_tensor = qml.math.stack([majorana_getter[i] for i in range(2 * majorana_getter.n)])
+        majorana_tensor = MajoranaGetter(n=len(wires)).majorana_tensor
         h = (1 / 4) * logm(matrix)
         unitary = qml.math.expm(
             -1.0

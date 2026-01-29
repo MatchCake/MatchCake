@@ -69,3 +69,9 @@ class SptmCompRyRy(SingleParticleTransitionMatrixOperation):
         matrix[..., 1, 3] = qml.math.sin(theta_minus_phi)
         matrix[..., 3, 3] = qml.math.cos(theta_minus_phi)
         super().__init__(matrix, wires=wires, id=id, **kwargs)
+        self._given_params = params
+
+    def to_matchgate(self):
+        from ..comp_rotations import CompRyRy
+
+        return CompRyRy(params=self._given_params, wires=self.wires)

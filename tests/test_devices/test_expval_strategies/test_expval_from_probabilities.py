@@ -133,7 +133,7 @@ class TestExpvalFromProbabilities:
         @qml.qnode(qubit_device)
         def ground_truth_circuit():
             state_prep_op.queue()
-            nif_device.global_sptm.to_qubit_unitary()
+            nif_device.global_sptm.to_qubit_operation()
             return qml.expval(random_hamiltonian)
 
         ground_truth_energy = ground_truth_circuit()
