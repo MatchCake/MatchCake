@@ -10,6 +10,8 @@ from matchcake.utils.torch_utils import to_tensor
 
 from .gram_matrix import GramMatrix
 from .kernel import Kernel
+from ...operations import SingleParticleTransitionMatrixOperation
+from ...typing import TensorLike
 
 
 class NIFKernel(Kernel):
@@ -103,11 +105,13 @@ class NIFKernel(Kernel):
         :return: A tensor representing the computed similarity matrix.
         :rtype: torch.Tensor
         """
+        sptm0 = self._x_to_sptm(x0)
+        sptm1 = self._x_to_sptm(x1)
 
         def _func(indices):
-            b_x0, b_x1 = x0[indices[:, 0]], x1[indices[:, 1]]
+            b_sptm0, b_sptm1 = sptm0[indices[:, 0]], sptm1[indices[:, 1]]
             return self._q_device.execute_generator(
-                self.circuit(b_x0, b_x1),
+                self.circuit(b_sptm0, b_sptm1),
                 observable=qml.Projector(np.zeros(self.n_qubits, dtype=int), wires=self.wires),
                 output_type="expval",
                 reset=True,
@@ -117,23 +121,38 @@ class NIFKernel(Kernel):
         gram.apply_(_func, batch_size=self.gram_batch_size, symmetrize=True)
         return gram.to_tensor().to(device=self.device)
 
-    def circuit(self, x0, x1):
+    def circuit(self, sptm0: TensorLike, sptm1: TensorLike):
         """
-        Generates a quantum circuit by applying an ansatz followed by its adjoint.
+        Applies a quantum circuit consisting of two operations to the specified wires.
+        The circuit applies a single-particle transition matrix operation followed by its
+        adjoint (conjugate transpose).
 
-        The method first yields the result of applying the ansatz function to the
-        first input, `x0`. Then, it yields the adjoint of the ansatz function applied
-        to the second input, `x1`. This allows the generation of customized quantum
-        circuits where specific operations are defined by the ansatz function.
-
-        :param x0: The first parameter used for generating the circuit via the ansatz.
-        :param x1: The second parameter used for generating the adjoint circuit via
-            the ansatz.
-        :return: Yields the quantum operations for constructing the circuit.
+        :param sptm0: The first single-particle transition matrix operation to be applied.
+            This operation acts on the specified wires in the circuit.
+        :param sptm1: The second single-particle transition matrix operation to be
+            applied, followed by its adjoint. This operation also acts on the specified wires.
+        :return: Yields the sequential operations in the circuit application. This
+            does not return a concrete value but facilitates the execution of the quantum
+            circuit.
         """
-        yield from self.ansatz(x0)
-        yield from adjoint_generator(self.ansatz(x1))
+        yield SingleParticleTransitionMatrixOperation(sptm0, wires=self.wires)
+        yield SingleParticleTransitionMatrixOperation(sptm1, wires=self.wires).adjoint()
         return
+
+    def _x_to_sptm(self, x: TensorLike) -> TensorLike:
+        """
+        Transforms the given input tensor into a single particle transition matrix (SPTM) by
+        applying the user's ansatz. The function prepares the quantum device, executes the
+        generator method on the ansatz with the given input, and retrieves the resulting
+        SPTM.
+
+        :param x: Input tensor to be transformed.
+        :type x: TensorLike
+        :return: The single particle transition matrix (SPTM) resulting from the ansatz execution.
+        :rtype: TensorLike
+        """
+        self._q_device.execute_generator(self.ansatz(x), reset=True)
+        return self._q_device.global_sptm.matrix()
 
     @property
     def wires(self):
