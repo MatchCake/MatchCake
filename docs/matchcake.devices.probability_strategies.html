@@ -1,0 +1,322 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>matchcake.devices.probability_strategies package &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="matchcake.devices.sampling_strategies package" href="matchcake.devices.sampling_strategies.html" />
+    <link rel="prev" title="matchcake.devices.expval_strategies.clifford_expval package" href="matchcake.devices.expval_strategies.clifford_expval.html" /> 
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="index.html">Docs</a></li>
+        
+          <li><a href="matchcake.html">matchcake package</a></li>
+        
+          <li><a href="matchcake.devices.html">matchcake.devices package</a></li>
+        
+      <li>matchcake.devices.probability_strategies package</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="sources/matchcake.devices.probability_strategies.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#cuda-installation">CUDA installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#quick-usage-preview">Quick Usage Preview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#citation">Citation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="matchcake.html">matchcake package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="matchcake.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section id="matchcake-devices-probability-strategies-package">
+<h1>matchcake.devices.probability_strategies package<a class="headerlink" href="#matchcake-devices-probability-strategies-package" title="Permalink to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-matchcake.devices.probability_strategies.clifford_sum_strategy">
+<span id="matchcake-devices-probability-strategies-clifford-sum-strategy-module"></span><h2>matchcake.devices.probability_strategies.clifford_sum_strategy module<a class="headerlink" href="#module-matchcake.devices.probability_strategies.clifford_sum_strategy" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.clifford_sum_strategy.CliffordSumStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.devices.probability_strategies.clifford_sum_strategy.</span></span><span class="sig-name descname"><span class="pre">CliffordSumStrategy</span></span><a class="headerlink" href="#matchcake.devices.probability_strategies.clifford_sum_strategy.CliffordSumStrategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy" title="matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProbabilityStrategy</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.clifford_sum_strategy.CliffordSumStrategy.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CliffordSum'</span></em><a class="headerlink" href="#matchcake.devices.probability_strategies.clifford_sum_strategy.CliffordSumStrategy.NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.clifford_sum_strategy.CliffordSumStrategy.REQUIRES_KWARGS">
+<span class="sig-name descname"><span class="pre">REQUIRES_KWARGS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['all_wires',</span> <span class="pre">'state_prep_op',</span> <span class="pre">'transition_matrix']</span></em><a class="headerlink" href="#matchcake.devices.probability_strategies.clifford_sum_strategy.CliffordSumStrategy.REQUIRES_KWARGS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.clifford_sum_strategy.CliffordSumStrategy.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_binary_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TensorLike</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></span><a class="headerlink" href="#matchcake.devices.probability_strategies.clifford_sum_strategy.CliffordSumStrategy.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call self as a function.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.clifford_sum_strategy.CliffordSumStrategy.compute_clifford_expvals">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compute_clifford_expvals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_prep_op</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#matchcake.devices.probability_strategies.clifford_sum_strategy.CliffordSumStrategy.compute_clifford_expvals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.devices.probability_strategies.explicit_sum_strategy">
+<span id="matchcake-devices-probability-strategies-explicit-sum-strategy-module"></span><h2>matchcake.devices.probability_strategies.explicit_sum_strategy module<a class="headerlink" href="#module-matchcake.devices.probability_strategies.explicit_sum_strategy" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.explicit_sum_strategy.ExplicitSumStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.devices.probability_strategies.explicit_sum_strategy.</span></span><span class="sig-name descname"><span class="pre">ExplicitSumStrategy</span></span><a class="headerlink" href="#matchcake.devices.probability_strategies.explicit_sum_strategy.ExplicitSumStrategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy" title="matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProbabilityStrategy</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.explicit_sum_strategy.ExplicitSumStrategy.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ExplicitSum'</span></em><a class="headerlink" href="#matchcake.devices.probability_strategies.explicit_sum_strategy.ExplicitSumStrategy.NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.explicit_sum_strategy.ExplicitSumStrategy.REQUIRES_KWARGS">
+<span class="sig-name descname"><span class="pre">REQUIRES_KWARGS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['transition_matrix',</span> <span class="pre">'all_wires']</span></em><a class="headerlink" href="#matchcake.devices.probability_strategies.explicit_sum_strategy.ExplicitSumStrategy.REQUIRES_KWARGS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.explicit_sum_strategy.ExplicitSumStrategy.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_binary_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TensorLike</span></span></span><a class="headerlink" href="#matchcake.devices.probability_strategies.explicit_sum_strategy.ExplicitSumStrategy.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call self as a function.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.explicit_sum_strategy.ExplicitSumStrategy.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.devices.probability_strategies.explicit_sum_strategy.ExplicitSumStrategy.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.devices.probability_strategies.lookup_table_strategy">
+<span id="matchcake-devices-probability-strategies-lookup-table-strategy-module"></span><h2>matchcake.devices.probability_strategies.lookup_table_strategy module<a class="headerlink" href="#module-matchcake.devices.probability_strategies.lookup_table_strategy" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.lookup_table_strategy.LookupTableStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.devices.probability_strategies.lookup_table_strategy.</span></span><span class="sig-name descname"><span class="pre">LookupTableStrategy</span></span><a class="headerlink" href="#matchcake.devices.probability_strategies.lookup_table_strategy.LookupTableStrategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy" title="matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProbabilityStrategy</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.lookup_table_strategy.LookupTableStrategy.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LookupTable'</span></em><a class="headerlink" href="#matchcake.devices.probability_strategies.lookup_table_strategy.LookupTableStrategy.NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.lookup_table_strategy.LookupTableStrategy.REQUIRES_KWARGS">
+<span class="sig-name descname"><span class="pre">REQUIRES_KWARGS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['lookup_table',</span> <span class="pre">'pfaffian_method']</span></em><a class="headerlink" href="#matchcake.devices.probability_strategies.lookup_table_strategy.LookupTableStrategy.REQUIRES_KWARGS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.lookup_table_strategy.LookupTableStrategy.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_binary_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TensorLike</span></span></span><a class="headerlink" href="#matchcake.devices.probability_strategies.lookup_table_strategy.LookupTableStrategy.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call self as a function.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.lookup_table_strategy.LookupTableStrategy.batch_call">
+<span class="sig-name descname"><span class="pre">batch_call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_binary_states</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TensorLike</span></span></span><a class="headerlink" href="#matchcake.devices.probability_strategies.lookup_table_strategy.LookupTableStrategy.batch_call" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.devices.probability_strategies.probability_strategy">
+<span id="matchcake-devices-probability-strategies-probability-strategy-module"></span><h2>matchcake.devices.probability_strategies.probability_strategy module<a class="headerlink" href="#module-matchcake.devices.probability_strategies.probability_strategy" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.devices.probability_strategies.probability_strategy.</span></span><span class="sig-name descname"><span class="pre">ProbabilityStrategy</span></span><a class="headerlink" href="#matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ProbabilityStrategy'</span></em><a class="headerlink" href="#matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy.NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy.REQUIRES_KWARGS">
+<span class="sig-name descname"><span class="pre">REQUIRES_KWARGS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy.REQUIRES_KWARGS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy.__call__">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_binary_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TensorLike</span></span></span><a class="headerlink" href="#matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call self as a function.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy.batch_call">
+<span class="sig-name descname"><span class="pre">batch_call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_binary_states</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TensorLike</span></span></span><a class="headerlink" href="#matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy.batch_call" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy.check_required_kwargs">
+<span class="sig-name descname"><span class="pre">check_required_kwargs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy.check_required_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.devices.probability_strategies">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-matchcake.devices.probability_strategies" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="matchcake.devices.probability_strategies.get_probability_strategy">
+<span class="sig-prename descclassname"><span class="pre">matchcake.devices.probability_strategies.</span></span><span class="sig-name descname"><span class="pre">get_probability_strategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy" title="matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy"><span class="pre">ProbabilityStrategy</span></a></span></span><a class="headerlink" href="#matchcake.devices.probability_strategies.get_probability_strategy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="static/documentation_options.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>
