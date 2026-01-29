@@ -83,7 +83,7 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         """
         is_torch = isinstance(x, torch.Tensor)
         x: torch.Tensor = to_tensor(x).to(device=self.device)  # type: ignore
-        x: torch.Tensor = self.forward(x, self.x_train_)  # type: ignore
+        x: torch.Tensor = self(x, self.x_train_)  # type: ignore
         if is_torch:
             return x
         return to_numpy(x, dtype=np.float32)  # pragma: no cover

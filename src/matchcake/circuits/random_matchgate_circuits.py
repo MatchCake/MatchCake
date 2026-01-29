@@ -10,6 +10,8 @@ from ..operations import (
     CompRzRz,
     FermionicSuperposition,
     MatchgateOperation,
+    Rxx,
+    Rzz,
     fSWAP,
 )
 from .random_generator import RandomOperationsGenerator
@@ -29,6 +31,8 @@ class RandomMatchgateOperationsGenerator(RandomOperationsGenerator):
             CompHH,
             CompRyRy,
             FermionicSuperposition,
+            Rxx,
+            Rzz,
         ),
         *,
         use_cuda: bool = False,
@@ -67,6 +71,7 @@ class RandomMatchgateHaarOperationsGenerator(RandomMatchgateOperationsGenerator)
         initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
         **kwargs,
     ):
+        n_ops = n_ops if n_ops is not None else 4 * len(wires)
         super().__init__(
             wires=wires,
             n_ops=n_ops,
@@ -80,7 +85,6 @@ class RandomMatchgateHaarOperationsGenerator(RandomMatchgateOperationsGenerator)
         self.add_swap_noise = add_swap_noise
 
     def haar_circuit_gen(self):
-        yield qml.Identity(wires=[0, 1])
         n_ops = 0
         rn_gen = np.random.default_rng(self.seed)
         while n_ops < self.n_ops:

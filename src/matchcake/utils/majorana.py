@@ -1,12 +1,15 @@
 import functools
 import importlib
 from collections import OrderedDict
+from functools import cached_property
 from typing import Any, Callable, List, Optional, Tuple, Union
 
 import numpy as np
 import pennylane as qml
+from pennylane.pauli import string_to_pauli_word
 from pennylane.wires import Wires
 
+from ..typing import TensorLike
 from .constants import PAULI_I, PAULI_X, PAULI_Y, PAULI_Z
 from .operators import recursive_2in_operator, recursive_kron
 
@@ -119,6 +122,13 @@ def get_majorana_pair(i: int, j: int, n: int) -> np.ndarray:
     return get_majorana(i, n) @ get_majorana(j, n)
 
 
+def majorana_to_pauli(i: int) -> qml.pauli.PauliWord:
+    k = int(i // 2)
+    gate = "X" if i % 2 == 0 else "Y"
+    majorana_str = "".join(["Z"] * k + [gate])
+    return string_to_pauli_word(majorana_str)
+
+
 class MajoranaGetter:
     r"""
 
@@ -194,3 +204,13 @@ class MajoranaGetter:
 
     def clear_cache(self):
         self.cache = {}
+
+    @cached_property
+    def majorana_tensor(self) -> TensorLike:
+        """
+        Get all Majorana matrices as a stacked tensor.
+
+        :return: Majorana tensor or shape (:math:`2n`, :math:`2^n`, :math:`2^n`)
+        :rtype: TensorLike
+        """
+        return qml.math.stack([self[i] for i in range(2 * self.n)])

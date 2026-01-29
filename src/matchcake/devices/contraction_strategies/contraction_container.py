@@ -6,7 +6,6 @@ from pennylane.wires import Wires
 from ...operations.matchgate_operation import MatchgateOperation
 from ...operations.single_particle_transition_matrices.single_particle_transition_matrix import (
     SingleParticleTransitionMatrixOperation,
-    _SingleParticleTransitionMatrix,
 )
 
 
@@ -69,7 +68,7 @@ class _ContractionMatchgatesContainer:
             return self.add(op)
         except _ContractionMatchgatesContainerAddException:
             return False
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             warnings.warn(f"Unexpected exception in try_add: {e}", RuntimeWarning)
             return False
 
@@ -84,7 +83,7 @@ class _ContractionMatchgatesContainer:
         self,
         ops: Iterable[Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]],
     ) -> int:
-        for i, op in enumerate(ops):
+        for i, op in enumerate(ops):  # pragma: no cover
             if not self.try_add(op):
                 return i
         return -1
@@ -93,10 +92,10 @@ class _ContractionMatchgatesContainer:
         self.op_container.clear()
         self.wires_set.clear()
 
-    def contract(self) -> Optional[_SingleParticleTransitionMatrix]:
+    def contract(self) -> Optional[SingleParticleTransitionMatrixOperation]:
         return SingleParticleTransitionMatrixOperation.from_operations(self.values())
 
-    def contract_and_clear(self) -> Optional[_SingleParticleTransitionMatrix]:
+    def contract_and_clear(self) -> Optional[SingleParticleTransitionMatrixOperation]:
         contracted_op = self.contract()
         self.clear()
         return contracted_op
@@ -104,7 +103,7 @@ class _ContractionMatchgatesContainer:
     def push_contract(
         self,
         op: MatchgateOperation,
-    ) -> Optional[Union[MatchgateOperation, _SingleParticleTransitionMatrix]]:
+    ) -> Optional[Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]]:
         """
         This method will try to add the operation to the container. If it can't, it will contract the operations in the
         container, return the contracted operation, clear the current container and add the new operation to it.
@@ -120,7 +119,7 @@ class _ContractionMatchgatesContainer:
 
     def contract_operations(
         self, operations, callback: Optional[Callable[[int], None]] = None
-    ) -> List[Union[MatchgateOperation, _SingleParticleTransitionMatrix]]:
+    ) -> List[Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]]:
         new_operations = []
         for i, op in enumerate(operations):
             if not isinstance(op, tuple(self.ALLOWED_GATE_CLASSES)):

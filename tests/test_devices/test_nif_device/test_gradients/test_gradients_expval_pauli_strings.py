@@ -36,8 +36,8 @@ hand_made_test_data = [
     ([1, 0, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
     ([1, 1, 1], [qml.PauliZ(0) @ qml.PauliZ(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
     ([1, 1, 1], [qml.PauliX(0) @ qml.PauliX(1), qml.PauliZ(1) @ qml.PauliZ(2)]),
-    ([1, 1, 1], [qml.PauliX(0) @ qml.PauliZ(1), qml.PauliX(1) @ qml.PauliZ(2)]),
-    ([1, 1, 1], [qml.PauliX(0) @ qml.PauliZ(1), qml.PauliY(1) @ qml.PauliZ(2)]),
+    ([1, 1, 1], [qml.PauliX(0) @ qml.PauliY(1), qml.PauliX(1) @ qml.PauliY(2)]),
+    ([1, 1, 1], [qml.PauliX(0) @ qml.PauliY(1), qml.PauliY(1) @ qml.PauliY(2)]),
 ]
 
 rn_test_data = [

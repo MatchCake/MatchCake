@@ -68,3 +68,9 @@ class SptmCompRzRz(SingleParticleTransitionMatrixOperation):
         matrix[..., 3, 2] = 1j * (exp_theta - exp_phi) * exp_theta_phi / 2
         matrix[..., 3, 3] = (exp_theta + exp_phi) * exp_theta_phi / 2
         super().__init__(matrix, wires=wires, id=id, **kwargs)
+        self._given_params = params
+
+    def to_matchgate(self):
+        from ..comp_rotations import CompRzRz
+
+        return CompRzRz(params=self._given_params, wires=self.wires)
