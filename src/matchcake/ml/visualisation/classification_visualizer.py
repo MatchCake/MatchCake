@@ -9,9 +9,7 @@ from matplotlib.colors import ListedColormap
 from sklearn import decomposition
 from sklearn.utils.estimator_checks import check_estimator
 
-
-class Visualizer:
-    pass
+from .visualizer import Visualizer
 
 
 class ClassificationVisualizer(Visualizer):
