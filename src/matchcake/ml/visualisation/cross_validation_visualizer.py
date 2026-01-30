@@ -25,7 +25,13 @@ class CrossValidationVisualizer(Visualizer):
             score_split_name: str = "Splits",
             score_name_map: Optional[Dict[str, str]] = None,
             palette: Optional[Union[str, list, Dict]] = "colorblind",
+            estimator_name_key: Optional[str] = None,
     ):
+        if estimator_name_key is not None:
+            self.cvo.results_df = self.cvo.results_df.rename(
+                columns={self.cvo.estimator_name_key: estimator_name_key}
+            )
+            self.cvo.estimator_name_key = estimator_name_key
         melted_df = self.cvo.results_df.melt(
             id_vars=[self.cvo.estimator_name_key],
             value_vars=self.cvo.score_columns,
