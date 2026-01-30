@@ -1,3 +1,4 @@
 
 from .visualizer import Visualizer
 from .classification_visualizer import ClassificationVisualizer
+from .cross_validation_visualizer import CrossValidationVisualizer
