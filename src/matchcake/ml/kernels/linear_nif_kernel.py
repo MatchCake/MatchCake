@@ -1,9 +1,9 @@
 import numpy as np
 import torch
 
-from matchcake import NonInteractingFermionicDevice
-from matchcake.operations import SingleParticleTransitionMatrixOperation
-from matchcake.utils.torch_utils import to_tensor
+from ...devices.nif_device import NonInteractingFermionicDevice
+from ...operations.single_particle_transition_matrices.single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
+from ...utils.torch_utils import to_tensor
 
 from .nif_kernel import NIFKernel
 

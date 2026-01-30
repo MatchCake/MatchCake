@@ -4,9 +4,8 @@ import numpy as np
 import pennylane as qml
 import torch
 
-from matchcake import NonInteractingFermionicDevice
-from matchcake.utils.operators import adjoint_generator
-from matchcake.utils.torch_utils import to_tensor
+from ...devices.nif_device import NonInteractingFermionicDevice
+from ...utils.torch_utils import to_tensor
 
 from .gram_matrix import GramMatrix
 from .kernel import Kernel
