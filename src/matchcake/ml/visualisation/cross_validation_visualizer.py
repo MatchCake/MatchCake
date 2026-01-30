@@ -1,10 +1,12 @@
 from typing import Optional, Dict, Union
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import seaborn as sns
 
 from .visualizer import Visualizer
 from ..cross_validation import CrossValidationOutput
+from .mpl_rcparams import MPL_RC_DEFAULT_PARAMS
 
 
 class CrossValidationVisualizer(Visualizer):
@@ -12,6 +14,7 @@ class CrossValidationVisualizer(Visualizer):
             self,
             cross_validation_output: CrossValidationOutput
     ):
+        mpl.rcParams.update(MPL_RC_DEFAULT_PARAMS)
         self.cvo = cross_validation_output
 
     def plot(
