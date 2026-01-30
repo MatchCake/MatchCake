@@ -43,7 +43,7 @@ class CrossValidation:
         self.x = x
         self.y = y
         if cv is None:
-            cv = StratifiedShuffleSplit(n_splits=20, test_size=0.2)
+            cv = StratifiedShuffleSplit(n_splits=20, test_size=0.2, random_state=0)
         self.cv = cv
         if cross_validate_kwargs is None:
             cross_validate_kwargs = {}
