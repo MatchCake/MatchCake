@@ -191,7 +191,11 @@ class ClassificationVisualizer(Visualizer):
             fontsize=kwargs.get("fontsize", 18),
         )
 
-        ax.legend(handles=patches, fontsize=kwargs.get("fontsize", 18))
+        ax.legend(
+            handles=patches,
+            fontsize=kwargs.get("fontsize", 18),
+            loc=kwargs.get("legend_loc", "best"),
+        )
         if kwargs.get("hide_ticks", True):
             ax.set_xticks([])
             ax.set_yticks([])
