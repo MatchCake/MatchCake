@@ -45,6 +45,12 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         self.x_train_: Optional[Union[NDArray, torch.Tensor]] = None
         self.y_train_: Optional[Union[NDArray, torch.Tensor]] = None
         self.is_fitted_ = False
+        self.device_tracker_param = torch.nn.Parameter(torch.empty(0), requires_grad=False)
+
+    def __setattr__(self, key, value):
+        if key != "device_tracker_param" and isinstance(value, (torch.nn.Module, torch.nn.Parameter)):
+            value = value.to(self.device)
+        super().__setattr__(key, value)
 
     def forward(self, x0: torch.Tensor, x1: Optional[torch.Tensor] = None) -> torch.Tensor:
         """
@@ -141,14 +147,9 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
     @property
     def device(self):
         """
-        Provides the current device of the model parameters. If the model has no parameters,
-        it defaults to the CPU device. This property is useful for determining where the
-        model is currently located, either on CPU or a specific GPU.
+        Provides the current device of the model parameters.
 
-        :return: The device on which the model's parameters reside, or 'cpu' if there are
-                 no parameters.
+        :return: The device on which the model's parameters reside.
         :rtype: torch.device
         """
-        if len(list(self.parameters())) == 0:
-            return torch.device("cpu")
-        return list(self.parameters())[0].device
+        return self.device_tracker_param.device

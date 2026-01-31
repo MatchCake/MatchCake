@@ -3,6 +3,7 @@ from typing import Optional
 import numpy as np
 import pennylane as qml
 import torch
+from tqdm import tqdm
 
 from ...devices.nif_device import NonInteractingFermionicDevice
 from ...utils.torch_utils import to_tensor
@@ -68,7 +69,9 @@ class NIFKernel(Kernel):
         """
         if x1 is None:
             x1 = x0
-        x0, x1 = to_tensor(x0, dtype=self.R_DTYPE), to_tensor(x1, dtype=self.R_DTYPE)  # type: ignore
+        x0 = to_tensor(x0, dtype=self.R_DTYPE, device=self.device)  # type: ignore
+        x1 = to_tensor(x1, dtype=self.R_DTYPE, device=self.device)  # type: ignore
+        self.to(device=self.device)
         kernel = self.compute_similarities(x0, x1)  # type: ignore
         return kernel
 
@@ -104,20 +107,33 @@ class NIFKernel(Kernel):
         :return: A tensor representing the computed similarity matrix.
         :rtype: torch.Tensor
         """
+        gram = GramMatrix((x0.shape[0], x1.shape[0]), requires_grad=self.training)
+        p_bar = tqdm(
+            total=int(np.prod(gram.shape)),
+            desc="Computing Gram matrix",
+            unit="element",
+            disable=True,
+        )
+        p_bar.set_postfix_str("Compiling x0 circuits ...")
         sptm0 = self._x_to_sptm(x0)
+        p_bar.set_postfix_str("Compiling x1 circuits ...")
         sptm1 = self._x_to_sptm(x1)
+        p_bar.set_postfix_str("Evaluating Gram matrix ...")
 
         def _func(indices):
             b_sptm0, b_sptm1 = sptm0[indices[:, 0]], sptm1[indices[:, 1]]
-            return self._q_device.execute_generator(
+            expval = self._q_device.execute_generator(
                 self.circuit(b_sptm0, b_sptm1),
                 observable=qml.Projector(np.zeros(self.n_qubits, dtype=int), wires=self.wires),
                 output_type="expval",
                 reset=True,
             )
+            p_bar.update(len(indices))
+            return expval
 
-        gram = GramMatrix((x0.shape[0], x1.shape[0]), requires_grad=self.training)
         gram.apply_(_func, batch_size=self.gram_batch_size, symmetrize=True)
+        p_bar.set_postfix_str("Done.")
+        p_bar.close()
         return gram.to_tensor().to(device=self.device)
 
     def circuit(self, sptm0: TensorLike, sptm1: TensorLike):

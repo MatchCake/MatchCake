@@ -77,7 +77,7 @@ class GramMatrix:
         :type value: Any
         """
         if self.requires_grad:
-            self._tensor[key] = to_tensor(value, dtype=torch.float32)  # type: ignore
+            self._tensor[key] = to_tensor(value, dtype=torch.float32, device=self._tensor.device)  # type: ignore
         else:
             self._memmap[key] = to_numpy(value, dtype=np.float32)  # type: ignore
             self._memmap.flush()
