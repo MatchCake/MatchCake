@@ -196,6 +196,7 @@ class GramMatrix:
                 batch.append((i, j))
             if len(batch) == batch_size:
                 yield np.stack(batch, axis=0)
+                batch = []
         if len(batch) > 0:
             yield np.stack(batch, axis=0)
         return
