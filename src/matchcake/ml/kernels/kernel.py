@@ -32,6 +32,7 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         *,
         gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
         random_state: int = 0,
+        alignment: bool = False,
     ):
         """
         Initializes the class with configurations related to batch sizes and random state.
@@ -42,6 +43,7 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         super().__init__()
         self.gram_batch_size = gram_batch_size
         self.random_state = random_state
+        self.alignment = alignment
         self.np_rn_gen = np.random.RandomState(seed=random_state)
         self.x_train_: Optional[Union[NDArray, torch.Tensor]] = None
         self.y_train_: Optional[Union[NDArray, torch.Tensor]] = None
@@ -113,6 +115,8 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         self.x_train_ = x_train
         self.y_train_ = y_train
         self.is_fitted_ = True
+        if self.alignment:
+            self._align_kernel()
         return self
 
     def predict(self, x: Union[NDArray, torch.Tensor]) -> Union[NDArray, torch.Tensor]:
@@ -151,6 +155,18 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         self.eval()
         self.requires_grad_(False)
         return self
+
+    def _align_kernel(self):
+        """
+        Aligns the kernel matrix using the training data.
+
+        This method adjusts the kernel matrix based on the training data to ensure
+        that it is properly aligned.
+
+        :return: The aligned kernel matrix.
+        :rtype: torch.Tensor
+        """
+        raise NotImplementedError
 
     @property
     def device(self):
