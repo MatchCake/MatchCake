@@ -2,9 +2,10 @@ import numpy as np
 import torch
 
 from ...devices.nif_device import NonInteractingFermionicDevice
-from ...operations.single_particle_transition_matrices.single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
+from ...operations.single_particle_transition_matrices.single_particle_transition_matrix import (
+    SingleParticleTransitionMatrixOperation,
+)
 from ...utils.torch_utils import to_tensor
-
 from .nif_kernel import NIFKernel
 
 

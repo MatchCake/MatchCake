@@ -1,36 +1,31 @@
-from typing import Optional, Dict, Union
+from typing import Dict, Optional, Union
 
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import seaborn as sns
 
-from .visualizer import Visualizer
 from ..cross_validation import CrossValidationOutput
 from .mpl_rcparams import MPL_RC_DEFAULT_PARAMS
+from .visualizer import Visualizer
 
 
 class CrossValidationVisualizer(Visualizer):
-    def __init__(
-            self,
-            cross_validation_output: CrossValidationOutput
-    ):
+    def __init__(self, cross_validation_output: CrossValidationOutput):
         mpl.rcParams.update(MPL_RC_DEFAULT_PARAMS)
         self.cvo = cross_validation_output
 
     def plot(
-            self,
-            *,
-            ax: Optional[plt.Axes] = None,
-            score_name: str = "Score",
-            score_split_name: str = "Splits",
-            score_name_map: Optional[Dict[str, str]] = None,
-            palette: Optional[Union[str, list, Dict]] = "colorblind",
-            estimator_name_key: Optional[str] = None,
+        self,
+        *,
+        ax: Optional[plt.Axes] = None,
+        score_name: str = "Score",
+        score_split_name: str = "Splits",
+        score_name_map: Optional[Dict[str, str]] = None,
+        palette: Optional[Union[str, list, Dict]] = "colorblind",
+        estimator_name_key: Optional[str] = None,
     ):
         if estimator_name_key is not None:
-            self.cvo.results_df = self.cvo.results_df.rename(
-                columns={self.cvo.estimator_name_key: estimator_name_key}
-            )
+            self.cvo.results_df = self.cvo.results_df.rename(columns={self.cvo.estimator_name_key: estimator_name_key})
             self.cvo.estimator_name_key = estimator_name_key
         melted_df = self.cvo.results_df.melt(
             id_vars=[self.cvo.estimator_name_key],
@@ -52,5 +47,3 @@ class CrossValidationVisualizer(Visualizer):
             ax=ax,
         )
         return ax
-
-

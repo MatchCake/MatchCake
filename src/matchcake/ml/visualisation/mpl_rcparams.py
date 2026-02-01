@@ -1,4 +1,3 @@
-
 MPL_RC_DEFAULT_PARAMS = {
     "font.size": 18,
     "legend.fontsize": 16,
@@ -7,15 +6,15 @@ MPL_RC_DEFAULT_PARAMS = {
     "xtick.direction": "in",
     "xtick.major.size": 12,
     "xtick.major.width": 3,
-    'xtick.minor.visible': True,
-    'xtick.minor.size': 6.0,
-    'xtick.minor.width': 2.0,
+    "xtick.minor.visible": True,
+    "xtick.minor.size": 6.0,
+    "xtick.minor.width": 2.0,
     "ytick.direction": "in",
     "ytick.major.width": 3,
     "ytick.major.size": 12,
-    'ytick.minor.visible': True,
-    'ytick.minor.size': 6.0,
-    'ytick.minor.width': 2.0,
+    "ytick.minor.visible": True,
+    "ytick.minor.size": 6.0,
+    "ytick.minor.width": 2.0,
     "font.family": "sans-serif",
     "font.sans-serif": [
         "Helvetica",
@@ -29,4 +28,3 @@ MPL_RC_DEFAULT_PARAMS = {
     "text.latex.preamble": r"\usepackage{amsmath}",
     "errorbar.capsize": 2,
 }
-

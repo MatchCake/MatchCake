@@ -1,3 +1,4 @@
+from functools import cached_property
 from typing import Optional
 
 import numpy as np
@@ -6,12 +7,11 @@ import torch
 from tqdm import tqdm
 
 from ...devices.nif_device import NonInteractingFermionicDevice
-from ...utils.torch_utils import to_tensor
-
-from .gram_matrix import GramMatrix
-from .kernel import Kernel
 from ...operations import SingleParticleTransitionMatrixOperation
 from ...typing import TensorLike
+from ...utils.torch_utils import to_tensor
+from .gram_matrix import GramMatrix
+from .kernel import Kernel
 
 
 class NIFKernel(Kernel):
@@ -54,7 +54,7 @@ class NIFKernel(Kernel):
         self.R_DTYPE = torch.float32
         self._q_device = NonInteractingFermionicDevice(n_qubits, r_dtype=self.R_DTYPE)
 
-    def forward(self, x0: torch.Tensor, x1: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, x0: TensorLike, x1: Optional[TensorLike] = None, **kwargs) -> TensorLike:
         """
         Calculates the similarities between input tensors and returns the kernel output.
 
@@ -69,10 +69,10 @@ class NIFKernel(Kernel):
         """
         if x1 is None:
             x1 = x0
-        x0 = to_tensor(x0, dtype=self.R_DTYPE, device=self.device)  # type: ignore
-        x1 = to_tensor(x1, dtype=self.R_DTYPE, device=self.device)  # type: ignore
+        x0 = to_tensor(x0, dtype=self.R_DTYPE)  # type: ignore
+        x1 = to_tensor(x1, dtype=self.R_DTYPE)  # type: ignore
         self.to(device=self.device)
-        kernel = self.compute_similarities(x0, x1)  # type: ignore
+        kernel = self.compute_similarities(x0, x1, **kwargs)  # type: ignore
         return kernel
 
     def ansatz(self, x: torch.Tensor):
@@ -93,7 +93,7 @@ class NIFKernel(Kernel):
         """
         raise NotImplementedError
 
-    def compute_similarities(self, x0: torch.Tensor, x1: torch.Tensor):
+    def compute_similarities(self, x0: torch.Tensor, x1: torch.Tensor, **kwargs):
         """
         Computes the similarity matrix between tensors `x0` and `x1`. The function evaluates
         quantum computational circuits for pairs of instances from `x0` and `x1` to compute a
@@ -112,16 +112,21 @@ class NIFKernel(Kernel):
             total=int(np.prod(gram.shape)),
             desc="Computing Gram matrix",
             unit="element",
-            disable=True,
+            disable=not kwargs.get("verbose", False),
         )
         p_bar.set_postfix_str("Compiling x0 circuits ...")
         sptm0 = self._x_to_sptm(x0)
         p_bar.set_postfix_str("Compiling x1 circuits ...")
-        sptm1 = self._x_to_sptm(x1)
+        if kwargs.get("x1_train", False):
+            sptm1 = self.sptms_train
+        else:
+            sptm1 = self._x_to_sptm(x1)
         p_bar.set_postfix_str("Evaluating Gram matrix ...")
 
         def _func(indices):
             b_sptm0, b_sptm1 = sptm0[indices[:, 0]], sptm1[indices[:, 1]]
+            b_sptm0 = to_tensor(b_sptm0, dtype=self.R_DTYPE, device=self.device)  # type: ignore
+            b_sptm1 = to_tensor(b_sptm1, dtype=self.R_DTYPE, device=self.device)  # type: ignore
             expval = self._q_device.execute_generator(
                 self.circuit(b_sptm0, b_sptm1),
                 observable=qml.Projector(np.zeros(self.n_qubits, dtype=int), wires=self.wires),
@@ -134,7 +139,7 @@ class NIFKernel(Kernel):
         gram.apply_(_func, batch_size=self.gram_batch_size, symmetrize=True)
         p_bar.set_postfix_str("Done.")
         p_bar.close()
-        return gram.to_tensor().to(device=self.device)
+        return gram.to_tensor().to(dtype=self.R_DTYPE)
 
     def circuit(self, sptm0: TensorLike, sptm1: TensorLike):
         """
@@ -166,8 +171,15 @@ class NIFKernel(Kernel):
         :return: The single particle transition matrix (SPTM) resulting from the ansatz execution.
         :rtype: TensorLike
         """
-        self._q_device.execute_generator(self.ansatz(x), reset=True)
-        return self._q_device.global_sptm.matrix()
+        x = to_tensor(x, dtype=self.R_DTYPE)  # type: ignore
+        batched_indices = np.array_split(np.arange(len(x)), np.ceil(len(x) / self.gram_batch_size))
+        sptms = []
+        for batch_indices in batched_indices:
+            bx = to_tensor(x[batch_indices], dtype=self.R_DTYPE, device=self.device)  # type: ignore
+            self._q_device.execute_generator(self.ansatz(bx), reset=True)
+            sptms.append(to_tensor(self._q_device.global_sptm.matrix(), dtype=self.R_DTYPE, device=x.device))
+        concatenated_sptms = qml.math.concatenate(sptms, axis=0)
+        return concatenated_sptms
 
     @property
     def wires(self):
@@ -191,3 +203,7 @@ class NIFKernel(Kernel):
     @property
     def q_device(self):
         return self._q_device
+
+    @cached_property
+    def sptms_train(self) -> TensorLike:
+        return self._x_to_sptm(self.x_train_)

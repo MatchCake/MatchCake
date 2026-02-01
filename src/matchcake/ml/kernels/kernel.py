@@ -5,6 +5,7 @@ import torch
 from numpy.typing import NDArray
 from sklearn.base import BaseEstimator, TransformerMixin
 
+from matchcake.typing import TensorLike
 from matchcake.utils.torch_utils import to_numpy, to_tensor
 
 
@@ -47,12 +48,7 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         self.is_fitted_ = False
         self.device_tracker_param = torch.nn.Parameter(torch.empty(0), requires_grad=False)
 
-    def __setattr__(self, key, value):
-        if key != "device_tracker_param" and isinstance(value, (torch.nn.Module, torch.nn.Parameter)):
-            value = value.to(self.device)
-        super().__setattr__(key, value)
-
-    def forward(self, x0: torch.Tensor, x1: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, x0: TensorLike, x1: Optional[TensorLike] = None, **kwargs) -> TensorLike:
         """
         Computes the forward pass of the model with the given inputs.
 
@@ -73,12 +69,16 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         """
         raise NotImplementedError
 
-    def transform(self, x: Union[NDArray, torch.Tensor]) -> Union[NDArray, torch.Tensor]:
+    def transform(self, x: Union[NDArray, TensorLike]) -> Union[NDArray, TensorLike]:
         """
         Transforms the input using a specified transformation process. The transformation
         is performed on the provided input data, converting it into a tensor if necessary
         and applying the forward operation with the trained data. If the original input
         was not a tensor, it converts the transformed data back to a numpy array.
+
+        The model is set to evaluation mode during prediction to ensure that layers
+        like dropout and batch normalization behave appropriately for inference.
+        The transformation is performed without tracking gradients to optimize performance.
 
         :param x: Input data to be transformed. Can be either a NumPy array or a PyTorch
                   tensor.
@@ -88,13 +88,15 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         :rtype: Union[NDArray, torch.Tensor]
         """
         is_torch = isinstance(x, torch.Tensor)
-        x: torch.Tensor = to_tensor(x).to(device=self.device)  # type: ignore
-        x: torch.Tensor = self(x, self.x_train_)  # type: ignore
+        x: torch.Tensor = to_tensor(x)  # type: ignore
+        self.eval()
+        with torch.no_grad():
+            x: torch.Tensor = self(x, self.x_train_, x1_train=True)  # type: ignore
         if is_torch:
             return x
         return to_numpy(x, dtype=np.float32)  # pragma: no cover
 
-    def fit(self, x_train: Union[NDArray, torch.Tensor], y_train: Optional[Union[NDArray, torch.Tensor]] = None):
+    def fit(self, x_train: Union[NDArray, TensorLike], y_train: Optional[Union[NDArray, TensorLike]] = None):
         """
         Fits the model using the provided training data. This method stores the
         training data and sets the model's state to fitted.
@@ -121,12 +123,18 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         resulting output. It supports both NumPy arrays and PyTorch tensors as input.
         The return type will match the input type.
 
+        The model is set to evaluation mode during prediction to ensure that layers
+        like dropout and batch normalization behave appropriately for inference.
+        The transformation is performed without tracking gradients to optimize performance.
+
         :param x: The input data to be transformed. Can be either a NumPy array
             or a PyTorch tensor.
         :return: The transformed input data. The returned type will match the
             type of the input data (NumPy array or PyTorch tensor).
         """
-        return self.transform(x)
+        self.eval()
+        with torch.no_grad():
+            return self.transform(x)
 
     def freeze(self):
         """

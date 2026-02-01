@@ -5,6 +5,7 @@ import torch
 from numpy.typing import NDArray
 from torch.nn import Parameter
 
+from ...typing import TensorLike
 from ...utils.torch_utils import to_tensor
 
 try:
@@ -117,7 +118,7 @@ class FermionicPQCKernel(NIFKernel):
         self.encoder = torch.nn.Flatten()
         self.data_scaling_: Optional[Parameter] = None
 
-    def fit(self, x_train: Union[NDArray, torch.Tensor], y_train: Optional[Union[NDArray, torch.Tensor]] = None):
+    def fit(self, x_train: Union[NDArray, TensorLike], y_train: Optional[Union[NDArray, TensorLike]] = None):
         """
         Fits the model to the training data by initializing the parameters for the
         quantum operations and determining the depth of the operation layers based
@@ -131,8 +132,8 @@ class FermionicPQCKernel(NIFKernel):
         """
         super().fit(x_train, y_train)
         n_inputs = int(np.prod(x_train.shape[1:]))
-        self.bias_ = Parameter(torch.from_numpy(self.np_rn_gen.random(n_inputs))).to(dtype=self.R_DTYPE)  # type: ignore
-        self.data_scaling_ = torch.pi * Parameter(torch.ones(n_inputs)).to(dtype=self.R_DTYPE)  # type: ignore
+        self.bias_ = Parameter(torch.from_numpy(self.np_rn_gen.random(n_inputs))).to(dtype=self.R_DTYPE, device=self.device)  # type: ignore
+        self.data_scaling_ = torch.pi * Parameter(torch.ones(n_inputs)).to(dtype=self.R_DTYPE, device=self.device)  # type: ignore
         if self.depth_ is None:
             self.depth_ = int(max(1, np.ceil(x_train.shape[-1] / self.n_qubits)))
         return self
@@ -151,7 +152,7 @@ class FermionicPQCKernel(NIFKernel):
         :yield: Decompositions of specified operations for inclusion in a quantum circuit.
 
         """
-        x = to_tensor(x, dtype=self.R_DTYPE).to(device=self.device)
+        x = to_tensor(x, dtype=self.R_DTYPE, device=self.device)
         x = self.bias_ + self.data_scaling_ * self.encoder(x)
 
         wires_double = PATTERN_TO_WIRES["double"](self.wires)
