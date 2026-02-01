@@ -130,12 +130,12 @@ class FermionicPQCKernel(NIFKernel):
             type NDArray or torch.Tensor.
         :return: Updated instance of the class after fitting the training data.
         """
-        super().fit(x_train, y_train)
         n_inputs = int(np.prod(x_train.shape[1:]))
         self.bias_ = Parameter(torch.from_numpy(self.np_rn_gen.random(n_inputs))).to(dtype=self.R_DTYPE, device=self.device)  # type: ignore
         self.data_scaling_ = torch.pi * Parameter(torch.ones(n_inputs)).to(dtype=self.R_DTYPE, device=self.device)  # type: ignore
         if self.depth_ is None:
             self.depth_ = int(max(1, np.ceil(x_train.shape[-1] / self.n_qubits)))
+        super().fit(x_train, y_train)
         return self
 
     def ansatz(self, x):
