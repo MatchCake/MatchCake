@@ -2,8 +2,10 @@ from typing import Optional, Union
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from numpy.typing import NDArray
 from sklearn.base import BaseEstimator, TransformerMixin
+from tqdm import tqdm
 
 from matchcake.typing import TensorLike
 from matchcake.utils.torch_utils import to_numpy, to_tensor
@@ -114,9 +116,9 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         """
         self.x_train_ = x_train
         self.y_train_ = y_train
-        self.is_fitted_ = True
         if self.alignment:
             self._align_kernel()
+        self.is_fitted_ = True
         return self
 
     def predict(self, x: Union[NDArray, torch.Tensor]) -> Union[NDArray, torch.Tensor]:
@@ -156,17 +158,117 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         self.requires_grad_(False)
         return self
 
-    def _align_kernel(self):
-        """
+    def _align_kernel(
+            self,
+            iterations: int = 100,
+            learning_rate: float = 0.01,
+            verbose: bool = False,
+    ):
+        r"""
         Aligns the kernel matrix using the training data.
 
         This method adjusts the kernel matrix based on the training data to ensure
-        that it is properly aligned.
+        that it is properly aligned using gradient-based optimization. The kernel
+        alignment score measures the similarity between the kernel matrix and the
+        ideal kernel derived from the target labels.
+
+        The alignment is computed as:
+
+        .. :math::
+            \text{alignment} = \frac{\langle K_c, Y_c \rangle}{||K_c|| * ||Y_c||}
+
+        where
+
+        .. :math::
+            K_c = C K C,
+
+        .. :math::
+            Y_c = C Y C,
+
+        and :math:`C` is the centering matrix. Here, :math:`\langle\cdot,\cdot\rangle` denotes the Frobenius inner product,
+        and ||.|| denotes the Frobenius norm, with :math:`K` being the kernel matrix and :math:`Y` being
+        the ideal kernel from labels.
+
+        where K is the kernel matrix and Y is the ideal kernel from labels.
 
         :return: The aligned kernel matrix.
         :rtype: torch.Tensor
         """
-        raise NotImplementedError
+        if self.x_train_ is None or self.y_train_ is None:
+            raise ValueError("Training data must be provided before kernel alignment.")
+        self.train()
+        centerer = self._create_kernel_centerer()
+        y_kernel = self._create_y_kernel().to(self.device)
+        centered_y_kernel = torch.einsum("ij,jk,kl->il", centerer, y_kernel, centerer)
+
+        optimizer = torch.optim.AdamW(self.parameters(), lr=learning_rate)
+        p_bar = tqdm(np.arange(iterations), desc="Aligning kernel", disable=not verbose)
+        for _ in p_bar:
+            optimizer.zero_grad()
+            kernel_matrix = self(self.x_train_, self.x_train_)
+            centered_kernel = torch.einsum("ij,jk,kl->il", centerer, kernel_matrix, centerer)
+            alignment = torch.einsum("ij,ij->", centered_kernel, centered_y_kernel.detach()) / (
+                    torch.norm(centered_kernel) * torch.norm(centered_y_kernel.detach()) + 1e-8
+            )
+            loss = -alignment
+            loss.backward()
+            optimizer.step()
+            p_bar.set_postfix_str(f"Alignment score: {alignment.detach().cpu().item():.4f}")
+
+        p_bar.close()
+        self.eval()
+        return self
+
+    def _create_y_kernel(self) -> torch.Tensor:
+        """
+        Creates a kernel matrix for the target variable `y_train`.
+
+        This method calculates the kernel matrix, which is used for measuring the similarity or
+        correlation structure of the target variable `y_train`. It handles classification tasks by
+        converting `y_train` to one-hot encoding when needed and supports binary or regression tasks.
+        For multi-dimensional target data (e.g., multi-variate regression), the method computes
+        the kernel via generalized Einstein summation.
+
+        :raises ValueError: Raised if `y_train` contains invalid or unexpected values that cannot be processed.
+
+        :return: A kernel matrix computed from the target variable `y_train`.
+        :rtype: torch.Tensor
+        """
+        if not isinstance(self.y_train_, torch.Tensor):
+            y_train = to_tensor(np.asarray(self.y_train_), device=self.device)
+        else:
+            y_train = to_tensor(self.y_train_, device=self.device)
+        is_classification = all([
+            y_train.dim() == 1,  # single-dimensional
+            torch.allclose(y_train.float(), y_train.long().float()),  # integer values
+        ])
+        if is_classification:
+            # For classification: convert to one-hot encoding
+            n_classes = int(y_train.max().item()) + 1
+            y_one_hot = F.one_hot(y_train.long(), num_classes=n_classes).float()
+            y_kernel = torch.einsum("ki,bi->kb", y_one_hot, y_one_hot)
+        else: # Regression case
+            y_kernel = torch.einsum("i...,k...->ik", y_train, y_train)
+        return y_kernel
+
+    def _create_kernel_centerer(self):
+        """
+        Creates and returns a kernel centerer matrix for training data.
+
+        The kernel centerer is a matrix used to center the kernel matrix in kernel
+        methods, which involves transforming the kernel matrix such that its mean in
+        both rows and columns is zero. This is accomplished using the training data
+        sample size.
+
+        :return: A kernel centerer matrix for the training data.
+        :rtype: torch.Tensor
+        """
+        n_samples = len(self.x_train_)
+        centerer = (
+                torch.eye(n_samples, device=self.device)
+                - torch.ones((n_samples, n_samples), device=self.device) / n_samples
+        )
+        return centerer
 
     @property
     def device(self):

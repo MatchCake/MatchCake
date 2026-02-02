@@ -37,6 +37,7 @@ class NIFKernel(Kernel):
         *,
         gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
         random_state: int = 0,
+        alignment: bool = False,
         n_qubits: int = DEFAULT_N_QUBITS,
     ):
         """
@@ -50,6 +51,7 @@ class NIFKernel(Kernel):
         super().__init__(
             gram_batch_size=gram_batch_size,
             random_state=random_state,
+            alignment=alignment,
         )
         self.R_DTYPE = torch.float32
         self._q_device = NonInteractingFermionicDevice(n_qubits, r_dtype=self.R_DTYPE)

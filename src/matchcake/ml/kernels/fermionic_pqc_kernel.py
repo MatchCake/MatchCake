@@ -87,6 +87,7 @@ class FermionicPQCKernel(NIFKernel):
         *,
         gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
         random_state: int = 0,
+        alignment: bool = False,
         n_qubits: int = DEFAULT_N_QUBITS,
         rotations: str = "Y,Z",
         entangling_mth: str = "fswap",
@@ -107,6 +108,7 @@ class FermionicPQCKernel(NIFKernel):
         super().__init__(
             gram_batch_size=gram_batch_size,
             random_state=random_state,
+            alignment=alignment,
             n_qubits=n_qubits,
         )
         self.rotations = rotations
