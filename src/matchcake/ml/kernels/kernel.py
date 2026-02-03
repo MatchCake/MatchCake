@@ -47,9 +47,9 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         self.random_state = random_state
         self.alignment = alignment
         self.np_rn_gen = np.random.RandomState(seed=random_state)
-        self.x_train_: Optional[Union[NDArray, torch.Tensor]] = None
-        self.y_train_: Optional[Union[NDArray, torch.Tensor]] = None
-        self.is_fitted_ = False
+        self.x_train_: Optional[Union[NDArray, TensorLike]] = None
+        self.y_train_: Optional[Union[NDArray, TensorLike]] = None
+        self.is_fitted_: bool = False
         self.device_tracker_param = torch.nn.Parameter(torch.empty(0), requires_grad=False)
 
     def forward(self, x0: TensorLike, x1: Optional[TensorLike] = None, **kwargs) -> TensorLike:
@@ -73,7 +73,7 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         """
         raise NotImplementedError
 
-    def transform(self, x: Union[NDArray, TensorLike]) -> Union[NDArray, TensorLike]:
+    def transform(self, x: Union[NDArray, TensorLike]) -> Union[NDArray, torch.Tensor]:
         """
         Transforms the input using a specified transformation process. The transformation
         is performed on the provided input data, converting it into a tensor if necessary
@@ -86,7 +86,7 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
 
         :param x: Input data to be transformed. Can be either a NumPy array or a PyTorch
                   tensor.
-        :type x: Union[NDArray, torch.Tensor]
+        :type x: Union[NDArray, TensorLike]
         :return: The transformed data. The format matches the input type (a NumPy array
                  or a PyTorch tensor).
         :rtype: Union[NDArray, torch.Tensor]
@@ -121,7 +121,7 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         self.is_fitted_ = True
         return self
 
-    def predict(self, x: Union[NDArray, torch.Tensor]) -> Union[NDArray, torch.Tensor]:
+    def predict(self, x: Union[NDArray, TensorLike]) -> Union[NDArray, torch.Tensor]:
         """
         Predict transformed data using the model.
 
@@ -159,10 +159,10 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         return self
 
     def _align_kernel(
-            self,
-            iterations: int = 100,
-            learning_rate: float = 0.01,
-            verbose: bool = False,
+        self,
+        iterations: int = 100,
+        learning_rate: float = 0.01,
+        verbose: bool = False,
     ):
         r"""
         Aligns the kernel matrix using the training data.
@@ -208,7 +208,7 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
             kernel_matrix = self(self.x_train_, self.x_train_)
             centered_kernel = torch.einsum("ij,jk,kl->il", centerer, kernel_matrix, centerer)
             alignment = torch.einsum("ij,ij->", centered_kernel, centered_y_kernel.detach()) / (
-                    torch.norm(centered_kernel) * torch.norm(centered_y_kernel.detach()) + 1e-8
+                torch.norm(centered_kernel) * torch.norm(centered_y_kernel.detach()) + 1e-8
             )
             loss = -alignment
             loss.backward()
@@ -238,16 +238,18 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
             y_train = to_tensor(np.asarray(self.y_train_), device=self.device)
         else:
             y_train = to_tensor(self.y_train_, device=self.device)
-        is_classification = all([
-            y_train.dim() == 1,  # single-dimensional
-            torch.allclose(y_train.float(), y_train.long().float()),  # integer values
-        ])
+        is_classification = all(
+            [
+                y_train.dim() == 1,  # single-dimensional
+                torch.allclose(y_train.float(), y_train.long().float()),  # integer values
+            ]
+        )
         if is_classification:
             # For classification: convert to one-hot encoding
             n_classes = int(y_train.max().item()) + 1
             y_one_hot = F.one_hot(y_train.long(), num_classes=n_classes).float()
             y_kernel = torch.einsum("ki,bi->kb", y_one_hot, y_one_hot)
-        else: # Regression case
+        else:  # Regression case
             y_kernel = torch.einsum("i...,k...->ik", y_train, y_train)
         return y_kernel
 
@@ -265,8 +267,8 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         """
         n_samples = len(self.x_train_)
         centerer = (
-                torch.eye(n_samples, device=self.device)
-                - torch.ones((n_samples, n_samples), device=self.device) / n_samples
+            torch.eye(n_samples, device=self.device)
+            - torch.ones((n_samples, n_samples), device=self.device) / n_samples
         )
         return centerer
 
