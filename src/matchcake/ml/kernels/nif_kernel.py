@@ -1,4 +1,4 @@
-from functools import cached_property
+from functools import cached_property, partial
 from typing import Optional
 
 import numpy as np
@@ -124,20 +124,7 @@ class NIFKernel(Kernel):
         else:
             sptm1 = self._x_to_sptm(x1)
         p_bar.set_postfix_str("Evaluating Gram matrix ...")
-
-        def _func(indices):
-            b_sptm0, b_sptm1 = sptm0[indices[:, 0]], sptm1[indices[:, 1]]
-            b_sptm0 = to_tensor(b_sptm0, dtype=self.R_DTYPE, device=self.device)  # type: ignore
-            b_sptm1 = to_tensor(b_sptm1, dtype=self.R_DTYPE, device=self.device)  # type: ignore
-            expval = self._q_device.execute_generator(
-                self.circuit(b_sptm0, b_sptm1),
-                observable=qml.Projector(np.zeros(self.n_qubits, dtype=int), wires=self.wires),
-                output_type="expval",
-                reset=True,
-            )
-            p_bar.update(len(indices))
-            return expval
-
+        _func = partial(self._compute_similarities_func, sptm0=sptm0, sptm1=sptm1, p_bar=p_bar)
         gram.apply_(_func, batch_size=self.gram_batch_size, symmetrize=True)
         p_bar.set_postfix_str("Done.")
         p_bar.close()
@@ -180,8 +167,23 @@ class NIFKernel(Kernel):
             bx = to_tensor(x[batch_indices], dtype=self.R_DTYPE, device=self.device)  # type: ignore
             self._q_device.execute_generator(self.ansatz(bx), reset=True)
             sptms.append(to_tensor(self._q_device.global_sptm.matrix(), dtype=self.R_DTYPE, device=x.device))
-        concatenated_sptms = qml.math.concatenate(sptms, axis=0)
-        return concatenated_sptms
+        stacked_sptms = qml.math.stack(sptms, axis=0).reshape(
+            x.shape[0], 2 * self._q_device.num_wires, 2 * self._q_device.num_wires
+        )
+        return stacked_sptms
+
+    def _compute_similarities_func(self, indices, sptm0, sptm1, p_bar):
+        b_sptm0, b_sptm1 = sptm0[indices[:, 0]], sptm1[indices[:, 1]]
+        b_sptm0 = to_tensor(b_sptm0, dtype=self.R_DTYPE, device=self.device)  # type: ignore
+        b_sptm1 = to_tensor(b_sptm1, dtype=self.R_DTYPE, device=self.device)  # type: ignore
+        expval = self._q_device.execute_generator(
+            self.circuit(b_sptm0, b_sptm1),
+            observable=qml.Projector(np.zeros(self.n_qubits, dtype=int), wires=self.wires),
+            output_type="expval",
+            reset=True,
+        )
+        p_bar.update(len(indices))
+        return expval
 
     @property
     def wires(self):
