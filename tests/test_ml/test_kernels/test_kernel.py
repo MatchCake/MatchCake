@@ -4,6 +4,7 @@ import pytest
 import torch
 
 from matchcake.ml.kernels.kernel import Kernel
+from matchcake.utils.torch_utils import to_tensor
 
 
 class TestKernel:
@@ -38,3 +39,15 @@ class TestKernel:
     def test_freeze(self, kernel):
         kernel.freeze()
         assert not kernel.training
+
+    def test_alignment(self, kernel):
+        kernel.alignment = True
+
+        def forward_mock(x0, x1):
+            x0 = to_tensor(x0).float()
+            x1 = to_tensor(x1).float()
+            p = torch.ones_like(x0).float().requires_grad_()
+            return torch.einsum("ij,ij,jk->ik", p, x0, x1)
+
+        kernel.forward = forward_mock
+        kernel.fit(torch.rand(10, 10), torch.arange(10).long())

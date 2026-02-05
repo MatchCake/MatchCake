@@ -52,7 +52,7 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         self.is_fitted_: bool = False
         self.device_tracker_param = torch.nn.Parameter(torch.empty(0), requires_grad=False)
 
-    def forward(self, x0: TensorLike, x1: Optional[TensorLike] = None, **kwargs) -> TensorLike:
+    def forward(self, x0: TensorLike, x1: Optional[TensorLike] = None, **kwargs) -> torch.Tensor:
         """
         Computes the forward pass of the model with the given inputs.
 
