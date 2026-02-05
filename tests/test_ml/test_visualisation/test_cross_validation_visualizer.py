@@ -37,7 +37,7 @@ class TestCrossValidationVisualizer:
             (None, {"test_a": "accuracy"}),
             ("Model", {"test_a": "accuracy"}),
             ("Model", None),
-        ]
+        ],
     )
     def test_plot(self, cvv, estimator_name_key, score_name_map):
         ax = cvv.plot(estimator_name_key=estimator_name_key, score_name_map=score_name_map)
