@@ -81,3 +81,30 @@ class TestGramMatrix:
         assert gram._filepath.exists()
         del gram
         assert True
+
+    def test_indices_batch_generator_square(self):
+        gram = GramMatrix((10, 10))
+        expected_indices = np.stack(np.tril_indices(n=gram.shape[0], m=gram.shape[1], k=-1), axis=1)
+        indices_from_batches = np.concatenate(list(gram.indices_batch_generator()), axis=0)
+        assert indices_from_batches.shape == expected_indices.shape
+        indices_from_batches_unique = np.unique(indices_from_batches, axis=0)
+        assert indices_from_batches_unique.shape == indices_from_batches.shape
+        np.testing.assert_equal(indices_from_batches_unique, np.unique(expected_indices, axis=0))
+
+    def test_indices_batch_generator_rec_tril(self):
+        gram = GramMatrix((12, 10))
+        expected_indices = np.stack(np.tril_indices(n=gram.shape[0], m=gram.shape[1], k=-1), axis=1)
+        indices_from_batches = np.concatenate(list(gram.indices_batch_generator()), axis=0)
+        assert indices_from_batches.shape == expected_indices.shape
+        indices_from_batches_unique = np.unique(indices_from_batches, axis=0)
+        assert indices_from_batches_unique.shape == indices_from_batches.shape
+        np.testing.assert_equal(indices_from_batches_unique, np.unique(expected_indices, axis=0))
+
+    def test_indices_batch_generator_rec_triu(self):
+        gram = GramMatrix((10, 12))
+        expected_indices = np.stack(np.triu_indices(n=gram.shape[0], m=gram.shape[1], k=1), axis=1)
+        indices_from_batches = np.concatenate(list(gram.indices_batch_generator()), axis=0)
+        assert indices_from_batches.shape == expected_indices.shape
+        indices_from_batches_unique = np.unique(indices_from_batches, axis=0)
+        assert indices_from_batches_unique.shape == indices_from_batches.shape
+        np.testing.assert_equal(indices_from_batches_unique, np.unique(expected_indices, axis=0))

@@ -109,20 +109,20 @@ X, y = datasets.load_iris(return_X_y=True)
 x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
 # Create and fit the model
-pipline = Pipeline([
+pipeline = Pipeline([
     ('scaler', MinMaxScaler(feature_range=(0, 1))),
     ('kernel', FermionicPQCKernel(n_qubits=4, rotations="X,Z").freeze()),
     ('classifier', SVC(kernel='precomputed')),
 ])
-pipline.fit(x_train, y_train)
+pipeline.fit(x_train, y_train)
 
 # Evaluate the model
-test_accuracy = pipline.score(x_test, y_test)
+test_accuracy = pipeline.score(x_test, y_test)
 print(f"Test accuracy: {test_accuracy * 100:.2f}%")
 
 # Visualize the classification
 viz = ClassificationVisualizer(x=X, n_pts=1_000)
-viz.plot_2d_decision_boundaries(model=pipline, y=y, show=True)
+viz.plot_2d_decision_boundaries(model=pipeline, y=y, show=True)
 
 ```
 
