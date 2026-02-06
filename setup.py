@@ -2,8 +2,8 @@ from setuptools import setup
 import setuptools
 
 setup(
-    name='MatchCake',
-    long_description='file: README.md',
+    name="MatchCake",
+    long_description="file: README.md",
     long_description_content_type="text/markdown",
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
@@ -13,16 +13,16 @@ setup(
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Operating System :: OS Independent",
     ],
     project_urls={
-        'Homepage': 'https://github.com/MatchCake/MatchCake',
-        'Source': 'https://github.com/MatchCake/MatchCake',
-        'Documentation': 'https://MatchCake.github.io/MatchCake',
+        "Homepage": "https://github.com/MatchCake/MatchCake",
+        "Source": "https://github.com/MatchCake/MatchCake",
+        "Documentation": "https://MatchCake.github.io/MatchCake",
     },
 )
 
@@ -37,4 +37,3 @@ setup(
 #   twine check dist/*
 #   twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 #   twine upload dist/*
-
