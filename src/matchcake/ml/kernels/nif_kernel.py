@@ -73,7 +73,7 @@ class NIFKernel(Kernel):
             x1 = x0
         x0 = to_tensor(x0, dtype=self.R_DTYPE)  # type: ignore
         x1 = to_tensor(x1, dtype=self.R_DTYPE)  # type: ignore
-        self.to(device=self.device)
+        self.to(dtype=self.R_DTYPE, device=self.device)
         kernel = self.compute_similarities(x0, x1, **kwargs)  # type: ignore
         return kernel
 

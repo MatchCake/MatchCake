@@ -4,6 +4,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from numpy.typing import NDArray
+from pennylane_lightning.lightning_qubit_ops import best_alignment
+from scipy.optimize import OptimizeResult
 from sklearn.base import BaseEstimator, TransformerMixin
 from tqdm import tqdm
 
@@ -35,6 +37,10 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
         random_state: int = 0,
         alignment: bool = False,
+        alignment_iterations: int = 100,
+        alignment_learning_rate: float = 1e-3,
+        alignment_early_stopping_patience: int = 10,
+        alignment_early_stopping_threshold: float = 1e-5,
     ):
         """
         Initializes the class with configurations related to batch sizes and random state.
@@ -46,9 +52,14 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         self.gram_batch_size = gram_batch_size
         self.random_state = random_state
         self.alignment = alignment
+        self.alignment_iterations = alignment_iterations
+        self.alignment_learning_rate = alignment_learning_rate
+        self.alignment_early_stopping_patience = alignment_early_stopping_patience
+        self.alignment_early_stopping_threshold = alignment_early_stopping_threshold
         self.np_rn_gen = np.random.RandomState(seed=random_state)
         self.x_train_: Optional[Union[NDArray, TensorLike]] = None
         self.y_train_: Optional[Union[NDArray, TensorLike]] = None
+        self.opt_: Optional[OptimizeResult] = None
         self.is_fitted_: bool = False
         self.device_tracker_param = torch.nn.Parameter(torch.empty(0), requires_grad=False)
 
@@ -116,6 +127,7 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         """
         self.x_train_ = x_train
         self.y_train_ = y_train
+        self.build_model()
         if self.alignment:
             self._align_kernel()
         self.is_fitted_ = True
@@ -158,10 +170,22 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         self.requires_grad_(False)
         return self
 
+    def build_model(self) -> "Kernel":
+        """
+        Execute a forward pass with the training data to make sure the model's internal structures are properly
+        initialized.
+
+        :return: The model instance after building the internal structures.
+        :rtype: self
+        """
+        assert self.x_train_ is not None, "Training data must be provided to build the model."
+        with torch.no_grad():
+            x_dummy = self.x_train_[0:3] if len(self.x_train_) >= 3 else self.x_train_
+            self(x_dummy)
+        return self
+
     def _align_kernel(
         self,
-        iterations: int = 100,
-        learning_rate: float = 0.01,
         verbose: bool = False,
     ):
         r"""
@@ -201,9 +225,16 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         y_kernel = self._create_y_kernel().to(self.device)
         centered_y_kernel = torch.einsum("ij,jk,kl->il", centerer, y_kernel, centerer)
 
-        optimizer = torch.optim.AdamW(self.parameters(), lr=learning_rate)
-        p_bar = tqdm(np.arange(iterations), desc="Aligning kernel", disable=not verbose)
+        self.opt_ = OptimizeResult()
+        self.opt_.fun = np.inf
+        self.opt_.history = []
+        self.to(device=self.device)
+        best_params = torch.nn.utils.parameters_to_vector(self.parameters()).cpu().detach().clone()
+        best_alignment = -np.inf
+        optimizer = torch.optim.AdamW(self.parameters(), lr=self.alignment_learning_rate)
+        p_bar = tqdm(np.arange(self.alignment_iterations), desc="Aligning kernel", disable=not verbose)
         for _ in p_bar:
+            self.train()
             optimizer.zero_grad()
             kernel_matrix = self(self.x_train_, self.x_train_)
             centered_kernel = torch.einsum("ij,jk,kl->il", centerer, kernel_matrix, centerer)
@@ -211,10 +242,26 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
                 torch.norm(centered_kernel) * torch.norm(centered_y_kernel.detach()) + 1e-8
             )
             loss = -alignment
+            self.opt_.fun = alignment.detach().cpu().item()
+            self.opt_.history.append(self.opt_.fun)
+            if np.isclose(self.opt_.fun, np.max(self.opt_.history)):
+                best_params = torch.nn.utils.parameters_to_vector(self.parameters()).cpu().detach().clone()
+                best_alignment = self.opt_.fun
+            if all(
+                [
+                    len(self.opt_.history) > self.alignment_early_stopping_patience,
+                    np.all(
+                        np.abs(np.diff(self.opt_.history[-self.alignment_early_stopping_patience :]))
+                        <= self.alignment_early_stopping_threshold
+                    ),
+                ]
+            ):
+                break
             loss.backward()
             optimizer.step()
-            p_bar.set_postfix_str(f"Alignment score: {alignment.detach().cpu().item():.4f}")
-
+            p_bar.set_postfix_str(f"Alignment score: {self.opt_.fun:.4f}")
+        torch.nn.utils.vector_to_parameters(to_tensor(best_params, device=self.device), self.parameters())
+        self.opt_.fun = best_alignment
         p_bar.close()
         self.eval()
         return self
