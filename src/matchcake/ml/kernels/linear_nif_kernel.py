@@ -1,10 +1,11 @@
 import numpy as np
 import torch
 
-from matchcake import NonInteractingFermionicDevice
-from matchcake.operations import SingleParticleTransitionMatrixOperation
-from matchcake.utils.torch_utils import to_tensor
-
+from ...devices.nif_device import NonInteractingFermionicDevice
+from ...operations.single_particle_transition_matrices.single_particle_transition_matrix import (
+    SingleParticleTransitionMatrixOperation,
+)
+from ...utils.torch_utils import to_tensor
 from .nif_kernel import NIFKernel
 
 
@@ -34,6 +35,7 @@ class LinearNIFKernel(NIFKernel):
         *,
         gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
         random_state: int = 0,
+        alignment: bool = False,
         n_qubits: int = DEFAULT_N_QUBITS,
         bias: bool = True,
         encoder_activation: str = "Identity",
@@ -61,6 +63,7 @@ class LinearNIFKernel(NIFKernel):
         super().__init__(
             gram_batch_size=gram_batch_size,
             random_state=random_state,
+            alignment=alignment,
             n_qubits=n_qubits,
         )
         self._bias = bias
