@@ -61,9 +61,9 @@ class TestExpvalFromProbabilities:
 
         ground_truth_energy = ground_truth_circuit()
         nif_device.apply_generator(circuit)
-        clifford_energy = strategy(state_prep_op, hamiltonian, prob=nif_device.probability(hamiltonian.wires))
+        energy = strategy(state_prep_op, hamiltonian, prob_func=nif_device.probability)
         np.testing.assert_allclose(
-            clifford_energy,
+            energy,
             ground_truth_energy,
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
@@ -128,7 +128,7 @@ class TestExpvalFromProbabilities:
         nif_device.global_sptm = rn_global_sptm
         random_hamiltonian = self.get_random_hamiltonian(nif_device, rn_gen)
         nif_device.apply_state_prep(state_prep_op)
-        energy = strategy(state_prep_op, random_hamiltonian, prob=nif_device.probability(random_hamiltonian.wires))
+        energy = strategy(state_prep_op, random_hamiltonian, prob_func=nif_device.probability)
 
         @qml.qnode(qubit_device)
         def ground_truth_circuit():
@@ -143,4 +143,39 @@ class TestExpvalFromProbabilities:
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
             err_msg=f"{random_hamiltonian.terms() = }",
+        )
+
+    def test_long_range_hamiltonian(self, strategy):
+        long_range_hamiltonian = qml.Hamiltonian(
+            [0.5, -0.3, 0.8],
+            [qml.Z(0) @ qml.Z(8), qml.Z(1) @ qml.I(7), qml.I(0) @ qml.Z(5)],
+        )
+
+        n_qubits = max(long_range_hamiltonian.wires) + 1
+        qubit_device = qml.device("default.qubit", wires=n_qubits)
+
+        initial_state = np.zeros(n_qubits, dtype=int)
+        state_prep_op = qml.BasisState(initial_state, qubit_device.wires)
+        nif_device = NIFDevice(wires=n_qubits)
+        random_global_sptm = SingleParticleTransitionMatrixOperation.random(qubit_device.wires, seed=42)
+        nif_device.global_sptm = random_global_sptm
+        nif_device.apply_state_prep(state_prep_op)
+        energy = strategy(
+            state_prep_op,
+            long_range_hamiltonian,
+            prob_func=nif_device.probability,
+        )
+
+        @qml.qnode(qubit_device)
+        def ground_truth_circuit():
+            state_prep_op.queue()
+            random_global_sptm.to_qubit_operation().queue()
+            return qml.expval(long_range_hamiltonian)
+
+        ground_truth_energy = ground_truth_circuit()
+        np.testing.assert_allclose(
+            energy,
+            ground_truth_energy,
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=RTOL_APPROX_COMPARISON,
         )
