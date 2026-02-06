@@ -28,7 +28,7 @@ class TermsSplitter(ExpvalStrategy):
             raise ValueError(f"Cannot execute {self.NAME} strategy for {observable}.")
         splits = self.split(state_prep_op, observable)
         out = sum(
-            sum(op.scalar * strategy(state_prep_op, op, **self._fix_kwargs_prob(op, **kwargs)) for op in split)
+            sum(op.scalar * strategy(state_prep_op, op, **kwargs) for op in split)
             for split, strategy in zip(splits, self.strategies)
         )
         return out
@@ -52,12 +52,6 @@ class TermsSplitter(ExpvalStrategy):
     ) -> bool:
         hamiltonian = self._format_observable(observable)
         return all(any(s.can_execute(state_prep_op, op) for s in self.strategies) for op in hamiltonian.ops)
-
-    def _fix_kwargs_prob(self, op: SProd, **kwargs):
-        new_kwargs = {**kwargs}
-        if "prob_func" in new_kwargs:
-            new_kwargs["prob"] = new_kwargs["prob_func"](op.wires)
-        return new_kwargs
 
     @staticmethod
     def _format_observable(observable):

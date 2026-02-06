@@ -703,8 +703,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         if self.clifford_expval_strategy.can_execute(self.state_prep_op, observable):
             return self.clifford_expval_strategy(self.state_prep_op, observable, global_sptm=self.global_sptm.matrix())
         if self.expval_from_probabilities_strategy.can_execute(self.state_prep_op, observable):
-            prob = self.probability(wires=observable.wires)
-            return self.expval_from_probabilities_strategy(self.state_prep_op, observable, prob=prob)
+            return self.expval_from_probabilities_strategy(self.state_prep_op, observable, prob_func=self.probability)
         terms_splitter = TermsSplitter([self.clifford_expval_strategy, self.expval_from_probabilities_strategy])
         if terms_splitter.can_execute(self.state_prep_op, observable):
             return terms_splitter(
