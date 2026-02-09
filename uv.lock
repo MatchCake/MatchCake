@@ -1,6 +1,6 @@
 version = 1
 revision = 3
-requires-python = ">=3.11, <=3.14"
+requires-python = ">=3.11, <3.15"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130' and extra == 'extra-9-matchcake-cupy'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130' and extra == 'extra-9-matchcake-cupy'",
