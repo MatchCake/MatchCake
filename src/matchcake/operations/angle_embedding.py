@@ -1,5 +1,5 @@
 import pennylane as qml
-from pennylane.operation import AnyWires, Operation
+from pennylane.operation import Operation
 from pennylane.wires import Wires
 
 from .comp_rotations import CompRxRx, CompRyRy, CompRzRz
@@ -17,7 +17,7 @@ class MAngleEmbedding(Operation):
     to encode the input features. Features are padded if the number of them is odd.
     """
 
-    num_wires = AnyWires
+    num_wires = None
     grad_method = None
 
     @staticmethod
@@ -135,7 +135,7 @@ class MAngleEmbeddings(Operation):
     customized by specifying the rotations (e.g., "X", "X,Y,Z").
     """
 
-    num_wires = AnyWires
+    num_wires = None
     grad_method = None
 
     @staticmethod
