@@ -166,8 +166,11 @@ class NIFKernel(Kernel):
         for batch_indices in batched_indices:
             bx = to_tensor(x[batch_indices], dtype=self.R_DTYPE, device=self.device)  # type: ignore
             self._q_device.execute_generator(self.ansatz(bx), reset=True)
-            sptms.append(to_tensor(self._q_device.global_sptm.matrix(), dtype=self.R_DTYPE, device=x.device))
-        stacked_sptms = qml.math.stack(sptms, axis=0).reshape(
+            new_sptm = to_tensor(self._q_device.global_sptm.matrix(), dtype=self.R_DTYPE, device=x.device).reshape(
+                -1, 2 * self._q_device.num_wires, 2 * self._q_device.num_wires
+            )
+            sptms.append(new_sptm)
+        stacked_sptms = qml.math.concatenate(sptms, axis=0).reshape(
             x.shape[0], 2 * self._q_device.num_wires, 2 * self._q_device.num_wires
         )
         return stacked_sptms
