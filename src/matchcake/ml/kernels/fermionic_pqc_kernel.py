@@ -18,12 +18,9 @@ except ImportError:
     }
 
 from ...operations import (
-    CompHH,
-    MAngleEmbedding,
     SptmAngleEmbedding,
     SptmCompHH,
     SptmCompZX,
-    fSWAP,
 )
 from .nif_kernel import NIFKernel
 
@@ -133,8 +130,12 @@ class FermionicPQCKernel(NIFKernel):
         :return: Updated instance of the class after fitting the training data.
         """
         n_inputs = int(np.prod(x_train.shape[1:]))
-        self.bias_ = Parameter(torch.from_numpy(self.np_rn_gen.random(n_inputs))).to(dtype=self.R_DTYPE, device=self.device)  # type: ignore
-        self.data_scaling_ = torch.pi * Parameter(torch.ones(n_inputs)).to(dtype=self.R_DTYPE, device=self.device)  # type: ignore
+        self.bias_ = Parameter(torch.from_numpy(self.np_rn_gen.random(n_inputs))).to(  # type: ignore
+            dtype=self.R_DTYPE, device=self.device
+        )
+        self.data_scaling_ = torch.pi * Parameter(torch.ones(n_inputs)).to(  # type: ignore
+            dtype=self.R_DTYPE, device=self.device
+        )
         if self.depth_ is None:
             self.depth_ = int(max(1, np.ceil(x_train.shape[-1] / self.n_qubits)))
         super().fit(x_train, y_train)

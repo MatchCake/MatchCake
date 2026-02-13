@@ -4,7 +4,6 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from numpy.typing import NDArray
-from pennylane_lightning.lightning_qubit_ops import best_alignment
 from scipy.optimize import OptimizeResult
 from sklearn.base import BaseEstimator, TransformerMixin
 from tqdm import tqdm
