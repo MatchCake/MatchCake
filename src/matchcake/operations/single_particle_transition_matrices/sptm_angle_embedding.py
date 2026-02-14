@@ -5,7 +5,7 @@ from functools import partial
 import numpy as np
 import pennylane as qml
 import torch
-from pennylane.operation import AnyWires, Operation
+from pennylane.operation import Operation
 from pennylane.wires import Wires
 
 from .sptm_comp_rxrx import SptmCompRxRx
@@ -16,7 +16,7 @@ ROT = {"X": SptmCompRxRx, "Y": SptmCompRyRy, "Z": SptmCompRzRz}
 
 
 class SptmAngleEmbedding(Operation):
-    num_wires = AnyWires
+    num_wires = None
     grad_method = None
 
     @staticmethod

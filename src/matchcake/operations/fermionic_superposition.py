@@ -1,4 +1,4 @@
-from pennylane.operation import AnyWires, Operation
+from pennylane.operation import Operation
 from pennylane.wires import Wires
 
 from .comp_hh import CompHH
@@ -19,7 +19,7 @@ class FermionicSuperposition(Operation):
     it supports features such as decomposition into fundamental gates.
     """
 
-    num_wires = AnyWires
+    num_wires = None
     grad_method = None
 
     @classmethod

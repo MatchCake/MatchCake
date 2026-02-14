@@ -3,7 +3,7 @@ from collections import defaultdict
 from functools import partial
 
 import pennylane as qml
-from pennylane.operation import AnyWires, Operation
+from pennylane.operation import Operation
 from pennylane.wires import Wires
 
 from .comp_rotations import CompRxRx, CompRyRy, CompRzRz
@@ -12,7 +12,7 @@ ROT = {"X": CompRxRx, "Y": CompRyRy, "Z": CompRzRz}
 
 
 class MAngleEmbedding(Operation):
-    num_wires = AnyWires
+    num_wires = None
     grad_method = None
 
     @staticmethod
@@ -83,7 +83,7 @@ class MAngleEmbedding(Operation):
 
 
 class MAngleEmbeddings(Operation):
-    num_wires = AnyWires
+    num_wires = None
     grad_method = None
 
     @staticmethod

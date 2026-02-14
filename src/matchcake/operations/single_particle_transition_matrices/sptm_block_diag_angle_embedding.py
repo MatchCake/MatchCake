@@ -1,6 +1,5 @@
 import numpy as np
 import pennylane as qml
-from pennylane.operation import AnyWires
 
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
@@ -29,7 +28,7 @@ class SptmBlockDiagAngleEmbedding(SingleParticleTransitionMatrixOperation):
 
     """
 
-    num_wires = AnyWires
+    num_wires = None
 
     def __init__(self, params, wires=None, id=None):
         params_shape = qml.math.shape(params)
