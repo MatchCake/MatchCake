@@ -14,8 +14,8 @@ Please complete the following checklist when submitting a PR. The PR will not be
       `uv run pytest tests --cov=src --cov-report=term-missing --durations=30 --session-timeout=600`.
 - [ ] All new functions and code are clearly documented.
 - [ ] The code is formatted using Black.
-      You can do this by running `black src tests`.
+      You can do this by running `uv run black src tests`.
 - [ ] The imports are sorted using isort.
-      You can do this by running `isort src tests`.
+      You can do this by running `uv run isort src tests`.
 - [ ] The code is type-checked using Mypy.
-      You can do this by running `mypy src tests`.
+      You can do this by running `uv run mypy src tests`.
