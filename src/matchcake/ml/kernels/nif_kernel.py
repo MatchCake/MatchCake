@@ -1,13 +1,15 @@
+from functools import cached_property, partial
 from typing import Optional
 
 import numpy as np
 import pennylane as qml
 import torch
+from tqdm import tqdm
 
-from matchcake import NonInteractingFermionicDevice
-from matchcake.utils.operators import adjoint_generator
-from matchcake.utils.torch_utils import to_tensor
-
+from ...devices.nif_device import NonInteractingFermionicDevice
+from ...operations import SingleParticleTransitionMatrixOperation
+from ...typing import TensorLike
+from ...utils.torch_utils import to_tensor
 from .gram_matrix import GramMatrix
 from .kernel import Kernel
 
@@ -35,6 +37,7 @@ class NIFKernel(Kernel):
         *,
         gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
         random_state: int = 0,
+        alignment: bool = False,
         n_qubits: int = DEFAULT_N_QUBITS,
     ):
         """
@@ -48,11 +51,12 @@ class NIFKernel(Kernel):
         super().__init__(
             gram_batch_size=gram_batch_size,
             random_state=random_state,
+            alignment=alignment,
         )
         self.R_DTYPE = torch.float32
         self._q_device = NonInteractingFermionicDevice(n_qubits, r_dtype=self.R_DTYPE)
 
-    def forward(self, x0: torch.Tensor, x1: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, x0: TensorLike, x1: Optional[TensorLike] = None, **kwargs) -> TensorLike:
         """
         Calculates the similarities between input tensors and returns the kernel output.
 
@@ -67,8 +71,10 @@ class NIFKernel(Kernel):
         """
         if x1 is None:
             x1 = x0
-        x0, x1 = to_tensor(x0, dtype=self.R_DTYPE), to_tensor(x1, dtype=self.R_DTYPE)  # type: ignore
-        kernel = self.compute_similarities(x0, x1)  # type: ignore
+        x0 = to_tensor(x0, dtype=self.R_DTYPE)  # type: ignore
+        x1 = to_tensor(x1, dtype=self.R_DTYPE)  # type: ignore
+        self.to(dtype=self.R_DTYPE, device=self.device)
+        kernel = self.compute_similarities(x0, x1, **kwargs)  # type: ignore
         return kernel
 
     def ansatz(self, x: torch.Tensor):
@@ -89,7 +95,7 @@ class NIFKernel(Kernel):
         """
         raise NotImplementedError
 
-    def compute_similarities(self, x0: torch.Tensor, x1: torch.Tensor):
+    def compute_similarities(self, x0: torch.Tensor, x1: torch.Tensor, **kwargs):
         """
         Computes the similarity matrix between tensors `x0` and `x1`. The function evaluates
         quantum computational circuits for pairs of instances from `x0` and `x1` to compute a
@@ -103,37 +109,84 @@ class NIFKernel(Kernel):
         :return: A tensor representing the computed similarity matrix.
         :rtype: torch.Tensor
         """
-
-        def _func(indices):
-            b_x0, b_x1 = x0[indices[:, 0]], x1[indices[:, 1]]
-            return self._q_device.execute_generator(
-                self.circuit(b_x0, b_x1),
-                observable=qml.Projector(np.zeros(self.n_qubits, dtype=int), wires=self.wires),
-                output_type="expval",
-                reset=True,
-            )
-
         gram = GramMatrix((x0.shape[0], x1.shape[0]), requires_grad=self.training)
+        p_bar = tqdm(
+            total=int(np.prod(gram.shape)),
+            desc="Computing Gram matrix",
+            unit="element",
+            disable=not kwargs.get("verbose", False),
+        )
+        p_bar.set_postfix_str("Compiling x0 circuits ...")
+        sptm0 = self._x_to_sptm(x0)
+        p_bar.set_postfix_str("Compiling x1 circuits ...")
+        if kwargs.get("x1_train", False):
+            sptm1 = self.sptms_train
+        else:
+            sptm1 = self._x_to_sptm(x1)
+        p_bar.set_postfix_str("Evaluating Gram matrix ...")
+        _func = partial(self._compute_similarities_func, sptm0=sptm0, sptm1=sptm1, p_bar=p_bar)
         gram.apply_(_func, batch_size=self.gram_batch_size, symmetrize=True)
-        return gram.to_tensor().to(device=self.device)
+        p_bar.set_postfix_str("Done.")
+        p_bar.close()
+        return gram.to_tensor().to(dtype=self.R_DTYPE)
 
-    def circuit(self, x0, x1):
+    def circuit(self, sptm0: TensorLike, sptm1: TensorLike):
         """
-        Generates a quantum circuit by applying an ansatz followed by its adjoint.
+        Applies a quantum circuit consisting of two operations to the specified wires.
+        The circuit applies a single-particle transition matrix operation followed by its
+        adjoint (conjugate transpose).
 
-        The method first yields the result of applying the ansatz function to the
-        first input, `x0`. Then, it yields the adjoint of the ansatz function applied
-        to the second input, `x1`. This allows the generation of customized quantum
-        circuits where specific operations are defined by the ansatz function.
-
-        :param x0: The first parameter used for generating the circuit via the ansatz.
-        :param x1: The second parameter used for generating the adjoint circuit via
-            the ansatz.
-        :return: Yields the quantum operations for constructing the circuit.
+        :param sptm0: The first single-particle transition matrix operation to be applied.
+            This operation acts on the specified wires in the circuit.
+        :param sptm1: The second single-particle transition matrix operation to be
+            applied, followed by its adjoint. This operation also acts on the specified wires.
+        :return: Yields the sequential operations in the circuit application. This
+            does not return a concrete value but facilitates the execution of the quantum
+            circuit.
         """
-        yield from self.ansatz(x0)
-        yield from adjoint_generator(self.ansatz(x1))
+        yield SingleParticleTransitionMatrixOperation(sptm0, wires=self.wires)
+        yield SingleParticleTransitionMatrixOperation(sptm1, wires=self.wires).adjoint()
         return
+
+    def _x_to_sptm(self, x: TensorLike) -> TensorLike:
+        """
+        Transforms the given input tensor into a single particle transition matrix (SPTM) by
+        applying the user's ansatz. The function prepares the quantum device, executes the
+        generator method on the ansatz with the given input, and retrieves the resulting
+        SPTM.
+
+        :param x: Input tensor to be transformed.
+        :type x: TensorLike
+        :return: The single particle transition matrix (SPTM) resulting from the ansatz execution.
+        :rtype: TensorLike
+        """
+        x = to_tensor(x, dtype=self.R_DTYPE)  # type: ignore
+        batched_indices = np.array_split(np.arange(len(x)), np.ceil(len(x) / self.gram_batch_size))
+        sptms = []
+        for batch_indices in batched_indices:
+            bx = to_tensor(x[batch_indices], dtype=self.R_DTYPE, device=self.device)  # type: ignore
+            self._q_device.execute_generator(self.ansatz(bx), reset=True)
+            new_sptm = to_tensor(self._q_device.global_sptm.matrix(), dtype=self.R_DTYPE, device=x.device).reshape(
+                -1, 2 * self._q_device.num_wires, 2 * self._q_device.num_wires
+            )
+            sptms.append(new_sptm)
+        stacked_sptms = qml.math.concatenate(sptms, axis=0).reshape(
+            x.shape[0], 2 * self._q_device.num_wires, 2 * self._q_device.num_wires
+        )
+        return stacked_sptms
+
+    def _compute_similarities_func(self, indices, sptm0, sptm1, p_bar):
+        b_sptm0, b_sptm1 = sptm0[indices[:, 0]], sptm1[indices[:, 1]]
+        b_sptm0 = to_tensor(b_sptm0, dtype=self.R_DTYPE, device=self.device)  # type: ignore
+        b_sptm1 = to_tensor(b_sptm1, dtype=self.R_DTYPE, device=self.device)  # type: ignore
+        expval = self._q_device.execute_generator(
+            self.circuit(b_sptm0, b_sptm1),
+            observable=qml.Projector(np.zeros(self.n_qubits, dtype=int), wires=self.wires),
+            output_type="expval",
+            reset=True,
+        )
+        p_bar.update(len(indices))
+        return expval
 
     @property
     def wires(self):
@@ -157,3 +210,7 @@ class NIFKernel(Kernel):
     @property
     def q_device(self):
         return self._q_device
+
+    @cached_property
+    def sptms_train(self) -> TensorLike:
+        return self._x_to_sptm(self.x_train_)

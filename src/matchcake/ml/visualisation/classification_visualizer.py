@@ -9,9 +9,7 @@ from matplotlib.colors import ListedColormap
 from sklearn import decomposition
 from sklearn.utils.estimator_checks import check_estimator
 
-
-class Visualizer:
-    pass
+from .visualizer import Visualizer
 
 
 class ClassificationVisualizer(Visualizer):
@@ -193,7 +191,11 @@ class ClassificationVisualizer(Visualizer):
             fontsize=kwargs.get("fontsize", 18),
         )
 
-        ax.legend(handles=patches, fontsize=kwargs.get("fontsize", 18))
+        ax.legend(
+            handles=patches,
+            fontsize=kwargs.get("fontsize", 18),
+            loc=kwargs.get("legend_loc", "best"),
+        )
         if kwargs.get("hide_ticks", True):
             ax.set_xticks([])
             ax.set_yticks([])

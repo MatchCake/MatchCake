@@ -38,6 +38,8 @@ dependencies = [
     "importlib-metadata (>=8.7.0,<9.0.0)",
     "stim>=1.15.0",
     "autoray<=0.7.2",
+    "array-api-compat>=1.13.0",
+    "array-api-strict>=2.4.1",
 ]
 dynamic = ["readme"]
 
@@ -68,6 +70,7 @@ dev = [
     "pytest-timeout>=2.4.0",
     "pip>=25.3",
     "scipy-stubs>=1.15.3.0",
+    "pandas-stubs>=2.3.3.260113",
 ]
 docs = [
     "wheel>=0.45.1,<0.46",
@@ -93,6 +96,7 @@ conflicts = [
     { extra = "cpu" },
     { extra = "cu128" },
     { extra = "cu130" },
+    { extra = "cupy" },
   ],
 ]
 required-environments = [
@@ -111,6 +115,9 @@ cu128 = [
 cu130 = [
   "torch (>=2.1.2,<3.0.0)",
   "torchvision (>=0.22.0)",
+]
+cupy = [
+    "cupy>=13.6.0",
 ]
 
 [tool.uv.sources]
@@ -179,7 +186,8 @@ exclude = [
     "constants",
     "devices",
     "matchgate_parameter_sets",
-    "ml/visualisation.py",
+    "ml/visualisation",
+    "ml/kernels",
     "observables",
     "operations",
     "templates",
@@ -227,6 +235,7 @@ module = [
     "sklearn.utils.estimator_checks",
     "sklearn.kernel_approximation",
     "sklearn.utils",
+    "sklearn.model_selection",
     # Seaborn
     "seaborn",
     # PythonBasicTools
