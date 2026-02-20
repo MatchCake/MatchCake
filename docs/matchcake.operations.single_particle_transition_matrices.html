@@ -1,0 +1,1348 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>matchcake.operations.single_particle_transition_matrices package &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="matchcake.typing package" href="matchcake.typing.html" />
+    <link rel="prev" title="matchcake.operations package" href="matchcake.operations.html" /> 
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="index.html">Docs</a></li>
+        
+          <li><a href="matchcake.html">matchcake package</a></li>
+        
+          <li><a href="matchcake.operations.html">matchcake.operations package</a></li>
+        
+      <li>matchcake.operations.single_particle_transition_matrices package</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="sources/matchcake.operations.single_particle_transition_matrices.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#cuda-installation">CUDA installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#quick-usage-preview">Quick Usage Preview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#citation">Citation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="matchcake.html">matchcake package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="matchcake.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section id="matchcake-operations-single-particle-transition-matrices-package">
+<h1>matchcake.operations.single_particle_transition_matrices package<a class="headerlink" href="#matchcake-operations-single-particle-transition-matrices-package" title="Permalink to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix">
+<span id="matchcake-operations-single-particle-transition-matrices-single-particle-transition-matrix-module"></span><h2>matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix module<a class="headerlink" href="#module-matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.</span></span><span class="sig-name descname"><span class="pre">SingleParticleTransitionMatrixOperation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_angles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_angles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Operation</span></code></p>
+<p>Represents a single-particle transition matrix (SPTM) operation.</p>
+<p>This class defines and implements the behavior of single-particle transition
+matrix operations in a quantum computation framework. A SPTM is defined as</p>
+<div class="math notranslate nohighlight">
+\[R = \exp(4 h)\]</div>
+<p>where <span class="math notranslate nohighlight">\(R\)</span> is the SPTM and <span class="math notranslate nohighlight">\(h\)</span> is the free fermionic integrals, or transition energies between
+orbitals. The free fermions hamiltonian is then defines as</p>
+<div class="math notranslate nohighlight">
+\[H = i \sum_{i,j=0}^{2N - 1} h_{i,j} c_i c_j\]</div>
+<p>where <span class="math notranslate nohighlight">\(c_k\)</span> is the k-th majorana operator and <span class="math notranslate nohighlight">\(N\)</span> is the number of orbitals/qubits/wires.</p>
+<p>In terms of matchgate, the SPTM is defined as</p>
+<div class="math notranslate nohighlight">
+\[R_{\mu\nu} = \frac{1}{4} \text{Tr}((U c_\mu U^\dagger)c_\nu)\]</div>
+<p>where <span class="math notranslate nohighlight">\(R_{\mu\nu}\)</span> are the matrix elements of the SPTM and <span class="math notranslate nohighlight">\(U\)</span> is a matchgate.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.ALLOWED_ANGLES">
+<span class="sig-name descname"><span class="pre">ALLOWED_ANGLES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.ALLOWED_ANGLES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.DEFAULT_CHECK_ANGLES">
+<span class="sig-name descname"><span class="pre">DEFAULT_CHECK_ANGLES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.DEFAULT_CHECK_ANGLES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.DEFAULT_CHECK_MATRIX">
+<span class="sig-name descname"><span class="pre">DEFAULT_CHECK_MATRIX</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.DEFAULT_CHECK_MATRIX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.DEFAULT_CLIP_ANGLES">
+<span class="sig-name descname"><span class="pre">DEFAULT_CLIP_ANGLES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.DEFAULT_CLIP_ANGLES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.DEFAULT_NORMALIZE">
+<span class="sig-name descname"><span class="pre">DEFAULT_NORMALIZE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.DEFAULT_NORMALIZE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.EQUAL_ALLOWED_ANGLES">
+<span class="sig-name descname"><span class="pre">EQUAL_ALLOWED_ANGLES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.EQUAL_ALLOWED_ANGLES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_angles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_angles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize an operation that applies a single-particle transition represented by the
+specified matrix with optional parameters for clipping angles, checking matrix and
+angle validity, and normalization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>matrix</strong> – A tensor-like object defining the transition matrix.</p></li>
+<li><p><strong>wires</strong> – Optional; Specifies the wires or subsystems the operation acts on. Can
+be a sequence of integers or a <cite>Wires</cite> object.</p></li>
+<li><p><strong>id</strong> – Optional; The operation’s unique identifier.</p></li>
+<li><p><strong>clip_angles</strong> – Boolean flag indicating whether to clip angles in the matrix.
+Defaults to <cite>DEFAULT_CLIP_ANGLES</cite>.</p></li>
+<li><p><strong>check_angles</strong> – Boolean flag indicating whether to validate the angles in the
+matrix. Defaults to <cite>DEFAULT_CHECK_ANGLES</cite>.</p></li>
+<li><p><strong>check_matrix</strong> – Boolean flag indicating whether to check if the matrix lies
+within the SO(4) group. Defaults to <cite>DEFAULT_CHECK_MATRIX</cite>.</p></li>
+<li><p><strong>normalize</strong> – Boolean flag indicating whether to orthonormalize the matrix
+prior to initialization. Defaults to <cite>DEFAULT_NORMALIZE</cite>.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent classes or methods.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <cite>check_matrix</cite> is True and the provided matrix does not belong
+to the SO(4) group.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.adjoint">
+<span class="sig-name descname"><span class="pre">adjoint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a></span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.adjoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an operation that is the adjoint of this one.</p>
+<p>Adjointed operations are the conjugated and transposed version of the
+original operation. Adjointed ops are equivalent to the inverted operation for unitary
+gates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The adjointed operation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.batch_size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_size</span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.batch_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Batch size of the operator if it is used with broadcasted parameters.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">batch_size</span></code> is determined based on <code class="docutils literal notranslate"><span class="pre">ndim_params</span></code> and the provided parameters
+for the operator. If (some of) the latter have an additional dimension, and this
+dimension has the same size for all parameters, its size is the batch size of the
+operator. If no parameter has an additional dimension, the batch size is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Size of the parameter broadcasting dimension if present, else <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.casting_priorities">
+<span class="sig-name descname"><span class="pre">casting_priorities</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'numpy'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'autograd'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'jax'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'tf'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'torch'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['numpy',</span> <span class="pre">'autograd',</span> <span class="pre">'jax',</span> <span class="pre">'tf',</span> <span class="pre">'torch']</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.casting_priorities" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.check_angles">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">check_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">angles</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.check_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the ALLOWED_ANGLES is not none, check if the angles are in the allowed range.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.check_is_in_so4">
+<span class="sig-name descname"><span class="pre">check_is_in_so4</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.check_is_in_so4" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.check_is_unitary">
+<span class="sig-name descname"><span class="pre">check_is_unitary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.check_is_unitary" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.clip_angles">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clip_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">angles</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.clip_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the ALLOWED_ANGLES is not none, set the angles to the closest allowed angle.
+If all the angles are equal in the last dimension, the EQUAL_ALLOWED_ANGLES is used instead.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.clip_to_allowed_angles">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clip_to_allowed_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">angles</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allowed_angles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.clip_to_allowed_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the ALLOWED_ANGLES is not none, set the angles to the closest allowed angle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.compute_decomposition">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compute_decomposition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">hyperparameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.compute_decomposition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Representation of the operator as a product of other operators (static method).</p>
+<div class="math notranslate nohighlight">
+\[O = O_1 O_2 \dots O_n.\]</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Operations making up the decomposition should be queued within the
+<code class="docutils literal notranslate"><span class="pre">compute_decomposition</span></code> method.</p>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">decomposition()</span></code>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*params</strong> (<em>list</em>) – trainable parameters of the operator, as stored in the <code class="docutils literal notranslate"><span class="pre">parameters</span></code> attribute</p></li>
+<li><p><strong>wires</strong> (<em>Iterable</em><em>[</em><em>Any</em><em>]</em><em>, </em><em>Wires</em>) – wires that the operator acts on</p></li>
+<li><p><strong>**hyperparams</strong> (<em>dict</em>) – non-trainable hyperparameters of the operator, as stored in the <code class="docutils literal notranslate"><span class="pre">hyperparameters</span></code> attribute</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>decomposition of the operator</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[Operator]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.cs_wires">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cs_wires</span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.cs_wires" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.from_operation">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Operator</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a></span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.from_operation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an instance of SingleParticleTransitionMatrixOperation from the given operation.</p>
+<p>This class method allows the construction of a
+SingleParticleTransitionMatrixOperation instance from various types of
+operators. If the input operator is already an instance of
+SingleParticleTransitionMatrixOperation, it is directly returned.
+It also checks if the provided operator has the <cite>to_sptm_operation</cite> method or
+the <cite>single_particle_transition_matrix</cite> attribute. If it’s the case, the SPTM will be
+constructed from <cite>to_sptm_operation</cite> or from <cite>single_particle_transition_matrix</cite> if the first
+doesn’t exist. When none of the required attributes or
+methods are present, we try to build a MatchGateOperation from the given operation matrix.
+If nothing works, a ValueError is raised.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>op</strong> – The input operator to be converted. It can be an instance of
+<cite>Operator</cite> or <cite>SingleParticleTransitionMatrixOperation</cite>.</p></li>
+<li><p><strong>kwargs</strong> – Any additional keyword arguments passed to the method.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new instance of SingleParticleTransitionMatrixOperation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation">SingleParticleTransitionMatrixOperation</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – When the input operator cannot be converted due to
+missing attributes or methods.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.from_operations">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_operations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a></span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.from_operations" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method will contract multiple SingleParticleTransitionMatrixOperations into a single one.
+Each operation must act on a different set of wires.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ops</strong> – The operations to contract.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The contracted SingleParticleTransitionMatrixOperation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation">SingleParticleTransitionMatrixOperation</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.generator">
+<span class="sig-name descname"><span class="pre">generator</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.generator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.grad_method">
+<span class="sig-name descname"><span class="pre">grad_method</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'A'</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.grad_method" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.grad_recipe">
+<span class="sig-name descname"><span class="pre">grad_recipe</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.grad_recipe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gradient recipe for the
+parameter-shift method.</p>
+<p>This is a tuple with one nested list per operation parameter. For
+parameter <span class="math notranslate nohighlight">\(\phi_k\)</span>, the nested list contains elements of the form
+<span class="math notranslate nohighlight">\([c_i, a_i, s_i]\)</span> where <span class="math notranslate nohighlight">\(i\)</span> is the index of the
+term, resulting in a gradient recipe of</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial}{\partial\phi_k}f = \sum_{i} c_i f(a_i \phi_k + s_i).\]</div>
+<p>If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the default gradient recipe containing the two terms
+<span class="math notranslate nohighlight">\([c_0, a_0, s_0]=[1/2, 1, \pi/2]\)</span> and <span class="math notranslate nohighlight">\([c_1, a_1,
+s_1]=[-1/2, 1, -\pi/2]\)</span> is assumed for every parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple(Union(list[list[float]], None)) or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.make_wires_continuous">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">make_wires_continuous</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.make_wires_continuous" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.matrix">
+<span class="sig-name descname"><span class="pre">matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wire_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TensorLike</span></span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Representation of the operator as a matrix in the computational basis.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">wire_order</span></code> is provided, the numerical representation considers the position of the
+operator’s wires in the global wire order. Otherwise, the wire order defaults to the
+operator’s wires.</p>
+<p>If the matrix depends on trainable parameters, the result
+will be cast in the same autodifferentiation framework as the parameters.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">MatrixUndefinedError</span></code> is raised if the matrix representation has not been defined.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">compute_matrix()</span></code></p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>wire_order</strong> (<em>Iterable</em>) – global wire order, must contain all wire labels from the operator’s wires</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>matrix representation</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tensor_like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.num_params">
+<span class="sig-name descname"><span class="pre">num_params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.num_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.num_wires">
+<span class="sig-name descname"><span class="pre">num_wires</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">WiresEnum</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-1</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.num_wires" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of wires the operator acts on.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.pad">
+<span class="sig-name descname"><span class="pre">pad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.pad" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.par_domain">
+<span class="sig-name descname"><span class="pre">par_domain</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'A'</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.par_domain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.random">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.random" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.random_params">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.random_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.real">
+<span class="sig-name descname"><span class="pre">real</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.real" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.sorted_wires">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sorted_wires</span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.sorted_wires" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.to_cuda">
+<span class="sig-name descname"><span class="pre">to_cuda</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.to_cuda" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.to_matchgate">
+<span class="sig-name descname"><span class="pre">to_matchgate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.to_matchgate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.to_qubit_operation">
+<span class="sig-name descname"><span class="pre">to_qubit_operation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Operation</span></span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.to_qubit_operation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the current object into a qubit operation.</p>
+<p>This method determines the appropriate qubit operation based on the number
+of wires in the object. If the number of wires is two, it converts the object to
+a matchgate operation. Otherwise, it falls back to converting the object into
+a generic qubit unitary operation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An instance of <cite>Operation</cite> representing either a match gate or a
+qubit unitary operation, depending on the number of wires.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Operation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.to_qubit_unitary">
+<span class="sig-name descname"><span class="pre">to_qubit_unitary</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">QubitUnitary</span></span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.to_qubit_unitary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the internal matrix representation to a <cite>qml.QubitUnitary</cite> object. The method takes the unitary matrix
+representation of the object and associates it with the specified wires. This is primarily used for creating
+quantum operations that act on qubits in Pennylane.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <cite>qml.QubitUnitary</cite> object that represents the unitary operation acting on the specified wires.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>qml.QubitUnitary</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.to_torch">
+<span class="sig-name descname"><span class="pre">to_torch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.to_torch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.to_unitary_matrix">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">to_unitary_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TensorLike</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TensorLike</span></span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation.to_unitary_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the Matchgate unitary matrix from the single particle transition matrix.</p>
+<dl class="simple">
+<dt>… :math:</dt><dd><p>U = exp(-sumlimits_{i,j=0}^{2N-1} h_{ij} c_i c_j)
+R = exp(4 h) implies h = frac{1}{4} log(R)</p>
+</dd>
+</dl>
+<p>where <span class="math notranslate nohighlight">\(c_i\)</span> are the Majorana operators, <span class="math notranslate nohighlight">\(R\)</span> is the current single particle transition matrix.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding">
+<span id="matchcake-operations-single-particle-transition-matrices-sptm-angle-embedding-module"></span><h2>matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding module<a class="headerlink" href="#module-matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.</span></span><span class="sig-name descname"><span class="pre">SptmAngleEmbedding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'X'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Operation</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'X'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a new Matchgate AngleEmbedding operation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Note<span class="colon">:</span></dt>
+<dd class="field-odd"><p>It is better to have one more wire than the number of features because every gate acts on two wires.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>features</strong> – The features to embed.</p></li>
+<li><p><strong>wires</strong> – The wires to embed the features on.</p></li>
+<li><p><strong>id</strong> – The id of the operation.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Keyword Arguments<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>contract_rots</strong> – If True, contract the rotations. Default is False.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding.compute_decomposition">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compute_decomposition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">hyperparameters</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding.compute_decomposition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Representation of the operator as a product of other operators (static method).</p>
+<div class="math notranslate nohighlight">
+\[O = O_1 O_2 \dots O_n.\]</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Operations making up the decomposition should be queued within the
+<code class="docutils literal notranslate"><span class="pre">compute_decomposition</span></code> method.</p>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">decomposition()</span></code>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*params</strong> (<em>list</em>) – trainable parameters of the operator, as stored in the <code class="docutils literal notranslate"><span class="pre">parameters</span></code> attribute</p></li>
+<li><p><strong>wires</strong> (<em>Iterable</em><em>[</em><em>Any</em><em>]</em><em>, </em><em>Wires</em>) – wires that the operator acts on</p></li>
+<li><p><strong>**hyperparams</strong> (<em>dict</em>) – non-trainable hyperparameters of the operator, as stored in the <code class="docutils literal notranslate"><span class="pre">hyperparameters</span></code> attribute</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>decomposition of the operator</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[Operator]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding.grad_method">
+<span class="sig-name descname"><span class="pre">grad_method</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding.grad_method" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding.ndim_params">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ndim_params</span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding.ndim_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of dimensions per trainable parameter of the operator.</p>
+<p>By default, this property returns the numbers of dimensions of the parameters used
+for the operator creation. If the parameter sizes for an operator subclass are fixed,
+this property can be overwritten to return the fixed value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of dimensions for each trainable parameter.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding.num_params">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_params</span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding.num_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of trainable parameters that the operator depends on.</p>
+<p>By default, this property returns as many parameters as were used for the
+operator creation. If the number of parameters for an operator subclass is fixed,
+this property can be overwritten to return the fixed value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>number of parameters</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding.num_wires">
+<span class="sig-name descname"><span class="pre">num_wires</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">WiresEnum</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-1</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding.num_wires" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of wires the operator acts on.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding.pad_params">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pad_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding.SptmAngleEmbedding.pad_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the number of parameters is odd, pad the parameters with zero to make it even.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>params</strong> – The parameters to pad.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The padded parameters.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.single_particle_transition_matrices.sptm_block_diag_angle_embedding">
+<span id="matchcake-operations-single-particle-transition-matrices-sptm-block-diag-angle-embedding-module"></span><h2>matchcake.operations.single_particle_transition_matrices.sptm_block_diag_angle_embedding module<a class="headerlink" href="#module-matchcake.operations.single_particle_transition_matrices.sptm_block_diag_angle_embedding" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_block_diag_angle_embedding.SptmBlockDiagAngleEmbedding">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.single_particle_transition_matrices.sptm_block_diag_angle_embedding.</span></span><span class="sig-name descname"><span class="pre">SptmBlockDiagAngleEmbedding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_block_diag_angle_embedding.SptmBlockDiagAngleEmbedding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleParticleTransitionMatrixOperation</span></code></a></p>
+<p>Embedding operation for the block diagonal angle single-particle transition matrix.
+The input features will be embedded into the block diagonal of the single-particle transition matrix of
+size <span class="math notranslate nohighlight">\(2N \times 2N\)</span>, where <span class="math notranslate nohighlight">\(N\)</span> is the number of qubits. This operation can then encode
+<span class="math notranslate nohighlight">\(N\)</span> features into the diagonal of the single-particle transition matrix. Here is the formula for the
+block diagonal angle embedding:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align}
+R = \begin{bmatrix}
+    \cos(f_0) &amp; -\sin(f_0) &amp; 0 &amp; 0 &amp; \cdots &amp; 0 \\
+    \sin(f_0) &amp; \cos(f_0) &amp; 0 &amp; 0 &amp; \cdots &amp; 0 \\
+    0 &amp; 0 &amp; \cos(f_1) &amp; -\sin(f_1) &amp; \cdots &amp; 0 \\
+    0 &amp; 0 &amp; \sin(f_1) &amp; \cos(f_1) &amp; \cdots &amp; 0 \\
+    \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+    0 &amp; 0 &amp; 0 &amp; 0 &amp; \cdots &amp; \cos(f_{N-1}) &amp; -\sin(f_{N-1}) \\
+    0 &amp; 0 &amp; 0 &amp; 0 &amp; \cdots &amp; \sin(f_{N-1}) &amp; \cos(f_{N-1})
+\end{bmatrix}\end{split}\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>params</strong> – The parameters of the operation</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_block_diag_angle_embedding.SptmBlockDiagAngleEmbedding.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_block_diag_angle_embedding.SptmBlockDiagAngleEmbedding.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize an operation that applies a single-particle transition represented by the
+specified matrix with optional parameters for clipping angles, checking matrix and
+angle validity, and normalization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>matrix</strong> – A tensor-like object defining the transition matrix.</p></li>
+<li><p><strong>wires</strong> – Optional; Specifies the wires or subsystems the operation acts on. Can
+be a sequence of integers or a <cite>Wires</cite> object.</p></li>
+<li><p><strong>id</strong> – Optional; The operation’s unique identifier.</p></li>
+<li><p><strong>clip_angles</strong> – Boolean flag indicating whether to clip angles in the matrix.
+Defaults to <cite>DEFAULT_CLIP_ANGLES</cite>.</p></li>
+<li><p><strong>check_angles</strong> – Boolean flag indicating whether to validate the angles in the
+matrix. Defaults to <cite>DEFAULT_CHECK_ANGLES</cite>.</p></li>
+<li><p><strong>check_matrix</strong> – Boolean flag indicating whether to check if the matrix lies
+within the SO(4) group. Defaults to <cite>DEFAULT_CHECK_MATRIX</cite>.</p></li>
+<li><p><strong>normalize</strong> – Boolean flag indicating whether to orthonormalize the matrix
+prior to initialization. Defaults to <cite>DEFAULT_NORMALIZE</cite>.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent classes or methods.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <cite>check_matrix</cite> is True and the provided matrix does not belong
+to the SO(4) group.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_block_diag_angle_embedding.SptmBlockDiagAngleEmbedding.num_wires">
+<span class="sig-name descname"><span class="pre">num_wires</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">WiresEnum</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-1</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_block_diag_angle_embedding.SptmBlockDiagAngleEmbedding.num_wires" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of wires the operator acts on.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.single_particle_transition_matrices.sptm_comp_hh">
+<span id="matchcake-operations-single-particle-transition-matrices-sptm-comp-hh-module"></span><h2>matchcake.operations.single_particle_transition_matrices.sptm_comp_hh module<a class="headerlink" href="#module-matchcake.operations.single_particle_transition_matrices.sptm_comp_hh" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_hh.SptmCompHH">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.single_particle_transition_matrices.sptm_comp_hh.</span></span><span class="sig-name descname"><span class="pre">SptmCompHH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_hh.SptmCompHH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleParticleTransitionMatrixOperation</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_hh.SptmCompHH.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_hh.SptmCompHH.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize an operation that applies a single-particle transition represented by the
+specified matrix with optional parameters for clipping angles, checking matrix and
+angle validity, and normalization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>matrix</strong> – A tensor-like object defining the transition matrix.</p></li>
+<li><p><strong>wires</strong> – Optional; Specifies the wires or subsystems the operation acts on. Can
+be a sequence of integers or a <cite>Wires</cite> object.</p></li>
+<li><p><strong>id</strong> – Optional; The operation’s unique identifier.</p></li>
+<li><p><strong>clip_angles</strong> – Boolean flag indicating whether to clip angles in the matrix.
+Defaults to <cite>DEFAULT_CLIP_ANGLES</cite>.</p></li>
+<li><p><strong>check_angles</strong> – Boolean flag indicating whether to validate the angles in the
+matrix. Defaults to <cite>DEFAULT_CHECK_ANGLES</cite>.</p></li>
+<li><p><strong>check_matrix</strong> – Boolean flag indicating whether to check if the matrix lies
+within the SO(4) group. Defaults to <cite>DEFAULT_CHECK_MATRIX</cite>.</p></li>
+<li><p><strong>normalize</strong> – Boolean flag indicating whether to orthonormalize the matrix
+prior to initialization. Defaults to <cite>DEFAULT_NORMALIZE</cite>.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent classes or methods.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <cite>check_matrix</cite> is True and the provided matrix does not belong
+to the SO(4) group.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_hh.SptmCompHH.adjoint">
+<span class="sig-name descname"><span class="pre">adjoint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a></span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_hh.SptmCompHH.adjoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an operation that is the adjoint of this one.</p>
+<p>Adjointed operations are the conjugated and transposed version of the
+original operation. Adjointed ops are equivalent to the inverted operation for unitary
+gates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The adjointed operation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_hh.SptmCompHH.random">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_hh.SptmCompHH.random" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_hh.SptmCompHH.to_matchgate">
+<span class="sig-name descname"><span class="pre">to_matchgate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_hh.SptmCompHH.to_matchgate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx">
+<span id="matchcake-operations-single-particle-transition-matrices-sptm-comp-rxrx-module"></span><h2>matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx module<a class="headerlink" href="#module-matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx.SptmCompRxRx">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx.</span></span><span class="sig-name descname"><span class="pre">SptmCompRxRx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx.SptmCompRxRx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleParticleTransitionMatrixOperation</span></code></a></p>
+<p>This class represents the single-particle transition matrix for the composition Rx, Rx rotation gates.</p>
+<p>This matrix is defined as</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align}
+    M(Rx(2\theta), Rx(2\phi)) = U(2\theta, 2\phi) = \begin{pmatrix}
+        \cos(\phi - \theta) &amp; 0 &amp; 0 &amp; -\sin(\phi - \theta) \\
+        0 &amp; \cos(\phi + \theta) &amp; \sin(\phi + \theta) &amp; 0 \\
+        0 &amp; -\sin(\phi + \theta) &amp; \cos(\phi + \theta) &amp; 0 \\
+        \sin(\phi - \theta) &amp; 0 &amp; 0 &amp; \cos(\phi - \theta)
+    \end{pmatrix}.
+\end{align}\end{split}\]</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx.SptmCompRxRx.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx.SptmCompRxRx.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize an operation that applies a single-particle transition represented by the
+specified matrix with optional parameters for clipping angles, checking matrix and
+angle validity, and normalization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>matrix</strong> – A tensor-like object defining the transition matrix.</p></li>
+<li><p><strong>wires</strong> – Optional; Specifies the wires or subsystems the operation acts on. Can
+be a sequence of integers or a <cite>Wires</cite> object.</p></li>
+<li><p><strong>id</strong> – Optional; The operation’s unique identifier.</p></li>
+<li><p><strong>clip_angles</strong> – Boolean flag indicating whether to clip angles in the matrix.
+Defaults to <cite>DEFAULT_CLIP_ANGLES</cite>.</p></li>
+<li><p><strong>check_angles</strong> – Boolean flag indicating whether to validate the angles in the
+matrix. Defaults to <cite>DEFAULT_CHECK_ANGLES</cite>.</p></li>
+<li><p><strong>check_matrix</strong> – Boolean flag indicating whether to check if the matrix lies
+within the SO(4) group. Defaults to <cite>DEFAULT_CHECK_MATRIX</cite>.</p></li>
+<li><p><strong>normalize</strong> – Boolean flag indicating whether to orthonormalize the matrix
+prior to initialization. Defaults to <cite>DEFAULT_NORMALIZE</cite>.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent classes or methods.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <cite>check_matrix</cite> is True and the provided matrix does not belong
+to the SO(4) group.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx.SptmCompRxRx.random_params">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx.SptmCompRxRx.random_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx.SptmCompRxRx.to_matchgate">
+<span class="sig-name descname"><span class="pre">to_matchgate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx.SptmCompRxRx.to_matchgate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry">
+<span id="matchcake-operations-single-particle-transition-matrices-sptm-comp-ryry-module"></span><h2>matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry module<a class="headerlink" href="#module-matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.</span></span><span class="sig-name descname"><span class="pre">SptmCompRyRy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleParticleTransitionMatrixOperation</span></code></a></p>
+<p>Single Particle Transition Matrix (Sptm) Composition of rotations YY of a matchgate</p>
+<div class="math notranslate nohighlight">
+\[U = M(R_Y(\theta), R_Y(\phi))\]</div>
+<p>where M is the matchgate. The current class represent</p>
+<div class="math notranslate nohighlight">
+\[R_{\mu\nu} = \frac{1}{4} \text{Tr}{\left(U c_\mu U^\dagger\right)c_\nu}\]</div>
+<p>where R is the Sptm and c are the majoranas.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy.ALLOWED_ANGLES">
+<span class="sig-name descname"><span class="pre">ALLOWED_ANGLES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[3.141592653589793,</span> <span class="pre">9.42477796076938]</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy.ALLOWED_ANGLES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy.DEFAULT_CLIP_ANGLES">
+<span class="sig-name descname"><span class="pre">DEFAULT_CLIP_ANGLES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy.DEFAULT_CLIP_ANGLES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy.EQUAL_ALLOWED_ANGLES">
+<span class="sig-name descname"><span class="pre">EQUAL_ALLOWED_ANGLES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[0,</span> <span class="pre">3.141592653589793,</span> <span class="pre">6.283185307179586,</span> <span class="pre">9.42477796076938]</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy.EQUAL_ALLOWED_ANGLES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize an operation that applies a single-particle transition represented by the
+specified matrix with optional parameters for clipping angles, checking matrix and
+angle validity, and normalization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>matrix</strong> – A tensor-like object defining the transition matrix.</p></li>
+<li><p><strong>wires</strong> – Optional; Specifies the wires or subsystems the operation acts on. Can
+be a sequence of integers or a <cite>Wires</cite> object.</p></li>
+<li><p><strong>id</strong> – Optional; The operation’s unique identifier.</p></li>
+<li><p><strong>clip_angles</strong> – Boolean flag indicating whether to clip angles in the matrix.
+Defaults to <cite>DEFAULT_CLIP_ANGLES</cite>.</p></li>
+<li><p><strong>check_angles</strong> – Boolean flag indicating whether to validate the angles in the
+matrix. Defaults to <cite>DEFAULT_CHECK_ANGLES</cite>.</p></li>
+<li><p><strong>check_matrix</strong> – Boolean flag indicating whether to check if the matrix lies
+within the SO(4) group. Defaults to <cite>DEFAULT_CHECK_MATRIX</cite>.</p></li>
+<li><p><strong>normalize</strong> – Boolean flag indicating whether to orthonormalize the matrix
+prior to initialization. Defaults to <cite>DEFAULT_NORMALIZE</cite>.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent classes or methods.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <cite>check_matrix</cite> is True and the provided matrix does not belong
+to the SO(4) group.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy.random_params">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy.random_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy.to_matchgate">
+<span class="sig-name descname"><span class="pre">to_matchgate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy.to_matchgate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz">
+<span id="matchcake-operations-single-particle-transition-matrices-sptm-comp-rzrz-module"></span><h2>matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz module<a class="headerlink" href="#module-matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.</span></span><span class="sig-name descname"><span class="pre">SptmCompRzRz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleParticleTransitionMatrixOperation</span></code></a></p>
+<p>Single Particle Transition Matrix (Sptm) Composition of rotations ZZ of a matchgate</p>
+<div class="math notranslate nohighlight">
+\[U = M(R_Z(\theta), R_Z(\phi))\]</div>
+<p>where M is the matchgate. The current class represent</p>
+<div class="math notranslate nohighlight">
+\[R_{\mu\nu} = \frac{1}{4} \text{Tr}{\left(M c_\mu M^\dagger\right)c_\nu}\]</div>
+<p>where R is the Sptm and c are the majoranas.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz.ALLOWED_ANGLES">
+<span class="sig-name descname"><span class="pre">ALLOWED_ANGLES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz.ALLOWED_ANGLES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz.EQUAL_ALLOWED_ANGLES">
+<span class="sig-name descname"><span class="pre">EQUAL_ALLOWED_ANGLES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz.EQUAL_ALLOWED_ANGLES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize an operation that applies a single-particle transition represented by the
+specified matrix with optional parameters for clipping angles, checking matrix and
+angle validity, and normalization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>matrix</strong> – A tensor-like object defining the transition matrix.</p></li>
+<li><p><strong>wires</strong> – Optional; Specifies the wires or subsystems the operation acts on. Can
+be a sequence of integers or a <cite>Wires</cite> object.</p></li>
+<li><p><strong>id</strong> – Optional; The operation’s unique identifier.</p></li>
+<li><p><strong>clip_angles</strong> – Boolean flag indicating whether to clip angles in the matrix.
+Defaults to <cite>DEFAULT_CLIP_ANGLES</cite>.</p></li>
+<li><p><strong>check_angles</strong> – Boolean flag indicating whether to validate the angles in the
+matrix. Defaults to <cite>DEFAULT_CHECK_ANGLES</cite>.</p></li>
+<li><p><strong>check_matrix</strong> – Boolean flag indicating whether to check if the matrix lies
+within the SO(4) group. Defaults to <cite>DEFAULT_CHECK_MATRIX</cite>.</p></li>
+<li><p><strong>normalize</strong> – Boolean flag indicating whether to orthonormalize the matrix
+prior to initialization. Defaults to <cite>DEFAULT_NORMALIZE</cite>.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent classes or methods.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <cite>check_matrix</cite> is True and the provided matrix does not belong
+to the SO(4) group.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz.random_params">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz.random_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz.to_matchgate">
+<span class="sig-name descname"><span class="pre">to_matchgate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz.to_matchgate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition">
+<span id="matchcake-operations-single-particle-transition-matrices-sptm-fermionic-superposition-module"></span><h2>matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition module<a class="headerlink" href="#module-matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.</span></span><span class="sig-name descname"><span class="pre">SptmFermionicSuperposition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleParticleTransitionMatrixOperation</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize an operation that applies a single-particle transition represented by the
+specified matrix with optional parameters for clipping angles, checking matrix and
+angle validity, and normalization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>matrix</strong> – A tensor-like object defining the transition matrix.</p></li>
+<li><p><strong>wires</strong> – Optional; Specifies the wires or subsystems the operation acts on. Can
+be a sequence of integers or a <cite>Wires</cite> object.</p></li>
+<li><p><strong>id</strong> – Optional; The operation’s unique identifier.</p></li>
+<li><p><strong>clip_angles</strong> – Boolean flag indicating whether to clip angles in the matrix.
+Defaults to <cite>DEFAULT_CLIP_ANGLES</cite>.</p></li>
+<li><p><strong>check_angles</strong> – Boolean flag indicating whether to validate the angles in the
+matrix. Defaults to <cite>DEFAULT_CHECK_ANGLES</cite>.</p></li>
+<li><p><strong>check_matrix</strong> – Boolean flag indicating whether to check if the matrix lies
+within the SO(4) group. Defaults to <cite>DEFAULT_CHECK_MATRIX</cite>.</p></li>
+<li><p><strong>normalize</strong> – Boolean flag indicating whether to orthonormalize the matrix
+prior to initialization. Defaults to <cite>DEFAULT_NORMALIZE</cite>.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent classes or methods.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <cite>check_matrix</cite> is True and the provided matrix does not belong
+to the SO(4) group.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition.adjoint">
+<span class="sig-name descname"><span class="pre">adjoint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a></span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition.adjoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an operation that is the adjoint of this one.</p>
+<p>Adjointed operations are the conjugated and transposed version of the
+original operation. Adjointed ops are equivalent to the inverted operation for unitary
+gates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The adjointed operation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition.compute_decomposition">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compute_decomposition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">hyperparameters</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition.compute_decomposition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Representation of the operator as a product of other operators (static method).</p>
+<div class="math notranslate nohighlight">
+\[O = O_1 O_2 \dots O_n.\]</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Operations making up the decomposition should be queued within the
+<code class="docutils literal notranslate"><span class="pre">compute_decomposition</span></code> method.</p>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">decomposition()</span></code>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*params</strong> (<em>list</em>) – trainable parameters of the operator, as stored in the <code class="docutils literal notranslate"><span class="pre">parameters</span></code> attribute</p></li>
+<li><p><strong>wires</strong> (<em>Iterable</em><em>[</em><em>Any</em><em>]</em><em>, </em><em>Wires</em>) – wires that the operator acts on</p></li>
+<li><p><strong>**hyperparams</strong> (<em>dict</em>) – non-trainable hyperparameters of the operator, as stored in the <code class="docutils literal notranslate"><span class="pre">hyperparameters</span></code> attribute</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>decomposition of the operator</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[Operator]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition.random">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition.random" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition.to_matchgate">
+<span class="sig-name descname"><span class="pre">to_matchgate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition.to_matchgate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.single_particle_transition_matrices.sptm_fswap">
+<span id="matchcake-operations-single-particle-transition-matrices-sptm-fswap-module"></span><h2>matchcake.operations.single_particle_transition_matrices.sptm_fswap module<a class="headerlink" href="#module-matchcake.operations.single_particle_transition_matrices.sptm_fswap" title="Permalink to this heading">¶</a></h2>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmCompZX">
+<span class="sig-prename descclassname"><span class="pre">matchcake.operations.single_particle_transition_matrices.sptm_fswap.</span></span><span class="sig-name descname"><span class="pre">SptmCompZX</span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmCompZX" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmCompZX" title="matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmCompZX"><code class="xref py py-class docutils literal notranslate"><span class="pre">SptmCompZX</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmFSwap">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.single_particle_transition_matrices.sptm_fswap.</span></span><span class="sig-name descname"><span class="pre">SptmFSwap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmFSwap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleParticleTransitionMatrixOperation</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmFSwap.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmFSwap.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize an operation that applies a single-particle transition represented by the
+specified matrix with optional parameters for clipping angles, checking matrix and
+angle validity, and normalization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>matrix</strong> – A tensor-like object defining the transition matrix.</p></li>
+<li><p><strong>wires</strong> – Optional; Specifies the wires or subsystems the operation acts on. Can
+be a sequence of integers or a <cite>Wires</cite> object.</p></li>
+<li><p><strong>id</strong> – Optional; The operation’s unique identifier.</p></li>
+<li><p><strong>clip_angles</strong> – Boolean flag indicating whether to clip angles in the matrix.
+Defaults to <cite>DEFAULT_CLIP_ANGLES</cite>.</p></li>
+<li><p><strong>check_angles</strong> – Boolean flag indicating whether to validate the angles in the
+matrix. Defaults to <cite>DEFAULT_CHECK_ANGLES</cite>.</p></li>
+<li><p><strong>check_matrix</strong> – Boolean flag indicating whether to check if the matrix lies
+within the SO(4) group. Defaults to <cite>DEFAULT_CHECK_MATRIX</cite>.</p></li>
+<li><p><strong>normalize</strong> – Boolean flag indicating whether to orthonormalize the matrix
+prior to initialization. Defaults to <cite>DEFAULT_NORMALIZE</cite>.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent classes or methods.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <cite>check_matrix</cite> is True and the provided matrix does not belong
+to the SO(4) group.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmFSwap.adjoint">
+<span class="sig-name descname"><span class="pre">adjoint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a></span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmFSwap.adjoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an operation that is the adjoint of this one.</p>
+<p>Adjointed operations are the conjugated and transposed version of the
+original operation. Adjointed ops are equivalent to the inverted operation for unitary
+gates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The adjointed operation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmFSwap.random">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmFSwap.random" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmFSwap.to_matchgate">
+<span class="sig-name descname"><span class="pre">to_matchgate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmFSwap.to_matchgate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.single_particle_transition_matrices.sptm_fswap_hh">
+<span id="matchcake-operations-single-particle-transition-matrices-sptm-fswap-hh-module"></span><h2>matchcake.operations.single_particle_transition_matrices.sptm_fswap_hh module<a class="headerlink" href="#module-matchcake.operations.single_particle_transition_matrices.sptm_fswap_hh" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fswap_hh.SptmFSwapHH">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.single_particle_transition_matrices.sptm_fswap_hh.</span></span><span class="sig-name descname"><span class="pre">SptmFSwapHH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fswap_hh.SptmFSwapHH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleParticleTransitionMatrixOperation</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fswap_hh.SptmFSwapHH.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fswap_hh.SptmFSwapHH.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize an operation that applies a single-particle transition represented by the
+specified matrix with optional parameters for clipping angles, checking matrix and
+angle validity, and normalization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>matrix</strong> – A tensor-like object defining the transition matrix.</p></li>
+<li><p><strong>wires</strong> – Optional; Specifies the wires or subsystems the operation acts on. Can
+be a sequence of integers or a <cite>Wires</cite> object.</p></li>
+<li><p><strong>id</strong> – Optional; The operation’s unique identifier.</p></li>
+<li><p><strong>clip_angles</strong> – Boolean flag indicating whether to clip angles in the matrix.
+Defaults to <cite>DEFAULT_CLIP_ANGLES</cite>.</p></li>
+<li><p><strong>check_angles</strong> – Boolean flag indicating whether to validate the angles in the
+matrix. Defaults to <cite>DEFAULT_CHECK_ANGLES</cite>.</p></li>
+<li><p><strong>check_matrix</strong> – Boolean flag indicating whether to check if the matrix lies
+within the SO(4) group. Defaults to <cite>DEFAULT_CHECK_MATRIX</cite>.</p></li>
+<li><p><strong>normalize</strong> – Boolean flag indicating whether to orthonormalize the matrix
+prior to initialization. Defaults to <cite>DEFAULT_NORMALIZE</cite>.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent classes or methods.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <cite>check_matrix</cite> is True and the provided matrix does not belong
+to the SO(4) group.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fswap_hh.SptmFSwapHH.adjoint">
+<span class="sig-name descname"><span class="pre">adjoint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a></span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fswap_hh.SptmFSwapHH.adjoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an operation that is the adjoint of this one.</p>
+<p>Adjointed operations are the conjugated and transposed version of the
+original operation. Adjointed ops are equivalent to the inverted operation for unitary
+gates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The adjointed operation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_fswap_hh.SptmFSwapHH.random">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_fswap_hh.SptmFSwapHH.random" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.single_particle_transition_matrices.sptm_identity">
+<span id="matchcake-operations-single-particle-transition-matrices-sptm-identity-module"></span><h2>matchcake.operations.single_particle_transition_matrices.sptm_identity module<a class="headerlink" href="#module-matchcake.operations.single_particle_transition_matrices.sptm_identity" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_identity.SptmIdentity">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.single_particle_transition_matrices.sptm_identity.</span></span><span class="sig-name descname"><span class="pre">SptmIdentity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_identity.SptmIdentity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleParticleTransitionMatrixOperation</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_identity.SptmIdentity.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_identity.SptmIdentity.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize an operation that applies a single-particle transition represented by the
+specified matrix with optional parameters for clipping angles, checking matrix and
+angle validity, and normalization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>matrix</strong> – A tensor-like object defining the transition matrix.</p></li>
+<li><p><strong>wires</strong> – Optional; Specifies the wires or subsystems the operation acts on. Can
+be a sequence of integers or a <cite>Wires</cite> object.</p></li>
+<li><p><strong>id</strong> – Optional; The operation’s unique identifier.</p></li>
+<li><p><strong>clip_angles</strong> – Boolean flag indicating whether to clip angles in the matrix.
+Defaults to <cite>DEFAULT_CLIP_ANGLES</cite>.</p></li>
+<li><p><strong>check_angles</strong> – Boolean flag indicating whether to validate the angles in the
+matrix. Defaults to <cite>DEFAULT_CHECK_ANGLES</cite>.</p></li>
+<li><p><strong>check_matrix</strong> – Boolean flag indicating whether to check if the matrix lies
+within the SO(4) group. Defaults to <cite>DEFAULT_CHECK_MATRIX</cite>.</p></li>
+<li><p><strong>normalize</strong> – Boolean flag indicating whether to orthonormalize the matrix
+prior to initialization. Defaults to <cite>DEFAULT_NORMALIZE</cite>.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent classes or methods.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <cite>check_matrix</cite> is True and the provided matrix does not belong
+to the SO(4) group.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_identity.SptmIdentity.adjoint">
+<span class="sig-name descname"><span class="pre">adjoint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a></span></span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_identity.SptmIdentity.adjoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an operation that is the adjoint of this one.</p>
+<p>Adjointed operations are the conjugated and transposed version of the
+original operation. Adjointed ops are equivalent to the inverted operation for unitary
+gates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The adjointed operation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_identity.SptmIdentity.random">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_identity.SptmIdentity.random" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.single_particle_transition_matrices.sptm_identity.SptmIdentity.to_matchgate">
+<span class="sig-name descname"><span class="pre">to_matchgate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.single_particle_transition_matrices.sptm_identity.SptmIdentity.to_matchgate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.single_particle_transition_matrices">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-matchcake.operations.single_particle_transition_matrices" title="Permalink to this heading">¶</a></h2>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="static/documentation_options.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>

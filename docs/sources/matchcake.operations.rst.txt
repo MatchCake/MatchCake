@@ -1,0 +1,109 @@
+matchcake.operations package
+============================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   matchcake.operations.single_particle_transition_matrices
+
+Submodules
+----------
+
+matchcake.operations.angle\_embedding module
+--------------------------------------------
+
+.. automodule:: matchcake.operations.angle_embedding
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.comp\_hh module
+------------------------------------
+
+.. automodule:: matchcake.operations.comp_hh
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.comp\_paulis module
+----------------------------------------
+
+.. automodule:: matchcake.operations.comp_paulis
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.comp\_rotations module
+-------------------------------------------
+
+.. automodule:: matchcake.operations.comp_rotations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.fermionic\_controlled\_z module
+----------------------------------------------------
+
+.. automodule:: matchcake.operations.fermionic_controlled_z
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.fermionic\_superposition module
+----------------------------------------------------
+
+.. automodule:: matchcake.operations.fermionic_superposition
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.fermionic\_swap module
+-------------------------------------------
+
+.. automodule:: matchcake.operations.fermionic_swap
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.matchgate\_identity module
+-----------------------------------------------
+
+.. automodule:: matchcake.operations.matchgate_identity
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.matchgate\_operation module
+------------------------------------------------
+
+.. automodule:: matchcake.operations.matchgate_operation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.rxx module
+-------------------------------
+
+.. automodule:: matchcake.operations.rxx
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.rzz module
+-------------------------------
+
+.. automodule:: matchcake.operations.rzz
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: matchcake.operations
+   :members:
+   :undoc-members:
+   :show-inheritance:

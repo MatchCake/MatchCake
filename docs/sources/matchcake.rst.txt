@@ -1,0 +1,27 @@
+matchcake package
+=================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   matchcake.base
+   matchcake.circuits
+   matchcake.constants
+   matchcake.devices
+   matchcake.matchgate_parameter_sets
+   matchcake.ml
+   matchcake.observables
+   matchcake.operations
+   matchcake.typing
+   matchcake.utils
+
+Module contents
+---------------
+
+.. automodule:: matchcake
+   :members:
+   :undoc-members:
+   :show-inheritance:

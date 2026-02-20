@@ -1,0 +1,41 @@
+matchcake.devices package
+=========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   matchcake.devices.contraction_strategies
+   matchcake.devices.expval_strategies
+   matchcake.devices.probability_strategies
+   matchcake.devices.sampling_strategies
+   matchcake.devices.star_state_finding_strategies
+
+Submodules
+----------
+
+matchcake.devices.device\_utils module
+--------------------------------------
+
+.. automodule:: matchcake.devices.device_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.devices.nif\_device module
+------------------------------------
+
+.. automodule:: matchcake.devices.nif_device
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: matchcake.devices
+   :members:
+   :undoc-members:
+   :show-inheritance:

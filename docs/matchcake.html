@@ -1,0 +1,844 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>matchcake package &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="matchcake.base package" href="matchcake.base.html" />
+    <link rel="prev" title="MatchCake" href="readme.html" /> 
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="index.html">Docs</a></li>
+        
+      <li>matchcake package</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="sources/matchcake.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#cuda-installation">CUDA installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#quick-usage-preview">Quick Usage Preview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#citation">Citation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">matchcake package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section id="matchcake-package">
+<h1>matchcake package<a class="headerlink" href="#matchcake-package" title="Permalink to this heading">¶</a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.base.html">matchcake.base package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.base.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.base.html#module-matchcake.base.lookup_table">matchcake.base.lookup_table module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.ALL_1D_INDEXES"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.ALL_1D_INDEXES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.ALL_2D_INDEXES"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.ALL_2D_INDEXES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.__call__"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.__call__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.__init__"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.batch_size"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.batch_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_bm_transition_dagger_matrix"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.block_bm_transition_dagger_matrix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_bm_transition_transpose_matrix"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.block_bm_transition_transpose_matrix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.block_diagonal_matrix"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.block_diagonal_matrix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_2p_beta_m1"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_2p_beta_m1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_d_beta"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_d_beta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_e_beta"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.c_2p_alpha_m1__c_e_beta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_2p_beta_m1"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.c_d_alpha__c_2p_beta_m1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_d_beta"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.c_d_alpha__c_d_beta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_d_alpha__c_e_beta"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.c_d_alpha__c_e_beta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_2p_beta_m1"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.c_e_alpha__c_2p_beta_m1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_d_beta"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.c_e_alpha__c_d_beta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.c_e_alpha__c_e_beta"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.c_e_alpha__c_e_beta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.close_p_bar"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.close_p_bar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.compute_observable_of_target_state"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.compute_observable_of_target_state()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.compute_observables_of_target_states"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.compute_observables_of_target_states()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_2p_beta_m1"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_2p_beta_m1()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_d_beta"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_d_beta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_e_beta"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.get_c_2p_alpha_m1__c_e_beta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_2p_beta_m1"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.get_c_d_alpha__c_2p_beta_m1()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_d_beta"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.get_c_d_alpha__c_d_beta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_d_alpha__c_e_beta"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.get_c_d_alpha__c_e_beta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_2p_beta_m1"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.get_c_e_alpha__c_2p_beta_m1()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_d_beta"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.get_c_e_alpha__c_d_beta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.get_c_e_alpha__c_e_beta"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.get_c_e_alpha__c_e_beta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.getter_table"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.getter_table</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.initialize_p_bar"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.initialize_p_bar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.n_particles"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.n_particles</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_n"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.p_bar_set_n()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_postfix"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.p_bar_set_postfix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.p_bar_set_postfix_str"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.p_bar_set_postfix_str()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.shape"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.shape</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.stacked_items"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.stacked_items</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.transition_bm_block_matrix"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.transition_bm_block_matrix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.transition_matrix"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.transition_matrix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable.update_p_bar"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicLookupTable.update_p_bar()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.base.html#module-matchcake.base">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.circuits.html">matchcake.circuits package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.circuits.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.circuits.html#module-matchcake.circuits.random_generator">matchcake.circuits.random_generator module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_generator.RandomOperationsGenerator"><code class="docutils literal notranslate"><span class="pre">RandomOperationsGenerator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_generator.RandomOperationsGenerator.__init__"><code class="docutils literal notranslate"><span class="pre">RandomOperationsGenerator.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_generator.RandomOperationsGenerator.circuit"><code class="docutils literal notranslate"><span class="pre">RandomOperationsGenerator.circuit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_generator.RandomOperationsGenerator.get_initial_state"><code class="docutils literal notranslate"><span class="pre">RandomOperationsGenerator.get_initial_state()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_generator.RandomOperationsGenerator.get_ops"><code class="docutils literal notranslate"><span class="pre">RandomOperationsGenerator.get_ops()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_generator.RandomOperationsGenerator.get_output_op"><code class="docutils literal notranslate"><span class="pre">RandomOperationsGenerator.get_output_op()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_generator.RandomOperationsGenerator.n_qubits"><code class="docutils literal notranslate"><span class="pre">RandomOperationsGenerator.n_qubits</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_generator.RandomOperationsGenerator.n_wires"><code class="docutils literal notranslate"><span class="pre">RandomOperationsGenerator.n_wires</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_generator.RandomOperationsGenerator.output_kwargs"><code class="docutils literal notranslate"><span class="pre">RandomOperationsGenerator.output_kwargs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_generator.RandomOperationsGenerator.tolist"><code class="docutils literal notranslate"><span class="pre">RandomOperationsGenerator.tolist()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.circuits.html#module-matchcake.circuits.random_matchgate_circuits">matchcake.circuits.random_matchgate_circuits module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_matchgate_circuits.RandomMatchgateHaarOperationsGenerator"><code class="docutils literal notranslate"><span class="pre">RandomMatchgateHaarOperationsGenerator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_matchgate_circuits.RandomMatchgateHaarOperationsGenerator.__init__"><code class="docutils literal notranslate"><span class="pre">RandomMatchgateHaarOperationsGenerator.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_matchgate_circuits.RandomMatchgateHaarOperationsGenerator.haar_circuit_gen"><code class="docutils literal notranslate"><span class="pre">RandomMatchgateHaarOperationsGenerator.haar_circuit_gen()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_matchgate_circuits.RandomMatchgateOperationsGenerator"><code class="docutils literal notranslate"><span class="pre">RandomMatchgateOperationsGenerator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_matchgate_circuits.RandomMatchgateOperationsGenerator.__init__"><code class="docutils literal notranslate"><span class="pre">RandomMatchgateOperationsGenerator.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.circuits.html#module-matchcake.circuits.random_parametrize_circuit_generator">matchcake.circuits.random_parametrize_circuit_generator module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_parametrize_circuit_generator.RandomParametrizeGenerator"><code class="docutils literal notranslate"><span class="pre">RandomParametrizeGenerator</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.circuits.html#module-matchcake.circuits.random_sptm_circuits">matchcake.circuits.random_sptm_circuits module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_sptm_circuits.RandomSptmHaarOperationsGenerator"><code class="docutils literal notranslate"><span class="pre">RandomSptmHaarOperationsGenerator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_sptm_circuits.RandomSptmHaarOperationsGenerator.__init__"><code class="docutils literal notranslate"><span class="pre">RandomSptmHaarOperationsGenerator.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_sptm_circuits.RandomSptmHaarOperationsGenerator.haar_circuit_gen"><code class="docutils literal notranslate"><span class="pre">RandomSptmHaarOperationsGenerator.haar_circuit_gen()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_sptm_circuits.RandomSptmOperationsGenerator"><code class="docutils literal notranslate"><span class="pre">RandomSptmOperationsGenerator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_sptm_circuits.RandomSptmOperationsGenerator.__init__"><code class="docutils literal notranslate"><span class="pre">RandomSptmOperationsGenerator.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.circuits.html#matchcake.circuits.random_sptm_circuits.random_sptm_operations_generator"><code class="docutils literal notranslate"><span class="pre">random_sptm_operations_generator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.circuits.html#module-matchcake.circuits">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.constants.html">matchcake.constants package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.constants.html#module-matchcake.constants">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.constants.html#matchcake.constants.MatmulDirectionType"><code class="docutils literal notranslate"><span class="pre">MatmulDirectionType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.constants.html#matchcake.constants.MatmulDirectionType.LR"><code class="docutils literal notranslate"><span class="pre">MatmulDirectionType.LR</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.constants.html#matchcake.constants.MatmulDirectionType.RL"><code class="docutils literal notranslate"><span class="pre">MatmulDirectionType.RL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.constants.html#matchcake.constants.MatmulDirectionType.place_ops"><code class="docutils literal notranslate"><span class="pre">MatmulDirectionType.place_ops()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.devices.html">matchcake.devices package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.contraction_strategies.html">matchcake.devices.contraction_strategies package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies.contraction_container">matchcake.devices.contraction_strategies.contraction_container module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies.contraction_strategy">matchcake.devices.contraction_strategies.contraction_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies.forward_strategy">matchcake.devices.contraction_strategies.forward_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies.horizontal_strategy">matchcake.devices.contraction_strategies.horizontal_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies.neighbours_strategy">matchcake.devices.contraction_strategies.neighbours_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies.none_strategy">matchcake.devices.contraction_strategies.none_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies.vertical_strategy">matchcake.devices.contraction_strategies.vertical_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.expval_strategies.html">matchcake.devices.expval_strategies package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.expval_strategies.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.expval_strategies.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.expval_strategies.html#module-matchcake.devices.expval_strategies.expval_from_probabilities">matchcake.devices.expval_strategies.expval_from_probabilities module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.expval_strategies.html#module-matchcake.devices.expval_strategies.expval_strategy">matchcake.devices.expval_strategies.expval_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.expval_strategies.html#module-matchcake.devices.expval_strategies.terms_splitter">matchcake.devices.expval_strategies.terms_splitter module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.expval_strategies.html#module-matchcake.devices.expval_strategies">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.probability_strategies.html">matchcake.devices.probability_strategies package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.probability_strategies.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.probability_strategies.html#module-matchcake.devices.probability_strategies.clifford_sum_strategy">matchcake.devices.probability_strategies.clifford_sum_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.probability_strategies.html#module-matchcake.devices.probability_strategies.explicit_sum_strategy">matchcake.devices.probability_strategies.explicit_sum_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.probability_strategies.html#module-matchcake.devices.probability_strategies.lookup_table_strategy">matchcake.devices.probability_strategies.lookup_table_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.probability_strategies.html#module-matchcake.devices.probability_strategies.probability_strategy">matchcake.devices.probability_strategies.probability_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.probability_strategies.html#module-matchcake.devices.probability_strategies">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.sampling_strategies.html">matchcake.devices.sampling_strategies package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#module-matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling">matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#module-matchcake.devices.sampling_strategies.qubit_by_qubit_sampling">matchcake.devices.sampling_strategies.qubit_by_qubit_sampling module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#module-matchcake.devices.sampling_strategies.sampling_strategy">matchcake.devices.sampling_strategies.sampling_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#module-matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling">matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#module-matchcake.devices.sampling_strategies">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html">matchcake.devices.star_state_finding_strategies package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#module-matchcake.devices.star_state_finding_strategies.a_star_strategy">matchcake.devices.star_state_finding_strategies.a_star_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#module-matchcake.devices.star_state_finding_strategies.from_sampling_strategy">matchcake.devices.star_state_finding_strategies.from_sampling_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#module-matchcake.devices.star_state_finding_strategies.greedy_strategy">matchcake.devices.star_state_finding_strategies.greedy_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#module-matchcake.devices.star_state_finding_strategies.star_state_finding_strategy">matchcake.devices.star_state_finding_strategies.star_state_finding_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#module-matchcake.devices.star_state_finding_strategies">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.html#module-matchcake.devices.device_utils">matchcake.devices.device_utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.device_utils.circuit_or_fop_matmul"><code class="docutils literal notranslate"><span class="pre">circuit_or_fop_matmul()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.html#module-matchcake.devices.nif_device">matchcake.devices.nif_device module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_CONTRACTION_METHOD"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.DEFAULT_CONTRACTION_METHOD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_PFAFFIAN_METHOD"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.DEFAULT_PFAFFIAN_METHOD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_PROB_STRATEGY"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.DEFAULT_PROB_STRATEGY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_SAMPLING_STRATEGY"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.DEFAULT_SAMPLING_STRATEGY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_STAR_STATE_FINDING_STRATEGY"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.DEFAULT_STAR_STATE_FINDING_STRATEGY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.__init__"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.analytic_probability"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.analytic_probability()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.apply"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.apply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.apply_generator"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.apply_generator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.apply_op"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.apply_op()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.apply_state_prep"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.apply_state_prep()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.author"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.author</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.batch_transform"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.batch_transform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.binary_state"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.binary_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.capabilities"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.capabilities()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.casting_priorities"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.casting_priorities</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.close_p_bar"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.close_p_bar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.compute_star_state"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.compute_star_state()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.default_expand_fn"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.default_expand_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.exact_expval"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.exact_expval()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.execute_generator"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.execute_generator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.execute_output"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.execute_output()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.expval"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.expval()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.generate_samples"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.generate_samples()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.get_state_probability"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.get_state_probability()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.get_states_probability"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.get_states_probability()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.global_sptm"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.global_sptm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.initialize_p_bar"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.initialize_p_bar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.is_state_initialized"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.is_state_initialized</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.lookup_table"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.lookup_table</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.name"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.observables"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.observables</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.operations"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.operations</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.p_bar_set_n"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.p_bar_set_n()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.p_bar_set_postfix"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.p_bar_set_postfix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.p_bar_set_postfix_str"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.p_bar_set_postfix_str()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.p_bar_set_total"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.p_bar_set_total()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.pennylane_requires"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.pennylane_requires</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.pfaffian_methods"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.pfaffian_methods</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.reset"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.reset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.samples"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.samples</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.short_name"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.short_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.star_probability"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.star_probability</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.star_state"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.star_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.state"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.state_prep_op"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.state_prep_op</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.transition_matrix"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.transition_matrix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.update_p_bar"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.update_p_bar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.update_single_particle_transition_matrix"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.update_single_particle_transition_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.version"><code class="docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice.version</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.html#module-matchcake.devices">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html">matchcake.matchgate_parameter_sets package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#module-matchcake.matchgate_parameter_sets.matchgate_params">matchcake.matchgate_parameter_sets.matchgate_params module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_params.MatchgateParams"><code class="docutils literal notranslate"><span class="pre">MatchgateParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_params.MatchgateParams.__init__"><code class="docutils literal notranslate"><span class="pre">MatchgateParams.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_params.MatchgateParams.batch_size"><code class="docutils literal notranslate"><span class="pre">MatchgateParams.batch_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_params.MatchgateParams.compute_batch_size"><code class="docutils literal notranslate"><span class="pre">MatchgateParams.compute_batch_size()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_params.MatchgateParams.compute_shape"><code class="docutils literal notranslate"><span class="pre">MatchgateParams.compute_shape()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_params.MatchgateParams.matrix"><code class="docutils literal notranslate"><span class="pre">MatchgateParams.matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_params.MatchgateParams.shape"><code class="docutils literal notranslate"><span class="pre">MatchgateParams.shape</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#module-matchcake.matchgate_parameter_sets.matchgate_polar_params">matchcake.matchgate_parameter_sets.matchgate_polar_params module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams"><code class="docutils literal notranslate"><span class="pre">MatchgatePolarParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams.__init__"><code class="docutils literal notranslate"><span class="pre">MatchgatePolarParams.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams.get_angles_params_list"><code class="docutils literal notranslate"><span class="pre">MatchgatePolarParams.get_angles_params_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams.get_modules_params_list"><code class="docutils literal notranslate"><span class="pre">MatchgatePolarParams.get_modules_params_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams.get_params_list"><code class="docutils literal notranslate"><span class="pre">MatchgatePolarParams.get_params_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams.matrix"><code class="docutils literal notranslate"><span class="pre">MatchgatePolarParams.matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams.r0"><code class="docutils literal notranslate"><span class="pre">MatchgatePolarParams.r0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams.r1"><code class="docutils literal notranslate"><span class="pre">MatchgatePolarParams.r1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams.theta0"><code class="docutils literal notranslate"><span class="pre">MatchgatePolarParams.theta0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams.theta1"><code class="docutils literal notranslate"><span class="pre">MatchgatePolarParams.theta1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams.theta2"><code class="docutils literal notranslate"><span class="pre">MatchgatePolarParams.theta2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams.theta3"><code class="docutils literal notranslate"><span class="pre">MatchgatePolarParams.theta3</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_polar_params.MatchgatePolarParams.theta4"><code class="docutils literal notranslate"><span class="pre">MatchgatePolarParams.theta4</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#module-matchcake.matchgate_parameter_sets.matchgate_standard_params">matchcake.matchgate_parameter_sets.matchgate_standard_params module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams"><code class="docutils literal notranslate"><span class="pre">MatchgateStandardParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams.__init__"><code class="docutils literal notranslate"><span class="pre">MatchgateStandardParams.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams.a"><code class="docutils literal notranslate"><span class="pre">MatchgateStandardParams.a</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams.b"><code class="docutils literal notranslate"><span class="pre">MatchgateStandardParams.b</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams.c"><code class="docutils literal notranslate"><span class="pre">MatchgateStandardParams.c</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams.d"><code class="docutils literal notranslate"><span class="pre">MatchgateStandardParams.d</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams.from_sub_matrices"><code class="docutils literal notranslate"><span class="pre">MatchgateStandardParams.from_sub_matrices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams.get_params_list"><code class="docutils literal notranslate"><span class="pre">MatchgateStandardParams.get_params_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams.matrix"><code class="docutils literal notranslate"><span class="pre">MatchgateStandardParams.matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams.w"><code class="docutils literal notranslate"><span class="pre">MatchgateStandardParams.w</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams.x"><code class="docutils literal notranslate"><span class="pre">MatchgateStandardParams.x</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams.y"><code class="docutils literal notranslate"><span class="pre">MatchgateStandardParams.y</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#matchcake.matchgate_parameter_sets.matchgate_standard_params.MatchgateStandardParams.z"><code class="docutils literal notranslate"><span class="pre">MatchgateStandardParams.z</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.matchgate_parameter_sets.html#module-matchcake.matchgate_parameter_sets">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.ml.html">matchcake.ml package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.kernels.html">matchcake.ml.kernels package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.fermionic_pqc_kernel">matchcake.ml.kernels.fermionic_pqc_kernel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.gram_matrix">matchcake.ml.kernels.gram_matrix module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.kernel">matchcake.ml.kernels.kernel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.linear_nif_kernel">matchcake.ml.kernels.linear_nif_kernel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.nif_kernel">matchcake.ml.kernels.nif_kernel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.nystroem">matchcake.ml.kernels.nystroem module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.visualisation.html">matchcake.ml.visualisation package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.visualisation.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.visualisation.html#module-matchcake.ml.visualisation.classification_visualizer">matchcake.ml.visualisation.classification_visualizer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.visualisation.html#module-matchcake.ml.visualisation.cross_validation_visualizer">matchcake.ml.visualisation.cross_validation_visualizer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.visualisation.html#module-matchcake.ml.visualisation.mpl_rcparams">matchcake.ml.visualisation.mpl_rcparams module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.visualisation.html#module-matchcake.ml.visualisation.visualizer">matchcake.ml.visualisation.visualizer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.visualisation.html#module-matchcake.ml.visualisation">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.html#module-matchcake.ml.cross_validation">matchcake.ml.cross_validation module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.html#matchcake.ml.cross_validation.CrossValidation"><code class="docutils literal notranslate"><span class="pre">CrossValidation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.html#matchcake.ml.cross_validation.CrossValidation.ESTIMATOR_NAME_KEY"><code class="docutils literal notranslate"><span class="pre">CrossValidation.ESTIMATOR_NAME_KEY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.html#matchcake.ml.cross_validation.CrossValidation.__init__"><code class="docutils literal notranslate"><span class="pre">CrossValidation.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.html#matchcake.ml.cross_validation.CrossValidation.run"><code class="docutils literal notranslate"><span class="pre">CrossValidation.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.html#matchcake.ml.cross_validation.CrossValidationOutput"><code class="docutils literal notranslate"><span class="pre">CrossValidationOutput</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.html#matchcake.ml.cross_validation.CrossValidationOutput.ESTIMATOR_NAME_KEY"><code class="docutils literal notranslate"><span class="pre">CrossValidationOutput.ESTIMATOR_NAME_KEY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.html#matchcake.ml.cross_validation.CrossValidationOutput.__init__"><code class="docutils literal notranslate"><span class="pre">CrossValidationOutput.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.ml.html#matchcake.ml.cross_validation.CrossValidationOutput.score_columns"><code class="docutils literal notranslate"><span class="pre">CrossValidationOutput.score_columns</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.html#module-matchcake.ml">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.observables.html">matchcake.observables package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.observables.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.observables.html#module-matchcake.observables.batch_hamiltonian">matchcake.observables.batch_hamiltonian module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.observables.html#matchcake.observables.batch_hamiltonian.BatchHamiltonian"><code class="docutils literal notranslate"><span class="pre">BatchHamiltonian</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.observables.html#matchcake.observables.batch_hamiltonian.BatchHamiltonian.__init__"><code class="docutils literal notranslate"><span class="pre">BatchHamiltonian.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.observables.html#matchcake.observables.batch_hamiltonian.BatchHamiltonian.eigvals"><code class="docutils literal notranslate"><span class="pre">BatchHamiltonian.eigvals()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.observables.html#matchcake.observables.batch_hamiltonian.BatchHamiltonian.eigvals_on_z_basis"><code class="docutils literal notranslate"><span class="pre">BatchHamiltonian.eigvals_on_z_basis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.observables.html#matchcake.observables.batch_hamiltonian.BatchHamiltonian.name"><code class="docutils literal notranslate"><span class="pre">BatchHamiltonian.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.observables.html#matchcake.observables.batch_hamiltonian.BatchHamiltonian.reduce"><code class="docutils literal notranslate"><span class="pre">BatchHamiltonian.reduce()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.observables.html#module-matchcake.observables.batch_projector">matchcake.observables.batch_projector module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.observables.html#matchcake.observables.batch_projector.BatchProjector"><code class="docutils literal notranslate"><span class="pre">BatchProjector</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.observables.html#matchcake.observables.batch_projector.BatchProjector.__init__"><code class="docutils literal notranslate"><span class="pre">BatchProjector.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.observables.html#matchcake.observables.batch_projector.BatchProjector.get_batch_wires"><code class="docutils literal notranslate"><span class="pre">BatchProjector.get_batch_wires()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.observables.html#matchcake.observables.batch_projector.BatchProjector.get_states"><code class="docutils literal notranslate"><span class="pre">BatchProjector.get_states()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.observables.html#module-matchcake.observables">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.operations.html">matchcake.operations package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.operations.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html">matchcake.operations.single_particle_transition_matrices package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#module-matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix">matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#module-matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding">matchcake.operations.single_particle_transition_matrices.sptm_angle_embedding module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#module-matchcake.operations.single_particle_transition_matrices.sptm_block_diag_angle_embedding">matchcake.operations.single_particle_transition_matrices.sptm_block_diag_angle_embedding module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#module-matchcake.operations.single_particle_transition_matrices.sptm_comp_hh">matchcake.operations.single_particle_transition_matrices.sptm_comp_hh module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#module-matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx">matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#module-matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry">matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#module-matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz">matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#module-matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition">matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#module-matchcake.operations.single_particle_transition_matrices.sptm_fswap">matchcake.operations.single_particle_transition_matrices.sptm_fswap module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#module-matchcake.operations.single_particle_transition_matrices.sptm_fswap_hh">matchcake.operations.single_particle_transition_matrices.sptm_fswap_hh module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#module-matchcake.operations.single_particle_transition_matrices.sptm_identity">matchcake.operations.single_particle_transition_matrices.sptm_identity module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#module-matchcake.operations.single_particle_transition_matrices">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.operations.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.operations.html#module-matchcake.operations.angle_embedding">matchcake.operations.angle_embedding module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbedding"><code class="docutils literal notranslate"><span class="pre">MAngleEmbedding</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbedding.__init__"><code class="docutils literal notranslate"><span class="pre">MAngleEmbedding.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbedding.compute_decomposition"><code class="docutils literal notranslate"><span class="pre">MAngleEmbedding.compute_decomposition()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbedding.grad_method"><code class="docutils literal notranslate"><span class="pre">MAngleEmbedding.grad_method</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbedding.ndim_params"><code class="docutils literal notranslate"><span class="pre">MAngleEmbedding.ndim_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbedding.num_params"><code class="docutils literal notranslate"><span class="pre">MAngleEmbedding.num_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbedding.num_wires"><code class="docutils literal notranslate"><span class="pre">MAngleEmbedding.num_wires</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbedding.pad_params"><code class="docutils literal notranslate"><span class="pre">MAngleEmbedding.pad_params()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbeddings"><code class="docutils literal notranslate"><span class="pre">MAngleEmbeddings</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbeddings.__init__"><code class="docutils literal notranslate"><span class="pre">MAngleEmbeddings.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbeddings.compute_decomposition"><code class="docutils literal notranslate"><span class="pre">MAngleEmbeddings.compute_decomposition()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbeddings.grad_method"><code class="docutils literal notranslate"><span class="pre">MAngleEmbeddings.grad_method</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbeddings.ndim_params"><code class="docutils literal notranslate"><span class="pre">MAngleEmbeddings.ndim_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbeddings.num_params"><code class="docutils literal notranslate"><span class="pre">MAngleEmbeddings.num_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbeddings.num_wires"><code class="docutils literal notranslate"><span class="pre">MAngleEmbeddings.num_wires</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.angle_embedding.MAngleEmbeddings.pad_params"><code class="docutils literal notranslate"><span class="pre">MAngleEmbeddings.pad_params()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.operations.html#module-matchcake.operations.comp_hh">matchcake.operations.comp_hh module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_hh.CompHH"><code class="docutils literal notranslate"><span class="pre">CompHH</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_hh.CompHH.__init__"><code class="docutils literal notranslate"><span class="pre">CompHH.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_hh.CompHH.label"><code class="docutils literal notranslate"><span class="pre">CompHH.label()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_hh.CompHH.random"><code class="docutils literal notranslate"><span class="pre">CompHH.random()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_hh.CompHH.to_sptm_operation"><code class="docutils literal notranslate"><span class="pre">CompHH.to_sptm_operation()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.operations.html#module-matchcake.operations.comp_paulis">matchcake.operations.comp_paulis module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_paulis.CompPauli"><code class="docutils literal notranslate"><span class="pre">CompPauli</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_paulis.CompPauli.__init__"><code class="docutils literal notranslate"><span class="pre">CompPauli.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_paulis.CompPauli.get_implicit_parameters"><code class="docutils literal notranslate"><span class="pre">CompPauli.get_implicit_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_paulis.CompPauli.label"><code class="docutils literal notranslate"><span class="pre">CompPauli.label()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_paulis.CompPauli.num_params"><code class="docutils literal notranslate"><span class="pre">CompPauli.num_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_paulis.CompPauli.num_wires"><code class="docutils literal notranslate"><span class="pre">CompPauli.num_wires</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_paulis.CompPauli.random"><code class="docutils literal notranslate"><span class="pre">CompPauli.random()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_paulis.CompXX"><code class="docutils literal notranslate"><span class="pre">CompXX</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_paulis.CompYY"><code class="docutils literal notranslate"><span class="pre">CompYY</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_paulis.CompZZ"><code class="docutils literal notranslate"><span class="pre">CompZZ</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.operations.html#module-matchcake.operations.comp_rotations">matchcake.operations.comp_rotations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRotation"><code class="docutils literal notranslate"><span class="pre">CompRotation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRotation.__init__"><code class="docutils literal notranslate"><span class="pre">CompRotation.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRotation.get_implicit_parameters"><code class="docutils literal notranslate"><span class="pre">CompRotation.get_implicit_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRotation.label"><code class="docutils literal notranslate"><span class="pre">CompRotation.label()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRotation.num_params"><code class="docutils literal notranslate"><span class="pre">CompRotation.num_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRotation.num_wires"><code class="docutils literal notranslate"><span class="pre">CompRotation.num_wires</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRotation.random"><code class="docutils literal notranslate"><span class="pre">CompRotation.random()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRotation.random_params"><code class="docutils literal notranslate"><span class="pre">CompRotation.random_params()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRxRx"><code class="docutils literal notranslate"><span class="pre">CompRxRx</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRxRx.__init__"><code class="docutils literal notranslate"><span class="pre">CompRxRx.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRxRx.to_sptm_operation"><code class="docutils literal notranslate"><span class="pre">CompRxRx.to_sptm_operation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRyRy"><code class="docutils literal notranslate"><span class="pre">CompRyRy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRyRy.__init__"><code class="docutils literal notranslate"><span class="pre">CompRyRy.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRyRy.to_sptm_operation"><code class="docutils literal notranslate"><span class="pre">CompRyRy.to_sptm_operation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRzRz"><code class="docutils literal notranslate"><span class="pre">CompRzRz</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRzRz.__init__"><code class="docutils literal notranslate"><span class="pre">CompRzRz.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.comp_rotations.CompRzRz.to_sptm_operation"><code class="docutils literal notranslate"><span class="pre">CompRzRz.to_sptm_operation()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.operations.html#module-matchcake.operations.fermionic_controlled_z">matchcake.operations.fermionic_controlled_z module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_controlled_z.FermionicControlledZ"><code class="docutils literal notranslate"><span class="pre">FermionicControlledZ</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_controlled_z.fCZ"><code class="docutils literal notranslate"><span class="pre">fCZ</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_controlled_z.fCZ.compute_decomposition"><code class="docutils literal notranslate"><span class="pre">fCZ.compute_decomposition()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_controlled_z.fCZ.label"><code class="docutils literal notranslate"><span class="pre">fCZ.label()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_controlled_z.fCZ.num_params"><code class="docutils literal notranslate"><span class="pre">fCZ.num_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_controlled_z.fCZ.num_wires"><code class="docutils literal notranslate"><span class="pre">fCZ.num_wires</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.operations.html#module-matchcake.operations.fermionic_superposition">matchcake.operations.fermionic_superposition module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_superposition.FermionicSuperposition"><code class="docutils literal notranslate"><span class="pre">FermionicSuperposition</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_superposition.FermionicSuperposition.compute_decomposition"><code class="docutils literal notranslate"><span class="pre">FermionicSuperposition.compute_decomposition()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_superposition.FermionicSuperposition.grad_method"><code class="docutils literal notranslate"><span class="pre">FermionicSuperposition.grad_method</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_superposition.FermionicSuperposition.num_params"><code class="docutils literal notranslate"><span class="pre">FermionicSuperposition.num_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_superposition.FermionicSuperposition.num_wires"><code class="docutils literal notranslate"><span class="pre">FermionicSuperposition.num_wires</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_superposition.FermionicSuperposition.random"><code class="docutils literal notranslate"><span class="pre">FermionicSuperposition.random()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_superposition.FermionicSuperposition.to_sptm_operation"><code class="docutils literal notranslate"><span class="pre">FermionicSuperposition.to_sptm_operation()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.operations.html#module-matchcake.operations.fermionic_swap">matchcake.operations.fermionic_swap module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_swap.CompZX"><code class="docutils literal notranslate"><span class="pre">CompZX</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_swap.FermionicSWAP"><code class="docutils literal notranslate"><span class="pre">FermionicSWAP</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_swap.fSWAP"><code class="docutils literal notranslate"><span class="pre">fSWAP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_swap.fSWAP.__init__"><code class="docutils literal notranslate"><span class="pre">fSWAP.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_swap.fSWAP.random"><code class="docutils literal notranslate"><span class="pre">fSWAP.random()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_swap.fSWAP.to_sptm_operation"><code class="docutils literal notranslate"><span class="pre">fSWAP.to_sptm_operation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_swap.fswap_chain"><code class="docutils literal notranslate"><span class="pre">fswap_chain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.fermionic_swap.fswap_chain_gen"><code class="docutils literal notranslate"><span class="pre">fswap_chain_gen()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.operations.html#module-matchcake.operations.matchgate_identity">matchcake.operations.matchgate_identity module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_identity.MatchgateIdentity"><code class="docutils literal notranslate"><span class="pre">MatchgateIdentity</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_identity.MatchgateIdentity.__init__"><code class="docutils literal notranslate"><span class="pre">MatchgateIdentity.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.operations.html#module-matchcake.operations.matchgate_operation">matchcake.operations.matchgate_operation module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.__init__"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.a"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.a</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.adjoint"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.adjoint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.b"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.b</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.batch_size"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.batch_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.c"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.c</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.compute_decomposition"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.compute_decomposition()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.compute_matrix"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.compute_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.cs_wires"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.cs_wires</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.d"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.d</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.device"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.device</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.dtype"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.dtype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.from_polar_params"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.from_polar_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.from_std_params"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.from_std_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.from_sub_matrices"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.from_sub_matrices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.generator"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.generator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.get_padded_single_particle_transition_matrix"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.get_padded_single_particle_transition_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.grad_method"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.grad_method</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.grad_recipe"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.grad_recipe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.inner_gate_data"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.inner_gate_data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.label"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.label()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.ndim_params"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.ndim_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.num_params"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.num_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.num_wires"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.num_wires</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.outer_gate_data"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.outer_gate_data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.par_domain"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.par_domain</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.random"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.random()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.random_params"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.random_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.shape"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.shape</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.single_particle_transition_matrix"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.single_particle_transition_matrix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.sorted_wires"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.sorted_wires</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.to_sptm_operation"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.to_sptm_operation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.w"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.w</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.x"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.x</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.y"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.y</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.matchgate_operation.MatchgateOperation.z"><code class="docutils literal notranslate"><span class="pre">MatchgateOperation.z</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.operations.html#module-matchcake.operations.rxx">matchcake.operations.rxx module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.rxx.Rxx"><code class="docutils literal notranslate"><span class="pre">Rxx</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.rxx.Rxx.__init__"><code class="docutils literal notranslate"><span class="pre">Rxx.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.rxx.Rxx.random_params"><code class="docutils literal notranslate"><span class="pre">Rxx.random_params()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.operations.html#module-matchcake.operations.rzz">matchcake.operations.rzz module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.rzz.Rzz"><code class="docutils literal notranslate"><span class="pre">Rzz</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.rzz.Rzz.__init__"><code class="docutils literal notranslate"><span class="pre">Rzz.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.operations.html#matchcake.operations.rzz.Rzz.random_params"><code class="docutils literal notranslate"><span class="pre">Rzz.random_params()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.operations.html#module-matchcake.operations">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.typing.html">matchcake.typing package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.typing.html#module-matchcake.typing">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.utils.html">matchcake.utils package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.utils.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.utils.html#module-matchcake.utils.constants">matchcake.utils.constants module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.utils.html#module-matchcake.utils.cuda">matchcake.utils.cuda module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.cuda.is_cuda_available"><code class="docutils literal notranslate"><span class="pre">is_cuda_available()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.utils.html#module-matchcake.utils.logm">matchcake.utils.logm module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.logm.TorchLogm"><code class="docutils literal notranslate"><span class="pre">TorchLogm</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.logm.TorchLogm.backward"><code class="docutils literal notranslate"><span class="pre">TorchLogm.backward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.logm.TorchLogm.forward"><code class="docutils literal notranslate"><span class="pre">TorchLogm.forward()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.logm.logm"><code class="docutils literal notranslate"><span class="pre">logm()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.utils.html#module-matchcake.utils.majorana">matchcake.utils.majorana module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.majorana.MajoranaGetter"><code class="docutils literal notranslate"><span class="pre">MajoranaGetter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.majorana.MajoranaGetter.__call__"><code class="docutils literal notranslate"><span class="pre">MajoranaGetter.__call__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.majorana.MajoranaGetter.__init__"><code class="docutils literal notranslate"><span class="pre">MajoranaGetter.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.majorana.MajoranaGetter.cache_item"><code class="docutils literal notranslate"><span class="pre">MajoranaGetter.cache_item()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.majorana.MajoranaGetter.clear_cache"><code class="docutils literal notranslate"><span class="pre">MajoranaGetter.clear_cache()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.majorana.MajoranaGetter.majorana_tensor"><code class="docutils literal notranslate"><span class="pre">MajoranaGetter.majorana_tensor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.majorana.get_majorana"><code class="docutils literal notranslate"><span class="pre">get_majorana()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.majorana.get_majorana_pair"><code class="docutils literal notranslate"><span class="pre">get_majorana_pair()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.majorana.get_majorana_pauli_list"><code class="docutils literal notranslate"><span class="pre">get_majorana_pauli_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.majorana.get_majorana_pauli_string"><code class="docutils literal notranslate"><span class="pre">get_majorana_pauli_string()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.majorana.majorana_to_pauli"><code class="docutils literal notranslate"><span class="pre">majorana_to_pauli()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.utils.html#module-matchcake.utils.math">matchcake.utils.math module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.check_is_unitary"><code class="docutils literal notranslate"><span class="pre">check_is_unitary()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.circuit_matmul"><code class="docutils literal notranslate"><span class="pre">circuit_matmul()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.convert_1d_to_2d_indexes"><code class="docutils literal notranslate"><span class="pre">convert_1d_to_2d_indexes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.convert_2d_to_1d_indexes"><code class="docutils literal notranslate"><span class="pre">convert_2d_to_1d_indexes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.convert_and_cast_like"><code class="docutils literal notranslate"><span class="pre">convert_and_cast_like()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.convert_and_cast_tensor_from_tensors"><code class="docutils literal notranslate"><span class="pre">convert_and_cast_tensor_from_tensors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.convert_like_and_cast_to"><code class="docutils literal notranslate"><span class="pre">convert_like_and_cast_to()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.convert_tensors_to_same_type"><code class="docutils literal notranslate"><span class="pre">convert_tensors_to_same_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.convert_tensors_to_same_type_and_cast_to"><code class="docutils literal notranslate"><span class="pre">convert_tensors_to_same_type_and_cast_to()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.dagger"><code class="docutils literal notranslate"><span class="pre">dagger()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.det"><code class="docutils literal notranslate"><span class="pre">det()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.exp_taylor_series"><code class="docutils literal notranslate"><span class="pre">exp_taylor_series()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.eye_block_matrix"><code class="docutils literal notranslate"><span class="pre">eye_block_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.eye_like"><code class="docutils literal notranslate"><span class="pre">eye_like()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.fermionic_operator_matmul"><code class="docutils literal notranslate"><span class="pre">fermionic_operator_matmul()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.matmul"><code class="docutils literal notranslate"><span class="pre">matmul()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.orthonormalize"><code class="docutils literal notranslate"><span class="pre">orthonormalize()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.random_index"><code class="docutils literal notranslate"><span class="pre">random_index()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.math.svd"><code class="docutils literal notranslate"><span class="pre">svd()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.utils.html#module-matchcake.utils.operators">matchcake.utils.operators module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.operators.adjoint_generator"><code class="docutils literal notranslate"><span class="pre">adjoint_generator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.operators.recursive_2in_operator"><code class="docutils literal notranslate"><span class="pre">recursive_2in_operator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.operators.recursive_kron"><code class="docutils literal notranslate"><span class="pre">recursive_kron()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.utils.html#module-matchcake.utils.torch_utils">matchcake.utils.torch_utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.torch_utils.detach"><code class="docutils literal notranslate"><span class="pre">detach()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.torch_utils.to_cpu"><code class="docutils literal notranslate"><span class="pre">to_cpu()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.torch_utils.to_cuda"><code class="docutils literal notranslate"><span class="pre">to_cuda()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.torch_utils.to_numpy"><code class="docutils literal notranslate"><span class="pre">to_numpy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.torch_utils.to_tensor"><code class="docutils literal notranslate"><span class="pre">to_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.torch_utils.torch_wrap_circular_bounds"><code class="docutils literal notranslate"><span class="pre">torch_wrap_circular_bounds()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.utils.html#module-matchcake.utils">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.binary_state_to_state"><code class="docutils literal notranslate"><span class="pre">binary_state_to_state()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.binary_string_to_state_number"><code class="docutils literal notranslate"><span class="pre">binary_string_to_state_number()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.binary_string_to_vector"><code class="docutils literal notranslate"><span class="pre">binary_string_to_vector()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.camel_case_to_spaced_camel_case"><code class="docutils literal notranslate"><span class="pre">camel_case_to_spaced_camel_case()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.check_if_imag_is_zero"><code class="docutils literal notranslate"><span class="pre">check_if_imag_is_zero()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.decompose_binary_state_into_majorana_indexes"><code class="docutils literal notranslate"><span class="pre">decompose_binary_state_into_majorana_indexes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.decompose_matrix_into_majoranas"><code class="docutils literal notranslate"><span class="pre">decompose_matrix_into_majoranas()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.decompose_state_into_majorana_indexes"><code class="docutils literal notranslate"><span class="pre">decompose_state_into_majorana_indexes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.get_4x4_non_interacting_fermionic_hamiltonian_from_params"><code class="docutils literal notranslate"><span class="pre">get_4x4_non_interacting_fermionic_hamiltonian_from_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.get_all_subclasses"><code class="docutils literal notranslate"><span class="pre">get_all_subclasses()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.get_block_diagonal_matrix"><code class="docutils literal notranslate"><span class="pre">get_block_diagonal_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.get_eigvals_on_z_basis"><code class="docutils literal notranslate"><span class="pre">get_eigvals_on_z_basis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.get_hamming_weight"><code class="docutils literal notranslate"><span class="pre">get_hamming_weight()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.get_non_interacting_fermionic_hamiltonian_from_coeffs"><code class="docutils literal notranslate"><span class="pre">get_non_interacting_fermionic_hamiltonian_from_coeffs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.get_probabilities_from_state"><code class="docutils literal notranslate"><span class="pre">get_probabilities_from_state()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.get_unitary_from_hermitian_matrix"><code class="docutils literal notranslate"><span class="pre">get_unitary_from_hermitian_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.load_backend_lib"><code class="docutils literal notranslate"><span class="pre">load_backend_lib()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.make_single_particle_transition_matrix_from_gate"><code class="docutils literal notranslate"><span class="pre">make_single_particle_transition_matrix_from_gate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.make_transition_matrix_from_action_matrix"><code class="docutils literal notranslate"><span class="pre">make_transition_matrix_from_action_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.make_wires_continuous"><code class="docutils literal notranslate"><span class="pre">make_wires_continuous()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.skew_antisymmetric_vector_to_matrix"><code class="docutils literal notranslate"><span class="pre">skew_antisymmetric_vector_to_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.state_to_binary_state"><code class="docutils literal notranslate"><span class="pre">state_to_binary_state()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.utils.html#matchcake.utils.state_to_binary_string"><code class="docutils literal notranslate"><span class="pre">state_to_binary_string()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="module-matchcake">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-matchcake" title="Permalink to this heading">¶</a></h2>
+<p>MatchCake is a Python library for simulating non-interacting systems of fermions using Matchgate Circuits.</p>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="static/documentation_options.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>
