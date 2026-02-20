@@ -1,7 +1,3 @@
-import warnings
-from collections import defaultdict
-from functools import partial
-
 import pennylane as qml
 from pennylane.operation import AnyWires, Operation
 from pennylane.wires import Wires
@@ -12,11 +8,39 @@ ROT = {"X": CompRxRx, "Y": CompRyRy, "Z": CompRzRz}
 
 
 class MAngleEmbedding(Operation):
+    """
+    Represents the Matchgate AngleEmbedding operation.
+
+    This class defines a quantum operation to embed features into a quantum circuit
+    using a matchgate-based angle embedding scheme. It is specifically designed to
+    act on an even number of qubits and allows for customizable rotation operations
+    to encode the input features. Features are padded if the number of them is odd.
+    """
+
     num_wires = AnyWires
     grad_method = None
 
     @staticmethod
     def compute_decomposition(*params, wires=None, **hyperparameters):
+        """
+        Computes the decomposition of quantum operations based on the provided parameters,
+        wires, and hyperparameters. It concatenates and potentially pads input parameters,
+        and applies specified rotations on target wires. Designed to handle both batched and
+        unbatched input parameters.
+
+        :param params: Positional arguments representing the parameters to be used in
+            the decomposition. Each parameter can be a single value or a batch of values.
+        :type params: list or numpy.ndarray
+        :param wires: Specifies the wires on which the operations are applied.
+        :type wires: list or pennylane.wires.Wires
+        :param hyperparameters: Dictionary containing hyperparameters such as the types
+            of rotations to apply. Defaults to a rotation around the X-axis if not
+            provided in the dictionary key `"rotations"`.
+        :type hyperparameters: dict
+        :return: A list of operations representing the decomposition based on the applied
+            rotations and input parameters.
+        :rtype: list
+        """
         params = qml.math.concatenate(params, axis=-1)
         params = MAngleEmbedding.pad_params(params)
         batched = qml.math.ndim(params) > 1
@@ -83,6 +107,34 @@ class MAngleEmbedding(Operation):
 
 
 class MAngleEmbeddings(Operation):
+    r"""
+    Represents a quantum operation for Matchgate Angle Embedding.
+
+    This class embeds classical features into a quantum circuit using matchgate-based
+    two-qubit rotations acting on *pairs* of wires. Features are padded with a trailing
+    zero if an odd number is provided, since each matchgate consumes two parameters.
+
+    Key difference vs :class:`MAngleEmbedding`
+    -----------------------------------------
+    ``MAngleEmbeddings`` supports *multi-layer* embeddings by **cycling over wire pairs**:
+    if the number of feature-pairs exceeds the number of available wire-pairs
+    (``len(wires)//2``), the operation **reuses the same wire pairs** and continues in a
+    new logical "layer". Concretely, for wire pairs ``(wires[0], wires[1])``,
+    ``(wires[2], wires[3])``, ... the i-th feature-pair is applied to pair
+    ``i % (len(wires)//2)`` and its layer index is ``i // (len(wires)//2)``.
+
+    By contrast, ``MAngleEmbedding`` performs a single pass over the wire pairs and
+    raises an error when the (padded) feature length exceeds the number of provided
+    wires (i.e., when an additional layer would be needed).
+
+    Notes
+    -----
+    This operation requires at least two wires (so that at least one wire pair exists).
+
+    The operation supports different rotation gates for embedding, which can be
+    customized by specifying the rotations (e.g., "X", "X,Y,Z").
+    """
+
     num_wires = AnyWires
     grad_method = None
 
