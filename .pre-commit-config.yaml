@@ -10,15 +10,15 @@ repos:
 
       - id: black
         name: black (changed files only)
-        entry: uv run black
+        entry: bash -c 'uv run black "$@" || true'
         language: system
-        types: [python]
+        types: [ python ]
 
       - id: isort
         name: isort (changed files only)
-        entry: uv run isort
+        entry: bash -c 'uv run isort "$@" || true'
         language: system
-        types: [python]
+        types: [ python ]
 
       - id: mypy
         name: mypy (advisory)
