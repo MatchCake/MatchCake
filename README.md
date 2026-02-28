@@ -134,6 +134,11 @@ viz.plot_2d_decision_boundaries(model=pipeline, y=y, show=True)
 - [Nystroem Kernel Approximation](https://github.com/MatchCake/MatchCake/blob/main/tutorials/nystroem_kernel_approximation.ipynb)
 
 
+# For Developers
+
+To contribute to the development of MatchCake, please refer to the [contributing guidelines](.github/CONTRIBUTING.md).
+
+
 
 # Notes
 - This package is still in development and some features may not be available yet.
