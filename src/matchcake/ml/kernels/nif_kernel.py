@@ -28,19 +28,20 @@ class NIFKernel(Kernel):
     :ivar R_DTYPE: Data type used for computation within the kernel.
     :type R_DTYPE: torch.dtype
     """
+
     DEFAULT_N_QUBITS = 12
 
     def __init__(
         self,
         *,
-        gram_batch_size: int = NIFKernel.DEFAULT_GRAM_BATCH_SIZE,
-        random_state: int = NIFKernel.DEFAULT_RANDOM_STATE,
-        alignment: bool = NIFKernel.DEFAULT_ALIGNMENT,
-        alignment_iterations: int = NIFKernel.DEFAULT_ALIGNMENT_ITERATIONS,
-        alignment_learning_rate: float = NIFKernel.DEFAULT_ALIGNMENT_LEARNING_RATE,
-        alignment_early_stopping_patience: int = NIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
-        alignment_early_stopping_threshold: float = NIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
-        n_qubits: int = NIFKernel.DEFAULT_N_QUBITS,
+        gram_batch_size: int = Kernel.DEFAULT_GRAM_BATCH_SIZE,
+        random_state: int = Kernel.DEFAULT_RANDOM_STATE,
+        alignment: bool = Kernel.DEFAULT_ALIGNMENT,
+        alignment_iterations: int = Kernel.DEFAULT_ALIGNMENT_ITERATIONS,
+        alignment_learning_rate: float = Kernel.DEFAULT_ALIGNMENT_LEARNING_RATE,
+        alignment_early_stopping_patience: int = Kernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
+        alignment_early_stopping_threshold: float = Kernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
+        n_qubits: int = DEFAULT_N_QUBITS,
     ):
         """
         Initializes the class with specific parameters for quantum device configuration and

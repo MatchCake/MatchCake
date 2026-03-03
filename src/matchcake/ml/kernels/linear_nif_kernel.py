@@ -33,16 +33,16 @@ class LinearNIFKernel(NIFKernel):
     def __init__(
         self,
         *,
-        gram_batch_size: int = LinearNIFKernel.DEFAULT_GRAM_BATCH_SIZE,
-        random_state: int = LinearNIFKernel.DEFAULT_RANDOM_STATE,
-        alignment: bool = LinearNIFKernel.DEFAULT_ALIGNMENT,
-        alignment_iterations: int = LinearNIFKernel.DEFAULT_ALIGNMENT_ITERATIONS,
-        alignment_learning_rate: float = LinearNIFKernel.DEFAULT_ALIGNMENT_LEARNING_RATE,
-        alignment_early_stopping_patience: int = LinearNIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
-        alignment_early_stopping_threshold: float = LinearNIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
-        n_qubits: int = LinearNIFKernel.DEFAULT_N_QUBITS,
-        bias: bool = LinearNIFKernel.DEFAULT_BIAS,
-        encoder_activation: str = LinearNIFKernel.DEFAULT_ENCODER_ACTIVATION,
+        gram_batch_size: int = NIFKernel.DEFAULT_GRAM_BATCH_SIZE,
+        random_state: int = NIFKernel.DEFAULT_RANDOM_STATE,
+        alignment: bool = NIFKernel.DEFAULT_ALIGNMENT,
+        alignment_iterations: int = NIFKernel.DEFAULT_ALIGNMENT_ITERATIONS,
+        alignment_learning_rate: float = NIFKernel.DEFAULT_ALIGNMENT_LEARNING_RATE,
+        alignment_early_stopping_patience: int = NIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
+        alignment_early_stopping_threshold: float = NIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
+        n_qubits: int = NIFKernel.DEFAULT_N_QUBITS,
+        bias: bool = DEFAULT_BIAS,
+        encoder_activation: str = DEFAULT_ENCODER_ACTIVATION,
     ):
         """
         Initializes the class with configurable parameters for the model's encoder

@@ -74,6 +74,7 @@ class FermionicPQCKernel(NIFKernel):
         initialized during the `fit` method call.
     :type data_scaling_: torch.nn.parameter.Parameter
     """
+
     DEFAULT_ROTATIONS = "Y,Z"
     DEFAULT_ENTANGLING_MTH = "fswap"
     available_entangling_mth = {"fswap", "identity", "hadamard"}
@@ -81,16 +82,16 @@ class FermionicPQCKernel(NIFKernel):
     def __init__(
         self,
         *,
-        gram_batch_size: int = FermionicPQCKernel.DEFAULT_GRAM_BATCH_SIZE,
-        random_state: int = FermionicPQCKernel.DEFAULT_RANDOM_STATE,
-        alignment: bool = FermionicPQCKernel.DEFAULT_ALIGNMENT,
-        alignment_iterations: int = FermionicPQCKernel.DEFAULT_ALIGNMENT_ITERATIONS,
-        alignment_learning_rate: float = FermionicPQCKernel.DEFAULT_ALIGNMENT_LEARNING_RATE,
-        alignment_early_stopping_patience: int = FermionicPQCKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
-        alignment_early_stopping_threshold: float = FermionicPQCKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
-        n_qubits: int = FermionicPQCKernel.DEFAULT_N_QUBITS,
-        rotations: str = FermionicPQCKernel.DEFAULT_ROTATIONS,
-        entangling_mth: str = FermionicPQCKernel.DEFAULT_ENTANGLING_MTH,
+        gram_batch_size: int = NIFKernel.DEFAULT_GRAM_BATCH_SIZE,
+        random_state: int = NIFKernel.DEFAULT_RANDOM_STATE,
+        alignment: bool = NIFKernel.DEFAULT_ALIGNMENT,
+        alignment_iterations: int = NIFKernel.DEFAULT_ALIGNMENT_ITERATIONS,
+        alignment_learning_rate: float = NIFKernel.DEFAULT_ALIGNMENT_LEARNING_RATE,
+        alignment_early_stopping_patience: int = NIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
+        alignment_early_stopping_threshold: float = NIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
+        n_qubits: int = NIFKernel.DEFAULT_N_QUBITS,
+        rotations: str = DEFAULT_ROTATIONS,
+        entangling_mth: str = DEFAULT_ENTANGLING_MTH,
     ):
         """
         Initializes the class with specified parameters for quantum circuit design and
