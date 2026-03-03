@@ -29,23 +29,34 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
     """
 
     DEFAULT_GRAM_BATCH_SIZE = 10_000
+    DEFAULT_RANDOM_STATE = 0
+    DEFAULT_ALIGNMENT = False
+    DEFAULT_ALIGNMENT_ITERATIONS = 100
+    DEFAULT_ALIGNMENT_LEARNING_RATE = 1e-3
+    DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE = 10
+    DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD = 1e-5
 
     def __init__(
         self,
         *,
         gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
-        random_state: int = 0,
-        alignment: bool = False,
-        alignment_iterations: int = 100,
-        alignment_learning_rate: float = 1e-3,
-        alignment_early_stopping_patience: int = 10,
-        alignment_early_stopping_threshold: float = 1e-5,
+        random_state: int = DEFAULT_RANDOM_STATE,
+        alignment: bool = DEFAULT_ALIGNMENT,
+        alignment_iterations: int = DEFAULT_ALIGNMENT_ITERATIONS,
+        alignment_learning_rate: float = DEFAULT_ALIGNMENT_LEARNING_RATE,
+        alignment_early_stopping_patience: int = DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
+        alignment_early_stopping_threshold: float = DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
     ):
         """
         Initializes the class with configurations related to batch sizes and random state.
 
         :param gram_batch_size: The batch size to be used for processing gram matrices.
         :param random_state: The seed value for ensuring reproducible random number generation.
+        :param alignment: A boolean flag indicating whether to perform kernel alignment during fitting.
+        :param alignment_iterations: The maximum number of iterations for kernel alignment optimization.
+        :param alignment_learning_rate: The learning rate for the optimizer used in kernel alignment.
+        :param alignment_early_stopping_patience: The number of iterations to wait for improvement before stopping kernel alignment optimization.
+        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel alignment optimization, used for early stopping criteria.
         """
         super().__init__()
         self.gram_batch_size = gram_batch_size
