@@ -46,6 +46,11 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
 
         :param gram_batch_size: The batch size to be used for processing gram matrices.
         :param random_state: The seed value for ensuring reproducible random number generation.
+        :param alignment: A boolean flag indicating whether to perform kernel alignment during fitting.
+        :param alignment_iterations: The maximum number of iterations for kernel alignment optimization.
+        :param alignment_learning_rate: The learning rate for the optimizer used in kernel alignment.
+        :param alignment_early_stopping_patience: The number of iterations to wait for improvement before stopping kernel alignment optimization.
+        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel alignment optimization, used for early stopping criteria.
         """
         super().__init__()
         self.gram_batch_size = gram_batch_size

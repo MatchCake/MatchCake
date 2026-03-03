@@ -36,6 +36,10 @@ class LinearNIFKernel(NIFKernel):
         gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
         random_state: int = 0,
         alignment: bool = False,
+        alignment_iterations: int = 100,
+        alignment_learning_rate: float = 1e-3,
+        alignment_early_stopping_patience: int = 10,
+        alignment_early_stopping_threshold: float = 1e-5,
         n_qubits: int = DEFAULT_N_QUBITS,
         bias: bool = True,
         encoder_activation: str = "Identity",
@@ -51,6 +55,16 @@ class LinearNIFKernel(NIFKernel):
         :param random_state: Seed value for random number generation to ensure
             reproducibility and consistency.
         :type random_state: int
+        :param alignment: A boolean flag indicating whether to perform kernel alignment during fitting.
+        :type alignment: bool
+        :param alignment_iterations: The maximum number of iterations for kernel alignment optimization.
+        :type alignment_iterations: int
+        :param alignment_learning_rate: The learning rate for the optimizer used in kernel alignment.
+        :type alignment_learning_rate: float
+        :param alignment_early_stopping_patience: The number of iterations to wait for improvement before stopping kernel alignment optimization.
+        :type alignment_early_stopping_patience: int
+        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel alignment optimization, used for early stopping criteria.
+        :type alignment_early_stopping_threshold: float
         :param n_qubits: Number of qubits used in the quantum computation process.
         :type n_qubits: int
         :param bias: Determines if the linear layers in the encoder should include a
@@ -64,6 +78,10 @@ class LinearNIFKernel(NIFKernel):
             gram_batch_size=gram_batch_size,
             random_state=random_state,
             alignment=alignment,
+            alignment_iterations=alignment_iterations,
+            alignment_learning_rate=alignment_learning_rate,
+            alignment_early_stopping_patience=alignment_early_stopping_patience,
+            alignment_early_stopping_threshold=alignment_early_stopping_threshold,
             n_qubits=n_qubits,
         )
         self._bias = bias
