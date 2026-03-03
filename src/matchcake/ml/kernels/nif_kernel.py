@@ -28,21 +28,19 @@ class NIFKernel(Kernel):
     :ivar R_DTYPE: Data type used for computation within the kernel.
     :type R_DTYPE: torch.dtype
     """
-
     DEFAULT_N_QUBITS = 12
-    DEFAULT_GRAM_BATCH_SIZE = 10_000
 
     def __init__(
         self,
         *,
-        gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
-        random_state: int = 0,
-        alignment: bool = False,
-        alignment_iterations: int = 100,
-        alignment_learning_rate: float = 1e-3,
-        alignment_early_stopping_patience: int = 10,
-        alignment_early_stopping_threshold: float = 1e-5,
-        n_qubits: int = DEFAULT_N_QUBITS,
+        gram_batch_size: int = NIFKernel.DEFAULT_GRAM_BATCH_SIZE,
+        random_state: int = NIFKernel.DEFAULT_RANDOM_STATE,
+        alignment: bool = NIFKernel.DEFAULT_ALIGNMENT,
+        alignment_iterations: int = NIFKernel.DEFAULT_ALIGNMENT_ITERATIONS,
+        alignment_learning_rate: float = NIFKernel.DEFAULT_ALIGNMENT_LEARNING_RATE,
+        alignment_early_stopping_patience: int = NIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
+        alignment_early_stopping_threshold: float = NIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
+        n_qubits: int = NIFKernel.DEFAULT_N_QUBITS,
     ):
         """
         Initializes the class with specific parameters for quantum device configuration and

@@ -27,22 +27,22 @@ class LinearNIFKernel(NIFKernel):
     :type DEFAULT_GRAM_BATCH_SIZE: int
     """
 
-    DEFAULT_N_QUBITS = 12
-    DEFAULT_GRAM_BATCH_SIZE = 10_000
+    DEFAULT_BIAS = True
+    DEFAULT_ENCODER_ACTIVATION = "Identity"
 
     def __init__(
         self,
         *,
-        gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
-        random_state: int = 0,
-        alignment: bool = False,
-        alignment_iterations: int = 100,
-        alignment_learning_rate: float = 1e-3,
-        alignment_early_stopping_patience: int = 10,
-        alignment_early_stopping_threshold: float = 1e-5,
-        n_qubits: int = DEFAULT_N_QUBITS,
-        bias: bool = True,
-        encoder_activation: str = "Identity",
+        gram_batch_size: int = LinearNIFKernel.DEFAULT_GRAM_BATCH_SIZE,
+        random_state: int = LinearNIFKernel.DEFAULT_RANDOM_STATE,
+        alignment: bool = LinearNIFKernel.DEFAULT_ALIGNMENT,
+        alignment_iterations: int = LinearNIFKernel.DEFAULT_ALIGNMENT_ITERATIONS,
+        alignment_learning_rate: float = LinearNIFKernel.DEFAULT_ALIGNMENT_LEARNING_RATE,
+        alignment_early_stopping_patience: int = LinearNIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
+        alignment_early_stopping_threshold: float = LinearNIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
+        n_qubits: int = LinearNIFKernel.DEFAULT_N_QUBITS,
+        bias: bool = LinearNIFKernel.DEFAULT_BIAS,
+        encoder_activation: str = LinearNIFKernel.DEFAULT_ENCODER_ACTIVATION,
     ):
         """
         Initializes the class with configurable parameters for the model's encoder
