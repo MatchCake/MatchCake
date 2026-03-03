@@ -75,19 +75,23 @@ class FermionicPQCKernel(NIFKernel):
     :type data_scaling_: torch.nn.parameter.Parameter
     """
 
-    DEFAULT_N_QUBITS = 12
-    DEFAULT_GRAM_BATCH_SIZE = 10_000
+    DEFAULT_ROTATIONS = "Y,Z"
+    DEFAULT_ENTANGLING_MTH = "fswap"
     available_entangling_mth = {"fswap", "identity", "hadamard"}
 
     def __init__(
         self,
         *,
-        gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
-        random_state: int = 0,
-        alignment: bool = False,
-        n_qubits: int = DEFAULT_N_QUBITS,
-        rotations: str = "Y,Z",
-        entangling_mth: str = "fswap",
+        gram_batch_size: int = NIFKernel.DEFAULT_GRAM_BATCH_SIZE,
+        random_state: int = NIFKernel.DEFAULT_RANDOM_STATE,
+        alignment: bool = NIFKernel.DEFAULT_ALIGNMENT,
+        alignment_iterations: int = NIFKernel.DEFAULT_ALIGNMENT_ITERATIONS,
+        alignment_learning_rate: float = NIFKernel.DEFAULT_ALIGNMENT_LEARNING_RATE,
+        alignment_early_stopping_patience: int = NIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
+        alignment_early_stopping_threshold: float = NIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
+        n_qubits: int = NIFKernel.DEFAULT_N_QUBITS,
+        rotations: str = DEFAULT_ROTATIONS,
+        entangling_mth: str = DEFAULT_ENTANGLING_MTH,
     ):
         """
         Initializes the class with specified parameters for quantum circuit design and
@@ -96,6 +100,11 @@ class FermionicPQCKernel(NIFKernel):
 
         :param gram_batch_size: Size of the gram batch, used for processing data in batches.
         :param random_state: Seed for random number generator to ensure reproducibility.
+        :param alignment: A boolean flag indicating whether to perform kernel alignment during fitting.
+        :param alignment_iterations: The maximum number of iterations for kernel alignment optimization.
+        :param alignment_learning_rate: The learning rate for the optimizer used in kernel alignment.
+        :param alignment_early_stopping_patience: The number of iterations to wait for improvement before stopping kernel alignment optimization.
+        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel alignment optimization, used for early stopping criteria.
         :param n_qubits: Number of qubits to be used in the quantum circuit.
         :param rotations: Types of rotations to be applied in the quantum circuit, specified
             as a comma-separated string (e.g., "Y,Z").
@@ -106,6 +115,10 @@ class FermionicPQCKernel(NIFKernel):
             gram_batch_size=gram_batch_size,
             random_state=random_state,
             alignment=alignment,
+            alignment_iterations=alignment_iterations,
+            alignment_learning_rate=alignment_learning_rate,
+            alignment_early_stopping_patience=alignment_early_stopping_patience,
+            alignment_early_stopping_threshold=alignment_early_stopping_threshold,
             n_qubits=n_qubits,
         )
         self.rotations = rotations
