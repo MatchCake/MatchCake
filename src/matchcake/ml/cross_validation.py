@@ -64,7 +64,13 @@ class CrossValidation:
             )
             n_splits = len(cv_result[list(cv_result.keys())[0]])
             cv_result_list = [
-                {self.ESTIMATOR_NAME_KEY: estimator_name, **{k: v[i] for k, v in cv_result.items()}}
+                {
+                    self.ESTIMATOR_NAME_KEY: estimator_name,
+                    **{
+                        k: {"train": v["train"][i], "test": v["test"][i]} if k == "indices" else v[i]
+                        for k, v in cv_result.items()
+                    },
+                }
                 for i in range(n_splits)
             ]
             results.extend(cv_result_list)
