@@ -1,0 +1,29 @@
+repos:
+  - repo: local
+    hooks:
+      - id: uv-lock
+        name: uv lock (only when pyproject.toml changes)
+        entry: uv lock
+        language: system
+        pass_filenames: false
+        files: ^pyproject\.toml$
+
+      - id: black
+        name: black (changed files only)
+        entry: uv run black
+        language: system
+        types: [ python ]
+        pass_filenames: true
+
+      - id: isort
+        name: isort (changed files only)
+        entry: uv run isort
+        language: system
+        types: [ python ]
+        pass_filenames: true
+
+      - id: mypy
+        name: mypy (advisory)
+        entry: bash -c 'uv run mypy "$@" || true'
+        language: system
+        types: [python]
