@@ -23,6 +23,7 @@ class CrossValidationOutput:
     :ivar estimator_name_key: The key to the estimator name
     :type estimator_name_key: str
     """
+
     ESTIMATOR_NAME_KEY = "estimator_name"
 
     def __init__(
@@ -37,7 +38,7 @@ class CrossValidationOutput:
 
         :param estimators: The tested estimators
         :param results_df: The results of the cross-validation
-        :param estimator_name_key: The name to access the estimator name in the Dataframe.        
+        :param estimator_name_key: The name to access the estimator name in the Dataframe.
         """
         self.estimators = estimators
         self.results_df = results_df
@@ -48,7 +49,7 @@ class CrossValidationOutput:
         """
         Returns only the columns with score values from the Dataframe.
 
-        :return: A list of columns containing the score values. 
+        :return: A list of columns containing the score values.
         """
         return [c for c in self.results_df.columns if c.startswith("test_") or c.startswith("train_")]
 
@@ -61,6 +62,12 @@ class CrossValidation:
 
     :ivar ESTIMATOR_NAME_KEY: Internal key name for estimator names.
     :type ESTIMATOR_NAME_KEY: str
+    :ivar INDICES_NAME_KEY: Internal key name for indices.
+    :type INDICES_NAME_KEY: str
+    :ivar INDICES_TRAIN_KEY: Internal key name for training indices.
+    :type INDICES_TRAIN_KEY: str
+    :ivar INDICES_TEST_KEY: Internal key name for testing indices.
+    :type INDICES_TEST_KEY: str
     :ivar estimators: The dictionary mapping estimator names to the estimator.
     :type estimators: dict
     :ivar x: The independant variable.
@@ -72,7 +79,11 @@ class CrossValidation:
     :ivar cross_validator_kwargs: Additional arguments to pass to the cross-validator. See https://scikit-learn.org/stable/modules/cross_validation.html#the-cross-validate-function-and-multiple-metric-evaluation
     :type cross_validator_kwargs: dict
     """
+
     ESTIMATOR_NAME_KEY = "estimator_name"
+    INDICES_NAME_KEY = "indices"
+    INDICES_TRAIN_KEY = "train"
+    INDICES_TEST_KEY = "test"
 
     def __init__(
         self,
@@ -91,10 +102,10 @@ class CrossValidation:
         {
             'return_train_score': True,
             'return_estimator': True,
-            'return_estimator': True,
+            'return_indices': True,
         }
         ```
-        Each kwarg is optional and can be of value True or False. See https://scikit-learn.org/stable/modules/cross_validation.html#the-cross-validate-function-and-multiple-metric-evaluation for information on these parameters.
+        Each kwarg is optional and can be of value True or False. By default, `return_train_score` will be True. See https://scikit-learn.org/stable/modules/cross_validation.html#the-cross-validate-function-and-multiple-metric-evaluation for information on these parameters.
 
         :param estimators: Dictionary mapping estimator names to the estimator
         :param x: Independant variable to be processed.
@@ -121,7 +132,7 @@ class CrossValidation:
         Run the cross-validation. It will run all estimators with the same data and cross-validation method. Outputs of the cross-validation will be saved in a CrossValidationOutput object.
 
         :param verbose: If to show progress.
-        :return: A CrossValidationOutput object.        
+        :return: A CrossValidationOutput object.
         """
         results = []
         p_bar = tqdm(
@@ -139,7 +150,14 @@ class CrossValidation:
                 {
                     self.ESTIMATOR_NAME_KEY: estimator_name,
                     **{
-                        k: {"train": v["train"][i], "test": v["test"][i]} if k == "indices" else v[i]
+                        k: (
+                            {
+                                self.INDICES_TRAIN_KEY: v[self.INDICES_TRAIN_KEY][i],
+                                self.INDICES_TEST_KEY: v[self.INDICES_TEST_KEY][i],
+                            }
+                            if k == self.INDICES_NAME_KEY
+                            else v[i]
+                        )
                         for k, v in cv_result.items()
                     },
                 }
