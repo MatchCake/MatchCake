@@ -5,13 +5,7 @@ on:
     branches: [ "*" ]
 
 permissions:
-  contents: write
-  pull-requests: write
-  actions: write
-  checks: write
-  statuses: write
-  issues: write
-  discussions: write
+  contents: read
 
 jobs:
   Run-tests-on-Ubuntu:
@@ -53,14 +47,14 @@ jobs:
       run: |
         uv run pytest --nbmake tutorials -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
 
-    - name: Code Coverage
-      uses: orgoro/coverage@v3.2
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        coverageFile: tests/.tmp/coverage.xml
-        thresholdAll: 0.85
-        thresholdNew: 0.98
-        thresholdModified: 0.80
+        name: coverage
+        path: tests/.tmp/coverage.xml
+        if-no-files-found: error
+        retention-days: 1
+        overwrite: true
 
     - name: Test Build
       if: ${{ matrix.python-version == '3.11' }}

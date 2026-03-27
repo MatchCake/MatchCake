@@ -30,14 +30,17 @@ class NIFKernel(Kernel):
     """
 
     DEFAULT_N_QUBITS = 12
-    DEFAULT_GRAM_BATCH_SIZE = 10_000
 
     def __init__(
         self,
         *,
-        gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
-        random_state: int = 0,
-        alignment: bool = False,
+        gram_batch_size: int = Kernel.DEFAULT_GRAM_BATCH_SIZE,
+        random_state: int = Kernel.DEFAULT_RANDOM_STATE,
+        alignment: bool = Kernel.DEFAULT_ALIGNMENT,
+        alignment_iterations: int = Kernel.DEFAULT_ALIGNMENT_ITERATIONS,
+        alignment_learning_rate: float = Kernel.DEFAULT_ALIGNMENT_LEARNING_RATE,
+        alignment_early_stopping_patience: int = Kernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
+        alignment_early_stopping_threshold: float = Kernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
         n_qubits: int = DEFAULT_N_QUBITS,
     ):
         """
@@ -46,12 +49,21 @@ class NIFKernel(Kernel):
 
         :param gram_batch_size: The batch size for the Gram computation.
         :param random_state: Seed for the random number generator to ensure reproducibility.
+        :param alignment: A boolean flag indicating whether to perform kernel alignment during fitting.
+        :param alignment_iterations: The maximum number of iterations for kernel alignment optimization.
+        :param alignment_learning_rate: The learning rate for the optimizer used in kernel alignment.
+        :param alignment_early_stopping_patience: The number of iterations to wait for improvement before stopping kernel alignment optimization.
+        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel alignment optimization, used for early stopping criteria.
         :param n_qubits: The number of qubits for the non-interacting fermionic device.
         """
         super().__init__(
             gram_batch_size=gram_batch_size,
             random_state=random_state,
             alignment=alignment,
+            alignment_iterations=alignment_iterations,
+            alignment_learning_rate=alignment_learning_rate,
+            alignment_early_stopping_patience=alignment_early_stopping_patience,
+            alignment_early_stopping_threshold=alignment_early_stopping_threshold,
         )
         self.R_DTYPE = torch.float32
         self._q_device = NonInteractingFermionicDevice(n_qubits, r_dtype=self.R_DTYPE)
