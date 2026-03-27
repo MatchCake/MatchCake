@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.10", "3.11", "3.12", "3.13", ]
+        python-version: [ "3.11", "3.12", "3.13", "3.14", ]
 
     steps:
     - uses: actions/checkout@v3
@@ -57,7 +57,7 @@ jobs:
         overwrite: true
 
     - name: Test Build
-      if: ${{ matrix.python-version == '3.10' }}
+      if: ${{ matrix.python-version == '3.11' }}
       run: |
         uv run python -m build --sdist --wheel --no-isolation --outdir dist/ .
         uv run twine check dist/*
@@ -67,7 +67,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13",]
+        python-version: [ "3.11", "3.12", "3.13", "3.14", ]
 
     steps:
     - uses: actions/checkout@v3

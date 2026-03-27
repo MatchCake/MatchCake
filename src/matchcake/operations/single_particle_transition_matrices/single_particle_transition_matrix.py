@@ -3,7 +3,7 @@ from typing import Any, Iterable, List, Literal, Optional, Sequence, Union
 import numpy as np
 import pennylane as qml
 from pennylane.math import expm
-from pennylane.operation import AnyWires, Operation, Operator
+from pennylane.operation import Operation, Operator
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires, WiresLike
 
@@ -44,7 +44,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
     where :math:`R_{\mu\nu}` are the matrix elements of the SPTM and :math:`U` is a matchgate.
     """
 
-    num_wires = AnyWires
+    num_wires = None
     num_params = 1
     par_domain = "A"
     grad_method = "A"
