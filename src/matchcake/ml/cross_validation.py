@@ -92,20 +92,20 @@ class CrossValidation:
         y: Optional[TensorLike] = None,
         *,
         cv: Optional[Any] = None,
-        cross_validate_kwargs: Optional[Dict[str, bool]] = None,
+        cross_validate_kwargs: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize the Cross-Validator with the estimators to validate and the data to train it on.
 
-        Passed cross-validator kwargs must have the form:
-        ```json
+        Passed cross-validator kwargs can have the form:
+        ```
         {
             'return_train_score': True,
             'return_estimator': True,
             'return_indices': True,
         }
         ```
-        Each kwarg is optional and can be of value True or False. By default, `return_train_score` will be True. See https://scikit-learn.org/stable/modules/cross_validation.html#the-cross-validate-function-and-multiple-metric-evaluation for information on these parameters.
+        These kwargs are optional. By default, `return_train_score` will be True. See https://scikit-learn.org/stable/modules/cross_validation.html#the-cross-validate-function-and-multiple-metric-evaluation for information on these parameters.
 
         :param estimators: Dictionary mapping estimator names to the estimator
         :param x: Independant variable to be processed.
