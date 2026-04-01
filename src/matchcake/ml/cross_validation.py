@@ -146,23 +146,21 @@ class CrossValidation:
                 estimator=estimator, X=self.x, y=self.y, cv=self.cv, **self.cross_validate_kwargs
             )
             n_splits = len(cv_result[list(cv_result.keys())[0]])
-            cv_result_list = [
-                {
-                    self.ESTIMATOR_NAME_KEY: estimator_name,
-                    **{
-                        k: (
-                            {
-                                self.INDICES_TRAIN_KEY: v[self.INDICES_TRAIN_KEY][i],
-                                self.INDICES_TEST_KEY: v[self.INDICES_TEST_KEY][i],
-                            }
-                            if k == self.INDICES_NAME_KEY
-                            else v[i]
-                        )
-                        for k, v in cv_result.items()
-                    },
-                }
-                for i in range(n_splits)
-            ]
+
+            def cv_result_destructure(k, v):
+                if k == self.INDICES_NAME_KEY:
+                    return {
+                        self.INDICES_TRAIN_KEY: v[self.INDICES_TRAIN_KEY][i],
+                        self.INDICES_TEST_KEY: v[self.INDICES_TEST_KEY][i],
+                    }
+                return v[i]
+
+            cv_result_list = []
+            for i in range(n_splits):
+                cv_result_dict = {}
+                for k, v in cv_result.items():
+                    cv_result_dict.update({k: cv_result_destructure(k, v)})
+                cv_result_list.append({self.ESTIMATOR_NAME_KEY: estimator_name, **cv_result_dict})
             results.extend(cv_result_list)
         results_df = pd.DataFrame(results)
         cvo = CrossValidationOutput(self.estimators, results_df, estimator_name_key=self.ESTIMATOR_NAME_KEY)
