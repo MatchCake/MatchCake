@@ -127,6 +127,25 @@ class CrossValidation:
         self.cross_validate_kwargs = cross_validate_kwargs
         self.cross_validate_kwargs.setdefault("return_train_score", True)
 
+    def _cv_result_destructure(self, cv_result: dict[str, Any], index: int) -> dict[str, Any]:
+        """Destructure the result of the cross-validation
+
+        :param cv_result: The complete results from the Cross-Validation
+        :param index: The current index of the cross-validation iteration in the cv_result data
+        :return: Reformatted dictionary information for the cross-validation iteration
+        """
+        cv_result_dict = {}
+        for k, v in cv_result.items():
+            if k == self.INDICES_NAME_KEY:
+                value = {
+                    self.INDICES_TRAIN_KEY: v[self.INDICES_TRAIN_KEY][index],
+                    self.INDICES_TEST_KEY: v[self.INDICES_TEST_KEY][index],
+                }
+            else:
+                value = v[index]
+            cv_result_dict.update({k: value})
+        return cv_result_dict
+
     def run(self, verbose=True) -> CrossValidationOutput:
         """
         Run the cross-validation. It will run all estimators with the same data and cross-validation method. Outputs of the cross-validation will be saved in a CrossValidationOutput object.
@@ -147,20 +166,11 @@ class CrossValidation:
             )
             n_splits = len(cv_result[list(cv_result.keys())[0]])
 
-            def cv_result_destructure(k, v):
-                if k == self.INDICES_NAME_KEY:
-                    return {
-                        self.INDICES_TRAIN_KEY: v[self.INDICES_TRAIN_KEY][i],
-                        self.INDICES_TEST_KEY: v[self.INDICES_TEST_KEY][i],
-                    }
-                return v[i]
-
             cv_result_list = []
             for i in range(n_splits):
-                cv_result_dict = {}
-                for k, v in cv_result.items():
-                    cv_result_dict.update({k: cv_result_destructure(k, v)})
-                cv_result_list.append({self.ESTIMATOR_NAME_KEY: estimator_name, **cv_result_dict})
+                cv_result_list.append(
+                    {self.ESTIMATOR_NAME_KEY: estimator_name, **self._cv_result_destructure(cv_result, i)}
+                )
             results.extend(cv_result_list)
         results_df = pd.DataFrame(results)
         cvo = CrossValidationOutput(self.estimators, results_df, estimator_name_key=self.ESTIMATOR_NAME_KEY)
