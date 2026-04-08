@@ -47,3 +47,16 @@ class TestCrossValidation:
         assert isinstance(cvo, CrossValidationOutput)
         assert set(cv.estimators.keys()) == set(cvo.estimators.keys())
         assert CrossValidation.ESTIMATOR_NAME_KEY in cvo.results_df.columns
+
+    def test_run_with_kwargs(self, cv):
+        kwargs = {
+            "return_train_score": True,
+            "return_indices": True,
+            "return_estimator": True,
+        }
+        cv = CrossValidation(cv.estimators, x=cv.x, y=cv.y, cv=cv.cv, cross_validate_kwargs=kwargs)
+        cvo = cv.run(verbose=False)
+        assert isinstance(cvo, CrossValidationOutput)
+        assert "train_score" in cvo.results_df.columns
+        assert CrossValidation.INDICES_NAME_KEY in cvo.results_df.columns
+        assert CrossValidation.ESTIMATOR_NAME_KEY in cvo.results_df.columns
