@@ -48,6 +48,7 @@ jobs:
         uv run pytest --nbmake tutorials -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
 
     - name: Upload coverage artifact
+      if: ${{ matrix.python-version == '3.11' }}
       uses: actions/upload-artifact@v4
       with:
         name: coverage

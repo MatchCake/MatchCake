@@ -26,15 +26,16 @@ jobs:
         with:
           name: coverage
           run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify coverage file
-        run: test -f tests/.tmp/coverage.xml
+        run: test -f coverage.xml
 
       - name: Post coverage
         uses: orgoro/coverage@v3.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          coverageFile: tests/.tmp/coverage.xml
+          coverageFile: coverage.xml
           thresholdAll: 0.85
           thresholdNew: 0.98
           thresholdModified: 0.85
