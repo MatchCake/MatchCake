@@ -90,3 +90,28 @@ jobs:
       run: |
         # TODO: add -n=auto when possible
         uv run pytest tests --session-timeout=600
+
+  coverage:
+    name: Post Coverage Report
+    needs: [Run-tests-on-Ubuntu]
+    runs-on: ubuntu-latest
+    if: success()
+    permissions:
+      pull-requests: write
+      checks: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage
+
+      - name: Post coverage
+        uses: orgoro/coverage@v3.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          coverageFile: coverage.xml
+          thresholdAll: 0.85
+          thresholdNew: 0.98
+          thresholdModified: 0.85
