@@ -44,7 +44,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
     where :math:`R_{\mu\nu}` are the matrix elements of the SPTM and :math:`U` is a matchgate.
     """
 
-    num_wires = None
+    num_wires = qml.operation.AnyWires
     num_params = 1
     par_domain = "A"
     grad_method = "A"
