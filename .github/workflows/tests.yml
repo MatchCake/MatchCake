@@ -122,6 +122,8 @@ jobs:
           path: tests/.tmp
           name: coverage
       - run : ls -R tests/.tmp
+      - name: Debug coverage file
+        run: cat tests/.tmp/coverage.xml | head -50
       - name: Post coverage
         uses: orgoro/coverage@v3.2
         with:
