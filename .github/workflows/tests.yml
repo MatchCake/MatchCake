@@ -5,9 +5,13 @@ on:
     branches: [ "*" ]
 
 permissions:
-  contents: read
-  checks: write
-  pull-requests: write
+    contents: write
+    pull-requests: write
+    actions: write
+    checks: write
+    statuses: write
+    issues: write
+    discussions: write
 
 jobs:
   Run-tests-on-Ubuntu:
@@ -103,8 +107,13 @@ jobs:
     runs-on: ubuntu-latest
     if: success() && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
+      contents: write
       pull-requests: write
+      actions: write
       checks: write
+      statuses: write
+      issues: write
+      discussions: write
     steps:
       - uses: actions/checkout@v4
       - name: Download coverage artifact
@@ -121,7 +130,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           coverageFile: coverage.xml
-          sourceDir: src
           thresholdAll: 0.85
           thresholdNew: 0.98
           thresholdModified: 0.85
