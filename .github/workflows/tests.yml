@@ -6,6 +6,8 @@ on:
 
 permissions:
   contents: read
+  checks: write
+  pull-requests: write
 
 jobs:
   Run-tests-on-Ubuntu:
@@ -51,7 +53,8 @@ jobs:
 
     - name: Code Coverage
       if: |
-        ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        ${{ matrix.python-version == '3.11' &&
+        github.event.pull_request.head.repo.full_name == github.repository }}
       uses: orgoro/coverage@v3.2
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
