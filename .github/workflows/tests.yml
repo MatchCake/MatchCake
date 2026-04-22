@@ -51,9 +51,12 @@ jobs:
         uv run pytest tests \
           ${{ github.event.pull_request.head.repo.full_name != github.repository && '--cov-fail-under=98' || '' }} \
           --cov=src --cov-branch --cov-report="xml:tests/.tmp/coverage.xml" --cov-report=term-missing --durations=30 --session-timeout=600
-    - name: Test Notebooks
+
+    - name: Debug coverage before upload
+      if: matrix.python-version == '3.11'
       run: |
-        uv run pytest --nbmake tutorials -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
+        echo "=== Coverage summary ==="
+        head -5 tests/.tmp/coverage.xml
 
     - name: Upload coverage artifact
       if: |
@@ -65,6 +68,10 @@ jobs:
         path: tests/.tmp/coverage.xml
         if-no-files-found: error
         retention-days: 1
+
+    - name: Test Notebooks
+      run: |
+        uv run pytest --nbmake tutorials -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
 
     - name: Test Build
       if: ${{ matrix.python-version == '3.11' }}
