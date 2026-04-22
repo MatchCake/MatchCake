@@ -111,6 +111,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: coverage
+      - name: Fix coverage file paths
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          sed -i "s|/home/runner/work/${REPO}/||g" coverage.xml
       - name: Post coverage
         uses: orgoro/coverage@v3.2
         with:
