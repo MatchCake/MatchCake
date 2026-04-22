@@ -63,3 +63,18 @@ class TestPfaffian:
         target_det = 0.0
         pf = utils.pfaffian(matrix, method=mth)
         np.testing.assert_allclose(pf**2, target_det, atol=1e-32)
+
+    def test_grads_with_zeros(self, n, batch_size, mth):
+        if batch_size is None:
+            np_matrix = np.zeros((n, n))
+        else:
+            np_matrix = np.zeros((batch_size, n, n))
+        np_matrix = np_matrix - np.einsum("...ij->...ji", np_matrix)
+        torch_matrix = torch.from_numpy(np_matrix).requires_grad_()
+        func = partial(utils.pfaffian, method=mth)
+        assert gradcheck(
+            func,
+            (torch_matrix,),
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=10 * RTOL_APPROX_COMPARISON,
+        )
