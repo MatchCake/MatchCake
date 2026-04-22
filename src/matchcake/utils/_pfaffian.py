@@ -15,8 +15,26 @@ def pfaffian_by_det(
     __matrix: TensorLike,
     p_bar: Optional[tqdm.tqdm] = None,
     show_progress: bool = False,
-    epsilon: float = 1e-12,
+    epsilon: float = 1e-32,
 ) -> TensorLike:
+    """
+    Compute the Pfaffian of a skew-symmetric matrix using determinant-based methods.
+
+    This function calculates the Pfaffian value of a skew-symmetric matrix (or a batch
+    of such matrices) using the determinant of the matrix. If the matrix is of odd
+    dimensions, the result is zero because skew-symmetric matrices of odd size
+    always have a zero Pfaffian. The computation is optimized for different backends
+    like "autograd", "numpy", and others.
+
+    :param __matrix: Input skew-symmetric matrix or batch of skew-symmetric matrices.
+    :param p_bar: Optional progress bar instance for updating progress.
+    :param show_progress: Whether to display progress during computation. Defaults
+        to False.
+    :param epsilon: Minimum value to clip the determinant during the computation of
+        the Pfaffian to avoid numerical instabilities. Defaults to 1e-32.
+    :return: The computed Pfaffian value(s) of the input skew-symmetric matrix or batch.
+    :rtype: TensorLike
+    """
     shape = qml.math.shape(__matrix)
     p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)
     p_bar.set_description(f"[det] Computing determinant of {shape} matrix")
@@ -33,10 +51,10 @@ def pfaffian_by_det(
     backend = qml.math.get_interface(__matrix)
     if backend in ["autograd", "numpy"]:
         det = qml.math.linalg.det(__matrix)
-        pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
+        pf = qml.math.sqrt(qml.math.clip(qml.math.abs(det), min=epsilon))
     else:
         det = qml.math.det(__matrix)
-        pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
+        pf = qml.math.sqrt(qml.math.clamp(qml.math.abs(det), min=epsilon))
     p_bar.set_description(f"Determinant of {shape} matrix computed")
     p_bar.update()
     p_bar.close()
@@ -47,7 +65,7 @@ def pfaffian_by_det_cuda(
     __matrix: TensorLike,
     p_bar: Optional[tqdm.tqdm] = None,
     show_progress: bool = False,
-    epsilon: float = 1e-12,
+    epsilon: float = 1e-32,
 ) -> TensorLike:
     shape = qml.math.shape(__matrix)
     p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)
@@ -62,7 +80,13 @@ def pfaffian_by_det_cuda(
     else:
         det = torch_utils.to_cpu(cuda_det)
     det = convert_and_cast_like(det, __matrix)
-    pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
+
+    det_backend = qml.math.get_interface(det)
+    if det_backend in ["autograd", "numpy"]:
+        pf = qml.math.sqrt(qml.math.clip(qml.math.abs(det), min=epsilon))
+    else:
+        pf = qml.math.sqrt(qml.math.clamp(qml.math.abs(det), min=epsilon))
+
     p_bar.set_description(f"Determinant of {shape} matrix computed")
     p_bar.update()
     p_bar.close()
@@ -72,7 +96,7 @@ def pfaffian_by_det_cuda(
 def pfaffian(
     __matrix: TensorLike,
     method: Literal["det", "cuda_det", "PfaffianFDBPf"] = "det",
-    epsilon: float = 1e-12,
+    epsilon: float = 1e-32,
     p_bar: Optional[tqdm.tqdm] = None,
     show_progress: bool = False,
 ) -> TensorLike:
@@ -101,6 +125,7 @@ def pfaffian(
     elif method == "cuda_det":
         return pfaffian_by_det_cuda(__matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon)
     elif method == "PfaffianFDBPf":
+        torch_pfaffian.PfaffianStrategy.EPSILON = epsilon
         pf = torch_pfaffian.get_pfaffian_function(method)(torch_utils.to_tensor(__matrix, dtype=torch.complex128))
         return convert_and_cast_like(pf, __matrix)
     raise ValueError(f"Invalid method. Got {method}, must be 'det', 'cuda_det', or 'PfaffianFDBPf'.")

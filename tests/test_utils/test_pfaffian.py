@@ -2,6 +2,8 @@ from functools import partial
 
 import numpy as np
 import pytest
+import torch
+from torch.autograd import gradcheck
 
 from matchcake import utils
 
@@ -42,9 +44,6 @@ class TestPfaffian:
         )
 
     def test_pfaffian_methods_grads(self, n, batch_size, mth):
-        import torch
-        from torch.autograd import gradcheck
-
         if batch_size is None:
             np_matrix = np.random.rand(n, n)
         else:
@@ -58,3 +57,9 @@ class TestPfaffian:
             atol=ATOL_APPROX_COMPARISON,
             rtol=10 * RTOL_APPROX_COMPARISON,
         )
+
+    def test_with_zeros(self, n, batch_size, mth):
+        matrix = np.zeros((n, n))
+        target_det = 0.0
+        pf = utils.pfaffian(matrix, method=mth)
+        np.testing.assert_allclose(pf**2, target_det, atol=1e-32)
