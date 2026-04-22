@@ -5,7 +5,13 @@ on:
     branches: [ "*" ]
 
 permissions:
-  contents: read
+    contents: write
+    pull-requests: write
+    actions: write
+    checks: write
+    statuses: write
+    issues: write
+    discussions: write
 
 jobs:
   Run-tests-on-Ubuntu:
@@ -42,19 +48,30 @@ jobs:
     - name: Test Unittests with pytest
       run: |
         # TODO: add -n=auto when possible
-        uv run pytest tests --cov=src --cov-report="xml:tests/.tmp/coverage.xml" --cov-report=term-missing --durations=30 --session-timeout=600
-    - name: Test Notebooks
+        uv run pytest tests \
+          ${{ github.event.pull_request.head.repo.full_name != github.repository && '--cov-fail-under=98' || '' }} \
+          --cov=src --cov-branch --cov-report="xml:tests/.tmp/coverage.xml" --cov-report=term-missing --durations=30 --session-timeout=600
+
+    - name: Debug coverage before upload
+      if: matrix.python-version == '3.11'
       run: |
-        uv run pytest --nbmake tutorials -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
+        echo "=== Coverage summary ==="
+        head -5 tests/.tmp/coverage.xml
 
     - name: Upload coverage artifact
+      if: |
+        matrix.python-version == '3.11' &&
+        github.event.pull_request.head.repo.full_name == github.repository
       uses: actions/upload-artifact@v4
       with:
         name: coverage
         path: tests/.tmp/coverage.xml
         if-no-files-found: error
         retention-days: 1
-        overwrite: true
+
+    - name: Test Notebooks
+      run: |
+        uv run pytest --nbmake tutorials -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
 
     - name: Test Build
       if: ${{ matrix.python-version == '3.11' }}
@@ -89,3 +106,36 @@ jobs:
       run: |
         # TODO: add -n=auto when possible
         uv run pytest tests --session-timeout=600
+
+
+  Coverage:
+    name: Post Coverage Report
+    needs: [ Run-tests-on-Ubuntu ]
+    runs-on: ubuntu-latest
+    if: success() && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+      checks: write
+      statuses: write
+      issues: write
+      discussions: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: tests/.tmp
+          name: coverage
+      - run : ls -R tests/.tmp
+      - name: Debug coverage file
+        run: cat tests/.tmp/coverage.xml | head -50
+      - name: Post coverage
+        uses: orgoro/coverage@v3.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          coverageFile: tests/.tmp/coverage.xml
+          thresholdAll: 0.85
+          thresholdNew: 0.98
+          thresholdModified: 0.85
