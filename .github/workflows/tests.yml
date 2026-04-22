@@ -42,20 +42,24 @@ jobs:
     - name: Test Unittests with pytest
       run: |
         # TODO: add -n=auto when possible
-        uv run pytest tests --cov=src --cov-report="xml:tests/.tmp/coverage.xml" --cov-report=term-missing --durations=30 --session-timeout=600
+        uv run pytest tests \
+          ${{ github.event.pull_request.head.repo.full_name != github.repository && '--cov-fail-under=98' || '' }} \
+          --cov=src --cov-branch --cov-report="xml:tests/.tmp/coverage.xml" --cov-report=term-missing --durations=30 --session-timeout=600
     - name: Test Notebooks
       run: |
         uv run pytest --nbmake tutorials -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
 
-    - name: Upload coverage artifact
-      if: ${{ matrix.python-version == '3.11' }}
-      uses: actions/upload-artifact@v4
+    - name: Code Coverage
+      if: |
+        ${{ matrix.python-version == '3.11' &&
+        github.event.pull_request.head.repo.full_name == github.repository }}
+      uses: orgoro/coverage@v3.2
       with:
-        name: coverage
-        path: tests/.tmp/coverage.xml
-        if-no-files-found: error
-        retention-days: 1
-        overwrite: true
+        token: ${{ secrets.GITHUB_TOKEN }}
+        coverageFile: tests/.tmp/coverage.xml
+        thresholdAll: 0.85
+        thresholdNew: 0.98
+        thresholdModified: 0.85
 
     - name: Test Build
       if: ${{ matrix.python-version == '3.11' }}
@@ -90,28 +94,3 @@ jobs:
       run: |
         # TODO: add -n=auto when possible
         uv run pytest tests --session-timeout=600
-
-  coverage:
-    name: Post Coverage Report
-    needs: [Run-tests-on-Ubuntu]
-    runs-on: ubuntu-latest
-    if: success()
-    permissions:
-      pull-requests: write
-      checks: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download coverage artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage
-
-      - name: Post coverage
-        uses: orgoro/coverage@v3.2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          coverageFile: coverage.xml
-          thresholdAll: 0.85
-          thresholdNew: 0.98
-          thresholdModified: 0.85
