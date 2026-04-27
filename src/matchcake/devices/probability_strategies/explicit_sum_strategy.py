@@ -1,16 +1,15 @@
 import warnings
-from typing import Callable
 
 import numpy as np
 import pennylane as qml
 import pythonbasictools as pbt
 from pennylane import numpy as pnp
+from pennylane.operation import StatePrepBase
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 
-from ... import utils
-from ...base.lookup_table import NonInteractingFermionicLookupTable
 from .probability_strategy import ProbabilityStrategy
+from ... import utils
 
 
 class ExplicitSumStrategy(ProbabilityStrategy):
@@ -31,18 +30,18 @@ class ExplicitSumStrategy(ProbabilityStrategy):
         :Note: This function does not support broadcasted inputs yet.
         :Note: This function comes from the ``default.qubit`` device.
         """
-        state = np.zeros(2**num_wires, dtype=np.complex128)
+        state = np.zeros(2 ** num_wires, dtype=np.complex128)
         state[index] = 1
         state = qml.math.cast(state, dtype=complex)
         return np.reshape(state, [2] * num_wires)
 
     def __call__(
-        self,
-        *,
-        system_state: TensorLike,
-        target_binary_state: TensorLike,
-        wires: Wires,
-        **kwargs,
+            self,
+            *,
+            state_prep_op: StatePrepBase,
+            target_binary_state: TensorLike,
+            wires: Wires,
+            **kwargs,
     ) -> TensorLike:
         self.check_required_kwargs(kwargs)
 
@@ -62,6 +61,7 @@ class ExplicitSumStrategy(ProbabilityStrategy):
                 UserWarning,
             )
 
+        system_state = self.system_basis_state_from_state_prep_op(state_prep_op)
         ket_majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(system_state)
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
         zero_state = self._create_basis_state(0, num_wires).flatten()
@@ -90,13 +90,13 @@ class ExplicitSumStrategy(ProbabilityStrategy):
         return pnp.real(target_prob)
 
     def _compute_partial_prob_of_m_n_vector(
-        self,
-        transition_matrix,
-        m_n_vector,
-        target_binary_state,
-        wires,
-        bra,
-        ket,
+            self,
+            transition_matrix,
+            m_n_vector,
+            target_binary_state,
+            wires,
+            bra,
+            ket,
     ):
         inner_op_list = [
             self.majorana_getter((1 - b) * i + b * j, (1 - b) * j + b * i)

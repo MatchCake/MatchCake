@@ -2,6 +2,7 @@ import numpy as np
 import pennylane as qml
 import pytest
 import torch
+from pennylane import BasisState
 from pennylane.ops.qubit.observables import BasisStateProjector
 from scipy.linalg import expm
 
@@ -10,7 +11,6 @@ from matchcake.operations.single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
 )
 from matchcake.utils import torch_utils
-
 from ....configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
@@ -105,14 +105,14 @@ class TestNonInteractingFermionicDeviceGradients:
         )
 
     def test_sptm_circuit_prob_strategy_batch_call_rn_transition_matrix_gradient_check(
-        self, expm_input_matrix, target_binary_states, system_state
+            self, expm_input_matrix, target_binary_states, system_state
     ):
         def get_output(matrix):
             nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
             transition_matrix = utils.make_transition_matrix_from_action_matrix(matrix)
             nif_device.transition_matrix = transition_matrix
             return nif_device.prob_strategy.batch_call(
-                system_state=system_state,
+                state_prep_op=BasisState(system_state, wires=np.arange(len(system_state))),
                 target_binary_states=target_binary_states,
                 batch_wires=None,
                 lookup_table=nif_device.lookup_table,
@@ -129,13 +129,13 @@ class TestNonInteractingFermionicDeviceGradients:
         )
 
     def test_sptm_circuit_prob_strategy_batch_call_rn_sptm_gradient_check(
-        self, expm_input_matrix, target_binary_states
+            self, expm_input_matrix, target_binary_states
     ):
         def circuit(sptm_matrix):
             nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
             nif_device.global_sptm = sptm_matrix
             return nif_device.prob_strategy.batch_call(
-                system_state=nif_device.binary_state,
+                state_prep_op=nif_device.state_prep_op,
                 target_binary_states=target_binary_states,
                 batch_wires=None,
                 lookup_table=nif_device.lookup_table,
@@ -157,7 +157,7 @@ class TestNonInteractingFermionicDeviceGradients:
             nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
             nif_device.apply_op(op)
             return nif_device.prob_strategy.batch_call(
-                system_state=nif_device.binary_state,
+                state_prep_op=nif_device.state_prep_op,
                 target_binary_states=target_binary_states,
                 batch_wires=None,
                 lookup_table=nif_device.lookup_table,

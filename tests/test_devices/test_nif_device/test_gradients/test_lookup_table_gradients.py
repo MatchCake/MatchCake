@@ -1,13 +1,13 @@
 import numpy as np
 import pytest
 import torch
+from pennylane import BasisState
 from scipy.linalg import expm
 from torch.autograd import gradcheck
 
 from matchcake import utils
 from matchcake.base.lookup_table import NonInteractingFermionicLookupTable
 from matchcake.devices.probability_strategies import LookupTableStrategy
-
 from ....configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
@@ -61,13 +61,13 @@ class TestNonInteractingFermionicLookupTableGradients:
         )
 
     def test_compute_observables_of_target_states_gradients_lookup_table_strategy(
-        self, input_matrix, system_state, target_binary_states
+            self, input_matrix, system_state, target_binary_states
     ):
         def get_output(transition_matrix):
             lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
             lookup_table_strategy = LookupTableStrategy()
             probs = lookup_table_strategy.batch_call(
-                system_state=system_state,
+                state_prep_op=BasisState(system_state, wires=np.arange(len(system_state))),
                 target_binary_states=target_binary_states,
                 batch_wires=None,
                 pfaffian_method="det",

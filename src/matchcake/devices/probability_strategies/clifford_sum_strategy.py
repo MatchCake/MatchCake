@@ -3,18 +3,19 @@ from typing import List, Tuple
 import numpy as np
 import pennylane as qml
 from pennylane import BasisState, qnode
-from pennylane.operation import Operator
+from pennylane.operation import Operator, StatePrepBase
 from pennylane.wires import Wires
 
+from .probability_strategy import ProbabilityStrategy
 from ... import utils
+from ...operations.state_preparation import StatePrepFromGates
 from ...typing import TensorLike
 from ...utils.majorana import majorana_to_pauli
-from .probability_strategy import ProbabilityStrategy
 
 
 class CliffordSumStrategy(ProbabilityStrategy):
     NAME: str = "CliffordSum"
-    REQUIRES_KWARGS = ["all_wires", "state_prep_op", "transition_matrix"]
+    REQUIRES_KWARGS = ["all_wires", "transition_matrix"]
 
     @staticmethod
     def compute_clifford_expvals(state_prep_op: Operator, indexes_shape: Tuple[int, ...]) -> np.ndarray:
@@ -23,6 +24,9 @@ class CliffordSumStrategy(ProbabilityStrategy):
         def clifford_circuit():
             if isinstance(state_prep_op, BasisState):
                 for op in state_prep_op.decomposition():
+                    op.queue()
+            elif isinstance(state_prep_op, StatePrepFromGates):
+                for op in state_prep_op.decomposition_generator():
                     op.queue()
             else:
                 raise NotImplementedError("Only BasisState is implemented for Clifford subroutine.")
@@ -86,12 +90,12 @@ class CliffordSumStrategy(ProbabilityStrategy):
         return utils.recursive_2in_operator(outer_prod, transition_vectors)
 
     def __call__(
-        self,
-        *,
-        system_state: TensorLike,
-        target_binary_state: TensorLike,
-        wires: Wires,
-        **kwargs,
+            self,
+            *,
+            state_prep_op: StatePrepBase,
+            target_binary_state: TensorLike,
+            wires: Wires,
+            **kwargs,
     ) -> TensorLike:
         self.check_required_kwargs(kwargs)
 
@@ -101,7 +105,6 @@ class CliffordSumStrategy(ProbabilityStrategy):
         all_wires = kwargs["all_wires"]
         num_wires = len(all_wires)
         transition_matrix = kwargs["transition_matrix"]
-        state_prep_op: Operator = kwargs["state_prep_op"]
         fermi_ops = self._basis_state_to_fermi_ops(target_binary_state, wires)
         fermi_ops = self._apply_wicks_contraction(fermi_ops)
         transition_vectors = self._gather_transition_vectors(fermi_ops, transition_matrix)
