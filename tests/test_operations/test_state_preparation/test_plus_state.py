@@ -19,7 +19,7 @@ class TestNIFDevicePlusState:
 
         qubit_qnode = qml.QNode(circuit, qubit_dev)
         state = qubit_qnode()
-        target_state = np.ones(2 ** num_wires) / np.sqrt(2 ** num_wires)
+        target_state = np.ones(2**num_wires) / np.sqrt(2**num_wires)
         np.testing.assert_allclose(state, target_state, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
 
     def test_vs_svs(self):

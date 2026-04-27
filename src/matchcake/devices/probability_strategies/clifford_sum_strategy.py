@@ -6,11 +6,11 @@ from pennylane import BasisState, qnode
 from pennylane.operation import Operator, StatePrepBase
 from pennylane.wires import Wires
 
-from .probability_strategy import ProbabilityStrategy
 from ... import utils
 from ...operations.state_preparation import StatePrepFromGates
 from ...typing import TensorLike
 from ...utils.majorana import majorana_to_pauli
+from .probability_strategy import ProbabilityStrategy
 
 
 class CliffordSumStrategy(ProbabilityStrategy):
@@ -90,12 +90,12 @@ class CliffordSumStrategy(ProbabilityStrategy):
         return utils.recursive_2in_operator(outer_prod, transition_vectors)
 
     def __call__(
-            self,
-            *,
-            state_prep_op: StatePrepBase,
-            target_binary_state: TensorLike,
-            wires: Wires,
-            **kwargs,
+        self,
+        *,
+        state_prep_op: StatePrepBase,
+        target_binary_state: TensorLike,
+        wires: Wires,
+        **kwargs,
     ) -> TensorLike:
         self.check_required_kwargs(kwargs)
 

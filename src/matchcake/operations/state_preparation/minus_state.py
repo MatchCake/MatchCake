@@ -15,9 +15,9 @@ class MinusState(StatePrepFromGates):
         return
 
     def __init__(
-            self,
-            wires: Optional[WiresLike] = None,
-            id: Optional[str] = None,
+        self,
+        wires: Optional[WiresLike] = None,
+        id: Optional[str] = None,
     ):
         super().__init__(gate_generator=self.gate_generator, wires=wires, id=id)
 

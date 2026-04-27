@@ -74,9 +74,9 @@ class SingleParticleTransitionMatrixOperation(Operation):
 
     @staticmethod
     def compute_decomposition(
-            *params: TensorLike,
-            wires: Optional[WiresLike] = None,
-            **hyperparameters: dict[str, Any],
+        *params: TensorLike,
+        wires: Optional[WiresLike] = None,
+        **hyperparameters: dict[str, Any],
     ):
         unitary = SingleParticleTransitionMatrixOperation.to_unitary_matrix(params[0])
         return [qml.QubitUnitary(unitary, wires=wires)]
@@ -151,7 +151,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
 
     @classmethod
     def from_operation(
-            cls, op: Union[Operator, "SingleParticleTransitionMatrixOperation"], **kwargs
+        cls, op: Union[Operator, "SingleParticleTransitionMatrixOperation"], **kwargs
     ) -> "SingleParticleTransitionMatrixOperation":
         """
         Creates an instance of SingleParticleTransitionMatrixOperation from the given operation.
@@ -195,9 +195,9 @@ class SingleParticleTransitionMatrixOperation(Operation):
 
     @classmethod
     def from_operations(
-            cls,
-            ops: Iterable[Union[Any, "SingleParticleTransitionMatrixOperation"]],
-            **kwargs,
+        cls,
+        ops: Iterable[Union[Any, "SingleParticleTransitionMatrixOperation"]],
+        **kwargs,
     ) -> "SingleParticleTransitionMatrixOperation":
         """
         This method will contract multiple SingleParticleTransitionMatrixOperations into a single one.
@@ -264,16 +264,16 @@ class SingleParticleTransitionMatrixOperation(Operation):
         )
 
     def __init__(
-            self,
-            matrix: TensorLike,
-            wires: Optional[Union[Sequence[int], Wires]] = None,
-            *,
-            id=None,
-            clip_angles: bool = DEFAULT_CLIP_ANGLES,
-            check_angles: bool = DEFAULT_CHECK_ANGLES,
-            check_matrix: bool = DEFAULT_CHECK_MATRIX,
-            normalize: bool = DEFAULT_NORMALIZE,
-            **kwargs,
+        self,
+        matrix: TensorLike,
+        wires: Optional[Union[Sequence[int], Wires]] = None,
+        *,
+        id=None,
+        clip_angles: bool = DEFAULT_CLIP_ANGLES,
+        check_angles: bool = DEFAULT_CHECK_ANGLES,
+        check_matrix: bool = DEFAULT_CHECK_MATRIX,
+        normalize: bool = DEFAULT_NORMALIZE,
+        **kwargs,
     ):
         """
         Initialize an operation that applies a single-particle transition represented by the

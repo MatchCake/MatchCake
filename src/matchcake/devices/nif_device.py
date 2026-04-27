@@ -7,12 +7,12 @@ import torch
 import tqdm
 from pennylane.exceptions import DeviceError
 
+from ..operations.state_preparation import StatePrepFromGates
+from ..typing import TensorLike
 from .expval_strategies.clifford_expval.clifford_expval_strategy import (
     CliffordExpvalStrategy,
 )
 from .expval_strategies.expval_from_probabilities import ExpvalFromProbabilitiesStrategy
-from ..operations.state_preparation import StatePrepFromGates
-from ..typing import TensorLike
 
 try:
     from pennylane.ops import Hamiltonian
@@ -155,9 +155,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
 
     @classmethod
     def update_single_particle_transition_matrix(
-            cls,
-            old_sptm: Optional[Union[SingleParticleTransitionMatrixOperation, TensorLike]],
-            new_sptm: Union[SingleParticleTransitionMatrixOperation, TensorLike],
+        cls,
+        old_sptm: Optional[Union[SingleParticleTransitionMatrixOperation, TensorLike]],
+        new_sptm: Union[SingleParticleTransitionMatrixOperation, TensorLike],
     ) -> TensorLike:
         """
         Update the old single particle transition matrix by performing a matrix multiplication with the new single
@@ -184,14 +184,14 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         return fermionic_operator_matmul(old_sptm, new_sptm, operator="einsum")
 
     def __init__(
-            self,
-            wires: Union[int, Wires, List[int]] = 2,
-            *,
-            r_dtype=torch.float64,
-            c_dtype=torch.complex128,
-            analytic=None,
-            shots: Optional[int] = None,
-            **kwargs,
+        self,
+        wires: Union[int, Wires, List[int]] = 2,
+        *,
+        r_dtype=torch.float64,
+        c_dtype=torch.complex128,
+        analytic=None,
+        shots: Optional[int] = None,
+        **kwargs,
     ):
         if np.isscalar(wires):
             assert wires > 1, "At least two wires are required for this device."
@@ -274,11 +274,11 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         return self.apply_generator(iter(operations), rotations=rotations, **kwargs)
 
     def execute_generator(
-            self,
-            op_iterator: Iterable[qml.operation.Operation],
-            observable: Optional = None,
-            output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
-            **kwargs,
+        self,
+        op_iterator: Iterable[qml.operation.Operation],
+        observable: Optional = None,
+        output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
+        **kwargs,
     ):
         """
         Execute a generator of operations on the device and return the result in the specified output type.
@@ -312,10 +312,10 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         return self.execute_output(observable=observable, output_type=output_type, **kwargs)
 
     def execute_output(
-            self,
-            observable: Optional = None,
-            output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
-            **kwargs,
+        self,
+        observable: Optional = None,
+        output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
+        **kwargs,
     ):
         """
         Return the result of the execution in the specified output type.
@@ -356,7 +356,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         raise ValueError(f"Output type {output_type} is not supported.")
 
     def apply_generator(
-            self, op_iterator: Iterable[qml.operation.Operation], **kwargs
+        self, op_iterator: Iterable[qml.operation.Operation], **kwargs
     ) -> "NonInteractingFermionicDevice":
         """
         Apply a generator of gates to the device.
@@ -384,10 +384,10 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                     continue
                 self.apply_op(op_j)
                 self.apply_metadata["n_contracted_operations"] = (
-                        self.apply_metadata.get("n_contracted_operations", 0) + 1
+                    self.apply_metadata.get("n_contracted_operations", 0) + 1
                 )
                 self.apply_metadata["percentage_contracted"] = (
-                        100 * (i + 1 - self.apply_metadata["n_contracted_operations"]) / (i + 1)
+                    100 * (i + 1 - self.apply_metadata["n_contracted_operations"]) / (i + 1)
                 )
             self.p_bar_set_n(i + 1)
             self.p_bar_set_postfix_str(f"Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%")
@@ -400,9 +400,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             self.apply_op(last_op)
             self.apply_metadata["n_contracted_operations"] = self.apply_metadata.get("n_contracted_operations", 0) + 1
         self.apply_metadata["percentage_contracted"] = (
-                100
-                * (self.apply_metadata["n_operations"] - self.apply_metadata.get("n_contracted_operations", 0))
-                / max(self.apply_metadata["n_operations"], 1)
+            100
+            * (self.apply_metadata["n_operations"] - self.apply_metadata.get("n_contracted_operations", 0))
+            / max(self.apply_metadata["n_operations"], 1)
         )
 
         self.p_bar_set_n(self.apply_metadata["n_operations"])
@@ -536,10 +536,10 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         )
 
     def get_states_probability(
-            self,
-            target_binary_states: TensorLike,
-            batch_wires: Optional[Wires] = None,
-            **kwargs,
+        self,
+        target_binary_states: TensorLike,
+        batch_wires: Optional[Wires] = None,
+        **kwargs,
     ):
         """
         Calculates the probability of the provided binary states with respect to the
@@ -902,7 +902,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             circuit.measurements[0].obs, (Hamiltonian, Sum)
         )
         single_hamiltonian_with_grouping_known = (
-                single_hamiltonian and circuit.measurements[0].obs.grouping_indices is not None
+            single_hamiltonian and circuit.measurements[0].obs.grouping_indices is not None
         )
 
         if not getattr(self, "use_grouping", True) and single_hamiltonian and all_obs_usable:

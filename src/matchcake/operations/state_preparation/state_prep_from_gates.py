@@ -1,10 +1,10 @@
 from functools import cached_property
-from typing import Optional, Callable, Any, List, Dict, Iterator
+from typing import Any, Callable, Dict, Iterator, List, Optional
 
 import numpy as np
 import pennylane as qml
 from pennylane import BasisState, X
-from pennylane.operation import StatePrepBase, Operation
+from pennylane.operation import Operation, StatePrepBase
 from pennylane.wires import WiresLike
 
 from matchcake.typing import TensorLike
@@ -13,18 +13,18 @@ from matchcake.typing import TensorLike
 class StatePrepFromGates(StatePrepBase):
     @staticmethod
     def compute_decomposition(
-            *params: TensorLike,
-            wires: Optional[WiresLike] = None,
-            **hyperparameters: Dict[str, Any],
+        *params: TensorLike,
+        wires: Optional[WiresLike] = None,
+        **hyperparameters: Dict[str, Any],
     ) -> List[Operation]:
         gate_generator: Callable[[WiresLike], Iterator[Operation]] = hyperparameters["gate_generator"]
         return [op for op in gate_generator(wires)]
 
     def __init__(
-            self,
-            gate_generator: Callable[[WiresLike], Iterator[Operation]],
-            wires: Optional[WiresLike] = None,
-            id: Optional[str] = None,
+        self,
+        gate_generator: Callable[[WiresLike], Iterator[Operation]],
+        wires: Optional[WiresLike] = None,
+        id: Optional[str] = None,
     ):
         super().__init__(wires=wires, id=id)
         self.gate_generator = gate_generator

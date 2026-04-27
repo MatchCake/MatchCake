@@ -5,11 +5,11 @@ from pennylane.ops.op_math import Prod
 from pennylane.ops.qubit import Projector
 from pennylane.pauli import pauli_sentence, pauli_word_to_string
 
-from .expval_strategy import ExpvalStrategy
 from ...observables.batch_hamiltonian import BatchHamiltonian
 from ...operations.state_preparation import StatePrepFromGates
 from ...typing import TensorLike
 from ...utils import get_eigvals_on_z_basis
+from .expval_strategy import ExpvalStrategy
 
 
 class ExpvalFromProbabilitiesStrategy(ExpvalStrategy):
@@ -39,9 +39,9 @@ class ExpvalFromProbabilitiesStrategy(ExpvalStrategy):
         return probs
 
     def can_execute(
-            self,
-            state_prep_op: StatePrepBase,
-            observable: Operator,
+        self,
+        state_prep_op: StatePrepBase,
+        observable: Operator,
     ) -> bool:
         if isinstance(observable, (Projector,)):
             return False

@@ -5,9 +5,9 @@ from pennylane.operation import StatePrepBase
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 
-from .probability_strategy import ProbabilityStrategy
 from ... import utils
 from ...base.lookup_table import NonInteractingFermionicLookupTable
+from .probability_strategy import ProbabilityStrategy
 
 
 class LookupTableStrategy(ProbabilityStrategy):
@@ -15,12 +15,12 @@ class LookupTableStrategy(ProbabilityStrategy):
     REQUIRES_KWARGS = ["lookup_table", "pfaffian_method"]
 
     def __call__(
-            self,
-            *,
-            state_prep_op: StatePrepBase,
-            target_binary_state: TensorLike,
-            wires: Wires,
-            **kwargs,
+        self,
+        *,
+        state_prep_op: StatePrepBase,
+        target_binary_state: TensorLike,
+        wires: Wires,
+        **kwargs,
     ) -> TensorLike:
         self.check_required_kwargs(kwargs)
         if isinstance(wires, int):
@@ -44,12 +44,12 @@ class LookupTableStrategy(ProbabilityStrategy):
         return prob
 
     def batch_call(
-            self,
-            *,
-            state_prep_op: StatePrepBase,
-            target_binary_states: TensorLike,
-            batch_wires: Optional[Wires] = None,
-            **kwargs,
+        self,
+        *,
+        state_prep_op: StatePrepBase,
+        target_binary_states: TensorLike,
+        batch_wires: Optional[Wires] = None,
+        **kwargs,
     ) -> TensorLike:
         self.check_required_kwargs(kwargs)
 

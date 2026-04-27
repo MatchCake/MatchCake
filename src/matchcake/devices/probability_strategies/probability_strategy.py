@@ -32,24 +32,24 @@ class ProbabilityStrategy(ABC):
 
     @abstractmethod
     def __call__(
-            self,
-            *,
-            # system_state: TensorLike,
-            state_prep_op: StatePrepBase,
-            target_binary_state: TensorLike,
-            wires: Wires,
-            **kwargs,
+        self,
+        *,
+        # system_state: TensorLike,
+        state_prep_op: StatePrepBase,
+        target_binary_state: TensorLike,
+        wires: Wires,
+        **kwargs,
     ) -> TensorLike:
         raise NotImplementedError("This method should be implemented by the subclass.")
 
     def batch_call(
-            self,
-            *,
-            # system_state: TensorLike,
-            state_prep_op: StatePrepBase,
-            target_binary_states: TensorLike,
-            batch_wires: Wires,
-            **kwargs,
+        self,
+        *,
+        # system_state: TensorLike,
+        state_prep_op: StatePrepBase,
+        target_binary_states: TensorLike,
+        batch_wires: Wires,
+        **kwargs,
     ) -> TensorLike:
         if qml.math.shape(target_binary_states) != qml.math.shape(batch_wires):
             raise ValueError(

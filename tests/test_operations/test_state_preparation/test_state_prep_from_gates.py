@@ -1,10 +1,12 @@
 import numpy as np
 import pennylane as qml
 import pytest
-from pennylane import X, H
+from pennylane import H, X
 
 from matchcake import NonInteractingFermionicDevice
-from matchcake.operations.state_preparation.state_prep_from_gates import StatePrepFromGates
+from matchcake.operations.state_preparation.state_prep_from_gates import (
+    StatePrepFromGates,
+)
 
 
 class TestStatePrepFromGates:
@@ -29,8 +31,8 @@ class TestStatePrepFromGates:
         [
             ([X, X, X, X], [0, 0, 0, 1]),
             ([X, qml.Identity, qml.Identity, X], [0, 0, 1, 0]),
-            ([qml.Identity, qml.Identity, qml.Identity, qml.Identity], [1, 0, 0, 0])
-        ]
+            ([qml.Identity, qml.Identity, qml.Identity, qml.Identity], [1, 0, 0, 0]),
+        ],
     )
     def test_execute_with_prob(self, gates, probs):
         def gate_generator(wires):
