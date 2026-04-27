@@ -5,13 +5,13 @@ on:
     branches: [ "*" ]
 
 permissions:
-    contents: write
-    pull-requests: write
-    actions: write
-    checks: write
-    statuses: write
-    issues: write
-    discussions: write
+  contents: write
+  pull-requests: write
+  actions: write
+  checks: write
+  statuses: write
+  issues: write
+  discussions: write
 
 jobs:
   Run-tests-on-Ubuntu:
@@ -22,62 +22,62 @@ jobs:
         python-version: [ "3.11", "3.12", "3.13", "3.14", ]
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install uv
-      uses: astral-sh/setup-uv@v6
-      with:
-        version: "0.9.2"
-        python-version: ${{ matrix.python-version }}
-        enable-cache: true
-    - name: Install dependencies
-      run: |
-        uv venv .venv
-        uv sync --locked --dev --extra cpu
-    - name: Test Linting
-      run: |
-        uv run black src tests --check --diff
-        uv run isort src tests --check-only --diff
-    - name: Test Typing
-      continue-on-error: true
-      run: |
-        uv run mypy src tests
-    - name: Test Unittests with pytest
-      run: |
-        # TODO: add -n=auto when possible
-        uv run pytest tests \
-          ${{ github.event.pull_request.head.repo.full_name != github.repository && '--cov-fail-under=98' || '' }} \
-          --cov=src --cov-branch --cov-report="xml:tests/.tmp/coverage.xml" --cov-report=term-missing --durations=30 --session-timeout=600
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.2"
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - name: Install dependencies
+        run: |
+          uv venv .venv
+          uv sync --locked --dev --extra cpu
+      - name: Test Linting
+        run: |
+          uv run black src tests --check --diff
+          uv run isort src tests --check-only --diff
+      - name: Test Typing
+        continue-on-error: true
+        run: |
+          uv run mypy src tests
+      - name: Test Unittests with pytest
+        run: |
+          # TODO: add -n=auto when possible
+          uv run pytest tests \
+            ${{ github.event.pull_request.head.repo.full_name != github.repository && '--cov-fail-under=98' || '' }} \
+            --cov=src --cov-branch --cov-report="xml:tests/.tmp/coverage.xml" --cov-report=term-missing --durations=30 --session-timeout=600
 
-    - name: Debug coverage before upload
-      if: matrix.python-version == '3.11'
-      run: |
-        echo "=== Coverage summary ==="
-        head -5 tests/.tmp/coverage.xml
+      - name: Debug coverage before upload
+        if: matrix.python-version == '3.11'
+        run: |
+          echo "=== Coverage summary ==="
+          head -5 tests/.tmp/coverage.xml
 
-    - name: Upload coverage artifact
-      if: |
-        matrix.python-version == '3.11' &&
-        github.event.pull_request.head.repo.full_name == github.repository
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage
-        path: tests/.tmp/coverage.xml
-        if-no-files-found: error
-        retention-days: 1
+      - name: Upload coverage artifact
+        if: |
+          matrix.python-version == '3.11' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: tests/.tmp/coverage.xml
+          if-no-files-found: error
+          retention-days: 1
 
-    - name: Test Notebooks
-      run: |
-        uv run pytest --nbmake tutorials -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
+      - name: Test Notebooks
+        run: |
+          uv run pytest --nbmake tutorials -n=auto --nbmake-kernel=python3 --nbmake-timeout=600  # 10 minutes timeout
 
-    - name: Test Build
-      if: ${{ matrix.python-version == '3.11' }}
-      run: |
-        uv run python -m build --sdist --wheel --no-isolation --outdir dist/ .
-        uv run twine check dist/*
+      - name: Test Build
+        if: ${{ matrix.python-version == '3.11' }}
+        run: |
+          uv run python -m build --sdist --wheel --no-isolation --outdir dist/ .
+          uv run twine check dist/*
 
   Run-tests-on-Windows:
     name: Run tests on Windows-latest
@@ -87,25 +87,25 @@ jobs:
         python-version: [ "3.11", "3.12", "3.13", "3.14", ]
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install uv
-      uses: astral-sh/setup-uv@v6
-      with:
-        version: "0.9.2"
-        python-version: ${{ matrix.python-version }}
-        enable-cache: true
-    - name: Install dependencies
-      run: |
-        uv venv .venv
-        uv sync --locked --dev --extra cpu
-    - name: Test Unittests with pytest
-      run: |
-        # TODO: add -n=auto when possible
-        uv run pytest tests --session-timeout=600
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.2"
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - name: Install dependencies
+        run: |
+          uv venv .venv
+          uv sync --locked --dev --extra cpu
+      - name: Test Unittests with pytest
+        run: |
+          # TODO: add -n=auto when possible
+          uv run pytest tests --session-timeout=600
 
 
   Coverage:
@@ -128,7 +128,7 @@ jobs:
         with:
           path: tests/.tmp
           name: coverage
-      - run : ls -R tests/.tmp
+      - run: ls -R tests/.tmp
       - name: Debug coverage file
         run: cat tests/.tmp/coverage.xml | head -50
       - name: Post coverage
@@ -136,6 +136,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           coverageFile: tests/.tmp/coverage.xml
-          thresholdAll: 0.85
+          thresholdAll: 0.88
           thresholdNew: 0.98
-          thresholdModified: 0.85
+          thresholdModified: 0.88

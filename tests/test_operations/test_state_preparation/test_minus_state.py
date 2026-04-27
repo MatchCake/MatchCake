@@ -8,7 +8,7 @@ from matchcake.operations.state_preparation.minus_state import MinusState
 from tests.configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
 
 
-class TestNIFDeviceMinusState:
+class TestMinusState:
     @pytest.mark.parametrize("num_wires", [2, 3, 4, 5])
     def test_state_vector(self, num_wires):
         qubit_dev = qml.device("lightning.qubit", wires=num_wires)
@@ -43,3 +43,7 @@ class TestNIFDeviceMinusState:
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
+
+    def test_label(self):
+        op = MinusState(wires=[0, 1])
+        assert "-" in op.label()
