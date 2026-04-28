@@ -81,7 +81,9 @@ jobs:
 
   Run-tests-on-Windows:
     name: Run tests on Windows-latest
+    needs: [ Run-tests-on-Ubuntu ]
     runs-on: windows-latest
+    if: success()
     strategy:
       matrix:
         python-version: [ "3.11", "3.12", "3.13", "3.14", ]
