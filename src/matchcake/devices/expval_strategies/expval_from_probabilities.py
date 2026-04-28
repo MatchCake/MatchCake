@@ -1,5 +1,3 @@
-from typing import Union
-
 import pennylane as qml
 import torch
 from pennylane.operation import Operator, StatePrepBase, TermsUndefinedError
@@ -8,6 +6,7 @@ from pennylane.ops.qubit import Projector
 from pennylane.pauli import pauli_sentence, pauli_word_to_string
 
 from ...observables.batch_hamiltonian import BatchHamiltonian
+from ...operations.state_preparation import StatePrepFromGates
 from ...typing import TensorLike
 from ...utils import get_eigvals_on_z_basis
 from .expval_strategy import ExpvalStrategy
@@ -46,6 +45,9 @@ class ExpvalFromProbabilitiesStrategy(ExpvalStrategy):
     ) -> bool:
         if isinstance(observable, (Projector,)):
             return False
+        if isinstance(state_prep_op, StatePrepFromGates):
+            if not state_prep_op.is_basis_state:
+                return False
         pauli_kinds = [pauli_word_to_string(op) for op in pauli_sentence(observable)]
         return all((len(set(p) - {"Z", "I"}) == 0) for p in pauli_kinds)
 

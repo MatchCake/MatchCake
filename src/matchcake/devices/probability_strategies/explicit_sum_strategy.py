@@ -1,15 +1,14 @@
 import warnings
-from typing import Callable
 
 import numpy as np
 import pennylane as qml
 import pythonbasictools as pbt
 from pennylane import numpy as pnp
+from pennylane.operation import StatePrepBase
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 
 from ... import utils
-from ...base.lookup_table import NonInteractingFermionicLookupTable
 from .probability_strategy import ProbabilityStrategy
 
 
@@ -39,7 +38,7 @@ class ExplicitSumStrategy(ProbabilityStrategy):
     def __call__(
         self,
         *,
-        system_state: TensorLike,
+        state_prep_op: StatePrepBase,
         target_binary_state: TensorLike,
         wires: Wires,
         **kwargs,
@@ -62,6 +61,7 @@ class ExplicitSumStrategy(ProbabilityStrategy):
                 UserWarning,
             )
 
+        system_state = self.system_basis_state_from_state_prep_op(state_prep_op)
         ket_majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(system_state)
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
         zero_state = self._create_basis_state(0, num_wires).flatten()
