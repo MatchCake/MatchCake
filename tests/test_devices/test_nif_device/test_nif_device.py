@@ -1,5 +1,8 @@
 import numpy as np
 import pytest
+import torch
+from pennylane import BasisState
+from pennylane.exceptions import DeviceError
 
 from matchcake import NonInteractingFermionicDevice
 from matchcake.base import NonInteractingFermionicLookupTable
@@ -47,3 +50,22 @@ class TestNonInteractingFermionicDevice:
         dev.compute_star_state()
         prob = dev.star_probability
         np.testing.assert_allclose(prob, 1.0)
+
+    def test_apply_two_state_prep_op(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        dev.apply_state_prep(BasisState(np.array([0, 1]), wires=dev.wires), index=0)
+        with pytest.raises(DeviceError):
+            dev.apply_state_prep(BasisState(np.array([0, 1]), wires=dev.wires), index=1)
+
+    def test_transition_matrix_property_setter(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        dev.apply_op(SingleParticleTransitionMatrixOperation(np.eye(4), wires=dev.wires).to_torch())
+        dev.transition_matrix = np.eye(4)
+        assert isinstance(dev.transition_matrix, torch.Tensor)
+        assert dev._lookup_table is None
+
+    def test__dot(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        a = torch.tensor([1, 2, 3]).reshape(1, -1).to(dev.R_DTYPE)
+        b = torch.tensor([4, 5, 6]).reshape(1, -1).to(dev.R_DTYPE)
+        torch.testing.assert_close(dev._dot(a, b), torch.einsum("...i,...i->...", a, b))

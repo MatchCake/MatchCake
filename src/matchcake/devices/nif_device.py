@@ -367,7 +367,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             self.apply_metadata["n_operations"] = i + 1
             self.p_bar_set_total(max(i + 1, total))
             if isinstance(op, qml.Identity):
-                continue
+                continue  # pragma: no cover
             is_prep = self.apply_state_prep(op, index=i)
             if is_prep:
                 continue
@@ -385,7 +385,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             self.p_bar_set_n(i + 1)
             self.p_bar_set_postfix_str(f"Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%")
             if kwargs.get("gc_op", False):
-                del op
+                del op  # pragma: no cover
 
         self.p_bar_set_total(self.apply_metadata["n_operations"])
         last_op = self.contraction_strategy.get_reminding()
@@ -457,7 +457,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         """
 
         if kwargs.get("index", 0) > 0 and isinstance(operation, StatePrepBase):
-            raise qml.DeviceError(
+            raise DeviceError(
                 f"Operation {operation.name} cannot be used after other Operations have already been applied "
                 f"on a {self.short_name} device."
             )
@@ -937,8 +937,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
 
     @transition_matrix.setter
     def transition_matrix(self, value):
-        if self._transition_matrix is not None and value is not None:
-            value = convert_and_cast_like(value, self._transition_matrix)
+        if all([a is not None for a in (self._global_sptm, value)]):
+            value = convert_and_cast_like(value, self._global_sptm.matrix())
         self._transition_matrix = value
         self._lookup_table = None
 
