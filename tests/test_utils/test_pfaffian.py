@@ -78,3 +78,9 @@ class TestPfaffian:
             atol=ATOL_APPROX_COMPARISON,
             rtol=10 * RTOL_APPROX_COMPARISON,
         )
+
+
+class TestPfaffianExtended:
+    def test_invalid_method(self):
+        with pytest.raises(ValueError):
+            utils.pfaffian(np.random.rand(2, 2), method="invalid_method")

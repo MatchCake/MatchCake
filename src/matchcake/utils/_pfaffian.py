@@ -66,7 +66,7 @@ def pfaffian_by_det_cuda(
     p_bar: Optional[tqdm.tqdm] = None,
     show_progress: bool = False,
     epsilon: float = 1e-32,
-) -> TensorLike:
+) -> TensorLike:  # pragma: no cover
     shape = qml.math.shape(__matrix)
     p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)
     p_bar.set_description(f"[cuda_det] Computing determinant of {shape} matrix")
@@ -122,7 +122,7 @@ def pfaffian(
 
     if method == "det":
         return pfaffian_by_det(__matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon)
-    elif method == "cuda_det":
+    elif method == "cuda_det":  # pragma: no cover
         return pfaffian_by_det_cuda(__matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon)
     elif method == "PfaffianFDBPf":
         torch_pfaffian.PfaffianStrategy.EPSILON = epsilon
