@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import torch
+from pennylane import BasisState
 from scipy.linalg import expm
 from torch.autograd import gradcheck
 
@@ -67,7 +68,7 @@ class TestNonInteractingFermionicLookupTableGradients:
             lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
             lookup_table_strategy = LookupTableStrategy()
             probs = lookup_table_strategy.batch_call(
-                system_state=system_state,
+                state_prep_op=BasisState(system_state, wires=np.arange(len(system_state))),
                 target_binary_states=target_binary_states,
                 batch_wires=None,
                 pfaffian_method="det",
