@@ -7,6 +7,7 @@ from pennylane.ops.qubit import Projector
 from pennylane.pauli import pauli_word_to_string
 
 from .... import utils
+from ....operations.state_preparation.state_prep_from_gates import StatePrepFromGates
 from ....typing import TensorLike
 from ....utils.majorana import majorana_to_pauli
 from ....utils.torch_utils import to_tensor
@@ -27,8 +28,13 @@ class CliffordExpvalStrategy(ExpvalStrategy):
             if isinstance(state_prep_op, BasisState):
                 for op in state_prep_op.decomposition():
                     op.queue()
+            elif isinstance(state_prep_op, StatePrepFromGates):
+                for op in state_prep_op.decomposition_generator():
+                    op.queue()
             else:
-                raise NotImplementedError("Only BasisState is implemented for Clifford subroutine.")
+                raise NotImplementedError(
+                    "Only BasisState & StatePrepFromGates are implemented for Clifford subroutine."
+                )
             return [qml.expval(majorana_to_pauli(mu) @ majorana_to_pauli(nu)) for mu, nu in zip(*triu_indices)]
 
         return clifford_circuit()

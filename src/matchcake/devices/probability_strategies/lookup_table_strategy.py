@@ -1,7 +1,7 @@
-from typing import Callable, Optional
+from typing import Optional
 
-import numpy as np
 import pennylane as qml
+from pennylane.operation import StatePrepBase
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 
@@ -17,7 +17,7 @@ class LookupTableStrategy(ProbabilityStrategy):
     def __call__(
         self,
         *,
-        system_state: TensorLike,
+        state_prep_op: StatePrepBase,
         target_binary_state: TensorLike,
         wires: Wires,
         **kwargs,
@@ -33,6 +33,7 @@ class LookupTableStrategy(ProbabilityStrategy):
         pfaffian_method: str = kwargs["pfaffian_method"]
 
         show_progress = kwargs.get("show_progress", False)
+        system_state = self.system_basis_state_from_state_prep_op(state_prep_op)
         obs = lookup_table.compute_observable_of_target_state(
             system_state,
             target_binary_state,
@@ -45,7 +46,7 @@ class LookupTableStrategy(ProbabilityStrategy):
     def batch_call(
         self,
         *,
-        system_state: TensorLike,
+        state_prep_op: StatePrepBase,
         target_binary_states: TensorLike,
         batch_wires: Optional[Wires] = None,
         **kwargs,
@@ -56,6 +57,7 @@ class LookupTableStrategy(ProbabilityStrategy):
         pfaffian_method: str = kwargs["pfaffian_method"]
 
         show_progress = kwargs.get("show_progress", False)
+        system_state = self.system_basis_state_from_state_prep_op(state_prep_op)
         batch_obs = lookup_table(
             system_state,
             target_binary_states,
