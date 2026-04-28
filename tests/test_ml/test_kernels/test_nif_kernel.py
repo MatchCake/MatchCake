@@ -1,9 +1,9 @@
 from unittest.mock import MagicMock
 
 import numpy as np
+import pennylane as qml
 import pytest
 import torch
-import pennylane as qml
 
 from matchcake import MatchgateOperation, NonInteractingFermionicDevice
 from matchcake.ml.kernels import NIFKernel
@@ -59,7 +59,7 @@ class TestNIFKernel:
         """
         wires = list(range(n_qubits))
         sptm0 = SingleParticleTransitionMatrixOperation.random_params(batch_size=10, seed=seed, wires=wires)
-        sptm1 = SingleParticleTransitionMatrixOperation.random_params(batch_size=10, seed=seed+1, wires=wires)
+        sptm1 = SingleParticleTransitionMatrixOperation.random_params(batch_size=10, seed=seed + 1, wires=wires)
         kernel = NIFKernel(n_qubits=len(wires))
 
         def qnode_wrapper(*args, **kwargs):
@@ -73,5 +73,3 @@ class TestNIFKernel:
 
         global_sptm = kernel.q_device.global_sptm.matrix()
         np.testing.assert_allclose(matmul(sptm0, dagger(sptm1)), global_sptm)
-
-

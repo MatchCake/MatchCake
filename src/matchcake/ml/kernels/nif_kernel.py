@@ -157,7 +157,9 @@ class NIFKernel(Kernel):
             circuit.
         """
         yield SingleParticleTransitionMatrixOperation(sptm0, wires=self.wires)
-        yield qml.adjoint(SingleParticleTransitionMatrixOperation)(sptm1, wires=self.wires)
+        with qml.QueuingManager.stop_recording():
+            sptm1_instance = SingleParticleTransitionMatrixOperation(sptm1, wires=self.wires)
+        yield sptm1_instance.adjoint()
         return
 
     def _x_to_sptm(self, x: TensorLike) -> TensorLike:
