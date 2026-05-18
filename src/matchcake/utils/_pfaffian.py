@@ -1,3 +1,4 @@
+import threading
 from typing import Literal, Optional
 
 import numpy as np
@@ -9,6 +10,8 @@ from pennylane.typing import TensorLike
 
 from . import torch_utils
 from .math import convert_and_cast_like
+
+_pfaffian_fdbpf_lock = threading.Lock()
 
 
 def pfaffian_by_det(
@@ -125,7 +128,8 @@ def pfaffian(
     elif method == "cuda_det":  # pragma: no cover
         return pfaffian_by_det_cuda(__matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon)
     elif method == "PfaffianFDBPf":
-        torch_pfaffian.PfaffianStrategy.EPSILON = epsilon
-        pf = torch_pfaffian.get_pfaffian_function(method)(torch_utils.to_tensor(__matrix, dtype=torch.complex128))
+        with _pfaffian_fdbpf_lock:
+            torch_pfaffian.PfaffianStrategy.EPSILON = epsilon
+            pf = torch_pfaffian.get_pfaffian_function(method)(torch_utils.to_tensor(__matrix, dtype=torch.complex128))
         return convert_and_cast_like(pf, __matrix)
     raise ValueError(f"Invalid method. Got {method}, must be 'det', 'cuda_det', or 'PfaffianFDBPf'.")
