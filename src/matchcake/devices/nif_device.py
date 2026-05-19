@@ -5,9 +5,11 @@ from typing import Iterable, List, Literal, Optional, Union
 import numpy as np
 import torch
 import tqdm
+from pennylane import BasisState
 from pennylane.exceptions import DeviceError
 
 from ..operations.state_preparation import StatePrepFromGates
+from ..operations.state_preparation import ProductState
 from ..typing import TensorLike
 from .expval_strategies.clifford_expval.clifford_expval_strategy import (
     CliffordExpvalStrategy,
@@ -246,7 +248,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self.apply_metadata = defaultdict()
         self.clifford_expval_strategy = CliffordExpvalStrategy()
         self.expval_from_probabilities_strategy = ExpvalFromProbabilitiesStrategy()
-        self._state_prep_op = qml.BasisState(np.zeros(self.num_wires, dtype=int), wires=self.wires)
+        self._state_prep_op = ProductState.from_basis_state(
+            np.zeros(self.num_wires, dtype=int), wires=self.wires
+        )
 
     def apply(self, operations, rotations=None, **kwargs):
         """
@@ -463,7 +467,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             )
 
         is_applied = True
-        if isinstance(operation, StatePrepBase):
+        if isinstance(operation, BasisState):
+            self._state_prep_op = ProductState.from_basis_state(operation)
+        elif isinstance(operation, StatePrepBase):
             self._state_prep_op = operation
         else:
             is_applied = False
@@ -736,8 +742,6 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     def reset(self):
         """Reset the device"""
         super().reset()
-        self._binary_state = None
-        self._basis_state_index = 0
         self._global_sptm = None
         self._batched = False
         self._transition_matrix = None
@@ -747,6 +751,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self._samples = None
         self.apply_metadata = defaultdict()
         self.contraction_strategy.reset()
+        self._state_prep_op = ProductState.from_basis_state(
+            np.zeros(self.num_wires, dtype=int), wires=self.wires
+        )
 
     def update_p_bar(self, *args, **kwargs):
         if self.p_bar is None:
@@ -981,3 +988,11 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     @property
     def state_prep_op(self) -> StatePrepBase:
         return self._state_prep_op
+
+    @property
+    def covariance_matrix(self):
+        if not isinstance(self.state_prep_op, ProductState):
+            raise ValueError(f"Covariance matrix can only be computed for product states. Got {type(self.state_prep_op)} instead of ProductState.")
+        cov0 = self.state_prep_op.covariance_matrix
+        q = self.global_sptm.matrix(self.wires)
+        return qml.math.einsum("...ij,ik,...kl->...jl", q, cov0, q)

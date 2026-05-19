@@ -10,9 +10,9 @@ from pennylane.wires import Wires, WiresLike
 
 
 class ProductState(StatePrepBase):
-    num_wires = qml.operation.AnyWires
+    num_wires = None
     grad_method = None
-    ATOL = 1e-8
+    ATOL = 1e-12
 
     @staticmethod
     def compute_decomposition(state, wires):
@@ -27,6 +27,44 @@ class ProductState(StatePrepBase):
         for k, w in enumerate(wires):
             ops.append(qml.StatePrep(state[k], wires=[w]))
         return ops
+
+
+    @classmethod
+    def from_basis_state(
+            cls,
+            basis_state,
+            wires: Optional[WiresLike] = None,
+    ) -> "ProductState":
+        r"""
+        Construct a :class:`ProductState` from a computational-basis state.
+
+        :param basis_state: A :class:`pennylane.BasisState` operation **or** a
+            1-D integer tensor-like of length ``n`` whose :math:`k`-th entry is
+            0 or 1 (the bit for qubit *k*).
+        :param wires: Wire labels for the resulting operation.  Ignored when
+            *basis_state* is a :class:`~pennylane.BasisState` (the wires are
+            taken from that object instead).
+        :returns: A :class:`ProductState` encoding the same computational-basis
+            state.
+        """
+        if isinstance(basis_state, qml.BasisState):
+            bits = qml.math.toarray(basis_state.parameters[0]).astype(int)
+            wires = basis_state.wires
+        else:
+            assert wires is not None, "Must provide wires if basis_state is not a BasisState"
+            bits = qml.math.toarray(qml.math.asarray(basis_state)).astype(int)
+            wires = Wires(wires)
+
+        n = len(wires)
+        if bits.shape != (n,):
+            raise ValueError(
+                f"basis_state must have shape ({n},) matching wires, got {tuple(bits.shape)}."
+            )
+        # |0> -> [1, 0],  |1> -> [0, 1]
+        state = np.zeros((n, 2), dtype=complex)
+        state[bits == 0, 0] = 1.0
+        state[bits == 1, 1] = 1.0
+        return cls(state, wires=wires, validate_norm=False)
 
 
     def __init__(
