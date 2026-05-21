@@ -11,6 +11,106 @@ from pennylane.typing import TensorLike
 from . import torch_utils
 from .math import convert_and_cast_like
 
+
+def signed_pfaffian(matrix: TensorLike) -> TensorLike:
+    """
+    Compute the signed Pfaffian of a real antisymmetric matrix (or batch).
+
+    Processes each element of the batch independently using the Parlett-Reid
+    algorithm (skew-tridiagonalization with partial pivoting). Supports
+    arbitrary leading batch dimensions.
+
+    :param matrix: Real antisymmetric matrix of even size (..., 2k, 2k).
+    :return: Signed Pfaffian of shape (...,).
+    """
+    if not isinstance(matrix, torch.Tensor):
+        matrix = torch.as_tensor(np.array(matrix), dtype=torch.float64)
+    A = matrix.to(torch.float64)
+    shape = A.shape
+    n = shape[-1]
+
+    if n == 0:
+        return torch.ones(shape[:-2], dtype=A.dtype, device=A.device)
+    if n % 2 == 1:
+        return torch.zeros(shape[:-2], dtype=A.dtype, device=A.device)
+
+    batch_shape = shape[:-2]
+    # Flatten batch dims for uniform processing
+    A_flat = A.reshape(-1, n, n).clone()  # (B, n, n)
+    B = A_flat.shape[0]
+    pf_flat = torch.ones(B, dtype=A.dtype, device=A.device)
+
+    for b in range(B):
+        M = A_flat[b]
+        sign = 1.0
+        for i in range(0, n - 2, 2):
+            # Pivot: find row with max |M[j, i]| for j > i+1
+            col_abs = M[i + 2:, i].abs()
+            p_rel = int(torch.argmax(col_abs).item())
+            p = p_rel + i + 2
+            if p != i + 1 and col_abs[p_rel].item() > abs(M[i + 1, i].item()):
+                # Congruence swap: rows/cols i+1 <-> p
+                M[[i + 1, p], :] = M[[p, i + 1], :]
+                M[:, [i + 1, p]] = M[:, [p, i + 1]]
+                sign *= -1.0
+            # Schur complement elimination
+            pivot_val = M[i + 1, i].item()
+            if abs(pivot_val) < 1e-300:
+                sign = 0.0
+                break
+            tau = M[i + 2:, i] / pivot_val          # (n-i-2,)
+            row_ip1 = M[i + 1, i + 2:]               # (n-i-2,)
+            col_ip1 = M[i + 2:, i + 1]               # (n-i-2,)
+            M[i + 2:, i + 2:] += (
+                torch.outer(tau, col_ip1) - torch.outer(col_ip1, tau)
+            )
+            M[i + 2:, i] = 0.0
+            M[i, i + 2:] = 0.0
+            M[i + 2:, i + 1] = 0.0
+            M[i + 1, i + 2:] = 0.0
+
+        # Product of super-diagonal entries
+        pf_T = 1.0
+        for i in range(0, n, 2):
+            pf_T *= M[i, i + 1].item()
+        pf_flat[b] = sign * pf_T
+
+    result = pf_flat.reshape(batch_shape if batch_shape else ())
+    return convert_and_cast_like(result, matrix)
+
+
+def sector_pfaffian_features(
+    Lambda: TensorLike,
+    S_list: np.ndarray,
+) -> TensorLike:
+    """
+    Return (..., K) tensor of signed Pfaffians of (m x m) principal submatrices.
+
+    :param Lambda: (..., D, D) antisymmetric matrix (or batch).
+    :param S_list: (K, m) integer array of index tuples.
+    :return: (..., K) Pfaffians.
+    """
+    Lambda_t = torch.as_tensor(
+        np.array(Lambda) if not isinstance(Lambda, torch.Tensor) else Lambda,
+        dtype=torch.float64,
+    )
+    S = np.asarray(S_list)  # (K, m)
+    K, m = S.shape
+    rows = S[:, :, None]  # (K, m, 1)
+    cols = S[:, None, :]  # (K, 1, m)
+    sub = Lambda_t[..., rows, cols]  # (..., K, m, m)
+
+    if m == 2:
+        # Fast path: Pf of 2x2 [[0, a], [-a, 0]] = a
+        result = sub[..., 0, 1]  # (..., K)
+    else:
+        # Compute signed Pfaffian for each element
+        batch_shape = sub.shape[:-2]
+        result = torch.stack(
+            [signed_pfaffian(sub[..., k, :, :]) for k in range(K)], dim=-1
+        )
+    return convert_and_cast_like(result, Lambda)
+
 _pfaffian_fdbpf_lock = threading.Lock()
 
 

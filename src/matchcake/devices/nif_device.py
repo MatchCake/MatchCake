@@ -15,6 +15,12 @@ from .expval_strategies.clifford_expval.clifford_expval_strategy import (
     CliffordExpvalStrategy,
 )
 from .expval_strategies.expval_from_probabilities import ExpvalFromProbabilitiesStrategy
+from .expval_strategies.m_pfaffian import MPfaffianExpvalStrategy
+from .expval_strategies.m_pfaffian._extended_covariance import (
+    displacement_vector as _displacement_vector,
+    extended_covariance_matrix as _extended_covariance_matrix,
+    sptm_lift as _sptm_lift,
+)
 
 try:
     from pennylane.ops import Hamiltonian
@@ -112,6 +118,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         "BasisEmbedding",
         "StatePrep",
         "BasisState",
+        ProductState.__name__,
     }
     observables = {
         "PauliX",
@@ -248,6 +255,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self.apply_metadata = defaultdict()
         self.clifford_expval_strategy = CliffordExpvalStrategy()
         self.expval_from_probabilities_strategy = ExpvalFromProbabilitiesStrategy()
+        self.m_pfaffian_expval_strategy = MPfaffianExpvalStrategy()
         self._state_prep_op = ProductState.from_basis_state(
             np.zeros(self.num_wires, dtype=int), wires=self.wires
         )
@@ -682,14 +690,23 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             return self.get_state_probability(observable.parameters[0], observable.wires)
         if isinstance(observable, BatchProjector):
             return self.get_states_probability(observable.get_states(), observable.get_batch_wires())
+        if self.m_pfaffian_expval_strategy.can_execute(self.state_prep_op, observable):
+            return self.m_pfaffian_expval_strategy(
+                self.state_prep_op,
+                observable,
+                extended_covariance_matrix=self.extended_covariance_matrix,
+            )
         if self.clifford_expval_strategy.can_execute(self.state_prep_op, observable):
             return self.clifford_expval_strategy(self.state_prep_op, observable, global_sptm=self.global_sptm.matrix())
         if self.expval_from_probabilities_strategy.can_execute(self.state_prep_op, observable):
             return self.expval_from_probabilities_strategy(self.state_prep_op, observable, prob_func=self.probability)
-        terms_splitter = TermsSplitter([self.clifford_expval_strategy, self.expval_from_probabilities_strategy])
+        terms_splitter = TermsSplitter([self.m_pfaffian_expval_strategy, self.clifford_expval_strategy, self.expval_from_probabilities_strategy])
         if terms_splitter.can_execute(self.state_prep_op, observable):
             return terms_splitter(
-                self.state_prep_op, observable, global_sptm=self.global_sptm.matrix(), prob_func=self.probability
+                self.state_prep_op, observable,
+                extended_covariance_matrix=self.extended_covariance_matrix,
+                global_sptm=self.global_sptm.matrix(),
+                prob_func=self.probability,
             )
 
         raise DeviceError(
@@ -996,3 +1013,36 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         cov0 = self.state_prep_op.covariance_matrix
         q = self.global_sptm.matrix(self.wires)
         return qml.math.einsum("...ij,ik,...kl->...jl", q, cov0, q)
+
+    @property
+    def extended_covariance_matrix(self):
+        """Extended (2n+1)x(2n+1) covariance matrix tilde_Lambda.
+
+        Lifts the standard covariance matrix by appending a displacement
+        column/row at position 2n (the parity index). Evolves the full
+        extended state under the matchgate SPTM as tilde_Q^T tilde_Lambda_0 tilde_Q.
+
+        BasisState inputs are promoted to ProductState first (displacement is zero).
+
+        See expval_from_mpf.md for the math.
+        """
+        state_prep = self.state_prep_op
+        if isinstance(state_prep, BasisState):
+            state_prep = ProductState.from_basis_state(state_prep)
+        if not isinstance(state_prep, ProductState):
+            raise ValueError(
+                f"Extended covariance matrix requires a ProductState or BasisState. "
+                f"Got {type(state_prep)}."
+            )
+        # Build tilde_Lambda_0 from the initial state
+        amplitudes = state_prep.data[0]       # (n, 2) complex
+        cov0 = state_prep.covariance_matrix    # (2n, 2n)
+        d0 = _displacement_vector(amplitudes, self.wires)  # (2n,)
+        tilde_Lambda_0 = _extended_covariance_matrix(cov0, d0)  # (2n+1, 2n+1)
+
+        # Lift SPTM: tilde_Q = Q ⊕ 1
+        q = self.global_sptm.matrix(self.wires)  # (2n, 2n)
+        tilde_Q = _sptm_lift(q)                  # (2n+1, 2n+1)
+
+        # Evolve: tilde_Lambda(t) = tilde_Q^T tilde_Lambda_0 tilde_Q
+        return qml.math.einsum("...ij,ik,...kl->...jl", tilde_Q, tilde_Lambda_0, tilde_Q)
