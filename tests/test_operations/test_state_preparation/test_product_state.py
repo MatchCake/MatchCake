@@ -148,22 +148,22 @@ class TestProductState:
             dtype=complex,
         )
         op = ProductState(state, wires=[0, 1, 2])
-        psi_op = np.asarray(op.state_vector())
+        psi_op = np.asarray(op.state_vector()).reshape(-1)
         psi_ref = _per_qubit_to_full_vector(state, n)
         np.testing.assert_allclose(psi_op, psi_ref, atol=1e-12)
 
     def test_state_vector_permutes_under_wire_order(self):
         # |0>|1> on wires [0, 1]; asking for wire_order [1, 0] should swap.
         op = ProductState(np.array([1, 0, 0, 1], dtype=complex), wires=[0, 1])
-        psi_ab = np.asarray(op.state_vector(wire_order=[0, 1]))  # |01>
-        psi_ba = np.asarray(op.state_vector(wire_order=[1, 0]))  # |10>
+        psi_ab = np.asarray(op.state_vector(wire_order=[0, 1])).reshape(-1)  # |01>
+        psi_ba = np.asarray(op.state_vector(wire_order=[1, 0])).reshape(-1)  # |10>
         np.testing.assert_allclose(psi_ab, np.array([0, 1, 0, 0], dtype=complex))
         np.testing.assert_allclose(psi_ba, np.array([0, 0, 1, 0], dtype=complex))
 
     def test_state_vector_embeds_into_larger_wire_order(self):
         # |1> on wire 1; ask for wire_order [0, 1, 2]: extra wires padded with |0>
         op = ProductState(np.array([0, 1], dtype=complex), wires=[1])
-        psi = np.asarray(op.state_vector(wire_order=[0, 1, 2]))
+        psi = np.asarray(op.state_vector(wire_order=[0, 1, 2])).reshape(-1)
         # Expected: |0>|1>|0> = index 010_b = 2
         expected = np.zeros(8, dtype=complex)
         expected[0b010] = 1.0

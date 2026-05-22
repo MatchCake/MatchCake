@@ -1,6 +1,7 @@
 from typing import Sequence
 
 import numpy as np
+import pennylane as qml
 import torch
 
 from ....typing import TensorLike
@@ -51,38 +52,35 @@ def displacement_vector(
 
 
 def extended_covariance_matrix(
-    Lambda: TensorLike,
+    cov_matrix: TensorLike,
     displacement: TensorLike,
 ) -> TensorLike:
-    """Return tilde_Lambda in R^{(2n+1) x (2n+1)} with the parity index at 2n.
+    """Return the extended covariance matrix in R^{(2n+1) x (2n+1)} with the parity index at 2n.
 
     Layout:
-        tilde_Lambda = [[ Lambda,  d   ],
-                        [ -d^T,    0   ]]
+        ext_cov_matrix = [[ cov_matrix,  d   ],
+                          [ -d^T,        0   ]]
 
-    :param Lambda: (..., 2n, 2n) real antisymmetric covariance matrix.
+    :param cov_matrix: (..., 2n, 2n) real antisymmetric covariance matrix.
     :param displacement: (..., 2n) real displacement vector d[mu] = <c_mu>.
     :return: (..., 2n+1, 2n+1) extended covariance matrix.
     """
-    Lambda_t = torch.as_tensor(
-        np.array(Lambda) if not isinstance(Lambda, torch.Tensor) else Lambda,
-        dtype=torch.float64,
-    )
+    cov_matrix_t = torch.as_tensor(qml.math.real(cov_matrix), dtype=torch.float64)
     d = torch.as_tensor(
         np.array(displacement) if not isinstance(displacement, torch.Tensor) else displacement,
         dtype=torch.float64,
     )
-    batch = Lambda_t.shape[:-2]
+    batch = cov_matrix_t.shape[:-2]
 
     d_col = d.unsqueeze(-1)          # (..., 2n, 1)
     neg_d_row = -d.unsqueeze(-2)     # (..., 1, 2n)
-    zero_corner = torch.zeros(*batch, 1, 1, dtype=torch.float64, device=Lambda_t.device)
+    zero_corner = torch.zeros(*batch, 1, 1, dtype=torch.float64, device=cov_matrix_t.device)
 
-    top = torch.cat([Lambda_t, d_col], dim=-1)           # (..., 2n, 2n+1)
-    bottom = torch.cat([neg_d_row, zero_corner], dim=-1)  # (..., 1,  2n+1)
-    tilde = torch.cat([top, bottom], dim=-2)              # (..., 2n+1, 2n+1)
+    top = torch.cat([cov_matrix_t, d_col], dim=-1)        # (..., 2n, 2n+1)
+    bottom = torch.cat([neg_d_row, zero_corner], dim=-1)   # (..., 1,  2n+1)
+    tilde = torch.cat([top, bottom], dim=-2)               # (..., 2n+1, 2n+1)
 
-    return convert_and_cast_like(tilde, Lambda)
+    return convert_and_cast_like(tilde, cov_matrix)
 
 
 def sptm_lift(Q: TensorLike) -> TensorLike:
@@ -97,10 +95,7 @@ def sptm_lift(Q: TensorLike) -> TensorLike:
     :param Q: (..., 2n, 2n) orthogonal SPTM.
     :return: (..., 2n+1, 2n+1) lifted SPTM.
     """
-    Q_t = torch.as_tensor(
-        np.array(Q) if not isinstance(Q, torch.Tensor) else Q,
-        dtype=torch.float64,
-    )
+    Q_t = torch.as_tensor(qml.math.real(Q), dtype=torch.float64)
     batch = Q_t.shape[:-2]
     two_n = Q_t.shape[-1]
 

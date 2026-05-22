@@ -24,7 +24,7 @@ def signed_pfaffian(matrix: TensorLike) -> TensorLike:
     :return: Signed Pfaffian of shape (...,).
     """
     if not isinstance(matrix, torch.Tensor):
-        matrix = torch.as_tensor(np.array(matrix), dtype=torch.float64)
+        matrix = torch.as_tensor(qml.math.real(matrix), dtype=torch.float64)
     A = matrix.to(torch.float64)
     shape = A.shape
     n = shape[-1]
@@ -80,36 +80,32 @@ def signed_pfaffian(matrix: TensorLike) -> TensorLike:
 
 
 def sector_pfaffian_features(
-    Lambda: TensorLike,
-    S_list: np.ndarray,
+    cov_matrix: TensorLike,
+    index_sets: np.ndarray,
 ) -> TensorLike:
     """
-    Return (..., K) tensor of signed Pfaffians of (m x m) principal submatrices.
+    Return (..., n_terms) tensor of signed Pfaffians of (submatrix_size x submatrix_size)
+    principal submatrices.
 
-    :param Lambda: (..., D, D) antisymmetric matrix (or batch).
-    :param S_list: (K, m) integer array of index tuples.
-    :return: (..., K) Pfaffians.
+    :param cov_matrix: (..., D, D) antisymmetric matrix (or batch).
+    :param index_sets: (n_terms, submatrix_size) integer array of Majorana index tuples.
+    :return: (..., n_terms) Pfaffians.
     """
-    Lambda_t = torch.as_tensor(
-        np.array(Lambda) if not isinstance(Lambda, torch.Tensor) else Lambda,
-        dtype=torch.float64,
-    )
-    S = np.asarray(S_list)  # (K, m)
-    K, m = S.shape
-    rows = S[:, :, None]  # (K, m, 1)
-    cols = S[:, None, :]  # (K, 1, m)
-    sub = Lambda_t[..., rows, cols]  # (..., K, m, m)
+    cov_matrix_t = torch.as_tensor(qml.math.real(cov_matrix), dtype=torch.float64)
+    index_sets = np.asarray(index_sets)                      # (n_terms, submatrix_size)
+    n_terms, submatrix_size = index_sets.shape
+    row_indices = index_sets[:, :, None]                     # (n_terms, submatrix_size, 1)
+    col_indices = index_sets[:, None, :]                     # (n_terms, 1, submatrix_size)
+    submatrices = cov_matrix_t[..., row_indices, col_indices]  # (..., n_terms, submatrix_size, submatrix_size)
 
-    if m == 2:
+    if submatrix_size == 2:
         # Fast path: Pf of 2x2 [[0, a], [-a, 0]] = a
-        result = sub[..., 0, 1]  # (..., K)
+        result = submatrices[..., 0, 1]  # (..., n_terms)
     else:
-        # Compute signed Pfaffian for each element
-        batch_shape = sub.shape[:-2]
         result = torch.stack(
-            [signed_pfaffian(sub[..., k, :, :]) for k in range(K)], dim=-1
+            [signed_pfaffian(submatrices[..., k, :, :]) for k in range(n_terms)], dim=-1
         )
-    return convert_and_cast_like(result, Lambda)
+    return convert_and_cast_like(result, cov_matrix)
 
 _pfaffian_fdbpf_lock = threading.Lock()
 

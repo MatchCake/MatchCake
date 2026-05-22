@@ -75,17 +75,22 @@ extensions = [
     'sphinx.ext.githubpages',
     # 'sphinx_rtd_theme',
     'sphinxcontrib.bibtex',
-    'sphinx_mdinclude',
-    # 'nbsphinx',
+    'myst_nb',
     'sphinx.ext.mathjax',
     # 'sphinx.ext.mathbase',
     'sphinx.ext.todo',
 ]
 
+nb_execution_mode = 'off'
+
+myst_enable_extensions = ['dollarmath', 'colon_fence']
+
 bibtex_bibfiles = ['references.bib']
 
 templates_path = ['_templates']
-exclude_patterns = []
+exclude_patterns = ['tutorials/README.md']
+
+suppress_warnings = ['myst.xref_missing', 'myst.header']
 
 
 # -- Options for HTML output -------------------------------------------------

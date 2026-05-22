@@ -17,16 +17,12 @@ class ProductState(StatePrepBase):
     @staticmethod
     def compute_decomposition(state, wires):
         r"""
-        Decompose into one single-qubit ``StatePrep`` per qubit. This lets
+        Decompose into a single ``StatePrep`` from the full state vector. This lets
         devices that don't natively support :class:`ProductState` execute it
-        by falling back to the standard single-qubit state-prep machinery.
+        by falling back to the standard state-prep machinery.
         """
-        state = qml.math.asarray(state)
-        # state has shape (n, 2): row k is the (alpha_k, beta_k) pair for qubit k.
-        ops = []
-        for k, w in enumerate(wires):
-            ops.append(qml.StatePrep(state[k], wires=[w]))
-        return ops
+        sv = ProductState(state, wires=wires, validate_norm=False).state_vector()
+        return [qml.StatePrep(qml.math.reshape(sv, (-1,)), wires=wires)]
 
 
     @classmethod
@@ -218,41 +214,35 @@ class ProductState(StatePrepBase):
         """
         # data[0] is the canonical (n, 2) matrix.
         per_qubit = self.data[0]
-        # Kronecker product across qubits
-        psi = per_qubit[0]
-        for k in range(1, per_qubit.shape[0]):
-            psi = qml.math.kron(psi, per_qubit[k])
+        n = len(self.wires)
+        # Kronecker product across qubits, then reshape to (2,) * n.
+        psi_flat = per_qubit[0]
+        for k in range(1, n):
+            psi_flat = qml.math.kron(psi_flat, per_qubit[k])
+        psi = qml.math.reshape(psi_flat, (2,) * n)
 
         if wire_order is None or Wires(wire_order) == self.wires:
             return psi
 
-        n = len(self.wires)
         wire_order = Wires(wire_order)
         if not set(self.wires).issubset(set(wire_order)):
             raise ValueError(
                 "wire_order must contain all of this operation's wires."
             )
-        # Embed into the larger Hilbert space
         n_total = len(wire_order)
         if n_total == n:
-            # Just a permutation among our own wires
+            # Pure permutation of our wires.
             perm = [list(self.wires).index(w) for w in wire_order]
-            psi_reshaped = qml.math.reshape(psi, (2,) * n)
-            psi_reshaped = qml.math.transpose(psi_reshaped, perm)
-            return qml.math.reshape(psi_reshaped, (2 ** n,))
-        # If wire_order is strictly larger, pad with |0>s on the extra wires.
-        # Build extra |0> factors and Kron in the right positions.
+            return qml.math.transpose(psi, perm)
+        # Embed into a larger Hilbert space by padding extra wires with |0>.
         extra_wires = [w for w in wire_order if w not in self.wires]
-        extra = qml.math.asarray([1.0, 0.0], dtype=psi.dtype)
-        full = psi
+        zero = qml.math.asarray([1.0, 0.0], dtype=psi_flat.dtype)
+        full = psi_flat
         for _ in extra_wires:
-            full = qml.math.kron(full, extra)
-        # Now full lives on (self.wires + extra_wires); permute to wire_order
+            full = qml.math.kron(full, zero)
         new_order = list(self.wires) + list(extra_wires)
         perm = [new_order.index(w) for w in wire_order]
-        full = qml.math.reshape(full, (2,) * n_total)
-        full = qml.math.transpose(full, perm)
-        return qml.math.reshape(full, (2 ** n_total,))
+        return qml.math.transpose(qml.math.reshape(full, (2,) * n_total), perm)
 
     def _as_torch(self, x):
         """

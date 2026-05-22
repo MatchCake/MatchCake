@@ -271,7 +271,7 @@ class TestMPfaffianExpvalStrategy:
         psi = random_product_state(n, seed=seed)
         wires = list(range(n))
         prod_state = ProductState(psi, wires=wires)
-        psi_flat = np.array(prod_state.state_vector())
+        psi_flat = np.array(prod_state.state_vector()).reshape(-1)
         tilde_L = build_tilde_lambda(prod_state, wires)
 
         for k in range(n):
@@ -286,7 +286,7 @@ class TestMPfaffianExpvalStrategy:
         psi = random_product_state(n, seed=seed)
         wires = list(range(n))
         prod_state = ProductState(psi, wires=wires)
-        psi_flat = np.array(prod_state.state_vector())
+        psi_flat = np.array(prod_state.state_vector()).reshape(-1)
         tilde_L = build_tilde_lambda(prod_state, wires)
 
         observables = [
@@ -316,7 +316,7 @@ class TestMPfaffianExpvalStrategy:
         for k, b in enumerate(bits):
             psi[k, b] = 1.0
         prod_state = ProductState(psi, wires=wires)
-        psi_flat = np.array(prod_state.state_vector())
+        psi_flat = np.array(prod_state.state_vector()).reshape(-1)
         tilde_L = build_tilde_lambda(prod_state, wires)
 
         ref = brute_force_expval(psi_flat, obs, n)
@@ -329,7 +329,7 @@ class TestMPfaffianExpvalStrategy:
         psi = random_product_state(n, seed=seed)
         wires = list(range(n))
         prod_state = ProductState(psi, wires=wires)
-        psi_flat = np.array(prod_state.state_vector())
+        psi_flat = np.array(prod_state.state_vector()).reshape(-1)
         tilde_L = build_tilde_lambda(prod_state, wires)
 
         H = 0.5 * qml.X(0) + 0.3 * qml.Z(0) @ qml.Z(1) + 0.2 * qml.Y(0)
@@ -371,7 +371,7 @@ class TestMPfaffianEndToEnd:
     def test_product_state_no_circuit(self, n, seed, obs):
         """ProductState alone, no matchgates: NIF must match default.qubit."""
         psi = random_product_state(n, seed=seed)
-        psi_flat = ProductState(psi, wires=list(range(n))).state_vector()
+        psi_flat = np.array(ProductState(psi, wires=list(range(n))).state_vector()).reshape(-1)
         wires = list(range(n))
 
         def nif_circuit():
@@ -399,7 +399,7 @@ class TestMPfaffianEndToEnd:
     def test_single_rzrz(self, n, seed, angles, obs):
         """ProductState + one CompRzRz on [0,1]: NIF must match default.qubit."""
         psi = random_product_state(n, seed=seed)
-        psi_flat = ProductState(psi, wires=list(range(n))).state_vector()
+        psi_flat = np.array(ProductState(psi, wires=list(range(n))).state_vector()).reshape(-1)
         wires = list(range(n))
         params = np.array(angles)
 
@@ -429,7 +429,7 @@ class TestMPfaffianEndToEnd:
     def test_single_ryry(self, n, seed, angles, obs):
         """ProductState + one CompRyRy on [0,1]: NIF must match default.qubit."""
         psi = random_product_state(n, seed=seed)
-        psi_flat = ProductState(psi, wires=list(range(n))).state_vector()
+        psi_flat = np.array(ProductState(psi, wires=list(range(n))).state_vector()).reshape(-1)
         wires = list(range(n))
         params = np.array(angles)
 
@@ -457,7 +457,7 @@ class TestMPfaffianEndToEnd:
     def test_fswap(self, n, seed, obs):
         """ProductState + fSWAP on [0,1]: NIF must match default.qubit."""
         psi = random_product_state(n, seed=seed)
-        psi_flat = ProductState(psi, wires=list(range(n))).state_vector()
+        psi_flat = np.array(ProductState(psi, wires=list(range(n))).state_vector()).reshape(-1)
         wires = list(range(n))
 
         def nif_circuit():
@@ -486,7 +486,7 @@ class TestMPfaffianEndToEnd:
         """ProductState + CompRyRy on [0,1] then CompRzRz on [1,2], 3-qubit chain."""
         n = 3
         psi = random_product_state(n, seed=seed)
-        psi_flat = ProductState(psi, wires=list(range(n))).state_vector()
+        psi_flat = np.array(ProductState(psi, wires=list(range(n))).state_vector()).reshape(-1)
         wires = list(range(n))
         p01 = np.array(a01)
         p12 = np.array(a12)
@@ -522,7 +522,7 @@ class TestMPfaffianEndToEnd:
         """Random product state + random matchgate circuit + random Pauli observable."""
         rng = np.random.RandomState(seed)
         psi = random_product_state(n, seed=seed)
-        psi_flat = ProductState(psi, wires=list(range(n))).state_vector()
+        psi_flat = np.array(ProductState(psi, wires=list(range(n))).state_vector()).reshape(-1)
         wires = list(range(n))
         gates = random_circuit_gates(n, n_gates, rng)
         obs = random_pauli_obs(n, rng)
@@ -553,7 +553,7 @@ class TestMPfaffianEndToEnd:
     def test_hamiltonian_mixed_parity(self, n, seed, angles):
         """Hamiltonian with parity-preserving (ZZ) and parity-breaking (X, Y, XY) terms."""
         psi = random_product_state(n, seed=seed)
-        psi_flat = ProductState(psi, wires=list(range(n))).state_vector()
+        psi_flat = np.array(ProductState(psi, wires=list(range(n))).state_vector()).reshape(-1)
         wires = list(range(n))
         params = np.array(angles)
         H = 0.5 * qml.X(0) + 0.3 * qml.Z(0) @ qml.Z(1) + 0.2 * qml.Y(0) @ qml.X(1) - 0.4 * qml.Y(1)

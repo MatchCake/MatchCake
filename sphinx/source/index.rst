@@ -13,6 +13,18 @@ Welcome to MatchCake's documentation!
     readme
 
 .. toctree::
+   :maxdepth: 2
+   :caption: Tutorials:
+
+   tutorials
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Theory:
+
+   theory
+
+.. toctree::
    :maxdepth: 4
    :caption: Modules:
 

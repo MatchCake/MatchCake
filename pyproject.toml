@@ -94,6 +94,9 @@ docs = [
     "groundwork-sphinx-theme>=1.1,<2",
     "karma-sphinx-theme>=0.0.8,<0.0.9",
     "sphinx-mdinclude>=0.6,<0.7",
+    "nbsphinx>=0.9.8",
+    "myst-parser>=3.0.1",
+    "myst-nb>=1.4.0",
 ]
 
 [tool.uv]
@@ -223,41 +226,16 @@ exclude = [
 
 [[tool.mypy.overrides]]
 module = [
-    # PennyLane
-    "pennylane",
-    "pennylane.wires",
-    "pennylane.templates.broadcast",
-    "pennylane.ops.qubit.observables",
-    "pennylane.typing",
-    "pennylane.operation",
-    "pennylane.tape",
-    "pennylane.pulse",
-    "pennylane.measurements",
-    "pennylane.ops",
-    "pennylane.numpy",
-    "pennylane.ops.op_math.linear_combination",
-    "pennylane.math",
-    # Scikit-learn
-    "sklearn",
-    "sklearn.base",
-    "sklearn.utils.validation",
-    "sklearn.utils.multiclass",
-    "sklearn.utils.estimator_checks",
-    "sklearn.kernel_approximation",
-    "sklearn.utils",
-    "sklearn.model_selection",
-    # Seaborn
-    "seaborn",
-    # PythonBasicTools
-    "pythonbasictools",
-    "pythonbasictools.multiprocessing_tools",
-    # Others
+    "pennylane.*",
+    "sklearn.*",
+    "seaborn.*",
+    "pythonbasictools.*",
     "tqdm",
     "joblib",
     "psutil",
     "umap",
     "tensorflow",
-    "jax.scipy.linalg",
+    "jax.*",
     "torch_pfaffian",
     "sympy",
     "networkx",
