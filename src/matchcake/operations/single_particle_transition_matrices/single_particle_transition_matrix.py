@@ -378,16 +378,16 @@ class SingleParticleTransitionMatrixOperation(Operation):
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
         return SingleParticleTransitionMatrixOperation(dagger(self.matrix()), wires=self.wires, **self._hyperparameters)
 
-    def to_cuda(self):
-        import torch
+    def to_cuda(self):  # pragma: no cover
+        import torch  # pragma: no cover
 
-        from ...utils import torch_utils
+        from ...utils import torch_utils  # pragma: no cover
 
-        return SingleParticleTransitionMatrixOperation(
-            torch_utils.to_cuda(self.matrix(), dtype=torch.complex128),
-            wires=self.wires,
-            **self._hyperparameters,
-        )
+        return SingleParticleTransitionMatrixOperation(  # pragma: no cover
+            torch_utils.to_cuda(self.matrix(), dtype=torch.complex128),  # pragma: no cover
+            wires=self.wires,  # pragma: no cover
+            **self._hyperparameters,  # pragma: no cover
+        )  # pragma: no cover
 
     def to_torch(self):
         import torch

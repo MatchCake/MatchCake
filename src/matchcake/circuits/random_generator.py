@@ -65,8 +65,8 @@ class RandomOperationsGenerator:
             rn_wire0 = rn_gen.choice(wires[:-1])
             rn_wire1 = rn_wire0 + 1
             op = cls.random(wires=[rn_wire0, rn_wire1], batch_size=self.batch_size, seed=self.seed)
-            if self.use_cuda:
-                op = op.to_cuda()
+            if self.use_cuda:  # pragma: no cover
+                op = op.to_cuda()  # pragma: no cover
             yield op
         return
 

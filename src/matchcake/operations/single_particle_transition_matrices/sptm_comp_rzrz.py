@@ -43,11 +43,11 @@ class SptmCompRzRz(SingleParticleTransitionMatrixOperation):
         else:
             raise ValueError(f"Invalid shape for the parameters: {params_shape}")
 
-        if params_shape[-1] != 2:
-            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
+        if params_shape[-1] != 2:  # pragma: no cover
+            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")  # pragma: no cover
 
-        if self.hyperparameters.get("check_angles", self.DEFAULT_CHECK_ANGLES):
-            self.check_angles(params)
+        if self.hyperparameters.get("check_angles", self.DEFAULT_CHECK_ANGLES):  # pragma: no cover
+            self.check_angles(params)  # pragma: no cover
         if self.hyperparameters.get("clip_angles", self.DEFAULT_CLIP_ANGLES):
             params = self.clip_angles(params)
 

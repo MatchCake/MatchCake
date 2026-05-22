@@ -5,11 +5,13 @@ import torch
 from matchcake.operations import MatchgateOperation
 from matchcake.operations.single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
+    SptmCompRyRy,
 )
 from matchcake.utils import torch_utils
 from matchcake.utils.math import svd
 
 from ...configs import (
+    ATOL_MATRIX_COMPARISON,
     TEST_SEED,
     set_seed,
 )
@@ -104,3 +106,73 @@ class TestSingleParticleTransitionMatrixOperation:
             np.ones_like(s),
             atol=1e-6,
         )
+
+    def test_round(self, batch_size, size):
+        matrix = np.random.random((batch_size, 2 * size, 2 * size))
+        sptm = SingleParticleTransitionMatrixOperation(matrix=matrix, wires=np.arange(size))
+        rounded = round(sptm, 3)
+        assert isinstance(rounded, SingleParticleTransitionMatrixOperation)
+
+    def test_real(self, batch_size, size):
+        matrix = np.random.random((batch_size, 2 * size, 2 * size)).astype(complex)
+        matrix += 1j * np.random.random((batch_size, 2 * size, 2 * size))
+        sptm = SingleParticleTransitionMatrixOperation(matrix=matrix, wires=np.arange(size))
+        real_sptm = sptm.real()
+        assert isinstance(real_sptm, SingleParticleTransitionMatrixOperation)
+
+    def test_trunc(self, batch_size, size):
+        matrix = np.random.random((batch_size, 2 * size, 2 * size))
+        sptm = SingleParticleTransitionMatrixOperation(matrix=matrix, wires=np.arange(size))
+        truncated = sptm.__trunc__()
+        assert isinstance(truncated, SingleParticleTransitionMatrixOperation)
+
+    def test_check_is_in_so4_returns_false_non_det1(self, batch_size, size):
+        matrix = 2.0 * np.eye(2 * size)
+        sptm = SingleParticleTransitionMatrixOperation(matrix=matrix, wires=np.arange(size))
+        assert not sptm.check_is_in_so4()
+
+    def test_check_is_in_so4_returns_false_non_orthogonal(self, batch_size, size):
+        matrix = np.random.random((2 * size, 2 * size))
+        sptm = SingleParticleTransitionMatrixOperation(matrix=matrix, wires=np.arange(size))
+        assert not sptm.check_is_in_so4()
+
+    def test_from_operation_with_sptm_attribute(self, batch_size, size):
+        n_qubits = 2
+        mgo = MatchgateOperation.random(batch_size=batch_size, wires=np.arange(n_qubits), seed=size)
+
+        class _OpWithSptm:
+            wires = mgo.wires
+            single_particle_transition_matrix = mgo.single_particle_transition_matrix
+
+        sptm = SingleParticleTransitionMatrixOperation.from_operation(_OpWithSptm())
+        assert isinstance(sptm, SingleParticleTransitionMatrixOperation)
+
+    def test_check_matrix_invalid_raises(self, batch_size, size):
+        matrix = 2.0 * np.eye(2 * size)
+        with pytest.raises(ValueError):
+            SingleParticleTransitionMatrixOperation(matrix=matrix, wires=np.arange(size), check_matrix=True)
+
+    def test_clip_angles_scalar_shape(self, batch_size, size):
+        scalar_angle = np.array(np.pi)
+        clipped = SptmCompRyRy.clip_angles(scalar_angle)
+        assert SptmCompRyRy.check_angles(clipped)
+
+    def test_check_angles_invalid_not_equal_raises(self, batch_size, size):
+        invalid_params = np.array([[0.5, 1.0]])
+        with pytest.raises(ValueError):
+            SptmCompRyRy.check_angles(invalid_params)
+
+    def test_check_angles_invalid_equal_raises(self, batch_size, size):
+        invalid_params = np.array([[0.5, 0.5]])
+        with pytest.raises(ValueError):
+            SptmCompRyRy.check_angles(invalid_params)
+
+    def test_pad_not_implemented_for_4d(self, batch_size, size):
+        matrix = np.random.random((2, 2, 2 * size, 2 * size))
+        sptm = SingleParticleTransitionMatrixOperation.__new__(SingleParticleTransitionMatrixOperation)
+        sptm._matrix = matrix
+        sptm._wires = np.arange(size)
+        sptm._hyperparameters = {}
+        from pennylane.wires import Wires
+        with pytest.raises(NotImplementedError):
+            sptm.pad(Wires(np.arange(size + 1)))

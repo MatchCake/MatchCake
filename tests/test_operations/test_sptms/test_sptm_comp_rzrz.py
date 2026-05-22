@@ -100,3 +100,24 @@ class TestSptmRzRz:
             atol=ATOL_APPROX_COMPARISON,
             rtol=1,
         )
+
+    def test_invalid_param_count_raises(self):
+        params = np.zeros(3)
+        with pytest.raises(ValueError):
+            SptmCompRzRz(params, wires=[0, 1])
+
+    def test_invalid_3d_params_raises(self):
+        params = np.zeros((2, 2, 2))
+        with pytest.raises(ValueError):
+            SptmCompRzRz(params, wires=[0, 1])
+
+    def test_to_matchgate(self):
+        params = SptmCompRzRz.random_params()
+        sptm = SptmCompRzRz(params, wires=[0, 1])
+        mg = sptm.to_matchgate()
+        assert isinstance(mg, CompRzRz)
+
+    def test_check_angles_enabled(self):
+        params = SptmCompRzRz.random_params()
+        sptm = SptmCompRzRz(params, wires=[0, 1], check_angles=True)
+        assert sptm is not None

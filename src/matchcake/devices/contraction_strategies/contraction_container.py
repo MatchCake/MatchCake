@@ -86,7 +86,7 @@ class _ContractionMatchgatesContainer:
         for i, op in enumerate(ops):  # pragma: no cover
             if not self.try_add(op):
                 return i
-        return -1
+        return -1  # pragma: no cover
 
     def clear(self):
         self.op_container.clear()

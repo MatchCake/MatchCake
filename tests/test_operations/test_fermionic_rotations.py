@@ -5,6 +5,7 @@ import torch
 
 from matchcake import utils
 from matchcake.operations import CompRotation, CompRxRx, CompRyRy, CompRzRz
+from matchcake.operations.comp_rotations import _make_complete_rot_matrix, _make_rot_matrix
 
 from ..configs import (
     ATOL_APPROX_COMPARISON,
@@ -129,3 +130,76 @@ class TestCompRotation:
         assert torch.all(
             torch.isfinite(params.grad)
         ), f"The gradient is not computed correctly for {directions}, {taylor_terms} terms and {x}."
+
+    @pytest.mark.parametrize("direction", ["X", "Y", "Z"])
+    def test_make_rot_matrix_scalar_input(self, direction):
+        mat = _make_rot_matrix(np.float64(0.5), direction)
+        assert mat.shape == (2, 2)
+
+    @pytest.mark.parametrize("direction", ["X", "Y", "Z"])
+    def test_make_rot_matrix_batch_input(self, direction):
+        params = np.array([0.1, 0.2, 0.3])
+        mat = _make_rot_matrix(params, direction)
+        assert mat.shape == (3, 2, 2)
+
+    def test_make_rot_matrix_invalid_direction_raises(self):
+        with pytest.raises(ValueError, match="Invalid direction"):
+            _make_rot_matrix(np.float64(0.5), "Q")
+
+    def test_make_rot_matrix_invalid_ndim_raises(self):
+        params = np.zeros((2, 2))
+        with pytest.raises(ValueError, match="Invalid number of dimensions"):
+            _make_rot_matrix(params, "X")
+
+    def test_label_default(self):
+        op = CompRxRx(np.array([0.1, 0.2]), wires=[0, 1])
+        lbl = op.label()
+        assert isinstance(lbl, str)
+
+    def test_label_with_decimals(self):
+        op = CompRxRx(np.array([0.1, 0.2]), wires=[0, 1])
+        lbl = op.label(decimals=2)
+        assert "0.10" in lbl or "0.20" in lbl
+
+    def test_label_with_base_label(self):
+        op = CompRxRx(np.array([0.1, 0.2]), wires=[0, 1])
+        lbl = op.label(base_label="MyRot")
+        assert "MyRot" in lbl
+
+    def test_make_complete_rot_matrix_invalid_ndim_raises(self):
+        params = np.zeros((2, 2, 2))
+        with pytest.raises(ValueError, match="Invalid number of dimensions"):
+            _make_complete_rot_matrix(params, ["X", "X"])
+
+    def test_make_complete_rot_matrix_wrong_param_count_raises(self):
+        params = np.zeros((3,))
+        with pytest.raises(ValueError, match="Number of parameters"):
+            _make_complete_rot_matrix(params, ["X", "X"])
+
+    def test_comp_rotation_wrong_angle_count_raises(self):
+        with pytest.raises(ValueError, match="requires 2 angles"):
+            CompRotation(np.array([0.1, 0.2, 0.3]), directions=["X", "X"], wires=[0, 1])
+
+    def test_comp_rotation_wrong_directions_raises(self):
+        with pytest.raises(ValueError, match="requires two directions"):
+            CompRotation(np.array([0.1, 0.2]), directions=["X", "X", "Z"], wires=[0, 1])
+
+    def test_label_batch_params_cache_none_returns_op_label(self):
+        op = CompRxRx(np.array([[0.1, 0.2], [0.3, 0.4]]), wires=[0, 1])
+        lbl = op.label()
+        assert lbl == "CompRxRx"
+
+    def test_label_batch_params_adds_to_cache(self):
+        op = CompRxRx(np.array([[0.1, 0.2]]), wires=[0, 1])
+        cache = {"matrices": []}
+        lbl = op.label(cache=cache)
+        assert "(M0)" in lbl
+        assert len(cache["matrices"]) == 1
+
+    def test_label_batch_params_cached_matrix_returned(self):
+        op = CompRxRx(np.array([[0.1, 0.2]]), wires=[0, 1])
+        cache = {"matrices": []}
+        op.label(cache=cache)
+        lbl = op.label(cache=cache)
+        assert "(M0)" in lbl
+

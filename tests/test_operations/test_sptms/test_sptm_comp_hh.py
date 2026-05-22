@@ -7,6 +7,11 @@ from tests.configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
 
 
 class TestSptmCompHH:
+    def test_to_matchgate(self):
+        sptm = SptmCompHH(wires=[0, 1])
+        mg = sptm.to_matchgate()
+        assert isinstance(mg, CompHH)
+
     def test_matchgate_equal_to_sptm_fhh(self):
         matchgate = CompHH(wires=[0, 1])
         m_sptm = make_single_particle_transition_matrix_from_gate(matchgate.matrix())

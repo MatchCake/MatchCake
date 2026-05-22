@@ -1,10 +1,13 @@
 import numpy as np
+import pennylane as qml
 import pytest
 import torch
 from scipy.linalg import expm
 from torch.autograd import gradcheck
 
 from matchcake import utils
+from matchcake.utils import MajoranaGetter, get_majorana
+from matchcake.utils.operators import recursive_2in_operator
 
 from ..configs import (
     ATOL_APPROX_COMPARISON,
@@ -227,3 +230,92 @@ class TestUtils:
         else:
             binary_state = utils.state_to_binary_string(inputs)
         assert binary_state == out_state, f"{binary_state} != {out_state}"
+
+    def test_binary_state_to_state_with_list(self):
+        result = utils.binary_state_to_state([0, 1])
+        np.testing.assert_allclose(result, np.array([0, 1, 0, 0]))
+
+    def test_state_to_binary_state_from_array(self):
+        result = utils.state_to_binary_state(np.array([0, 0, 1, 0]))
+        np.testing.assert_array_equal(result, np.array([1, 0]))
+
+    def test_binary_string_to_state_number(self):
+        assert utils.binary_string_to_state_number("10") == 2
+        assert utils.binary_string_to_state_number("11") == 3
+        assert utils.binary_string_to_state_number("01") == 1
+
+    def test_get_non_interacting_fermionic_hamiltonian_3d(self):
+        coeffs = np.random.randn(1, 4, 4)
+        h = utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs)
+        assert h.shape == (1, 4, 4)
+
+    def test_get_non_interacting_fermionic_hamiltonian_wrong_ndim(self):
+        coeffs = np.random.randn(2, 4, 4, 4)
+        with pytest.raises(ValueError):
+            utils.get_non_interacting_fermionic_hamiltonian_from_coeffs(coeffs)
+
+    def test_decompose_matrix_into_majoranas_with_getter(self):
+        n = 2
+        coefficients = np.random.rand(2**n)
+        matrix = sum(coefficients[i] * get_majorana(i, n) for i in range(2**n))
+        getter = MajoranaGetter(n=n)
+        out = utils.decompose_matrix_into_majoranas(matrix, majorana_getter=getter)
+        np.testing.assert_allclose(out, coefficients, atol=ATOL_MATRIX_COMPARISON)
+
+    def test_decompose_state_into_majorana_indexes(self):
+        state = np.array([0, 1, 0, 0])
+        indexes = utils.decompose_state_into_majorana_indexes(state)
+        np.testing.assert_array_equal(indexes, np.array([2]))
+
+    def test_decompose_state_into_majorana_indexes_int(self):
+        indexes = utils.decompose_state_into_majorana_indexes(1, n=2)
+        np.testing.assert_array_equal(indexes, np.array([2]))
+
+    def test_get_unitary_from_hermitian_matrix(self):
+        h = np.diag([1.0, 2.0, 3.0, 4.0])
+        u = utils.get_unitary_from_hermitian_matrix(h)
+        assert u.shape == (4, 4)
+        np.testing.assert_allclose(u @ u.conj().T, np.eye(4), atol=ATOL_MATRIX_COMPARISON)
+
+    def test_load_backend_lib_string(self):
+        lib = utils.load_backend_lib("numpy")
+        import numpy as _np
+        assert lib is _np
+
+    def test_camel_case_to_spaced_camel_case(self):
+        result = utils.camel_case_to_spaced_camel_case("CamelCaseString")
+        assert result == "Camel Case String"
+
+    def test_camel_case_to_spaced_camel_case_no_caps(self):
+        result = utils.camel_case_to_spaced_camel_case("lowercase")
+        assert result == "lowercase"
+
+    def test_get_probabilities_from_state_int_wires(self):
+        state = np.array([1.0, 0.0, 0.0, 0.0])
+        probs = utils.get_probabilities_from_state(state, wires=0)
+        np.testing.assert_allclose(probs, np.array([1.0, 0.0]), atol=ATOL_SCALAR_COMPARISON)
+
+    def test_get_all_subclasses_include_base(self):
+        class _Base:
+            pass
+        class _Sub(_Base):
+            pass
+        result = utils.get_all_subclasses(_Base, include_base_cls=True)
+        assert _Base in result
+        assert _Sub in result
+
+    def test_get_eigvals_on_z_basis_raise_on_failure(self):
+        class _BadOp:
+            wires = qml.wires.Wires([0, 1])
+            def matrix(self):
+                raise RuntimeError("no matrix")
+        with pytest.raises(RuntimeError):
+            utils.get_eigvals_on_z_basis(_BadOp(), raise_on_failure=True)
+
+    def test_recursive_2in_operator_non_recursive(self):
+        result = recursive_2in_operator(np.add, [1, 2, 3, 4], recursive=False)
+        assert result == 10
+
+    def test_recursive_2in_operator_empty_raises(self):
+        with pytest.raises(ValueError):
+            recursive_2in_operator(np.add, [])

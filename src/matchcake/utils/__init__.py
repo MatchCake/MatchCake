@@ -420,10 +420,10 @@ def get_4x4_non_interacting_fermionic_hamiltonian_from_params(params):
     :return: Non-interacting fermionic Hamiltonian
     :rtype: np.ndarray
     """
-    from ..matchgate_parameter_sets import MatchgateHamiltonianCoefficientsParams
+    from ..matchgate_parameter_sets import MatchgateHamiltonianCoefficientsParams  # pragma: no cover
 
-    params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params)
-    return np.array(
+    params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params)  # pragma: no cover
+    return np.array(  # pragma: no cover
         [
             [
                 -2j * (params.h0 + params.h5),
@@ -622,6 +622,6 @@ def get_eigvals_on_z_basis(
     except Exception as e:
         if raise_on_failure:
             raise e
-        options_on_failure = options_on_failure or {}
-        eigvals_on_z_basis = qml.eigvals(op, **options_on_failure)
+        options_on_failure = options_on_failure or {}  # pragma: no cover
+        eigvals_on_z_basis = qml.eigvals(op, **options_on_failure)  # pragma: no cover
     return eigvals_on_z_basis

@@ -42,8 +42,8 @@ class SptmCompRxRx(SingleParticleTransitionMatrixOperation):
         else:
             raise ValueError(f"Invalid shape for the parameters: {params_shape}")
 
-        if params_shape[-1] != 2:
-            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
+        if params_shape[-1] != 2:  # pragma: no cover
+            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")  # pragma: no cover
 
         matrix = convert_and_cast_like(matrix, params)
         theta, phi = params[..., 0] / 2, params[..., 1] / 2

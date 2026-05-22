@@ -16,3 +16,8 @@ class TestSingleParticleTransitionMatrixOperationBlockDiagonalAngleEmbedding:
         sptm = SptmBlockDiagAngleEmbedding(matrix, wires=np.arange((size**2) * 4))
         shape_size = (size**2) * 8
         assert sptm.shape == (batch_size, shape_size, shape_size)
+
+    def test_too_few_wires_raises(self, batch_size, size):
+        matrix = np.random.random((batch_size, 2 * size, 2 * size))
+        with pytest.raises(ValueError):
+            SptmBlockDiagAngleEmbedding(matrix, wires=np.arange(1))
