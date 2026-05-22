@@ -202,17 +202,13 @@ practice.
 
 ## References
 
-[1] R. Jozsa, A. Miyake & S. Strelchuk, *Jordan-Wigner formalism for arbitrary 2-input
-2-output matchgates and their classical simulation*, arXiv:1311.3046 (2015). The "linear
-becomes quadratic" trick is Theorem 3.
+[1] Jozsa, Richard, Akimasa Miyake, and Sergii Strelchuk. "Jordan-Wigner formalism for arbitrary 2-input 2-output 
+matchgates and their classical simulation." arXiv preprint arXiv:1311.3046 (2013).
 
-[2] A. Projansky, N. Necaise & J. D. Whitfield, *Gaussianity and simulability of Cliffords
-and matchgates*, J. Phys. A **58**, 195302 (2025), arXiv:2412.14736. Theorem 6 states
-the extended-encoding result; Section 5.2 sketches the SPTM lift.
+[2] Projansky, Andrew M., Jason Necaise, and James D. Whitfield. "Gaussianity and simulability of Cliffords and 
+matchgates." Journal of Physics A: Mathematical and Theoretical 58, no. 19 (2025): 195302.
 
-[3] S. Bravyi, *Lagrangian representation for fermionic linear optics*,
-arXiv:quant-ph/0404180 (2004). The original $\Lambda$/Wick/Pfaffian formalism for the
-non-extended case.
+[3] Bravyi, Sergey. "Lagrangian representation for fermionic linear optics." arXiv preprint quant-ph/0404180 (2004).
 
 [4] W. H. Press, S. A. Teukolsky, W. T. Vetterling & B. P. Flannery, *Numerical Recipes*,
-3rd ed., Cambridge University Press (2007). Parlett-Reid algorithm for the Pfaffian, Ch. 11.
+3rd ed., Cambridge University Press (2007).
