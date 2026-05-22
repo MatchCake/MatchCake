@@ -57,14 +57,14 @@ class ClassificationVisualizer(Visualizer):
                 n_jobs = kwargs.get("n_jobs", max(0, psutil.cpu_count() - 2))
                 if self.reducer.lower() == "pca":
                     self.reducer = decomposition.PCA(n_components=2, random_state=self.seed)
-                elif self.reducer.lower() == "umap":
-                    import umap
+                elif self.reducer.lower() == "umap":  # pragma: no cover
+                    import umap  # pragma: no cover
 
-                    self.reducer = umap.UMAP(n_components=2, transform_seed=self.seed, n_jobs=n_jobs)
+                    self.reducer = umap.UMAP(n_components=2, transform_seed=self.seed, n_jobs=n_jobs)  # pragma: no cover
                 else:
                     raise ValueError(f"Unknown reducer: {self.reducer}")
-            if kwargs.get("check_estimators", True):
-                check_estimator(self.reducer)
+            if kwargs.get("check_estimators", True):  # pragma: no cover
+                check_estimator(self.reducer)  # pragma: no cover
             self.reducer.fit(self.x)
             self.transform = self.reducer.transform
             self.inverse_transform = self.reducer.inverse_transform

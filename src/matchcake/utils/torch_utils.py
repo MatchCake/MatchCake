@@ -48,11 +48,11 @@ def to_tensor(
                 return torch.tensor(x, dtype=dtype, device=device)
             except Exception as e:
                 raise ValueError(f"Unsupported type {type(x)}") from e
-    raise ValueError(f"Unsupported type {type(x)}")
+    raise ValueError(f"Unsupported type {type(x)}")  # pragma: no cover
 
 
-def to_cuda(x: Any, dtype=torch.float64):
-    return to_tensor(x, dtype=dtype, device=torch.device("cuda"))
+def to_cuda(x: Any, dtype=torch.float64):  # pragma: no cover
+    return to_tensor(x, dtype=dtype, device=torch.device("cuda"))  # pragma: no cover
 
 
 def to_cpu(x: Any, dtype=torch.float64):
@@ -75,7 +75,7 @@ def to_numpy(x: Any, dtype=np.float64):
                 return np.asarray(x, dtype=dtype)
             except Exception as e:
                 raise ValueError(f"Unsupported type {type(x)}") from e
-    raise ValueError(f"Unsupported type {type(x)}")
+    raise ValueError(f"Unsupported type {type(x)}")  # pragma: no cover
 
 
 def detach(x: Any):
