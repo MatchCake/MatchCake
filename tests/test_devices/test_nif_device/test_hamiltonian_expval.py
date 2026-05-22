@@ -277,7 +277,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device(
         return [qml.expval(c * h) for c, h in zip(batched_hamiltonian.coeffs, batched_hamiltonian.ops)]
 
     q_node = qml.QNode(circuit, qubit_device)
-    expected_energy = np.reshape(q_node(), energy.shape)
+    expected_energy = np.reshape(np.asarray(q_node()), energy.shape)
 
     np.testing.assert_allclose(
         energy,
@@ -332,7 +332,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device_ha
         return [qml.expval(c * h) for c, h in zip(batched_hamiltonian.coeffs, batched_hamiltonian.ops)]
 
     q_node = qml.QNode(circuit, qubit_device)
-    expected_energy = np.reshape(q_node(), energy.shape)
+    expected_energy = np.reshape(np.asarray(q_node()), energy.shape)
 
     np.testing.assert_allclose(
         energy,

@@ -686,6 +686,11 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         :raises qml.DeviceError: If the expectation value of the observable cannot
             be computed on the current device due to compatibility issues.
         """
+        if isinstance(observable, BatchHamiltonian):
+            return qml.math.stack([
+                qml.math.real(c * self.exact_expval(op))
+                for c, op in zip(observable.coeffs, observable.ops)
+            ])
         if isinstance(observable, BasisStateProjector):
             return self.get_state_probability(observable.parameters[0], observable.wires)
         if isinstance(observable, BatchProjector):

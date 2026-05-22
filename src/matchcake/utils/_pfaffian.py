@@ -102,9 +102,16 @@ def sector_pfaffian_features(
         # Fast path: Pf of 2x2 [[0, a], [-a, 0]] = a
         result = submatrices[..., 0, 1]  # (..., n_terms)
     else:
-        result = torch.stack(
-            [signed_pfaffian(submatrices[..., k, :, :]) for k in range(n_terms)], dim=-1
+        # Compute sign without gradient (Parlett-Reid is not autograd-safe),
+        # multiply by sqrt(|det|) which carries the gradient via torch.linalg.det.
+        # Pf(M)^2 = det(M), so |Pf| = sqrt(|det|), and sign is determined separately.
+        subs = [submatrices[..., k, :, :] for k in range(n_terms)]
+        with torch.no_grad():
+            signs = torch.stack([torch.sign(signed_pfaffian(s.detach())) for s in subs], dim=-1)
+        magnitudes = torch.stack(
+            [torch.sqrt(torch.linalg.det(s).abs().clamp(min=1e-32)) for s in subs], dim=-1
         )
+        result = signs * magnitudes
     return convert_and_cast_like(result, cov_matrix)
 
 _pfaffian_fdbpf_lock = threading.Lock()

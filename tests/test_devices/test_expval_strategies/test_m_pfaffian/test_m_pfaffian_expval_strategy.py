@@ -265,6 +265,28 @@ class TestMPfaffianExpvalStrategy:
         obs = qml.Hermitian(np.eye(2), wires=[0])
         assert not self.strat.can_execute(op, obs)
 
+    def test_can_execute_false_for_unsupported_state_prep(self):
+        state_prep = qml.StatePrep(np.array([1.0, 0.0]), wires=[0])
+        assert not self.strat.can_execute(state_prep, qml.X(0))
+
+    def test_execute_raises_on_unsupported_state_prep(self):
+        state_prep = qml.StatePrep(np.array([1.0, 0.0]), wires=[0])
+        tilde_L = torch.zeros(3, 3, dtype=torch.float64)
+        with pytest.raises(ValueError, match="Cannot execute"):
+            self.strat(state_prep, qml.X(0), extended_covariance_matrix=tilde_L)
+
+    def test_hamiltonian_with_identity_term(self):
+        n = 2
+        psi = np.array([[1 / np.sqrt(2), 1 / np.sqrt(2)], [1.0, 0.0]], dtype=complex)
+        wires = list(range(n))
+        prod_state = ProductState(psi, wires=wires)
+        psi_flat = np.array(prod_state.state_vector()).reshape(-1)
+        tilde_L = build_tilde_lambda(prod_state, wires)
+        H = qml.Hamiltonian([2.0, 0.5], [qml.Identity(0), qml.X(0)])
+        ref = 2.0 + 0.5 * brute_force_expval(psi_flat, qml.X(0), n)
+        got = float(self.strat(prod_state, H, extended_covariance_matrix=tilde_L))
+        np.testing.assert_allclose(got, ref, atol=ATOL)
+
     @pytest.mark.parametrize("n,seed", [(1, 0), (2, 1), (3, 2), (2, 3)])
     def test_single_qubit_xyz(self, n, seed):
         """X, Y, Z expectations match brute-force for all qubits."""

@@ -1,27 +1,4 @@
-"""
-Tests for matchcake.operations.product_state.ProductState.
-
-These tests verify that:
-  - the constructor accepts both flat (2N,) and matrix (N, 2) inputs and
-    canonicalises to the (N, 2) layout internally;
-  - state_vector agrees with an explicit Kronecker product of the per-qubit
-    factors, including under wire reordering and embedding;
-  - is_basis_state / as_basis_state correctly identify computational-basis
-    states and reject superpositions;
-  - covariance_matrix agrees with the brute-force formula
-    Lambda_{mu nu} = i <psi| c_mu c_nu |psi> computed from the full
-    statevector, on computational-basis states as well as on random pure
-    product states, for n in {2, 3, 4};
-  - covariance_matrix is cached.
-
-The brute-force reference uses matchcake.utils.majorana.get_majorana, so
-these tests double as cross-checks that the ProductState formula and the
-package's Majorana operators agree on Jordan-Wigner conventions.
-"""
-
 from __future__ import annotations
-
-import sys
 
 import numpy as np
 import pennylane as qml
@@ -31,9 +8,7 @@ from matchcake.operations.state_preparation.product_state import ProductState
 from matchcake.utils.majorana import get_majorana
 
 
-# --------------------------------------------------------------------------- #
-# Helpers
-# --------------------------------------------------------------------------- #
+
 def _brute_force_lambda(psi: np.ndarray, n: int) -> np.ndarray:
     """Lambda_{mu nu} = i <psi| c_mu c_nu |psi> for a full state vector psi.
 
@@ -81,11 +56,7 @@ def _random_product_state(n: int, seed: int = 0) -> np.ndarray:
     return state
 
 
-# --------------------------------------------------------------------------- #
-# Tests
-# --------------------------------------------------------------------------- #
 class TestProductState:
-    # -- Input validation -------------------------------------------------- #
     def test_init_rejects_wrong_length_vector(self):
         with pytest.raises(ValueError, match="shape"):
             ProductState(np.zeros(3, dtype=complex), wires=[0, 1])
@@ -106,7 +77,7 @@ class TestProductState:
         op = ProductState(bad, wires=[0, 1], validate_norm=False)
         assert op.data[0].shape == (2, 2)
 
-    # -- Canonical (N, 2) storage ----------------------------------------- #
+
     def test_flat_and_matrix_input_produce_same_internal_state(self):
         flat = np.array(
             [1 / np.sqrt(2), 1 / np.sqrt(2), 0, 1, 1, 0], dtype=complex
@@ -135,7 +106,7 @@ class TestProductState:
         cov_matrix = ProductState(matrix, wires=[0, 1, 2]).covariance_matrix
         torch.testing.assert_close(cov_flat, cov_matrix)
 
-    # -- state_vector ------------------------------------------------------ #
+
     def test_state_vector_matches_explicit_kron(self):
         n = 3
         # |+> on q0, |1> on q1, (|0>+i|1>)/sqrt(2) on q2
@@ -174,7 +145,7 @@ class TestProductState:
         with pytest.raises(ValueError, match="must contain"):
             op.state_vector(wire_order=[0])
 
-    # -- is_basis_state / as_basis_state ---------------------------------- #
+
     @pytest.mark.parametrize(
         "bits",
         [
@@ -216,7 +187,7 @@ class TestProductState:
         with pytest.raises(ValueError, match="not a computational-basis state"):
             op.as_basis_state()
 
-    # -- covariance_matrix: shape, dtype, antisymmetry, caching ----------- #
+
     def test_covariance_matrix_shape_and_dtype(self):
         op = ProductState(_random_product_state(3, seed=0), wires=range(3))
         cov = op.covariance_matrix
@@ -235,7 +206,7 @@ class TestProductState:
         cov2 = op.covariance_matrix
         assert cov1 is cov2, "covariance_matrix should be cached"
 
-    # -- covariance_matrix: agreement with brute force -------------------- #
+
     @pytest.mark.parametrize(
         "bits",
         [
@@ -268,7 +239,7 @@ class TestProductState:
         cov_ref = _brute_force_lambda(_per_qubit_to_full_vector(state, n), n)
         np.testing.assert_allclose(cov_op, cov_ref, atol=1e-9)
 
-    # -- covariance_matrix: physical sanity ------------------------------- #
+
     @pytest.mark.parametrize(
         "bits",
         [
@@ -290,6 +261,35 @@ class TestProductState:
         cov = op.covariance_matrix
         eye = torch.eye(2 * n, dtype=cov.dtype, device=cov.device)
         torch.testing.assert_close(cov.T @ cov, eye, atol=1e-9, rtol=0.0)
+
+    def test_init_with_real_state_casts_to_complex(self):
+        state = np.array([1.0, 0.0, 0.0, 1.0])
+        op = ProductState(state, wires=[0, 1])
+        assert np.iscomplexobj(np.asarray(op.data[0]))
+
+    def test_compute_decomposition_returns_state_prep(self):
+        state = np.array([[1, 0], [0, 1]], dtype=complex, )
+        decomp = ProductState.compute_decomposition(state, wires=[0, 1])
+        assert len(decomp) == 1
+        assert isinstance(decomp[0], qml.StatePrep)
+
+    def test_from_basis_state_from_int_array(self):
+        op = ProductState.from_basis_state([0, 1], wires=[0, 1])
+        assert op.is_basis_state
+        np.testing.assert_array_equal(
+            np.asarray(op.as_basis_state().parameters[0]), [0, 1]
+        )
+
+    def test_from_basis_state_wrong_shape_raises(self):
+        with pytest.raises(ValueError, match="shape"):
+            ProductState.from_basis_state([0, 1, 0], wires=[0, 1])
+
+    def test_as_torch_returns_same_tensor_if_already_tensor(self):
+        state = np.array([[1, 0], [0, 1]], dtype=complex)
+        op = ProductState(state, wires=[0, 1])
+        t = torch.tensor([1.0, 2.0], dtype=torch.float64)
+        result = op._as_torch(t)
+        assert result is t
 
     def test_inter_qubit_block_vanishes_when_z_eigenstate_in_between(self):
         # |0> |+> |0>: qubit 1 has z_1 = 0, so the parity string between

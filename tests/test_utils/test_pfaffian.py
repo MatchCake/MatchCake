@@ -9,7 +9,11 @@ import torch_pfaffian
 from torch.autograd import gradcheck
 
 from matchcake import utils
-from matchcake.utils._pfaffian import _pfaffian_fdbpf_lock
+from matchcake.utils._pfaffian import (
+    _pfaffian_fdbpf_lock,
+    sector_pfaffian_features,
+    signed_pfaffian,
+)
 
 from ..configs import (
     ATOL_APPROX_COMPARISON,
@@ -88,6 +92,93 @@ class TestPfaffianExtended:
     def test_invalid_method(self):
         with pytest.raises(ValueError):
             utils.pfaffian(np.random.rand(2, 2), method="invalid_method")
+
+    def test_signed_pfaffian_numpy_input(self):
+        m = np.array([[0.0, 3.0], [-3.0, 0.0]])
+        pf = float(signed_pfaffian(m))
+        np.testing.assert_allclose(pf, 3.0, atol=1e-12)
+
+    def test_signed_pfaffian_empty_matrix(self):
+        m = torch.zeros(0, 0, dtype=torch.float64)
+        result = signed_pfaffian(m)
+        np.testing.assert_allclose(float(result), 1.0, atol=1e-12)
+
+    def test_signed_pfaffian_odd_size(self):
+        m = torch.zeros(3, 3, dtype=torch.float64)
+        result = signed_pfaffian(m)
+        np.testing.assert_allclose(float(result), 0.0, atol=1e-12)
+
+    def test_signed_pfaffian_near_singular_pivot(self):
+        # A matrix whose first pivot is exactly zero forces sign=0.0 path.
+        m = torch.zeros(4, 4, dtype=torch.float64)
+        pf = float(signed_pfaffian(m))
+        np.testing.assert_allclose(pf, 0.0, atol=1e-12)
+
+    def test_sector_pfaffian_2x2_fast_path(self):
+        cov = torch.tensor([[0.0, 2.5, 0.0, 0.0],
+                            [-2.5, 0.0, 0.0, 0.0],
+                            [0.0, 0.0, 0.0, 1.3],
+                            [0.0, 0.0, -1.3, 0.0]], dtype=torch.float64)
+        index_sets = np.array([[0, 1], [2, 3]])
+        result = sector_pfaffian_features(cov, index_sets)
+        np.testing.assert_allclose(np.array(result), [2.5, 1.3], atol=1e-12)
+
+    def test_sector_pfaffian_4x4_submatrix(self):
+        a, b, c, d, e, f = 1.0, 2.0, 3.0, 4.0, 5.0, 6.0
+        A = torch.tensor([
+            [0, a, b, c],
+            [-a, 0, d, e],
+            [-b, -d, 0, f],
+            [-c, -e, -f, 0],
+        ], dtype=torch.float64)
+        expected = a * f - b * e + c * d
+        index_sets = np.array([[0, 1, 2, 3]])
+        result = sector_pfaffian_features(A, index_sets)
+        np.testing.assert_allclose(float(result[0]), expected, atol=1e-10)
+
+    def test_sector_pfaffian_2x2_grads(self):
+        def fn(cov):
+            return sector_pfaffian_features(cov, np.array([[0, 1], [2, 3]]))
+
+        cov = torch.tensor([[0.0, 2.5, 0.0, 0.0],
+                            [-2.5, 0.0, 0.0, 0.0],
+                            [0.0, 0.0, 0.0, 1.3],
+                            [0.0, 0.0, -1.3, 0.0]], dtype=torch.float64).requires_grad_(True)
+        from torch.autograd import gradcheck
+        assert gradcheck(fn, (cov,), atol=1e-6)
+
+    def test_sector_pfaffian_4x4_grads(self):
+        def fn(A):
+            return sector_pfaffian_features(A, np.array([[0, 1, 2, 3]]))
+
+        m = torch.randn(4, 4, dtype=torch.float64)
+        A = (m - m.T).requires_grad_(True)
+        from torch.autograd import gradcheck
+        assert gradcheck(fn, (A,), atol=1e-6)
+
+    def test_signed_pfaffian_4x4_non_zero_schur_complement(self):
+        a, b, c, d, e, f = 1.0, 2.0, 3.0, 4.0, 5.0, 6.0
+        A = torch.tensor([
+            [0, a, b, c],
+            [-a, 0, d, e],
+            [-b, -d, 0, f],
+            [-c, -e, -f, 0],
+        ], dtype=torch.float64)
+        expected = a * f - b * e + c * d
+        pf = float(signed_pfaffian(A))
+        np.testing.assert_allclose(pf, expected, atol=1e-10)
+
+    def test_signed_pfaffian_pivot_swap_triggered(self):
+        # Construct a matrix where M[3,0] > M[1,0] to force pivot swap.
+        A = torch.tensor([
+            [0, 0.01, 0.01, 5.0],
+            [-0.01, 0, 1.0, 1.0],
+            [-0.01, -1.0, 0, 1.0],
+            [-5.0, -1.0, -1.0, 0],
+        ], dtype=torch.float64)
+        det = float(torch.linalg.det(A))
+        pf = float(signed_pfaffian(A))
+        np.testing.assert_allclose(pf ** 2, det, atol=1e-8)
 
 
 class TestPfaffianFDBPfThreadSafety:
