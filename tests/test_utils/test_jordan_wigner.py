@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from pennylane.pauli import PauliWord
 
 from matchcake.utils.jordan_wigner import JordanWigner
 
@@ -69,3 +70,34 @@ class TestJordanWigner:
         jw = JordanWigner(2)
         with pytest.raises(AssertionError):
             jw.pauli_to_majorana("XYZ", [0, 1])
+
+    def test_string_without_wires_raises(self):
+        jw = JordanWigner(1)
+        with pytest.raises(ValueError, match="wires must be provided"):
+            jw.pauli_to_majorana("X")
+
+    def test_pauli_word_matches_string(self):
+        jw = JordanWigner(2)
+        wires = [0, 1]
+        for pauli_str in ("IX", "IY", "IZ", "XI", "YI", "ZI", "XX", "YY", "XY", "YX", "ZZ"):
+            indices_str, phase_str = jw.pauli_to_majorana(pauli_str, wires)
+            word = PauliWord({w: c for w, c in zip(wires, pauli_str) if c != "I"})
+            indices_word, phase_word = jw.pauli_to_majorana(word, wires)
+            np.testing.assert_array_equal(indices_str, indices_word)
+            np.testing.assert_almost_equal(phase_str, phase_word)
+
+    def test_pauli_word_default_wires(self):
+        jw = JordanWigner(2)
+        word = PauliWord({0: "X", 1: "Y"})
+        indices_word, phase_word = jw.pauli_to_majorana(word)
+        indices_str, phase_str = jw.pauli_to_majorana("XY", [0, 1])
+        np.testing.assert_array_equal(indices_word, indices_str)
+        np.testing.assert_almost_equal(phase_word, phase_str)
+
+    def test_pauli_word_missing_wire_treated_as_identity(self):
+        jw = JordanWigner(2)
+        word = PauliWord({1: "X"})
+        indices_word, phase_word = jw.pauli_to_majorana(word, [0, 1])
+        indices_str, phase_str = jw.pauli_to_majorana("IX", [0, 1])
+        np.testing.assert_array_equal(indices_word, indices_str)
+        np.testing.assert_almost_equal(phase_word, phase_str)

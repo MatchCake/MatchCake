@@ -1,6 +1,19 @@
-from typing import Sequence, Tuple
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
+
+try:
+    from pennylane.pauli import PauliWord
+    _PENNYLANE_PAULI_TYPES = (PauliWord,)
+except ImportError:
+    _PENNYLANE_PAULI_TYPES = ()
+
+_PAULI_TO_MAJORANA = {
+    "I": lambda k: ([], 1 + 0j),
+    "X": lambda k: ([idx for j in range(k) for idx in (2 * j, 2 * j + 1)] + [2 * k], (-1j) ** k),
+    "Y": lambda k: ([idx for j in range(k) for idx in (2 * j, 2 * j + 1)] + [2 * k + 1], (-1j) ** k),
+    "Z": lambda k: ([2 * k, 2 * k + 1], -1j),
+}
 
 
 class JordanWigner:
@@ -18,6 +31,9 @@ class JordanWigner:
 
     JW strings: X_k and Y_k each carry Z_0...Z_{k-1}; each Z_j = -i c_{2j} c_{2j+1}.
     Indices are sorted via insertion sort; duplicate pairs are cancelled via c^2 = 1.
+
+    ``pauli_to_majorana`` accepts either a plain string (with an explicit ``wires``
+    sequence) or a PennyLane ``PauliWord`` (where ``wires`` defaults to sorted keys).
     """
 
     @staticmethod
@@ -66,47 +82,54 @@ class JordanWigner:
 
         return np.array(arr, dtype=int), complex(sign)
 
+    @staticmethod
+    def _parse_pauli(
+        pauli: Union[str, "PauliWord"],
+        wires: Optional[Sequence[int]],
+    ) -> Tuple[list, Sequence[int]]:
+        """Normalize input to (char_wire_pairs, wires).
+
+        For a PauliWord, wires defaults to sorted keys; missing wires map to 'I'.
+        For a string, wires is required and must match length.
+        """
+        if isinstance(pauli, _PENNYLANE_PAULI_TYPES):
+            if wires is None:
+                wires = sorted(pauli.keys())
+            return [(pauli.get(w, "I"), w) for w in wires], wires
+        if wires is None:
+            raise ValueError("wires must be provided when pauli is a string")
+        assert len(pauli) == len(wires), (
+            f"len(pauli)={len(pauli)} != len(wires)={len(wires)}"
+        )
+        return list(zip(pauli, wires)), wires
+
     def __init__(self, n_qubits: int):
         self.n_qubits = n_qubits
 
     def pauli_to_majorana(
         self,
-        pauli_string: str,
-        wires: Sequence[int],
+        pauli: Union[str, "PauliWord"],
+        wires: Optional[Sequence[int]] = None,
     ) -> Tuple[np.ndarray, complex]:
         """Return (sorted_indices, phase) such that P = phase * c_{mu_1} ... c_{mu_m}.
 
-        :param pauli_string: One character per wire in ``wires`` order; must be in {'I', 'X', 'Y', 'Z'}.
-        :param wires: Wire labels in qubit order; len(wires) == len(pauli_string).
+        :param pauli: Pauli string or PennyLane PauliWord.
+        :param wires: Wire labels in qubit order. Required for strings; optional for PauliWord (defaults to sorted keys).
         :return: (sorted_indices, phase). ``phase`` is complex.
         """
-        assert len(pauli_string) == len(wires), (
-            f"len(pauli_string)={len(pauli_string)} != len(wires)={len(wires)}"
-        )
+        char_wire_pairs, wires = self._parse_pauli(pauli, wires)
         wire_to_qubit = {w: k for k, w in enumerate(wires)}
 
         indices: list[int] = []
         phase: complex = 1.0 + 0j
 
-        for char, wire in zip(pauli_string, wires):
+        for char, wire in char_wire_pairs:
             k = wire_to_qubit[wire]
-            if char == "I":
-                continue
-            elif char == "X":
-                for j in range(k):
-                    indices.extend([2 * j, 2 * j + 1])
-                    phase *= -1j
-                indices.append(2 * k)
-            elif char == "Y":
-                for j in range(k):
-                    indices.extend([2 * j, 2 * j + 1])
-                    phase *= -1j
-                indices.append(2 * k + 1)
-            elif char == "Z":
-                indices.extend([2 * k, 2 * k + 1])
-                phase *= -1j
-            else:
+            if char not in _PAULI_TO_MAJORANA:
                 raise ValueError(f"Unknown Pauli character: {char!r}")
+            new_indices, local_phase = _PAULI_TO_MAJORANA[char](k)
+            indices.extend(new_indices)
+            phase *= local_phase
 
         if not indices:
             return np.array([], dtype=int), phase
