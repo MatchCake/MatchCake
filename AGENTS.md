@@ -30,6 +30,7 @@
 - One test class per file. Each test file contains exactly one `Test*` class.
 - All tests must be methods of a `Test*` class. No module-level `test_*` functions.
 - Tests must be compatible with pytest-xdist parallel execution: no shared mutable state between tests, no dependency on execution order, and no hardcoded resources (ports, file paths) that would conflict across workers.
+- Prefer `np.testing` and `torch.testing` assertion helpers over bare `assert` statements for numerical comparisons. Use `torch.autograd.gradcheck` when testing gradient correctness.
 
 ## Class method ordering
 Methods within a class must appear in this order:
