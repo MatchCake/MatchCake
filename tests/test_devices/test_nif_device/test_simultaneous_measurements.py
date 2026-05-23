@@ -24,8 +24,17 @@ from matchcake.operations import (
 from ...configs import (
     ATOL_APPROX_COMPARISON,
     RTOL_APPROX_COMPARISON,
+    TEST_SEED,
+    set_seed,
 )
 from .. import devices_init, specific_matchgate_circuit
+
+
+_NON_ZERO_INITIAL_STATES_2_WIRES = [
+    np.array([0, 1]),
+    np.array([1, 0]),
+    np.array([1, 1]),
+]
 
 
 class TestNIFDeviceProbabilities:
@@ -148,6 +157,105 @@ class TestNIFDeviceProbabilities:
             return qml.probs(wires=op_gen.wires)
 
         qubit_probs = ground_truth_circuit()
+        np.testing.assert_allclose(
+            nif_probs.squeeze(),
+            qubit_probs.squeeze(),
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=RTOL_APPROX_COMPARISON,
+        )
+
+    @pytest.mark.parametrize(
+        "num_gates, num_wires, initial_binary_state",
+        [
+            (num_gates, num_wires, initial_binary_state)
+            for num_wires in [2, 3, 4]
+            for num_gates in [1, 3, 6]
+            for initial_binary_state in [
+                np.array([0, 1]),
+                np.array([1, 0]),
+                np.array([1, 1]),
+            ]
+        ],
+    )
+    def test_multiples_matchgate_probs_against_qubit_device_non_zero_initial_state(
+        self, num_gates, num_wires, initial_binary_state
+    ):
+        set_seed(TEST_SEED)
+        full_initial_state = np.zeros(num_wires, dtype=int)
+        full_initial_state[: len(initial_binary_state)] = initial_binary_state
+
+        params_list = [MatchgateOperation.random_params(seed=i) for i in range(num_gates)]
+        all_wires = np.arange(num_wires)
+        wire0_vector = np.random.choice(all_wires[:-1], size=num_gates)
+        wire1_vector = wire0_vector + 1
+        params_wires_list = [
+            (params, [int(w0), int(w1)])
+            for params, w0, w1 in zip(params_list, wire0_vector, wire1_vector)
+        ]
+
+        nif_device, qubit_device = devices_init(wires=num_wires)
+        nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
+        qubit_qnode = qml.QNode(specific_matchgate_circuit, qubit_device)
+
+        qubit_state = qubit_qnode(
+            params_wires_list,
+            full_initial_state,
+            all_wires=qubit_device.wires,
+            in_param_type=mgp.MatchgatePolarParams,
+            out_op="state",
+        )
+        qubit_probs = utils.get_probabilities_from_state(qubit_state, wires=all_wires)
+        nif_probs = nif_qnode(
+            params_wires_list,
+            full_initial_state,
+            all_wires=nif_device.wires,
+            in_param_type=mgp.MatchgatePolarParams,
+            out_op="probs",
+            out_wires=all_wires,
+        )
+        np.testing.assert_allclose(
+            nif_probs.squeeze(),
+            qubit_probs.squeeze(),
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=RTOL_APPROX_COMPARISON,
+        )
+
+    @pytest.mark.parametrize(
+        "num_wires, initial_binary_state",
+        [
+            (num_wires, initial_binary_state)
+            for num_wires in [2, 3, 4]
+            for initial_binary_state in [
+                np.array([0, 0]),
+                np.array([0, 1]),
+                np.array([1, 0]),
+                np.array([1, 1]),
+            ]
+        ],
+    )
+    def test_zero_gate_circuit_probs_against_qubit_device(self, num_wires, initial_binary_state):
+        full_initial_state = np.zeros(num_wires, dtype=int)
+        full_initial_state[: len(initial_binary_state)] = initial_binary_state
+
+        all_wires = np.arange(num_wires)
+        nif_device, qubit_device = devices_init(wires=num_wires)
+        nif_qnode = qml.QNode(specific_matchgate_circuit, nif_device)
+        qubit_qnode = qml.QNode(specific_matchgate_circuit, qubit_device)
+
+        qubit_state = qubit_qnode(
+            [],
+            full_initial_state,
+            all_wires=qubit_device.wires,
+            out_op="state",
+        )
+        qubit_probs = utils.get_probabilities_from_state(qubit_state, wires=all_wires)
+        nif_probs = nif_qnode(
+            [],
+            full_initial_state,
+            all_wires=nif_device.wires,
+            out_op="probs",
+            out_wires=all_wires,
+        )
         np.testing.assert_allclose(
             nif_probs.squeeze(),
             qubit_probs.squeeze(),
