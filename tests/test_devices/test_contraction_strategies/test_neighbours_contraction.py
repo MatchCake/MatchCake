@@ -6,9 +6,8 @@ import pytest
 import torch
 
 import matchcake as mc
-from matchcake import MatchgateOperation
+from matchcake import MatchgateOperation, utils
 from matchcake import matchgate_parameter_sets as mgp
-from matchcake import utils
 from matchcake.circuits import random_sptm_operations_generator
 from matchcake.operations import SptmCompRxRx, SptmIdentity
 from matchcake.utils import torch_utils

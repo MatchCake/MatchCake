@@ -1,4 +1,3 @@
-import itertools
 from typing import Callable, Optional
 
 import numpy as np
@@ -69,7 +68,7 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
             total=device.num_wires,
             desc=f"[{self.NAME}] Generating Samples by Subsets of {k}",
             disable=not kwargs.get("show_progress", False),
-            unit=f"wire",
+            unit="wire",
         )
         added_states = device.states_to_binary(np.arange(int(2**k)), k)
         # pi_0 = pi_0(x_0) = [p_0(0), p_0(1)]

@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 
 
 def generate_doc(path_to_root_dir: str = "."):

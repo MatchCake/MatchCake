@@ -1,17 +1,15 @@
 import functools
-import importlib
 from collections import OrderedDict
 from functools import cached_property
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 import pennylane as qml
 from pennylane.pauli import string_to_pauli_word
-from pennylane.wires import Wires
 
 from ..typing import TensorLike
 from .constants import PAULI_I, PAULI_X, PAULI_Y, PAULI_Z
-from .operators import recursive_2in_operator, recursive_kron
+from .operators import recursive_kron
 
 
 def get_majorana_pauli_list(i: int, n: int) -> List[np.ndarray]:

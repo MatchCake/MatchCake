@@ -61,9 +61,11 @@ class LinearNIFKernel(NIFKernel):
         :type alignment_iterations: int
         :param alignment_learning_rate: The learning rate for the optimizer used in kernel alignment.
         :type alignment_learning_rate: float
-        :param alignment_early_stopping_patience: The number of iterations to wait for improvement before stopping kernel alignment optimization.
+        :param alignment_early_stopping_patience: The number of iterations to wait for improvement
+            before stopping kernel alignment optimization.
         :type alignment_early_stopping_patience: int
-        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel alignment optimization, used for early stopping criteria.
+        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel
+            alignment optimization, used for early stopping criteria.
         :type alignment_early_stopping_threshold: float
         :param n_qubits: Number of qubits used in the quantum computation process.
         :type n_qubits: int

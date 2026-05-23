@@ -1,10 +1,7 @@
 import numpy as np
 import pennylane as qml
-import torch
-from pennylane.wires import Wires
 
 from ...utils.math import convert_and_cast_like
-from ...utils.torch_utils import to_tensor
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 

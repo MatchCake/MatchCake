@@ -5,8 +5,9 @@ import numpy as np
 import pennylane as qml
 import torch
 from pennylane.operation import StatePrepBase
-from ...typing import TensorLike
 from pennylane.wires import Wires, WiresLike
+
+from ...typing import TensorLike
 
 
 class ProductState(StatePrepBase):

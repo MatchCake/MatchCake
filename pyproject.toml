@@ -220,6 +220,12 @@ line-length = 120
 [tool.ruff.lint]
 select = ["E", "F", "I"]
 
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401"]
+"sphinx/source/conf.py" = ["E402"]
+"src/matchcake/base/lookup_table.py" = ["E501"]
+"tutorials/**" = ["E501"]
+
 [tool.ruff.format]
 quote-style = "double"
 

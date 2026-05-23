@@ -5,7 +5,6 @@ from pennylane.ops.qubit import BasisStateProjector
 from pennylane.wires import Wires
 
 from matchcake import BatchHamiltonian, NIFDevice
-from matchcake.circuits import RandomMatchgateHaarOperationsGenerator
 from matchcake.devices.expval_strategies.expval_from_probabilities import (
     ExpvalFromProbabilitiesStrategy,
 )

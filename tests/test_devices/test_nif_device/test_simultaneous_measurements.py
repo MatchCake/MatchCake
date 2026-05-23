@@ -1,14 +1,11 @@
 import numpy as np
 import pennylane as qml
 import pytest
-from pennylane.ops.qubit import BasisStateProjector
 
-from matchcake import MatchgateOperation, NonInteractingFermionicDevice
+from matchcake import MatchgateOperation, NonInteractingFermionicDevice, utils
 from matchcake import matchgate_parameter_sets as mgp
-from matchcake import utils
 from matchcake.circuits import RandomMatchgateOperationsGenerator
 from matchcake.devices.contraction_strategies import contraction_strategy_map
-from matchcake.devices.probability_strategies import get_probability_strategy
 from matchcake.operations import (
     CompHH,
     CompRxRx,
@@ -17,7 +14,6 @@ from matchcake.operations import (
     FermionicSuperposition,
     Rxx,
     Rzz,
-    SingleParticleTransitionMatrixOperation,
     fSWAP,
 )
 
@@ -28,7 +24,6 @@ from ...configs import (
     set_seed,
 )
 from .. import devices_init, specific_matchgate_circuit
-
 
 _NON_ZERO_INITIAL_STATES_2_WIRES = [
     np.array([0, 1]),
@@ -189,8 +184,7 @@ class TestNIFDeviceProbabilities:
         wire0_vector = np.random.choice(all_wires[:-1], size=num_gates)
         wire1_vector = wire0_vector + 1
         params_wires_list = [
-            (params, [int(w0), int(w1)])
-            for params, w0, w1 in zip(params_list, wire0_vector, wire1_vector)
+            (params, [int(w0), int(w1)]) for params, w0, w1 in zip(params_list, wire0_vector, wire1_vector)
         ]
 
         nif_device, qubit_device = devices_init(wires=num_wires)

@@ -354,7 +354,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
         slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-1])
         try:
             padded_matrix[..., slice_0, slice_1] = matrix
-        except:
+        except Exception:
             padded_matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(matrix, padded_matrix)
         kwargs = self._hyperparameters.copy()
         return SingleParticleTransitionMatrixOperation(padded_matrix, wires=cs_wires, **kwargs)

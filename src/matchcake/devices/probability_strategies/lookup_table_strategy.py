@@ -1,4 +1,4 @@
-from typing import Literal, Optional, cast
+from typing import Literal, Optional
 
 import pennylane as qml
 from pennylane.operation import StatePrepBase

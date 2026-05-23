@@ -8,8 +8,7 @@ import tqdm
 from pennylane import BasisState
 from pennylane.exceptions import DeviceError
 
-from ..operations.state_preparation import StatePrepFromGates
-from ..operations.state_preparation import ProductState
+from ..operations.state_preparation import ProductState, StatePrepFromGates
 from ..typing import TensorLike
 from .expval_strategies.clifford_expval.clifford_expval_strategy import (
     CliffordExpvalStrategy,
@@ -18,7 +17,11 @@ from .expval_strategies.expval_from_probabilities import ExpvalFromProbabilities
 from .expval_strategies.m_pfaffian import MPfaffianExpvalStrategy
 from .expval_strategies.m_pfaffian._extended_covariance import (
     displacement_vector as _displacement_vector,
+)
+from .expval_strategies.m_pfaffian._extended_covariance import (
     extended_covariance_matrix as _extended_covariance_matrix,
+)
+from .expval_strategies.m_pfaffian._extended_covariance import (
     sptm_lift as _sptm_lift,
 )
 
@@ -952,7 +955,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         :Note: This function comes from the ``default.qubit`` device.
         """
         raise NotImplementedError(
-            "The NIF device does not support dense state representation. It would require an exponential amount of memory."
+            "The NIF device does not support dense state representation. "
+            "It would require an exponential amount of memory."
         )
 
     @property
@@ -1012,7 +1016,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     def covariance_matrix(self):
         if not isinstance(self.state_prep_op, ProductState):
             raise ValueError(
-                f"Covariance matrix can only be computed for product states. Got {type(self.state_prep_op)} instead of ProductState."
+                f"Covariance matrix can only be computed for product states. "
+                f"Got {type(self.state_prep_op)} instead of ProductState."
             )
         cov0 = self.state_prep_op.covariance_matrix
         q = self.global_sptm.matrix(self.wires)

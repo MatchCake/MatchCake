@@ -1,17 +1,16 @@
-from typing import Any, Sequence, cast
+from typing import Any, cast
 
 import numpy as np
 import pennylane as qml
 import torch
 from pennylane.operation import Operator, StatePrepBase, TermsUndefinedError
-from pennylane.ops.qubit.observables import BasisStateProjector
 from pennylane.pauli import pauli_word_to_string
 
+from ....operations.state_preparation.product_state import ProductState
 from ....typing import TensorLike
 from ....utils import JordanWigner
 from ....utils._pfaffian import sector_pfaffian_features
 from ....utils.math import convert_and_cast_like
-from ....operations.state_preparation.product_state import ProductState
 from ..expval_strategy import ExpvalStrategy
 
 

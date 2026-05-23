@@ -4,14 +4,12 @@ import pytest
 import tqdm
 from pennylane import BasisState
 from pennylane.exceptions import DeviceError
-from pennylane.ops.op_math import Sum
 from pennylane.tape import QuantumTape
 
 from matchcake import NonInteractingFermionicDevice
 from matchcake.observables.batch_hamiltonian import BatchHamiltonian
 from matchcake.observables.batch_projector import BatchProjector
 from matchcake.operations import CompZX
-from matchcake.operations.state_preparation import ProductState
 from matchcake.operations.state_preparation.state_prep_from_gates import StatePrepFromGates
 
 from ...configs import TEST_SEED, set_seed

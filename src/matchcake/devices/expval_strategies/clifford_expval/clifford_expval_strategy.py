@@ -88,11 +88,14 @@ class CliffordExpvalStrategy(ExpvalStrategy):
     def _compute_full_clifford_expvals(self, state_prep_op: StatePrepBase, global_sptm):
         triu_indices = np.triu_indices(global_sptm.shape[-1], k=1)
         expvals = torch.eye(global_sptm.shape[-1], dtype=global_sptm.dtype, device=global_sptm.device)
-        expvals[triu_indices[0], triu_indices[1]] = cast(torch.Tensor, to_tensor(
-            qml.math.stack(self.compute_clifford_expvals(state_prep_op)),
-            dtype=global_sptm.dtype,
-            device=global_sptm.device,
-        ))
+        expvals[triu_indices[0], triu_indices[1]] = cast(
+            torch.Tensor,
+            to_tensor(
+                qml.math.stack(self.compute_clifford_expvals(state_prep_op)),
+                dtype=global_sptm.dtype,
+                device=global_sptm.device,
+            ),
+        )
         expvals[triu_indices[1], triu_indices[0]] = -expvals[triu_indices[0], triu_indices[1]]
         return expvals
 

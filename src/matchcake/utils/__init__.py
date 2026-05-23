@@ -1,6 +1,6 @@
 import importlib
-from functools import partial
 from collections.abc import Callable
+from functools import partial
 from typing import Any, List, Optional, Union
 
 import numpy as np
@@ -13,8 +13,8 @@ from scipy import sparse
 
 from . import constants, cuda, majorana, math, operators, torch_utils
 from ._pfaffian import pfaffian, sector_pfaffian_features, signed_pfaffian
-from .jordan_wigner import JordanWigner
 from .constants import PAULI_I, PAULI_X, PAULI_Y, PAULI_Z
+from .jordan_wigner import JordanWigner
 from .logm import logm
 from .majorana import (
     MajoranaGetter,

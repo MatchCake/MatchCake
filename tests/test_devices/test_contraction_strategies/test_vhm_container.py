@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 import matchcake as mc
-from matchcake import matchgate_parameter_sets as mgp
 from matchcake.devices.contraction_strategies import get_contraction_strategy
 from matchcake.operations import SptmCompRxRx
 

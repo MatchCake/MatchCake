@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Any, Callable, Dict, Iterator, List, Optional
+from typing import Any, Callable, Iterator, List, Optional
 
 import numpy as np
 import pennylane as qml

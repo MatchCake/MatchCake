@@ -4,14 +4,12 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import os
-import pprint
-import sys
 import shutil
+import sys
 
 basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 sys.path.insert(0, basedir)
 import matchcake
-
 
 _html_folders_formatted = {}
 _allowed_special_methods = ["__init__", "__call__"]

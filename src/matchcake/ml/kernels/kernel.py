@@ -55,8 +55,10 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         :param alignment: A boolean flag indicating whether to perform kernel alignment during fitting.
         :param alignment_iterations: The maximum number of iterations for kernel alignment optimization.
         :param alignment_learning_rate: The learning rate for the optimizer used in kernel alignment.
-        :param alignment_early_stopping_patience: The number of iterations to wait for improvement before stopping kernel alignment optimization.
-        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel alignment optimization, used for early stopping criteria.
+        :param alignment_early_stopping_patience: The number of iterations to wait for improvement
+            before stopping kernel alignment optimization.
+        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel
+            alignment optimization, used for early stopping criteria.
         """
         super().__init__()
         self.gram_batch_size = gram_batch_size
@@ -220,7 +222,8 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         .. :math::
             Y_c = C Y C,
 
-        and :math:`C` is the centering matrix. Here, :math:`\langle\cdot,\cdot\rangle` denotes the Frobenius inner product,
+        and :math:`C` is the centering matrix. Here, :math:`\langle\cdot,\cdot\rangle` denotes
+        the Frobenius inner product,
         and ||.|| denotes the Frobenius norm, with :math:`K` being the kernel matrix and :math:`Y` being
         the ideal kernel from labels.
 
@@ -271,7 +274,9 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
             loss.backward()
             optimizer.step()
             p_bar.set_postfix_str(f"Alignment score: {self.opt_.fun:.4f}")  # type: ignore[attr-defined]
-        torch.nn.utils.vector_to_parameters(cast(torch.Tensor, to_tensor(best_params, device=self.device)), self.parameters())
+        torch.nn.utils.vector_to_parameters(
+            cast(torch.Tensor, to_tensor(best_params, device=self.device)), self.parameters()
+        )
         self.opt_.fun = best_alignment  # type: ignore[attr-defined]
         p_bar.close()
         self.eval()

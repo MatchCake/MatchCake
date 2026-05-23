@@ -116,7 +116,7 @@ class TestSptmRyRy:
         angles = np.random.uniform(-10 * np.pi, 10 * np.pi, size=batch_size)
         new_angles = SptmCompRyRy.clip_angles(angles)
         assert new_angles.shape == angles.shape
-        assert type(new_angles) == type(angles)
+        assert type(new_angles) is type(angles)
         assert SptmCompRyRy.check_angles(new_angles)
 
     @pytest.mark.parametrize(

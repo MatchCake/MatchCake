@@ -1,5 +1,5 @@
 import warnings
-from typing import Callable, Iterable, List, Literal, Optional, Union, cast
+from typing import Callable, Iterable, List, Optional, Union, cast
 
 from pennylane.wires import Wires
 

@@ -1,5 +1,3 @@
-import pytest
-
 from matchcake.operations.fermionic_controlled_z import FermionicControlledZ, fCZ
 
 from ..configs import TEST_SEED, set_seed

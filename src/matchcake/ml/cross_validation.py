@@ -10,7 +10,8 @@ from matchcake.typing import TensorLike
 
 class CrossValidationOutput:
     r"""
-    The CrossValidation class defines an object to encapsulate the handling and the outputs of scikit-learn Cross-validation module.
+    The CrossValidation class defines an object to encapsulate the handling and the outputs
+    of scikit-learn Cross-validation module.
 
     It can run multiple estimators one after another to test the performance of each of them in a reproducible manner.
 
@@ -56,7 +57,8 @@ class CrossValidationOutput:
 
 class CrossValidation:
     r"""
-    The CrossValidation class defines an object to encapsulate the handling and the outputs of scikit-learn Cross-validation module.
+    The CrossValidation class defines an object to encapsulate the handling and the outputs of scikit-learn
+    Cross-validation module.
 
     It can run multiple estimators one after another to test the performance of each of them in a reproducible manner.
 
@@ -74,9 +76,11 @@ class CrossValidation:
     :type x: Any tensor-compatible object.
     :ivar y: The dependant variable.
     :type y: Any tensor-compatible object.
-    :ivar cv: The Cross-Validation method. If none is passed, it will default to a StratifiedShuffleSplit with 20 splits and a train-test ration of 80-20
+    :ivar cv: The Cross-Validation method. If none is passed, it will default to a
+        StratifiedShuffleSplit with 20 splits and a train-test ration of 80-20
     :type cv: Cross-validator
-    :ivar cross_validator_kwargs: Additional arguments to pass to the cross-validator. See https://scikit-learn.org/stable/modules/cross_validation.html#the-cross-validate-function-and-multiple-metric-evaluation
+    :ivar cross_validator_kwargs: Additional arguments to pass to the cross-validator.
+        See https://scikit-learn.org/stable/modules/cross_validation.html
     :type cross_validator_kwargs: dict
     """
 
@@ -105,7 +109,8 @@ class CrossValidation:
             'return_indices': True,
         }
         ```
-        These kwargs are optional. By default, `return_train_score` will be True. See https://scikit-learn.org/stable/modules/cross_validation.html#the-cross-validate-function-and-multiple-metric-evaluation for information on these parameters.
+        These kwargs are optional. By default, `return_train_score` will be True.
+        See https://scikit-learn.org/stable/modules/cross_validation.html for information on these parameters.
 
         :param estimators: Dictionary mapping estimator names to the estimator
         :param x: Independant variable to be processed.
@@ -113,7 +118,8 @@ class CrossValidation:
         :type y: Any tensor-compatible object.
         :param cv: The cross-validator. Will use a StratifiedShuffleSplit with 20 splits by default.
         :type cv: An initialised cross-validator.
-        :ivar cross_validator_kwargs: Additional arguments to pass to the cross-validator. See https://scikit-learn.org/stable/modules/cross_validation.html#the-cross-validate-function-and-multiple-metric-evaluation .
+        :ivar cross_validator_kwargs: Additional arguments to pass to the cross-validator.
+            See https://scikit-learn.org/stable/modules/cross_validation.html .
         :type cross_validator_kwargs: A mapping between the arguments and their True/False value.
         """
         self.estimators = estimators
@@ -148,7 +154,8 @@ class CrossValidation:
 
     def run(self, verbose=True) -> CrossValidationOutput:
         """
-        Run the cross-validation. It will run all estimators with the same data and cross-validation method. Outputs of the cross-validation will be saved in a CrossValidationOutput object.
+        Run the cross-validation. It will run all estimators with the same data and cross-validation method.
+        Outputs of the cross-validation will be saved in a CrossValidationOutput object.
 
         :param verbose: If to show progress.
         :return: A CrossValidationOutput object.

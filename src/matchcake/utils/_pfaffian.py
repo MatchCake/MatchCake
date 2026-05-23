@@ -59,7 +59,6 @@ def signed_pfaffian(matrix: TensorLike) -> TensorLike:
                 sign = 0.0
                 break
             tau = M[i + 2 :, i] / pivot_val  # (n-i-2,)
-            row_ip1 = M[i + 1, i + 2 :]  # (n-i-2,)
             col_ip1 = M[i + 2 :, i + 1]  # (n-i-2,)
             M[i + 2 :, i + 2 :] += torch.outer(tau, col_ip1) - torch.outer(col_ip1, tau)
             M[i + 2 :, i] = 0.0

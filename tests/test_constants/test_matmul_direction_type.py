@@ -1,5 +1,3 @@
-import pytest
-
 from matchcake.constants import MatmulDirectionType
 
 

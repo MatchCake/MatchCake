@@ -13,7 +13,6 @@ from matchcake.operations import (
     CompHH,
     CompZX,
     MatchgateIdentity,
-    SingleParticleTransitionMatrixOperation,
 )
 from matchcake.utils import get_block_diagonal_matrix
 from matchcake.utils.torch_utils import to_tensor

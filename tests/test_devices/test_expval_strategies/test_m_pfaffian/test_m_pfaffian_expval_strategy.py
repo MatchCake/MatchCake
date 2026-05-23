@@ -7,14 +7,13 @@ import pytest
 import torch
 
 from matchcake import NonInteractingFermionicDevice
-from matchcake.operations.comp_rotations import CompRyRy, CompRzRz
-from matchcake.operations.fermionic_swap import fSWAP
 from matchcake.devices.expval_strategies.m_pfaffian import (
     MPfaffianExpvalStrategy,
     displacement_vector,
     extended_covariance_matrix,
-    sptm_lift,
 )
+from matchcake.operations.comp_rotations import CompRyRy, CompRzRz
+from matchcake.operations.fermionic_swap import fSWAP
 from matchcake.operations.state_preparation.product_state import ProductState
 from matchcake.utils._pfaffian import signed_pfaffian
 from matchcake.utils.jordan_wigner import JordanWigner

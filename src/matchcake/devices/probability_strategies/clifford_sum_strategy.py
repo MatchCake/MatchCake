@@ -87,7 +87,9 @@ class CliffordSumStrategy(ProbabilityStrategy):
 
     @staticmethod
     def _create_transition_tensor(transition_vectors: List[TensorLike]) -> TensorLike:
-        outer_prod = lambda x, y: qml.math.einsum("...i,...j->...ij", x, y)
+        def outer_prod(x, y):
+            return qml.math.einsum("...i,...j->...ij", x, y)
+
         return utils.recursive_2in_operator(outer_prod, transition_vectors)
 
     def __call__(

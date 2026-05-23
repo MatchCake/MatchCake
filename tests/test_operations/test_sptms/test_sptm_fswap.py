@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 import matchcake as mc
-from matchcake import utils
 from matchcake.operations import fSWAP
 from matchcake.operations.fermionic_swap import CompZX
 from matchcake.operations.single_particle_transition_matrices import SptmCompZX

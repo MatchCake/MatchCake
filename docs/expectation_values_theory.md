@@ -138,8 +138,8 @@ $$
 \widetilde Q = \begin{pmatrix} Q & 0 \\ 0 & 1 \end{pmatrix} \in O(2n+1),
 $$
 
-and the extended covariance matrix evolves 
-as $\widetilde\Lambda(t) = \widetilde Q^\top \widetilde\Lambda_0\, \widetilde Q$. 
+and the extended covariance matrix evolves
+as $\widetilde\Lambda(t) = \widetilde Q^\top \widetilde\Lambda_0\, \widetilde Q$.
 MatchCake computes the standard $Q$ from the circuit
 and embeds it in this $(2n+1) \times (2n+1)$ block — no extra overhead.
 
@@ -202,10 +202,10 @@ practice.
 
 ## References
 
-[1] Jozsa, Richard, Akimasa Miyake, and Sergii Strelchuk. "Jordan-Wigner formalism for arbitrary 2-input 2-output 
+[1] Jozsa, Richard, Akimasa Miyake, and Sergii Strelchuk. "Jordan-Wigner formalism for arbitrary 2-input 2-output
 matchgates and their classical simulation." arXiv preprint arXiv:1311.3046 (2013).
 
-[2] Projansky, Andrew M., Jason Necaise, and James D. Whitfield. "Gaussianity and simulability of Cliffords and 
+[2] Projansky, Andrew M., Jason Necaise, and James D. Whitfield. "Gaussianity and simulability of Cliffords and
 matchgates." Journal of Physics A: Mathematical and Theoretical 58, no. 19 (2025): 195302.
 
 [3] Bravyi, Sergey. "Lagrangian representation for fermionic linear optics." arXiv preprint quant-ph/0404180 (2004).

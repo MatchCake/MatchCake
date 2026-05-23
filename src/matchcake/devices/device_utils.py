@@ -11,8 +11,6 @@ from ..operations.single_particle_transition_matrices.single_particle_transition
 )
 from ..utils.math import (
     circuit_matmul,
-    convert_and_cast_like,
-    dagger,
     fermionic_operator_matmul,
 )
 

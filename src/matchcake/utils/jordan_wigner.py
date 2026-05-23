@@ -114,7 +114,8 @@ class JordanWigner:
         """Return (sorted_indices, phase) such that P = phase * c_{mu_1} ... c_{mu_m}.
 
         :param pauli: Pauli string or PennyLane PauliWord.
-        :param wires: Wire labels in qubit order. Required for strings; optional for PauliWord (defaults to sorted keys).
+        :param wires: Wire labels in qubit order. Required for strings; optional for PauliWord
+            (defaults to sorted keys).
         :return: (sorted_indices, phase). ``phase`` is complex.
         """
         char_wire_pairs, wires = self._parse_pauli(pauli, wires)

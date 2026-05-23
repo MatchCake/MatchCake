@@ -2,7 +2,6 @@ import numpy as np
 import pennylane as qml
 import pytest
 import torch.nn
-from torch.nn import Parameter
 
 from matchcake.ml.kernels.fermionic_pqc_kernel import (
     PATTERN_TO_WIRES,
@@ -129,6 +128,7 @@ class TestFermionicPQCKernelMiscellaneous:
 
     def test_ansatz_invalid_entangling_method_raises(self):
         import torch
+
         kernel = FermionicPQCKernel(n_qubits=4, entangling_mth="identity")
         kernel.entangling_mth = "bad_method"
         kernel.depth_ = 1

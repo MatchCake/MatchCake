@@ -1,8 +1,6 @@
 import numpy as np
 from pennylane.wires import Wires
 
-from ...constants import _CIRCUIT_MATMUL_DIRECTION
-from ...utils.math import dagger
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 

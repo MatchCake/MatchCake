@@ -1,7 +1,8 @@
-import matchcake as mc
 import numpy as np
 import pennylane as qml
 from pennylane.ops.qubit.observables import BasisStateProjector
+
+import matchcake as mc
 
 # Create a Non-Interacting Fermionic Device with 4 qubits/wires
 nif_device = mc.NonInteractingFermionicDevice(wires=4)

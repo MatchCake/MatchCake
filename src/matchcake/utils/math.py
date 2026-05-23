@@ -32,7 +32,7 @@ def convert_and_cast_like(tensor1, tensor2):
             new_tensor1 = qml.math.real(new_tensor1)
         if (
             "complex" in qml.math.get_dtype_name(new_tensor1).lower()
-            and not "complex" in qml.math.get_dtype_name(tensor2).lower()
+            and "complex" not in qml.math.get_dtype_name(tensor2).lower()
         ):
             new_tensor1 = qml.math.real(new_tensor1)  # pragma: no cover
         new_tensor1 = qml.math.cast_like(new_tensor1, tensor2)

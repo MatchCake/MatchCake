@@ -77,8 +77,14 @@ class MatchgateStandardParams(MatchgateParams):
         batch_size = self.batch_size if self.batch_size is not None else 1
         a, b, c, d, w, x, y, z = cast(
             tuple[
-                torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor,
-                torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor,
+                torch.Tensor,
+                torch.Tensor,
+                torch.Tensor,
+                torch.Tensor,
+                torch.Tensor,
+                torch.Tensor,
+                torch.Tensor,
+                torch.Tensor,
             ],
             tuple(
                 cast(torch.Tensor, to_tensor(p, dtype=dtype, device=device))

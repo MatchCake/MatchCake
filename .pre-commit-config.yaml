@@ -1,29 +1,40 @@
 repos:
-  - repo: local
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
     hooks:
+      - id: check-added-large-files
+      - id: check-docstring-first
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: detect-private-key
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.9.28
+    hooks:
+      - id: uv-sync
       - id: uv-lock
-        name: uv lock (only when pyproject.toml changes)
-        entry: uv lock
-        language: system
-        pass_filenames: false
-        files: ^pyproject\.toml$
+      - id: uv-export
+        args:
+          [
+            "--frozen",
+            "--no-hashes",
+            "--output-file=requirements.txt",
+            "--quiet",
+          ]
 
-      - id: ruff-format
-        name: ruff format (changed files only)
-        entry: uv run ruff format
-        language: system
-        types: [python]
-        pass_filenames: true
+  - repo: https://github.com/tsvikas/sync-with-uv
+    rev: v0.5.0
+    hooks:
+      - id: sync-with-uv
 
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.14
+    hooks:
+      # Run the linter.
       - id: ruff-check
-        name: ruff check (changed files only)
-        entry: uv run ruff check --fix
-        language: system
-        types: [python]
-        pass_filenames: true
-
-      - id: mypy
-        name: mypy (advisory)
-        entry: bash -c 'uv run mypy "$@" || true'
-        language: system
-        types: [python]
+        args: [--fix, --exit-non-zero-on-fix]
+      # Run the formatter.
+      - id: ruff-format

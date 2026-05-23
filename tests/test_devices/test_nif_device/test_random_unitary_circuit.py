@@ -163,7 +163,9 @@ def test_global_sptm_det(operations_generator: RandomSptmOperationsGenerator, co
                 start=[],
             ),
             [
-                cast(Type[SingleParticleTransitionMatrixOperation], random.choice([SptmCompRxRx, SptmCompZX])).random(wires=w)
+                cast(Type[SingleParticleTransitionMatrixOperation], random.choice([SptmCompRxRx, SptmCompZX])).random(
+                    wires=w
+                )
                 for w in [
                     [0, 1],
                     [0, 1],

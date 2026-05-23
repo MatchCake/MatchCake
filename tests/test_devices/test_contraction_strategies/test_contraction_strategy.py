@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 import tqdm
 
 from matchcake.devices.contraction_strategies.forward_strategy import ForwardContractionStrategy

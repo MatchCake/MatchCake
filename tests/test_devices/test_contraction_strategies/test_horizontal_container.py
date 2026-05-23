@@ -4,7 +4,6 @@ import pytest
 
 import matchcake as mc
 from matchcake import matchgate_parameter_sets as mgp
-from matchcake import utils
 from matchcake.devices.contraction_strategies import get_contraction_strategy
 from matchcake.devices.contraction_strategies.contraction_container import (
     _ContractionMatchgatesContainerAddException,
@@ -17,7 +16,7 @@ from ...configs import (
     TEST_SEED,
     set_seed,
 )
-from .. import init_nif_device, init_qubit_device, specific_matchgate_circuit
+from .. import init_nif_device, specific_matchgate_circuit
 
 
 class TestHorizontalContainer:

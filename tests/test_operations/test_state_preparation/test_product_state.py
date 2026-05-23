@@ -4,6 +4,7 @@ import numpy as np
 import pennylane as qml
 import pytest
 import torch
+
 from matchcake.operations.state_preparation.product_state import ProductState
 from matchcake.utils.majorana import get_majorana
 

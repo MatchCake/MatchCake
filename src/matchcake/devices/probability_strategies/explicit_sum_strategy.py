@@ -56,8 +56,8 @@ class ExplicitSumStrategy(ProbabilityStrategy):
 
         if len(target_binary_state) > 4:
             warnings.warn(
-                f"Computing the probability of a target state with more than 4 bits "
-                f"may take a long time. Please consider using the lookup table strategy instead.",
+                "Computing the probability of a target state with more than 4 bits "
+                "may take a long time. Please consider using the lookup table strategy instead.",
                 UserWarning,
             )  # pragma: no cover
 

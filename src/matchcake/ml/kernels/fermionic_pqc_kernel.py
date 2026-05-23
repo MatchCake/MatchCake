@@ -103,8 +103,10 @@ class FermionicPQCKernel(NIFKernel):
         :param alignment: A boolean flag indicating whether to perform kernel alignment during fitting.
         :param alignment_iterations: The maximum number of iterations for kernel alignment optimization.
         :param alignment_learning_rate: The learning rate for the optimizer used in kernel alignment.
-        :param alignment_early_stopping_patience: The number of iterations to wait for improvement before stopping kernel alignment optimization.
-        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel alignment optimization, used for early stopping criteria.
+        :param alignment_early_stopping_patience: The number of iterations to wait for improvement
+            before stopping kernel alignment optimization.
+        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel
+            alignment optimization, used for early stopping criteria.
         :param n_qubits: Number of qubits to be used in the quantum circuit.
         :param rotations: Types of rotations to be applied in the quantum circuit, specified
             as a comma-separated string (e.g., "Y,Z").

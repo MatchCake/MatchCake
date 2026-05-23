@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 from matchcake.operations.comp_paulis import CompPauli, CompXX, CompYY, CompZZ

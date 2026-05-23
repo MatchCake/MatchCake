@@ -1,6 +1,5 @@
 import numpy as np
 import pennylane as qml
-import pytest
 
 from matchcake.observables import BatchHamiltonian
 

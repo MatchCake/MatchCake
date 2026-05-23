@@ -5,7 +5,7 @@ import pytest
 import matchcake as mc
 from matchcake import matchgate_parameter_sets as mgp
 from matchcake.devices.contraction_strategies import get_contraction_strategy
-from matchcake.utils.math import circuit_matmul, dagger, fermionic_operator_matmul
+from matchcake.utils.math import fermionic_operator_matmul
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -14,7 +14,7 @@ from ...configs import (
     TEST_SEED,
     set_seed,
 )
-from .. import devices_init, init_nif_device, specific_matchgate_circuit
+from .. import init_nif_device, specific_matchgate_circuit
 
 
 class TestVerticalContainer:

@@ -52,8 +52,10 @@ class NIFKernel(Kernel):
         :param alignment: A boolean flag indicating whether to perform kernel alignment during fitting.
         :param alignment_iterations: The maximum number of iterations for kernel alignment optimization.
         :param alignment_learning_rate: The learning rate for the optimizer used in kernel alignment.
-        :param alignment_early_stopping_patience: The number of iterations to wait for improvement before stopping kernel alignment optimization.
-        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel alignment optimization, used for early stopping criteria.
+        :param alignment_early_stopping_patience: The number of iterations to wait for improvement
+            before stopping kernel alignment optimization.
+        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel
+            alignment optimization, used for early stopping criteria.
         :param n_qubits: The number of qubits for the non-interacting fermionic device.
         """
         super().__init__(
@@ -182,9 +184,9 @@ class NIFKernel(Kernel):
             self._q_device.execute_generator(self.ansatz(bx), reset=True)
             global_sptm = self._q_device.global_sptm
             assert global_sptm is not None
-            new_sptm = cast(torch.Tensor, to_tensor(global_sptm.matrix(), dtype=self.R_DTYPE, device=cast(torch.Tensor, x).device)).reshape(
-                -1, 2 * self._q_device.num_wires, 2 * self._q_device.num_wires
-            )
+            new_sptm = cast(
+                torch.Tensor, to_tensor(global_sptm.matrix(), dtype=self.R_DTYPE, device=cast(torch.Tensor, x).device)
+            ).reshape(-1, 2 * self._q_device.num_wires, 2 * self._q_device.num_wires)
             sptms.append(new_sptm)
         x_tensor = cast(torch.Tensor, x)
         stacked_sptms = qml.math.concatenate(sptms, axis=0).reshape(

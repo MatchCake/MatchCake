@@ -1,8 +1,9 @@
+from unittest.mock import patch
+
 import matplotlib
 import numpy as np
 import pytest
 from sklearn.decomposition import PCA
-from unittest.mock import patch
 
 from matchcake.ml.visualisation.classification_visualizer import ClassificationVisualizer
 
@@ -32,8 +33,12 @@ class TestClassificationVisualizer:
         assert vis.x_mesh is None
 
     def test_gather_transforms_with_callables(self):
-        transform = lambda x: x
-        inverse_transform = lambda x: x
+        def transform(x):
+            return x
+
+        def inverse_transform(x):
+            return x
+
         vis = ClassificationVisualizer(x=self.x_2d, transform=transform, inverse_transform=inverse_transform)
         t, inv = vis.gather_transforms()
         assert t is transform

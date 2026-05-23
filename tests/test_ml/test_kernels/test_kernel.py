@@ -21,7 +21,7 @@ class TestKernel:
 
     def test_transform(self, kernel):
         x = torch.rand(10, 10)
-        y = kernel.transform(x)
+        kernel.transform(x)
         kernel.forward.assert_called_once()
 
     def test_fit(self, kernel):
@@ -34,7 +34,7 @@ class TestKernel:
 
     def test_predict(self, kernel):
         x = torch.rand(10, 10)
-        y = kernel.predict(x)
+        kernel.predict(x)
         kernel.forward.assert_called_once()
 
     def test_freeze(self, kernel):

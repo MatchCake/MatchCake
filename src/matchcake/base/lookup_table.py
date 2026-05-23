@@ -1,8 +1,7 @@
 import itertools
-import numbers
-from functools import cached_property
 from collections.abc import Callable
-from typing import Iterable, List, Optional, Sequence, Tuple, Union, cast
+from functools import cached_property
+from typing import Iterable, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pennylane as qml
@@ -610,13 +609,13 @@ class NonInteractingFermionicLookupTable:
     @cached_property
     def block_bm_transition_transpose_matrix(self):
         self.p_bar_set_postfix_str("Computing BT^T matrix.")
-        return qml.math.einsum(f"ij,...kj->...ik", self.block_diagonal_matrix, self.transition_matrix)
+        return qml.math.einsum("ij,...kj->...ik", self.block_diagonal_matrix, self.transition_matrix)
 
     @cached_property
     def block_bm_transition_dagger_matrix(self):
         self.p_bar_set_postfix_str("Computing BT^dagger matrix.")
         return qml.math.einsum(
-            f"ij,...kj->...ik",
+            "ij,...kj->...ik",
             self.block_diagonal_matrix,
             qml.math.conjugate(self.transition_matrix),
         )
@@ -624,7 +623,7 @@ class NonInteractingFermionicLookupTable:
     @cached_property
     def transition_bm_block_matrix(self):
         self.p_bar_set_postfix_str("Computing TB matrix.")
-        return qml.math.einsum(f"...ij,jk->...ik", self.transition_matrix, self.block_diagonal_matrix)
+        return qml.math.einsum("...ij,jk->...ik", self.transition_matrix, self.block_diagonal_matrix)
 
     @cached_property
     def shape(self) -> Tuple[int, int]:
@@ -634,7 +633,7 @@ class NonInteractingFermionicLookupTable:
     def c_d_alpha__c_d_beta(self) -> TensorLike:
         self.p_bar_set_postfix_str("Computing c_d_alpha__c_d_beta.")
         return qml.math.einsum(
-            f"...pj,...kj->...pk",
+            "...pj,...kj->...pk",
             self.transition_bm_block_matrix,
             self.transition_matrix,
         )
@@ -643,7 +642,7 @@ class NonInteractingFermionicLookupTable:
     def c_d_alpha__c_e_beta(self) -> TensorLike:
         self.p_bar_set_postfix_str("Computing c_d_alpha__c_e_beta.")
         return qml.math.einsum(
-            f"...pj,...kj->...pk",
+            "...pj,...kj->...pk",
             self.transition_bm_block_matrix,
             qml.math.conjugate(self.transition_matrix),
         )
@@ -656,7 +655,7 @@ class NonInteractingFermionicLookupTable:
     def c_e_alpha__c_d_beta(self) -> TensorLike:
         self.p_bar_set_postfix_str("Computing c_e_alpha__c_d_beta.")
         return qml.math.einsum(
-            f"...pi,...ik->...pk",
+            "...pi,...ik->...pk",
             qml.math.conjugate(self._transition_matrix),
             self.block_bm_transition_transpose_matrix,
         )
@@ -665,7 +664,7 @@ class NonInteractingFermionicLookupTable:
     def c_e_alpha__c_e_beta(self) -> TensorLike:
         self.p_bar_set_postfix_str("Computing c_e_alpha__c_e_beta.")
         return qml.math.einsum(
-            f"...pi,...ik->...pk",
+            "...pi,...ik->...pk",
             qml.math.conjugate(self._transition_matrix),
             self.block_bm_transition_dagger_matrix,
         )
@@ -674,7 +673,7 @@ class NonInteractingFermionicLookupTable:
     def c_e_alpha__c_2p_beta_m1(self) -> TensorLike:
         self.p_bar_set_postfix_str("Computing c_e_alpha__c_2p_beta_m1.")
         return qml.math.einsum(
-            f"...pi,ij->...pj",
+            "...pi,ij->...pj",
             qml.math.conjugate(self._transition_matrix),
             self.block_diagonal_matrix,
         )

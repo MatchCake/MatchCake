@@ -159,7 +159,7 @@ class ClassificationVisualizer(Visualizer):
             interpolation=kwargs.get("interpolation", "antialiased"),
         )
         if y is not None:
-            scatter = ax.scatter(
+            ax.scatter(
                 self.x_reduced[:, 0],
                 self.x_reduced[:, 1],
                 c=[cmap(i) for i in y],
