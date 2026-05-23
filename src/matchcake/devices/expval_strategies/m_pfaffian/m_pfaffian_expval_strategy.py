@@ -122,7 +122,8 @@ class MPfaffianExpvalStrategy(ExpvalStrategy):
             wick_phase = (-1j) ** (sector // 2)
             pfs = pf_values[sector]   # (..., n_terms)
             for k, (ext_index_set, ext_phase, term_idx) in enumerate(items):
-                coeff = complex(np.array(h_coeffs[term_idx]).item())
+                h_coeff = h_coeffs[term_idx]
+                coeff = complex(h_coeff.item() if isinstance(h_coeff, torch.Tensor) else h_coeff)
                 pf_k = pfs[..., k]   # (...)
                 scalar = float(np.real(coeff * complex(ext_phase) * wick_phase))
                 total_re = total_re + scalar * pf_k

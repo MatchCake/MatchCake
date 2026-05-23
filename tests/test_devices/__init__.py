@@ -89,7 +89,6 @@ def init_qubit_device(*args, **kwargs) -> qml.devices.Device:
     qubit_device = qml.device(
         kwargs.pop("name", "default.qubit"),
         wires=wires,
-        shots=kwargs.get("shots", None),
     )
     return qubit_device
 

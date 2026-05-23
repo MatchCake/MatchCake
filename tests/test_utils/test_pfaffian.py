@@ -121,7 +121,7 @@ class TestPfaffianExtended:
                             [0.0, 0.0, -1.3, 0.0]], dtype=torch.float64)
         index_sets = np.array([[0, 1], [2, 3]])
         result = sector_pfaffian_features(cov, index_sets)
-        np.testing.assert_allclose(np.array(result), [2.5, 1.3], atol=1e-12)
+        np.testing.assert_allclose(result.numpy(), [2.5, 1.3], atol=1e-12)
 
     def test_sector_pfaffian_4x4_submatrix(self):
         a, b, c, d, e, f = 1.0, 2.0, 3.0, 4.0, 5.0, 6.0

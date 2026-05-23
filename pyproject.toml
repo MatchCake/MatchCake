@@ -61,6 +61,12 @@ addopts = [
     "--cov-report=term-missing",
     "--durations=10",
 ]
+filterwarnings = [
+    "ignore:.*__array_wrap__.*:DeprecationWarning",
+    "ignore:.*ComplexHalf.*:UserWarning",
+    "ignore:.*xlim.*:UserWarning",
+    "ignore:.*Setting shots on device.*:pennylane.exceptions.PennyLaneDeprecationWarning",
+]
 
 [dependency-groups]
 dev = [

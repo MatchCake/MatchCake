@@ -69,7 +69,7 @@ def random_pauli_obs(n: int, rng: np.random.RandomState) -> qml.operation.Operat
 
 def build_tilde_lambda(prod_state: ProductState, wires: list) -> torch.Tensor:
     """Build the extended covariance matrix from a ProductState with no circuit."""
-    Lambda = np.array(prod_state.covariance_matrix)
+    Lambda = prod_state.covariance_matrix.detach().numpy()
     d = displacement_vector(torch.tensor(prod_state.data[0]), wires)
     return extended_covariance_matrix(torch.tensor(Lambda), d)
 
@@ -139,26 +139,26 @@ class TestDisplacementVector:
         """Computational |0> has zero displacement."""
         psi = torch.tensor([[1.0, 0.0]], dtype=torch.complex128)
         d = displacement_vector(psi, [0])
-        np.testing.assert_allclose(np.array(d), [0.0, 0.0], atol=ATOL)
+        np.testing.assert_allclose(d.numpy(), [0.0, 0.0], atol=ATOL)
 
     def test_plus_state_single(self):
         """|+> on one qubit: <c_0>=1, <c_1>=0."""
         psi = torch.tensor([[1/np.sqrt(2), 1/np.sqrt(2)]], dtype=torch.complex128)
         d = displacement_vector(psi, [0])
-        np.testing.assert_allclose(np.array(d), [1.0, 0.0], atol=ATOL)
+        np.testing.assert_allclose(d.numpy(), [1.0, 0.0], atol=ATOL)
 
     def test_plus_plus(self):
         """|++>: only <c_0>=1, rest zero because <Z_0>=0 kills the JW string."""
         psi = torch.tensor([[1/np.sqrt(2), 1/np.sqrt(2)],
                             [1/np.sqrt(2), 1/np.sqrt(2)]], dtype=torch.complex128)
         d = displacement_vector(psi, [0, 1])
-        np.testing.assert_allclose(np.array(d), [1.0, 0.0, 0.0, 0.0], atol=ATOL)
+        np.testing.assert_allclose(d.numpy(), [1.0, 0.0, 0.0, 0.0], atol=ATOL)
 
     def test_one_state(self):
         """Computational |1> has displacement [0, 0] (X and Y expectations are 0)."""
         psi = torch.tensor([[0.0, 1.0]], dtype=torch.complex128)
         d = displacement_vector(psi, [0])
-        np.testing.assert_allclose(np.array(d), [0.0, 0.0], atol=ATOL)
+        np.testing.assert_allclose(d.numpy(), [0.0, 0.0], atol=ATOL)
 
 
 class TestExtendedCovarianceMatrix:
@@ -170,9 +170,9 @@ class TestExtendedCovarianceMatrix:
         psi = np.zeros((n, 2), dtype=complex)
         psi[:, 0] = 1.0
         op = ProductState(psi, wires=list(range(n)))
-        Lambda = np.array(op.covariance_matrix)
+        Lambda = op.covariance_matrix.detach().numpy()
         d = np.zeros(2 * n)
-        tilde = np.array(extended_covariance_matrix(torch.tensor(Lambda), torch.tensor(d)))
+        tilde = extended_covariance_matrix(torch.tensor(Lambda), torch.tensor(d)).numpy()
         # Top-left block = Lambda
         np.testing.assert_allclose(tilde[:2*n, :2*n], Lambda, atol=ATOL)
         # Last row and column are zero
@@ -183,9 +183,9 @@ class TestExtendedCovarianceMatrix:
         """tilde_Lambda for |+> matches the worked example: [[0,0,1],[0,0,0],[-1,0,0]]."""
         psi = np.array([[1/np.sqrt(2), 1/np.sqrt(2)]], dtype=complex)
         op = ProductState(psi, wires=[0])
-        Lambda = np.array(op.covariance_matrix)
-        d = np.array(displacement_vector(torch.tensor(op.data[0]), [0]))
-        tilde = np.array(extended_covariance_matrix(torch.tensor(Lambda), torch.tensor(d)))
+        Lambda = op.covariance_matrix.detach().numpy()
+        d = displacement_vector(torch.tensor(op.data[0]), [0]).numpy()
+        tilde = extended_covariance_matrix(torch.tensor(Lambda), torch.tensor(d)).numpy()
         expected = np.array([[0, 0, 1], [0, 0, 0], [-1, 0, 0]], dtype=float)
         np.testing.assert_allclose(tilde, expected, atol=ATOL)
 
@@ -194,9 +194,9 @@ class TestExtendedCovarianceMatrix:
         n = 3
         psi = random_product_state(n, seed=7)
         op = ProductState(psi, wires=list(range(n)))
-        Lambda = np.array(op.covariance_matrix)
-        d = np.array(displacement_vector(torch.tensor(op.data[0]), list(range(n))))
-        tilde = np.array(extended_covariance_matrix(torch.tensor(Lambda), torch.tensor(d)))
+        Lambda = op.covariance_matrix.detach().numpy()
+        d = displacement_vector(torch.tensor(op.data[0]), list(range(n))).numpy()
+        tilde = extended_covariance_matrix(torch.tensor(Lambda), torch.tensor(d)).numpy()
         np.testing.assert_allclose(tilde + tilde.T, 0.0, atol=ATOL)
 
 
