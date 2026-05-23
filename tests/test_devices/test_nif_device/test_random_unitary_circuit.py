@@ -1,4 +1,5 @@
 import random
+from typing import Type, cast
 
 import numpy as np
 import pytest
@@ -14,6 +15,7 @@ from matchcake.operations import (
     SptmCompRxRx,
     SptmCompZX,
 )
+from matchcake.operations.single_particle_transition_matrices import SingleParticleTransitionMatrixOperation
 from matchcake.utils.math import dagger, det
 
 from ...configs import (
@@ -161,7 +163,7 @@ def test_global_sptm_det(operations_generator: RandomSptmOperationsGenerator, co
                 start=[],
             ),
             [
-                random.choice([SptmCompRxRx, SptmCompZX]).random(wires=w)
+                cast(Type[SingleParticleTransitionMatrixOperation], random.choice([SptmCompRxRx, SptmCompZX])).random(wires=w)
                 for w in [
                     [0, 1],
                     [0, 1],

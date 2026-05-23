@@ -6,7 +6,7 @@ from pennylane.ops.qubit.observables import BasisStateProjector
 
 from matchcake import MatchgateOperation, NonInteractingFermionicDevice, utils
 
-_majorana_getters = {}
+_majorana_getters: dict = {}
 
 
 def single_matchgate_circuit(params, initial_state=np.array([0, 0]), **kwargs):

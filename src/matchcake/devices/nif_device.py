@@ -1,6 +1,6 @@
 from collections import defaultdict
 from functools import partial
-from typing import Iterable, List, Literal, Optional, Union
+from typing import Any, Iterable, List, Literal, Optional, Union
 
 import numpy as np
 import torch
@@ -201,10 +201,10 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         shots: Optional[int] = None,
         **kwargs,
     ):
-        if np.isscalar(wires):
+        if isinstance(wires, int):
             assert wires > 1, "At least two wires are required for this device."
         else:
-            assert len(wires) > 1, "At least two wires are required for this device."
+            assert len(list(wires)) > 1, "At least two wires are required for this device."
         super().__init__(
             wires=wires,
             shots=shots,
@@ -218,9 +218,10 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self._star_probability = None
 
         self._transition_matrix = None
-        self._lookup_table = None
+        self._lookup_table: Optional[NonInteractingFermionicLookupTable] = None
         self._global_sptm = None
         self._batched = False
+        self._samples: Optional[np.ndarray] = None
 
         self.majorana_getter = kwargs.get("majorana_getter", utils.MajoranaGetter(self.num_wires, maxsize=256))
         assert isinstance(self.majorana_getter, utils.MajoranaGetter), (
@@ -252,7 +253,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         )
         self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
         self.show_progress = kwargs.get("show_progress", self.p_bar is not None)
-        self.apply_metadata = defaultdict()
+        self.apply_metadata: defaultdict = defaultdict()
         self.clifford_expval_strategy = CliffordExpvalStrategy()
         self.expval_from_probabilities_strategy = ExpvalFromProbabilitiesStrategy()
         self.m_pfaffian_expval_strategy = MPfaffianExpvalStrategy()
@@ -279,7 +280,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     def execute_generator(
         self,
         op_iterator: Iterable[qml.operation.Operation],
-        observable: Optional = None,
+        observable: Optional[Any] = None,
         output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
         **kwargs,
     ):
@@ -316,7 +317,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
 
     def execute_output(
         self,
-        observable: Optional = None,
+        observable: Optional[Any] = None,
         output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
         **kwargs,
     ):
@@ -794,7 +795,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     def initialize_p_bar(self, *args, **kwargs) -> Optional[tqdm.tqdm]:
         kwargs.setdefault("disable", not self.show_progress)
         if self.p_bar is None and not self.show_progress:
-            return
+            return None
         self.p_bar = tqdm.tqdm(*args, **kwargs)
         return self.p_bar
 
@@ -968,7 +969,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self._lookup_table = None
 
     @property
-    def global_sptm(self) -> Optional[SingleParticleTransitionMatrixOperation]:
+    def global_sptm(self) -> SingleParticleTransitionMatrixOperation:
         if self._global_sptm is None:
             matrix = np.eye(2 * self.num_wires)[None, ...]
             if not self._batched:

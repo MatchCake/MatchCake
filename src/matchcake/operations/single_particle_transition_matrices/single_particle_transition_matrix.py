@@ -60,8 +60,8 @@ class SingleParticleTransitionMatrixOperation(Operation):
     ]
     DEFAULT_CHECK_MATRIX = False
 
-    ALLOWED_ANGLES = None
-    EQUAL_ALLOWED_ANGLES = None
+    ALLOWED_ANGLES: Optional[List[float]] = None
+    EQUAL_ALLOWED_ANGLES: Optional[List[float]] = None
     DEFAULT_CHECK_ANGLES = False
     DEFAULT_CLIP_ANGLES = True
     DEFAULT_NORMALIZE = False
@@ -198,7 +198,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
         cls,
         ops: Iterable[Union[Any, "SingleParticleTransitionMatrixOperation"]],
         **kwargs,
-    ) -> "SingleParticleTransitionMatrixOperation":
+    ) -> "Optional[SingleParticleTransitionMatrixOperation]":
         """
         This method will contract multiple SingleParticleTransitionMatrixOperations into a single one.
         Each operation must act on a different set of wires.

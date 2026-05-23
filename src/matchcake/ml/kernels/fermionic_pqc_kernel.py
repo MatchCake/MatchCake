@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, cast
 
 import numpy as np
 import torch
@@ -142,7 +142,8 @@ class FermionicPQCKernel(NIFKernel):
             type NDArray or torch.Tensor.
         :return: Updated instance of the class after fitting the training data.
         """
-        n_inputs = int(np.prod(x_train.shape[1:]))
+        x_arr = cast(np.ndarray, x_train)
+        n_inputs = int(np.prod(x_arr.shape[1:]))
         self.bias_ = Parameter(torch.from_numpy(self.np_rn_gen.random(n_inputs))).to(  # type: ignore
             dtype=self.R_DTYPE, device=self.device
         )
@@ -150,7 +151,7 @@ class FermionicPQCKernel(NIFKernel):
             dtype=self.R_DTYPE, device=self.device
         )
         if self.depth_ is None:
-            self.depth_ = int(max(1, np.ceil(x_train.shape[-1] / self.n_qubits)))
+            self.depth_ = int(max(1, np.ceil(x_arr.shape[-1] / self.n_qubits)))
         super().fit(x_train, y_train)
         return self
 

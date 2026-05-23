@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import pennylane as qml
 import torch
@@ -54,15 +54,17 @@ class MatchgateStandardParams(MatchgateParams):
         outer_matrix: TensorLike,
         inner_matrix: TensorLike,
     ):
+        om = cast(torch.Tensor, outer_matrix)
+        im = cast(torch.Tensor, inner_matrix)
         return cls(
-            a=outer_matrix[..., 0, 0],
-            b=outer_matrix[..., 0, 1],
-            c=outer_matrix[..., 1, 0],
-            d=outer_matrix[..., 1, 1],
-            w=inner_matrix[..., 0, 0],
-            x=inner_matrix[..., 0, 1],
-            y=inner_matrix[..., 1, 0],
-            z=inner_matrix[..., 1, 1],
+            a=om[..., 0, 0],
+            b=om[..., 0, 1],
+            c=om[..., 1, 0],
+            d=om[..., 1, 1],
+            w=im[..., 0, 0],
+            x=im[..., 0, 1],
+            y=im[..., 1, 0],
+            z=im[..., 1, 1],
         )
 
     def get_params_list(self) -> List[Optional[TensorLike]]:
@@ -73,14 +75,18 @@ class MatchgateStandardParams(MatchgateParams):
         batch_sizes = list(set([s[0] for s in shapes if len(s) > 0]))
         assert len(batch_sizes) <= 1, f"Expect the same batch size for every parameters. Got: {batch_sizes}."
         batch_size = self.batch_size if self.batch_size is not None else 1
-        a, b, c, d, w, x, y, z = [
-            (
-                to_tensor(p, dtype=dtype, device=device)
+        a, b, c, d, w, x, y, z = cast(
+            tuple[
+                torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor,
+                torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor,
+            ],
+            tuple(
+                cast(torch.Tensor, to_tensor(p, dtype=dtype, device=device))
                 if p is not None
                 else torch.zeros((batch_size,), dtype=dtype, device=device)
-            )
-            for p in self.get_params_list()
-        ]
+                for p in self.get_params_list()
+            ),
+        )
         matrix = torch.zeros((batch_size, 4, 4), dtype=dtype, device=device)
         matrix[..., 0, 0] = a
         matrix[..., 0, 3] = b

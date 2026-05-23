@@ -1,3 +1,4 @@
+from collections.abc import Sequence as SequenceABC
 from typing import Any, List, Optional, Sequence, Type, Union
 
 import numpy as np
@@ -21,7 +22,7 @@ def random_sptm_operations_generator(
     n_ops: int,
     wires: Union[Sequence[int], int],
     batch_size: Optional[int] = None,
-    op_types: List[Type[SingleParticleTransitionMatrixOperation]] = (
+    op_types: SequenceABC[Type[SingleParticleTransitionMatrixOperation]] = (
         SptmCompRxRx,
         SptmCompZX,
         SptmCompRzRz,
@@ -35,13 +36,15 @@ def random_sptm_operations_generator(
     seed: Optional[int] = None,
     **kwargs,
 ):
+    wires_arr: np.ndarray
     if isinstance(wires, int):
-        wires = np.arange(wires)
-    wires = np.sort(np.asarray(wires))
+        wires_arr = np.arange(wires)
+    else:
+        wires_arr = np.sort(np.asarray(wires))
     rn_gen = np.random.default_rng(seed)
     for _ in range(n_ops):
         cls = rn_gen.choice(op_types)
-        rn_wire0 = rn_gen.choice(wires[:-1])
+        rn_wire0 = rn_gen.choice(wires_arr[:-1])
         rn_wire1 = rn_wire0 + 1
         op = cls.random(wires=[rn_wire0, rn_wire1], batch_size=batch_size, seed=seed)
         if use_cuda:
@@ -56,7 +59,7 @@ class RandomSptmOperationsGenerator(RandomOperationsGenerator):
         wires: Union[Sequence[int], int],
         n_ops: Optional[int] = None,
         batch_size: Optional[int] = None,
-        op_types: List[Type[SingleParticleTransitionMatrixOperation]] = (
+        op_types: SequenceABC[Type[SingleParticleTransitionMatrixOperation]] = (
             SptmCompRxRx,
             SptmCompZX,
             SptmCompRzRz,

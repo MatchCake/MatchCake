@@ -1,7 +1,8 @@
 import itertools
 import numbers
 from functools import cached_property
-from typing import Iterable, List, Optional, Sequence, Tuple, Union
+from collections.abc import Callable
+from typing import Iterable, List, Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
 import pennylane as qml
@@ -122,8 +123,10 @@ class NonInteractingFermionicLookupTable:
             index in the getter table.
         """
         if isinstance(item, int):
-            item = utils.math.convert_1d_to_2d_indexes([item], n_rows=3)[0]
-        i, j = item
+            item_2d = utils.math.convert_1d_to_2d_indexes([item], n_rows=3)[0]
+        else:
+            item_2d = item
+        i, j = item_2d
         getter = self.getter_table[i][j]
         return getter()
 
@@ -362,14 +365,13 @@ class NonInteractingFermionicLookupTable:
                 indexes_of_target_states.shape[0], axis=0
             )
 
-        self._assert_binary(system_state)
-        self._assert_binary(target_binary_states)
-        return (
-            system_state,
-            target_binary_states,
-            indexes_of_target_states,
-            initial_ndim,
-        )
+        ss = cast(np.ndarray, np.asarray(system_state))
+        tbs = cast(np.ndarray, target_binary_states)
+        iots = cast(np.ndarray, indexes_of_target_states)
+        ndim = cast(int, initial_ndim)
+        self._assert_binary(ss)
+        self._assert_binary(tbs)
+        return (ss, tbs, iots, ndim)
 
     def _get_bra_ket_indexes(self, system_state: np.ndarray, target_binary_states: np.ndarray, **kwargs):
         """
@@ -398,11 +400,11 @@ class NonInteractingFermionicLookupTable:
               target binary state.
         """
         target_batch_size = target_binary_states.shape[0]
-        ket_majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(system_state)
-        bra_majorana_indexes = list(reversed(ket_majorana_indexes))
+        ket_maj = utils.decompose_binary_state_into_majorana_indexes(system_state)
+        bra_maj = list(reversed(ket_maj))
 
-        ket_majorana_indexes = np.asarray(ket_majorana_indexes)[np.newaxis, :].repeat(target_batch_size, axis=0)
-        bra_majorana_indexes = np.asarray(bra_majorana_indexes)[np.newaxis, :].repeat(target_batch_size, axis=0)
+        ket_majorana_indexes = np.asarray(ket_maj)[np.newaxis, :].repeat(target_batch_size, axis=0)
+        bra_majorana_indexes = np.asarray(bra_maj)[np.newaxis, :].repeat(target_batch_size, axis=0)
         return bra_majorana_indexes, ket_majorana_indexes
 
     def _get_lt_indexes(
@@ -424,8 +426,8 @@ class NonInteractingFermionicLookupTable:
             states, and unmeasured class indexes.
         """
         target_batch_size = target_binary_states.shape[0]
-        unmeasured_cls_indexes = [2 for _ in range(ket_majorana_indexes.shape[-1])]
-        unmeasured_cls_indexes = np.asarray(unmeasured_cls_indexes)[np.newaxis, :].repeat(target_batch_size, axis=0)
+        unmeasured_cls_list = [2 for _ in range(ket_majorana_indexes.shape[-1])]
+        unmeasured_cls_indexes = np.asarray(unmeasured_cls_list)[np.newaxis, :].repeat(target_batch_size, axis=0)
         measure_cls_indexes = np.asarray([np.array([[b, 1 - b] for b in t]).flatten() for t in target_binary_states])
         lt_indexes = np.concatenate(
             [unmeasured_cls_indexes, measure_cls_indexes, unmeasured_cls_indexes],
@@ -469,7 +471,7 @@ class NonInteractingFermionicLookupTable:
         ).astype(int)
         return majorana_indexes
 
-    def _compute_items(self, indexes: Sequence[Tuple[int, int]], close_p_bar: bool = True) -> List[TensorLike]:
+    def _compute_items(self, indexes: Iterable[Tuple[int, int]], close_p_bar: bool = True) -> List[TensorLike]:
         """
         Compute the items of the lookup table corresponding to the indexes.
 
@@ -477,11 +479,10 @@ class NonInteractingFermionicLookupTable:
         :param close_p_bar: Whether to close the progress bar.
         :return: The items of the lookup table corresponding to the indexes.
         """
-        self.initialize_p_bar(total=len(indexes), initial=0, desc="Computing Lookup Table Items")
+        indexes_arr = np.asarray(list(indexes)).reshape(-1, 2)
+        self.initialize_p_bar(total=len(indexes_arr), initial=0, desc="Computing Lookup Table Items")
         items = []
-        indexes = np.asarray(indexes)
-        indexes = indexes.reshape(-1, 2)
-        for i, j in indexes:
+        for i, j in indexes_arr:
             items.append(self[i, j])
             self.update_p_bar()
         if close_p_bar:
@@ -491,7 +492,7 @@ class NonInteractingFermionicLookupTable:
     def _compute_stack_and_pad_items(
         self,
         indexes: Iterable[Tuple[int, int]],
-        pad_value: numbers.Number = 0.0,
+        pad_value: float = 0.0,
         close_p_bar: bool = True,
     ) -> TensorLike:
         """
@@ -700,7 +701,7 @@ class NonInteractingFermionicLookupTable:
         return matrix
 
     @cached_property
-    def getter_table(self) -> List[List[callable]]:
+    def getter_table(self) -> List[List[Callable]]:
         return [
             [
                 self.get_c_d_alpha__c_d_beta,

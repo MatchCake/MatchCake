@@ -21,11 +21,13 @@ class RandomOperationsGenerator:
         initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
         **kwargs,
     ):
+        wires_arr: np.ndarray
         if isinstance(wires, int):
-            wires = np.arange(wires)
-        wires = np.sort(np.asarray(wires))
-        self.wires = wires
-        self.n_ops = n_ops if n_ops is not None else 2 * len(wires) * len(op_types)
+            wires_arr = np.arange(wires)
+        else:
+            wires_arr = np.sort(np.asarray(wires))
+        self.wires = wires_arr
+        self.n_ops = n_ops if n_ops is not None else 2 * len(wires_arr) * len(op_types)
         self.batch_size = batch_size
         self.op_types = op_types
         self.use_cuda = use_cuda

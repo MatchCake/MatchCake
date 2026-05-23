@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, cast
 
 import numpy as np
 import torch
@@ -113,13 +113,13 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         :rtype: Union[NDArray, torch.Tensor]
         """
         is_torch = isinstance(x, torch.Tensor)
-        x: torch.Tensor = to_tensor(x)  # type: ignore
+        x_tensor = cast(torch.Tensor, to_tensor(x))  # type: ignore[arg-type]
         self.eval()
         with torch.no_grad():
-            x: torch.Tensor = self(x, self.x_train_, x1_train=True)  # type: ignore
+            x_tensor = cast(torch.Tensor, self(x_tensor, self.x_train_, x1_train=True))  # type: ignore[arg-type]
         if is_torch:
-            return x
-        return to_numpy(x, dtype=np.float32)  # pragma: no cover
+            return x_tensor
+        return cast(np.ndarray, to_numpy(x_tensor, dtype=np.float32))  # pragma: no cover
 
     def fit(self, x_train: Union[NDArray, TensorLike], y_train: Optional[Union[NDArray, TensorLike]] = None):
         """
@@ -190,7 +190,8 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         """
         assert self.x_train_ is not None, "Training data must be provided to build the model."
         with torch.no_grad():
-            x_dummy = self.x_train_[0:3] if len(self.x_train_) >= 3 else self.x_train_
+            x_train = cast(Union[np.ndarray, torch.Tensor], self.x_train_)
+            x_dummy = x_train[0:3] if len(x_train) >= 3 else x_train
             self(x_dummy)
         return self
 
@@ -236,8 +237,8 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         centered_y_kernel = torch.einsum("ij,jk,kl->il", centerer, y_kernel, centerer)
 
         self.opt_ = OptimizeResult()
-        self.opt_.fun = np.inf
-        self.opt_.history = []
+        self.opt_.fun = np.inf  # type: ignore[attr-defined]
+        self.opt_.history = []  # type: ignore[attr-defined]
         self.to(device=self.device)
         best_params = torch.nn.utils.parameters_to_vector(self.parameters()).cpu().detach().clone()
         best_alignment = -np.inf
@@ -252,16 +253,16 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
                 torch.norm(centered_kernel) * torch.norm(centered_y_kernel.detach()) + 1e-8
             )
             loss = -alignment
-            self.opt_.fun = alignment.detach().cpu().item()
-            self.opt_.history.append(self.opt_.fun)
-            if np.isclose(self.opt_.fun, np.max(self.opt_.history)):
+            self.opt_.fun = alignment.detach().cpu().item()  # type: ignore[attr-defined]
+            self.opt_.history.append(self.opt_.fun)  # type: ignore[attr-defined]
+            if np.isclose(self.opt_.fun, np.max(self.opt_.history)):  # type: ignore[attr-defined]
                 best_params = torch.nn.utils.parameters_to_vector(self.parameters()).cpu().detach().clone()
-                best_alignment = self.opt_.fun
+                best_alignment = self.opt_.fun  # type: ignore[attr-defined]
             if all(
                 [
-                    len(self.opt_.history) > self.alignment_early_stopping_patience,
+                    len(self.opt_.history) > self.alignment_early_stopping_patience,  # type: ignore[attr-defined]
                     np.all(
-                        np.abs(np.diff(self.opt_.history[-self.alignment_early_stopping_patience :]))
+                        np.abs(np.diff(self.opt_.history[-self.alignment_early_stopping_patience :]))  # type: ignore[attr-defined]
                         <= self.alignment_early_stopping_threshold
                     ),
                 ]
@@ -269,9 +270,9 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
                 break
             loss.backward()
             optimizer.step()
-            p_bar.set_postfix_str(f"Alignment score: {self.opt_.fun:.4f}")
-        torch.nn.utils.vector_to_parameters(to_tensor(best_params, device=self.device), self.parameters())
-        self.opt_.fun = best_alignment
+            p_bar.set_postfix_str(f"Alignment score: {self.opt_.fun:.4f}")  # type: ignore[attr-defined]
+        torch.nn.utils.vector_to_parameters(cast(torch.Tensor, to_tensor(best_params, device=self.device)), self.parameters())
+        self.opt_.fun = best_alignment  # type: ignore[attr-defined]
         p_bar.close()
         self.eval()
         return self
@@ -292,9 +293,9 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         :rtype: torch.Tensor
         """
         if not isinstance(self.y_train_, torch.Tensor):
-            y_train = to_tensor(np.asarray(self.y_train_), device=self.device)
+            y_train = cast(torch.Tensor, to_tensor(np.asarray(self.y_train_), device=self.device))
         else:
-            y_train = to_tensor(self.y_train_, device=self.device)
+            y_train = cast(torch.Tensor, to_tensor(self.y_train_, device=self.device))
         is_classification = all(
             [
                 y_train.dim() == 1,  # single-dimensional

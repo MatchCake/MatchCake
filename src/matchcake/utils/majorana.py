@@ -143,7 +143,7 @@ class MajoranaGetter:
     def __init__(self, n: int, maxsize=None):
         self.n = n
         self.maxsize = maxsize or np.inf
-        self.cache = OrderedDict()
+        self.cache: OrderedDict = OrderedDict()
 
     @functools.lru_cache(maxsize=None)
     def __getitem__(self, item: Union[int, Tuple[int, int]]) -> np.ndarray:

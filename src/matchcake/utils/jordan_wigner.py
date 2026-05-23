@@ -2,12 +2,13 @@ from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 
+_PENNYLANE_PAULI_TYPES: tuple = ()
 try:
     from pennylane.pauli import PauliWord
 
     _PENNYLANE_PAULI_TYPES = (PauliWord,)
 except ImportError:
-    _PENNYLANE_PAULI_TYPES = ()
+    pass
 
 _PAULI_TO_MAJORANA = {
     "I": lambda k: ([], 1 + 0j),

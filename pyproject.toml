@@ -195,40 +195,6 @@ exclude_also = [
     '@(abc\.)?abstractmethod',
 ]
 
-[tool.mypy]
-# TODO: Remove all the exclude folders/files.
-exclude = [
-    # Package
-    "base",
-    "circuits",
-    "constants",
-    "devices",
-    "matchgate_parameter_sets",
-    "ml/visualisation",
-    "ml/kernels",
-    "observables",
-    "operations",
-    "templates",
-    "utils/__init__.py",
-    "utils/constants",
-    "utils/cuda",
-    "utils/majorana",
-    "utils/math",
-    "utils/operators",
-    "utils/torch_utils",
-    "__init__.py",
-    # Tests
-    "tests/test_matchgate_params_set",
-    "tests/test_ml",
-    "tests/test_nif_device",
-    "tests/test_operations",
-    "tests/test_utils/test_orthonormalize.py",
-    "tests/test_logm.py",
-    "tests/test_lookup_table.py",
-    "tests/test_matchgate.py",
-    "tests/test_matchgate_operation.py",
-]
-
 [[tool.mypy.overrides]]
 module = [
     "pennylane.*",

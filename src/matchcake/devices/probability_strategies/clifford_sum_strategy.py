@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, cast
 
 import numpy as np
 import pennylane as qml
@@ -48,7 +48,7 @@ class CliffordSumStrategy(ProbabilityStrategy):
         :math:`a_j` is the jth fermionic annihilation operator.
         """
         ops = []
-        for w, b in zip(wires, basis_state):
+        for w, b in zip(wires, cast(np.ndarray, basis_state)):
             if qml.math.isclose(b, 0):
                 ops.append(qml.fermi.FermiA(int(w)) * qml.fermi.FermiC(int(w)))
             else:
@@ -76,12 +76,13 @@ class CliffordSumStrategy(ProbabilityStrategy):
     @staticmethod
     def _gather_transition_vectors(fermi_ops: qml.fermi.FermiWord, transition_matrix: TensorLike) -> List[TensorLike]:
         transition_vectors = []
+        tm = cast(np.ndarray, transition_matrix)
         for key in fermi_ops:
             orbital, position = key
             if fermi_ops[key] == "+":
-                transition_vectors.append(qml.math.conjugate(transition_matrix[..., position, :]))
+                transition_vectors.append(qml.math.conjugate(tm[..., position, :]))
             else:
-                transition_vectors.append(transition_matrix[..., position, :])
+                transition_vectors.append(tm[..., position, :])
         return transition_vectors
 
     @staticmethod

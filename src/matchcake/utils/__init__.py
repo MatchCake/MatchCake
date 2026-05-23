@@ -1,5 +1,6 @@
 import importlib
 from functools import partial
+from collections.abc import Callable
 from typing import Any, List, Optional, Union
 
 import numpy as np
@@ -98,10 +99,11 @@ def state_to_binary_string(state: Union[int, np.ndarray, sparse.sparray], n: Opt
         assert n is not None, "Number of particles must be specified if the state is an integer."
         assert state < 2**n, f"Invalid state: {state}, must be smaller than 2^n = {2**n}."
         return np.binary_repr(state, width=n)
-    n_states = np.prod(state.shape)
+    arr: np.ndarray = np.asarray(state.toarray()) if isinstance(state, sparse.sparray) else state  # type: ignore[attr-defined]
+    n_states = np.prod(arr.shape)
     n = int(np.log2(n_states))
     assert n_states == 2**n, f"Invalid number of states: {n_states}, must be a power of 2."
-    state_number = np.asarray(state.reshape(-1, n_states).argmax(-1)).astype(int).item()
+    state_number = np.asarray(arr.reshape(-1, n_states).argmax(-1)).astype(int).item()
     binary_state = np.binary_repr(state_number, width=n)
     return binary_state
 
@@ -286,6 +288,7 @@ def decompose_matrix_into_majoranas(
         n_states,
         n_states,
     ), f"Invalid shape for matrix: {shape}, must be square or batched."
+    get_majorana_func: Callable[[int], np.ndarray]
     if majorana_getter is None:
         get_majorana_func = partial(get_majorana, n=n)
     else:

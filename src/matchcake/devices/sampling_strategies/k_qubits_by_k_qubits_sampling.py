@@ -1,5 +1,5 @@
 import itertools
-from typing import Callable
+from typing import Callable, Optional
 
 import numpy as np
 import pennylane as qml
@@ -14,7 +14,7 @@ from .sampling_strategy import SamplingStrategy
 
 class KQubitsByKQubitsSampling(SamplingStrategy):
     NAME = "kQubitBykQubitSampling"
-    K: int = None
+    K: Optional[int] = None
 
     @classmethod
     def compute_extend_probs_to_all(
@@ -124,7 +124,7 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
 
         :return: Samples with shape (shots, num_wires) of probabilities |<x|psi>|^2
         """
-        return self.batch_generate_samples_by_subsets_of_k(device, states_prob_func, k=self.K, **kwargs)
+        return self.batch_generate_samples_by_subsets_of_k(device, states_prob_func, k=self.K or 1, **kwargs)
 
     def generate_samples(
         self,
@@ -150,4 +150,4 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
                 wires = np.expand_dims(wires, axis=0).repeat(len(states), axis=0)
             return qml.math.stack([state_prob_func(s, w) for s, w in zip(states, wires)], axis=0)
 
-        return self.batch_generate_samples_by_subsets_of_k(device, states_prob_func, k=self.K, **kwargs)
+        return self.batch_generate_samples_by_subsets_of_k(device, states_prob_func, k=self.K or 1, **kwargs)

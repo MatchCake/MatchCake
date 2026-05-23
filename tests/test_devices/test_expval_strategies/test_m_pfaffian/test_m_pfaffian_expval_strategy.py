@@ -1,4 +1,5 @@
 import itertools
+from typing import cast
 
 import numpy as np
 import pennylane as qml
@@ -45,7 +46,7 @@ def random_circuit_gates(n: int, n_gates: int, rng: np.random.RandomState) -> li
     Gates are drawn from {CompRzRz, CompRyRy, fSWAP} on random adjacent wire pairs.
     """
     gate_classes = [CompRzRz, CompRyRy, fSWAP]
-    gates = []
+    gates: list = []
     for _ in range(n_gates):
         w = int(rng.randint(0, n - 1))
         gate_cls = gate_classes[int(rng.randint(0, len(gate_classes)))]
@@ -69,9 +70,10 @@ def random_pauli_obs(n: int, rng: np.random.RandomState) -> qml.operation.Operat
 
 def build_tilde_lambda(prod_state: ProductState, wires: list) -> torch.Tensor:
     """Build the extended covariance matrix from a ProductState with no circuit."""
-    Lambda = prod_state.covariance_matrix.detach().numpy()
+    cov_mat = cast(torch.Tensor, prod_state.covariance_matrix)
+    Lambda = cov_mat.detach().numpy()
     d = displacement_vector(torch.tensor(prod_state.data[0]), wires)
-    return extended_covariance_matrix(torch.tensor(Lambda), d)
+    return cast(torch.Tensor, extended_covariance_matrix(torch.tensor(Lambda), d))
 
 
 class TestJordanWigner:

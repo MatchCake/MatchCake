@@ -10,7 +10,7 @@ __copyright__ = "Copyright 2023, Jérémie Gince"
 __license__ = "Apache 2.0"
 __url__ = "https://github.com/MatchCake/MatchCake"
 __package__ = "matchcake"
-__version__ = importlib_metadata.version(__package__)
+__version__: str = importlib_metadata.version(__package__)
 
 import warnings
 

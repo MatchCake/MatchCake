@@ -1,5 +1,5 @@
 from functools import cached_property, partial
-from typing import Optional
+from typing import Optional, cast
 
 import numpy as np
 import pennylane as qml
@@ -68,7 +68,7 @@ class NIFKernel(Kernel):
         self.R_DTYPE = torch.float32
         self._q_device = NonInteractingFermionicDevice(n_qubits, r_dtype=self.R_DTYPE)
 
-    def forward(self, x0: TensorLike, x1: Optional[TensorLike] = None, **kwargs) -> TensorLike:
+    def forward(self, x0: TensorLike, x1: Optional[TensorLike] = None, **kwargs) -> torch.Tensor:
         """
         Calculates the similarities between input tensors and returns the kernel output.
 
@@ -86,7 +86,7 @@ class NIFKernel(Kernel):
         x0 = to_tensor(x0, dtype=self.R_DTYPE)  # type: ignore
         x1 = to_tensor(x1, dtype=self.R_DTYPE)  # type: ignore
         self.to(dtype=self.R_DTYPE, device=self.device)
-        kernel = self.compute_similarities(x0, x1, **kwargs)  # type: ignore
+        kernel = cast(torch.Tensor, self.compute_similarities(x0, x1, **kwargs))  # type: ignore[arg-type]
         return kernel
 
     def ansatz(self, x: torch.Tensor):
@@ -178,14 +178,17 @@ class NIFKernel(Kernel):
         batched_indices = np.array_split(np.arange(len(x)), np.ceil(len(x) / self.gram_batch_size))
         sptms = []
         for batch_indices in batched_indices:
-            bx = to_tensor(x[batch_indices], dtype=self.R_DTYPE, device=self.device)  # type: ignore
+            bx = cast(torch.Tensor, to_tensor(x[batch_indices], dtype=self.R_DTYPE, device=self.device))  # type: ignore[index]
             self._q_device.execute_generator(self.ansatz(bx), reset=True)
-            new_sptm = to_tensor(self._q_device.global_sptm.matrix(), dtype=self.R_DTYPE, device=x.device).reshape(
+            global_sptm = self._q_device.global_sptm
+            assert global_sptm is not None
+            new_sptm = cast(torch.Tensor, to_tensor(global_sptm.matrix(), dtype=self.R_DTYPE, device=cast(torch.Tensor, x).device)).reshape(
                 -1, 2 * self._q_device.num_wires, 2 * self._q_device.num_wires
             )
             sptms.append(new_sptm)
+        x_tensor = cast(torch.Tensor, x)
         stacked_sptms = qml.math.concatenate(sptms, axis=0).reshape(
-            x.shape[0], 2 * self._q_device.num_wires, 2 * self._q_device.num_wires
+            x_tensor.shape[0], 2 * self._q_device.num_wires, 2 * self._q_device.num_wires
         )
         return stacked_sptms
 

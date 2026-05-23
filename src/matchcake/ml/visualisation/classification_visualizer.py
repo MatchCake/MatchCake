@@ -154,7 +154,7 @@ class ClassificationVisualizer(Visualizer):
             vmax=n_labels - 1,
             alpha=kwargs.get("alpha", 0.8),
             origin="lower",
-            extent=[x_min, x_max, y_min, y_max],
+            extent=(x_min, x_max, y_min, y_max),
             aspect=kwargs.get("aspect", "auto"),
             interpolation=kwargs.get("interpolation", "antialiased"),
         )

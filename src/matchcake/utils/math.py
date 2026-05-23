@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Any, Iterable, List, Literal, Optional, Tuple
 
 import numpy as np
@@ -83,7 +84,7 @@ def eye_block_matrix(matrix: TensorLike, n: int, index: int):
 
 def convert_tensors_to_same_type_and_cast_to(
     tensors: List[TensorLike],
-    cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+    cast_priorities: Sequence[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
         "numpy",
         "autograd",
         "jax",
@@ -116,7 +117,7 @@ def convert_tensors_to_same_type_and_cast_to(
 
 def convert_tensors_to_same_type(
     tensors: List[TensorLike],
-    cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+    cast_priorities: Sequence[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
         "numpy",
         "autograd",
         "jax",
@@ -149,7 +150,7 @@ def convert_tensors_to_same_type(
 def convert_and_cast_tensor_from_tensors(
     tensor: TensorLike,
     tensors: List[TensorLike],
-    cast_priorities: List[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
+    cast_priorities: Sequence[Literal["numpy", "autograd", "jax", "tf", "torch"]] = (
         "numpy",
         "autograd",
         "jax",

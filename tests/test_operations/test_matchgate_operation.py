@@ -231,9 +231,8 @@ class TestMatchgateOperation:
     def test_from_polar_params(self, polar_params, std_params):
         mgo = MatchgateOperation.from_polar_params(**polar_params, wires=[0, 1])
         for k, v in std_params.items():
-            assert (
-                torch.allclose(getattr(mgo, k), torch.tensor(v, dtype=getattr(mgo, k).dtype)),
-                f"Convertion from polar to std doesnt work. For {k=}, Got: {getattr(mgo, k)}, expected: {v}.",
+            assert torch.allclose(getattr(mgo, k), torch.tensor(v, dtype=getattr(mgo, k).dtype)), (
+                f"Convertion from polar to std doesnt work. For {k=}, Got: {getattr(mgo, k)}, expected: {v}."
             )
 
     def test_grads(self, comp_hh01):

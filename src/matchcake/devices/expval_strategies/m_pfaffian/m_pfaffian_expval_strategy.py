@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Any, Sequence, cast
 
 import numpy as np
 import pennylane as qml
@@ -73,16 +73,15 @@ class MPfaffianExpvalStrategy(ExpvalStrategy):
         self,
         state_prep_op: StatePrepBase,
         observable: Operator,
-        *,
-        extended_covariance_matrix: TensorLike,
         **kwargs,
     ) -> TensorLike:
+        extended_covariance_matrix: TensorLike = kwargs["extended_covariance_matrix"]
         if not self.can_execute(state_prep_op, observable):
             raise ValueError(
                 f"Cannot execute {self.NAME} strategy for observable {observable} with state_prep_op {state_prep_op}."
             )
 
-        ext_cov_matrix = extended_covariance_matrix  # (..., 2n+1, 2n+1)
+        ext_cov_matrix = cast(np.ndarray, extended_covariance_matrix)  # (..., 2n+1, 2n+1)
         n_total = ext_cov_matrix.shape[-1]  # 2n + 1
         parity_index = n_total - 1  # 2n
 
@@ -116,10 +115,10 @@ class MPfaffianExpvalStrategy(ExpvalStrategy):
             else:
                 pf_values[sector] = sector_pfaffian_features(ext_cov_matrix, index_sets)  # (..., n_terms)
 
-        total_re = torch.tensor(0.0, dtype=torch.float64)
+        total_re: Any = np.float64(0.0)
         for sector, items in terms_by_sector.items():
             wick_phase = (-1j) ** (sector // 2)
-            pfs = pf_values[sector]  # (..., n_terms)
+            pfs = cast(np.ndarray, pf_values[sector])  # (..., n_terms)
             for k, (ext_index_set, ext_phase, term_idx) in enumerate(items):
                 h_coeff = h_coeffs[term_idx]
                 coeff = complex(h_coeff.item() if isinstance(h_coeff, torch.Tensor) else h_coeff)
