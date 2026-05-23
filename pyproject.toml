@@ -75,13 +75,12 @@ dev = [
     "pytest>=8.4,<9",
     "docutils>=0.18,<0.20",
     "mypy>=1.15,<2",
-    "black>=25.1,<26",
+    "ruff>=0.9,<1",
     "nbmake>=1.5,<2",
     "wheel>=0.45,<0.46",
     "build>=1.4,<2",
     "twine>=6.1,<7",
     "pytest-xdist>=3.7,<4",
-    "isort>=6.0,<7",
     "pytest-timeout>=2.4",
     "pip>=25",
     "scipy-stubs>=1.15.3.0",
@@ -249,11 +248,14 @@ module = [
 ]
 ignore_missing_imports = true
 
-[tool.black]
+[tool.ruff]
 line-length = 120
 
-[tool.isort]
-profile = "black"
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.format]
+quote-style = "double"
 
 [tool.coverage.run]
 relative_files = true

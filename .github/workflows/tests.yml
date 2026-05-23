@@ -39,8 +39,8 @@ jobs:
           uv sync --locked --dev --extra cpu
       - name: Test Linting
         run: |
-          uv run black src tests --check --diff
-          uv run isort src tests --check-only --diff
+          uv run ruff format --check src tests
+          uv run ruff check src tests
       - name: Test Typing
         continue-on-error: true
         run: |

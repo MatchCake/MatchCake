@@ -8,18 +8,18 @@ repos:
         pass_filenames: false
         files: ^pyproject\.toml$
 
-      - id: black
-        name: black (changed files only)
-        entry: uv run black
+      - id: ruff-format
+        name: ruff format (changed files only)
+        entry: uv run ruff format
         language: system
-        types: [ python ]
+        types: [python]
         pass_filenames: true
 
-      - id: isort
-        name: isort (changed files only)
-        entry: uv run isort
+      - id: ruff-check
+        name: ruff check (changed files only)
+        entry: uv run ruff check --fix
         language: system
-        types: [ python ]
+        types: [python]
         pass_filenames: true
 
       - id: mypy
