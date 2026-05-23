@@ -233,7 +233,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         )
         self.pfaffian_method = kwargs.get("pfaffian_method", self.DEFAULT_PFAFFIAN_METHOD)
         assert self.pfaffian_method in self.pfaffian_methods, (
-            f"The pfaffian method must be one of {self.pfaffian_methods}. " f"Got {self.pfaffian_method} instead."
+            f"The pfaffian method must be one of {self.pfaffian_methods}. Got {self.pfaffian_method} instead."
         )
         self.sampling_strategy: SamplingStrategy = get_sampling_strategy(
             kwargs.get("sampling_strategy", self.DEFAULT_SAMPLING_STRATEGY)
@@ -256,9 +256,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self.clifford_expval_strategy = CliffordExpvalStrategy()
         self.expval_from_probabilities_strategy = ExpvalFromProbabilitiesStrategy()
         self.m_pfaffian_expval_strategy = MPfaffianExpvalStrategy()
-        self._state_prep_op = ProductState.from_basis_state(
-            np.zeros(self.num_wires, dtype=int), wires=self.wires
-        )
+        self._state_prep_op = ProductState.from_basis_state(np.zeros(self.num_wires, dtype=int), wires=self.wires)
 
     def apply(self, operations, rotations=None, **kwargs):
         """
@@ -519,7 +517,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         else:
             target_binary_state = np.asarray(target_binary_state)
         assert len(target_binary_state) == num_wires, (
-            f"The target binary state must have {num_wires} elements. " f"Got {len(target_binary_state)} instead."
+            f"The target binary state must have {num_wires} elements. Got {len(target_binary_state)} instead."
         )
         return self.prob_strategy(
             state_prep_op=self.state_prep_op,
@@ -687,10 +685,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             be computed on the current device due to compatibility issues.
         """
         if isinstance(observable, BatchHamiltonian):
-            return qml.math.stack([
-                qml.math.real(c * self.exact_expval(op))
-                for c, op in zip(observable.coeffs, observable.ops)
-            ])
+            return qml.math.stack(
+                [qml.math.real(c * self.exact_expval(op)) for c, op in zip(observable.coeffs, observable.ops)]
+            )
         if isinstance(observable, BasisStateProjector):
             return self.get_state_probability(observable.parameters[0], observable.wires)
         if isinstance(observable, BatchProjector):
@@ -705,10 +702,13 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             return self.clifford_expval_strategy(self.state_prep_op, observable, global_sptm=self.global_sptm.matrix())
         if self.expval_from_probabilities_strategy.can_execute(self.state_prep_op, observable):
             return self.expval_from_probabilities_strategy(self.state_prep_op, observable, prob_func=self.probability)
-        terms_splitter = TermsSplitter([self.m_pfaffian_expval_strategy, self.clifford_expval_strategy, self.expval_from_probabilities_strategy])
+        terms_splitter = TermsSplitter(
+            [self.m_pfaffian_expval_strategy, self.clifford_expval_strategy, self.expval_from_probabilities_strategy]
+        )
         if terms_splitter.can_execute(self.state_prep_op, observable):
             return terms_splitter(
-                self.state_prep_op, observable,
+                self.state_prep_op,
+                observable,
                 extended_covariance_matrix=self.extended_covariance_matrix,
                 global_sptm=self.global_sptm.matrix(),
                 prob_func=self.probability,
@@ -773,9 +773,7 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         self._samples = None
         self.apply_metadata = defaultdict()
         self.contraction_strategy.reset()
-        self._state_prep_op = ProductState.from_basis_state(
-            np.zeros(self.num_wires, dtype=int), wires=self.wires
-        )
+        self._state_prep_op = ProductState.from_basis_state(np.zeros(self.num_wires, dtype=int), wires=self.wires)
 
     def update_p_bar(self, *args, **kwargs):
         if self.p_bar is None:
@@ -900,13 +898,11 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             processing_fn = null_postprocess
 
         elif single_hamiltonian_with_grouping_known:
-
             # Use qwc grouping if the circuit contains a single measurement of a
             # Hamiltonian/Sum with grouping indices already calculated.
             circuits, processing_fn = qml.transforms.split_non_commuting(circuit, "qwc")
 
         elif any(isinstance(m.obs, (Hamiltonian, LinearCombination)) for m in circuit.measurements):
-
             # Otherwise, use wire-based grouping if the circuit contains a Hamiltonian
             # that is potentially very large.
             circuits, processing_fn = qml.transforms.split_non_commuting(circuit, "wires")
@@ -1014,7 +1010,9 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
     @property
     def covariance_matrix(self):
         if not isinstance(self.state_prep_op, ProductState):
-            raise ValueError(f"Covariance matrix can only be computed for product states. Got {type(self.state_prep_op)} instead of ProductState.")
+            raise ValueError(
+                f"Covariance matrix can only be computed for product states. Got {type(self.state_prep_op)} instead of ProductState."
+            )
         cov0 = self.state_prep_op.covariance_matrix
         q = self.global_sptm.matrix(self.wires)
         return qml.math.einsum("...ij,ik,...kl->...jl", q, cov0, q)
@@ -1036,18 +1034,17 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
             state_prep = ProductState.from_basis_state(state_prep)
         if not isinstance(state_prep, ProductState):
             raise ValueError(
-                f"Extended covariance matrix requires a ProductState or BasisState. "
-                f"Got {type(state_prep)}."
+                f"Extended covariance matrix requires a ProductState or BasisState. Got {type(state_prep)}."
             )
         # Build tilde_Lambda_0 from the initial state
-        amplitudes = state_prep.data[0]       # (n, 2) complex
-        cov0 = state_prep.covariance_matrix    # (2n, 2n)
+        amplitudes = state_prep.data[0]  # (n, 2) complex
+        cov0 = state_prep.covariance_matrix  # (2n, 2n)
         d0 = _displacement_vector(amplitudes, self.wires)  # (2n,)
         tilde_Lambda_0 = _extended_covariance_matrix(cov0, d0)  # (2n+1, 2n+1)
 
         # Lift SPTM: tilde_Q = Q ⊕ 1
         q = self.global_sptm.matrix(self.wires)  # (2n, 2n)
-        tilde_Q = _sptm_lift(q)                  # (2n+1, 2n+1)
+        tilde_Q = _sptm_lift(q)  # (2n+1, 2n+1)
 
         # Evolve: tilde_Lambda(t) = tilde_Q^T tilde_Lambda_0 tilde_Q
         return qml.math.einsum("...ij,ik,...kl->...jl", tilde_Q, tilde_Lambda_0, tilde_Q)

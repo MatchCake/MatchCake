@@ -96,7 +96,7 @@ def state_to_binary_string(state: Union[int, np.ndarray, sparse.sparray], n: Opt
     """
     if isinstance(state, int):
         assert n is not None, "Number of particles must be specified if the state is an integer."
-        assert state < 2**n, f"Invalid state: {state}, must be smaller than 2^n = {2 ** n}."
+        assert state < 2**n, f"Invalid state: {state}, must be smaller than 2^n = {2**n}."
         return np.binary_repr(state, width=n)
     n_states = np.prod(state.shape)
     n = int(np.log2(n_states))

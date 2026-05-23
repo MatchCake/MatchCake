@@ -45,7 +45,7 @@ def signed_pfaffian(matrix: TensorLike) -> TensorLike:
         sign = 1.0
         for i in range(0, n - 2, 2):
             # Pivot: find row with max |M[j, i]| for j > i+1
-            col_abs = M[i + 2:, i].abs()
+            col_abs = M[i + 2 :, i].abs()
             p_rel = int(torch.argmax(col_abs).item())
             p = p_rel + i + 2
             if p != i + 1 and col_abs[p_rel].item() > abs(M[i + 1, i].item()):
@@ -58,16 +58,14 @@ def signed_pfaffian(matrix: TensorLike) -> TensorLike:
             if abs(pivot_val) < 1e-300:
                 sign = 0.0
                 break
-            tau = M[i + 2:, i] / pivot_val          # (n-i-2,)
-            row_ip1 = M[i + 1, i + 2:]               # (n-i-2,)
-            col_ip1 = M[i + 2:, i + 1]               # (n-i-2,)
-            M[i + 2:, i + 2:] += (
-                torch.outer(tau, col_ip1) - torch.outer(col_ip1, tau)
-            )
-            M[i + 2:, i] = 0.0
-            M[i, i + 2:] = 0.0
-            M[i + 2:, i + 1] = 0.0
-            M[i + 1, i + 2:] = 0.0
+            tau = M[i + 2 :, i] / pivot_val  # (n-i-2,)
+            row_ip1 = M[i + 1, i + 2 :]  # (n-i-2,)
+            col_ip1 = M[i + 2 :, i + 1]  # (n-i-2,)
+            M[i + 2 :, i + 2 :] += torch.outer(tau, col_ip1) - torch.outer(col_ip1, tau)
+            M[i + 2 :, i] = 0.0
+            M[i, i + 2 :] = 0.0
+            M[i + 2 :, i + 1] = 0.0
+            M[i + 1, i + 2 :] = 0.0
 
         # Product of super-diagonal entries
         pf_T = 1.0
@@ -92,10 +90,10 @@ def sector_pfaffian_features(
     :return: (..., n_terms) Pfaffians.
     """
     cov_matrix_t = torch.as_tensor(qml.math.real(cov_matrix), dtype=torch.float64)
-    index_sets = np.asarray(index_sets)                      # (n_terms, submatrix_size)
+    index_sets = np.asarray(index_sets)  # (n_terms, submatrix_size)
     n_terms, submatrix_size = index_sets.shape
-    row_indices = index_sets[:, :, None]                     # (n_terms, submatrix_size, 1)
-    col_indices = index_sets[:, None, :]                     # (n_terms, 1, submatrix_size)
+    row_indices = index_sets[:, :, None]  # (n_terms, submatrix_size, 1)
+    col_indices = index_sets[:, None, :]  # (n_terms, 1, submatrix_size)
     submatrices = cov_matrix_t[..., row_indices, col_indices]  # (..., n_terms, submatrix_size, submatrix_size)
 
     if submatrix_size == 2:
@@ -108,11 +106,10 @@ def sector_pfaffian_features(
         subs = [submatrices[..., k, :, :] for k in range(n_terms)]
         with torch.no_grad():
             signs = torch.stack([torch.sign(signed_pfaffian(s.detach())) for s in subs], dim=-1)
-        magnitudes = torch.stack(
-            [torch.sqrt(torch.linalg.det(s).abs().clamp(min=1e-32)) for s in subs], dim=-1
-        )
+        magnitudes = torch.stack([torch.sqrt(torch.linalg.det(s).abs().clamp(min=1e-32)) for s in subs], dim=-1)
         result = signs * magnitudes
     return convert_and_cast_like(result, cov_matrix)
+
 
 _pfaffian_fdbpf_lock = threading.Lock()
 

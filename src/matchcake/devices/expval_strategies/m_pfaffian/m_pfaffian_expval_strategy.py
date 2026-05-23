@@ -79,13 +79,12 @@ class MPfaffianExpvalStrategy(ExpvalStrategy):
     ) -> TensorLike:
         if not self.can_execute(state_prep_op, observable):
             raise ValueError(
-                f"Cannot execute {self.NAME} strategy for observable {observable} "
-                f"with state_prep_op {state_prep_op}."
+                f"Cannot execute {self.NAME} strategy for observable {observable} with state_prep_op {state_prep_op}."
             )
 
         ext_cov_matrix = extended_covariance_matrix  # (..., 2n+1, 2n+1)
-        n_total = ext_cov_matrix.shape[-1]            # 2n + 1
-        parity_index = n_total - 1                    # 2n
+        n_total = ext_cov_matrix.shape[-1]  # 2n + 1
+        parity_index = n_total - 1  # 2n
 
         hamiltonian = self._to_hamiltonian(observable)
         h_coeffs, h_ops = hamiltonian.terms()
@@ -120,11 +119,11 @@ class MPfaffianExpvalStrategy(ExpvalStrategy):
         total_re = torch.tensor(0.0, dtype=torch.float64)
         for sector, items in terms_by_sector.items():
             wick_phase = (-1j) ** (sector // 2)
-            pfs = pf_values[sector]   # (..., n_terms)
+            pfs = pf_values[sector]  # (..., n_terms)
             for k, (ext_index_set, ext_phase, term_idx) in enumerate(items):
                 h_coeff = h_coeffs[term_idx]
                 coeff = complex(h_coeff.item() if isinstance(h_coeff, torch.Tensor) else h_coeff)
-                pf_k = pfs[..., k]   # (...)
+                pf_k = pfs[..., k]  # (...)
                 scalar = float(np.real(coeff * complex(ext_phase) * wick_phase))
                 total_re = total_re + scalar * pf_k
 
@@ -142,6 +141,7 @@ class MPfaffianExpvalStrategy(ExpvalStrategy):
           2. observable decomposes into a sum of Pauli strings.
         """
         from pennylane import BasisState
+
         if not isinstance(state_prep_op, (BasisState, ProductState)):
             return False
         try:

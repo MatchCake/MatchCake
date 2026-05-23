@@ -27,9 +27,9 @@ class ExpvalFromProbabilitiesStrategy(ExpvalStrategy):
         return qml.math.einsum("k,...ki,ki->...", hamiltonian.coeffs, probs, eigvals_on_z_basis)
 
     def gather_probs(self, hamiltonian, **kwargs) -> TensorLike:
-        assert any(
-            [s in kwargs for s in ["prob", "prob_func"]]
-        ), "Either 'prob' or 'prob_func' must be provided as a keyword argument."
+        assert any([s in kwargs for s in ["prob", "prob_func"]]), (
+            "Either 'prob' or 'prob_func' must be provided as a keyword argument."
+        )
         if "prob" in kwargs:
             return kwargs["prob"]
         assert "prob_func" in kwargs, "The probability function 'prob_func' must be provided as a keyword argument."

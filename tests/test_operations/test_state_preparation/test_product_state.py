@@ -8,7 +8,6 @@ from matchcake.operations.state_preparation.product_state import ProductState
 from matchcake.utils.majorana import get_majorana
 
 
-
 def _brute_force_lambda(psi: np.ndarray, n: int) -> np.ndarray:
     """Lambda_{mu nu} = i <psi| c_mu c_nu |psi> for a full state vector psi.
 
@@ -22,7 +21,9 @@ def _brute_force_lambda(psi: np.ndarray, n: int) -> np.ndarray:
                 continue
             cov[mu, nu] = 1j * np.trace(rho @ get_majorana(mu, n) @ get_majorana(nu, n))
     np.testing.assert_allclose(
-        cov.imag, 0.0, atol=1e-9,
+        cov.imag,
+        0.0,
+        atol=1e-9,
         err_msg="brute-force Lambda has nonzero imaginary part",
     )
     return cov.real
@@ -77,11 +78,8 @@ class TestProductState:
         op = ProductState(bad, wires=[0, 1], validate_norm=False)
         assert op.data[0].shape == (2, 2)
 
-
     def test_flat_and_matrix_input_produce_same_internal_state(self):
-        flat = np.array(
-            [1 / np.sqrt(2), 1 / np.sqrt(2), 0, 1, 1, 0], dtype=complex
-        )
+        flat = np.array([1 / np.sqrt(2), 1 / np.sqrt(2), 0, 1, 1, 0], dtype=complex)
         matrix = flat.reshape(3, 2)
 
         op_flat = ProductState(flat, wires=[0, 1, 2])
@@ -98,23 +96,23 @@ class TestProductState:
         assert op_flat.ndim_params == (2,)
 
     def test_flat_and_matrix_input_produce_same_covariance(self):
-        flat = np.array(
-            [1 / np.sqrt(2), 1 / np.sqrt(2), 0, 1, 1, 0], dtype=complex
-        )
+        flat = np.array([1 / np.sqrt(2), 1 / np.sqrt(2), 0, 1, 1, 0], dtype=complex)
         matrix = flat.reshape(3, 2)
         cov_flat = ProductState(flat, wires=[0, 1, 2]).covariance_matrix
         cov_matrix = ProductState(matrix, wires=[0, 1, 2]).covariance_matrix
         torch.testing.assert_close(cov_flat, cov_matrix)
-
 
     def test_state_vector_matches_explicit_kron(self):
         n = 3
         # |+> on q0, |1> on q1, (|0>+i|1>)/sqrt(2) on q2
         state = np.array(
             [
-                1 / np.sqrt(2), 1 / np.sqrt(2),
-                0, 1,
-                1 / np.sqrt(2), 1j / np.sqrt(2),
+                1 / np.sqrt(2),
+                1 / np.sqrt(2),
+                0,
+                1,
+                1 / np.sqrt(2),
+                1j / np.sqrt(2),
             ],
             dtype=complex,
         )
@@ -145,7 +143,6 @@ class TestProductState:
         with pytest.raises(ValueError, match="must contain"):
             op.state_vector(wire_order=[0])
 
-
     @pytest.mark.parametrize(
         "bits",
         [
@@ -172,9 +169,7 @@ class TestProductState:
         # |0>x-|1>: still a basis state up to global phase per qubit.
         op = ProductState(np.array([1, 0, 0, -1], dtype=complex), wires=[0, 1])
         assert op.is_basis_state is True
-        np.testing.assert_array_equal(
-            np.asarray(op.as_basis_state().parameters[0]), np.array([0, 1])
-        )
+        np.testing.assert_array_equal(np.asarray(op.as_basis_state().parameters[0]), np.array([0, 1]))
 
     def test_is_basis_state_false_on_superposition(self):
         state = np.array([1, 0, 1 / np.sqrt(2), 1 / np.sqrt(2)], dtype=complex)
@@ -186,7 +181,6 @@ class TestProductState:
         op = ProductState(state, wires=[0, 1])
         with pytest.raises(ValueError, match="not a computational-basis state"):
             op.as_basis_state()
-
 
     def test_covariance_matrix_shape_and_dtype(self):
         op = ProductState(_random_product_state(3, seed=0), wires=range(3))
@@ -206,7 +200,6 @@ class TestProductState:
         cov2 = op.covariance_matrix
         assert cov1 is cov2, "covariance_matrix should be cached"
 
-
     @pytest.mark.parametrize(
         "bits",
         [
@@ -225,9 +218,7 @@ class TestProductState:
 
         op = ProductState(state, wires=range(n))
         cov_op = op.covariance_matrix.detach().cpu().numpy()
-        cov_ref = _brute_force_lambda(
-            _per_qubit_to_full_vector(state.reshape(2 * n), n), n
-        )
+        cov_ref = _brute_force_lambda(_per_qubit_to_full_vector(state.reshape(2 * n), n), n)
         np.testing.assert_allclose(cov_op, cov_ref, atol=1e-9)
 
     @pytest.mark.parametrize("n", [2, 3, 4])
@@ -238,7 +229,6 @@ class TestProductState:
         cov_op = op.covariance_matrix.detach().cpu().numpy()
         cov_ref = _brute_force_lambda(_per_qubit_to_full_vector(state, n), n)
         np.testing.assert_allclose(cov_op, cov_ref, atol=1e-9)
-
 
     @pytest.mark.parametrize(
         "bits",
@@ -268,7 +258,10 @@ class TestProductState:
         assert np.iscomplexobj(np.asarray(op.data[0]))
 
     def test_compute_decomposition_returns_state_prep(self):
-        state = np.array([[1, 0], [0, 1]], dtype=complex, )
+        state = np.array(
+            [[1, 0], [0, 1]],
+            dtype=complex,
+        )
         decomp = ProductState.compute_decomposition(state, wires=[0, 1])
         assert len(decomp) == 1
         assert isinstance(decomp[0], qml.StatePrep)
@@ -276,9 +269,7 @@ class TestProductState:
     def test_from_basis_state_from_int_array(self):
         op = ProductState.from_basis_state([0, 1], wires=[0, 1])
         assert op.is_basis_state
-        np.testing.assert_array_equal(
-            np.asarray(op.as_basis_state().parameters[0]), [0, 1]
-        )
+        np.testing.assert_array_equal(np.asarray(op.as_basis_state().parameters[0]), [0, 1])
 
     def test_from_basis_state_wrong_shape_raises(self):
         with pytest.raises(ValueError, match="shape"):
@@ -297,9 +288,12 @@ class TestProductState:
         # in Lambda_0 must vanish.
         state = np.array(
             [
-                1, 0,                              # |0>
-                1 / np.sqrt(2), 1 / np.sqrt(2),    # |+>
-                1, 0,                              # |0>
+                1,
+                0,  # |0>
+                1 / np.sqrt(2),
+                1 / np.sqrt(2),  # |+>
+                1,
+                0,  # |0>
             ],
             dtype=complex,
         )

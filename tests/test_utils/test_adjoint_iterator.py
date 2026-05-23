@@ -4,7 +4,6 @@ from matchcake.utils.operators import adjoint_generator
 
 
 class DummyOp:
-
     @classmethod
     def iterator(cls, n):
         for i in range(n):

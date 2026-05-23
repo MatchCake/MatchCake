@@ -6,7 +6,6 @@ from matchcake.ml.kernels.gram_matrix import GramMatrix
 
 
 class TestGramMatrix:
-
     @pytest.mark.parametrize("shape, initial_value", [((4, 5), 0.0), ((5, 5), 1.0), ((5, 4), -1.0)])
     def test_init(self, shape, initial_value):
         gram = GramMatrix(shape, initial_value=initial_value, requires_grad=False)

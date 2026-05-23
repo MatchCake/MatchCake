@@ -34,9 +34,7 @@ class TestClassificationVisualizer:
     def test_gather_transforms_with_callables(self):
         transform = lambda x: x
         inverse_transform = lambda x: x
-        vis = ClassificationVisualizer(
-            x=self.x_2d, transform=transform, inverse_transform=inverse_transform
-        )
+        vis = ClassificationVisualizer(x=self.x_2d, transform=transform, inverse_transform=inverse_transform)
         t, inv = vis.gather_transforms()
         assert t is transform
         assert inv is inverse_transform

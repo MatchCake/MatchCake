@@ -49,31 +49,26 @@ class TestRandomOperationsGenerator:
 
     def test_get_output_op_expval(self):
         gen = RandomOperationsGenerator(
-            wires=4, n_ops=1, op_types=[MatchgateOperation],
-            output_type="expval", observable=qml.Z(0)
+            wires=4, n_ops=1, op_types=[MatchgateOperation], output_type="expval", observable=qml.Z(0)
         )
         result = gen.get_output_op()
         assert result is not None
 
     def test_get_output_op_samples(self):
-        gen = RandomOperationsGenerator(
-            wires=4, n_ops=1, op_types=[MatchgateOperation],
-            output_type="samples"
-        )
+        gen = RandomOperationsGenerator(wires=4, n_ops=1, op_types=[MatchgateOperation], output_type="samples")
         result = gen.get_output_op()
         assert result is not None
 
     def test_get_output_op_invalid_raises(self):
-        gen = RandomOperationsGenerator(
-            wires=4, n_ops=1, op_types=[MatchgateOperation],
-            output_type="invalid"
-        )
+        gen = RandomOperationsGenerator(wires=4, n_ops=1, op_types=[MatchgateOperation], output_type="invalid")
         with pytest.raises(ValueError, match="Invalid output_type"):
             gen.get_output_op()
 
     def test_get_initial_state_fixed(self):
         gen = RandomOperationsGenerator(
-            wires=4, n_ops=1, op_types=[MatchgateOperation],
+            wires=4,
+            n_ops=1,
+            op_types=[MatchgateOperation],
             initial_state=[0, 1, 0, 1],
         )
         rng = np.random.default_rng(TEST_SEED)
@@ -82,7 +77,9 @@ class TestRandomOperationsGenerator:
 
     def test_get_initial_state_wrong_length_raises(self):
         gen = RandomOperationsGenerator(
-            wires=4, n_ops=1, op_types=[MatchgateOperation],
+            wires=4,
+            n_ops=1,
+            op_types=[MatchgateOperation],
             initial_state=[0, 1],
         )
         rng = np.random.default_rng(TEST_SEED)

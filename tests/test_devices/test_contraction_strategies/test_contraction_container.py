@@ -51,7 +51,5 @@ class TestContractionMatchgatesContainer:
         identity = qml.Identity(0)
         matchgate = SptmCompRxRx(np.random.random(2), wires=[0, 1])
         callback_calls = []
-        forward_container.contract_operations(
-            [matchgate, identity], callback=lambda i: callback_calls.append(i)
-        )
+        forward_container.contract_operations([matchgate, identity], callback=lambda i: callback_calls.append(i))
         assert len(callback_calls) >= 1

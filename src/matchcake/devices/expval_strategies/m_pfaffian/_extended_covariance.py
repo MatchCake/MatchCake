@@ -32,7 +32,7 @@ def displacement_vector(
         dtype=torch.complex128,
     )
     alpha = psi[:, 0]  # (n,)
-    beta = psi[:, 1]   # (n,)
+    beta = psi[:, 1]  # (n,)
 
     x = 2.0 * torch.real(torch.conj(alpha) * beta)
     y = 2.0 * torch.imag(torch.conj(alpha) * beta)
@@ -45,8 +45,8 @@ def displacement_vector(
     for k in range(1, n):
         z_prod[k] = z_prod[k - 1] * z[k - 1].real
 
-    d[0::2] = z_prod * x   # <c_{2k}>   = z_prod[k] * <X_k>
-    d[1::2] = z_prod * y   # <c_{2k+1}> = z_prod[k] * <Y_k>
+    d[0::2] = z_prod * x  # <c_{2k}>   = z_prod[k] * <X_k>
+    d[1::2] = z_prod * y  # <c_{2k+1}> = z_prod[k] * <Y_k>
 
     return d
 
@@ -72,13 +72,13 @@ def extended_covariance_matrix(
     )
     batch = cov_matrix_t.shape[:-2]
 
-    d_col = d.unsqueeze(-1)          # (..., 2n, 1)
-    neg_d_row = -d.unsqueeze(-2)     # (..., 1, 2n)
+    d_col = d.unsqueeze(-1)  # (..., 2n, 1)
+    neg_d_row = -d.unsqueeze(-2)  # (..., 1, 2n)
     zero_corner = torch.zeros(*batch, 1, 1, dtype=torch.float64, device=cov_matrix_t.device)
 
-    top = torch.cat([cov_matrix_t, d_col], dim=-1)        # (..., 2n, 2n+1)
-    bottom = torch.cat([neg_d_row, zero_corner], dim=-1)   # (..., 1,  2n+1)
-    tilde = torch.cat([top, bottom], dim=-2)               # (..., 2n+1, 2n+1)
+    top = torch.cat([cov_matrix_t, d_col], dim=-1)  # (..., 2n, 2n+1)
+    bottom = torch.cat([neg_d_row, zero_corner], dim=-1)  # (..., 1,  2n+1)
+    tilde = torch.cat([top, bottom], dim=-2)  # (..., 2n+1, 2n+1)
 
     return convert_and_cast_like(tilde, cov_matrix)
 
@@ -103,8 +103,8 @@ def sptm_lift(Q: TensorLike) -> TensorLike:
     zeros_row = torch.zeros(*batch, 1, two_n, dtype=torch.float64, device=Q_t.device)
     one_corner = torch.ones(*batch, 1, 1, dtype=torch.float64, device=Q_t.device)
 
-    top = torch.cat([Q_t, zeros_col], dim=-1)            # (..., 2n, 2n+1)
-    bottom = torch.cat([zeros_row, one_corner], dim=-1)   # (..., 1,  2n+1)
-    tilde_Q = torch.cat([top, bottom], dim=-2)            # (..., 2n+1, 2n+1)
+    top = torch.cat([Q_t, zeros_col], dim=-1)  # (..., 2n, 2n+1)
+    bottom = torch.cat([zeros_row, one_corner], dim=-1)  # (..., 1,  2n+1)
+    tilde_Q = torch.cat([top, bottom], dim=-2)  # (..., 2n+1, 2n+1)
 
     return convert_and_cast_like(tilde_Q, Q)

@@ -60,7 +60,9 @@ class ClassificationVisualizer(Visualizer):
                 elif self.reducer.lower() == "umap":  # pragma: no cover
                     import umap  # pragma: no cover
 
-                    self.reducer = umap.UMAP(n_components=2, transform_seed=self.seed, n_jobs=n_jobs)  # pragma: no cover
+                    self.reducer = umap.UMAP(
+                        n_components=2, transform_seed=self.seed, n_jobs=n_jobs
+                    )  # pragma: no cover
                 else:
                     raise ValueError(f"Unknown reducer: {self.reducer}")
             if kwargs.get("check_estimators", True):  # pragma: no cover

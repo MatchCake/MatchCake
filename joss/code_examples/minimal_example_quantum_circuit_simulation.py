@@ -31,14 +31,10 @@ def circuit(params, wires, initial_state):
 
 # Create a QNode
 nif_qnode = qml.QNode(circuit, nif_device)
-qml.draw_mpl(nif_qnode)(
-    params=np.array([0.1, 0.2]), wires=nif_device.wires, initial_state=initial_state
-)
+qml.draw_mpl(nif_qnode)(params=np.array([0.1, 0.2]), wires=nif_device.wires, initial_state=initial_state)
 
 # Evaluate the QNode
-expval = nif_qnode(
-    params=np.array([0.1, 0.2]), wires=nif_device.wires, initial_state=initial_state
-)
+expval = nif_qnode(params=np.array([0.1, 0.2]), wires=nif_device.wires, initial_state=initial_state)
 print(f"Expectation value: {expval:.4f}")
 
 if __name__ == "__main__":

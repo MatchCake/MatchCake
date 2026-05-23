@@ -174,5 +174,6 @@ class TestSingleParticleTransitionMatrixOperation:
         sptm._wires = np.arange(size)
         sptm._hyperparameters = {}
         from pennylane.wires import Wires
+
         with pytest.raises(NotImplementedError):
             sptm.pad(Wires(np.arange(size + 1)))

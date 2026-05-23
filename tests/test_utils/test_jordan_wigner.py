@@ -27,14 +27,17 @@ class TestJordanWigner:
         with pytest.raises(ValueError, match="Unknown Pauli character"):
             jw.pauli_to_majorana("AX", [0, 1])
 
-    @pytest.mark.parametrize("n_qubits,pauli_str,wires,exp_len", [
-        (1, "I", [0], 0),
-        (1, "X", [0], 1),
-        (1, "Y", [0], 1),
-        (1, "Z", [0], 2),
-        (2, "XX", [0, 1], 2),
-        (2, "ZZ", [0, 1], 4),
-    ])
+    @pytest.mark.parametrize(
+        "n_qubits,pauli_str,wires,exp_len",
+        [
+            (1, "I", [0], 0),
+            (1, "X", [0], 1),
+            (1, "Y", [0], 1),
+            (1, "Z", [0], 2),
+            (2, "XX", [0, 1], 2),
+            (2, "ZZ", [0, 1], 4),
+        ],
+    )
     def test_pauli_to_majorana_index_count(self, n_qubits, pauli_str, wires, exp_len):
         jw = JordanWigner(n_qubits)
         indices, phase = jw.pauli_to_majorana(pauli_str, wires)

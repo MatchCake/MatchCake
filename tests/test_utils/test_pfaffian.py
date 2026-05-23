@@ -115,22 +115,25 @@ class TestPfaffianExtended:
         np.testing.assert_allclose(pf, 0.0, atol=1e-12)
 
     def test_sector_pfaffian_2x2_fast_path(self):
-        cov = torch.tensor([[0.0, 2.5, 0.0, 0.0],
-                            [-2.5, 0.0, 0.0, 0.0],
-                            [0.0, 0.0, 0.0, 1.3],
-                            [0.0, 0.0, -1.3, 0.0]], dtype=torch.float64)
+        cov = torch.tensor(
+            [[0.0, 2.5, 0.0, 0.0], [-2.5, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.3], [0.0, 0.0, -1.3, 0.0]],
+            dtype=torch.float64,
+        )
         index_sets = np.array([[0, 1], [2, 3]])
         result = sector_pfaffian_features(cov, index_sets)
         np.testing.assert_allclose(result.numpy(), [2.5, 1.3], atol=1e-12)
 
     def test_sector_pfaffian_4x4_submatrix(self):
         a, b, c, d, e, f = 1.0, 2.0, 3.0, 4.0, 5.0, 6.0
-        A = torch.tensor([
-            [0, a, b, c],
-            [-a, 0, d, e],
-            [-b, -d, 0, f],
-            [-c, -e, -f, 0],
-        ], dtype=torch.float64)
+        A = torch.tensor(
+            [
+                [0, a, b, c],
+                [-a, 0, d, e],
+                [-b, -d, 0, f],
+                [-c, -e, -f, 0],
+            ],
+            dtype=torch.float64,
+        )
         expected = a * f - b * e + c * d
         index_sets = np.array([[0, 1, 2, 3]])
         result = sector_pfaffian_features(A, index_sets)
@@ -140,11 +143,12 @@ class TestPfaffianExtended:
         def fn(cov):
             return sector_pfaffian_features(cov, np.array([[0, 1], [2, 3]]))
 
-        cov = torch.tensor([[0.0, 2.5, 0.0, 0.0],
-                            [-2.5, 0.0, 0.0, 0.0],
-                            [0.0, 0.0, 0.0, 1.3],
-                            [0.0, 0.0, -1.3, 0.0]], dtype=torch.float64).requires_grad_(True)
+        cov = torch.tensor(
+            [[0.0, 2.5, 0.0, 0.0], [-2.5, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.3], [0.0, 0.0, -1.3, 0.0]],
+            dtype=torch.float64,
+        ).requires_grad_(True)
         from torch.autograd import gradcheck
+
         assert gradcheck(fn, (cov,), atol=1e-6)
 
     def test_sector_pfaffian_4x4_grads(self):
@@ -154,31 +158,38 @@ class TestPfaffianExtended:
         m = torch.randn(4, 4, dtype=torch.float64)
         A = (m - m.T).requires_grad_(True)
         from torch.autograd import gradcheck
+
         assert gradcheck(fn, (A,), atol=1e-6)
 
     def test_signed_pfaffian_4x4_non_zero_schur_complement(self):
         a, b, c, d, e, f = 1.0, 2.0, 3.0, 4.0, 5.0, 6.0
-        A = torch.tensor([
-            [0, a, b, c],
-            [-a, 0, d, e],
-            [-b, -d, 0, f],
-            [-c, -e, -f, 0],
-        ], dtype=torch.float64)
+        A = torch.tensor(
+            [
+                [0, a, b, c],
+                [-a, 0, d, e],
+                [-b, -d, 0, f],
+                [-c, -e, -f, 0],
+            ],
+            dtype=torch.float64,
+        )
         expected = a * f - b * e + c * d
         pf = float(signed_pfaffian(A))
         np.testing.assert_allclose(pf, expected, atol=1e-10)
 
     def test_signed_pfaffian_pivot_swap_triggered(self):
         # Construct a matrix where M[3,0] > M[1,0] to force pivot swap.
-        A = torch.tensor([
-            [0, 0.01, 0.01, 5.0],
-            [-0.01, 0, 1.0, 1.0],
-            [-0.01, -1.0, 0, 1.0],
-            [-5.0, -1.0, -1.0, 0],
-        ], dtype=torch.float64)
+        A = torch.tensor(
+            [
+                [0, 0.01, 0.01, 5.0],
+                [-0.01, 0, 1.0, 1.0],
+                [-0.01, -1.0, 0, 1.0],
+                [-5.0, -1.0, -1.0, 0],
+            ],
+            dtype=torch.float64,
+        )
         det = float(torch.linalg.det(A))
         pf = float(signed_pfaffian(A))
-        np.testing.assert_allclose(pf ** 2, det, atol=1e-8)
+        np.testing.assert_allclose(pf**2, det, atol=1e-8)
 
 
 class TestPfaffianFDBPfThreadSafety:

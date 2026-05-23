@@ -109,9 +109,9 @@ class TestCompRotation:
         gate = CompRotation(params, wires=[0, 1], directions=directions)
         gate_real_mean = torch.real(torch.mean(gate.matrix()))
         gate_real_mean.backward()
-        assert torch.all(
-            torch.isfinite(params.grad)
-        ), f"The gradient is not computed correctly for {directions}, {taylor_terms} terms and {x}."
+        assert torch.all(torch.isfinite(params.grad)), (
+            f"The gradient is not computed correctly for {directions}, {taylor_terms} terms and {x}."
+        )
 
     @pytest.mark.parametrize(
         "x, directions, taylor_terms",
@@ -127,9 +127,9 @@ class TestCompRotation:
         gate = CompRotation(params, wires=[0, 1], directions=directions)
         gate_real_mean = torch.real(torch.mean(gate.matrix()))
         gate_real_mean.backward()
-        assert torch.all(
-            torch.isfinite(params.grad)
-        ), f"The gradient is not computed correctly for {directions}, {taylor_terms} terms and {x}."
+        assert torch.all(torch.isfinite(params.grad)), (
+            f"The gradient is not computed correctly for {directions}, {taylor_terms} terms and {x}."
+        )
 
     @pytest.mark.parametrize("direction", ["X", "Y", "Z"])
     def test_make_rot_matrix_scalar_input(self, direction):
@@ -202,4 +202,3 @@ class TestCompRotation:
         op.label(cache=cache)
         lbl = op.label(cache=cache)
         assert "(M0)" in lbl
-

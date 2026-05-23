@@ -24,12 +24,11 @@ class ProductState(StatePrepBase):
         sv = ProductState(state, wires=wires, validate_norm=False).state_vector()
         return [qml.StatePrep(qml.math.reshape(sv, (-1,)), wires=wires)]
 
-
     @classmethod
     def from_basis_state(
-            cls,
-            basis_state,
-            wires: Optional[WiresLike] = None,
+        cls,
+        basis_state,
+        wires: Optional[WiresLike] = None,
     ) -> "ProductState":
         r"""
         Construct a :class:`ProductState` from a computational-basis state.
@@ -53,22 +52,19 @@ class ProductState(StatePrepBase):
 
         n = len(wires)
         if bits.shape != (n,):
-            raise ValueError(
-                f"basis_state must have shape ({n},) matching wires, got {tuple(bits.shape)}."
-            )
+            raise ValueError(f"basis_state must have shape ({n},) matching wires, got {tuple(bits.shape)}.")
         # |0> -> [1, 0],  |1> -> [0, 1]
         state = np.zeros((n, 2), dtype=complex)
         state[bits == 0, 0] = 1.0
         state[bits == 1, 1] = 1.0
         return cls(state, wires=wires, validate_norm=False)
 
-
     def __init__(
-            self,
-            state: TensorLike,
-            wires: WiresLike,
-            validate_norm: bool = True,
-            id: Optional[str] = None,
+        self,
+        state: TensorLike,
+        wires: WiresLike,
+        validate_norm: bool = True,
+        id: Optional[str] = None,
     ):
         """
 
@@ -152,9 +148,9 @@ class ProductState(StatePrepBase):
         beta = psi[:, 1]
 
         # Bloch coordinates per qubit
-        x = 2.0 * qml.math.real(qml.math.conj(alpha) * beta)             # <X_k>
-        y = 2.0 * qml.math.imag(qml.math.conj(alpha) * beta)             # <Y_k>
-        z = qml.math.abs(alpha) ** 2 - qml.math.abs(beta) ** 2           # <Z_k>
+        x = 2.0 * qml.math.real(qml.math.conj(alpha) * beta)  # <X_k>
+        y = 2.0 * qml.math.imag(qml.math.conj(alpha) * beta)  # <Y_k>
+        z = qml.math.abs(alpha) ** 2 - qml.math.abs(beta) ** 2  # <Z_k>
 
         # Convert to a real torch.Tensor on the appropriate dtype.
         x = qml.math.cast(qml.math.real(x), dtype=float)
@@ -184,11 +180,11 @@ class ProductState(StatePrepBase):
                 if k == j + 1:
                     p = torch.tensor(1.0, dtype=x.dtype, device=x.device)
                 else:
-                    p = torch.prod(z[j + 1: k])
+                    p = torch.prod(z[j + 1 : k])
 
-                cov[2 * j,     2 * k]     = +y[j] * p * x[k]
-                cov[2 * j,     2 * k + 1] = +y[j] * p * y[k]
-                cov[2 * j + 1, 2 * k]     = -x[j] * p * x[k]
+                cov[2 * j, 2 * k] = +y[j] * p * x[k]
+                cov[2 * j, 2 * k + 1] = +y[j] * p * y[k]
+                cov[2 * j + 1, 2 * k] = -x[j] * p * x[k]
                 cov[2 * j + 1, 2 * k + 1] = -x[j] * p * y[k]
 
         # Antisymmetrise: Lambda <- Lambda - Lambda^T
@@ -226,9 +222,7 @@ class ProductState(StatePrepBase):
 
         wire_order = Wires(wire_order)
         if not set(self.wires).issubset(set(wire_order)):
-            raise ValueError(
-                "wire_order must contain all of this operation's wires."
-            )
+            raise ValueError("wire_order must contain all of this operation's wires.")
         n_total = len(wire_order)
         if n_total == n:
             # Pure permutation of our wires.
@@ -291,5 +285,3 @@ class ProductState(StatePrepBase):
     @property
     def ndim_params(self) -> tuple:
         return (2,)
-
-

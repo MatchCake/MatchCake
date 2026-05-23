@@ -80,19 +80,22 @@ class TestJordanWigner:
     def setup_method(self):
         self.jw = JordanWigner(3)
 
-    @pytest.mark.parametrize("pauli,wires,exp_indices,exp_phase", [
-        ("X", [0], [0],       1+0j),
-        ("Y", [0], [1],       1+0j),
-        ("Z", [0], [0, 1],   -1j),
-        ("I", [0], [],        1+0j),
-        ("XX", [0, 1], [1, 2], -1j),
-        ("YX", [0, 1], [0, 2],  1j),
-        ("XY", [0, 1], [1, 3], -1j),
-        ("YY", [0, 1], [0, 3],  1j),
-        ("ZZ", [0, 1], [0, 1, 2, 3], -1+0j),
-        ("IZ", [0, 1], [2, 3], -1j),
-        ("ZI", [0, 1], [0, 1], -1j),
-    ])
+    @pytest.mark.parametrize(
+        "pauli,wires,exp_indices,exp_phase",
+        [
+            ("X", [0], [0], 1 + 0j),
+            ("Y", [0], [1], 1 + 0j),
+            ("Z", [0], [0, 1], -1j),
+            ("I", [0], [], 1 + 0j),
+            ("XX", [0, 1], [1, 2], -1j),
+            ("YX", [0, 1], [0, 2], 1j),
+            ("XY", [0, 1], [1, 3], -1j),
+            ("YY", [0, 1], [0, 3], 1j),
+            ("ZZ", [0, 1], [0, 1, 2, 3], -1 + 0j),
+            ("IZ", [0, 1], [2, 3], -1j),
+            ("ZI", [0, 1], [0, 1], -1j),
+        ],
+    )
     def test_known_cases(self, pauli, wires, exp_indices, exp_phase):
         mu, ph = self.jw.pauli_to_majorana(pauli, wires)
         np.testing.assert_array_equal(mu, exp_indices)
@@ -101,6 +104,7 @@ class TestJordanWigner:
     def test_brute_force_n1(self):
         """For all 1-qubit Paulis, verify via matrix: P == phase * product(c_mu)."""
         from matchcake.utils.majorana import get_majorana
+
         jw = JordanWigner(1)
         for char in "IXYZ":
             mu, ph = jw.pauli_to_majorana(char, [0])
@@ -116,6 +120,7 @@ class TestJordanWigner:
     def test_brute_force_n2(self):
         """For all 2-qubit Paulis, verify via matrix."""
         from matchcake.utils.majorana import get_majorana
+
         jw = JordanWigner(2)
         for chars in itertools.product("IXYZ", repeat=2):
             pauli_str = "".join(chars)
@@ -128,8 +133,7 @@ class TestJordanWigner:
                     mat = mat @ get_majorana(idx, 2)
             pw = qml.pauli.string_to_pauli_word(pauli_str)
             target = pw.matrix(wire_order=[0, 1])
-            np.testing.assert_allclose(ph * mat, target, atol=ATOL,
-                                       err_msg=f"Failed for {pauli_str}")
+            np.testing.assert_allclose(ph * mat, target, atol=ATOL, err_msg=f"Failed for {pauli_str}")
 
 
 class TestDisplacementVector:
@@ -143,14 +147,13 @@ class TestDisplacementVector:
 
     def test_plus_state_single(self):
         """|+> on one qubit: <c_0>=1, <c_1>=0."""
-        psi = torch.tensor([[1/np.sqrt(2), 1/np.sqrt(2)]], dtype=torch.complex128)
+        psi = torch.tensor([[1 / np.sqrt(2), 1 / np.sqrt(2)]], dtype=torch.complex128)
         d = displacement_vector(psi, [0])
         np.testing.assert_allclose(d.numpy(), [1.0, 0.0], atol=ATOL)
 
     def test_plus_plus(self):
         """|++>: only <c_0>=1, rest zero because <Z_0>=0 kills the JW string."""
-        psi = torch.tensor([[1/np.sqrt(2), 1/np.sqrt(2)],
-                            [1/np.sqrt(2), 1/np.sqrt(2)]], dtype=torch.complex128)
+        psi = torch.tensor([[1 / np.sqrt(2), 1 / np.sqrt(2)], [1 / np.sqrt(2), 1 / np.sqrt(2)]], dtype=torch.complex128)
         d = displacement_vector(psi, [0, 1])
         np.testing.assert_allclose(d.numpy(), [1.0, 0.0, 0.0, 0.0], atol=ATOL)
 
@@ -174,14 +177,14 @@ class TestExtendedCovarianceMatrix:
         d = np.zeros(2 * n)
         tilde = extended_covariance_matrix(torch.tensor(Lambda), torch.tensor(d)).numpy()
         # Top-left block = Lambda
-        np.testing.assert_allclose(tilde[:2*n, :2*n], Lambda, atol=ATOL)
+        np.testing.assert_allclose(tilde[: 2 * n, : 2 * n], Lambda, atol=ATOL)
         # Last row and column are zero
-        np.testing.assert_allclose(tilde[2*n, :], 0.0, atol=ATOL)
-        np.testing.assert_allclose(tilde[:, 2*n], 0.0, atol=ATOL)
+        np.testing.assert_allclose(tilde[2 * n, :], 0.0, atol=ATOL)
+        np.testing.assert_allclose(tilde[:, 2 * n], 0.0, atol=ATOL)
 
     def test_plus_single_qubit(self):
         """tilde_Lambda for |+> matches the worked example: [[0,0,1],[0,0,0],[-1,0,0]]."""
-        psi = np.array([[1/np.sqrt(2), 1/np.sqrt(2)]], dtype=complex)
+        psi = np.array([[1 / np.sqrt(2), 1 / np.sqrt(2)]], dtype=complex)
         op = ProductState(psi, wires=[0])
         Lambda = op.covariance_matrix.detach().numpy()
         d = displacement_vector(torch.tensor(op.data[0]), [0]).numpy()
@@ -216,12 +219,15 @@ class TestSignedPfaffian:
     def test_4x4_known(self):
         # Pf([[0,a,b,c],[-a,0,d,e],[-b,-d,0,f],[-c,-e,-f,0]]) = a*f - b*e + c*d
         a, b, c, d, e, f = 1.0, 2.0, 3.0, 4.0, 5.0, 6.0
-        A = torch.tensor([
-            [0,  a,  b,  c],
-            [-a, 0,  d,  e],
-            [-b, -d, 0,  f],
-            [-c, -e, -f, 0],
-        ], dtype=torch.float64)
+        A = torch.tensor(
+            [
+                [0, a, b, c],
+                [-a, 0, d, e],
+                [-b, -d, 0, f],
+                [-c, -e, -f, 0],
+            ],
+            dtype=torch.float64,
+        )
         expected = a * f - b * e + c * d  # 1*6 - 2*5 + 3*4 = 6-10+12 = 8
         pf = float(signed_pfaffian(A))
         assert abs(pf - expected) < ATOL
@@ -235,7 +241,7 @@ class TestSignedPfaffian:
         A_t = torch.tensor(A, dtype=torch.float64)
         pf = float(signed_pfaffian(A_t))
         det = float(torch.linalg.det(A_t))
-        assert abs(pf ** 2 - det) < 1e-8, f"n={n}: pf^2={pf**2:.6f}, det={det:.6f}"
+        assert abs(pf**2 - det) < 1e-8, f"n={n}: pf^2={pf**2:.6f}, det={det:.6f}"
 
 
 class TestMPfaffianExpvalStrategy:
@@ -251,8 +257,7 @@ class TestMPfaffianExpvalStrategy:
         self.strat = MPfaffianExpvalStrategy()
 
     def test_can_execute_product_state(self):
-        op = ProductState(np.array([[1/np.sqrt(2), 1/np.sqrt(2)],
-                                    [1.0, 0.0]], dtype=complex), wires=[0, 1])
+        op = ProductState(np.array([[1 / np.sqrt(2), 1 / np.sqrt(2)], [1.0, 0.0]], dtype=complex), wires=[0, 1])
         assert self.strat.can_execute(op, qml.X(0))
         assert self.strat.can_execute(op, qml.Z(0) @ qml.Z(1))
 
@@ -300,8 +305,7 @@ class TestMPfaffianExpvalStrategy:
             for obs in [qml.X(k), qml.Y(k), qml.Z(k)]:
                 ref = brute_force_expval(psi_flat, obs, n)
                 got = float(self.strat(prod_state, obs, extended_covariance_matrix=tilde_L))
-                np.testing.assert_allclose(got, ref, atol=ATOL,
-                                           err_msg=f"n={n} seed={seed} obs={obs}")
+                np.testing.assert_allclose(got, ref, atol=ATOL, err_msg=f"n={n} seed={seed} obs={obs}")
 
     @pytest.mark.parametrize("n,seed", [(2, 0), (3, 1), (4, 2)])
     def test_two_qubit_correlators(self, n, seed):
@@ -323,13 +327,16 @@ class TestMPfaffianExpvalStrategy:
             got = float(self.strat(prod_state, obs, extended_covariance_matrix=tilde_L))
             np.testing.assert_allclose(got, ref, atol=ATOL, err_msg=f"obs={obs}")
 
-    @pytest.mark.parametrize("bits,obs", [
-        ([0, 0], qml.X(0)),
-        ([0, 0], qml.Z(0) @ qml.Z(1)),
-        ([1, 0], qml.X(0)),
-        ([0, 1], qml.Z(0) @ qml.Z(1)),
-        ([0, 0, 1], qml.X(1)),
-    ])
+    @pytest.mark.parametrize(
+        "bits,obs",
+        [
+            ([0, 0], qml.X(0)),
+            ([0, 0], qml.Z(0) @ qml.Z(1)),
+            ([1, 0], qml.X(0)),
+            ([0, 1], qml.Z(0) @ qml.Z(1)),
+            ([0, 0, 1], qml.X(1)),
+        ],
+    )
     def test_basis_state_regression(self, bits, obs):
         """On computational basis states, results must match brute-force statevector."""
         n = len(bits)
@@ -355,10 +362,7 @@ class TestMPfaffianExpvalStrategy:
         tilde_L = build_tilde_lambda(prod_state, wires)
 
         H = 0.5 * qml.X(0) + 0.3 * qml.Z(0) @ qml.Z(1) + 0.2 * qml.Y(0)
-        ref = sum(
-            float(c) * brute_force_expval(psi_flat, op, n)
-            for c, op in zip(*H.terms())
-        )
+        ref = sum(float(c) * brute_force_expval(psi_flat, op, n) for c, op in zip(*H.terms()))
         got = float(self.strat(prod_state, H, extended_covariance_matrix=tilde_L))
         np.testing.assert_allclose(got, ref, atol=ATOL)
 
@@ -381,15 +385,18 @@ class TestMPfaffianEndToEnd:
     def _qubit(n: int):
         return qml.device("default.qubit", wires=n)
 
-    @pytest.mark.parametrize("n,seed,obs", [
-        (2, 0, qml.X(0)),
-        (2, 1, qml.Y(0)),
-        (2, 2, qml.Z(0) @ qml.Z(1)),
-        (2, 3, qml.X(0) @ qml.Y(1)),
-        (3, 4, qml.X(1)),
-        (3, 5, qml.Y(0) @ qml.X(1)),
-        (3, 6, qml.Z(0) @ qml.Z(2)),
-    ])
+    @pytest.mark.parametrize(
+        "n,seed,obs",
+        [
+            (2, 0, qml.X(0)),
+            (2, 1, qml.Y(0)),
+            (2, 2, qml.Z(0) @ qml.Z(1)),
+            (2, 3, qml.X(0) @ qml.Y(1)),
+            (3, 4, qml.X(1)),
+            (3, 5, qml.Y(0) @ qml.X(1)),
+            (3, 6, qml.Z(0) @ qml.Z(2)),
+        ],
+    )
     def test_product_state_no_circuit(self, n, seed, obs):
         """ProductState alone, no matchgates: NIF must match default.qubit."""
         psi = random_product_state(n, seed=seed)
@@ -408,16 +415,19 @@ class TestMPfaffianEndToEnd:
         ref = float(qml.QNode(qubit_circuit, self._qubit(n))())
         np.testing.assert_allclose(got, ref, atol=ATOL)
 
-    @pytest.mark.parametrize("n,seed,angles,obs", [
-        (2, 0, [0.3, 0.7], qml.X(0)),
-        (2, 1, [0.3, 0.7], qml.Z(0) @ qml.Z(1)),
-        (2, 2, [1.1, 0.4], qml.X(0) @ qml.Y(1)),
-        (2, 3, [0.5, 1.5], qml.Y(0)),
-        (2, 4, [2.0, 0.1], qml.Y(0) @ qml.Y(1)),
-        (2, 5, [np.pi / 4, np.pi / 3], qml.X(0) @ qml.X(1)),
-        (3, 6, [0.8, 0.2], qml.X(0)),
-        (3, 7, [1.0, 1.5], qml.Z(0) @ qml.Z(1)),
-    ])
+    @pytest.mark.parametrize(
+        "n,seed,angles,obs",
+        [
+            (2, 0, [0.3, 0.7], qml.X(0)),
+            (2, 1, [0.3, 0.7], qml.Z(0) @ qml.Z(1)),
+            (2, 2, [1.1, 0.4], qml.X(0) @ qml.Y(1)),
+            (2, 3, [0.5, 1.5], qml.Y(0)),
+            (2, 4, [2.0, 0.1], qml.Y(0) @ qml.Y(1)),
+            (2, 5, [np.pi / 4, np.pi / 3], qml.X(0) @ qml.X(1)),
+            (3, 6, [0.8, 0.2], qml.X(0)),
+            (3, 7, [1.0, 1.5], qml.Z(0) @ qml.Z(1)),
+        ],
+    )
     def test_single_rzrz(self, n, seed, angles, obs):
         """ProductState + one CompRzRz on [0,1]: NIF must match default.qubit."""
         psi = random_product_state(n, seed=seed)
@@ -439,15 +449,18 @@ class TestMPfaffianEndToEnd:
         ref = float(qml.QNode(qubit_circuit, self._qubit(n))())
         np.testing.assert_allclose(got, ref, atol=ATOL)
 
-    @pytest.mark.parametrize("n,seed,angles,obs", [
-        (2, 0, [0.3, 0.7], qml.X(0)),
-        (2, 1, [0.3, 0.7], qml.Z(0) @ qml.Z(1)),
-        (2, 2, [1.1, 0.4], qml.Y(0) @ qml.X(1)),
-        (2, 3, [np.pi / 2, np.pi / 6], qml.X(0) @ qml.Y(1)),
-        (2, 4, [0.9, 1.3], qml.X(0)),
-        (3, 5, [0.5, 1.2], qml.Y(1)),
-        (3, 6, [1.5, 0.6], qml.Z(0) @ qml.Z(1)),
-    ])
+    @pytest.mark.parametrize(
+        "n,seed,angles,obs",
+        [
+            (2, 0, [0.3, 0.7], qml.X(0)),
+            (2, 1, [0.3, 0.7], qml.Z(0) @ qml.Z(1)),
+            (2, 2, [1.1, 0.4], qml.Y(0) @ qml.X(1)),
+            (2, 3, [np.pi / 2, np.pi / 6], qml.X(0) @ qml.Y(1)),
+            (2, 4, [0.9, 1.3], qml.X(0)),
+            (3, 5, [0.5, 1.2], qml.Y(1)),
+            (3, 6, [1.5, 0.6], qml.Z(0) @ qml.Z(1)),
+        ],
+    )
     def test_single_ryry(self, n, seed, angles, obs):
         """ProductState + one CompRyRy on [0,1]: NIF must match default.qubit."""
         psi = random_product_state(n, seed=seed)
@@ -469,13 +482,16 @@ class TestMPfaffianEndToEnd:
         ref = float(qml.QNode(qubit_circuit, self._qubit(n))())
         np.testing.assert_allclose(got, ref, atol=ATOL)
 
-    @pytest.mark.parametrize("n,seed,obs", [
-        (2, 0, qml.Z(0) @ qml.Z(1)),
-        (2, 1, qml.X(0) @ qml.X(1)),
-        (2, 2, qml.Z(0)),
-        (2, 3, qml.Y(0) @ qml.X(1)),
-        (2, 4, qml.X(0)),
-    ])
+    @pytest.mark.parametrize(
+        "n,seed,obs",
+        [
+            (2, 0, qml.Z(0) @ qml.Z(1)),
+            (2, 1, qml.X(0) @ qml.X(1)),
+            (2, 2, qml.Z(0)),
+            (2, 3, qml.Y(0) @ qml.X(1)),
+            (2, 4, qml.X(0)),
+        ],
+    )
     def test_fswap(self, n, seed, obs):
         """ProductState + fSWAP on [0,1]: NIF must match default.qubit."""
         psi = random_product_state(n, seed=seed)
@@ -496,14 +512,17 @@ class TestMPfaffianEndToEnd:
         ref = float(qml.QNode(qubit_circuit, self._qubit(n))())
         np.testing.assert_allclose(got, ref, atol=ATOL)
 
-    @pytest.mark.parametrize("seed,a01,a12,obs", [
-        (0, [0.3, 0.7], [1.1, 0.4], qml.X(0)),
-        (1, [0.3, 0.7], [1.1, 0.4], qml.Z(0) @ qml.Z(1)),
-        (2, [0.5, 1.2], [0.9, 0.3], qml.X(0) @ qml.Y(1)),
-        (3, [np.pi / 4, np.pi / 3], [np.pi / 6, 1.0], qml.Y(1) @ qml.X(2)),
-        (4, [0.8, 0.2], [1.5, 0.6], qml.Z(1) @ qml.Z(2)),
-        (5, [1.0, 0.5], [0.4, 1.2], qml.X(0) @ qml.X(2)),
-    ])
+    @pytest.mark.parametrize(
+        "seed,a01,a12,obs",
+        [
+            (0, [0.3, 0.7], [1.1, 0.4], qml.X(0)),
+            (1, [0.3, 0.7], [1.1, 0.4], qml.Z(0) @ qml.Z(1)),
+            (2, [0.5, 1.2], [0.9, 0.3], qml.X(0) @ qml.Y(1)),
+            (3, [np.pi / 4, np.pi / 3], [np.pi / 6, 1.0], qml.Y(1) @ qml.X(2)),
+            (4, [0.8, 0.2], [1.5, 0.6], qml.Z(1) @ qml.Z(2)),
+            (5, [1.0, 0.5], [0.4, 1.2], qml.X(0) @ qml.X(2)),
+        ],
+    )
     def test_chain_3qubit(self, seed, a01, a12, obs):
         """ProductState + CompRyRy on [0,1] then CompRzRz on [1,2], 3-qubit chain."""
         n = 3
@@ -529,17 +548,20 @@ class TestMPfaffianEndToEnd:
         ref = float(qml.QNode(qubit_circuit, self._qubit(n))())
         np.testing.assert_allclose(got, ref, atol=ATOL)
 
-    @pytest.mark.parametrize("n,n_gates,seed", [
-        (2, 1, 10),
-        (2, 3, 11),
-        (2, 5, 12),
-        (3, 2, 13),
-        (3, 4, 14),
-        (3, 6, 15),
-        (4, 3, 16),
-        (4, 6, 17),
-        (4, 9, 18),
-    ])
+    @pytest.mark.parametrize(
+        "n,n_gates,seed",
+        [
+            (2, 1, 10),
+            (2, 3, 11),
+            (2, 5, 12),
+            (3, 2, 13),
+            (3, 4, 14),
+            (3, 6, 15),
+            (4, 3, 16),
+            (4, 6, 17),
+            (4, 9, 18),
+        ],
+    )
     def test_random_circuit(self, n, n_gates, seed):
         """Random product state + random matchgate circuit + random Pauli observable."""
         rng = np.random.RandomState(seed)
@@ -565,13 +587,16 @@ class TestMPfaffianEndToEnd:
         ref = float(qml.QNode(qubit_circuit, self._qubit(n))())
         np.testing.assert_allclose(got, ref, atol=ATOL)
 
-    @pytest.mark.parametrize("n,seed,angles", [
-        (2, 0, [0.3, 0.7]),
-        (2, 1, [1.1, 0.4]),
-        (2, 2, [np.pi / 4, np.pi / 3]),
-        (2, 3, [0.9, 0.6]),
-        (3, 4, [0.5, 1.2]),
-    ])
+    @pytest.mark.parametrize(
+        "n,seed,angles",
+        [
+            (2, 0, [0.3, 0.7]),
+            (2, 1, [1.1, 0.4]),
+            (2, 2, [np.pi / 4, np.pi / 3]),
+            (2, 3, [0.9, 0.6]),
+            (3, 4, [0.5, 1.2]),
+        ],
+    )
     def test_hamiltonian_mixed_parity(self, n, seed, angles):
         """Hamiltonian with parity-preserving (ZZ) and parity-breaking (X, Y, XY) terms."""
         psi = random_product_state(n, seed=seed)

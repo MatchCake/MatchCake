@@ -280,6 +280,7 @@ class TestUtils:
     def test_load_backend_lib_string(self):
         lib = utils.load_backend_lib("numpy")
         import numpy as _np
+
         assert lib is _np
 
     def test_camel_case_to_spaced_camel_case(self):
@@ -298,8 +299,10 @@ class TestUtils:
     def test_get_all_subclasses_include_base(self):
         class _Base:
             pass
+
         class _Sub(_Base):
             pass
+
         result = utils.get_all_subclasses(_Base, include_base_cls=True)
         assert _Base in result
         assert _Sub in result
@@ -307,8 +310,10 @@ class TestUtils:
     def test_get_eigvals_on_z_basis_raise_on_failure(self):
         class _BadOp:
             wires = qml.wires.Wires([0, 1])
+
             def matrix(self):
                 raise RuntimeError("no matrix")
+
         with pytest.raises(RuntimeError):
             utils.get_eigvals_on_z_basis(_BadOp(), raise_on_failure=True)
 

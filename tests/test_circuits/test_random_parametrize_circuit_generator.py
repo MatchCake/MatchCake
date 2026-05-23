@@ -27,8 +27,6 @@ class TestRandomParametrizeGenerator:
         assert len(gen) == n_ops
 
     def test_iter_produces_operations(self):
-        gen = RandomParametrizeGenerator(
-            wires=4, n_ops=2, op_types=[MatchgateOperation], seed=TEST_SEED
-        )
+        gen = RandomParametrizeGenerator(wires=4, n_ops=2, op_types=[MatchgateOperation], seed=TEST_SEED)
         ops = list(gen)
         assert len(ops) == 3

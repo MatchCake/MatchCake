@@ -4,6 +4,7 @@ import numpy as np
 
 try:
     from pennylane.pauli import PauliWord
+
     _PENNYLANE_PAULI_TYPES = (PauliWord,)
 except ImportError:
     _PENNYLANE_PAULI_TYPES = ()
@@ -98,9 +99,7 @@ class JordanWigner:
             return [(pauli.get(w, "I"), w) for w in wires], wires
         if wires is None:
             raise ValueError("wires must be provided when pauli is a string")
-        assert len(pauli) == len(wires), (
-            f"len(pauli)={len(pauli)} != len(wires)={len(wires)}"
-        )
+        assert len(pauli) == len(wires), f"len(pauli)={len(pauli)} != len(wires)={len(wires)}"
         return list(zip(pauli, wires)), wires
 
     def __init__(self, n_qubits: int):

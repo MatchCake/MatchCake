@@ -22,8 +22,7 @@ def test_majorana_output_shape(k: int, n: int):
     out_shape = utils.get_majorana(k, n).shape
     target_shape = (2**n, 2**n)
     assert out_shape == target_shape, (
-        f"The output matrix is not of the correct shape with k={k} and n={n}. "
-        f"Got {out_shape} instead of {target_shape}"
+        f"The output matrix is not of the correct shape with k={k} and n={n}. Got {out_shape} instead of {target_shape}"
     )
 
 
