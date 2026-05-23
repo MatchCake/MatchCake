@@ -224,7 +224,7 @@ class TestMatchgateOperation:
                     theta3=0.5 * np.pi,
                     theta4=0.5 * np.pi,
                 ),
-                dict(a=0.2079, b=0, c=0, d=0.2079, w=0.2079, x=0, y=0, z=0.2079),
+                dict(a=1j, b=0, c=0, d=1j, w=1j, x=0, y=0, z=1j),
             ),
         ],
     )

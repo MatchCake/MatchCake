@@ -54,8 +54,8 @@ pythonpath = [
 ]
 testpaths = ["tests"]
 addopts = [
-    #  "-n=auto",
-    #  "--dist=loadscope",
+    "-n=auto",
+    "--cov-branch",
     "--cov=src",
     '--cov-report=xml:tests/.tmp/coverage.xml',
     "--cov-report=term-missing",

@@ -69,8 +69,6 @@ class MatchgatePolarParams(MatchgateParams):
         dtype: torch.dtype = torch.complex128,
         device: Optional[torch.device] = None,
     ) -> torch.Tensor:
-        division_epsilon = 1e-12
-
         shapes = [qml.math.shape(p) for p in self.get_params_list() if p is not None]
         batch_sizes = list(set([s[0] for s in shapes if len(s) > 0]))
         assert len(batch_sizes) <= 1, f"Expect the same batch size for every parameters. Got: {batch_sizes}."
@@ -94,8 +92,8 @@ class MatchgatePolarParams(MatchgateParams):
             ),
         )
 
-        r0_tilde = torch.sqrt(1 - r0**2 + division_epsilon)
-        r1_tilde = torch.sqrt(1 - r1**2 + division_epsilon)
+        r0_tilde = torch.sqrt(torch.clamp(1 - r0.real**2, min=0))
+        r1_tilde = torch.sqrt(torch.clamp(1 - r1.real**2, min=0))
         matrix = MatchgateStandardParams(
             a=r0 * torch.exp(1j * theta0),
             b=r0_tilde * torch.exp(1j * (theta2 + theta4 - (theta1 + torch.pi))),
