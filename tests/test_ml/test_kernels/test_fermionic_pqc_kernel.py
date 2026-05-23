@@ -115,3 +115,24 @@ class TestFermionicPQCKernel:
         kernel_matrix = kernel_instance(x_train)
         sts_kernel_matrix = state_vector_kernel(x_train)
         torch.testing.assert_close(kernel_matrix, sts_kernel_matrix)
+
+    def test_fit_with_preset_depth(self, kernel_instance, x_train):
+        kernel_instance.depth_ = 2
+        kernel_instance.fit(x_train)
+        assert kernel_instance.depth_ == 2
+
+
+class TestFermionicPQCKernelMiscellaneous:
+    def test_invalid_entangling_method_raises(self):
+        with pytest.raises(ValueError, match="Unknown entangling method"):
+            FermionicPQCKernel(n_qubits=4, entangling_mth="bad_method")
+
+    def test_ansatz_invalid_entangling_method_raises(self):
+        import torch
+        kernel = FermionicPQCKernel(n_qubits=4, entangling_mth="identity")
+        kernel.entangling_mth = "bad_method"
+        kernel.depth_ = 1
+        kernel.bias_ = torch.zeros(4)
+        kernel.data_scaling_ = torch.ones(4)
+        with pytest.raises(ValueError, match="Unknown entangling method"):
+            list(kernel.ansatz(np.zeros((1, 4))))

@@ -56,6 +56,8 @@ class LookupTableStrategy(ProbabilityStrategy):
         lookup_table: NonInteractingFermionicLookupTable = kwargs["lookup_table"]
         pfaffian_method: Literal["det", "cuda_det", "PfaffianFDBPf"] = kwargs["pfaffian_method"]
 
+        if lookup_table is None:
+            raise ValueError("lookup_table cannot be None")
         show_progress = kwargs.get("show_progress", False)
         system_state = self.system_basis_state_from_state_prep_op(state_prep_op)
         batch_obs = lookup_table(

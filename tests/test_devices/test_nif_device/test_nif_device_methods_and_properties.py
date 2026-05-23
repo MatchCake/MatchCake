@@ -4,12 +4,15 @@ import pytest
 import tqdm
 from pennylane import BasisState
 from pennylane.exceptions import DeviceError
+from pennylane.ops.op_math import Sum
+from pennylane.tape import QuantumTape
 
 from matchcake import NonInteractingFermionicDevice
 from matchcake.observables.batch_hamiltonian import BatchHamiltonian
 from matchcake.observables.batch_projector import BatchProjector
 from matchcake.operations import CompZX
 from matchcake.operations.state_preparation import ProductState
+from matchcake.operations.state_preparation.state_prep_from_gates import StatePrepFromGates
 
 from ...configs import TEST_SEED, set_seed
 from .. import init_nif_device
@@ -229,3 +232,64 @@ class TestNIFDeviceMethodsAndProperties:
         dev._state_prep_op = qml.Identity(wires=[0, 1])
         with pytest.raises(ValueError, match="Extended covariance matrix requires"):
             _ = dev.extended_covariance_matrix
+
+    def test_compute_star_state_cached(self):
+        dev = _make_zero_state_device(n_wires=2, shots=16)
+        dev.apply_generator([CompZX(wires=[0, 1])])
+        dev._samples = dev.generate_samples()
+        r1 = dev.compute_star_state()
+        r2 = dev.compute_star_state()
+        assert r1 == r2
+
+    def test_exact_expval_unhandled_observable_raises(self):
+        dev = _make_zero_state_device(n_wires=2)
+        state_prep = StatePrepFromGates(lambda wires: [qml.Hadamard(wires=wires[0])], wires=[0, 1])
+        dev._state_prep_op = state_prep
+        observable = qml.X(0) @ qml.Z(1)
+        with pytest.raises(DeviceError):
+            dev.exact_expval(observable)
+
+    def test_global_sptm_batched_returns_3d_matrix(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        dev._batched = True
+        dev._global_sptm = None
+        sptm = dev.global_sptm
+        assert sptm.matrix().shape == (1, 4, 4)
+
+    def test_patched_super_batch_transform_use_grouping_false(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        dev.use_grouping = False
+        sum_obs = qml.sum(qml.Z(0), qml.Z(1))
+        with QuantumTape() as tape:
+            qml.BasisState([0, 0], wires=[0, 1])
+            qml.expval(sum_obs)
+        circuits, fn = dev._patched_super_batch_transform(tape)
+        assert len(circuits) == 1
+
+    def test_patched_super_batch_transform_grouping_known(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        ham = qml.Hamiltonian([1.0, 0.5], [qml.Z(0) @ qml.Z(1), qml.Z(0)])
+        ham.compute_grouping()
+        with QuantumTape() as tape:
+            qml.BasisState([0, 0], wires=[0, 1])
+            qml.expval(ham)
+        circuits, fn = dev._patched_super_batch_transform(tape)
+        assert len(circuits) >= 1
+
+    def test_patched_super_batch_transform_hamiltonian_wires(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        ham = qml.Hamiltonian([1.0, 0.5], [qml.Z(0), qml.Z(1)])
+        with QuantumTape() as tape:
+            qml.BasisState([0, 0], wires=[0, 1])
+            qml.expval(ham)
+        circuits, fn = dev._patched_super_batch_transform(tape)
+        assert len(circuits) >= 1
+
+    def test_batch_transform_batch_hamiltonian_none_batch_size(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        batch_ham = BatchHamiltonian([1.0, 0.5], [qml.Z(0), qml.Z(1)])
+        with QuantumTape() as tape:
+            qml.BasisState([0, 0], wires=[0, 1])
+            qml.expval(batch_ham)
+        circuits, fn = dev.batch_transform(tape)
+        assert len(circuits) == 1

@@ -177,3 +177,34 @@ class TestSingleParticleTransitionMatrixOperation:
 
         with pytest.raises(NotImplementedError):
             sptm.pad(Wires(np.arange(size + 1)))
+
+    def test_from_operation_fallback_raises(self, batch_size, size):
+        from pennylane.wires import Wires
+
+        class _InvalidOp:
+            wires = Wires([0, 1])
+
+            def matrix(self):
+                return np.ones((4, 4))
+
+        with pytest.raises(ValueError, match="Cannot convert"):
+            SingleParticleTransitionMatrixOperation.from_operation(_InvalidOp())
+
+    def test_check_matrix_valid_so4(self, batch_size, size):
+        sptm_valid = SingleParticleTransitionMatrixOperation.random(wires=np.arange(size), seed=size)
+        sptm_checked = SingleParticleTransitionMatrixOperation(
+            sptm_valid.matrix(), wires=np.arange(size), check_matrix=True
+        )
+        assert sptm_checked is not None
+
+    def test_check_is_in_so4_det1_but_not_orthogonal(self, batch_size, size):
+        n = 2 * size
+        matrix = np.eye(n, dtype=float)
+        matrix[0, 1] = 1.0
+        sptm = SingleParticleTransitionMatrixOperation(matrix=matrix, wires=np.arange(size))
+        assert not sptm.check_is_in_so4()
+
+    def test_matmul_non_sptm_raises(self, batch_size, size):
+        sptm = SingleParticleTransitionMatrixOperation.random(wires=np.arange(size), seed=0)
+        with pytest.raises(ValueError):
+            _ = sptm @ "invalid"

@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from matchcake.utils.cuda import is_cuda_available
@@ -28,3 +30,8 @@ class TestIsCudaAvailable:
             pytest.skip("CUDA is available; cannot test the error path.")
         with pytest.raises(RuntimeError):
             is_cuda_available(throw_error=True)
+
+    def test_returns_true_when_cuda_mocked(self):
+        with patch("torch.cuda.is_available", return_value=True):
+            result = is_cuda_available()
+        assert result is True

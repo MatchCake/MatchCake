@@ -14,6 +14,7 @@ from matchcake.utils.math import (
     eye_like,
     fermionic_operator_matmul,
     matmul,
+    orthonormalize,
     svd,
 )
 
@@ -353,6 +354,39 @@ class TestMath:
         expected_torch = torch.det(x_torch)
         out_torch = det(x_torch)
         torch.testing.assert_close(out_torch, expected_torch)
+
+    def test_convert_like_and_cast_to_no_dtype(self):
+        source = np.random.uniform(-10, 10, (4, 3)).astype(np.float32)
+        target = torch.from_numpy(source).to(dtype=torch.float64)
+        out = utils.math.convert_like_and_cast_to(source, target, dtype=None)
+        assert isinstance(out, torch.Tensor)
+
+    def test_random_index_no_normalize(self):
+        probs = np.array([0.5, 0.3, 0.2])
+        idx = utils.math.random_index(probs, normalize_probs=False)
+        assert 0 <= idx < len(probs)
+
+    def test_orthonormalize_check_if_false(self):
+        rng = np.random.RandomState(42)
+        matrix = rng.uniform(1, 10) * rng.rand(4, 4)
+        result = orthonormalize(matrix, check_if_normalize=False)
+        expected_eye = result @ result.T
+        np.testing.assert_allclose(expected_eye, np.eye(4), atol=ATOL_APPROX_COMPARISON)
+
+    def test_orthonormalize_svd_all_ones(self):
+        rng = np.random.RandomState(7)
+        raw = rng.rand(4, 4)
+        already_ortho = orthonormalize(raw)
+        result = orthonormalize(already_ortho, check_if_normalize=False)
+        np.testing.assert_allclose(result, already_ortho, atol=ATOL_APPROX_COMPARISON)
+
+    def test_orthonormalize_exception_suppressed(self):
+        result = orthonormalize("bad_input", raises_error=False)
+        assert result == "bad_input"
+
+    def test_orthonormalize_exception_reraise(self):
+        with pytest.raises(Exception):
+            orthonormalize("bad_input", raises_error=True)
 
     def test_svd(self):
         x = np.linspace(-1, 1, 6**2).reshape(6, 6)
