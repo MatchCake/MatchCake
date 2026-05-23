@@ -194,7 +194,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_basis_state_against_qubit_device(b
         )
         for n_wires in range(2, 12)
         for _ in range(N_RANDOM_TESTS_PER_CASE)
-        for contraction_strategy in contraction_strategy_map.keys()
+        for contraction_strategy in sorted(contraction_strategy_map.keys())
     ],
 )
 def test_nif_batched_hamiltonian_expval_zz_on_rn_basis_state_against_qubit_device(
@@ -247,7 +247,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_basis_state_against_qubit_devic
         )
         for n_wires in range(2, 6)
         for i in range(N_RANDOM_TESTS_PER_CASE)
-        for contraction_strategy in contraction_strategy_map.keys()
+        for contraction_strategy in sorted(contraction_strategy_map.keys())
         for gen_cls in [
             RandomMatchgateHaarOperationsGenerator,
             RandomMatchgateOperationsGenerator,
@@ -301,7 +301,7 @@ def test_nif_batched_hamiltonian_expval_zz_on_rn_mop_gen_against_qubit_device(
         )
         for n_wires in range(2, 6)
         for i in range(N_RANDOM_TESTS_PER_CASE)
-        for contraction_strategy in contraction_strategy_map.keys()
+        for contraction_strategy in sorted(contraction_strategy_map.keys())
         for gen_cls in [
             RandomMatchgateHaarOperationsGenerator,
             RandomMatchgateOperationsGenerator,

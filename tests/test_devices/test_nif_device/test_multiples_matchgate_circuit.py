@@ -113,7 +113,7 @@ def test_multiples_matchgate_probs_with_qbit_device(params_list, n_wires):
         for i in range(3)
         for num_wires in range(2, 6)
         for num_gates in [1, 10 * num_wires]
-        for contraction_strategy in contraction_strategy_map.keys()
+        for contraction_strategy in sorted(contraction_strategy_map.keys())
     ],
 )
 def test_multiples_matchgate_probs_with_qbit_device_op_gen(op_gen, contraction_strategy):

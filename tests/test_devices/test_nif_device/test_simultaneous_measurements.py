@@ -106,7 +106,7 @@ class TestNIFDeviceProbabilities:
             for seed in range(2)
             for num_wires in [2, 3]
             for num_gates in [10 * num_wires]
-            for contraction_strategy in contraction_strategy_map.keys()
+            for contraction_strategy in sorted(contraction_strategy_map.keys())
             for prob_strategy in ["LookupTable"]
         ],
     )
