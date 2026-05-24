@@ -252,7 +252,7 @@ $$
 
 To summarize, the expectation value of a Hamiltonian can be computed in polynomial time by tracking the SPTMs associated
 with each matchgate in the circuit, together with the initial covariance matrix. Once these quantities are available, we
-compute the Jordan--Wigner transformation of the Pauli operators appearing in the Hamiltonian and evaluate a batch of
+compute the Jordan-Wigner transformation of the Pauli operators appearing in the Hamiltonian and evaluate a batch of
 Pfaffians to obtain the final energy.
 
 ## References
