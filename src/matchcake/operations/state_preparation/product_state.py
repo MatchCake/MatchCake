@@ -11,6 +11,17 @@ from ...typing import TensorLike
 
 
 class ProductState(StatePrepBase):
+    r"""
+    Prepare a product state from per-qubit amplitudes.
+
+    A single state is given either as a flat ``(2n,)`` vector or as an
+    ``(n, 2)`` matrix of per-qubit ``(alpha_k, beta_k)`` pairs.  A *batch* of
+    ``B`` states can also be passed as a ``(B, 2n)`` or ``(B, n, 2)`` array; in
+    that case :attr:`batch_size` is ``B`` and the per-state outputs
+    (:meth:`state_vector`, :attr:`covariance_matrix`, ...) gain a leading batch
+    axis.
+    """
+
     num_wires = None
     grad_method = None
     ATOL = 1e-12
@@ -22,8 +33,13 @@ class ProductState(StatePrepBase):
         devices that don't natively support :class:`ProductState` execute it
         by falling back to the standard state-prep machinery.
         """
-        sv = ProductState(state, wires=wires, validate_norm=False).state_vector()
-        return [qml.StatePrep(qml.math.reshape(sv, (-1,)), wires=wires)]
+        op = ProductState(state, wires=wires, validate_norm=False)
+        sv = op.state_vector()
+        if op.batch_size is None:
+            flat = qml.math.reshape(sv, (-1,))
+        else:
+            flat = qml.math.reshape(sv, (op.batch_size, -1))
+        return [qml.StatePrep(flat, wires=wires)]
 
     @classmethod
     def from_basis_state(
@@ -34,8 +50,9 @@ class ProductState(StatePrepBase):
         r"""
         Construct a :class:`ProductState` from a computational-basis state.
 
-        :param basis_state: A :class:`pennylane.BasisState` operation **or** a
-            1-D integer tensor-like of length ``n`` whose :math:`k`-th entry is
+        :param basis_state: A :class:`pennylane.BasisState` operation **or** an
+            integer tensor-like of shape ``(n,)`` (a single state) or
+            ``(batch, n)`` (a batch of states) whose :math:`k`-th entry is
             0 or 1 (the bit for qubit *k*).
         :param wires: Wire labels for the resulting operation.  Ignored when
             *basis_state* is a :class:`~pennylane.BasisState` (the wires are
@@ -52,12 +69,12 @@ class ProductState(StatePrepBase):
             wires = Wires(wires)
 
         n = len(wires)
-        if bits.shape != (n,):
-            raise ValueError(f"basis_state must have shape ({n},) matching wires, got {tuple(bits.shape)}.")
-        # |0> -> [1, 0],  |1> -> [0, 1]
-        state = np.zeros((n, 2), dtype=complex)
-        state[bits == 0, 0] = 1.0
-        state[bits == 1, 1] = 1.0
+        if bits.ndim not in (1, 2) or bits.shape[-1] != n:
+            raise ValueError(
+                f"basis_state must have shape ({n},) or (batch, {n}) matching wires, got {tuple(bits.shape)}."
+            )
+        # |0> -> [1, 0],  |1> -> [0, 1].  One-hot encode along a trailing axis.
+        state = np.eye(2, dtype=complex)[bits]  # (..., n, 2)
         return cls(state, wires=wires, validate_norm=False)
 
     def __init__(
@@ -71,7 +88,9 @@ class ProductState(StatePrepBase):
 
         TODO: Add control of dtypes
 
-        :param state:
+        :param state: Per-qubit amplitudes as a flat ``(2n,)`` vector, an
+            ``(n, 2)`` matrix, or their batched counterparts ``(B, 2n)`` /
+            ``(B, n, 2)``.
         :param wires:
         :param validate_norm:
         :param id:
@@ -80,16 +99,23 @@ class ProductState(StatePrepBase):
         state = qml.math.asarray(state)
 
         n = len(wires)
-        if state.shape == (2 * n,):
+        shape = tuple(state.shape)
+        if shape == (2 * n,):
             state = qml.math.reshape(state, (n, 2))
-        elif state.shape == (n, 2):
-            pass  # already canonical
+        elif shape == (n, 2):
+            pass  # already canonical (single, unbatched)
+        elif len(shape) == 2 and shape[1] == 2 * n:
+            # Batched flat vectors: (B, 2n) -> (B, n, 2)
+            state = qml.math.reshape(state, (shape[0], n, 2))
+        elif len(shape) == 3 and shape[1:] == (n, 2):
+            pass  # already canonical (batched)
         else:
             raise ValueError(
-                f"ProductState expects either a flat state vector of length "
-                f"2 * n_wires = {2 * n} or an (n_wires, 2) = ({n}, 2) matrix, "
-                f"got shape {tuple(state.shape)}. Each qubit contributes one "
-                f"pair (alpha_k, beta_k) of complex amplitudes."
+                f"ProductState expects a flat state vector of length "
+                f"2 * n_wires = {2 * n}, an (n_wires, 2) = ({n}, 2) matrix, or "
+                f"their batched forms (B, {2 * n}) / (B, {n}, 2), got shape "
+                f"{shape}. Each qubit contributes one pair (alpha_k, beta_k) of "
+                f"complex amplitudes."
             )
 
         # Cast to complex if not already
@@ -97,13 +123,13 @@ class ProductState(StatePrepBase):
             state = qml.math.cast(state, dtype=complex)
 
         if validate_norm:
-            # Per-qubit norms: rows of the (n, 2) matrix
+            # Per-qubit norms: sum over the trailing (alpha, beta) axis.
             norms_sq = qml.math.sum(qml.math.abs(state) ** 2, axis=-1)
             if not qml.math.allclose(norms_sq, 1.0, atol=self.ATOL):
-                bad = qml.math.where(qml.math.abs(norms_sq - 1.0) > self.ATOL)[0]
+                bad = np.argwhere(np.asarray(qml.math.abs(norms_sq - 1.0) > self.ATOL))
                 raise ValueError(
-                    f"Per-qubit amplitudes must each have unit norm. Qubits "
-                    f"{list(np.asarray(bad))} have norms^2 != 1 within atol={self.ATOL}. "
+                    f"Per-qubit amplitudes must each have unit norm. Entries "
+                    f"{bad.tolist()} have norms^2 != 1 within atol={self.ATOL}."
                 )
 
         super().__init__(state, wires=wires, id=id)
@@ -113,7 +139,8 @@ class ProductState(StatePrepBase):
         r"""
         Majorana covariance matrix :math:`\Lambda_0` of the prepared state.
 
-        Returns a real antisymmetric ``(2n, 2n)`` tensor with the convention
+        Returns a real antisymmetric ``(2n, 2n)`` tensor (or ``(B, 2n, 2n)`` for
+        a batched state) with the convention
 
         .. math::
             (\Lambda_0)_{\mu\nu} = i\, \langle\Psi|\, c_\mu c_\nu\, |\Psi\rangle,
@@ -142,18 +169,20 @@ class ProductState(StatePrepBase):
 
         The remaining entries are filled by antisymmetry.
         """
-        # data[0] is the canonical (n, 2) matrix of per-qubit amplitudes.
+        # data[0] is the canonical (n, 2) matrix of per-qubit amplitudes, or
+        # (B, n, 2) when batched.  Selecting the trailing axis keeps any
+        # leading batch dimensions intact.
         psi = self.data[0]
         n = len(self.wires)
-        alpha = psi[:, 0]
-        beta = psi[:, 1]
+        alpha = psi[..., 0]  # (..., n)
+        beta = psi[..., 1]  # (..., n)
 
         # Bloch coordinates per qubit
         x = 2.0 * qml.math.real(qml.math.conj(alpha) * beta)  # <X_k>
         y = 2.0 * qml.math.imag(qml.math.conj(alpha) * beta)  # <Y_k>
         z = qml.math.abs(alpha) ** 2 - qml.math.abs(beta) ** 2  # <Z_k>
 
-        # Convert to a real torch.Tensor on the appropriate dtype.
+        # Convert to real torch.Tensors on the appropriate dtype.
         x = qml.math.cast(qml.math.real(x), dtype=float)
         y = qml.math.cast(qml.math.real(y), dtype=float)
         z = qml.math.cast(qml.math.real(z), dtype=float)
@@ -161,14 +190,24 @@ class ProductState(StatePrepBase):
         y = self._as_torch(y)
         z = self._as_torch(z)
 
-        cov = torch.zeros((2 * n, 2 * n), dtype=x.dtype, device=x.device)
+        batch_shape = tuple(x.shape[:-1])
+        cov = torch.zeros(batch_shape + (2 * n, 2 * n), dtype=x.dtype, device=x.device)
 
         # Build the upper-triangular entries; antisymmetrise at the end.
         # Same-qubit entries: (Lambda_0)_{2k, 2k+1} = -z_k.
-        for k in range(n):
-            cov[2 * k, 2 * k + 1] = -z[k]
+        diag = torch.arange(n, device=x.device)
+        cov[..., 2 * diag, 2 * diag + 1] = -z
 
-        # Different-qubit upper-triangle blocks (j < k).
+        # Parity-string factors p_{jk} = prod_{j < l < k} z_l for every pair
+        # j < k. Build them column by column (p_{j,k} = p_{j,k-1} * z_{k-1});
+        # the k = j + 1 case keeps its initial value of 1 (empty product). A
+        # closed-form prefix-product ratio is avoided because z_l can be zero.
+        p_mat = torch.ones(batch_shape + (n, n), dtype=x.dtype, device=x.device)
+        for k in range(2, n):
+            p_mat[..., : k - 1, k] = p_mat[..., : k - 1, k - 1] * z[..., k - 1 : k]
+
+        # Different-qubit upper-triangle blocks (j < k), filled in one shot over
+        # all pairs given by the upper-triangular indices.
         # c_{2j}   = Z_{<j} X_j,  c_{2j+1} = Z_{<j} Y_j  (0-indexed).
         # For j<k, after cancelling Z strings on qubits < j:
         #   C_{2j}   C_{2k}   = -i Y_j (x) Z_{j+1..k-1} (x) X_k
@@ -176,17 +215,15 @@ class ProductState(StatePrepBase):
         #   C_{2j+1} C_{2k}   = +i X_j (x) Z_{j+1..k-1} (x) X_k
         #   C_{2j+1} C_{2k+1} = +i X_j (x) Z_{j+1..k-1} (x) Y_k
         # Then (Lambda_0)_{mu,nu} = i * <C_mu C_nu>.
-        for j in range(n):
-            for k in range(j + 1, n):
-                if k == j + 1:
-                    p = torch.tensor(1.0, dtype=x.dtype, device=x.device)
-                else:
-                    p = torch.prod(z[j + 1 : k])
+        rows, cols = np.triu_indices(n, k=1)
+        j = torch.as_tensor(rows, device=x.device)
+        k = torch.as_tensor(cols, device=x.device)
+        p = p_mat[..., j, k]  # (..., n * (n - 1) / 2)
 
-                cov[2 * j, 2 * k] = +y[j] * p * x[k]
-                cov[2 * j, 2 * k + 1] = +y[j] * p * y[k]
-                cov[2 * j + 1, 2 * k] = -x[j] * p * x[k]
-                cov[2 * j + 1, 2 * k + 1] = -x[j] * p * y[k]
+        cov[..., 2 * j, 2 * k] = +y[..., j] * p * x[..., k]
+        cov[..., 2 * j, 2 * k + 1] = +y[..., j] * p * y[..., k]
+        cov[..., 2 * j + 1, 2 * k] = -x[..., j] * p * x[..., k]
+        cov[..., 2 * j + 1, 2 * k + 1] = -x[..., j] * p * y[..., k]
 
         # Antisymmetrise: Lambda <- Lambda - Lambda^T
         cov = cov - qml.math.einsum("...ij->...ji", cov)
@@ -196,9 +233,17 @@ class ProductState(StatePrepBase):
         r"""
         Return an equivalent :class:`pennylane.BasisState` operation.
 
-        :raises ValueError: if this state is not a computational-basis state.
+        :raises ValueError: if this state is not a computational-basis state,
+            or if it is batched (``qml.BasisState`` has no batch dimension; use
+            :meth:`basis_state_bits` to obtain the per-state bit arrays).
         """
-        bits = self._basis_state_bits()
+        if self.batch_size is not None:
+            raise ValueError(
+                "as_basis_state() is not defined for a batched ProductState because "
+                "qml.BasisState has no batch dimension. Use `basis_state_bits()` to "
+                "obtain the (batch, n) array of bits instead."
+            )
+        bits = self.basis_state_bits()
         return qml.BasisState(bits, wires=self.wires)
 
     def state_vector(self, wire_order: Optional[WiresLike] = None) -> TensorLike:
@@ -207,16 +252,24 @@ class ProductState(StatePrepBase):
 
         Implements the :class:`pennylane.operation.StatePrepBase` contract so
         non-NIF devices (e.g. ``default.qubit``) can fall back to the explicit
-        Kronecker product when the ``ProductState`` op is executed.
+        Kronecker product when the ``ProductState`` op is executed.  For a
+        batched state the result carries a leading batch axis.
         """
-        # data[0] is the canonical (n, 2) matrix.
+        # data[0] is the canonical (n, 2) matrix, or (B, n, 2) when batched.
         per_qubit = self.data[0]
         n = len(self.wires)
-        # Kronecker product across qubits, then reshape to (2,) * n.
-        psi_flat = per_qubit[0]
+        batch_shape = tuple(per_qubit.shape[:-2])
+        nb = len(batch_shape)
+
+        # Batched Kronecker product across the qubit axis (second-to-last).
+        psi_flat = per_qubit[..., 0, :]  # (..., 2)
         for k in range(1, n):
-            psi_flat = qml.math.kron(psi_flat, per_qubit[k])
-        psi = qml.math.reshape(psi_flat, (2,) * n)
+            factor = per_qubit[..., k, :]  # (..., 2)
+            psi_flat = qml.math.reshape(
+                psi_flat[..., :, None] * factor[..., None, :],
+                batch_shape + (-1,),
+            )
+        psi = qml.math.reshape(psi_flat, batch_shape + (2,) * n)
 
         if wire_order is None or Wires(wire_order) == self.wires:
             return psi
@@ -226,18 +279,23 @@ class ProductState(StatePrepBase):
             raise ValueError("wire_order must contain all of this operation's wires.")
         n_total = len(wire_order)
         if n_total == n:
-            # Pure permutation of our wires.
+            # Pure permutation of our wires (batch axes stay leading).
             perm = [list(self.wires).index(w) for w in wire_order]
-            return qml.math.transpose(psi, perm)
+            full_perm = list(range(nb)) + [nb + p for p in perm]
+            return qml.math.transpose(psi, full_perm)
         # Embed into a larger Hilbert space by padding extra wires with |0>.
         extra_wires = [w for w in wire_order if w not in self.wires]
         zero = qml.math.asarray([1.0, 0.0], dtype=psi_flat.dtype)
         full = psi_flat
         for _ in extra_wires:
-            full = qml.math.kron(full, zero)
+            full = qml.math.reshape(
+                full[..., :, None] * zero,
+                batch_shape + (-1,),
+            )
         new_order = list(self.wires) + list(extra_wires)
         perm = [new_order.index(w) for w in wire_order]
-        return qml.math.transpose(qml.math.reshape(full, (2,) * n_total), perm)
+        full_perm = list(range(nb)) + [nb + p for p in perm]
+        return qml.math.transpose(qml.math.reshape(full, batch_shape + (2,) * n_total), full_perm)
 
     def _as_torch(self, x):
         """
@@ -249,35 +307,47 @@ class ProductState(StatePrepBase):
             return x
         return torch.as_tensor(np.asarray(x), dtype=torch.float64)
 
-    def _basis_state_bits(self) -> np.ndarray:
-        r"""Integer bit array. Raises :class:`ValueError` if not a basis state."""
-        if not self.is_basis_state:
+    def basis_state_bits(self) -> np.ndarray:
+        r"""Integer bit array. Raises :class:`ValueError` if not a basis state.
+
+        Shape is ``(n,)`` for a single state and ``(batch, n)`` when batched.
+        """
+        is_basis = self.is_basis_state
+        all_basis = is_basis if self.batch_size is None else bool(qml.math.all(is_basis))
+        if not all_basis:
             raise ValueError(
                 "ProductState is not a computational-basis state. Use "
                 "`is_basis_state` to check before calling `as_basis_state()`."
             )
-        state = qml.math.toarray(self.data[0])  # shape (n, 2)
-        alpha = state[:, 0]
-        beta = state[:, 1]
-        bits = (np.abs(beta) > np.abs(alpha)).astype(int)
+        state = qml.math.toarray(self.data[0])  # (..., n, 2)
+        alpha = state[..., 0]
+        beta = state[..., 1]
+        bits = (np.abs(beta) > np.abs(alpha)).astype(int)  # (..., n)
         return bits
 
     @cached_property
-    def is_basis_state(self) -> bool:
+    def is_basis_state(self):
         r"""
-        Return ``True`` iff every qubit is in a computational-basis state,
-        i.e. one of :math:`\alpha_k, \beta_k` is zero within :attr:`atol`.
+        Whether every qubit is in a computational-basis state, i.e. one of
+        :math:`\alpha_k, \beta_k` is zero within :attr:`ATOL`.
+
+        Returns a single ``bool`` for an unbatched state, or a boolean tensor of
+        shape ``(batch,)`` when batched (one entry per state).
 
         This is independent of any global phase on each qubit: a qubit in
         :math:`-|1\rangle` is still considered to be in basis state
         :math:`|1\rangle`.
         """
-        state = qml.math.asarray(self.data[0])  # shape (n, 2)
-        alpha = state[:, 0]
-        beta = state[:, 1]
+        state = qml.math.asarray(self.data[0])  # (..., n, 2)
+        alpha = state[..., 0]
+        beta = state[..., 1]
         alpha_zero = qml.math.abs(alpha) < self.ATOL
         beta_zero = qml.math.abs(beta) < self.ATOL
-        return bool(qml.math.all(alpha_zero | beta_zero))
+        # Reduce over the qubit axis only, keeping any batch axis.
+        result = qml.math.all(alpha_zero | beta_zero, axis=-1)
+        if self.batch_size is None:
+            return bool(result)
+        return result
 
     @property
     def num_params(self) -> int:

@@ -308,3 +308,170 @@ class TestProductState:
             atol=1e-9,
             rtol=0.0,
         )
+
+
+def _random_batched_product_state(batch: int, n: int, seed: int = 0) -> np.ndarray:
+    """A stack of ``batch`` random product states as a (batch, 2n) array."""
+    return np.stack([_random_product_state(n, seed=seed + b) for b in range(batch)])
+
+
+class TestProductStateBatched:
+    def test_batch_size_from_flat_input(self):
+        state = _random_batched_product_state(batch=4, n=3, seed=0)
+        op = ProductState(state, wires=range(3))
+        assert op.data[0].shape == (4, 3, 2)
+        assert op.batch_size == 4
+
+    def test_batch_size_from_matrix_input(self):
+        state = _random_batched_product_state(batch=4, n=3, seed=0).reshape(4, 3, 2)
+        op = ProductState(state, wires=range(3))
+        assert op.data[0].shape == (4, 3, 2)
+        assert op.batch_size == 4
+
+    def test_unbatched_input_has_no_batch_size(self):
+        op = ProductState(_random_product_state(3, seed=0), wires=range(3))
+        assert op.batch_size is None
+        assert op.data[0].shape == (3, 2)
+
+    def test_batched_flat_and_matrix_produce_same_internal_state(self):
+        flat = _random_batched_product_state(batch=3, n=2, seed=7)
+        matrix = flat.reshape(3, 2, 2)
+        op_flat = ProductState(flat, wires=[0, 1])
+        op_matrix = ProductState(matrix, wires=[0, 1])
+        np.testing.assert_allclose(
+            np.asarray(op_flat.data[0]),
+            np.asarray(op_matrix.data[0]),
+        )
+
+    def test_init_rejects_wrong_batched_shape(self):
+        # (batch, 5) does not match 2*n_wires = 4 for two wires.
+        with pytest.raises(ValueError, match="shape"):
+            ProductState(np.zeros((3, 5), dtype=complex), wires=[0, 1])
+
+    def test_init_rejects_non_unit_norm_in_batch(self):
+        state = _random_batched_product_state(batch=2, n=2, seed=0)
+        state[1, 2:] = [1.0, 1.0]  # break normalisation of qubit 1 in sample 1
+        with pytest.raises(ValueError, match="unit norm"):
+            ProductState(state, wires=[0, 1])
+
+    def test_batched_covariance_shape(self):
+        state = _random_batched_product_state(batch=5, n=3, seed=1)
+        cov = ProductState(state, wires=range(3)).covariance_matrix
+        assert cov.shape == (5, 6, 6)
+
+    def test_batched_covariance_matches_per_state(self):
+        batch, n = 4, 3
+        state = _random_batched_product_state(batch=batch, n=n, seed=2)
+        cov_batched = ProductState(state, wires=range(n)).covariance_matrix
+        for b in range(batch):
+            cov_single = ProductState(state[b], wires=range(n)).covariance_matrix
+            torch.testing.assert_close(cov_batched[b], cov_single)
+
+    def test_batched_covariance_matches_brute_force(self):
+        batch, n = 3, 3
+        state = _random_batched_product_state(batch=batch, n=n, seed=5)
+        cov_batched = ProductState(state, wires=range(n)).covariance_matrix.detach().cpu().numpy()
+        for b in range(batch):
+            cov_ref = _brute_force_lambda(_per_qubit_to_full_vector(state[b], n), n)
+            np.testing.assert_allclose(cov_batched[b], cov_ref, atol=1e-9)
+
+    def test_batched_covariance_is_antisymmetric(self):
+        state = _random_batched_product_state(batch=4, n=4, seed=3)
+        cov = ProductState(state, wires=range(4)).covariance_matrix
+        torch.testing.assert_close(cov, -qml.math.einsum("...ij->...ji", cov))
+
+    def test_batched_state_vector_matches_per_state(self):
+        batch, n = 4, 3
+        state = _random_batched_product_state(batch=batch, n=n, seed=4)
+        sv_batched = np.asarray(ProductState(state, wires=range(n)).state_vector())
+        assert sv_batched.shape == (batch,) + (2,) * n
+        for b in range(batch):
+            ref = _per_qubit_to_full_vector(state[b], n).reshape((2,) * n)
+            np.testing.assert_allclose(sv_batched[b], ref, atol=1e-12)
+
+    def test_batched_state_vector_permutes_under_wire_order(self):
+        # Two samples: |01> and |10> on wires [0, 1].
+        state = np.array(
+            [
+                [1, 0, 0, 1],  # |0>|1>
+                [0, 1, 1, 0],  # |1>|0>
+            ],
+            dtype=complex,
+        )
+        op = ProductState(state, wires=[0, 1])
+        psi_ba = np.asarray(op.state_vector(wire_order=[1, 0])).reshape(2, -1)
+        # Swapping wires turns |01> -> |10> and |10> -> |01>.
+        np.testing.assert_allclose(psi_ba[0], np.array([0, 0, 1, 0], dtype=complex))
+        np.testing.assert_allclose(psi_ba[1], np.array([0, 1, 0, 0], dtype=complex))
+
+    def test_batched_state_vector_embeds_into_larger_wire_order(self):
+        # Two single-qubit samples on wire 1: |0> and |1>.
+        state = np.array([[1, 0], [0, 1]], dtype=complex)
+        op = ProductState(state, wires=[1])
+        psi = np.asarray(op.state_vector(wire_order=[0, 1, 2])).reshape(2, -1)
+        expected0 = np.zeros(8, dtype=complex)
+        expected0[0b000] = 1.0  # |0>|0>|0>
+        expected1 = np.zeros(8, dtype=complex)
+        expected1[0b010] = 1.0  # |0>|1>|0>
+        np.testing.assert_allclose(psi[0], expected0, atol=1e-12)
+        np.testing.assert_allclose(psi[1], expected1, atol=1e-12)
+
+    def test_batched_is_basis_state(self):
+        # First sample is a basis state |01>, second is a superposition.
+        state = np.array(
+            [
+                [1, 0, 0, 1],
+                [1, 0, 1 / np.sqrt(2), 1 / np.sqrt(2)],
+            ],
+            dtype=complex,
+        )
+        op = ProductState(state, wires=[0, 1])
+        result = np.asarray(op.is_basis_state)
+        assert result.shape == (2,)
+        np.testing.assert_array_equal(result, [True, False])
+
+    def test_batched_basis_state_bits(self):
+        state = np.array(
+            [
+                [1, 0, 0, 1],  # |01>
+                [0, 1, 1, 0],  # |10>
+            ],
+            dtype=complex,
+        )
+        op = ProductState(state, wires=[0, 1])
+        bits = op.basis_state_bits()
+        assert bits.shape == (2, 2)
+        np.testing.assert_array_equal(bits, [[0, 1], [1, 0]])
+
+    def test_batched_as_basis_state_raises(self):
+        # qml.BasisState has no batch dimension; a batched ProductState can't
+        # be collapsed to a single BasisState.
+        state = np.array([[1, 0, 0, 1], [0, 1, 1, 0]], dtype=complex)
+        op = ProductState(state, wires=[0, 1])
+        with pytest.raises(ValueError, match="batched"):
+            op.as_basis_state()
+
+    def test_batched_basis_state_bits_raises_when_any_superposition(self):
+        state = np.array(
+            [
+                [1, 0, 0, 1],
+                [1, 0, 1 / np.sqrt(2), 1 / np.sqrt(2)],
+            ],
+            dtype=complex,
+        )
+        op = ProductState(state, wires=[0, 1])
+        with pytest.raises(ValueError, match="not a computational-basis state"):
+            op.basis_state_bits()
+
+    def test_from_basis_state_batched(self):
+        bits = [[0, 1], [1, 0], [1, 1]]
+        op = ProductState.from_basis_state(bits, wires=[0, 1])
+        assert op.batch_size == 3
+        np.testing.assert_array_equal(op.basis_state_bits(), bits)
+
+    def test_compute_decomposition_batched(self):
+        state = _random_batched_product_state(batch=3, n=2, seed=0)
+        decomp = ProductState.compute_decomposition(state, wires=[0, 1])
+        assert len(decomp) == 1
+        assert isinstance(decomp[0], qml.StatePrep)
+        assert decomp[0].batch_size == 3
