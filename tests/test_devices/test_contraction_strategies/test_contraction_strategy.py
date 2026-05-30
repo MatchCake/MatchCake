@@ -1,6 +1,8 @@
 import numpy as np
+import pytest
 import tqdm
 
+from matchcake.devices.contraction_strategies import get_contraction_strategy
 from matchcake.devices.contraction_strategies.forward_strategy import ForwardContractionStrategy
 from matchcake.operations import SptmCompRxRx
 
@@ -73,3 +75,13 @@ class TestContractionStrategy:
         strategy = ForwardContractionStrategy()
         strategy.p_bar = tqdm.tqdm(total=10, disable=True)
         strategy.close_p_bar()
+
+
+class TestGetContractionStrategy:
+    def test_unknown_name_raises(self):
+        with pytest.raises(ValueError, match="Unknown contraction strategy name"):
+            get_contraction_strategy("definitely_not_a_strategy")
+
+    def test_known_name_returns_instance(self):
+        strategy = get_contraction_strategy("forward")
+        assert isinstance(strategy, ForwardContractionStrategy)

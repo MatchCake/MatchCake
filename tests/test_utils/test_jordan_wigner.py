@@ -1,7 +1,11 @@
+import builtins
+import importlib
+
 import numpy as np
 import pytest
 from pennylane.pauli import PauliWord
 
+import matchcake.utils.jordan_wigner as jw_module
 from matchcake.utils.jordan_wigner import JordanWigner
 
 
@@ -104,3 +108,22 @@ class TestJordanWigner:
         indices_str, phase_str = jw.pauli_to_majorana("IX", [0, 1])
         np.testing.assert_array_equal(indices_word, indices_str)
         np.testing.assert_almost_equal(phase_word, phase_str)
+
+    def test_pauliword_import_guard_falls_back_to_empty(self, monkeypatch):
+        # When pennylane.pauli cannot be imported, the module degrades gracefully:
+        # _PENNYLANE_PAULI_TYPES becomes an empty tuple instead of raising at import.
+        real_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "pennylane.pauli":
+                raise ImportError("blocked for test")
+            return real_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", fake_import)
+        try:
+            reloaded = importlib.reload(jw_module)
+            assert reloaded._PENNYLANE_PAULI_TYPES == ()
+        finally:
+            monkeypatch.undo()
+            # Restore the module with PauliWord support for the rest of the suite.
+            importlib.reload(jw_module)
