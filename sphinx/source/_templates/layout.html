@@ -1,4 +1,14 @@
 {% extends "!layout.html" %}
+{% block extrahead %}
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process|mathjax_process|math|output_area'
+  }
+};
+</script>
+{% endblock %}
 {% block menu %}
 {% if versions %}
 <div style="padding: 0 0 1em 0;">
