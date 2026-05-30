@@ -7,6 +7,7 @@ import torch
 
 from matchcake.operations.state_preparation.product_state import ProductState
 from matchcake.utils.majorana import get_majorana
+from tests.configs import ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON
 
 
 def _brute_force_lambda(psi: np.ndarray, n: int) -> np.ndarray:
@@ -308,6 +309,21 @@ class TestProductState:
             atol=1e-9,
             rtol=0.0,
         )
+
+    def test_init_accepts_torch_complex_tensor(self):
+        state = torch.as_tensor(_random_product_state(3, seed=0), dtype=torch.complex128)
+        op = ProductState(state, wires=range(3), validate_norm=False)
+        assert op.covariance_matrix.shape == (6, 6)
+
+    @pytest.mark.parametrize("n", [3, 4])
+    def test_covariance_matrix_gradient_flows(self, n: int):
+        state_np = _random_product_state(n, seed=42)
+        state_t = torch.as_tensor(state_np, dtype=torch.complex128).requires_grad_(True)
+
+        def cov_fn(s: torch.Tensor) -> torch.Tensor:
+            return ProductState(s, wires=list(range(n)), validate_norm=False).covariance_matrix
+
+        torch.autograd.gradcheck(cov_fn, (state_t,), eps=1e-6, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
 
 
 def _random_batched_product_state(batch: int, n: int, seed: int = 0) -> np.ndarray:

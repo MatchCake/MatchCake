@@ -31,22 +31,31 @@ def displacement_vector(
         else product_state_amplitudes,
         dtype=torch.complex128,
     )
-    alpha = psi[:, 0]  # (n,)
-    beta = psi[:, 1]  # (n,)
+    alpha = psi[..., 0]  # (..., n)
+    beta = psi[..., 1]  # (..., n)
 
     x = 2.0 * torch.real(torch.conj(alpha) * beta)
     y = 2.0 * torch.imag(torch.conj(alpha) * beta)
-    z = torch.abs(alpha) ** 2 - torch.abs(beta) ** 2
+    z = torch.abs(alpha) ** 2 - torch.abs(beta) ** 2  # (..., n), real
 
-    n = psi.shape[0]
-    d = torch.zeros(2 * n, dtype=torch.float64, device=psi.device)
+    n = psi.shape[-2]
+    batch_shape = psi.shape[:-2]
 
-    z_prod = torch.ones(n, dtype=torch.float64, device=psi.device)
-    for k in range(1, n):
-        z_prod[k] = z_prod[k - 1] * z[k - 1].real
+    # Exclusive prefix product: z_prod[k] = z[0] * ... * z[k-1], z_prod[0] = 1.
+    if n > 1:
+        z_prod = torch.cat(
+            [
+                torch.ones(batch_shape + (1,), dtype=torch.float64, device=psi.device),
+                torch.cumprod(z[..., :-1], dim=-1),
+            ],
+            dim=-1,
+        )  # (..., n)
+    else:
+        z_prod = torch.ones(batch_shape + (n,), dtype=torch.float64, device=psi.device)
 
-    d[0::2] = z_prod * x  # <c_{2k}>   = z_prod[k] * <X_k>
-    d[1::2] = z_prod * y  # <c_{2k+1}> = z_prod[k] * <Y_k>
+    d = torch.zeros(batch_shape + (2 * n,), dtype=torch.float64, device=psi.device)
+    d[..., 0::2] = z_prod * x  # <c_{2k}>   = z_prod[k] * <X_k>
+    d[..., 1::2] = z_prod * y  # <c_{2k+1}> = z_prod[k] * <Y_k>
 
     return d
 

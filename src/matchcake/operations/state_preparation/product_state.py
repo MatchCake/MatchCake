@@ -118,8 +118,9 @@ class ProductState(StatePrepBase):
                 f"complex amplitudes."
             )
 
-        # Cast to complex if not already
-        if not qml.math.iscomplexobj(state):
+        # Cast to complex if not already (qml.math.iscomplexobj has no torch dispatch)
+        is_complex = torch.is_complex(state) if isinstance(state, torch.Tensor) else qml.math.iscomplexobj(state)
+        if not is_complex:
             state = qml.math.cast(state, dtype=complex)
 
         if validate_norm:
@@ -199,12 +200,21 @@ class ProductState(StatePrepBase):
         cov[..., 2 * diag, 2 * diag + 1] = -z
 
         # Parity-string factors p_{jk} = prod_{j < l < k} z_l for every pair
-        # j < k. Build them column by column (p_{j,k} = p_{j,k-1} * z_{k-1});
-        # the k = j + 1 case keeps its initial value of 1 (empty product). A
-        # closed-form prefix-product ratio is avoided because z_l can be zero.
-        p_mat = torch.ones(batch_shape + (n, n), dtype=x.dtype, device=x.device)
-        for k in range(2, n):
-            p_mat[..., : k - 1, k] = p_mat[..., : k - 1, k - 1] * z[..., k - 1 : k]
+        # j < k.  Built out-of-place to avoid autograd version-counter errors:
+        # each column is derived directly from z via a suffix cumprod, never by
+        # reading a previously in-place-written column of p_mat.
+        p_mat_cols = []
+        for k in range(n):
+            if k <= 1:
+                p_mat_cols.append(torch.ones(batch_shape + (n,), dtype=x.dtype, device=x.device))
+            else:
+                # col[j] = prod(z[j+1 : k]) for j < k-1, else 1.
+                # This equals the suffix product of z[1:k] at position j.
+                z_slice = z[..., 1:k]  # (..., k-1)
+                suffix = torch.flip(torch.cumprod(torch.flip(z_slice, dims=[-1]), dim=-1), dims=[-1])
+                ones_pad = torch.ones(batch_shape + (n - k + 1,), dtype=x.dtype, device=x.device)
+                p_mat_cols.append(torch.cat([suffix, ones_pad], dim=-1))
+        p_mat = torch.stack(p_mat_cols, dim=-1)  # (..., n, n)
 
         # Different-qubit upper-triangle blocks (j < k), filled in one shot over
         # all pairs given by the upper-triangular indices.

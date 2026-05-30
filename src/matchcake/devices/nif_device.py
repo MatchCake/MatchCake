@@ -1020,8 +1020,8 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
                 f"Got {type(self.state_prep_op)} instead of ProductState."
             )
         cov0 = self.state_prep_op.covariance_matrix
-        q = self.global_sptm.matrix(self.wires)
-        return qml.math.einsum("...ij,ik,...kl->...jl", q, cov0, q)
+        sptm = self.global_sptm.matrix(self.wires)
+        return qml.math.einsum("...ij,...ik,...kl->...jl", sptm, cov0, sptm)
 
     @property
     def extended_covariance_matrix(self):
@@ -1046,11 +1046,11 @@ class NonInteractingFermionicDevice(qml.devices.QubitDevice):
         amplitudes = state_prep.data[0]  # (n, 2) complex
         cov0 = state_prep.covariance_matrix  # (2n, 2n)
         d0 = _displacement_vector(amplitudes, self.wires)  # (2n,)
-        tilde_Lambda_0 = _extended_covariance_matrix(cov0, d0)  # (2n+1, 2n+1)
+        ext_cov0 = _extended_covariance_matrix(cov0, d0)  # (2n+1, 2n+1)
 
-        # Lift SPTM: tilde_Q = Q ⊕ 1
-        q = self.global_sptm.matrix(self.wires)  # (2n, 2n)
-        tilde_Q = _sptm_lift(q)  # (2n+1, 2n+1)
+        # Lift SPTM: \tilde{R} = R ⊕ 1
+        sptm = self.global_sptm.matrix(self.wires)  # (2n, 2n)
+        lifted_sptm = _sptm_lift(sptm)  # (2n+1, 2n+1)
 
         # Evolve: tilde_Lambda(t) = tilde_Q^T tilde_Lambda_0 tilde_Q
-        return qml.math.einsum("...ij,ik,...kl->...jl", tilde_Q, tilde_Lambda_0, tilde_Q)
+        return qml.math.einsum("...ij,...ik,...kl->...jl", lifted_sptm, ext_cov0, lifted_sptm)
