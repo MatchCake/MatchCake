@@ -8,23 +8,24 @@
 [![downloads](https://img.shields.io/pypi/dm/MatchCake)](https://pypi.org/project/MatchCake)
 [![PyPI version](https://img.shields.io/pypi/v/MatchCake)](https://pypi.org/project/MatchCake)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![status](https://joss.theoj.org/papers/91f77a47cbd519daac9794a1d2144361/status.svg)](https://joss.theoj.org/papers/91f77a47cbd519daac9794a1d2144361)
 
 ![Tests Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/tests.yml/badge.svg)
 ![Dist Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/build_dist.yml/badge.svg)
 ![Doc Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/docs.yml/badge.svg)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![codecov](https://codecov.io/github/MatchCake/MatchCake/branch/main/graph/badge.svg?token=Yz44IcMdVx)](https://codecov.io/github/MatchCake/MatchCake)
 
 
 # Description
 
-MatchCake is a Python package that provides a new PennyLane device for simulating a specific class of quantum 
-circuits called Matchgate circuits or matchcircuits. These circuits are made with matchgates, a class of restricted 
-quantum unitaries that are parity-preserving and operate on nearest-neighbor qubits. These constraints lead to 
+MatchCake is a Python package that provides a new PennyLane device for simulating a specific class of quantum
+circuits called Matchgate circuits or matchcircuits. These circuits are made with matchgates, a class of restricted
+quantum unitaries that are parity-preserving and operate on nearest-neighbor qubits. These constraints lead to
 matchgates being classically simulable in polynomial time.
 
-Additionally, this package provides quantum kernels made with [scikit-learn](https://scikit-learn.org/stable/) API allowing the 
-use matchcircuits as kernels in quantum machine learning algorithms. One way to use these kernels could be in a Support Vector 
+Additionally, this package provides quantum kernels made with [scikit-learn](https://scikit-learn.org/stable/) API allowing the
+use matchcircuits as kernels in quantum machine learning algorithms. One way to use these kernels could be in a Support Vector
 Machine (SVM).
 
 Note that this package is built on PennyLane and PyTorch. This means that only the NumPy and PyTorch backends are compatible.
@@ -148,7 +149,7 @@ To contribute to the development of MatchCake, please refer to the [contributing
 
 # About
 This work was supported by the Ministère de l'Économie, de l'Innovation et de l'Énergie du Québec
-through its Research Chair in Quantum Computing, an NSERC Discovery grant, and the Canada First Research Excellence 
+through its Research Chair in Quantum Computing, an NSERC Discovery grant, and the Canada First Research Excellence
 Fund.
 
 
@@ -184,18 +185,18 @@ Repository:
 
 ## Fermionic Machine Learning Paper
 
-[Fermionic Machine Learning](https://ieeexplore.ieee.org/document/10821385) is a work presented at the 2024 IEEE 
-International Conference on Quantum Computing and Engineering (QCE). The paper compares unconstrained quantum kernel 
-methods with constraint-based kernels derived from matchgate (free-fermionic) circuits, and benchmarks their 
-performance on supervised classification tasks. All free-fermionic kernels considered in this work were simulated 
+[Fermionic Machine Learning](https://ieeexplore.ieee.org/document/10821385) is a work presented at the 2024 IEEE
+International Conference on Quantum Computing and Engineering (QCE). The paper compares unconstrained quantum kernel
+methods with constraint-based kernels derived from matchgate (free-fermionic) circuits, and benchmarks their
+performance on supervised classification tasks. All free-fermionic kernels considered in this work were simulated
 using MatchCake.
 
 [IEEE Xplore paper](https://ieeexplore.ieee.org/document/10821385):
 ```
 @INPROCEEDINGS{10821385,
   author={Gince, Jérémie and Pagé, Jean-Michel and Armenta, Marco and Sarkar, Ayana and Kourtis, Stefanos},
-  booktitle={2024 IEEE International Conference on Quantum Computing and Engineering (QCE)}, 
-  title={Fermionic Machine Learning}, 
+  booktitle={2024 IEEE International Conference on Quantum Computing and Engineering (QCE)},
+  title={Fermionic Machine Learning},
   year={2024},
   volume={01},
   number={},
@@ -209,7 +210,7 @@ using MatchCake.
 [ArXiv paper](https://arxiv.org/abs/2404.19032):
 ```
 @misc{gince2024fermionic,
-      title={Fermionic Machine Learning}, 
+      title={Fermionic Machine Learning},
       author={Jérémie Gince and Jean-Michel Pagé and Marco Armenta and Ayana Sarkar and Stefanos Kourtis},
       year={2024},
       eprint={2404.19032},

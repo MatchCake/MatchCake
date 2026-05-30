@@ -116,7 +116,7 @@ class TestSptmRyRy:
         angles = np.random.uniform(-10 * np.pi, 10 * np.pi, size=batch_size)
         new_angles = SptmCompRyRy.clip_angles(angles)
         assert new_angles.shape == angles.shape
-        assert type(new_angles) == type(angles)
+        assert type(new_angles) is type(angles)
         assert SptmCompRyRy.check_angles(new_angles)
 
     @pytest.mark.parametrize(
@@ -142,3 +142,29 @@ class TestSptmRyRy:
             atol=ATOL_APPROX_COMPARISON,
             rtol=1,
         )
+
+    def test_invalid_param_count_raises(self):
+        params = np.zeros(3)
+        with pytest.raises(ValueError):
+            SptmCompRyRy(params, wires=[0, 1])
+
+    def test_invalid_3d_params_raises(self):
+        params = np.zeros((2, 2, 2))
+        with pytest.raises(ValueError):
+            SptmCompRyRy(params, wires=[0, 1])
+
+    def test_clip_angles(self):
+        params = SptmCompRyRy.random_params()
+        sptm = SptmCompRyRy(params, wires=[0, 1], clip_angles=True)
+        assert sptm is not None
+
+    def test_to_matchgate(self):
+        params = SptmCompRyRy.random_params()
+        sptm = SptmCompRyRy(params, wires=[0, 1])
+        mg = sptm.to_matchgate()
+        assert isinstance(mg, CompRyRy)
+
+    def test_check_angles_true_valid_params(self):
+        params = SptmCompRyRy.random_params()
+        sptm = SptmCompRyRy(params, wires=[0, 1], check_angles=True, clip_angles=False)
+        assert sptm is not None

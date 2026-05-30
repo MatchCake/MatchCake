@@ -5,11 +5,11 @@ from pennylane.ops.qubit import BasisStateProjector
 from pennylane.wires import Wires
 
 from matchcake import BatchHamiltonian, NIFDevice
-from matchcake.circuits import RandomMatchgateHaarOperationsGenerator
 from matchcake.devices.expval_strategies.expval_from_probabilities import (
     ExpvalFromProbabilitiesStrategy,
 )
 from matchcake.operations import CompHH, CompZX, SingleParticleTransitionMatrixOperation
+from matchcake.operations.state_preparation.state_prep_from_gates import StatePrepFromGates
 
 from ...configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
 
@@ -145,10 +145,19 @@ class TestExpvalFromProbabilities:
             err_msg=f"{random_hamiltonian.terms() = }",
         )
 
+    def test_can_execute_non_basis_state_prep_from_gates(self, strategy):
+        state_prep = StatePrepFromGates(lambda wires: [qml.Hadamard(wires=wires[0])], wires=[0, 1])
+        assert not strategy.can_execute(state_prep, qml.Z(0) @ qml.Z(1))
+
+    def test_format_observable_terms_undefined(self, strategy):
+        projector = BasisStateProjector([0, 0], wires=[0, 1])
+        hamiltonian = strategy._format_observable(projector)
+        assert hamiltonian is not None
+
     def test_long_range_hamiltonian(self, strategy):
         long_range_hamiltonian = qml.Hamiltonian(
             [0.5, -0.3, 0.8],
-            [qml.Z(0) @ qml.Z(8), qml.Z(1) @ qml.I(7), qml.I(0) @ qml.Z(5)],
+            [qml.Z(0) @ qml.Z(5), qml.Z(1) @ qml.I(4), qml.I(0) @ qml.Z(3)],
         )
 
         n_qubits = max(long_range_hamiltonian.wires) + 1

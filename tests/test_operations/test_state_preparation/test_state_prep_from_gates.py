@@ -10,7 +10,6 @@ from matchcake.operations.state_preparation.state_prep_from_gates import (
 
 
 class TestStatePrepFromGates:
-
     @pytest.mark.parametrize("gate, expval", [(X, 0), (H, 1)])
     def test_execute_with_expval(self, gate, expval):
         def gate_generator(wires):

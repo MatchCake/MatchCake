@@ -39,8 +39,8 @@ jobs:
           uv sync --locked --dev --extra cpu
       - name: Test Linting
         run: |
-          uv run black src tests --check --diff
-          uv run isort src tests --check-only --diff
+          uv run ruff format --check src tests
+          uv run ruff check src tests
       - name: Test Typing
         continue-on-error: true
         run: |
@@ -138,6 +138,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           coverageFile: tests/.tmp/coverage.xml
-          thresholdAll: 0.88
+          thresholdAll: 0.98
           thresholdNew: 0.98
-          thresholdModified: 0.88
+          thresholdModified: 0.98

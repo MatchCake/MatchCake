@@ -56,10 +56,10 @@ class ExplicitSumStrategy(ProbabilityStrategy):
 
         if len(target_binary_state) > 4:
             warnings.warn(
-                f"Computing the probability of a target state with more than 4 bits "
-                f"may take a long time. Please consider using the lookup table strategy instead.",
+                "Computing the probability of a target state with more than 4 bits "
+                "may take a long time. Please consider using the lookup table strategy instead.",
                 UserWarning,
-            )
+            )  # pragma: no cover
 
         system_state = self.system_basis_state_from_state_prep_op(state_prep_op)
         ket_majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(system_state)

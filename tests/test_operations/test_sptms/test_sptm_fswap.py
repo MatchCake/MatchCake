@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 
 import matchcake as mc
-from matchcake import utils
 from matchcake.operations import fSWAP
+from matchcake.operations.fermionic_swap import CompZX
 from matchcake.operations.single_particle_transition_matrices import SptmCompZX
 from matchcake.utils import make_single_particle_transition_matrix_from_gate
 
@@ -21,6 +21,11 @@ class TestSptmFSwap:
     @classmethod
     def setup_class(cls):
         set_seed(TEST_SEED)
+
+    def test_to_matchgate(self):
+        sptm = SptmCompZX(wires=[0, 1])
+        mg = sptm.to_matchgate()
+        assert isinstance(mg, CompZX)
 
     def test_matchgate_equal_to_sptm(self):
         matchgate = fSWAP(wires=[0, 1])

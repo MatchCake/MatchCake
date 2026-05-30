@@ -54,12 +54,18 @@ pythonpath = [
 ]
 testpaths = ["tests"]
 addopts = [
-    #  "-n=auto",
-    #  "--dist=loadscope",
+    "-n=auto",
+    "--cov-branch",
     "--cov=src",
     '--cov-report=xml:tests/.tmp/coverage.xml',
     "--cov-report=term-missing",
     "--durations=10",
+]
+filterwarnings = [
+    "ignore:.*__array_wrap__.*:DeprecationWarning",
+    "ignore:.*ComplexHalf.*:UserWarning",
+    "ignore:.*xlim.*:UserWarning",
+    "ignore:.*Setting shots on device.*:pennylane.exceptions.PennyLaneDeprecationWarning",
 ]
 
 [dependency-groups]
@@ -69,13 +75,12 @@ dev = [
     "pytest>=8.4,<9",
     "docutils>=0.18,<0.20",
     "mypy>=1.15,<2",
-    "black>=25.1,<26",
+    "ruff>=0.9,<1",
     "nbmake>=1.5,<2",
     "wheel>=0.45,<0.46",
     "build>=1.4,<2",
     "twine>=6.1,<7",
     "pytest-xdist>=3.7,<4",
-    "isort>=6.0,<7",
     "pytest-timeout>=2.4",
     "pip>=25",
     "scipy-stubs>=1.15.3.0",
@@ -94,6 +99,9 @@ docs = [
     "groundwork-sphinx-theme>=1.1,<2",
     "karma-sphinx-theme>=0.0.8,<0.0.9",
     "sphinx-mdinclude>=0.6,<0.7",
+    "nbsphinx>=0.9.8",
+    "myst-parser>=3.0.1",
+    "myst-nb>=1.4.0",
 ]
 
 [tool.uv]
@@ -187,77 +195,18 @@ exclude_also = [
     '@(abc\.)?abstractmethod',
 ]
 
-[tool.mypy]
-# TODO: Remove all the exclude folders/files.
-exclude = [
-    # Package
-    "base",
-    "circuits",
-    "constants",
-    "devices",
-    "matchgate_parameter_sets",
-    "ml/visualisation",
-    "ml/kernels",
-    "observables",
-    "operations",
-    "templates",
-    "utils/__init__.py",
-    "utils/constants",
-    "utils/cuda",
-    "utils/majorana",
-    "utils/math",
-    "utils/operators",
-    "utils/torch_utils",
-    "__init__.py",
-    # Tests
-    "tests/test_matchgate_params_set",
-    "tests/test_ml",
-    "tests/test_nif_device",
-    "tests/test_operations",
-    "tests/test_utils/test_orthonormalize.py",
-    "tests/test_logm.py",
-    "tests/test_lookup_table.py",
-    "tests/test_matchgate.py",
-    "tests/test_matchgate_operation.py",
-]
-
 [[tool.mypy.overrides]]
 module = [
-    # PennyLane
-    "pennylane",
-    "pennylane.wires",
-    "pennylane.templates.broadcast",
-    "pennylane.ops.qubit.observables",
-    "pennylane.typing",
-    "pennylane.operation",
-    "pennylane.tape",
-    "pennylane.pulse",
-    "pennylane.measurements",
-    "pennylane.ops",
-    "pennylane.numpy",
-    "pennylane.ops.op_math.linear_combination",
-    "pennylane.math",
-    # Scikit-learn
-    "sklearn",
-    "sklearn.base",
-    "sklearn.utils.validation",
-    "sklearn.utils.multiclass",
-    "sklearn.utils.estimator_checks",
-    "sklearn.kernel_approximation",
-    "sklearn.utils",
-    "sklearn.model_selection",
-    # Seaborn
-    "seaborn",
-    # PythonBasicTools
-    "pythonbasictools",
-    "pythonbasictools.multiprocessing_tools",
-    # Others
+    "pennylane.*",
+    "sklearn.*",
+    "seaborn.*",
+    "pythonbasictools.*",
     "tqdm",
     "joblib",
     "psutil",
     "umap",
     "tensorflow",
-    "jax.scipy.linalg",
+    "jax.*",
     "torch_pfaffian",
     "sympy",
     "networkx",
@@ -265,11 +214,20 @@ module = [
 ]
 ignore_missing_imports = true
 
-[tool.black]
+[tool.ruff]
 line-length = 120
 
-[tool.isort]
-profile = "black"
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401"]
+"sphinx/source/conf.py" = ["E402"]
+"src/matchcake/base/lookup_table.py" = ["E501"]
+"tutorials/**" = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
 
 [tool.coverage.run]
 relative_files = true

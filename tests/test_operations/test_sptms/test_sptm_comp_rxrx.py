@@ -100,3 +100,19 @@ class TestCompRxRx:
             raise_exception=True,
             check_undefined_grad=False,
         )
+
+    def test_invalid_param_count_raises(self, batch_size):
+        params = np.zeros(3)
+        with pytest.raises(ValueError):
+            SptmCompRxRx(params, wires=[0, 1])
+
+    def test_invalid_3d_params_raises(self, batch_size):
+        params = np.zeros((2, 2, 2))
+        with pytest.raises(ValueError):
+            SptmCompRxRx(params, wires=[0, 1])
+
+    def test_to_matchgate(self, batch_size):
+        params = np.random.random(2)
+        sptm = SptmCompRxRx(params, wires=[0, 1])
+        mg = sptm.to_matchgate()
+        assert isinstance(mg, CompRxRx)

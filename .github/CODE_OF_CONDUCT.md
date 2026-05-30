@@ -56,5 +56,3 @@ This Code of Conduct applies both within project spaces and in public spaces whe
 ## Attribution
 
 This Code of Conduct is adapted from the [Contributor Covenant](http://contributor-covenant.org), version 3.0, available at [https://www.contributor-covenant.org/version/3/0/code_of_conduct/](https://www.contributor-covenant.org/version/3/0/code_of_conduct/)
-
-

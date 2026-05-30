@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 import pennylane as qml
 from pennylane.operation import StatePrepBase
@@ -30,7 +30,7 @@ class LookupTableStrategy(ProbabilityStrategy):
         wires_indexes = all_wires.indices(wires)
 
         lookup_table: NonInteractingFermionicLookupTable = kwargs["lookup_table"]
-        pfaffian_method: str = kwargs["pfaffian_method"]
+        pfaffian_method: Literal["det", "cuda_det", "PfaffianFDBPf"] = kwargs["pfaffian_method"]
 
         show_progress = kwargs.get("show_progress", False)
         system_state = self.system_basis_state_from_state_prep_op(state_prep_op)
@@ -54,8 +54,10 @@ class LookupTableStrategy(ProbabilityStrategy):
         self.check_required_kwargs(kwargs)
 
         lookup_table: NonInteractingFermionicLookupTable = kwargs["lookup_table"]
-        pfaffian_method: str = kwargs["pfaffian_method"]
+        pfaffian_method: Literal["det", "cuda_det", "PfaffianFDBPf"] = kwargs["pfaffian_method"]
 
+        if lookup_table is None:
+            raise ValueError("lookup_table cannot be None")
         show_progress = kwargs.get("show_progress", False)
         system_state = self.system_basis_state_from_state_prep_op(state_prep_op)
         batch_obs = lookup_table(

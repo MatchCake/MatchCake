@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Any, Callable, Dict, Iterator, List, Optional
+from typing import Any, Callable, Iterator, List, Optional
 
 import numpy as np
 import pennylane as qml
@@ -15,7 +15,7 @@ class StatePrepFromGates(StatePrepBase):
     def compute_decomposition(
         *params: TensorLike,
         wires: Optional[WiresLike] = None,
-        **hyperparameters: Dict[str, Any],
+        **hyperparameters: Any,
     ) -> List[Operation]:
         gate_generator: Callable[[WiresLike], Iterator[Operation]] = hyperparameters["gate_generator"]
         return [op for op in gate_generator(wires)]

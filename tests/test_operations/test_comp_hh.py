@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from matchcake.operations import CompHH
 from matchcake.utils import make_single_particle_transition_matrix_from_gate

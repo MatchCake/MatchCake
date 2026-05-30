@@ -1,4 +1,5 @@
 import random
+from typing import Type, cast
 
 import numpy as np
 import pytest
@@ -14,6 +15,7 @@ from matchcake.operations import (
     SptmCompRxRx,
     SptmCompZX,
 )
+from matchcake.operations.single_particle_transition_matrices import SingleParticleTransitionMatrixOperation
 from matchcake.utils.math import dagger, det
 
 from ...configs import (
@@ -43,7 +45,7 @@ set_seed(TEST_SEED)
         for num_wires in [2, 3, 6]
         for num_gates in [0, 1, 10 * num_wires]
         for batch_size in [None, 16]
-        for contraction_strategy in contraction_strategy_map.keys()
+        for contraction_strategy in sorted(contraction_strategy_map.keys())
         for gen_cls in [
             RandomSptmOperationsGenerator,
             RandomSptmHaarOperationsGenerator,
@@ -91,7 +93,7 @@ def test_global_sptm_unitary(operations_generator: RandomSptmOperationsGenerator
         for num_wires in [2, 3, 6]
         for num_gates in [0, 1, 10 * num_wires]
         for batch_size in [None, 16]
-        for contraction_strategy in contraction_strategy_map.keys()
+        for contraction_strategy in sorted(contraction_strategy_map.keys())
         for gen_cls in [
             RandomSptmOperationsGenerator,
             RandomSptmHaarOperationsGenerator,
@@ -121,7 +123,7 @@ def test_global_sptm_det(operations_generator: RandomSptmOperationsGenerator, co
     "operations, contraction_strategy",
     [
         (operations, contraction_strategy)
-        for contraction_strategy in contraction_strategy_map.keys()
+        for contraction_strategy in sorted(contraction_strategy_map.keys())
         for operations in [
             [SptmCompRxRx.random(wires=[0, 1]), SptmCompZX(wires=[0, 1])],
             [SptmCompRxRx.random(wires=[0, 1]), SptmCompZX(wires=[1, 2])],
@@ -161,7 +163,9 @@ def test_global_sptm_det(operations_generator: RandomSptmOperationsGenerator, co
                 start=[],
             ),
             [
-                random.choice([SptmCompRxRx, SptmCompZX]).random(wires=w)
+                cast(Type[SingleParticleTransitionMatrixOperation], random.choice([SptmCompRxRx, SptmCompZX])).random(
+                    wires=w
+                )
                 for w in [
                     [0, 1],
                     [0, 1],

@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Callable
 
-import numpy as np
 import pennylane as qml
-import tqdm
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 

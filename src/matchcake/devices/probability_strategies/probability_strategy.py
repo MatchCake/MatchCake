@@ -9,6 +9,7 @@ from pennylane.wires import Wires
 from pythonbasictools.multiprocessing_tools import apply_func_multiprocess
 
 from matchcake.operations.state_preparation import StatePrepFromGates
+from matchcake.operations.state_preparation.product_state import ProductState
 
 
 class ProbabilityStrategy(ABC):
@@ -21,6 +22,8 @@ class ProbabilityStrategy(ABC):
             return state_prep_op.parameters[0]
         elif isinstance(state_prep_op, StatePrepFromGates):
             return state_prep_op.to_basis_state().parameters[0]
+        elif isinstance(state_prep_op, ProductState):
+            return state_prep_op.as_basis_state().parameters[0]
         else:
             raise NotImplementedError(f"{cls.__name__} cannot be used with {type(state_prep_op)}")
 

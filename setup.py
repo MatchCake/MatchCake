@@ -1,5 +1,5 @@
-from setuptools import setup
 import setuptools
+from setuptools import setup
 
 setup(
     name="MatchCake",

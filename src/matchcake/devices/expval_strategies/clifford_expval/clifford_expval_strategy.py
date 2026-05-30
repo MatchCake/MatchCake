@@ -1,3 +1,5 @@
+from typing import cast
+
 import numpy as np
 import pennylane as qml
 import torch
@@ -86,10 +88,13 @@ class CliffordExpvalStrategy(ExpvalStrategy):
     def _compute_full_clifford_expvals(self, state_prep_op: StatePrepBase, global_sptm):
         triu_indices = np.triu_indices(global_sptm.shape[-1], k=1)
         expvals = torch.eye(global_sptm.shape[-1], dtype=global_sptm.dtype, device=global_sptm.device)
-        expvals[triu_indices[0], triu_indices[1]] = to_tensor(
-            qml.math.stack(self.compute_clifford_expvals(state_prep_op)),
-            dtype=global_sptm.dtype,
-            device=global_sptm.device,
+        expvals[triu_indices[0], triu_indices[1]] = cast(
+            torch.Tensor,
+            to_tensor(
+                qml.math.stack(self.compute_clifford_expvals(state_prep_op)),
+                dtype=global_sptm.dtype,
+                device=global_sptm.device,
+            ),
         )
         expvals[triu_indices[1], triu_indices[0]] = -expvals[triu_indices[0], triu_indices[1]]
         return expvals
@@ -106,7 +111,9 @@ class CliffordExpvalStrategy(ExpvalStrategy):
         return result
 
     def _create_transition_tensor(self, global_sptm: TensorLike, majorana_indices: TensorLike) -> TensorLike:
-        transition_matrices = qml.math.einsum("...kij->i...kj", global_sptm[..., majorana_indices, :])
+        sptm = cast(torch.Tensor, global_sptm)
+        mi = cast(torch.Tensor, majorana_indices)
+        transition_matrices = qml.math.einsum("...kij->i...kj", sptm[..., mi, :])
         return utils.recursive_2in_operator(self._outer_prod, transition_matrices)
 
     def _prepare_summands(

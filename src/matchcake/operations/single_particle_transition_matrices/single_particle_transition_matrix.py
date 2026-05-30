@@ -60,8 +60,8 @@ class SingleParticleTransitionMatrixOperation(Operation):
     ]
     DEFAULT_CHECK_MATRIX = False
 
-    ALLOWED_ANGLES = None
-    EQUAL_ALLOWED_ANGLES = None
+    ALLOWED_ANGLES: Optional[List[float]] = None
+    EQUAL_ALLOWED_ANGLES: Optional[List[float]] = None
     DEFAULT_CHECK_ANGLES = False
     DEFAULT_CLIP_ANGLES = True
     DEFAULT_NORMALIZE = False
@@ -198,7 +198,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
         cls,
         ops: Iterable[Union[Any, "SingleParticleTransitionMatrixOperation"]],
         **kwargs,
-    ) -> "SingleParticleTransitionMatrixOperation":
+    ) -> "Optional[SingleParticleTransitionMatrixOperation]":
         """
         This method will contract multiple SingleParticleTransitionMatrixOperations into a single one.
         Each operation must act on a different set of wires.
@@ -354,7 +354,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
         slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + matrix.shape[-1])
         try:
             padded_matrix[..., slice_0, slice_1] = matrix
-        except:
+        except Exception:
             padded_matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(matrix, padded_matrix)
         kwargs = self._hyperparameters.copy()
         return SingleParticleTransitionMatrixOperation(padded_matrix, wires=cs_wires, **kwargs)
@@ -378,16 +378,16 @@ class SingleParticleTransitionMatrixOperation(Operation):
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
         return SingleParticleTransitionMatrixOperation(dagger(self.matrix()), wires=self.wires, **self._hyperparameters)
 
-    def to_cuda(self):
-        import torch
+    def to_cuda(self):  # pragma: no cover
+        import torch  # pragma: no cover
 
-        from ...utils import torch_utils
+        from ...utils import torch_utils  # pragma: no cover
 
-        return SingleParticleTransitionMatrixOperation(
-            torch_utils.to_cuda(self.matrix(), dtype=torch.complex128),
-            wires=self.wires,
-            **self._hyperparameters,
-        )
+        return SingleParticleTransitionMatrixOperation(  # pragma: no cover
+            torch_utils.to_cuda(self.matrix(), dtype=torch.complex128),  # pragma: no cover
+            wires=self.wires,  # pragma: no cover
+            **self._hyperparameters,  # pragma: no cover
+        )  # pragma: no cover
 
     def to_torch(self):
         import torch

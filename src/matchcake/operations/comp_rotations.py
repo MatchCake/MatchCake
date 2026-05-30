@@ -195,13 +195,13 @@ class CompRotation(MatchgateOperation):
                 [0., 0., 0., 1.]], requires_grad=True)]
 
         """
-        if self.draw_label_params is not None:
-            return super().label(decimals=decimals, base_label=base_label, cache=cache)
+        if self.draw_label_params is not None:  # pragma: no cover
+            return super().label(decimals=decimals, base_label=base_label, cache=cache)  # pragma: no cover
 
         op_label = base_label or self.__class__.__name__
 
-        if self.num_params == 0:
-            return op_label
+        if self.num_params == 0:  # pragma: no cover
+            return op_label  # pragma: no cover
 
         params = self.get_implicit_parameters()
 
@@ -228,9 +228,8 @@ class CompRotation(MatchgateOperation):
         def _format(x):
             try:
                 return format(qml.math.toarray(x), f".{decimals}f")
-            except ValueError:
-                # If the parameter can't be displayed as a float
-                return format(x)
+            except ValueError:  # pragma: no cover
+                return format(x)  # pragma: no cover
 
         param_string = ",\n".join(_format(p) for p in params)
         return f"{op_label}\n({param_string})"

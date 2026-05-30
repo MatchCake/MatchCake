@@ -11,6 +11,6 @@ def get_probability_strategy(name: str) -> ProbabilityStrategy:
     name = name.lower().strip()
     if name not in probability_strategy_map:
         raise ValueError(
-            f"Unknown sampling strategy name: {name}. " f"Available strategies: {list(probability_strategy_map.keys())}"
+            f"Unknown sampling strategy name: {name}. Available strategies: {list(probability_strategy_map.keys())}"
         )
     return probability_strategy_map[name]()

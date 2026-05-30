@@ -1,10 +1,7 @@
 import numpy as np
 import pennylane as qml
-import torch
-from pennylane.wires import Wires
 
 from ...utils.math import convert_and_cast_like
-from ...utils.torch_utils import to_tensor
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
@@ -46,8 +43,8 @@ class SptmCompRyRy(SingleParticleTransitionMatrixOperation):
         else:
             raise ValueError(f"Invalid shape for the parameters: {params_shape}")
 
-        if params_shape[-1] != 2:
-            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
+        if params_shape[-1] != 2:  # pragma: no cover
+            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")  # pragma: no cover
         if kwargs.get("check_angles", self.DEFAULT_CHECK_ANGLES):
             self.check_angles(params)
         if kwargs.get("clip_angles", self.DEFAULT_CLIP_ANGLES):

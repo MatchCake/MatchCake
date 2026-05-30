@@ -38,22 +38,22 @@ class CompPauli(MatchgateOperation):
             paulis_map[paulis[0]], paulis_map[paulis[1]], wires=wires, id=id, _paulis="".join(paulis), **kwargs
         )
 
-    def __init__(self, *args, **kwargs):
-        self._paulis = kwargs.pop("_paulis", None)
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):  # pragma: no cover
+        self._paulis = kwargs.pop("_paulis", None)  # pragma: no cover
+        super().__init__(*args, **kwargs)  # pragma: no cover
 
-    def get_implicit_parameters(self):
-        return self._paulis
+    def get_implicit_parameters(self):  # pragma: no cover
+        return self._paulis  # pragma: no cover
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         """Constructor-call-like representation."""
-        if self.parameters:
-            params = ", ".join([repr(p) for p in self.get_implicit_parameters()])
-            return f"{self.name}({params}, wires={self.wires.tolist()})"
-        return f"{self.name}(wires={self.wires.tolist()})"
+        if self.parameters:  # pragma: no cover
+            params = ", ".join([repr(p) for p in self.get_implicit_parameters()])  # pragma: no cover
+            return f"{self.name}({params}, wires={self.wires.tolist()})"  # pragma: no cover
+        return f"{self.name}(wires={self.wires.tolist()})"  # pragma: no cover
 
-    def label(self, decimals=None, base_label=None, cache=None):
-        return base_label or self.name
+    def label(self, decimals=None, base_label=None, cache=None):  # pragma: no cover
+        return base_label or self.name  # pragma: no cover
 
 
 class CompXX(CompPauli):

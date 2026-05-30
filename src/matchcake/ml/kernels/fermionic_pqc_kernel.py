@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, cast
 
 import numpy as np
 import torch
@@ -103,8 +103,10 @@ class FermionicPQCKernel(NIFKernel):
         :param alignment: A boolean flag indicating whether to perform kernel alignment during fitting.
         :param alignment_iterations: The maximum number of iterations for kernel alignment optimization.
         :param alignment_learning_rate: The learning rate for the optimizer used in kernel alignment.
-        :param alignment_early_stopping_patience: The number of iterations to wait for improvement before stopping kernel alignment optimization.
-        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel alignment optimization, used for early stopping criteria.
+        :param alignment_early_stopping_patience: The number of iterations to wait for improvement
+            before stopping kernel alignment optimization.
+        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel
+            alignment optimization, used for early stopping criteria.
         :param n_qubits: Number of qubits to be used in the quantum circuit.
         :param rotations: Types of rotations to be applied in the quantum circuit, specified
             as a comma-separated string (e.g., "Y,Z").
@@ -142,7 +144,8 @@ class FermionicPQCKernel(NIFKernel):
             type NDArray or torch.Tensor.
         :return: Updated instance of the class after fitting the training data.
         """
-        n_inputs = int(np.prod(x_train.shape[1:]))
+        x_arr = cast(np.ndarray, x_train)
+        n_inputs = int(np.prod(x_arr.shape[1:]))
         self.bias_ = Parameter(torch.from_numpy(self.np_rn_gen.random(n_inputs))).to(  # type: ignore
             dtype=self.R_DTYPE, device=self.device
         )
@@ -150,7 +153,7 @@ class FermionicPQCKernel(NIFKernel):
             dtype=self.R_DTYPE, device=self.device
         )
         if self.depth_ is None:
-            self.depth_ = int(max(1, np.ceil(x_train.shape[-1] / self.n_qubits)))
+            self.depth_ = int(max(1, np.ceil(x_arr.shape[-1] / self.n_qubits)))
         super().fit(x_train, y_train)
         return self
 
