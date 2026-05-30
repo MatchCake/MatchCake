@@ -102,6 +102,7 @@ docs = [
     "nbsphinx>=0.9.8",
     "myst-parser>=3.0.1",
     "myst-nb>=1.4.0",
+    "sphinx-multiversion>=0.2.4",
 ]
 
 [tool.uv]

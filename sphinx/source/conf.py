@@ -78,7 +78,15 @@ extensions = [
     "sphinx.ext.mathjax",
     # 'sphinx.ext.mathbase',
     "sphinx.ext.todo",
+    "sphinx_multiversion",
 ]
+
+smv_branch_whitelist = r"^(main|dev)$"
+smv_tag_whitelist = r"^$"
+smv_remote_whitelist = r"^origin$"
+smv_released_pattern = r"^$"
+smv_outputdir_format = "{ref.name}"
+smv_prefer_remote_refs = True
 
 nb_execution_mode = "off"
 

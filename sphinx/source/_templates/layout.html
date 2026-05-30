@@ -1,0 +1,14 @@
+{% extends "!layout.html" %}
+{% block menu %}
+{% if versions %}
+<div style="padding: 0 0 1em 0;">
+  <label for="version-select" style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 0.3em; color: #555;">Version</label>
+  <select id="version-select" onchange="window.location.href=this.value" style="width: 100%; padding: 0.3em 0.4em; font-size: 0.9em; border: 1px solid #ccc; border-radius: 3px; background: #fff; cursor: pointer;">
+    {% for v in versions %}
+    <option value="{{ v.url }}" {% if v.name == current_version %}selected{% endif %}>{{ v.name }}</option>
+    {% endfor %}
+  </select>
+</div>
+{% endif %}
+{{ super() }}
+{% endblock %}
