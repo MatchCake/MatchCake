@@ -226,14 +226,14 @@ class ProductState(StatePrepBase):
         #   C_{2j+1} C_{2k+1} = +i X_j (x) Z_{j+1..k-1} (x) Y_k
         # Then (Lambda_0)_{mu,nu} = i * <C_mu C_nu>.
         rows, cols = np.triu_indices(n, k=1)
-        j = torch.as_tensor(rows, device=x.device)
-        k = torch.as_tensor(cols, device=x.device)
-        p = p_mat[..., j, k]  # (..., n * (n - 1) / 2)
+        row_idx = torch.as_tensor(rows, device=x.device)
+        col_idx = torch.as_tensor(cols, device=x.device)
+        p = p_mat[..., row_idx, col_idx]  # (..., n * (n - 1) / 2)
 
-        cov[..., 2 * j, 2 * k] = +y[..., j] * p * x[..., k]
-        cov[..., 2 * j, 2 * k + 1] = +y[..., j] * p * y[..., k]
-        cov[..., 2 * j + 1, 2 * k] = -x[..., j] * p * x[..., k]
-        cov[..., 2 * j + 1, 2 * k + 1] = -x[..., j] * p * y[..., k]
+        cov[..., 2 * row_idx, 2 * col_idx] = +y[..., row_idx] * p * x[..., col_idx]
+        cov[..., 2 * row_idx, 2 * col_idx + 1] = +y[..., row_idx] * p * y[..., col_idx]
+        cov[..., 2 * row_idx + 1, 2 * col_idx] = -x[..., row_idx] * p * x[..., col_idx]
+        cov[..., 2 * row_idx + 1, 2 * col_idx + 1] = -x[..., row_idx] * p * y[..., col_idx]
 
         # Antisymmetrise: Lambda <- Lambda - Lambda^T
         cov = cov - qml.math.einsum("...ij->...ji", cov)

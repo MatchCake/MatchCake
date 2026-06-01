@@ -547,3 +547,18 @@ class MatchgateOperation(Operation):
     @property
     def device(self) -> torch.device:
         return self.matrix().device
+
+
+import copy as _copy  # noqa: E402
+
+from pennylane.ops.functions import bind_new_parameters as _bind_new_parameters  # noqa: E402
+
+
+@_bind_new_parameters.register(MatchgateOperation)
+def _bind_new_parameters_matchgate(op, params):
+    """Reconstruct a MatchgateOperation with updated parameters without using __new__ redirection."""
+    new_op = _copy.copy(op)
+    new_op.__dict__.pop("batch_size", None)
+    new_op.__dict__.pop("single_particle_transition_matrix", None)
+    new_op.data = tuple(params)
+    return new_op

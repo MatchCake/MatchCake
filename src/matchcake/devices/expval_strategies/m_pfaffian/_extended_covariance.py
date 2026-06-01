@@ -11,7 +11,7 @@ from ....utils.math import convert_and_cast_like
 def displacement_vector(
     product_state_amplitudes: TensorLike,
     wires: Sequence[int],
-) -> TensorLike:
+) -> torch.Tensor:
     """Return d in R^{2n} with d[mu] = <c_mu>_rho for rho = product state.
 
     The product state is |psi_prod> = prod_k (a_k |0> + b_k |1>),

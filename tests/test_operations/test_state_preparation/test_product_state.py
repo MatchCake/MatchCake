@@ -321,7 +321,7 @@ class TestProductState:
         state_t = torch.as_tensor(state_np, dtype=torch.complex128).requires_grad_(True)
 
         def cov_fn(s: torch.Tensor) -> torch.Tensor:
-            return ProductState(s, wires=list(range(n)), validate_norm=False).covariance_matrix
+            return torch.as_tensor(ProductState(s, wires=list(range(n)), validate_norm=False).covariance_matrix)
 
         torch.autograd.gradcheck(cov_fn, (state_t,), eps=1e-6, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
 

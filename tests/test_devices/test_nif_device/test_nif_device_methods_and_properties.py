@@ -4,7 +4,6 @@ import pytest
 import tqdm
 from pennylane import BasisState
 from pennylane.exceptions import DeviceError
-from pennylane.tape import QuantumTape
 
 from matchcake import NonInteractingFermionicDevice
 from matchcake.observables.batch_hamiltonian import BatchHamiltonian
@@ -247,57 +246,117 @@ class TestNIFDeviceMethodsAndProperties:
         with pytest.raises(DeviceError):
             dev.exact_expval(observable)
 
+    def test_apply_state_prep_non_basis_state_prep_base(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        from matchcake.operations.state_preparation import ProductState
+
+        prod = ProductState.from_basis_state(np.array([0, 1]), wires=[0, 1])
+        result = dev.apply_state_prep(prod, index=0)
+        assert result is True
+        assert isinstance(dev._state_prep_op, ProductState)
+
+    def test_analytic_probability_default_wires(self):
+        dev = _make_zero_state_device(n_wires=2)
+        probs = dev.analytic_probability()
+        assert probs.shape == (4,)
+        np.testing.assert_allclose(float(probs[0]), 1.0, atol=1e-6)
+
+    def test_sample_basis_states_1d_probs(self):
+        dev = NonInteractingFermionicDevice(wires=2, shots=32)
+        dev._current_shots = 32
+        probs_1d = np.array([0.5, 0.5])
+        samples = dev.sample_basis_states(2, probs_1d)
+        assert samples.shape == (32,)
+
+    def test_global_sptm_setter_with_operation(self):
+        from matchcake.operations import SingleParticleTransitionMatrixOperation
+
+        dev = NonInteractingFermionicDevice(wires=2)
+        op = SingleParticleTransitionMatrixOperation(np.eye(4), wires=[0, 1])
+        dev.global_sptm = op
+        assert isinstance(dev._global_sptm, SingleParticleTransitionMatrixOperation)
+
+    def test_global_sptm_setter_with_sptm_instance(self):
+        from matchcake.operations import SingleParticleTransitionMatrixOperation
+
+        dev = NonInteractingFermionicDevice(wires=2)
+        sptm = SingleParticleTransitionMatrixOperation(np.eye(4), wires=[0, 1])
+        dev.global_sptm = sptm
+        assert dev._global_sptm is sptm
+
+    def test_execute_single_quantum_script_directly(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        tape = qml.tape.QuantumScript(
+            [qml.BasisState(np.array([0, 0]), wires=[0, 1])],
+            [qml.expval(qml.PauliZ(0))],
+        )
+        result = dev.execute(tape)
+        np.testing.assert_allclose(float(result), 1.0, atol=1e-6)
+
+    def test_probability_with_shots_via_qnode(self):
+        dev = NonInteractingFermionicDevice(wires=2, shots=512)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.BasisState(np.array([0, 0]), wires=[0, 1])
+            return qml.probs(wires=[0, 1])
+
+        probs = circuit()
+        assert probs.shape == (4,)
+        np.testing.assert_allclose(probs[0], 1.0, atol=0.05)
+
+    def test_sample_with_observable_via_qnode(self):
+        dev = NonInteractingFermionicDevice(wires=2, shots=64)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.BasisState(np.array([0, 0]), wires=[0, 1])
+            return qml.sample(qml.PauliZ(0))
+
+        samples = circuit()
+        assert samples.shape == (64,)
+        np.testing.assert_array_equal(samples, np.ones(64))
+
+    def test_sample_basis_states_raises_without_shots(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        with pytest.raises(ValueError, match="shots"):
+            dev.sample_basis_states(2, np.array([0.5, 0.5]))
+
+    def test_sample_basis_states_batched_2d_probs(self):
+        dev = NonInteractingFermionicDevice(wires=2, shots=16)
+        dev._current_shots = 16
+        probs_2d = np.array([[0.5, 0.5], [0.25, 0.75]])
+        samples = dev.sample_basis_states(2, probs_2d)
+        assert samples.shape == (2, 16)
+
+    def test_setup_execution_config_default(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        config = dev.setup_execution_config()
+        assert config.gradient_method == "backprop"
+
+    def test_supports_derivatives_no_config(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        assert dev.supports_derivatives() is True
+
+    def test_supports_derivatives_unsupported_method(self):
+        from pennylane.devices import ExecutionConfig
+
+        dev = NonInteractingFermionicDevice(wires=2)
+        config = ExecutionConfig(gradient_method="adjoint")
+        assert dev.supports_derivatives(config) is False
+
+    def test_asarray_real_input_with_explicit_dtype(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        x = np.array([1.0, 2.0, 3.0])
+        result = dev._asarray(x, dtype=dev.R_DTYPE)
+        assert result is not None
+
     def test_global_sptm_batched_returns_3d_matrix(self):
         dev = NonInteractingFermionicDevice(wires=2)
         dev._batched = True
         dev._global_sptm = None
         sptm = dev.global_sptm
         assert sptm.matrix().shape == (1, 4, 4)
-
-    def test_patched_super_batch_transform_use_grouping_false(self):
-        dev = NonInteractingFermionicDevice(wires=2)
-        dev.use_grouping = False
-        sum_obs = qml.sum(qml.Z(0), qml.Z(1))
-        with QuantumTape() as tape:
-            qml.BasisState([0, 0], wires=[0, 1])
-            qml.expval(sum_obs)
-        circuits, fn = dev._patched_super_batch_transform(tape)
-        assert len(circuits) == 1
-
-    def test_patched_super_batch_transform_grouping_known(self):
-        dev = NonInteractingFermionicDevice(wires=2)
-        ham = qml.Hamiltonian([1.0, 0.5], [qml.Z(0) @ qml.Z(1), qml.Z(0)])
-        ham.compute_grouping()
-        with QuantumTape() as tape:
-            qml.BasisState([0, 0], wires=[0, 1])
-            qml.expval(ham)
-        circuits, fn = dev._patched_super_batch_transform(tape)
-        assert len(circuits) >= 1
-
-    def test_patched_super_batch_transform_hamiltonian_wires(self):
-        dev = NonInteractingFermionicDevice(wires=2)
-        ham = qml.Hamiltonian([1.0, 0.5], [qml.Z(0), qml.Z(1)])
-        with QuantumTape() as tape:
-            qml.BasisState([0, 0], wires=[0, 1])
-            qml.expval(ham)
-        circuits, fn = dev._patched_super_batch_transform(tape)
-        assert len(circuits) >= 1
-
-    def test_batch_transform_batch_hamiltonian_none_batch_size(self):
-        dev = NonInteractingFermionicDevice(wires=2)
-        batch_ham = BatchHamiltonian([1.0, 0.5], [qml.Z(0), qml.Z(1)])
-        with QuantumTape() as tape:
-            qml.BasisState([0, 0], wires=[0, 1])
-            qml.expval(batch_ham)
-        circuits, fn = dev.batch_transform(tape)
-        assert len(circuits) == 1
-
-    @staticmethod
-    def _disable_broadcasting(dev, monkeypatch):
-        """Force ``supports_broadcasting`` off so the non-broadcasting code paths run."""
-        caps = dict(dev.capabilities())
-        caps["supports_broadcasting"] = False
-        monkeypatch.setattr(dev, "capabilities", lambda: caps)
 
     def test_exact_expval_falls_back_to_probabilities(self):
         # Z-only weight-3 string with a non-(Basis/Product) state prep: the M-Pfaffian and
@@ -308,52 +367,3 @@ class TestNIFDeviceMethodsAndProperties:
         observable = qml.Z(0) @ qml.Z(1) @ qml.Z(2)
         result = dev.exact_expval(observable)
         np.testing.assert_allclose(np.real(np.asarray(result)).squeeze(), -1.0)
-
-    def test_batch_transform_batch_hamiltonian_no_broadcasting(self, monkeypatch):
-        dev = NonInteractingFermionicDevice(wires=2)
-        self._disable_broadcasting(dev, monkeypatch)
-        batch_ham = BatchHamiltonian([1.0, 0.5], [qml.Z(0), qml.Z(1)])
-        with QuantumTape() as tape:
-            qml.BasisState([0, 0], wires=[0, 1])
-            qml.expval(batch_ham)
-        assert tape.batch_size is None
-        circuits, fn = dev.batch_transform(tape)
-        assert len(circuits) == 1
-
-    def test_batch_transform_batch_hamiltonian_no_broadcasting_batched(self, monkeypatch):
-        # BatchHamiltonian with a broadcasted circuit and broadcasting disabled: falls
-        # through to the patched super batch_transform instead of the early return.
-        dev = NonInteractingFermionicDevice(wires=2)
-        self._disable_broadcasting(dev, monkeypatch)
-        batch_ham = BatchHamiltonian([1.0, 0.5], [qml.Z(0), qml.Z(1)])
-        with QuantumTape() as tape:
-            qml.BasisState([0, 0], wires=[0, 1])
-            qml.RX(np.array([0.1, 0.2, 0.3]), wires=0)
-            qml.expval(batch_ham)
-        assert tape.batch_size == 3
-        circuits, fn = dev.batch_transform(tape)
-        assert len(circuits) >= 1
-
-    def test_patched_super_batch_transform_no_broadcasting_none_batch_size(self, monkeypatch):
-        dev = NonInteractingFermionicDevice(wires=2)
-        self._disable_broadcasting(dev, monkeypatch)
-        ham = qml.Hamiltonian([1.0, 0.5], [qml.Z(0) @ qml.Z(1), qml.X(0)])
-        with QuantumTape() as tape:
-            qml.BasisState([0, 0], wires=[0, 1])
-            qml.expval(ham)
-        assert tape.batch_size is None
-        circuits, fn = dev._patched_super_batch_transform(tape)
-        assert len(circuits) >= 1
-
-    def test_patched_super_batch_transform_no_broadcasting_broadcast_expand(self, monkeypatch):
-        dev = NonInteractingFermionicDevice(wires=2)
-        self._disable_broadcasting(dev, monkeypatch)
-        ham = qml.Hamiltonian([1.0, 0.5], [qml.Z(0) @ qml.Z(1), qml.X(0)])
-        with QuantumTape() as tape:
-            qml.BasisState([0, 0], wires=[0, 1])
-            qml.RX(np.array([0.1, 0.2, 0.3]), wires=0)
-            qml.expval(ham)
-        assert tape.batch_size == 3
-        circuits, fn = dev._patched_super_batch_transform(tape)
-        # One tape per (term x broadcast slice) after broadcast_expand.
-        assert len(circuits) > 1

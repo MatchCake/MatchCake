@@ -179,6 +179,7 @@ class NIFKernel(Kernel):
         x = to_tensor(x, dtype=self.R_DTYPE)  # type: ignore
         batched_indices = np.array_split(np.arange(len(x)), np.ceil(len(x) / self.gram_batch_size))
         sptms = []
+        assert self._q_device.num_wires is not None
         for batch_indices in batched_indices:
             bx = cast(torch.Tensor, to_tensor(x[batch_indices], dtype=self.R_DTYPE, device=self.device))  # type: ignore[index]
             self._q_device.execute_generator(self.ansatz(bx), reset=True)

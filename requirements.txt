@@ -24,7 +24,7 @@ attrs==26.1.0
     #   referencing
 autograd==1.8.0
     # via pennylane
-autoray==0.8.2
+autoray==0.8.4
     # via
     #   matchcake
     #   pennylane
@@ -354,11 +354,11 @@ parso==0.8.6
     # via jedi
 pathspec==1.0.4
     # via mypy
-pennylane==0.44.1
+pennylane==0.45.0
     # via
     #   matchcake
     #   pennylane-lightning
-pennylane-lightning==0.44.0
+pennylane-lightning==0.45.0
     # via
     #   matchcake
     #   pennylane
