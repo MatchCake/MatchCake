@@ -296,6 +296,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             is_prep = self.apply_state_prep(op, index=i)
             if is_prep:
                 continue
+            op = self.convert_op_to_supported(op)
             op_list = self.contraction_strategy.get_next_operations(op)
             for j, op_j in enumerate(op_list):
                 if op_j is None:
@@ -332,6 +333,38 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         )
         self.close_p_bar()
         return self
+
+    def convert_op_to_supported(self, op: qml.operation.Operation) -> qml.operation.Operation:
+        """
+        Ensure an operation is supported by the device, converting native matchgates when possible.
+
+        If ``op`` is already a :class:`MatchgateOperation` or a
+        :class:`SingleParticleTransitionMatrixOperation` (or a subclass of either), or if it
+        already knows how to produce a single-particle transition matrix (it exposes a
+        ``to_sptm_operation`` method or a ``single_particle_transition_matrix`` attribute), it is
+        returned unchanged and handled downstream by :meth:`apply_op`. Otherwise, the operation's
+        matrix is fed to the :class:`MatchgateOperation` constructor, which validates that it is a
+        matchgate. If the matrix is a matchgate, the resulting :class:`MatchgateOperation` is
+        returned; if not, a :class:`DeviceError` is raised.
+
+        :param op: The operation to check and convert.
+        :type op: qml.operation.Operation
+        :return: A supported operation equivalent to ``op``.
+        :rtype: qml.operation.Operation
+        :raises DeviceError: If ``op`` is neither a supported operation nor a matchgate.
+        """
+        if isinstance(op, (MatchgateOperation, SingleParticleTransitionMatrixOperation)):
+            return op
+        if hasattr(op, "to_sptm_operation") or hasattr(op, "single_particle_transition_matrix"):
+            return op
+        try:
+            return MatchgateOperation(op.matrix(), wires=op.wires)
+        except Exception as error:
+            raise DeviceError(
+                f"The {self.name} device can only handle operations that are an instance of "
+                f"MatchgateOperation or SingleParticleTransitionMatrixOperation. "
+                f"The operation {op} is neither and could not be converted to a MatchgateOperation."
+            ) from error
 
     def apply_op(self, op: qml.operation.Operation) -> SingleParticleTransitionMatrixOperation:
         """
@@ -1063,12 +1096,23 @@ class NonInteractingFermionicDevice(qml.devices.Device):
     def _stopping_condition(self, op: qml.operation.Operator) -> bool:
         """Return True when an operator is natively supported by this device.
 
+        An operator is natively supported if its name is in ``_supported_ops`` or if it can be
+        converted to a :class:`MatchgateOperation` (i.e. it is a native matchgate such as
+        ``IsingXX``). Stopping the decomposition on native matchgates lets them reach
+        :meth:`apply_op`, where they are converted by :meth:`convert_op_to_supported`.
+
         :param op: The operator to check.
         :type op: qml.operation.Operator
         :return: True if the operator is natively supported.
         :rtype: bool
         """
-        return op.name in self._supported_ops
+        if op.name in self._supported_ops:
+            return True
+        try:
+            self.convert_op_to_supported(op)
+            return True
+        except DeviceError:
+            return False
 
     @property
     def covariance_matrix(self) -> TensorLike:

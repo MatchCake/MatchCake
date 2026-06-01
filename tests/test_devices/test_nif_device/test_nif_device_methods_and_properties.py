@@ -358,6 +358,73 @@ class TestNIFDeviceMethodsAndProperties:
         sptm = dev.global_sptm
         assert sptm.matrix().shape == (1, 4, 4)
 
+    def test_convert_op_to_supported_passthrough_matchgate(self):
+        from matchcake.operations.matchgate_operation import MatchgateOperation
+
+        dev = NonInteractingFermionicDevice(wires=2)
+        op = MatchgateOperation.random(wires=[0, 1], seed=TEST_SEED)
+        assert dev.convert_op_to_supported(op) is op
+
+    def test_convert_op_to_supported_passthrough_sptm(self):
+        from matchcake.operations import SingleParticleTransitionMatrixOperation
+
+        dev = NonInteractingFermionicDevice(wires=2)
+        op = SingleParticleTransitionMatrixOperation(np.eye(4), wires=[0, 1])
+        assert dev.convert_op_to_supported(op) is op
+
+    def test_convert_op_to_supported_converts_native_matchgate(self):
+        from matchcake.operations.matchgate_operation import MatchgateOperation
+
+        dev = NonInteractingFermionicDevice(wires=2)
+        converted = dev.convert_op_to_supported(qml.IsingXX(0.5, wires=[0, 1]))
+        assert isinstance(converted, MatchgateOperation)
+
+    def test_convert_op_to_supported_non_matchgate_raises(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        with pytest.raises(DeviceError, match="MatchgateOperation or SingleParticleTransitionMatrixOperation"):
+            dev.convert_op_to_supported(qml.CNOT(wires=[0, 1]))
+
+    def test_apply_generator_converts_native_matchgate(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        dev.apply_generator([qml.IsingXX(0.5, wires=[0, 1])])
+        assert dev.global_sptm is not None
+
+    def test_stopping_condition_native_matchgate(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        assert dev._stopping_condition(qml.IsingXX(0.5, wires=[0, 1])) is True
+        assert dev._stopping_condition(qml.CNOT(wires=[0, 1])) is False
+
+    def test_qnode_with_native_matchgate(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+
+        @qml.qnode(dev)
+        def circuit(theta):
+            qml.BasisState(np.array([0, 0]), wires=[0, 1])
+            qml.IsingXX(theta, wires=[0, 1])
+            return qml.probs(wires=[0, 1])
+
+        reference = qml.device("default.qubit", wires=2)
+
+        @qml.qnode(reference)
+        def reference_circuit(theta):
+            qml.BasisState(np.array([0, 0]), wires=[0, 1])
+            qml.IsingXX(theta, wires=[0, 1])
+            return qml.probs(wires=[0, 1])
+
+        np.testing.assert_allclose(np.asarray(circuit(0.5)), np.asarray(reference_circuit(0.5)), atol=1e-6)
+
+    def test_qnode_with_non_matchgate_raises(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.BasisState(np.array([0, 0]), wires=[0, 1])
+            qml.CNOT(wires=[0, 1])
+            return qml.probs(wires=[0, 1])
+
+        with pytest.raises(DeviceError):
+            circuit()
+
     def test_exact_expval_falls_back_to_probabilities(self):
         # Z-only weight-3 string with a non-(Basis/Product) state prep: the M-Pfaffian and
         # Clifford strategies decline, so exact_expval falls back to the probability strategy.

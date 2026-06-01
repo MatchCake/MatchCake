@@ -68,6 +68,10 @@ class MatchgateOperation(Operation):
     num_wires = 2
     par_domain = "A"
 
+    # Positions of the matchgate matrix that must be zero (everything outside the outer
+    # corners and the inner 2x2 block, see the class docstring for the matrix layout).
+    MATCHGATE_ZERO_POSITIONS = ((0, 1), (0, 2), (1, 0), (1, 3), (2, 0), (2, 3), (3, 1), (3, 2))
+
     grad_method = "A"
     grad_recipe = None
 
@@ -398,6 +402,18 @@ class MatchgateOperation(Operation):
             )
         return check
 
+    def _check_structure_constraint(self) -> bool:
+        with torch.no_grad():
+            matrix = to_cpu(self.matrix())
+            off_structure = torch.stack([matrix[..., r, c] for r, c in self.MATCHGATE_ZERO_POSITIONS], dim=-1)
+            check = torch.allclose(off_structure, torch.zeros_like(off_structure), atol=1e-5)
+        if not check:
+            raise ValueError(
+                rf"The matrix does not have the matchgate structure. Expected zeros outside the "
+                rf"outer corners and the inner 2x2 block. Got {off_structure}."
+            )
+        return check
+
     def _check_det_constraint(self) -> bool:
         with torch.no_grad():
             outer_determinant = torch.linalg.det(self.outer_gate_data)
@@ -411,6 +427,7 @@ class MatchgateOperation(Operation):
         return check
 
     def _check_is_matchgate(self):
+        self._check_structure_constraint()
         self._check_m_m_dagger_constraint()
         self._check_m_dagger_m_constraint()  # pragma: no cover
         self._check_det_constraint()
