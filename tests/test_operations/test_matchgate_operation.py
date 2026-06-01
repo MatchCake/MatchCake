@@ -88,6 +88,15 @@ class TestMatchgateOperation:
                     [0.0, 0, 0, 1.0],
                 ]
             ),
+            # CNOT: unitary with equal sub-determinants but without the matchgate structure.
+            np.array(
+                [
+                    [1.0, 0, 0, 0.0],
+                    [0, 1.0, 0.0, 0],
+                    [0, 0.0, 0.0, 1.0],
+                    [0.0, 0, 1.0, 0],
+                ]
+            ),
         ],
     )
     def test_init_from_not_matchgate(self, input_matrix):
