@@ -26,6 +26,12 @@ DTYPES_TO_TORCH_TYPES = {
 }
 
 
+def get_torch_dtype(dtype: Any, default: torch.dtype) -> torch.dtype:
+    if dtype is None:
+        return default
+    return DTYPES_TO_TORCH_TYPES.get(dtype, dtype)  # type: ignore[arg-type, return-value]
+
+
 def to_tensor(
     x: Any, dtype: Optional[torch.dtype] = torch.float64, device: Optional[torch.device] = None
 ) -> Union[torch.Tensor, List[torch.Tensor], Tuple[torch.Tensor, ...], Dict[str, torch.Tensor]]:

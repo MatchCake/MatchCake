@@ -208,12 +208,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self._debugger = kwargs.get("debugger", None)
         self._init_kwargs = kwargs
 
-        self.R_DTYPE = torch_utils.DTYPES_TO_TORCH_TYPES.get(
-            kwargs.get("r_dtype"), kwargs.get("r_dtype", type(self).R_DTYPE)
-        )
-        self.C_DTYPE = torch_utils.DTYPES_TO_TORCH_TYPES.get(
-            kwargs.get("c_dtype"), kwargs.get("c_dtype", type(self).C_DTYPE)
-        )
+        self.R_DTYPE = torch_utils.get_torch_dtype(kwargs.get("r_dtype"), type(self).R_DTYPE)
+        self.C_DTYPE = torch_utils.get_torch_dtype(kwargs.get("c_dtype"), type(self).C_DTYPE)
         self._c_dtype_name = str(self.C_DTYPE).rsplit(".", 1)[-1]
         self._r_dtype_name = str(self.R_DTYPE).rsplit(".", 1)[-1]
 
