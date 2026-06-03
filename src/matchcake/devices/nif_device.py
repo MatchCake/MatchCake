@@ -52,7 +52,7 @@ from .expval_strategies.m_pfaffian._extended_covariance import (
     sptm_lift as _sptm_lift,
 )
 from .expval_strategies.terms_splitter import TermsSplitter
-from .probability_strategies import ProbabilityStrategy, get_probability_strategy
+from .probability_strategies import ProbabilityStrategy, ProductStateProbabilityStrategy, get_probability_strategy
 from .sampling_strategies import SamplingStrategy, get_sampling_strategy
 from .star_state_finding_strategies import (
     StarStateFindingStrategy,
@@ -233,6 +233,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self.prob_strategy: ProbabilityStrategy = get_probability_strategy(
             kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY)
         )
+        self.product_state_prob_strategy: ProductStateProbabilityStrategy = ProductStateProbabilityStrategy()
         self.contraction_strategy: ContractionStrategy = get_contraction_strategy(
             kwargs.get("contraction_strategy", self.DEFAULT_CONTRACTION_METHOD)
         )
@@ -745,16 +746,27 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         assert len(target_binary_state) == num_wires, (
             f"The target binary state must have {num_wires} elements. Got {len(target_binary_state)} instead."
         )
-        return self.prob_strategy(
+        is_basis = getattr(self.state_prep_op, "is_basis_state", False)
+        if is_basis or not isinstance(self.state_prep_op, ProductState):
+            return self.prob_strategy(
+                state_prep_op=self.state_prep_op,
+                target_binary_state=target_binary_state,
+                wires=wires,
+                all_wires=self.wires,
+                lookup_table=self.lookup_table,
+                transition_matrix=self.transition_matrix,
+                global_sptm=self.global_sptm,
+                pfaffian_method=self.pfaffian_method,
+                majorana_getter=self.majorana_getter,
+                show_progress=self.show_progress,
+            )
+        return self.product_state_prob_strategy(
             state_prep_op=self.state_prep_op,
             target_binary_state=target_binary_state,
             wires=wires,
             all_wires=self.wires,
-            lookup_table=self.lookup_table,
-            transition_matrix=self.transition_matrix,
-            global_sptm=self.global_sptm,
+            covariance_matrix=self.covariance_matrix,
             pfaffian_method=self.pfaffian_method,
-            majorana_getter=self.majorana_getter,
             show_progress=self.show_progress,
         )
 
@@ -807,16 +819,28 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             f"The target binary states must have the shape {batch_wires.shape}. "
             f"Got {target_binary_states.shape} instead."
         )
-        return self.prob_strategy.batch_call(
+        is_basis = getattr(self.state_prep_op, "is_basis_state", False)
+        if is_basis or not isinstance(self.state_prep_op, ProductState):
+            return self.prob_strategy.batch_call(
+                state_prep_op=self.state_prep_op,
+                target_binary_states=target_binary_states,
+                batch_wires=batch_wires,
+                all_wires=self.wires,
+                lookup_table=self.lookup_table,
+                transition_matrix=self.transition_matrix,
+                global_sptm=self.global_sptm.matrix(),
+                pfaffian_method=self.pfaffian_method,
+                majorana_getter=self.majorana_getter,
+                show_progress=kwargs.pop("show_progress", self.show_progress),
+                **kwargs,
+            )
+        return self.product_state_prob_strategy.batch_call(
             state_prep_op=self.state_prep_op,
             target_binary_states=target_binary_states,
             batch_wires=batch_wires,
             all_wires=self.wires,
-            lookup_table=self.lookup_table,
-            transition_matrix=self.transition_matrix,
-            global_sptm=self.global_sptm.matrix(),
+            covariance_matrix=self.covariance_matrix,
             pfaffian_method=self.pfaffian_method,
-            majorana_getter=self.majorana_getter,
             show_progress=kwargs.pop("show_progress", self.show_progress),
             **kwargs,
         )
