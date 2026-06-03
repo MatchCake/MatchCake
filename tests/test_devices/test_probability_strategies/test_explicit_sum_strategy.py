@@ -26,7 +26,7 @@ class TestExplicitSumStrategy:
         wires, transition_matrix, state_prep_op = two_qubit_setup
         result = strategy(
             state_prep_op=state_prep_op,
-            target_binary_state=np.array([0]),
+            target_binary_states=np.array([0]),
             wires=0,
             all_wires=Wires(wires),
             transition_matrix=transition_matrix,

@@ -470,7 +470,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
         :return: A `qml.QubitUnitary` object that represents the unitary operation acting on the specified wires.
         :rtype: qml.QubitUnitary
         """
-        return qml.QubitUnitary(self.to_unitary_matrix(self.matrix()), wires=self.wires, id=self.id, unitary_check=True)
+        return qml.QubitUnitary(self.to_unitary_matrix(self.matrix()), wires=self.wires, unitary_check=True)
 
     def to_qubit_operation(self) -> Operation:
         """

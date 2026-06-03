@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 import numpy as np
 import pennylane as qml
@@ -7,6 +7,7 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 
 from ... import utils
+from ...operations.state_preparation.product_state import ProductState
 from ...utils.math import convert_and_cast_like
 from .probability_strategy import ProbabilityStrategy
 
@@ -59,10 +60,6 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
       and measurements," Phys. Rev. A 93, 062332 (2016), arXiv:1602.03539.
     - S. Bravyi, "Lagrangian representation for fermionic linear optics," Quantum Inf. Comput. 5,
       216 (2005), arXiv:quant-ph/0404180.
-
-    TODO: merge batch call and call for ProbabilityStrategy.
-    TODO: The shape of lambda_t_w: (2k, 2k) shouldn't be (B, 2k, 2k)?
-    TODO: Verify that gradient flow is working
     """
 
     NAME: str = "ProductState"
@@ -75,20 +72,26 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
         Constructs the real antisymmetric :math:`(2k) \times (2k)` matrix with
         :math:`(\Lambda_y)_{2j,\,2j+1} = -(-1)^{y_j}` for :math:`j = 0, \ldots, k-1`.
 
-        :param target_binary_state: Binary outcome :math:`y` of shape ``(n_wires,)``.
+        Accepts a single outcome ``(k,)`` and returns ``(2k, 2k)``, or a batch ``(B, k)``
+        and returns ``(B, 2k, 2k)``.
+
+        :param target_binary_state: Binary outcome(s) of shape ``(n_wires,)`` or ``(B, n_wires)``.
         :type target_binary_state: TensorLike
         :param n_wires: Number of measured wires :math:`k`.
         :type n_wires: int
-        :return: Antisymmetric matrix of shape ``(2*n_wires, 2*n_wires)``.
+        :return: Antisymmetric matrix of shape ``(2*n_wires, 2*n_wires)`` or ``(B, 2*n_wires, 2*n_wires)``.
         :rtype: np.ndarray
         """
-        lambda_y = np.zeros((2 * n_wires, 2 * n_wires))
         bits = np.asarray(target_binary_state).astype(int)
-        for j in range(n_wires):
-            val = -((-1) ** bits[j])
-            lambda_y[2 * j, 2 * j + 1] = val
-            lambda_y[2 * j + 1, 2 * j] = -val
-        return lambda_y
+        single = bits.ndim == 1
+        bits = np.atleast_2d(bits)  # (B, k)
+        B, k = bits.shape
+        lambda_y = np.zeros((B, 2 * k, 2 * k))
+        j = np.arange(k)
+        vals = -((-1.0) ** bits)  # (B, k)
+        lambda_y[:, 2 * j, 2 * j + 1] = vals
+        lambda_y[:, 2 * j + 1, 2 * j] = -vals
+        return lambda_y[0] if single else lambda_y
 
     @staticmethod
     def extract_majorana_submatrix(
@@ -97,10 +100,6 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
     ) -> TensorLike:
         r"""Extract the principal Majorana submatrix for the given wire positions.
 
-        For wire positions :math:`i_0, \ldots, i_{k-1}` in the full wire list, returns the
-        :math:`(2k) \times (2k)` principal submatrix indexed by
-        :math:`\{2i_j, 2i_j+1 : j = 0,\ldots,k-1\}`.
-
         :param covariance_matrix: Evolved covariance matrix of shape ``(..., 2n, 2n)``.
         :type covariance_matrix: TensorLike
         :param wire_indices: Positions of the measured wires in the full wire list, shape ``(k,)``.
@@ -108,10 +107,110 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
         :return: Principal submatrix of shape ``(..., 2k, 2k)``.
         :rtype: TensorLike
         """
-        majorana_indices = np.concatenate([[2 * i, 2 * i + 1] for i in wire_indices])
+        wire_indices = np.asarray(wire_indices)
+        majorana_indices = np.stack([2 * wire_indices, 2 * wire_indices + 1], axis=1).ravel()
         return covariance_matrix[..., majorana_indices[:, None], majorana_indices[None, :]]
 
+    @staticmethod
+    def _extract_majorana_submatrix_batch(
+        covariance_matrix: TensorLike,
+        all_wires: Wires,
+        batch_wires: np.ndarray,
+        k: int,
+    ) -> TensorLike:
+        r"""Extract per-outcome Majorana submatrices for a batch of wire subsets.
+
+        :param covariance_matrix: Evolved covariance matrix of shape ``(..., 2n, 2n)``.
+        :type covariance_matrix: TensorLike
+        :param all_wires: Full device wire list.
+        :type all_wires: Wires
+        :param batch_wires: Per-outcome wire labels of shape ``(B, k)``.
+        :type batch_wires: np.ndarray
+        :param k: Number of measured wires per outcome.
+        :type k: int
+        :return: Submatrix batch of shape ``(..., B, 2k, 2k)``.
+        :rtype: TensorLike
+        """
+        wire_indices_batch = np.array([all_wires.indices(Wires(w)) for w in batch_wires])  # (B, k)
+        majorana_batch = np.stack([2 * wire_indices_batch, 2 * wire_indices_batch + 1], axis=2).reshape(
+            len(batch_wires), 2 * k
+        )  # (B, 2k)
+        return covariance_matrix[..., majorana_batch[:, :, None], majorana_batch[:, None, :]]  # (..., B, 2k, 2k)
+
     def __call__(
+        self,
+        *,
+        state_prep_op: StatePrepBase,
+        target_binary_states: TensorLike,
+        wires: Wires,
+        **kwargs,
+    ) -> TensorLike:
+        r"""Compute probabilities for one or a batch of basis outcomes.
+
+        Accepts a single outcome ``(k,)`` and returns a scalar, or a batch ``(B, k)``
+        and returns ``(B,)``. When all outcomes share the same wires (the device default),
+        the batch is handled in one vectorized determinant call over a ``(B, 2k, 2k)`` stack.
+
+        :param state_prep_op: State preparation operation (not used directly; the evolved
+            covariance matrix is passed via ``covariance_matrix``).
+        :type state_prep_op: StatePrepBase
+        :param target_binary_states: Binary outcomes of shape ``(k,)`` or ``(B, k)``.
+        :type target_binary_states: TensorLike
+        :param wires: Measured wires — ``Wires`` for single, ``ndarray(B, k)`` for batch.
+        :type wires: Wires
+        :return: Scalar or ``(B,)`` probabilities.
+        :rtype: TensorLike
+        """
+        self.check_required_kwargs(kwargs)
+
+        target_arr = np.asarray(target_binary_states)
+        is_single = target_arr.ndim == 1
+        k = target_arr.shape[-1]
+
+        covariance_matrix: TensorLike = kwargs["covariance_matrix"]  # (..., 2n, 2n)
+        pfaffian_method: Literal["det", "cuda_det", "PfaffianFDBPf"] = kwargs["pfaffian_method"]
+        all_wires = Wires(kwargs["all_wires"])
+        kwargs.pop("show_progress", False)
+
+        if isinstance(wires, int):
+            wires = [wires]
+        batch_wires = np.asarray(wires)
+
+        # ``build_lambda_y`` returns (2k, 2k) for a single outcome and (B, 2k, 2k) for a
+        # batch, so the pfaffian's leading axes (covariance batch and/or outcome batch) are
+        # preserved naturally — no manual squeeze of the result is required.
+        if is_single:
+            wire_indices = all_wires.indices(Wires(batch_wires))
+            lambda_t_w = self.extract_majorana_submatrix(covariance_matrix, wire_indices)  # (..., 2k, 2k)
+        else:
+            if batch_wires.ndim == 1:
+                batch_wires = np.broadcast_to(batch_wires, target_arr.shape)
+            same_wires = len(target_arr) <= 1 or np.all(batch_wires == batch_wires[0])
+            if same_wires:
+                wire_indices = all_wires.indices(Wires(batch_wires[0]))
+                lambda_t_w = self.extract_majorana_submatrix(covariance_matrix, wire_indices)  # (..., 2k, 2k)
+            else:
+                lambda_t_w = self._extract_majorana_submatrix_batch(
+                    covariance_matrix, all_wires, batch_wires, k
+                )  # (..., B, 2k, 2k)
+
+        lambda_y = convert_and_cast_like(self.build_lambda_y(target_arr, k), covariance_matrix)
+
+        combined = lambda_t_w + lambda_y
+        prob = (1.0 / 2**k) * qml.math.real(utils.pfaffian(combined, method=pfaffian_method))
+        return convert_and_cast_like(prob, covariance_matrix)
+
+    def can_execute(self, state_prep_op: StatePrepBase) -> bool:
+        """Return True for any :class:`~matchcake.operations.ProductState` input.
+
+        :param state_prep_op: State preparation operation.
+        :type state_prep_op: StatePrepBase
+        :return: True when ``state_prep_op`` is a ``ProductState``.
+        :rtype: bool
+        """
+        return isinstance(state_prep_op, ProductState)
+
+    def _compute_single(
         self,
         *,
         state_prep_op: StatePrepBase,
@@ -119,123 +218,20 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
         wires: Wires,
         **kwargs,
     ) -> TensorLike:
-        r"""Compute the probability of a single basis outcome for a product-state input.
+        """Single-state entry point, delegates to :meth:`__call__`.
 
-        :param state_prep_op: State preparation operation. Not used directly; the evolved
-            covariance matrix must be supplied via the ``covariance_matrix`` keyword argument.
+        :param state_prep_op: State preparation operation.
         :type state_prep_op: StatePrepBase
-        :param target_binary_state: Binary outcome :math:`y` of shape ``(k,)``.
+        :param target_binary_state: Binary outcome of shape ``(k,)``.
         :type target_binary_state: TensorLike
         :param wires: Measured wires.
         :type wires: Wires
         :return: Scalar probability.
         :rtype: TensorLike
         """
-        self.check_required_kwargs(kwargs)
-        if isinstance(wires, int):
-            wires = [wires]
-        wires = Wires(wires)
-        k = len(wires)
-
-        covariance_matrix: TensorLike = kwargs["covariance_matrix"]  # (..., 2n, 2n)
-        pfaffian_method: Literal["det", "cuda_det", "PfaffianFDBPf"] = kwargs["pfaffian_method"]
-        all_wires = Wires(kwargs["all_wires"])
-
-        wire_indices = all_wires.indices(wires)
-
-        # Extract Lambda(t)|_W: (..., 2k, 2k)
-        lambda_t_w = self.extract_majorana_submatrix(covariance_matrix, wire_indices)
-        lambda_y = convert_and_cast_like(self.build_lambda_y(target_binary_state, k), covariance_matrix)
-
-        # p(y_W) = (1/2^k) * |Pf(Lambda(t)|_W + Lambda_y_W)|
-        combined = lambda_t_w + lambda_y  # (..., 2k, 2k)
-        prob = (1.0 / 2**k) * qml.math.real(utils.pfaffian(combined, method=pfaffian_method))
-        return convert_and_cast_like(prob, covariance_matrix)
-
-    def batch_call(
-        self,
-        *,
-        state_prep_op: StatePrepBase,
-        target_binary_states: TensorLike,
-        batch_wires: Optional[Wires] = None,
-        **kwargs,
-    ) -> TensorLike:
-        r"""Compute probabilities for a batch of basis outcomes.
-
-        When all rows of ``batch_wires`` are identical (the common case from the device), the
-        computation is vectorized: a single ``(B, 2k, 2k)`` stack of combined matrices is
-        assembled and their Pfaffians computed in one call. Otherwise falls back to per-outcome
-        calls.
-
-        :param state_prep_op: State preparation operation.
-        :type state_prep_op: StatePrepBase
-        :param target_binary_states: Batch of binary outcomes of shape ``(B, k)``.
-        :type target_binary_states: TensorLike
-        :param batch_wires: Wires per outcome of shape ``(B, k)``. Defaults to all device wires
-            broadcast to the batch shape.
-        :type batch_wires: Optional[Wires]
-        :return: Probability vector of shape ``(B,)``.
-        :rtype: TensorLike
-        """
-        self.check_required_kwargs(kwargs)
-
-        covariance_matrix: TensorLike = kwargs["covariance_matrix"]  # (..., 2n, 2n)
-        pfaffian_method: Literal["det", "cuda_det", "PfaffianFDBPf"] = kwargs["pfaffian_method"]
-        all_wires = Wires(kwargs["all_wires"])
-        kwargs.pop("show_progress", False)
-
-        target_binary_states = np.asarray(target_binary_states)  # (B, k)
-
-        if batch_wires is None:
-            batch_wires = np.broadcast_to(np.asarray(all_wires), target_binary_states.shape)
-        batch_wires = np.asarray(batch_wires)
-
-        n_batch = len(target_binary_states)
-        k = target_binary_states.shape[-1]
-
-        same_wires = n_batch == 0 or all(np.array_equal(batch_wires[i], batch_wires[0]) for i in range(1, n_batch))
-
-        if not same_wires:
-            probs = qml.math.stack(
-                [
-                    self(
-                        state_prep_op=state_prep_op,
-                        target_binary_state=tbs,
-                        wires=Wires(wires),
-                        **kwargs,
-                    )
-                    for tbs, wires in zip(target_binary_states, batch_wires)
-                ]
-            )
-            return probs
-
-        wire_indices = all_wires.indices(Wires(batch_wires[0]))
-
-        # Extract Lambda(t)|_W once: (..., 2k, 2k)
-        lambda_t_w = self.extract_majorana_submatrix(covariance_matrix, wire_indices)
-
-        # Batch of Lambda_y matrices: (B, 2k, 2k)
-        lambda_y_batch = np.stack([self.build_lambda_y(tbs, k) for tbs in target_binary_states])
-        lambda_y_batch = convert_and_cast_like(lambda_y_batch, covariance_matrix)
-
-        cov_ndim = len(qml.math.shape(covariance_matrix))
-        if cov_ndim > 2:
-            # Device batch dims present: fall back to per-outcome calls
-            probs = qml.math.stack(
-                [
-                    self(
-                        state_prep_op=state_prep_op,
-                        target_binary_state=tbs,
-                        wires=Wires(batch_wires[0]),
-                        **kwargs,
-                    )
-                    for tbs in target_binary_states
-                ]
-            )
-            return probs
-
-        # lambda_t_w: (2k, 2k),  lambda_y_batch: (B, 2k, 2k)
-        # Broadcasting gives combined: (B, 2k, 2k)
-        combined = lambda_t_w + lambda_y_batch
-        prob = (1.0 / 2**k) * qml.math.real(utils.pfaffian(combined, method=pfaffian_method))
-        return convert_and_cast_like(prob, covariance_matrix)
+        return self(
+            state_prep_op=state_prep_op,
+            target_binary_states=target_binary_state,
+            wires=wires,
+            **kwargs,
+        )

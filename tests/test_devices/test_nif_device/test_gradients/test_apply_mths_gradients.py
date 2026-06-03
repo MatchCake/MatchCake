@@ -7,6 +7,7 @@ from pennylane.ops.qubit.observables import BasisStateProjector
 from scipy.linalg import expm
 
 from matchcake import NonInteractingFermionicDevice, utils
+from matchcake.devices.probability_strategies import LookupTableStrategy
 from matchcake.operations.single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
 )
@@ -112,10 +113,11 @@ class TestNonInteractingFermionicDeviceGradients:
             nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
             transition_matrix = utils.make_transition_matrix_from_action_matrix(matrix)
             nif_device.transition_matrix = transition_matrix
-            return nif_device.prob_strategy.batch_call(
+            return LookupTableStrategy()(
                 state_prep_op=BasisState(system_state, wires=np.arange(len(system_state))),
                 target_binary_states=target_binary_states,
-                batch_wires=None,
+                wires=nif_device.wires,
+                all_wires=nif_device.wires,
                 lookup_table=nif_device.lookup_table,
                 pfaffian_method="det",
             )
@@ -135,10 +137,11 @@ class TestNonInteractingFermionicDeviceGradients:
         def circuit(sptm_matrix):
             nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
             nif_device.global_sptm = sptm_matrix
-            return nif_device.prob_strategy.batch_call(
+            return LookupTableStrategy()(
                 state_prep_op=nif_device.state_prep_op,
                 target_binary_states=target_binary_states,
-                batch_wires=None,
+                wires=nif_device.wires,
+                all_wires=nif_device.wires,
                 lookup_table=nif_device.lookup_table,
                 pfaffian_method="det",
             )
@@ -157,10 +160,11 @@ class TestNonInteractingFermionicDeviceGradients:
             op = SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2))
             nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
             nif_device.apply_op(op)
-            return nif_device.prob_strategy.batch_call(
+            return LookupTableStrategy()(
                 state_prep_op=nif_device.state_prep_op,
                 target_binary_states=target_binary_states,
-                batch_wires=None,
+                wires=nif_device.wires,
+                all_wires=nif_device.wires,
                 lookup_table=nif_device.lookup_table,
                 pfaffian_method="det",
             )

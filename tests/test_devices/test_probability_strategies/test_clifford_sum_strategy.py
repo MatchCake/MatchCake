@@ -38,7 +38,7 @@ class TestCliffordSumStrategy:
         nif_probs = strategy(
             system_state=system_state,
             state_prep_op=state_prep_op,
-            target_binary_state=target_state,
+            target_binary_states=target_state,
             wires=wires,
             all_wires=wires,
             global_sptm=global_sptm.matrix(),
@@ -61,7 +61,7 @@ class TestCliffordSumStrategy:
         state_prep_op = qml.BasisState(np.zeros(num_wires, dtype=int), wires)
         result = strategy(
             state_prep_op=state_prep_op,
-            target_binary_state=np.array([0]),
+            target_binary_states=np.array([0]),
             wires=0,
             all_wires=Wires(wires),
             transition_matrix=transition_matrix,

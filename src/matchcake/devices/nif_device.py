@@ -52,7 +52,11 @@ from .expval_strategies.m_pfaffian._extended_covariance import (
     sptm_lift as _sptm_lift,
 )
 from .expval_strategies.terms_splitter import TermsSplitter
-from .probability_strategies import ProbabilityStrategy, ProductStateProbabilityStrategy, get_probability_strategy
+from .probability_strategies import (
+    ProbabilityFuncDispatcher,
+    ProductStateProbabilityStrategy,
+    get_probability_strategy,
+)
 from .sampling_strategies import SamplingStrategy, get_sampling_strategy
 from .star_state_finding_strategies import (
     StarStateFindingStrategy,
@@ -230,10 +234,12 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self.sampling_strategy: SamplingStrategy = get_sampling_strategy(
             kwargs.get("sampling_strategy", self.DEFAULT_SAMPLING_STRATEGY)
         )
-        self.prob_strategy: ProbabilityStrategy = get_probability_strategy(
-            kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY)
+        self.prob_dispatcher: ProbabilityFuncDispatcher = ProbabilityFuncDispatcher(
+            [
+                get_probability_strategy(kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY)),
+                ProductStateProbabilityStrategy(),
+            ]
         )
-        self.product_state_prob_strategy: ProductStateProbabilityStrategy = ProductStateProbabilityStrategy()
         self.contraction_strategy: ContractionStrategy = get_contraction_strategy(
             kwargs.get("contraction_strategy", self.DEFAULT_CONTRACTION_METHOD)
         )
@@ -709,94 +715,43 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         return self._samples
 
     def get_state_probability(self, target_binary_state: TensorLike, wires: Optional[Wires] = None) -> TensorLike:
-        """
-        Calculates the probability of the system being in a specific binary state for the given wires.
+        """Thin wrapper around :meth:`get_states_probability` for a single outcome.
 
-        This method determines how likely the system's quantum state corresponds to the provided
-        target binary state. The functionality supports different formats for the input state:
-        integer, list, string, or a tensor-like object. It also processes the specified wires to
-        pinpoint the relevant parts of the quantum state and computes the probability using
-        internally defined strategies.
+        Accepts the same input formats (int, str, list, array) and returns a scalar.
 
-        :param target_binary_state: The desired binary state of the system to calculate the probability for. \
-        Can be provided as an integer, list, string, or tensor-like object.
+        :param target_binary_state: The desired binary state. Accepts int, str, list, or array.
         :type target_binary_state: TensorLike
-        :param wires: Optional argument specifying which wires to consider when computing the probability. \
-        If not provided, defaults to all wires in the system.
+        :param wires: Wires to measure. Defaults to all device wires.
         :type wires: Optional[Wires]
-        :return: Probability associated with the target binary state on the given wires. Returns `None` if \
-        the state has not been initialized.
+        :return: Scalar probability.
         :rtype: TensorLike
         """
-        if wires is None:
-            wires = self.wires
-
-        wires = Wires(wires)
-        num_wires = len(wires)
-        if isinstance(target_binary_state, int):
-            target_binary_state = utils.binary_string_to_vector(
-                utils.state_to_binary_string(target_binary_state, num_wires)
-            )
-        elif isinstance(target_binary_state, list):
-            target_binary_state = np.array(target_binary_state)
-        elif isinstance(target_binary_state, str):
-            target_binary_state = utils.binary_string_to_vector(target_binary_state)
-        else:
-            target_binary_state = np.asarray(target_binary_state)
-        assert len(target_binary_state) == num_wires, (
-            f"The target binary state must have {num_wires} elements. Got {len(target_binary_state)} instead."
-        )
-        is_basis = getattr(self.state_prep_op, "is_basis_state", False)
-        if is_basis or not isinstance(self.state_prep_op, ProductState):
-            return self.prob_strategy(
-                state_prep_op=self.state_prep_op,
-                target_binary_state=target_binary_state,
-                wires=wires,
-                all_wires=self.wires,
-                lookup_table=self.lookup_table,
-                transition_matrix=self.transition_matrix,
-                global_sptm=self.global_sptm,
-                pfaffian_method=self.pfaffian_method,
-                majorana_getter=self.majorana_getter,
-                show_progress=self.show_progress,
-            )
-        return self.product_state_prob_strategy(
-            state_prep_op=self.state_prep_op,
-            target_binary_state=target_binary_state,
-            wires=wires,
-            all_wires=self.wires,
-            covariance_matrix=self.covariance_matrix,
-            pfaffian_method=self.pfaffian_method,
-            show_progress=self.show_progress,
-        )
+        return self.get_states_probability(target_binary_state, wires)
 
     def get_states_probability(
         self,
         target_binary_states: TensorLike,
-        batch_wires: Optional[Wires] = None,
+        wires: Optional[Wires] = None,
         **kwargs,
     ) -> TensorLike:
-        """
-        Calculates the probability of the provided binary states with respect to the
-        current system state. This function supports various input formats for the
-        target binary states, including integers, strings, lists, and NumPy arrays,
-        and performs necessary conversions to ensure compatibility. It handles batch
-        processing of wires in conjunction with target states to compute the resulting
-        probabilities. If the system state is uninitialized, the function returns None.
+        """Compute probabilities for one or a batch of basis outcomes.
 
-        :param target_binary_states: Tensor-like object representing the target binary
-            states. May be an integer, string, list, or NumPy array. If provided as an
-            integer or string, it is converted into a vectorized binary format.
+        Dispatches through :attr:`prob_dispatcher` which routes to the first compatible
+        strategy. Routing is determined by each strategy's ``can_execute`` method — no
+        manual ``is_basis_state`` check is performed here.
+
+        Detects input dimensionality:
+
+        * 1-D input ``(k,)`` → returns a scalar.
+        * 2-D input ``(B, k)`` → returns a ``(B,)`` vector.
+
+        :param target_binary_states: Binary outcomes. Accepts int, str, list, or array
+            of shape ``(k,)`` (single) or ``(B, k)`` (batch).
         :type target_binary_states: TensorLike
-        :param batch_wires: Optional; defines the wires to process in batch. Defaults
-            to the current set of system wires. Expected to match the shape of
-            `target_binary_states`.
-        :type batch_wires: Optional[Wires]
-        :param kwargs: Additional keyword arguments for fine-tuning the probability
-            computation process. Includes parameters like `show_progress`, which
-            controls the display of progress feedback.
-        :return: Probabilities of the provided binary states as computed by the
-            configured probability strategy.
+        :param wires: Measured wires. For a single outcome this is a flat ``Wires``; for
+            a batch it is broadcast to ``(B, k)``. Defaults to all device wires.
+        :type wires: Optional[Wires]
+        :return: Scalar for single input, ``(B,)`` vector for batch input.
         :rtype: TensorLike
         """
         if isinstance(target_binary_states, int):
@@ -810,38 +765,37 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         else:
             target_binary_states = np.asarray(target_binary_states)
 
-        if batch_wires is None:
-            batch_wires = self.wires
-        batch_wires = np.asarray(batch_wires)
-        batch_wires = np.broadcast_to(batch_wires, target_binary_states.shape)
+        is_single = target_binary_states.ndim == 1
 
-        assert target_binary_states.shape == batch_wires.shape, (
-            f"The target binary states must have the shape {batch_wires.shape}. "
-            f"Got {target_binary_states.shape} instead."
-        )
-        is_basis = getattr(self.state_prep_op, "is_basis_state", False)
-        if is_basis or not isinstance(self.state_prep_op, ProductState):
-            return self.prob_strategy.batch_call(
-                state_prep_op=self.state_prep_op,
-                target_binary_states=target_binary_states,
-                batch_wires=batch_wires,
-                all_wires=self.wires,
-                lookup_table=self.lookup_table,
-                transition_matrix=self.transition_matrix,
-                global_sptm=self.global_sptm.matrix(),
-                pfaffian_method=self.pfaffian_method,
-                majorana_getter=self.majorana_getter,
-                show_progress=kwargs.pop("show_progress", self.show_progress),
-                **kwargs,
+        if wires is None:
+            wires = self.wires
+
+        if is_single:
+            wires = Wires(wires)
+            assert len(target_binary_states) == len(wires), (
+                f"The target binary state must have {len(wires)} elements. Got {len(target_binary_states)} instead."
             )
-        return self.product_state_prob_strategy.batch_call(
+        else:
+            wires = np.asarray(wires)
+            wires = np.broadcast_to(wires, target_binary_states.shape)
+
+        strategy_kwargs = dict(
+            all_wires=self.wires,
+            lookup_table=self.lookup_table,
+            transition_matrix=self.transition_matrix,
+            global_sptm=self.global_sptm.matrix(),
+            pfaffian_method=self.pfaffian_method,
+            majorana_getter=self.majorana_getter,
+            show_progress=kwargs.pop("show_progress", self.show_progress),
+        )
+        if isinstance(self.state_prep_op, ProductState):
+            strategy_kwargs["covariance_matrix"] = self.covariance_matrix
+
+        return self.prob_dispatcher(
             state_prep_op=self.state_prep_op,
             target_binary_states=target_binary_states,
-            batch_wires=batch_wires,
-            all_wires=self.wires,
-            covariance_matrix=self.covariance_matrix,
-            pfaffian_method=self.pfaffian_method,
-            show_progress=kwargs.pop("show_progress", self.show_progress),
+            wires=wires,
+            **strategy_kwargs,
             **kwargs,
         )
 

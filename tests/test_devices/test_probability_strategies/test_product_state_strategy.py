@@ -9,11 +9,11 @@ from pennylane.wires import Wires
 
 from matchcake import NonInteractingFermionicDevice
 from matchcake.devices.probability_strategies import ProductStateProbabilityStrategy
-from matchcake.operations import MatchgateOperation
+from matchcake.operations import MatchgateOperation, Rxx
 from matchcake.operations.state_preparation.product_state import ProductState
 from matchcake.utils import signed_pfaffian
 
-from ...configs import ATOL_SCALAR_COMPARISON, set_seed
+from ...configs import ATOL_APPROX_COMPARISON, ATOL_SCALAR_COMPARISON, RTOL_APPROX_COMPARISON, set_seed
 
 
 def _random_qubit_amplitudes(n_wires: int, seed: int) -> np.ndarray:
@@ -127,8 +127,7 @@ class TestProductStateProbabilityStrategy:
         ref_probs = np.asarray(qml.QNode(circuit, ref_dev)())
         np.testing.assert_allclose(nif_probs, ref_probs, atol=ATOL_SCALAR_COMPARISON)
 
-        # Direct strategy comparison: product-state strategy must match LUT
-        qml.QNode(circuit, nif_dev)()  # rebuild SPTM
+        qml.QNode(circuit, nif_dev)()
         lambda_t = nif_dev.covariance_matrix
         strat = ProductStateProbabilityStrategy()
         all_wires = nif_dev.wires
@@ -138,7 +137,7 @@ class TestProductStateProbabilityStrategy:
             prod_prob = float(
                 strat(
                     state_prep_op=nif_dev.state_prep_op,
-                    target_binary_state=y,
+                    target_binary_states=y,
                     wires=all_wires,
                     all_wires=all_wires,
                     covariance_matrix=lambda_t,
@@ -173,7 +172,7 @@ class TestProductStateProbabilityStrategy:
 
             np.testing.assert_allclose(pf_val, det_val, atol=ATOL_SCALAR_COMPARISON)
 
-    def test_batching(self, strategy: ProductStateProbabilityStrategy) -> None:
+    def test_single_call(self, strategy: ProductStateProbabilityStrategy) -> None:
         set_seed()
         n_wires = 2
         per_qubit = _random_qubit_amplitudes(n_wires, seed=62)
@@ -189,15 +188,14 @@ class TestProductStateProbabilityStrategy:
         lambda_t = nif_dev.covariance_matrix
         all_wires = nif_dev.wires
 
-        all_outcomes = np.array(list(itertools.product([0, 1], repeat=n_wires)))  # (4, 2)
-        batch_wires = np.broadcast_to(np.asarray(all_wires), all_outcomes.shape)
+        all_outcomes = np.array(list(itertools.product([0, 1], repeat=n_wires)))
 
         single_probs = np.array(
             [
                 float(
                     strategy(
                         state_prep_op=nif_dev.state_prep_op,
-                        target_binary_state=y,
+                        target_binary_states=y,
                         wires=all_wires,
                         all_wires=all_wires,
                         covariance_matrix=lambda_t,
@@ -209,10 +207,10 @@ class TestProductStateProbabilityStrategy:
         )
 
         batch_probs = np.asarray(
-            strategy.batch_call(
+            strategy(
                 state_prep_op=nif_dev.state_prep_op,
                 target_binary_states=all_outcomes,
-                batch_wires=batch_wires,
+                wires=all_wires,
                 all_wires=all_wires,
                 covariance_matrix=lambda_t,
                 pfaffian_method=nif_dev.pfaffian_method,
@@ -239,7 +237,7 @@ class TestProductStateProbabilityStrategy:
         prob_via_int = float(
             strategy(
                 state_prep_op=nif_dev.state_prep_op,
-                target_binary_state=np.array([0]),
+                target_binary_states=np.array([0]),
                 wires=0,
                 all_wires=nif_dev.wires,
                 covariance_matrix=lambda_t,
@@ -249,7 +247,7 @@ class TestProductStateProbabilityStrategy:
         prob_via_list = float(
             strategy(
                 state_prep_op=nif_dev.state_prep_op,
-                target_binary_state=np.array([0]),
+                target_binary_states=np.array([0]),
                 wires=[0],
                 all_wires=nif_dev.wires,
                 covariance_matrix=lambda_t,
@@ -258,7 +256,7 @@ class TestProductStateProbabilityStrategy:
         )
         np.testing.assert_allclose(prob_via_int, prob_via_list, atol=ATOL_SCALAR_COMPARISON)
 
-    def test_batch_call_without_batch_wires(self, strategy: ProductStateProbabilityStrategy) -> None:
+    def test_batch_same_wires_matches_single_calls(self, strategy: ProductStateProbabilityStrategy) -> None:
         set_seed()
         n_wires = 2
         per_qubit = _random_qubit_amplitudes(n_wires, seed=66)
@@ -273,32 +271,36 @@ class TestProductStateProbabilityStrategy:
         qml.QNode(circuit, nif_dev)()
         lambda_t = nif_dev.covariance_matrix
         all_wires = nif_dev.wires
-
         all_outcomes = np.array(list(itertools.product([0, 1], repeat=n_wires)))
 
-        result_no_bw = np.asarray(
-            strategy.batch_call(
+        batch_probs = np.asarray(
+            strategy(
                 state_prep_op=nif_dev.state_prep_op,
                 target_binary_states=all_outcomes,
-                batch_wires=None,
+                wires=all_wires,
                 all_wires=all_wires,
                 covariance_matrix=lambda_t,
                 pfaffian_method=nif_dev.pfaffian_method,
             )
         )
-        result_explicit_bw = np.asarray(
-            strategy.batch_call(
-                state_prep_op=nif_dev.state_prep_op,
-                target_binary_states=all_outcomes,
-                batch_wires=np.broadcast_to(np.asarray(all_wires), all_outcomes.shape),
-                all_wires=all_wires,
-                covariance_matrix=lambda_t,
-                pfaffian_method=nif_dev.pfaffian_method,
-            )
+        single_probs = np.array(
+            [
+                float(
+                    strategy(
+                        state_prep_op=nif_dev.state_prep_op,
+                        target_binary_states=y,
+                        wires=all_wires,
+                        all_wires=all_wires,
+                        covariance_matrix=lambda_t,
+                        pfaffian_method=nif_dev.pfaffian_method,
+                    )
+                )
+                for y in all_outcomes
+            ]
         )
-        np.testing.assert_allclose(result_no_bw, result_explicit_bw, atol=ATOL_SCALAR_COMPARISON)
+        np.testing.assert_allclose(batch_probs, single_probs, atol=ATOL_SCALAR_COMPARISON)
 
-    def test_batch_call_different_wires_fallback(self, strategy: ProductStateProbabilityStrategy) -> None:
+    def test_batch_different_wires_matches_single_calls(self, strategy: ProductStateProbabilityStrategy) -> None:
         set_seed()
         n_wires = 2
         per_qubit = _random_qubit_amplitudes(n_wires, seed=68)
@@ -314,15 +316,14 @@ class TestProductStateProbabilityStrategy:
         lambda_t = nif_dev.covariance_matrix
         all_wires = nif_dev.wires
 
-        # Measure each outcome on a different single wire (forces the not-same-wires fallback)
         target_binary_states = np.array([[0], [1]])  # (2, 1)
-        batch_wires = np.array([[0], [1]])  # (2, 1) — different wire per outcome
+        batch_wires = np.array([[0], [1]])  # different wire per outcome
 
         batch_probs = np.asarray(
-            strategy.batch_call(
+            strategy(
                 state_prep_op=nif_dev.state_prep_op,
                 target_binary_states=target_binary_states,
-                batch_wires=batch_wires,
+                wires=batch_wires,
                 all_wires=all_wires,
                 covariance_matrix=lambda_t,
                 pfaffian_method=nif_dev.pfaffian_method,
@@ -333,7 +334,7 @@ class TestProductStateProbabilityStrategy:
                 float(
                     strategy(
                         state_prep_op=nif_dev.state_prep_op,
-                        target_binary_state=target_binary_states[i],
+                        target_binary_states=target_binary_states[i],
                         wires=Wires(batch_wires[i]),
                         all_wires=all_wires,
                         covariance_matrix=lambda_t,
@@ -345,7 +346,7 @@ class TestProductStateProbabilityStrategy:
         )
         np.testing.assert_allclose(batch_probs, single_probs, atol=ATOL_SCALAR_COMPARISON)
 
-    def test_batch_call_batched_covariance_fallback(self, strategy: ProductStateProbabilityStrategy) -> None:
+    def test_batch_batched_covariance(self, strategy: ProductStateProbabilityStrategy) -> None:
         set_seed()
         n_wires = 2
         per_qubit = _random_qubit_amplitudes(n_wires, seed=70)
@@ -359,24 +360,160 @@ class TestProductStateProbabilityStrategy:
 
         qml.QNode(circuit, nif_dev)()
         cov = np.asarray(nif_dev.covariance_matrix)  # (2n, 2n)
-        # Simulate device batch by adding a leading batch dim
-        cov_batched = np.stack([cov])  # (1, 2n, 2n)
-
         all_wires = nif_dev.wires
-        all_outcomes = np.array(list(itertools.product([0, 1], repeat=n_wires)))
-        batch_wires = np.broadcast_to(np.asarray(all_wires), all_outcomes.shape)
 
-        # The cov_ndim > 2 branch falls back to per-outcome calls; result shape: (B,) or (B, cov_batch)
-        result = strategy.batch_call(
-            state_prep_op=nif_dev.state_prep_op,
-            target_binary_states=all_outcomes,
-            batch_wires=batch_wires,
-            all_wires=all_wires,
-            covariance_matrix=cov_batched,
-            pfaffian_method=nif_dev.pfaffian_method,
+        # Two outcomes, one per circuit — shapes align: (2, 2k, 2k) + (2, 2k, 2k)
+        outcomes = np.array([[0, 0], [0, 1]])  # (2, 2)
+        cov_batched = np.stack([cov, cov])  # (2, 2n, 2n) — two identical circuits
+
+        batched_probs = np.asarray(
+            strategy(
+                state_prep_op=nif_dev.state_prep_op,
+                target_binary_states=outcomes,
+                wires=all_wires,
+                all_wires=all_wires,
+                covariance_matrix=cov_batched,
+                pfaffian_method=nif_dev.pfaffian_method,
+            )
+        )  # (2,)
+
+        # Both circuits are identical so results must match single-cov calls
+        ref_probs = np.array(
+            [
+                float(
+                    strategy(
+                        state_prep_op=nif_dev.state_prep_op,
+                        target_binary_states=outcomes[i],
+                        wires=all_wires,
+                        all_wires=all_wires,
+                        covariance_matrix=cov,
+                        pfaffian_method=nif_dev.pfaffian_method,
+                    )
+                )
+                for i in range(len(outcomes))
+            ]
         )
-        # Result has a leading B dimension (one entry per outcome), each stacked per cov-batch
-        assert result is not None
+
+        assert batched_probs.shape == (2,)
+        np.testing.assert_allclose(batched_probs, ref_probs, atol=ATOL_SCALAR_COMPARISON)
+
+    def test_build_lambda_y_single(self, strategy: ProductStateProbabilityStrategy) -> None:
+        y = np.array([0, 1, 0])
+        lam = strategy.build_lambda_y(y, 3)
+        assert lam.shape == (6, 6)
+        np.testing.assert_allclose(lam[0, 1], -1.0)  # -(-1)^0 = -1
+        np.testing.assert_allclose(lam[1, 0], 1.0)
+        np.testing.assert_allclose(lam[2, 3], 1.0)  # -(-1)^1 = +1
+        np.testing.assert_allclose(lam[3, 2], -1.0)
+        np.testing.assert_allclose(lam[4, 5], -1.0)  # -(-1)^0 = -1
+        np.testing.assert_allclose(lam[5, 4], 1.0)
+
+    def test_build_lambda_y_batch(self, strategy: ProductStateProbabilityStrategy) -> None:
+        outcomes = np.array([[0, 1], [1, 0], [1, 1]])  # (3, 2)
+        lam_batch = strategy.build_lambda_y(outcomes, 2)
+        assert lam_batch.shape == (3, 4, 4)
+        for i, y in enumerate(outcomes):
+            expected = strategy.build_lambda_y(y, 2)
+            np.testing.assert_allclose(lam_batch[i], expected)
+
+    def test_extract_majorana_submatrix_batch(self, strategy: ProductStateProbabilityStrategy) -> None:
+        set_seed()
+        n_wires = 3
+        per_qubit = _random_qubit_amplitudes(n_wires, seed=72)
+
+        nif_dev = NonInteractingFermionicDevice(wires=range(n_wires))
+
+        def circuit():
+            ProductState(per_qubit, wires=range(n_wires))
+            MatchgateOperation.random(wires=[0, 1], seed=21)
+            MatchgateOperation.random(wires=[1, 2], seed=22)
+            return qml.probs(wires=range(n_wires))
+
+        qml.QNode(circuit, nif_dev)()
+        cov = np.asarray(nif_dev.covariance_matrix)
+        all_wires = nif_dev.wires
+
+        batch_wires = np.array([[0], [1], [2]])  # (3, 1) — different wire per row
+        result = ProductStateProbabilityStrategy._extract_majorana_submatrix_batch(cov, all_wires, batch_wires, k=1)
+        assert result.shape == (3, 2, 2)
+        for i, w in enumerate([0, 1, 2]):
+            expected = ProductStateProbabilityStrategy.extract_majorana_submatrix(cov, all_wires.indices(Wires([w])))
+            np.testing.assert_allclose(result[i], expected)
+
+    def test_gradient_flow_strategy_gradcheck(self, strategy: ProductStateProbabilityStrategy) -> None:
+        """Gradient flows correctly through the strategy w.r.t. the covariance matrix."""
+        set_seed()
+        n_wires = 2
+        sp = ProductState(np.array([0.6, 0.8, 0.6, 0.8], dtype=complex), wires=[0, 1])
+        all_outcomes = np.array(list(itertools.product([0, 1], repeat=n_wires)))  # (4, 2)
+        all_wires = Wires(range(n_wires))
+
+        def batch_probs(p):
+            cov = p - p.t()  # real antisymmetric covariance
+            return strategy(
+                state_prep_op=sp,
+                target_binary_states=all_outcomes,
+                wires=all_wires,
+                all_wires=all_wires,
+                covariance_matrix=cov,
+                pfaffian_method="det",
+            )
+
+        def single_prob(p):
+            cov = p - p.t()
+            return strategy(
+                state_prep_op=sp,
+                target_binary_states=np.array([0, 1]),
+                wires=all_wires,
+                all_wires=all_wires,
+                covariance_matrix=cov,
+                pfaffian_method="det",
+            )
+
+        p = torch.randn(2 * n_wires, 2 * n_wires, dtype=torch.double, requires_grad=True)
+        assert torch.autograd.gradcheck(batch_probs, (p,), atol=1e-5, rtol=1e-4)
+        assert torch.autograd.gradcheck(single_prob, (p,), atol=1e-5, rtol=1e-4)
+
+    @pytest.mark.parametrize("init_param", [0.3, 1.1, 2.4])
+    def test_gradient_through_device_matches_default_qubit(self, init_param: float) -> None:
+        """End-to-end: NIF probability gradient matches default.qubit for a product-state input."""
+        set_seed()
+        n_wires = 2
+        per_qubit = _random_qubit_amplitudes(n_wires, seed=80)
+
+        nif_dev = NonInteractingFermionicDevice(wires=range(n_wires))
+        ref_dev = qml.device("default.qubit", wires=range(n_wires))
+
+        def make_circuit(device):
+            @qml.qnode(device, interface="torch", diff_method="backprop")
+            def circuit(params):
+                ProductState(per_qubit, wires=range(n_wires))
+                Rxx(params, wires=[0, 1])
+                return qml.probs(wires=range(n_wires))
+
+            return circuit
+
+        nif_circuit = make_circuit(nif_dev)
+        ref_circuit = make_circuit(ref_dev)
+
+        # Self-consistency: NIF analytic gradient matches finite differences.
+        gradcheck_param = torch.tensor([init_param], dtype=torch.float64).requires_grad_()
+        assert torch.autograd.gradcheck(
+            nif_circuit, (gradcheck_param,), eps=1e-3, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON
+        )
+
+        # Cross-check the gradient itself against the state-vector simulator. default.qubit
+        # carries a leading broadcast dim, so flatten before comparing values.
+        def jac(circuit):
+            param = torch.tensor([init_param], dtype=torch.float64, requires_grad=True)
+            return torch.autograd.functional.jacobian(lambda x: circuit(x), param).detach().ravel()
+
+        np.testing.assert_allclose(
+            np.asarray(jac(nif_circuit)),
+            np.asarray(jac(ref_circuit)),
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=RTOL_APPROX_COMPARISON,
+        )
 
     @staticmethod
     def _sector_sum_oracle(lambda_t: np.ndarray, target_binary_state: np.ndarray) -> float:
@@ -402,7 +539,7 @@ class TestProductStateProbabilityStrategy:
                 sign_exp = len(subset) + int(sum(y[k] for k in subset))
                 sign = (-1) ** sign_exp
                 if len(subset) == 0:
-                    total += sign * 1.0  # Pf([]) = 1 by convention
+                    total += sign * 1.0
                 else:
                     s_t = np.concatenate([[2 * k, 2 * k + 1] for k in subset])
                     submatrix = lambda_t[np.ix_(s_t, s_t)]
