@@ -11,6 +11,31 @@ from ..constants import (
 )
 from ..typing import TensorLike
 
+_COMPLEX_DTYPE_NAME_BY_PRECISION = {
+    "float16": "complex32",
+    "float32": "complex64",
+    "float64": "complex128",
+    "complex32": "complex32",
+    "complex64": "complex64",
+    "complex128": "complex128",
+}
+
+
+def complex_dtype_name_like(reference: TensorLike) -> str:
+    """Return the complex dtype name matching the floating-point precision of ``reference``.
+
+    Real references are mapped to the complex dtype with the same component precision
+    (``float32`` -> ``complex64``, ``float64`` -> ``complex128``), and complex references
+    keep their own precision. Unknown dtypes fall back to ``complex128``.
+
+    :param reference: Tensor whose precision determines the returned complex dtype.
+    :type reference: TensorLike
+    :return: A backend-agnostic complex dtype name (e.g. ``"complex64"``).
+    :rtype: str
+    """
+    name = qml.math.get_dtype_name(reference).lower()
+    return _COMPLEX_DTYPE_NAME_BY_PRECISION.get(name, "complex128")
+
 
 def convert_and_cast_like(tensor1, tensor2):
     r"""

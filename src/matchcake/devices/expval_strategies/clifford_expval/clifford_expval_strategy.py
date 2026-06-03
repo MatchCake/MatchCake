@@ -122,7 +122,8 @@ class CliffordExpvalStrategy(ExpvalStrategy):
         observable: Operator,
         global_sptm: TensorLike,
     ):
-        global_sptm = to_tensor(global_sptm, dtype=torch.complex128)
+        is_complex = "complex" in qml.math.get_dtype_name(global_sptm).lower()
+        global_sptm = to_tensor(global_sptm, dtype=None if is_complex else torch.complex128)
         global_sptm = qml.math.einsum("...ij->...ji", global_sptm)  # TODO: why do I need this transpose?
         expvals = self._compute_full_clifford_expvals(state_prep_op, global_sptm)
         hamiltonian = self._format_observable(observable)

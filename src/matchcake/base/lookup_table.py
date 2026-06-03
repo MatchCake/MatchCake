@@ -185,7 +185,11 @@ class NonInteractingFermionicLookupTable:
 
         batch_size = [self.batch_size] if self.batch_size else [1]
         obs_shape = [target_batch_size] + batch_size + [obs_size, obs_size]
-        obs = qml.math.convert_like(np.zeros(obs_shape, dtype=complex), self.transition_matrix)
+        obs = utils.math.convert_like_and_cast_to(
+            np.zeros(obs_shape, dtype=complex),
+            self.transition_matrix,
+            dtype=utils.math.complex_dtype_name_like(self.transition_matrix),
+        )
         obs[..., obs_indices[0], obs_indices[1]] = qml.math.transpose(
             lt_items[new_all_lt_indexes, ..., lt_item_rows, lt_item_cols], (0, -1, -2)
         )
@@ -523,7 +527,9 @@ class NonInteractingFermionicLookupTable:
                 new_shape = list(item_shape)
                 new_shape[-2] = max_dim_0
                 new_shape[-1] = max_dim_1
-                new_item = qml.math.convert_like(np.full(new_shape, fill_value=pad_value, dtype=complex), item)
+                new_item = utils.math.convert_and_cast_like(
+                    np.full(new_shape, fill_value=pad_value, dtype=complex), item
+                )
                 new_item[..., : item_shape[-2], : item_shape[-1]] = item
                 items[i] = new_item
             items = qml.math.stack(items)
@@ -604,7 +610,11 @@ class NonInteractingFermionicLookupTable:
 
         :return: the :math:`B` matrix.
         """
-        return utils.get_block_diagonal_matrix(self.n_particles)
+        return utils.math.convert_like_and_cast_to(
+            utils.get_block_diagonal_matrix(self.n_particles),
+            self.transition_matrix,
+            dtype=utils.math.complex_dtype_name_like(self.transition_matrix),
+        )
 
     @cached_property
     def block_bm_transition_transpose_matrix(self):
@@ -696,7 +706,7 @@ class NonInteractingFermionicLookupTable:
             matrix[..., :, :] = qml.math.eye(size, dtype=complex)
         else:
             matrix = np.eye(self.transition_matrix.shape[-1])
-        matrix = qml.math.convert_like(matrix, self.transition_matrix)
+        matrix = utils.math.convert_and_cast_like(matrix, self.transition_matrix)
         return matrix
 
     @cached_property
