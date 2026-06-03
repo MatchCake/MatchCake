@@ -382,6 +382,32 @@ class TestMath:
         idx = utils.math.random_index(probs, normalize_probs=False)
         assert 0 <= idx < len(probs)
 
+    def test_random_index_returns_numpy_int(self):
+        probs = torch.tensor([[0.5, 0.3, 0.2], [0.1, 0.1, 0.8]], dtype=torch.float64)
+        indexes = utils.math.random_index(probs, n=8, axis=-1)
+        assert isinstance(indexes, np.ndarray)
+        assert np.issubdtype(indexes.dtype, np.integer)
+        assert indexes.shape == (8, 2)
+        assert indexes.min() >= 0 and indexes.max() < 3
+
+    @pytest.mark.parametrize("backend", ["numpy", "torch"])
+    def test_random_index_backend_agnostic_distribution(self, backend):
+        set_seed(TEST_SEED)
+        target = np.array([[0.6, 0.1, 0.3], [0.2, 0.5, 0.3]])
+        probs = torch.tensor(target, dtype=torch.float64) if backend == "torch" else target
+        n = 40000
+        indexes = utils.math.random_index(probs, n=n, axis=-1)
+        estimate = np.stack(
+            [np.bincount(indexes[:, row], minlength=target.shape[-1]) / n for row in range(target.shape[0])],
+            axis=0,
+        )
+        np.testing.assert_allclose(estimate, target, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
+
+    def test_random_index_deterministic_distribution(self):
+        probs = np.array([0.0, 1.0, 0.0])
+        indexes = utils.math.random_index(probs, n=32, axis=-1)
+        np.testing.assert_array_equal(indexes, np.ones(32, dtype=int))
+
     def test_orthonormalize_check_if_false(self):
         rng = np.random.RandomState(42)
         matrix = rng.uniform(1, 10) * rng.rand(4, 4)
