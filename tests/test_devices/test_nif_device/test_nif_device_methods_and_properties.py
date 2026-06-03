@@ -91,6 +91,39 @@ class TestNIFDeviceMethodsAndProperties:
         with pytest.raises(ValueError, match="1D or 2D"):
             dev.analytic_probability(wires=wires_3d)
 
+    def test_analytic_probability_unbatched_normalized(self):
+        dev = _make_zero_state_device(n_wires=2)
+        probs = np.asarray(dev.analytic_probability(wires=[0, 1]))
+        assert probs.shape == (4,)
+        np.testing.assert_allclose(probs.sum(), 1.0, atol=1e-6)
+
+    def test_analytic_probability_batched_normalized_per_row(self):
+        from matchcake.operations import SptmCompRxRx
+
+        n_wires, batch_size = 2, 3
+        rng = np.random.default_rng(TEST_SEED)
+        dev = init_nif_device(wires=n_wires)
+        dev.apply_state_prep(BasisState(np.zeros(n_wires, dtype=int), wires=range(n_wires)))
+        dev.apply([SptmCompRxRx(rng.uniform(0, np.pi, (batch_size, 2)), wires=[0, 1])])
+        probs = np.asarray(dev.analytic_probability(wires=[0, 1]))
+        assert probs.shape == (batch_size, 2**n_wires)
+        # Each batch element must be a proper distribution (regression: previously a global
+        # sum normalized every row to 1 / batch_size).
+        np.testing.assert_allclose(probs.sum(axis=-1), np.ones(batch_size), atol=1e-6)
+
+    def test_analytic_probability_batched_product_state_normalized_per_row(self):
+        from matchcake.operations.state_preparation.product_state import ProductState
+
+        n_wires, batch_size = 2, 3
+        rng = np.random.default_rng(TEST_SEED)
+        angles = rng.uniform(0.2, np.pi - 0.2, (batch_size, n_wires))
+        amplitudes = np.stack([np.cos(angles / 2), np.sin(angles / 2)], axis=-1).astype(complex)
+        dev = init_nif_device(wires=n_wires)
+        dev.apply_state_prep(ProductState(amplitudes, wires=range(n_wires)))
+        probs = np.asarray(dev.analytic_probability(wires=[0, 1]))
+        assert probs.shape == (batch_size, 2**n_wires)
+        np.testing.assert_allclose(probs.sum(axis=-1), np.ones(batch_size), atol=1e-6)
+
     def test_exact_expval_batch_projector(self):
         dev = _make_zero_state_device(n_wires=2)
         states = [np.array([0, 0])]

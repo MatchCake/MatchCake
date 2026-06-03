@@ -8,6 +8,7 @@ from matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling import 
     KQubitsByKQubitsSampling,
 )
 from matchcake.operations import SptmCompRxRx
+from matchcake.operations.state_preparation.product_state import ProductState
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -34,6 +35,29 @@ def _empirical_distribution(samples, num_wires):
     indices = flat.dot(2 ** np.arange(num_wires)[::-1])
     counts = np.bincount(indices, minlength=2**num_wires)
     return counts / flat.shape[0]
+
+
+def _non_basis_product_state(num_wires, rng, batch_size=None):
+    shape = (num_wires,) if batch_size is None else (batch_size, num_wires)
+    angles = rng.uniform(0.2, np.pi - 0.2, shape)
+    amplitudes = np.stack([np.cos(angles / 2), np.sin(angles / 2)], axis=-1).astype(complex)
+    return ProductState(amplitudes, wires=range(num_wires))
+
+
+def _exact_distribution_batched(device, num_wires):
+    all_states = device.states_to_binary(np.arange(2**num_wires), num_wires)
+    probs = np.asarray(device.get_states_probability(all_states, np.arange(num_wires)))  # (2 ** n, batch)
+    return probs / probs.sum(axis=0, keepdims=True)
+
+
+def _empirical_distribution_batched(samples, num_wires, batch_size):
+    flat = np.asarray(samples).astype(int)  # (shots, batch, n)
+    empirical = np.zeros((2**num_wires, batch_size))
+    powers = 2 ** np.arange(num_wires)[::-1]
+    for b in range(batch_size):
+        indices = flat[:, b, :].dot(powers)
+        empirical[:, b] = np.bincount(indices, minlength=2**num_wires) / flat.shape[0]
+    return empirical
 
 
 class TestKQubitsByKQubitsSampling:
@@ -149,6 +173,66 @@ class TestKQubitsByKQubitsSampling:
         samples = _KSampling().batch_generate_samples(device, torch_states_prob_func)
         assert isinstance(samples, np.ndarray)
         empirical = _empirical_distribution(samples, num_wires)
+
+        np.testing.assert_allclose(empirical, exact, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
+
+    @pytest.mark.parametrize("num_wires", [3, 4])
+    def test_samples_match_exact_distribution_from_product_state(self, num_wires):
+        set_seed(TEST_SEED)
+        rng = np.random.default_rng(TEST_SEED)
+        device = init_nif_device(wires=num_wires, shots=int(40000))
+        device.apply_state_prep(_non_basis_product_state(num_wires, rng))
+        assert not device.state_prep_op.is_basis_state
+        exact = _exact_distribution(device, num_wires)
+
+        samples = _KSampling().batch_generate_samples(device, device.get_states_probability)
+        empirical = _empirical_distribution(samples, num_wires)
+
+        np.testing.assert_allclose(empirical, exact, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
+
+    def test_samples_match_exact_distribution_product_state_with_gates(self):
+        set_seed(TEST_SEED)
+        num_wires = 4
+        rng = np.random.default_rng(TEST_SEED)
+        device = init_nif_device(wires=num_wires, shots=int(40000))
+        device.apply_state_prep(_non_basis_product_state(num_wires, rng))
+        device.apply([SptmCompRxRx(rng.uniform(0, np.pi, 2), wires=[i, i + 1]) for i in range(num_wires - 1)])
+        exact = _exact_distribution(device, num_wires)
+
+        samples = _KSampling().batch_generate_samples(device, device.get_states_probability)
+        empirical = _empirical_distribution(samples, num_wires)
+
+        np.testing.assert_allclose(empirical, exact, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
+
+    @pytest.mark.parametrize("num_wires", [3, 4])
+    def test_samples_match_exact_distribution_from_batched_product_state(self, num_wires):
+        set_seed(TEST_SEED)
+        batch_size = 3
+        rng = np.random.default_rng(TEST_SEED)
+        device = init_nif_device(wires=num_wires, shots=int(40000))
+        device.apply_state_prep(_non_basis_product_state(num_wires, rng, batch_size=batch_size))
+        assert device.state_prep_op.batch_size == batch_size
+        exact = _exact_distribution_batched(device, num_wires)
+
+        samples = _KSampling().batch_generate_samples(device, device.get_states_probability)
+        assert np.asarray(samples).shape == (40000, batch_size, num_wires)
+        empirical = _empirical_distribution_batched(samples, num_wires, batch_size)
+
+        np.testing.assert_allclose(empirical, exact, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
+
+    def test_samples_match_exact_distribution_batched_product_state_with_gates(self):
+        set_seed(TEST_SEED)
+        num_wires = 4
+        batch_size = 3
+        rng = np.random.default_rng(TEST_SEED)
+        device = init_nif_device(wires=num_wires, shots=int(40000))
+        device.apply_state_prep(_non_basis_product_state(num_wires, rng, batch_size=batch_size))
+        device.apply([SptmCompRxRx(rng.uniform(0, np.pi, 2), wires=[i, i + 1]) for i in range(num_wires - 1)])
+        exact = _exact_distribution_batched(device, num_wires)
+
+        samples = _KSampling().batch_generate_samples(device, device.get_states_probability)
+        assert np.asarray(samples).shape == (40000, batch_size, num_wires)
+        empirical = _empirical_distribution_batched(samples, num_wires, batch_size)
 
         np.testing.assert_allclose(empirical, exact, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
 

@@ -481,7 +481,11 @@ class NonInteractingFermionicDevice(qml.devices.Device):
 
         probs = self.get_states_probability(wires_binary_states, wires)
         probs = qml.math.transpose(probs)
-        probs = probs / qml.math.sum(probs)
+        # Normalize over the basis-state axis (last). For a batched state prep ``probs`` is
+        # ``(batch, 2 ** k)``, so a global sum would make each row sum to ``1 / batch``; the
+        # per-row sum keeps every batch element a proper distribution. For the unbatched case
+        # ``probs`` is ``(2 ** k,)`` and this reduces to the usual full normalization.
+        probs = probs / qml.math.sum(probs, axis=-1, keepdims=True)
         return probs
 
     def close_p_bar(self) -> None:

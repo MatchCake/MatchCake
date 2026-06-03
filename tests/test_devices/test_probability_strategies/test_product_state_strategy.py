@@ -350,52 +350,61 @@ class TestProductStateProbabilityStrategy:
         set_seed()
         n_wires = 2
         per_qubit = _random_qubit_amplitudes(n_wires, seed=70)
+        all_wires = Wires(range(n_wires))
 
-        nif_dev = NonInteractingFermionicDevice(wires=range(n_wires))
+        def covariance_for(seed: int):
+            nif_dev = NonInteractingFermionicDevice(wires=range(n_wires))
 
-        def circuit():
-            ProductState(per_qubit, wires=range(n_wires))
-            MatchgateOperation.random(wires=[0, 1], seed=19)
-            return qml.probs(wires=range(n_wires))
+            def circuit():
+                ProductState(per_qubit, wires=range(n_wires))
+                MatchgateOperation.random(wires=[0, 1], seed=seed)
+                return qml.probs(wires=range(n_wires))
 
-        qml.QNode(circuit, nif_dev)()
-        cov = np.asarray(nif_dev.covariance_matrix)  # (2n, 2n)
-        all_wires = nif_dev.wires
+            qml.QNode(circuit, nif_dev)()
+            return np.asarray(nif_dev.covariance_matrix), nif_dev.state_prep_op, nif_dev.pfaffian_method
 
-        # Two outcomes, one per circuit — shapes align: (2, 2k, 2k) + (2, 2k, 2k)
-        outcomes = np.array([[0, 0], [0, 1]])  # (2, 2)
-        cov_batched = np.stack([cov, cov])  # (2, 2n, 2n) — two identical circuits
+        # Two distinct circuits (state preparations) stacked along the covariance batch axis.
+        cov_a, state_prep_op, pfaffian_method = covariance_for(19)
+        cov_b, _, _ = covariance_for(23)
+        cov_batched = np.stack([cov_a, cov_b])  # (B=2, 2n, 2n)
 
-        batched_probs = np.asarray(
+        # A batch of B_q outcomes queried against B state preparations must produce the full
+        # (B_q, B) grid: entry [q, b] = probability of outcome q under preparation b. The
+        # outcome batch and the state-prep batch are independent axes (B_q != B here).
+        outcomes = np.array([[0, 0], [0, 1], [1, 1]])  # (B_q=3, k=2)
+
+        grid_probs = np.asarray(
             strategy(
-                state_prep_op=nif_dev.state_prep_op,
+                state_prep_op=state_prep_op,
                 target_binary_states=outcomes,
                 wires=all_wires,
                 all_wires=all_wires,
                 covariance_matrix=cov_batched,
-                pfaffian_method=nif_dev.pfaffian_method,
+                pfaffian_method=pfaffian_method,
             )
-        )  # (2,)
+        )
 
-        # Both circuits are identical so results must match single-cov calls
         ref_probs = np.array(
             [
-                float(
-                    strategy(
-                        state_prep_op=nif_dev.state_prep_op,
-                        target_binary_states=outcomes[i],
-                        wires=all_wires,
-                        all_wires=all_wires,
-                        covariance_matrix=cov,
-                        pfaffian_method=nif_dev.pfaffian_method,
+                [
+                    float(
+                        strategy(
+                            state_prep_op=state_prep_op,
+                            target_binary_states=outcome,
+                            wires=all_wires,
+                            all_wires=all_wires,
+                            covariance_matrix=cov,
+                            pfaffian_method=pfaffian_method,
+                        )
                     )
-                )
-                for i in range(len(outcomes))
+                    for cov in (cov_a, cov_b)
+                ]
+                for outcome in outcomes
             ]
         )
 
-        assert batched_probs.shape == (2,)
-        np.testing.assert_allclose(batched_probs, ref_probs, atol=ATOL_SCALAR_COMPARISON)
+        assert grid_probs.shape == (3, 2)
+        np.testing.assert_allclose(grid_probs, ref_probs, atol=ATOL_SCALAR_COMPARISON)
 
     def test_build_lambda_y_single(self, strategy: ProductStateProbabilityStrategy) -> None:
         y = np.array([0, 1, 0])

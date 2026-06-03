@@ -176,9 +176,11 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
             wires = [wires]
         batch_wires = np.asarray(wires)
 
-        # ``build_lambda_y`` returns (2k, 2k) for a single outcome and (B, 2k, 2k) for a
-        # batch, so the pfaffian's leading axes (covariance batch and/or outcome batch) are
-        # preserved naturally — no manual squeeze of the result is required.
+        # ``build_lambda_y`` returns (2k, 2k) for a single outcome and (B_q, 2k, 2k) for a
+        # batch of outcomes. The covariance submatrix carries its own (state-prep) batch
+        # axes. The two batches are independent and must broadcast on separate axes so that
+        # a batch of B_q outcomes queried against B state preparations yields (B_q, ..., B).
+        same_wires = True
         if is_single:
             wire_indices = all_wires.indices(Wires(batch_wires))
             lambda_t_w = self.extract_majorana_submatrix(covariance_matrix, wire_indices)  # (..., 2k, 2k)
@@ -195,6 +197,19 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
                 )  # (..., B, 2k, 2k)
 
         lambda_y = convert_and_cast_like(self.build_lambda_y(target_arr, k), covariance_matrix)
+
+        # When the state preparation is batched, ``lambda_t_w`` has leading batch axes that
+        # the outcome batch of ``lambda_y`` would otherwise collide with. In the shared-wires
+        # case the outcome axis is not yet present in ``lambda_t_w``, so insert the covariance
+        # batch axes after the outcome axis of ``lambda_y`` to keep the two batches separate.
+        if not is_single and same_wires:
+            covariance_batch_ndim = qml.math.ndim(lambda_t_w) - 2
+            if covariance_batch_ndim > 0:
+                lambda_y_shape = tuple(qml.math.shape(lambda_y))  # (B_q, 2k, 2k)
+                lambda_y = qml.math.reshape(
+                    lambda_y,
+                    lambda_y_shape[:1] + (1,) * covariance_batch_ndim + lambda_y_shape[1:],
+                )
 
         combined = lambda_t_w + lambda_y
         prob = (1.0 / 2**k) * qml.math.real(utils.pfaffian(combined, method=pfaffian_method))
