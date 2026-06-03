@@ -1,8 +1,9 @@
 import numpy as np
+import pennylane as qml
 import pytest
 import torch
 
-from matchcake.operations import MatchgateOperation
+from matchcake.operations import MatchgateOperation, Rxx
 from matchcake.operations.single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
     SptmCompRyRy,
@@ -11,6 +12,8 @@ from matchcake.utils import torch_utils
 from matchcake.utils.math import svd
 
 from ...configs import (
+    ATOL_MATRIX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
     TEST_SEED,
     set_seed,
 )
@@ -28,6 +31,89 @@ class TestSingleParticleTransitionMatrixOperation:
     @pytest.fixture
     def input_matrix(self, batch_size, size):
         return np.random.random((batch_size, 2 * size, 2 * size))
+
+    @pytest.mark.parametrize(
+        "matrix_dtype, expected_name",
+        [
+            (np.complex128, "float64"),
+            (np.complex64, "float32"),
+            (np.float64, "float64"),
+            (np.float32, "float32"),
+            (torch.complex64, "float32"),
+            (torch.complex128, "float64"),
+        ],
+    )
+    def test_dtype_property_returns_real_backend_agnostic_name(self, batch_size, size, matrix_dtype, expected_name):
+        # The SPTM is real-valued: a complex input is stored as its real counterpart, so the dtype
+        # property always reports a floating-point dtype name.
+        shape = (batch_size, 2 * size, 2 * size)
+        if isinstance(matrix_dtype, torch.dtype):
+            matrix = torch.zeros(shape, dtype=matrix_dtype)
+        else:
+            matrix = np.zeros(shape, dtype=matrix_dtype)
+        operation = SingleParticleTransitionMatrixOperation(matrix, wires=np.arange(size))
+        assert operation.dtype == expected_name
+
+    @pytest.mark.parametrize("matrix_dtype, expected_name", [(np.float32, "float32"), (np.float64, "float64")])
+    def test_to_torch_preserves_matrix_dtype(self, batch_size, size, matrix_dtype, expected_name):
+        matrix = np.random.random((batch_size, 2 * size, 2 * size)).astype(matrix_dtype)
+        operation = SingleParticleTransitionMatrixOperation(matrix, wires=np.arange(size)).to_torch()
+        assert isinstance(operation.matrix(), torch.Tensor)
+        assert operation.dtype == expected_name
+
+    def test_matrix_is_always_real(self, batch_size, size):
+        complex_matrix = np.random.random((batch_size, 2 * size, 2 * size)).astype(np.complex128)
+        operation = SingleParticleTransitionMatrixOperation(complex_matrix, wires=np.arange(size))
+        assert "complex" not in operation.dtype
+        assert "complex" not in qml.math.get_dtype_name(operation.matrix())
+
+    def test_constructor_drops_negligible_imaginary_part(self, batch_size, size):
+        real_part = np.random.random((batch_size, 2 * size, 2 * size))
+        complex_matrix = real_part + 1e-9j * np.random.random((batch_size, 2 * size, 2 * size))
+        operation = SingleParticleTransitionMatrixOperation(complex_matrix, wires=np.arange(size))
+        np.testing.assert_allclose(
+            qml.math.cast(operation.matrix(), "float64"),
+            real_part,
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_constructor_raises_on_significant_imaginary_part(self, batch_size, size):
+        complex_matrix = np.random.random((batch_size, 2 * size, 2 * size)).astype(np.complex128)
+        complex_matrix += 1j * np.random.random((batch_size, 2 * size, 2 * size))
+        with pytest.raises(ValueError, match="must be real"):
+            SingleParticleTransitionMatrixOperation(complex_matrix, wires=np.arange(size), check_real=True)
+
+    def test_constructor_does_not_check_imaginary_when_check_real_false(self, batch_size, size):
+        complex_matrix = np.random.random((batch_size, 2 * size, 2 * size)).astype(np.complex128)
+        complex_matrix += 1j * np.random.random((batch_size, 2 * size, 2 * size))
+        operation = SingleParticleTransitionMatrixOperation(complex_matrix, wires=np.arange(size), check_real=False)
+        assert "complex" not in operation.dtype
+
+    def test_gradient_flows_through_complex_input(self, batch_size, size):
+        def sptm_from_complex(real_matrix):
+            complex_matrix = qml.math.cast(real_matrix, "complex128")
+            return SingleParticleTransitionMatrixOperation(complex_matrix, wires=np.arange(size)).matrix()
+
+        assert torch.autograd.gradcheck(
+            sptm_from_complex,
+            torch_utils.to_tensor(np.random.random((batch_size, 2 * size, 2 * size)), torch.double).requires_grad_(),
+            raise_exception=True,
+            check_undefined_grad=False,
+        )
+
+    def test_gradient_flows_through_matchgate_built_sptm(self, batch_size, size):
+        # Building an SPTM from a matchgate goes through a complex matrix whose imaginary part is
+        # numerically zero. The gradient must still flow back to the (real) matchgate angles.
+        def sptm_from_matchgate(angles):
+            return SingleParticleTransitionMatrixOperation.from_operation(Rxx(angles, wires=[0, 1])).matrix()
+
+        assert torch.autograd.gradcheck(
+            sptm_from_matchgate,
+            torch_utils.to_tensor(np.random.random(batch_size), torch.double).requires_grad_(),
+            raise_exception=True,
+            check_undefined_grad=False,
+        )
 
     def test_sptm_sum_gradient_check(self, input_matrix):
         def sptm_sum(p):
@@ -114,8 +200,9 @@ class TestSingleParticleTransitionMatrixOperation:
 
     def test_real(self, batch_size, size):
         matrix = np.random.random((batch_size, 2 * size, 2 * size)).astype(complex)
-        matrix += 1j * np.random.random((batch_size, 2 * size, 2 * size))
+        matrix += 1e-9j * np.random.random((batch_size, 2 * size, 2 * size))
         sptm = SingleParticleTransitionMatrixOperation(matrix=matrix, wires=np.arange(size))
+        assert "complex" not in sptm.dtype
         real_sptm = sptm.real()
         assert isinstance(real_sptm, SingleParticleTransitionMatrixOperation)
 

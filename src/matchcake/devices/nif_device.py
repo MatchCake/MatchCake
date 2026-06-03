@@ -32,7 +32,8 @@ from ..utils import (
     torch_utils,
 )
 from ..utils.math import (
-    convert_and_cast_like,
+    complex_dtype_name_like,
+    convert_like_and_cast_to,
     fermionic_operator_matmul,
 )
 from .contraction_strategies import ContractionStrategy, get_contraction_strategy
@@ -72,8 +73,6 @@ def _nif_split_non_commuting(tape: QuantumScript):
 
 
 class NonInteractingFermionicDevice(qml.devices.Device):
-    _wires: Optional[Wires]
-
     r"""
     The Non-Interacting Fermionic Simulator device. This device simulates non-interacting fermions using
     matchgate operations and single particle transition matrices.
@@ -100,6 +99,12 @@ class NonInteractingFermionicDevice(qml.devices.Device):
     :type n_workers: int
     :keyword star_state_finding_strategy: The strategy to find the star state.
     :type star_state_finding_strategy: Union[str, StarStateFindingStrategy]
+    :keyword r_dtype: The real floating-point dtype used for real-valued tensors. Defaults to ``torch.float64``.
+    :type r_dtype: torch.dtype
+    :keyword c_dtype: The complex dtype used for complex-valued tensors throughout the pipeline (single-particle
+        transition matrices, lookup table, observables). Defaults to ``torch.complex128`` to preserve maximum
+        precision. Set to e.g. ``torch.complex64`` to reduce memory usage and computation cost.
+    :type c_dtype: torch.dtype
 
     :Note: This device is a simulator for non-interacting fermions. It is based on the ``default.qubit`` device.
     :Note: This device supports batch execution.
@@ -107,6 +112,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
     """
 
     name = "nif.qubit"
+    _wires: Optional[Wires]
 
     R_DTYPE = torch.float64
     C_DTYPE = torch.complex128
@@ -201,6 +207,11 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         super().__init__(wires=wires, shots=shots)
         self._debugger = kwargs.get("debugger", None)
         self._init_kwargs = kwargs
+
+        self.R_DTYPE = torch_utils.get_torch_dtype(kwargs.get("r_dtype"), type(self).R_DTYPE)
+        self.C_DTYPE = torch_utils.get_torch_dtype(kwargs.get("c_dtype"), type(self).C_DTYPE)
+        self._c_dtype_name = str(self.C_DTYPE).rsplit(".", 1)[-1]
+        self._r_dtype_name = str(self.R_DTYPE).rsplit(".", 1)[-1]
 
         self._star_state = None
         self._star_probability = None
@@ -382,6 +393,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             instance of ``SingleParticleTransitionMatrixOperation``.
         """
         op_sptm = SingleParticleTransitionMatrixOperation.from_operation(op).pad(self.wires).matrix()
+        op_sptm = qml.math.cast(op_sptm, self._r_dtype_name)
         self._batched = self._batched or (qml.math.ndim(op_sptm) > 2)
         self.global_sptm = self.update_single_particle_transition_matrix(self._global_sptm, op_sptm)
         return self.global_sptm
@@ -1171,7 +1183,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         """
         if self._global_sptm is None:
             assert self.num_wires is not None
-            matrix = np.eye(2 * self.num_wires)[None, ...]
+            matrix = qml.math.cast(np.eye(2 * self.num_wires)[None, ...], self._r_dtype_name)
             if not self._batched:
                 matrix = matrix[0]
             return SingleParticleTransitionMatrixOperation(matrix, wires=self.wires)
@@ -1183,7 +1195,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             value = SingleParticleTransitionMatrixOperation.from_operation(value)
         if not isinstance(value, SingleParticleTransitionMatrixOperation):
             value = SingleParticleTransitionMatrixOperation(value, wires=self.wires)
-        self._global_sptm = value
+        matrix = qml.math.cast(value.matrix(), self._r_dtype_name)
+        self._global_sptm = SingleParticleTransitionMatrixOperation(matrix, wires=value.wires, **value._hyperparameters)
         self.transition_matrix = None
 
     @property
@@ -1285,7 +1298,10 @@ class NonInteractingFermionicDevice(qml.devices.Device):
     @transition_matrix.setter
     def transition_matrix(self, value: Optional[TensorLike]) -> None:
         if self._global_sptm is not None and value is not None:
-            value = convert_and_cast_like(value, self._global_sptm.matrix())
+            global_sptm_matrix = self._global_sptm.matrix()
+            value = convert_like_and_cast_to(
+                value, global_sptm_matrix, dtype=complex_dtype_name_like(global_sptm_matrix)
+            )
         self._transition_matrix = value
         self._lookup_table = None
 

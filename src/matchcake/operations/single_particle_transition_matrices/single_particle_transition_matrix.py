@@ -65,6 +65,8 @@ class SingleParticleTransitionMatrixOperation(Operation):
     DEFAULT_CHECK_ANGLES = False
     DEFAULT_CLIP_ANGLES = True
     DEFAULT_NORMALIZE = False
+    DEFAULT_CHECK_REAL = True
+    REAL_PART_ATOL = 1e-6
 
     @staticmethod
     def make_wires_continuous(wires: Wires):
@@ -80,6 +82,35 @@ class SingleParticleTransitionMatrixOperation(Operation):
     ):
         unitary = SingleParticleTransitionMatrixOperation.to_unitary_matrix(params[0])
         return [qml.QubitUnitary(unitary, wires=wires)]
+
+    @staticmethod
+    def _enforce_real(matrix: TensorLike, check_real: bool) -> TensorLike:
+        """Return the real part of ``matrix``, keeping it real-valued (a floating-point dtype).
+
+        Real inputs are returned unchanged. Complex inputs (e.g. a matrix built from a matchgate)
+        have their imaginary part dropped via the differentiable ``qml.math.real``, so gradients flow
+        through. When ``check_real`` is True, the imaginary part must be negligible (within
+        :attr:`REAL_PART_ATOL`) or a ``ValueError`` is raised.
+
+        :param matrix: The candidate single-particle transition matrix.
+        :type matrix: TensorLike
+        :param check_real: Whether to verify that a complex input has a negligible imaginary part.
+        :type check_real: bool
+        :return: The real-valued matrix.
+        :rtype: TensorLike
+        :raises ValueError: If ``check_real`` is True and the imaginary part exceeds ``REAL_PART_ATOL``.
+        """
+        if "complex" not in qml.math.get_dtype_name(matrix).lower():
+            return matrix
+        if check_real:
+            atol = SingleParticleTransitionMatrixOperation.REAL_PART_ATOL
+            max_abs_imaginary = qml.math.max(qml.math.abs(qml.math.imag(matrix)))
+            if max_abs_imaginary > atol:
+                raise ValueError(
+                    f"The single-particle transition matrix must be real, but its maximum absolute "
+                    f"imaginary part is {max_abs_imaginary}, which exceeds {atol}."
+                )
+        return qml.math.real(matrix)
 
     @classmethod
     def clip_angles(cls, angles):
@@ -272,6 +303,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
         clip_angles: bool = DEFAULT_CLIP_ANGLES,
         check_angles: bool = DEFAULT_CHECK_ANGLES,
         check_matrix: bool = DEFAULT_CHECK_MATRIX,
+        check_real: bool = DEFAULT_CHECK_REAL,
         normalize: bool = DEFAULT_NORMALIZE,
         **kwargs,
     ):
@@ -279,6 +311,12 @@ class SingleParticleTransitionMatrixOperation(Operation):
         Initialize an operation that applies a single-particle transition represented by the
         specified matrix with optional parameters for clipping angles, checking matrix and
         angle validity, and normalization.
+
+        The single-particle transition matrix is a real orthogonal matrix, so the stored matrix is
+        always real (a floating-point dtype). A complex matrix may be passed (for example, one built
+        from a matchgate), in which case its imaginary part is dropped after an optional check that it
+        is negligible. Dropping the imaginary part is differentiable, so gradients still flow through a
+        complex input.
 
         :param matrix: A tensor-like object defining the transition matrix.
         :param wires: Optional; Specifies the wires or subsystems the operation acts on. Can
@@ -290,14 +328,19 @@ class SingleParticleTransitionMatrixOperation(Operation):
             matrix. Defaults to `DEFAULT_CHECK_ANGLES`.
         :param check_matrix: Boolean flag indicating whether to check if the matrix lies
             within the SO(4) group. Defaults to `DEFAULT_CHECK_MATRIX`.
+        :param check_real: Boolean flag indicating whether to verify that a complex input matrix has a
+            negligible imaginary part (within `REAL_PART_ATOL`) before dropping it.
+            Defaults to `DEFAULT_CHECK_REAL`.
         :param normalize: Boolean flag indicating whether to orthonormalize the matrix
             prior to initialization. Defaults to `DEFAULT_NORMALIZE`.
         :param kwargs: Additional keyword arguments passed to parent classes or methods.
         :raises ValueError: If `check_matrix` is True and the provided matrix does not belong
-            to the SO(4) group.
+            to the SO(4) group, or if `check_real` is True and the imaginary part of `matrix`
+            exceeds `REAL_PART_ATOL`.
         """
         if normalize:
             matrix = orthonormalize(matrix)
+        matrix = self._enforce_real(matrix, check_real)
         self._matrix = matrix
         self._wires = wires
         super().__init__(matrix, wires=wires, id=id)
@@ -305,6 +348,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
             "clip_angles": clip_angles,
             "check_angles": check_angles,
             "check_matrix": check_matrix,
+            "check_real": check_real,
         }
         if check_matrix:
             if not self.check_is_in_so4():
@@ -379,23 +423,19 @@ class SingleParticleTransitionMatrixOperation(Operation):
         return SingleParticleTransitionMatrixOperation(dagger(self.matrix()), wires=self.wires, **self._hyperparameters)
 
     def to_cuda(self):  # pragma: no cover
-        import torch  # pragma: no cover
-
         from ...utils import torch_utils  # pragma: no cover
 
         return SingleParticleTransitionMatrixOperation(  # pragma: no cover
-            torch_utils.to_cuda(self.matrix(), dtype=torch.complex128),  # pragma: no cover
+            torch_utils.to_cuda(self.matrix(), dtype=None),  # pragma: no cover
             wires=self.wires,  # pragma: no cover
             **self._hyperparameters,  # pragma: no cover
         )  # pragma: no cover
 
     def to_torch(self):
-        import torch
-
         from ...utils import torch_utils
 
         return SingleParticleTransitionMatrixOperation(
-            torch_utils.to_tensor(self.matrix(), dtype=torch.complex128),
+            torch_utils.to_tensor(self.matrix(), dtype=None),
             wires=self.wires,
             **self._hyperparameters,
         )
@@ -478,6 +518,15 @@ class SingleParticleTransitionMatrixOperation(Operation):
     @property
     def shape(self):
         return qml.math.shape(self._matrix)
+
+    @property
+    def dtype(self) -> str:
+        """The backend-agnostic dtype name of the underlying matrix.
+
+        :return: The dtype name (e.g. ``"complex128"``).
+        :rtype: str
+        """
+        return qml.math.get_dtype_name(self._matrix)
 
     @property
     def batch_size(self):

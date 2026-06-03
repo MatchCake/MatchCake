@@ -6,6 +6,7 @@ from matchcake import utils
 from matchcake.utils.math import (
     check_is_unitary,
     circuit_matmul,
+    complex_dtype_name_like,
     convert_1d_to_2d_indexes,
     convert_2d_to_1d_indexes,
     convert_tensors_to_same_type,
@@ -135,6 +136,21 @@ def test_random_index_3d_none(probs_shape):
 
 
 class TestMath:
+    @pytest.mark.parametrize(
+        "reference, expected_name",
+        [
+            (torch.zeros(2, dtype=torch.float32), "complex64"),
+            (torch.zeros(2, dtype=torch.float64), "complex128"),
+            (torch.zeros(2, dtype=torch.complex64), "complex64"),
+            (torch.zeros(2, dtype=torch.complex128), "complex128"),
+            (np.zeros(2, dtype=np.float32), "complex64"),
+            (np.zeros(2, dtype=np.float64), "complex128"),
+            (np.zeros(2, dtype=np.int64), "complex128"),
+        ],
+    )
+    def test_complex_dtype_name_like(self, reference, expected_name):
+        assert complex_dtype_name_like(reference) == expected_name
+
     def test_convert_and_cast_like(self):
         source = np.random.uniform(-10, 10, (4, 3)).astype(np.float32)
         target = np.random.uniform(-10, 10, (4, 3)).astype(np.float64)

@@ -282,7 +282,8 @@ class TestNIFDeviceMethodsAndProperties:
         dev = NonInteractingFermionicDevice(wires=2)
         sptm = SingleParticleTransitionMatrixOperation(np.eye(4), wires=[0, 1])
         dev.global_sptm = sptm
-        assert dev._global_sptm is sptm
+        assert dev._global_sptm.dtype == "float64"
+        np.testing.assert_allclose(dev._global_sptm.matrix(), np.eye(4))
 
     def test_execute_single_quantum_script_directly(self):
         dev = NonInteractingFermionicDevice(wires=2)
