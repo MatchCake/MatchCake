@@ -1158,9 +1158,10 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             raise ValueError(
                 f"Extended covariance matrix requires a ProductState or BasisState. Got {type(state_prep)}."
             )
-        # Build tilde_Lambda_0 from the initial state
-        amplitudes = state_prep.data[0]  # (n, 2) complex
-        cov0 = state_prep.covariance_matrix  # (2n, 2n)
+        # Build tilde_Lambda_0 from the initial state. Cast to the device's configured
+        # precision so r_dtype/c_dtype control the whole m-Pfaffian pipeline.
+        amplitudes = qml.math.cast(state_prep.data[0], self._c_dtype_name)  # (n, 2) complex
+        cov0 = qml.math.cast(state_prep.covariance_matrix, self._r_dtype_name)  # (2n, 2n)
         d0 = _displacement_vector(amplitudes, self.wires)  # (2n,)
         ext_cov0 = _extended_covariance_matrix(cov0, d0)  # (2n+1, 2n+1)
 

@@ -6,6 +6,7 @@ import torch
 
 from ....typing import TensorLike
 from ....utils.math import convert_and_cast_like
+from ....utils.torch_utils import infer_complex_dtype, infer_real_dtype
 
 
 def displacement_vector(
@@ -25,11 +26,15 @@ def displacement_vector(
     :param wires: Wire labels (unused for the computation; here for API consistency).
     :return: Real tensor of shape (2n,).
     """
+    # Preserve the precision of the input amplitudes (complex64 -> float32) instead
+    # of forcing complex128/float64.
+    c_dtype = infer_complex_dtype(product_state_amplitudes)
+    r_dtype = infer_real_dtype(product_state_amplitudes)
     psi = torch.as_tensor(
         np.array(product_state_amplitudes)
         if not isinstance(product_state_amplitudes, torch.Tensor)
         else product_state_amplitudes,
-        dtype=torch.complex128,
+        dtype=c_dtype,
     )
     alpha = psi[..., 0]  # (..., n)
     beta = psi[..., 1]  # (..., n)
@@ -45,15 +50,15 @@ def displacement_vector(
     if n > 1:
         z_prod = torch.cat(
             [
-                torch.ones(batch_shape + (1,), dtype=torch.float64, device=psi.device),
+                torch.ones(batch_shape + (1,), dtype=r_dtype, device=psi.device),
                 torch.cumprod(z[..., :-1], dim=-1),
             ],
             dim=-1,
         )  # (..., n)
     else:
-        z_prod = torch.ones(batch_shape + (n,), dtype=torch.float64, device=psi.device)
+        z_prod = torch.ones(batch_shape + (n,), dtype=r_dtype, device=psi.device)
 
-    d = torch.zeros(batch_shape + (2 * n,), dtype=torch.float64, device=psi.device)
+    d = torch.zeros(batch_shape + (2 * n,), dtype=r_dtype, device=psi.device)
     d[..., 0::2] = z_prod * x  # <c_{2k}>   = z_prod[k] * <X_k>
     d[..., 1::2] = z_prod * y  # <c_{2k+1}> = z_prod[k] * <Y_k>
 
@@ -74,16 +79,17 @@ def extended_covariance_matrix(
     :param displacement: (..., 2n) real displacement vector d[mu] = <c_mu>.
     :return: (..., 2n+1, 2n+1) extended covariance matrix.
     """
-    cov_matrix_t = torch.as_tensor(qml.math.real(cov_matrix), dtype=torch.float64)
+    r_dtype = infer_real_dtype(cov_matrix)
+    cov_matrix_t = torch.as_tensor(qml.math.real(cov_matrix), dtype=r_dtype)
     d = torch.as_tensor(
         np.array(displacement) if not isinstance(displacement, torch.Tensor) else displacement,
-        dtype=torch.float64,
+        dtype=r_dtype,
     )
     batch = cov_matrix_t.shape[:-2]
 
     d_col = d.unsqueeze(-1)  # (..., 2n, 1)
     neg_d_row = -d.unsqueeze(-2)  # (..., 1, 2n)
-    zero_corner = torch.zeros(*batch, 1, 1, dtype=torch.float64, device=cov_matrix_t.device)
+    zero_corner = torch.zeros(*batch, 1, 1, dtype=r_dtype, device=cov_matrix_t.device)
 
     top = torch.cat([cov_matrix_t, d_col], dim=-1)  # (..., 2n, 2n+1)
     bottom = torch.cat([neg_d_row, zero_corner], dim=-1)  # (..., 1,  2n+1)
@@ -104,13 +110,14 @@ def sptm_lift(Q: TensorLike) -> TensorLike:
     :param Q: (..., 2n, 2n) orthogonal SPTM.
     :return: (..., 2n+1, 2n+1) lifted SPTM.
     """
-    Q_t = torch.as_tensor(qml.math.real(Q), dtype=torch.float64)
+    r_dtype = infer_real_dtype(Q)
+    Q_t = torch.as_tensor(qml.math.real(Q), dtype=r_dtype)
     batch = Q_t.shape[:-2]
     two_n = Q_t.shape[-1]
 
-    zeros_col = torch.zeros(*batch, two_n, 1, dtype=torch.float64, device=Q_t.device)
-    zeros_row = torch.zeros(*batch, 1, two_n, dtype=torch.float64, device=Q_t.device)
-    one_corner = torch.ones(*batch, 1, 1, dtype=torch.float64, device=Q_t.device)
+    zeros_col = torch.zeros(*batch, two_n, 1, dtype=r_dtype, device=Q_t.device)
+    zeros_row = torch.zeros(*batch, 1, two_n, dtype=r_dtype, device=Q_t.device)
+    one_corner = torch.ones(*batch, 1, 1, dtype=r_dtype, device=Q_t.device)
 
     top = torch.cat([Q_t, zeros_col], dim=-1)  # (..., 2n, 2n+1)
     bottom = torch.cat([zeros_row, one_corner], dim=-1)  # (..., 1,  2n+1)

@@ -10,34 +10,7 @@ from pennylane.typing import TensorLike
 
 from . import torch_utils
 from .math import convert_and_cast_like
-
-_COMPLEX_TO_REAL_DTYPE = {
-    torch.complex32: torch.float16,
-    torch.complex64: torch.float32,
-    torch.complex128: torch.float64,
-}
-
-
-def infer_real_dtype(tensor: TensorLike) -> torch.dtype:
-    """
-    Infer the real-valued ``torch`` dtype matching the precision of ``tensor``.
-
-    Complex inputs map to their real counterpart (e.g. ``complex128 -> float64``),
-    floating inputs keep their precision, and non-floating inputs fall back to
-    ``float64``.
-
-    :param tensor: Tensor (torch, numpy, ...) whose precision is inspected.
-    :return: A real ``torch.dtype``.
-    """
-    if isinstance(tensor, torch.Tensor):
-        dtype = tensor.dtype
-    else:
-        dtype = torch.as_tensor(np.asarray(tensor)).dtype
-    if dtype in _COMPLEX_TO_REAL_DTYPE:
-        return _COMPLEX_TO_REAL_DTYPE[dtype]
-    if dtype.is_floating_point:
-        return dtype
-    return torch.float64
+from .torch_utils import infer_real_dtype
 
 
 def signed_pfaffian(matrix: TensorLike, dtype: Optional[torch.dtype] = None) -> TensorLike:

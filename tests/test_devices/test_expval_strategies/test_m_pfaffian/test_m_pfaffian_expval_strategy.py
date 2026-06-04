@@ -204,6 +204,66 @@ class TestExtendedCovarianceMatrix:
         np.testing.assert_allclose(tilde + tilde.T, 0.0, atol=ATOL)
 
 
+class TestMPfaffianPrecisionControl:
+    """The m-Pfaffian building blocks must preserve input precision, not force float64."""
+
+    @pytest.mark.parametrize(
+        "amp_dtype, expected_real_dtype",
+        [(torch.complex64, torch.float32), (torch.complex128, torch.float64)],
+    )
+    def test_displacement_vector_precision(self, amp_dtype, expected_real_dtype):
+        psi = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=amp_dtype)
+        d = displacement_vector(psi, [0, 1])
+        assert d.dtype == expected_real_dtype
+
+    @pytest.mark.parametrize("r_dtype", [torch.float32, torch.float64])
+    def test_extended_covariance_matrix_precision(self, r_dtype):
+        n = 2
+        cov = torch.zeros(2 * n, 2 * n, dtype=r_dtype)
+        d = torch.zeros(2 * n, dtype=r_dtype)
+        tilde = extended_covariance_matrix(cov, d)
+        assert tilde.dtype == r_dtype
+
+    @pytest.mark.parametrize(
+        "r_dtype, c_dtype",
+        [(torch.float32, torch.complex64), (torch.float64, torch.complex128)],
+    )
+    def test_end_to_end_device_precision(self, r_dtype, c_dtype):
+        """Device r_dtype/c_dtype must control the whole expval pipeline dtype."""
+        inv = 1 / np.sqrt(2)
+        dev = NonInteractingFermionicDevice(wires=2, r_dtype=r_dtype, c_dtype=c_dtype)
+        amps = torch.tensor([[1.0, 0.0], [inv, inv]], dtype=c_dtype)
+        params = torch.tensor([0.3, 0.4], dtype=r_dtype)
+
+        @qml.qnode(dev)
+        def circ(p):
+            ProductState(amps, wires=[0, 1])
+            CompRyRy(p, wires=[0, 1])
+            return qml.expval(qml.Z(0) @ qml.X(1))
+
+        res = circ(params)
+        assert dev.extended_covariance_matrix.dtype == r_dtype
+        assert res.dtype == r_dtype
+
+    def test_precision_values_agree_across_dtypes(self):
+        """float32 and float64 pipelines must agree to single precision."""
+        inv = 1 / np.sqrt(2)
+        vals = {}
+        for r_dtype, c_dtype in [(torch.float32, torch.complex64), (torch.float64, torch.complex128)]:
+            dev = NonInteractingFermionicDevice(wires=2, r_dtype=r_dtype, c_dtype=c_dtype)
+            amps = torch.tensor([[1.0, 0.0], [inv, inv]], dtype=c_dtype)
+            params = torch.tensor([0.3, 0.4], dtype=r_dtype)
+
+            @qml.qnode(dev)
+            def circ(p):
+                ProductState(amps, wires=[0, 1])
+                CompRyRy(p, wires=[0, 1])
+                return qml.expval(qml.Z(0) @ qml.X(1))
+
+            vals[r_dtype] = float(circ(params))
+        np.testing.assert_allclose(vals[torch.float32], vals[torch.float64], atol=1e-5)
+
+
 class TestSignedPfaffian:
     """Tests for the signed_pfaffian implementation via Parlett-Reid skew-tridiagonalization."""
 
