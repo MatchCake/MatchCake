@@ -82,7 +82,6 @@ class ProductState(StatePrepBase):
         state: TensorLike,
         wires: WiresLike,
         validate_norm: bool = True,
-        id: Optional[str] = None,
     ):
         """
 
@@ -93,7 +92,6 @@ class ProductState(StatePrepBase):
             ``(B, n, 2)``.
         :param wires:
         :param validate_norm:
-        :param id:
         """
         wires = Wires(wires)
         state = qml.math.asarray(state)
@@ -133,7 +131,7 @@ class ProductState(StatePrepBase):
                     f"{bad.tolist()} have norms^2 != 1 within atol={self.ATOL}."
                 )
 
-        super().__init__(state, wires=wires, id=id)
+        super().__init__(state, wires=wires)
 
     @cached_property
     def covariance_matrix(self) -> TensorLike:

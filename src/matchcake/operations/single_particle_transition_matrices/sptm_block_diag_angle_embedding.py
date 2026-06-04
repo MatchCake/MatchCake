@@ -30,7 +30,7 @@ class SptmBlockDiagAngleEmbedding(SingleParticleTransitionMatrixOperation):
 
     num_wires = None
 
-    def __init__(self, params, wires=None, id=None):
+    def __init__(self, params, wires=None):
         params_shape = qml.math.shape(params)
         params_batched = qml.math.reshape(params, (-1, *params_shape[-2:]))
         params_batched_flatten = qml.math.reshape(params_batched, (params_shape[0], -1))
@@ -51,4 +51,4 @@ class SptmBlockDiagAngleEmbedding(SingleParticleTransitionMatrixOperation):
             matrix[..., i, i + 1] = -qml.math.sin(params_batched_flatten[..., p_idx])
             matrix[..., i + 1, i + 1] = qml.math.cos(params_batched_flatten[..., p_idx])
 
-        super().__init__(matrix, wires=wires, id=id, normalize=False)
+        super().__init__(matrix, wires=wires, normalize=False)

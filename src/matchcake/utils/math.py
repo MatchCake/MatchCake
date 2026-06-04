@@ -232,7 +232,7 @@ def random_index(
     n: Optional[int] = None,
     axis=-1,
     normalize_probs: bool = True,
-    eps: float = 1e-12,
+    eps: float = 1e-32,
 ):
     """
     Generates random indices based on provided probabilities along a specified axis.
@@ -253,21 +253,50 @@ def random_index(
     :param normalize_probs: Boolean indicating whether to normalize `probs`
         along the specified axis to ensure that the entries sum to 1.
         Defaults to True.
-    :param eps: A small float value added to the denominator during
-        normalization to prevent division by zero. Defaults to 1e-12.
+    :param eps: Threshold below which the per-axis probability mass is treated as
+        zero (and replaced by one) to avoid dividing by zero. The relative weights
+        are otherwise left untouched. Defaults to 1e-32.
     :return: A scalar or an array of randomly selected indices based on the
-        probabilities provided.
-    """
-    _n = n or 1
-    axis = np.mod(axis, probs.ndim)
-    if normalize_probs:
-        probs = probs / (probs.sum(axis=axis, keepdims=True) + eps)
+        probabilities provided. The indices are returned as a NumPy integer
+        array regardless of the backend of ``probs``.
 
-    shape_wo_axis = list(probs.shape)
+    .. note::
+
+        The routine is backend agnostic: ``probs`` may be a NumPy array, a
+        Torch tensor, or any other array type supported by ``qml.math``. All
+        probability arithmetic is performed in the native backend of ``probs``
+        and only the final integer indices are returned as NumPy.
+    """
+    from .torch_utils import to_numpy
+
+    n_samples = n or 1
+    n_categories = qml.math.shape(probs)[axis]
+    axis = int(np.mod(axis, qml.math.ndim(probs)))
+    if normalize_probs:
+        # Divide by the true mass along ``axis`` so the relative weights are preserved
+        # exactly. An *additive* epsilon would dominate the denominator whenever the
+        # masses are tiny (e.g. deep autoregressive conditionals whose joint masses are
+        # ~2**-n), collapsing the normalised distribution toward zero and making the
+        # inverse-CDF always fall on the last category. We only guard against an exactly
+        # zero sum, leaving the distribution untouched everywhere else.
+        total = qml.math.sum(probs, axis=axis, keepdims=True)
+        safe_total = qml.math.where(total > eps, total, qml.math.ones_like(total))
+        probs = probs / safe_total
+
+    # Inverse-CDF sampling: draw uniforms and count how many cumulative masses
+    # they exceed. Counting (rather than ``argmax``) gives the first category
+    # whose cumulative mass crosses the uniform draw without relying on the
+    # backend specific tie-breaking of ``argmax``.
+    cumulative = qml.math.expand_dims(qml.math.cumsum(probs, axis=axis), axis=0)  # (1, ..., n_categories, ...)
+    shape_wo_axis = list(qml.math.shape(probs))
     shape_wo_axis.pop(axis)
-    shape_wo_axis = [_n] + shape_wo_axis
-    r = np.expand_dims(np.random.rand(*shape_wo_axis), axis=1 + axis)
-    indexes = (probs.cumsum(axis=axis) > r).argmax(axis=1 + axis)
+    uniform = np.random.random([n_samples] + shape_wo_axis)
+    uniform = qml.math.cast_like(qml.math.convert_like(uniform, probs), probs)
+    uniform = qml.math.expand_dims(uniform, axis=1 + axis)  # (n_samples, ..., 1, ...)
+
+    below = qml.math.cast(cumulative <= uniform, int)
+    indexes = qml.math.sum(below, axis=1 + axis)  # (n_samples, ...)
+    indexes = np.clip(to_numpy(indexes, dtype=int), 0, n_categories - 1)
     if n is None:
         return indexes[0]
     return indexes

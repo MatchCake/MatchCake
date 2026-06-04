@@ -47,7 +47,7 @@ class SptmAngleEmbedding(Operation):
     def __repr__(self):
         return f"{self.__class__.__name__}({self.data}, wires={self.wires.tolist()})"
 
-    def __init__(self, features, wires, rotations="X", id=None, **kwargs):
+    def __init__(self, features, wires, rotations="X", **kwargs):
         r"""
         Construct a new Matchgate AngleEmbedding operation.
 
@@ -55,7 +55,6 @@ class SptmAngleEmbedding(Operation):
 
         :param features: The features to embed.
         :param wires: The wires to embed the features on.
-        :param id: The id of the operation.
 
         :keyword contract_rots: If True, contract the rotations. Default is False.
         """
@@ -69,7 +68,7 @@ class SptmAngleEmbedding(Operation):
             "rotations": [ROT[r] for r in self._rotations],
         }
         wires = wires[:n_features]
-        super().__init__(features, wires=wires, id=id)
+        super().__init__(features, wires=wires)
 
     @property
     def num_params(self):

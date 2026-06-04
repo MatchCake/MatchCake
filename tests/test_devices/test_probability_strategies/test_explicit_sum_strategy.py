@@ -26,9 +26,26 @@ class TestExplicitSumStrategy:
         wires, transition_matrix, state_prep_op = two_qubit_setup
         result = strategy(
             state_prep_op=state_prep_op,
+            target_binary_states=np.array([0]),
+            wires=0,
+            all_wires=Wires(wires),
+            transition_matrix=transition_matrix,
+        )
+        assert result is not None
+
+    def test_compute_single_wires_as_int(self, strategy, two_qubit_setup):
+        wires, transition_matrix, state_prep_op = two_qubit_setup
+        result = strategy._compute_single(
+            state_prep_op=state_prep_op,
             target_binary_state=np.array([0]),
             wires=0,
             all_wires=Wires(wires),
             transition_matrix=transition_matrix,
         )
         assert result is not None
+
+    def test_can_execute_basis_state_true(self, strategy):
+        assert strategy.can_execute(qml.BasisState(np.zeros(2, dtype=int), wires=[0, 1])) is True
+
+    def test_can_execute_non_state_false(self, strategy):
+        assert strategy.can_execute(qml.PauliX(0)) is False

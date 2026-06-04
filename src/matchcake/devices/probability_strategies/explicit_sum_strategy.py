@@ -35,7 +35,27 @@ class ExplicitSumStrategy(ProbabilityStrategy):
         state = qml.math.cast(state, dtype=complex)
         return np.reshape(state, [2] * num_wires)
 
-    def __call__(
+    def can_execute(self, state_prep_op: StatePrepBase) -> bool:
+        """Return True for basis-state inputs (BasisState, StatePrepFromGates, or ProductState that is a basis state).
+
+        :param state_prep_op: State preparation operation.
+        :type state_prep_op: StatePrepBase
+        :return: True if the state is a computational-basis state.
+        :rtype: bool
+        """
+        from pennylane.ops.qubit.state_preparation import BasisState
+
+        from ...operations.state_preparation import StatePrepFromGates
+        from ...operations.state_preparation.product_state import ProductState
+
+        if isinstance(state_prep_op, (BasisState, StatePrepFromGates)):
+            return True
+        if isinstance(state_prep_op, ProductState):
+            is_basis = state_prep_op.is_basis_state
+            return bool(is_basis) if isinstance(is_basis, bool) else bool(qml.math.all(is_basis))
+        return False
+
+    def _compute_single(
         self,
         *,
         state_prep_op: StatePrepBase,

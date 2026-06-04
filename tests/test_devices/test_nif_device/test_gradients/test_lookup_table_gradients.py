@@ -67,10 +67,11 @@ class TestNonInteractingFermionicLookupTableGradients:
         def get_output(transition_matrix):
             lookup_table = NonInteractingFermionicLookupTable(transition_matrix)
             lookup_table_strategy = LookupTableStrategy()
-            probs = lookup_table_strategy.batch_call(
+            probs = lookup_table_strategy(
                 state_prep_op=BasisState(system_state, wires=np.arange(len(system_state))),
                 target_binary_states=target_binary_states,
-                batch_wires=None,
+                wires=np.arange(len(system_state)),
+                all_wires=np.arange(len(system_state)),
                 pfaffian_method="det",
                 lookup_table=lookup_table,
             )

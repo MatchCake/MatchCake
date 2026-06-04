@@ -31,7 +31,7 @@ class SptmCompRyRy(SingleParticleTransitionMatrixOperation):
         rn_gen = np.random.default_rng(seed)
         return rn_gen.choice(cls.ALLOWED_ANGLES, size=params_shape)
 
-    def __init__(self, params, wires=None, *, id=None, **kwargs):
+    def __init__(self, params, wires=None, **kwargs):
         params_shape = qml.math.shape(params)
         if params_shape[-1] != 2:
             raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
@@ -65,7 +65,7 @@ class SptmCompRyRy(SingleParticleTransitionMatrixOperation):
 
         matrix[..., 1, 3] = qml.math.sin(theta_minus_phi)
         matrix[..., 3, 3] = qml.math.cos(theta_minus_phi)
-        super().__init__(matrix, wires=wires, id=id, **kwargs)
+        super().__init__(matrix, wires=wires, **kwargs)
         self._given_params = params
 
     def to_matchgate(self):

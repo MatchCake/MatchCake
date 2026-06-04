@@ -92,7 +92,17 @@ class CliffordSumStrategy(ProbabilityStrategy):
 
         return utils.recursive_2in_operator(outer_prod, transition_vectors)
 
-    def __call__(
+    def can_execute(self, state_prep_op: StatePrepBase) -> bool:
+        """Return True only for BasisState and StatePrepFromGates inputs.
+
+        :param state_prep_op: State preparation operation.
+        :type state_prep_op: StatePrepBase
+        :return: True when the state is a BasisState or StatePrepFromGates.
+        :rtype: bool
+        """
+        return isinstance(state_prep_op, (BasisState, StatePrepFromGates))
+
+    def _compute_single(
         self,
         *,
         state_prep_op: StatePrepBase,

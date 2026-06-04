@@ -2,7 +2,9 @@ from ...utils import get_all_subclasses
 from .clifford_sum_strategy import CliffordSumStrategy
 from .explicit_sum_strategy import ExplicitSumStrategy
 from .lookup_table_strategy import LookupTableStrategy
+from .probability_func_dispatcher import ProbabilityFuncDispatcher
 from .probability_strategy import ProbabilityStrategy
+from .product_state_strategy import ProductStateProbabilityStrategy
 
 probability_strategy_map = {_cls.NAME.lower().strip(): _cls for _cls in get_all_subclasses(ProbabilityStrategy)}
 

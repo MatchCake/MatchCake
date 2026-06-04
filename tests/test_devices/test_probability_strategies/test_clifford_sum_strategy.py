@@ -38,7 +38,7 @@ class TestCliffordSumStrategy:
         nif_probs = strategy(
             system_state=system_state,
             state_prep_op=state_prep_op,
-            target_binary_state=target_state,
+            target_binary_states=target_state,
             wires=wires,
             all_wires=wires,
             global_sptm=global_sptm.matrix(),
@@ -61,12 +61,33 @@ class TestCliffordSumStrategy:
         state_prep_op = qml.BasisState(np.zeros(num_wires, dtype=int), wires)
         result = strategy(
             state_prep_op=state_prep_op,
+            target_binary_states=np.array([0]),
+            wires=0,
+            all_wires=Wires(wires),
+            transition_matrix=transition_matrix,
+        )
+        assert result is not None
+
+    def test_compute_single_wires_as_int(self, strategy):
+        num_wires = 2
+        wires = np.arange(num_wires)
+        global_sptm = SingleParticleTransitionMatrixOperation.random(wires=wires, seed=42)
+        transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm.matrix())
+        state_prep_op = qml.BasisState(np.zeros(num_wires, dtype=int), wires)
+        result = strategy._compute_single(
+            state_prep_op=state_prep_op,
             target_binary_state=np.array([0]),
             wires=0,
             all_wires=Wires(wires),
             transition_matrix=transition_matrix,
         )
         assert result is not None
+
+    def test_can_execute_basis_state_true(self, strategy):
+        assert strategy.can_execute(qml.BasisState(np.zeros(2, dtype=int), wires=[0, 1])) is True
+
+    def test_can_execute_non_state_false(self, strategy):
+        assert strategy.can_execute(qml.PauliX(0)) is False
 
     def test_compute_clifford_expvals_state_prep_from_gates(self):
         state_prep = StatePrepFromGates(lambda wires: [qml.Hadamard(wires=wires[0])], wires=[0, 1])

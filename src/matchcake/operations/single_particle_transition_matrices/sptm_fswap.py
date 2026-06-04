@@ -9,7 +9,7 @@ class SptmCompZX(SingleParticleTransitionMatrixOperation):
     def random(cls, wires: Wires, batch_size=None, **kwargs):
         return cls(wires=wires, **kwargs)
 
-    def __init__(self, wires=None, id=None, **kwargs):
+    def __init__(self, wires=None, **kwargs):
         wires_arr = Wires(wires).toarray()
         wire0, wire1 = np.sort(wires_arr)
         size = 2 * (wire1 - wire0 + 1)
@@ -24,7 +24,7 @@ class SptmCompZX(SingleParticleTransitionMatrixOperation):
         if wire0 != wires_arr[0]:
             matrix = matrix.T
 
-        super().__init__(matrix, wires=wires, id=id, **kwargs)
+        super().__init__(matrix, wires=wires, **kwargs)
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
         return self
