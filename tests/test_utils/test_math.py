@@ -167,7 +167,9 @@ class TestMath:
     def test_convert_like_and_cast_to(self):
         source = np.random.uniform(-10, 10, (4, 3)).astype(np.float32)
         target = torch.from_numpy(source).to(dtype=torch.float64)
-        out = utils.math.convert_like_and_cast_to(source, target, torch.complex32)
+        # torch flags ``complex32`` (ComplexHalf) as experimental; the warning is expected here.
+        with pytest.warns(UserWarning, match="ComplexHalf"):
+            out = utils.math.convert_like_and_cast_to(source, target, torch.complex32)
         assert isinstance(out, torch.Tensor)
         assert out.dtype == torch.complex32
 

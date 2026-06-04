@@ -36,7 +36,6 @@ class CompZX(MatchgateOperation):
     def __init__(
         self,
         wires=None,
-        id=None,
         default_dtype: torch.dtype = torch.complex128,
         default_device: Optional[torch.device] = None,
         **kwargs,
@@ -44,14 +43,13 @@ class CompZX(MatchgateOperation):
         super().__init__(
             mgp.MatchgateStandardParams.from_sub_matrices(PAULI_Z, PAULI_X),
             wires=wires,
-            id=id,
             default_dtype=default_dtype,
             default_device=default_device,
             **kwargs,
         )
 
     def to_sptm_operation(self) -> SingleParticleTransitionMatrixOperation:
-        return SptmCompZX(wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs)
+        return SptmCompZX(wires=self.wires, **self.hyperparameters, **self.kwargs)
 
 
 FermionicSWAP = CompZX

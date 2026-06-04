@@ -29,7 +29,7 @@ class SptmCompRzRz(SingleParticleTransitionMatrixOperation):
         rn_gen = np.random.default_rng(seed)
         return rn_gen.uniform(0, 2 * np.pi, params_shape)
 
-    def __init__(self, params, wires=None, *, id=None, **kwargs):
+    def __init__(self, params, wires=None, **kwargs):
         params_shape = qml.math.shape(params)
         if params_shape[-1] != 2:
             raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
@@ -65,7 +65,7 @@ class SptmCompRzRz(SingleParticleTransitionMatrixOperation):
         matrix[..., 2, 3] = 1j * (exp_phi - exp_theta) * exp_theta_phi / 2
         matrix[..., 3, 2] = 1j * (exp_theta - exp_phi) * exp_theta_phi / 2
         matrix[..., 3, 3] = (exp_theta + exp_phi) * exp_theta_phi / 2
-        super().__init__(matrix, wires=wires, id=id, **kwargs)
+        super().__init__(matrix, wires=wires, **kwargs)
         self._given_params = params
 
     def to_matchgate(self):

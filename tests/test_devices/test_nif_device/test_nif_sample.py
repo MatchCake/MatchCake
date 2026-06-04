@@ -1,8 +1,10 @@
+import warnings
+
 import numpy as np
 import pennylane as qml
 import pytest
 
-from matchcake import MatchgateOperation
+from matchcake import MatchgateOperation, NonInteractingFermionicDevice
 from matchcake.circuits import random_sptm_operations_generator
 from matchcake.operations import SptmCompRxRx
 from matchcake.utils import torch_utils
@@ -13,7 +15,7 @@ from ...configs import (
     TEST_SEED,
     set_seed,
 )
-from .. import devices_init, specific_matchgate_circuit
+from .. import devices_init, init_nif_device, specific_matchgate_circuit
 
 
 class TestNonInteractingFermionicDeviceSampling:
@@ -117,6 +119,33 @@ class TestNonInteractingFermionicDeviceSampling:
             rtol=RTOL_APPROX_COMPARISON,
             err_msg=f"abs_diff: {abs_diff.tolist()}",
         )
+
+    def test_constructing_with_shots_does_not_warn(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            NonInteractingFermionicDevice(wires=3, shots=64)
+
+    @pytest.mark.parametrize("shots", [16, 128])
+    def test_execute_generator_shots_param_overrides_default(self, shots):
+        num_wires = 3
+        device = init_nif_device(wires=num_wires)  # analytic, no device-level shots
+        operations = [qml.BasisState(np.array([1, 0, 1], dtype=int), wires=range(num_wires))]
+        samples = torch_utils.to_numpy(
+            device.execute_generator(iter(operations), output_type="samples", shots=shots, apply=True, reset=True)
+        ).astype(int)
+        assert samples.shape == (shots, num_wires)
+        np.testing.assert_array_equal(samples, np.tile([1, 0, 1], (shots, 1)))
+
+    def test_execute_generator_without_shots_is_analytic(self):
+        num_wires = 3
+        device = init_nif_device(wires=num_wires)
+        operations = [qml.BasisState(np.array([1, 0, 1], dtype=int), wires=range(num_wires))]
+        probs = torch_utils.to_numpy(
+            device.execute_generator(iter(operations), output_type="probs", apply=True, reset=True)
+        )
+        assert np.isclose(probs.sum(), 1.0)
+        # |101> is index 5 in a 3-wire basis.
+        assert np.isclose(probs[5], 1.0)
 
     @pytest.mark.parametrize(
         "batch_size, num_gates, num_wires",

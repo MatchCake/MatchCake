@@ -24,9 +24,8 @@ class StatePrepFromGates(StatePrepBase):
         self,
         gate_generator: Callable[[WiresLike], Iterator[Operation]],
         wires: Optional[WiresLike] = None,
-        id: Optional[str] = None,
     ):
-        super().__init__(wires=wires, id=id)
+        super().__init__(wires=wires)
         self.gate_generator = gate_generator
         self.hyperparameters["gate_generator"] = gate_generator
 

@@ -24,7 +24,7 @@ class FermionicSuperposition(Operation):
 
     @classmethod
     def random(cls, wires: Wires, **kwargs):
-        return cls(wires=wires, id=kwargs.get("id", None))
+        return cls(wires=wires)
 
     @staticmethod
     def compute_decomposition(*params, wires=None, **hyperparameters):
@@ -43,4 +43,4 @@ class FermionicSuperposition(Operation):
         return 0
 
     def to_sptm_operation(self) -> SptmFermionicSuperposition:
-        return SptmFermionicSuperposition(wires=self.wires, id=self.id, **self.hyperparameters)
+        return SptmFermionicSuperposition(wires=self.wires, **self.hyperparameters)

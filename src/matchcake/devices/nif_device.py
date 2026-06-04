@@ -11,7 +11,7 @@ from pennylane import BasisState
 from pennylane.devices.execution_config import ExecutionConfig
 from pennylane.devices.preprocess import decompose
 from pennylane.exceptions import DeviceError
-from pennylane.measurements import ExpectationMP, ProbabilityMP, SampleMP
+from pennylane.measurements import ExpectationMP, ProbabilityMP, SampleMP, Shots
 from pennylane.operation import Operation, StatePrepBase
 from pennylane.ops.qubit.observables import BasisStateProjector
 from pennylane.tape import QuantumScript
@@ -62,6 +62,8 @@ from .star_state_finding_strategies import (
     StarStateFindingStrategy,
     get_star_state_finding_strategy,
 )
+
+_UNSET = object()  # sentinel distinguishing "shots not provided" from an explicit ``shots=None``
 
 
 @qml.transform
@@ -208,7 +210,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
                 assert wires > 1, "At least two wires are required for this device."
             else:
                 assert len(list(wires)) > 1, "At least two wires are required for this device."
-        super().__init__(wires=wires, shots=shots)
+        super().__init__(wires=wires)
+        self._shots = Shots(shots)
         self._debugger = kwargs.get("debugger", None)
         self._init_kwargs = kwargs
 
@@ -256,7 +259,6 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self.expval_from_probabilities_strategy = ExpvalFromProbabilitiesStrategy()
         self.m_pfaffian_expval_strategy = MPfaffianExpvalStrategy()
 
-        # Wire-dependent state: initialized immediately when wires are known, deferred otherwise.
         self.majorana_getter: Optional[utils.MajoranaGetter] = None
         self._state_prep_op: Optional[StatePrepBase] = None
         if self._wires is not None:
@@ -481,10 +483,6 @@ class NonInteractingFermionicDevice(qml.devices.Device):
 
         probs = self.get_states_probability(wires_binary_states, wires)
         probs = qml.math.transpose(probs)
-        # Normalize over the basis-state axis (last). For a batched state prep ``probs`` is
-        # ``(batch, 2 ** k)``, so a global sum would make each row sum to ``1 / batch``; the
-        # per-row sum keeps every batch element a proper distribution. For the unbatched case
-        # ``probs`` is ``(2 ** k,)`` and this reduces to the usual full normalization.
         probs = probs / qml.math.sum(probs, axis=-1, keepdims=True)
         return probs
 
@@ -592,6 +590,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         op_iterator: Iterable[qml.operation.Operation],
         observable: Optional[Any] = None,
         output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
+        *,
+        shots: Any = _UNSET,
         **kwargs,
     ) -> Optional[Any]:
         """
@@ -603,6 +603,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :type observable: Optional
         :param output_type: The type of output to return. Supported types are "samples", "expval", and "probs"
         :type output_type: Optional[Literal["samples", "expval", "probs"]]
+        :param shots: Number of shots for sample-based outputs, forwarded to :meth:`execute_output`.
+            When provided, it overrides the device-level default for this call.
+        :type shots: Optional[int]
         :param kwargs: Additional keyword arguments
 
         :keyword reset: Whether to reset the device before applying the operations. Default is False.
@@ -623,12 +626,14 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             apply = False
         if apply:
             self.apply_generator(op_iterator, **kwargs)
-        return self.execute_output(observable=observable, output_type=output_type, **kwargs)
+        return self.execute_output(observable=observable, output_type=output_type, shots=shots, **kwargs)
 
     def execute_output(
         self,
         observable: Optional[Any] = None,
         output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
+        *,
+        shots: Any = _UNSET,
         **kwargs,
     ) -> Optional[Any]:
         """
@@ -638,6 +643,12 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :type observable: Optional
         :param output_type: The type of output to return. Supported types are "samples", "expval", and "probs"
         :type output_type: Optional[Literal["samples", "expval", "probs"]]
+        :param shots: Number of shots for sample-based outputs. When provided, it overrides the
+            device-level default for this call. When omitted, the device-level default (set at
+            construction, ``None`` by default for analytic execution) is used. This is the preferred
+            way to specify shots for direct ``execute_output``/``execute_generator`` use; with a
+            QNode, use the ``qml.set_shots`` transform instead.
+        :type shots: Optional[int]
         :param kwargs: Additional keyword arguments
 
         :keyword reset: Whether to reset the device before applying the operations. Default is False.
@@ -651,6 +662,10 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         """
         if output_type is None:
             return None
+        if shots is not _UNSET:
+            if shots != self._current_shots:
+                self._samples = None
+            self._current_shots = shots
         if self._active_shots is not None and self._samples is None:
             self._samples = self.generate_samples()
         if output_type == "samples":

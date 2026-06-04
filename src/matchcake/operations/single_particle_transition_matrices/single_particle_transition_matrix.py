@@ -299,7 +299,6 @@ class SingleParticleTransitionMatrixOperation(Operation):
         matrix: TensorLike,
         wires: Optional[Union[Sequence[int], Wires]] = None,
         *,
-        id=None,
         clip_angles: bool = DEFAULT_CLIP_ANGLES,
         check_angles: bool = DEFAULT_CHECK_ANGLES,
         check_matrix: bool = DEFAULT_CHECK_MATRIX,
@@ -321,7 +320,6 @@ class SingleParticleTransitionMatrixOperation(Operation):
         :param matrix: A tensor-like object defining the transition matrix.
         :param wires: Optional; Specifies the wires or subsystems the operation acts on. Can
             be a sequence of integers or a `Wires` object.
-        :param id: Optional; The operation's unique identifier.
         :param clip_angles: Boolean flag indicating whether to clip angles in the matrix.
             Defaults to `DEFAULT_CLIP_ANGLES`.
         :param check_angles: Boolean flag indicating whether to validate the angles in the
@@ -343,7 +341,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
         matrix = self._enforce_real(matrix, check_real)
         self._matrix = matrix
         self._wires = wires
-        super().__init__(matrix, wires=wires, id=id)
+        super().__init__(matrix, wires=wires)
         self._hyperparameters = {
             "clip_angles": clip_angles,
             "check_angles": check_angles,
@@ -459,7 +457,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
         from ..matchgate_operation import MatchgateOperation
 
         unitary = self.to_unitary_matrix(self.matrix())
-        return MatchgateOperation(unitary, wires=self.wires, id=self.id, **self.hyperparameters)
+        return MatchgateOperation(unitary, wires=self.wires, **self.hyperparameters)
 
     def to_qubit_unitary(self) -> qml.QubitUnitary:
         """

@@ -282,7 +282,7 @@ class MatchgateOperation(Operation):
     ):
         return [qml.QubitUnitary(params[0], wires=wires)]
 
-    def __new__(cls, *params: TensorLike, wires: Optional[WiresLike] = None, id: Optional[str] = None, **kwargs):
+    def __new__(cls, *params: TensorLike, wires: Optional[WiresLike] = None, **kwargs):
         is_matchgate = False
         if len(params) == 1 and isinstance(params[0], MatchgateParams):
             is_matchgate = True
@@ -298,7 +298,6 @@ class MatchgateOperation(Operation):
         self,
         matrix: Union[TensorLike, MatchgateParams],
         wires=None,
-        id=None,
         default_dtype: torch.dtype = torch.complex128,
         default_device: Optional[torch.device] = None,
         **kwargs,
@@ -314,7 +313,7 @@ class MatchgateOperation(Operation):
             matrix = to_tensor(matrix, dtype=default_dtype, device=default_device)
         self.draw_label_params = kwargs.get("draw_label_params", None)
         self.kwargs = kwargs
-        super().__init__(matrix, wires=wires, id=id)
+        super().__init__(matrix, wires=wires)
         self._check_is_matchgate()
 
     def __matmul__(self, other) -> Union["MatchgateOperation", SingleParticleTransitionMatrixOperation]:

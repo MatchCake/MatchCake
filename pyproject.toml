@@ -62,10 +62,11 @@ addopts = [
     "--durations=10",
 ]
 filterwarnings = [
+    # Third-party warnings we cannot fix in this codebase:
+    # autograd's tracer still calls ``__array_wrap__`` the old way under NumPy 2.0.
     "ignore:.*__array_wrap__.*:DeprecationWarning",
-    "ignore:.*ComplexHalf.*:UserWarning",
+    # seaborn sets a degenerate xlim internally for single-category violin plots.
     "ignore:.*xlim.*:UserWarning",
-    "ignore:.*Setting shots on device.*:pennylane.exceptions.PennyLaneDeprecationWarning",
 ]
 
 [dependency-groups]

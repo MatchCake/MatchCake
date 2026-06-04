@@ -31,11 +31,11 @@ class CompPauli(MatchgateOperation):
     def random(cls, wires: Wires, batch_size=None, **kwargs):
         return cls(wires=wires, **kwargs)
 
-    def __new__(cls, paulis: Sequence[Literal["X", "Y", "Z", "I"]], wires=None, id=None, **kwargs):
+    def __new__(cls, paulis: Sequence[Literal["X", "Y", "Z", "I"]], wires=None, **kwargs):
         if len(paulis) != 2:
             raise ValueError(f"{cls.__name__} requires two paulis; got {paulis}.")
         return cls.from_sub_matrices(
-            paulis_map[paulis[0]], paulis_map[paulis[1]], wires=wires, id=id, _paulis="".join(paulis), **kwargs
+            paulis_map[paulis[0]], paulis_map[paulis[1]], wires=wires, _paulis="".join(paulis), **kwargs
         )
 
     def __init__(self, *args, **kwargs):  # pragma: no cover
@@ -57,15 +57,15 @@ class CompPauli(MatchgateOperation):
 
 
 class CompXX(CompPauli):
-    def __new__(cls, wires=None, id=None, **kwargs):
-        return super().__new__(cls, paulis=["X", "X"], wires=wires, id=id, **kwargs)
+    def __new__(cls, wires=None, **kwargs):
+        return super().__new__(cls, paulis=["X", "X"], wires=wires, **kwargs)
 
 
 class CompYY(CompPauli):
-    def __new__(cls, wires=None, id=None, **kwargs):
-        return super().__new__(cls, paulis=["Y", "Y"], wires=wires, id=id, **kwargs)
+    def __new__(cls, wires=None, **kwargs):
+        return super().__new__(cls, paulis=["Y", "Y"], wires=wires, **kwargs)
 
 
 class CompZZ(CompPauli):
-    def __new__(cls, wires=None, id=None, **kwargs):
-        return super().__new__(cls, paulis=["Z", "Z"], wires=wires, id=id, **kwargs)
+    def __new__(cls, wires=None, **kwargs):
+        return super().__new__(cls, paulis=["Z", "Z"], wires=wires, **kwargs)

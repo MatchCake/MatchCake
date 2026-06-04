@@ -17,9 +17,8 @@ class MinusState(StatePrepFromGates):
     def __init__(
         self,
         wires: Optional[WiresLike] = None,
-        id: Optional[str] = None,
     ):
-        super().__init__(gate_generator=self.gate_generator, wires=wires, id=id)
+        super().__init__(gate_generator=self.gate_generator, wires=wires)
 
     def label(self, decimals=None, base_label=None, cache=None):
         return "|-⟩"
