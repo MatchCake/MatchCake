@@ -23,3 +23,9 @@ class TestLookupTableStrategy:
             pfaffian_method="det",
         )
         assert result is not None
+
+    def test_can_execute_basis_state_true(self, strategy):
+        assert strategy.can_execute(qml.BasisState(np.zeros(2, dtype=int), wires=[0, 1])) is True
+
+    def test_can_execute_non_state_false(self, strategy):
+        assert strategy.can_execute(qml.PauliX(0)) is False

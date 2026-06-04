@@ -232,7 +232,7 @@ def random_index(
     n: Optional[int] = None,
     axis=-1,
     normalize_probs: bool = True,
-    eps: float = 1e-12,
+    eps: float = 1e-32,
 ):
     """
     Generates random indices based on provided probabilities along a specified axis.
@@ -253,8 +253,9 @@ def random_index(
     :param normalize_probs: Boolean indicating whether to normalize `probs`
         along the specified axis to ensure that the entries sum to 1.
         Defaults to True.
-    :param eps: A small float value added to the denominator during
-        normalization to prevent division by zero. Defaults to 1e-12.
+    :param eps: Threshold below which the per-axis probability mass is treated as
+        zero (and replaced by one) to avoid dividing by zero. The relative weights
+        are otherwise left untouched. Defaults to 1e-32.
     :return: A scalar or an array of randomly selected indices based on the
         probabilities provided. The indices are returned as a NumPy integer
         array regardless of the backend of ``probs``.
@@ -272,7 +273,15 @@ def random_index(
     n_categories = qml.math.shape(probs)[axis]
     axis = int(np.mod(axis, qml.math.ndim(probs)))
     if normalize_probs:
-        probs = probs / (qml.math.sum(probs, axis=axis, keepdims=True) + eps)
+        # Divide by the true mass along ``axis`` so the relative weights are preserved
+        # exactly. An *additive* epsilon would dominate the denominator whenever the
+        # masses are tiny (e.g. deep autoregressive conditionals whose joint masses are
+        # ~2**-n), collapsing the normalised distribution toward zero and making the
+        # inverse-CDF always fall on the last category. We only guard against an exactly
+        # zero sum, leaving the distribution untouched everywhere else.
+        total = qml.math.sum(probs, axis=axis, keepdims=True)
+        safe_total = qml.math.where(total > eps, total, qml.math.ones_like(total))
+        probs = probs / safe_total
 
     # Inverse-CDF sampling: draw uniforms and count how many cumulative masses
     # they exceed. Counting (rather than ``argmax``) gives the first category

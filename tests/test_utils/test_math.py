@@ -408,6 +408,30 @@ class TestMath:
         indexes = utils.math.random_index(probs, n=32, axis=-1)
         np.testing.assert_array_equal(indexes, np.ones(32, dtype=int))
 
+    @pytest.mark.parametrize("scale", [1.0, 1e-13, 1e-20, 1e-30])
+    def test_random_index_preserves_tiny_unnormalized_weights(self, scale):
+        """Relative weights must be preserved even when the masses are far below 1.
+
+        Deep autoregressive conditionals feed ``random_index`` joint masses of order
+        ``2 ** -n``. An additive epsilon in the normalisation denominator would dominate
+        such masses and collapse the distribution onto the last category; dividing by the
+        true mass keeps the relative weights intact regardless of overall scale.
+        """
+        set_seed(TEST_SEED)
+        target = np.array([0.6, 0.1, 0.3])
+        probs = target * scale
+        n = 40000
+        indexes = utils.math.random_index(probs, n=n, axis=-1)
+        estimate = np.bincount(indexes, minlength=target.shape[-1]) / n
+        np.testing.assert_allclose(estimate, target, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
+
+    def test_random_index_zero_mass_is_safe(self):
+        """An all-zero probability vector must not divide by zero or raise."""
+        probs = np.zeros(4)
+        indexes = utils.math.random_index(probs, n=16, axis=-1)
+        assert indexes.shape == (16,)
+        assert indexes.min() >= 0 and indexes.max() < 4
+
     def test_orthonormalize_check_if_false(self):
         rng = np.random.RandomState(42)
         matrix = rng.uniform(1, 10) * rng.rand(4, 4)
