@@ -10,9 +10,10 @@ from pennylane.typing import TensorLike
 
 from . import torch_utils
 from .math import convert_and_cast_like
+from .torch_utils import infer_real_dtype
 
 
-def signed_pfaffian(matrix: TensorLike) -> TensorLike:
+def signed_pfaffian(matrix: TensorLike, dtype: Optional[torch.dtype] = None) -> TensorLike:
     """
     Compute the signed Pfaffian of a real antisymmetric matrix (or batch).
 
@@ -21,11 +22,17 @@ def signed_pfaffian(matrix: TensorLike) -> TensorLike:
     arbitrary leading batch dimensions.
 
     :param matrix: Real antisymmetric matrix of even size (..., 2k, 2k).
+    :param dtype: Real working precision for the internal computation. Defaults to
+        ``None``, in which case the precision is inferred from ``matrix`` (e.g. a
+        ``float32``/``complex64`` input keeps ``float32`` internals). Pass an
+        explicit real dtype to override.
     :return: Signed Pfaffian of shape (...,).
     """
+    if dtype is None:
+        dtype = infer_real_dtype(matrix)
     if not isinstance(matrix, torch.Tensor):
-        matrix = torch.as_tensor(qml.math.real(matrix), dtype=torch.float64)
-    A = matrix.to(torch.float64)
+        matrix = torch.as_tensor(qml.math.real(matrix), dtype=dtype)
+    A = matrix.to(dtype)
     shape = A.shape
     n = shape[-1]
 
@@ -79,6 +86,7 @@ def signed_pfaffian(matrix: TensorLike) -> TensorLike:
 def sector_pfaffian_features(
     cov_matrix: TensorLike,
     index_sets: np.ndarray,
+    dtype: Optional[torch.dtype] = None,
 ) -> TensorLike:
     """
     Return (..., n_terms) tensor of signed Pfaffians of (submatrix_size x submatrix_size)
@@ -86,9 +94,15 @@ def sector_pfaffian_features(
 
     :param cov_matrix: (..., D, D) antisymmetric matrix (or batch).
     :param index_sets: (n_terms, submatrix_size) integer array of Majorana index tuples.
+    :param dtype: Real working precision for the internal computation. Defaults to
+        ``None``, in which case the precision is inferred from ``cov_matrix`` (e.g. a
+        ``float32``/``complex64`` input keeps ``float32`` internals, avoiding the
+        ~2x memory of forcing ``float64``). Pass an explicit real dtype to override.
     :return: (..., n_terms) Pfaffians.
     """
-    cov_matrix_t = torch.as_tensor(qml.math.real(cov_matrix), dtype=torch.float64)
+    if dtype is None:
+        dtype = infer_real_dtype(cov_matrix)
+    cov_matrix_t = torch.as_tensor(qml.math.real(cov_matrix), dtype=dtype)
     index_sets = np.asarray(index_sets)  # (n_terms, submatrix_size)
     n_terms, submatrix_size = index_sets.shape
     row_indices = index_sets[:, :, None]  # (n_terms, submatrix_size, 1)

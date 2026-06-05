@@ -8,6 +8,7 @@ from pennylane.operation import StatePrepBase
 from pennylane.wires import Wires, WiresLike
 
 from ...typing import TensorLike
+from ...utils.torch_utils import infer_complex_dtype, infer_real_dtype, torch_dtype_name
 
 
 class ProductState(StatePrepBase):
@@ -116,10 +117,13 @@ class ProductState(StatePrepBase):
                 f"complex amplitudes."
             )
 
-        # Cast to complex if not already (qml.math.iscomplexobj has no torch dispatch)
+        # Cast to complex if not already (qml.math.iscomplexobj has no torch dispatch).
+        # The complex precision is inferred from the input so that a float32 / complex64
+        # state is not silently upcast to complex128 (precision is user-controllable).
         is_complex = torch.is_complex(state) if isinstance(state, torch.Tensor) else qml.math.iscomplexobj(state)
         if not is_complex:
-            state = qml.math.cast(state, dtype=complex)
+            c_dtype_name = torch_dtype_name(infer_complex_dtype(state))
+            state = qml.math.cast(state, dtype=c_dtype_name)
 
         if validate_norm:
             # Per-qubit norms: sum over the trailing (alpha, beta) axis.
@@ -181,13 +185,16 @@ class ProductState(StatePrepBase):
         y = 2.0 * qml.math.imag(qml.math.conj(alpha) * beta)  # <Y_k>
         z = qml.math.abs(alpha) ** 2 - qml.math.abs(beta) ** 2  # <Z_k>
 
-        # Convert to real torch.Tensors on the appropriate dtype.
-        x = qml.math.cast(qml.math.real(x), dtype=float)
-        y = qml.math.cast(qml.math.real(y), dtype=float)
-        z = qml.math.cast(qml.math.real(z), dtype=float)
-        x = self._as_torch(x)
-        y = self._as_torch(y)
-        z = self._as_torch(z)
+        # Convert to real torch.Tensors, preserving the precision of the amplitudes
+        # (complex64 -> float32, complex128 -> float64) instead of forcing float64.
+        r_dtype = infer_real_dtype(psi)
+        r_dtype_name = torch_dtype_name(r_dtype)
+        x = qml.math.cast(qml.math.real(x), dtype=r_dtype_name)
+        y = qml.math.cast(qml.math.real(y), dtype=r_dtype_name)
+        z = qml.math.cast(qml.math.real(z), dtype=r_dtype_name)
+        x = self._as_torch(x, dtype=r_dtype)
+        y = self._as_torch(y, dtype=r_dtype)
+        z = self._as_torch(z, dtype=r_dtype)
 
         batch_shape = tuple(x.shape[:-1])
         cov = torch.zeros(batch_shape + (2 * n, 2 * n), dtype=x.dtype, device=x.device)
@@ -305,15 +312,18 @@ class ProductState(StatePrepBase):
         full_perm = list(range(nb)) + [nb + p for p in perm]
         return qml.math.transpose(qml.math.reshape(full, batch_shape + (2,) * n_total), full_perm)
 
-    def _as_torch(self, x):
+    def _as_torch(self, x, dtype: Optional[torch.dtype] = None):
         """
         Convert a tensor-like to a real torch.Tensor, no-op if already one.
 
-        TODO: control dtype
+        :param dtype: Target real dtype for non-torch inputs. Defaults to the
+            precision inferred from ``x`` (so float32 inputs stay float32).
         """
         if isinstance(x, torch.Tensor):
             return x
-        return torch.as_tensor(np.asarray(x), dtype=torch.float64)
+        if dtype is None:
+            dtype = infer_real_dtype(x)
+        return torch.as_tensor(np.asarray(x), dtype=dtype)
 
     def basis_state_bits(self) -> np.ndarray:
         r"""Integer bit array. Raises :class:`ValueError` if not a basis state.

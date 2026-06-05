@@ -4,9 +4,58 @@ import numpy as np
 import pytest
 import torch
 
-from matchcake.utils.torch_utils import detach, to_numpy, to_tensor, torch_wrap_circular_bounds
+from matchcake.utils.torch_utils import (
+    detach,
+    infer_complex_dtype,
+    infer_real_dtype,
+    to_numpy,
+    to_tensor,
+    torch_dtype_name,
+    torch_wrap_circular_bounds,
+)
 
 from ..configs import ATOL_SCALAR_COMPARISON, RTOL_SCALAR_COMPARISON, TEST_SEED, set_seed
+
+
+class TestDtypeInference:
+    @pytest.mark.parametrize(
+        "in_dtype, expected",
+        [
+            (torch.float32, torch.float32),
+            (torch.float64, torch.float64),
+            (torch.complex64, torch.float32),
+            (torch.complex128, torch.float64),
+        ],
+    )
+    def test_infer_real_dtype_torch(self, in_dtype, expected):
+        assert infer_real_dtype(torch.zeros(2, dtype=in_dtype)) == expected
+
+    @pytest.mark.parametrize(
+        "in_dtype, expected",
+        [
+            (torch.float32, torch.complex64),
+            (torch.float64, torch.complex128),
+            (torch.complex64, torch.complex64),
+            (torch.complex128, torch.complex128),
+        ],
+    )
+    def test_infer_complex_dtype_torch(self, in_dtype, expected):
+        assert infer_complex_dtype(torch.zeros(2, dtype=in_dtype)) == expected
+
+    def test_infer_real_dtype_integer_uses_default(self):
+        assert infer_real_dtype(torch.zeros(2, dtype=torch.int64)) == torch.float64
+        assert infer_real_dtype(torch.zeros(2, dtype=torch.int64), default=torch.float32) == torch.float32
+
+    def test_infer_complex_dtype_integer_uses_default(self):
+        assert infer_complex_dtype(torch.zeros(2, dtype=torch.int64)) == torch.complex128
+
+    def test_infer_dtype_numpy(self):
+        assert infer_real_dtype(np.zeros(2, dtype=np.float32)) == torch.float32
+        assert infer_complex_dtype(np.zeros(2, dtype=np.complex128)) == torch.complex128
+
+    def test_torch_dtype_name(self):
+        assert torch_dtype_name(torch.float32) == "float32"
+        assert torch_dtype_name(torch.complex128) == "complex128"
 
 
 class TestToTensor:

@@ -9,7 +9,7 @@ from pennylane.pauli import pauli_word_to_string
 from ....operations.state_preparation.product_state import ProductState
 from ....typing import TensorLike
 from ....utils import JordanWigner
-from ....utils._pfaffian import sector_pfaffian_features
+from ....utils._pfaffian import infer_real_dtype, sector_pfaffian_features
 from ....utils.math import convert_and_cast_like
 from ..expval_strategy import ExpvalStrategy
 
@@ -101,18 +101,21 @@ class MPfaffianExpvalStrategy(ExpvalStrategy):
             sector = len(ext_index_set)
             terms_by_sector.setdefault(sector, []).append((ext_index_set, ext_phase, term_idx))
 
+        r_dtype = infer_real_dtype(ext_cov_matrix)
         pf_values: dict[int, TensorLike] = {}
         for sector, items in terms_by_sector.items():
             index_sets = np.stack([item[0] for item in items])  # (n_terms, sector)
             if sector == 0:
-                pf_values[sector] = torch.ones(len(items), dtype=torch.float64)
+                pf_values[sector] = torch.ones(len(items), dtype=r_dtype)
             elif sector == 2:
                 i_idx = index_sets[:, 0]
                 j_idx = index_sets[:, 1]
-                ext_cov_matrix_t = torch.as_tensor(qml.math.real(ext_cov_matrix), dtype=torch.float64)
+                ext_cov_matrix_t = torch.as_tensor(qml.math.real(ext_cov_matrix), dtype=r_dtype)
                 pf_values[sector] = ext_cov_matrix_t[..., i_idx, j_idx]  # (..., n_terms)
             else:
-                pf_values[sector] = sector_pfaffian_features(ext_cov_matrix, index_sets)  # (..., n_terms)
+                pf_values[sector] = sector_pfaffian_features(
+                    ext_cov_matrix, index_sets, dtype=r_dtype
+                )  # (..., n_terms)
 
         total_re: Any = np.float64(0.0)
         for sector, items in terms_by_sector.items():

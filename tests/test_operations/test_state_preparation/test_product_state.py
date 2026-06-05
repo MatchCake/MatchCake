@@ -104,6 +104,26 @@ class TestProductState:
         cov_matrix = ProductState(matrix, wires=[0, 1, 2]).covariance_matrix
         torch.testing.assert_close(cov_flat, cov_matrix)
 
+    @pytest.mark.parametrize(
+        "amp_dtype, expected_real_dtype",
+        [
+            (torch.complex64, torch.float32),
+            (torch.complex128, torch.float64),
+            (torch.float32, torch.float32),
+            (torch.float64, torch.float64),
+        ],
+    )
+    def test_covariance_matrix_preserves_input_precision(self, amp_dtype, expected_real_dtype):
+        inv = 1 / np.sqrt(2)
+        amps = torch.tensor([[1.0, 0.0], [inv, inv]], dtype=amp_dtype)
+        cov = ProductState(amps, wires=[0, 1]).covariance_matrix
+        assert cov.dtype == expected_real_dtype
+
+    def test_init_preserves_complex64_amplitudes(self):
+        amps = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)
+        op = ProductState(amps, wires=[0, 1])
+        assert op.data[0].dtype == torch.complex64
+
     def test_state_vector_matches_explicit_kron(self):
         n = 3
         # |+> on q0, |1> on q1, (|0>+i|1>)/sqrt(2) on q2

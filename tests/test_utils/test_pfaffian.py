@@ -11,6 +11,7 @@ from torch.autograd import gradcheck
 from matchcake import utils
 from matchcake.utils._pfaffian import (
     _pfaffian_fdbpf_lock,
+    infer_real_dtype,
     sector_pfaffian_features,
     signed_pfaffian,
 )
@@ -175,6 +176,50 @@ class TestPfaffianExtended:
         expected = a * f - b * e + c * d
         pf = float(signed_pfaffian(A))
         np.testing.assert_allclose(pf, expected, atol=1e-10)
+
+    @pytest.mark.parametrize(
+        "in_dtype, expected_real_dtype",
+        [
+            (torch.float32, torch.float32),
+            (torch.float64, torch.float64),
+            (torch.complex64, torch.float32),
+            (torch.complex128, torch.float64),
+        ],
+    )
+    def test_infer_real_dtype_torch(self, in_dtype, expected_real_dtype):
+        assert infer_real_dtype(torch.zeros(2, 2, dtype=in_dtype)) == expected_real_dtype
+
+    def test_infer_real_dtype_integer_fallback(self):
+        assert infer_real_dtype(torch.zeros(2, 2, dtype=torch.int64)) == torch.float64
+
+    def test_infer_real_dtype_numpy(self):
+        assert infer_real_dtype(np.zeros((2, 2), dtype=np.float32)) == torch.float32
+        assert infer_real_dtype(np.zeros((2, 2), dtype=np.complex128)) == torch.float64
+
+    @pytest.mark.parametrize("submatrix_size", [2, 4])
+    def test_sector_pfaffian_preserves_input_precision(self, submatrix_size):
+        # float32 input must not be silently upcast to float64 internals.
+        m = torch.randn(submatrix_size, submatrix_size, dtype=torch.float32)
+        A = m - m.T
+        index_sets = np.array([list(range(submatrix_size))])
+        result = sector_pfaffian_features(A, index_sets)
+        assert result.dtype == torch.float32
+
+    @pytest.mark.parametrize("submatrix_size", [2, 4])
+    def test_sector_pfaffian_explicit_dtype_override(self, submatrix_size):
+        m = torch.randn(submatrix_size, submatrix_size, dtype=torch.float32)
+        A = m - m.T
+        index_sets = np.array([list(range(submatrix_size))])
+        result = sector_pfaffian_features(A, index_sets, dtype=torch.float64)
+        assert result.dtype == torch.float32  # output recast to input dtype
+        # Value matches the float64 reference within float32 tolerance.
+        ref = sector_pfaffian_features(A.to(torch.float64), index_sets)
+        np.testing.assert_allclose(result.numpy(), ref.numpy(), atol=1e-5, rtol=1e-4)
+
+    def test_signed_pfaffian_preserves_float32(self):
+        m = torch.randn(4, 4, dtype=torch.float32)
+        A = m - m.T
+        assert signed_pfaffian(A).dtype == torch.float32
 
     def test_signed_pfaffian_pivot_swap_triggered(self):
         # Construct a matrix where M[3,0] > M[1,0] to force pivot swap.
