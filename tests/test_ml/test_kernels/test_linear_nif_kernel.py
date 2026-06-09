@@ -19,6 +19,22 @@ class TestLinearNIFKernel:
     def x_train(self):
         return np.linspace(0.0, 0.05, num=80).reshape(10, 8)
 
+    def test_custom_dtypes_propagate_to_device(self, n_qubits, encoder_activation, bias):
+        kernel = LinearNIFKernel(
+            n_qubits=n_qubits,
+            bias=bias,
+            encoder_activation=encoder_activation,
+            r_dtype=torch.float64,
+            c_dtype=torch.complex128,
+        )
+        assert kernel.R_DTYPE == torch.float64
+        assert kernel.C_DTYPE == torch.complex128
+        assert kernel.q_device.R_DTYPE == torch.float64
+        assert kernel.q_device.C_DTYPE == torch.complex128
+        kernel.n_qubits = n_qubits + 1
+        assert kernel.q_device.R_DTYPE == torch.float64
+        assert kernel.q_device.C_DTYPE == torch.complex128
+
     def test_fit(self, kernel_instance, x_train):
         kernel_instance.fit(x_train)
         assert kernel_instance.x_train_ is x_train

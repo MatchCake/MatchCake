@@ -9,7 +9,7 @@ from tqdm import tqdm
 from ...devices.nif_device import NonInteractingFermionicDevice
 from ...operations import SingleParticleTransitionMatrixOperation
 from ...typing import TensorLike
-from ...utils.torch_utils import to_tensor
+from ...utils.torch_utils import get_torch_dtype, to_tensor
 from .gram_matrix import GramMatrix
 from .kernel import Kernel
 
@@ -25,11 +25,16 @@ class NIFKernel(Kernel):
     The class supports flexible configuration of qubit numbers and processing batch
     sizes.
 
-    :ivar R_DTYPE: Data type used for computation within the kernel.
+    :ivar R_DTYPE: Real floating-point dtype used by the underlying device. Read from the device so
+        the device remains the single source of truth for precision.
     :type R_DTYPE: torch.dtype
+    :ivar C_DTYPE: Complex dtype used by the underlying device.
+    :type C_DTYPE: torch.dtype
     """
 
     DEFAULT_N_QUBITS = 12
+    DEFAULT_R_DTYPE = torch.float32
+    DEFAULT_C_DTYPE = torch.complex64
 
     def __init__(
         self,
@@ -42,6 +47,8 @@ class NIFKernel(Kernel):
         alignment_early_stopping_patience: int = Kernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
         alignment_early_stopping_threshold: float = Kernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
         n_qubits: int = DEFAULT_N_QUBITS,
+        r_dtype: Optional[torch.dtype] = None,
+        c_dtype: Optional[torch.dtype] = None,
     ):
         """
         Initializes the class with specific parameters for quantum device configuration and
@@ -57,6 +64,10 @@ class NIFKernel(Kernel):
         :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel
             alignment optimization, used for early stopping criteria.
         :param n_qubits: The number of qubits for the non-interacting fermionic device.
+        :param r_dtype: The real floating-point dtype passed to the non-interacting fermionic device.
+            Defaults to :attr:`DEFAULT_R_DTYPE` when ``None``.
+        :param c_dtype: The complex dtype passed to the non-interacting fermionic device.
+            Defaults to :attr:`DEFAULT_C_DTYPE` when ``None``.
         """
         super().__init__(
             gram_batch_size=gram_batch_size,
@@ -67,8 +78,9 @@ class NIFKernel(Kernel):
             alignment_early_stopping_patience=alignment_early_stopping_patience,
             alignment_early_stopping_threshold=alignment_early_stopping_threshold,
         )
-        self.R_DTYPE = torch.float32
-        self._q_device = NonInteractingFermionicDevice(n_qubits, r_dtype=self.R_DTYPE)
+        self._r_dtype = get_torch_dtype(r_dtype, self.DEFAULT_R_DTYPE)
+        self._c_dtype = get_torch_dtype(c_dtype, self.DEFAULT_C_DTYPE)
+        self._q_device = NonInteractingFermionicDevice(n_qubits, r_dtype=self._r_dtype, c_dtype=self._c_dtype)
 
     def forward(self, x0: TensorLike, x1: Optional[TensorLike] = None, **kwargs) -> torch.Tensor:
         """
@@ -225,11 +237,19 @@ class NIFKernel(Kernel):
         :param value: The number of qubits to be set for the quantum device.
         :type value: int
         """
-        self._q_device = NonInteractingFermionicDevice(value, r_dtype=self.R_DTYPE)
+        self._q_device = NonInteractingFermionicDevice(value, r_dtype=self._r_dtype, c_dtype=self._c_dtype)
 
     @property
     def q_device(self):
         return self._q_device
+
+    @property
+    def R_DTYPE(self) -> torch.dtype:
+        return getattr(self._q_device, "R_DTYPE", self._r_dtype)
+
+    @property
+    def C_DTYPE(self) -> torch.dtype:
+        return getattr(self._q_device, "C_DTYPE", self._c_dtype)
 
     @cached_property
     def sptms_train(self) -> TensorLike:
