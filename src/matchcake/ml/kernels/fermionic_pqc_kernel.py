@@ -90,6 +90,8 @@ class FermionicPQCKernel(NIFKernel):
         alignment_early_stopping_patience: int = NIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
         alignment_early_stopping_threshold: float = NIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
         n_qubits: int = NIFKernel.DEFAULT_N_QUBITS,
+        r_dtype: Optional[torch.dtype] = None,
+        c_dtype: Optional[torch.dtype] = None,
         rotations: str = DEFAULT_ROTATIONS,
         entangling_mth: str = DEFAULT_ENTANGLING_MTH,
     ):
@@ -108,6 +110,8 @@ class FermionicPQCKernel(NIFKernel):
         :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel
             alignment optimization, used for early stopping criteria.
         :param n_qubits: Number of qubits to be used in the quantum circuit.
+        :param r_dtype: The real floating-point dtype passed to the non-interacting fermionic device.
+        :param c_dtype: The complex dtype passed to the non-interacting fermionic device.
         :param rotations: Types of rotations to be applied in the quantum circuit, specified
             as a comma-separated string (e.g., "Y,Z").
         :param entangling_mth: Method for entangling qubits in the quantum circuit. Must
@@ -122,6 +126,8 @@ class FermionicPQCKernel(NIFKernel):
             alignment_early_stopping_patience=alignment_early_stopping_patience,
             alignment_early_stopping_threshold=alignment_early_stopping_threshold,
             n_qubits=n_qubits,
+            r_dtype=r_dtype,
+            c_dtype=c_dtype,
         )
         self.rotations = rotations
         self.entangling_mth = entangling_mth

@@ -30,6 +30,43 @@ class TestNIFKernel:
         assert kernel_instance.gram_batch_size == 10_000
         assert isinstance(kernel_instance.q_device, NonInteractingFermionicDevice)
 
+    def test_default_dtypes_match_device(self):
+        kernel = NIFKernel()
+        assert kernel.R_DTYPE == NIFKernel.DEFAULT_R_DTYPE
+        assert kernel.C_DTYPE == NIFKernel.DEFAULT_C_DTYPE
+        assert kernel.q_device.R_DTYPE == kernel.R_DTYPE
+        assert kernel.q_device.C_DTYPE == kernel.C_DTYPE
+
+    @pytest.mark.parametrize(
+        "r_dtype, c_dtype",
+        [
+            (torch.float32, torch.complex64),
+            (torch.float64, torch.complex128),
+        ],
+    )
+    def test_custom_dtypes_propagate_to_device(self, r_dtype, c_dtype):
+        kernel = NIFKernel(r_dtype=r_dtype, c_dtype=c_dtype)
+        assert kernel.R_DTYPE == r_dtype
+        assert kernel.C_DTYPE == c_dtype
+        assert kernel.q_device.R_DTYPE == r_dtype
+        assert kernel.q_device.C_DTYPE == c_dtype
+
+    def test_dtypes_preserved_when_setting_n_qubits(self):
+        kernel = NIFKernel(r_dtype=torch.float64, c_dtype=torch.complex128)
+        kernel.n_qubits = 4
+        assert kernel.q_device.R_DTYPE == torch.float64
+        assert kernel.q_device.C_DTYPE == torch.complex128
+
+    def test_sklearn_clone_preserves_dtypes(self):
+        from sklearn.base import clone
+
+        kernel = NIFKernel(r_dtype=torch.float64, c_dtype=torch.complex128)
+        assert kernel.get_params()["r_dtype"] == torch.float64
+        assert kernel.get_params()["c_dtype"] == torch.complex128
+        cloned = clone(kernel)
+        assert cloned.R_DTYPE == torch.float64
+        assert cloned.C_DTYPE == torch.complex128
+
     def test_forward(self, kernel_instance):
         x = torch.rand(10, 10)
         kernel_instance(x)
