@@ -57,6 +57,16 @@ class TestNIFKernel:
         assert kernel.q_device.R_DTYPE == torch.float64
         assert kernel.q_device.C_DTYPE == torch.complex128
 
+    def test_sklearn_clone_preserves_dtypes(self):
+        from sklearn.base import clone
+
+        kernel = NIFKernel(r_dtype=torch.float64, c_dtype=torch.complex128)
+        assert kernel.get_params()["r_dtype"] == torch.float64
+        assert kernel.get_params()["c_dtype"] == torch.complex128
+        cloned = clone(kernel)
+        assert cloned.R_DTYPE == torch.float64
+        assert cloned.C_DTYPE == torch.complex128
+
     def test_forward(self, kernel_instance):
         x = torch.rand(10, 10)
         kernel_instance(x)

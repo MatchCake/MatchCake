@@ -244,6 +244,14 @@ class NIFKernel(Kernel):
         return self._q_device
 
     @property
+    def r_dtype(self) -> torch.dtype:
+        return self._r_dtype
+
+    @property
+    def c_dtype(self) -> torch.dtype:
+        return self._c_dtype
+
+    @property
     def R_DTYPE(self) -> torch.dtype:
         return getattr(self._q_device, "R_DTYPE", self._r_dtype)
 
