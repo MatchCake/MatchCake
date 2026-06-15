@@ -1,6 +1,4 @@
-from pennylane.wires import Wires
-
-from ...operations import MatchgateOperation, SingleParticleTransitionMatrixOperation
+from ...operations import MatchgateOperation
 from .contraction_container import (
     _ContractionMatchgatesContainer,
     _ContractionMatchgatesContainerAddException,

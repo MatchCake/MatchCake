@@ -6,6 +6,7 @@ from matchcake import utils
 from matchcake.utils.math import (
     check_is_unitary,
     circuit_matmul,
+    complex_dtype_name_like,
     convert_1d_to_2d_indexes,
     convert_2d_to_1d_indexes,
     convert_tensors_to_same_type,
@@ -14,6 +15,7 @@ from matchcake.utils.math import (
     eye_like,
     fermionic_operator_matmul,
     matmul,
+    orthonormalize,
     svd,
 )
 
@@ -134,6 +136,21 @@ def test_random_index_3d_none(probs_shape):
 
 
 class TestMath:
+    @pytest.mark.parametrize(
+        "reference, expected_name",
+        [
+            (torch.zeros(2, dtype=torch.float32), "complex64"),
+            (torch.zeros(2, dtype=torch.float64), "complex128"),
+            (torch.zeros(2, dtype=torch.complex64), "complex64"),
+            (torch.zeros(2, dtype=torch.complex128), "complex128"),
+            (np.zeros(2, dtype=np.float32), "complex64"),
+            (np.zeros(2, dtype=np.float64), "complex128"),
+            (np.zeros(2, dtype=np.int64), "complex128"),
+        ],
+    )
+    def test_complex_dtype_name_like(self, reference, expected_name):
+        assert complex_dtype_name_like(reference) == expected_name
+
     def test_convert_and_cast_like(self):
         source = np.random.uniform(-10, 10, (4, 3)).astype(np.float32)
         target = np.random.uniform(-10, 10, (4, 3)).astype(np.float64)
@@ -150,7 +167,9 @@ class TestMath:
     def test_convert_like_and_cast_to(self):
         source = np.random.uniform(-10, 10, (4, 3)).astype(np.float32)
         target = torch.from_numpy(source).to(dtype=torch.float64)
-        out = utils.math.convert_like_and_cast_to(source, target, torch.complex32)
+        # torch flags ``complex32`` (ComplexHalf) as experimental; the warning is expected here.
+        with pytest.warns(UserWarning, match="ComplexHalf"):
+            out = utils.math.convert_like_and_cast_to(source, target, torch.complex32)
         assert isinstance(out, torch.Tensor)
         assert out.dtype == torch.complex32
 
@@ -353,6 +372,89 @@ class TestMath:
         expected_torch = torch.det(x_torch)
         out_torch = det(x_torch)
         torch.testing.assert_close(out_torch, expected_torch)
+
+    def test_convert_like_and_cast_to_no_dtype(self):
+        source = np.random.uniform(-10, 10, (4, 3)).astype(np.float32)
+        target = torch.from_numpy(source).to(dtype=torch.float64)
+        out = utils.math.convert_like_and_cast_to(source, target, dtype=None)
+        assert isinstance(out, torch.Tensor)
+
+    def test_random_index_no_normalize(self):
+        probs = np.array([0.5, 0.3, 0.2])
+        idx = utils.math.random_index(probs, normalize_probs=False)
+        assert 0 <= idx < len(probs)
+
+    def test_random_index_returns_numpy_int(self):
+        probs = torch.tensor([[0.5, 0.3, 0.2], [0.1, 0.1, 0.8]], dtype=torch.float64)
+        indexes = utils.math.random_index(probs, n=8, axis=-1)
+        assert isinstance(indexes, np.ndarray)
+        assert np.issubdtype(indexes.dtype, np.integer)
+        assert indexes.shape == (8, 2)
+        assert indexes.min() >= 0 and indexes.max() < 3
+
+    @pytest.mark.parametrize("backend", ["numpy", "torch"])
+    def test_random_index_backend_agnostic_distribution(self, backend):
+        set_seed(TEST_SEED)
+        target = np.array([[0.6, 0.1, 0.3], [0.2, 0.5, 0.3]])
+        probs = torch.tensor(target, dtype=torch.float64) if backend == "torch" else target
+        n = 40000
+        indexes = utils.math.random_index(probs, n=n, axis=-1)
+        estimate = np.stack(
+            [np.bincount(indexes[:, row], minlength=target.shape[-1]) / n for row in range(target.shape[0])],
+            axis=0,
+        )
+        np.testing.assert_allclose(estimate, target, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
+
+    def test_random_index_deterministic_distribution(self):
+        probs = np.array([0.0, 1.0, 0.0])
+        indexes = utils.math.random_index(probs, n=32, axis=-1)
+        np.testing.assert_array_equal(indexes, np.ones(32, dtype=int))
+
+    @pytest.mark.parametrize("scale", [1.0, 1e-13, 1e-20, 1e-30])
+    def test_random_index_preserves_tiny_unnormalized_weights(self, scale):
+        """Relative weights must be preserved even when the masses are far below 1.
+
+        Deep autoregressive conditionals feed ``random_index`` joint masses of order
+        ``2 ** -n``. An additive epsilon in the normalisation denominator would dominate
+        such masses and collapse the distribution onto the last category; dividing by the
+        true mass keeps the relative weights intact regardless of overall scale.
+        """
+        set_seed(TEST_SEED)
+        target = np.array([0.6, 0.1, 0.3])
+        probs = target * scale
+        n = 40000
+        indexes = utils.math.random_index(probs, n=n, axis=-1)
+        estimate = np.bincount(indexes, minlength=target.shape[-1]) / n
+        np.testing.assert_allclose(estimate, target, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
+
+    def test_random_index_zero_mass_is_safe(self):
+        """An all-zero probability vector must not divide by zero or raise."""
+        probs = np.zeros(4)
+        indexes = utils.math.random_index(probs, n=16, axis=-1)
+        assert indexes.shape == (16,)
+        assert indexes.min() >= 0 and indexes.max() < 4
+
+    def test_orthonormalize_check_if_false(self):
+        rng = np.random.RandomState(42)
+        matrix = rng.uniform(1, 10) * rng.rand(4, 4)
+        result = orthonormalize(matrix, check_if_normalize=False)
+        expected_eye = result @ result.T
+        np.testing.assert_allclose(expected_eye, np.eye(4), atol=ATOL_APPROX_COMPARISON)
+
+    def test_orthonormalize_svd_all_ones(self):
+        rng = np.random.RandomState(7)
+        raw = rng.rand(4, 4)
+        already_ortho = orthonormalize(raw)
+        result = orthonormalize(already_ortho, check_if_normalize=False)
+        np.testing.assert_allclose(result, already_ortho, atol=ATOL_APPROX_COMPARISON)
+
+    def test_orthonormalize_exception_suppressed(self):
+        result = orthonormalize("bad_input", raises_error=False)
+        assert result == "bad_input"
+
+    def test_orthonormalize_exception_reraise(self):
+        with pytest.raises(Exception):
+            orthonormalize("bad_input", raises_error=True)
 
     def test_svd(self):
         x = np.linspace(-1, 1, 6**2).reshape(6, 6)

@@ -1,106 +1,119 @@
-from typing import Literal, Optional
+import threading
+from typing import Optional
 
 import numpy as np
 import pennylane as qml
 import torch
 import torch_pfaffian
-import tqdm
 from pennylane.typing import TensorLike
 
 from . import torch_utils
 from .math import convert_and_cast_like
+from .torch_utils import infer_real_dtype
+
+_pfaffian_epsilon_lock = threading.Lock()
 
 
-def pfaffian_by_det(
-    __matrix: TensorLike,
-    p_bar: Optional[tqdm.tqdm] = None,
-    show_progress: bool = False,
-    epsilon: float = 1e-12,
+def signed_pfaffian(matrix: TensorLike, dtype: Optional[torch.dtype] = None) -> TensorLike:
+    """
+    Compute the signed Pfaffian of a real antisymmetric matrix (or batch).
+
+    Thin wrapper over :func:`pfaffian` with ``sign=True`` that infers a real working
+    precision from ``matrix``. The signed Pfaffian uses the native Rust Parlett-Reid kernel
+    on CPU and a device-native PyTorch fallback otherwise, supports arbitrary leading batch
+    dimensions, and is autograd-safe on the skew-symmetric manifold.
+
+    :param matrix: Real antisymmetric matrix of even size ``(..., 2k, 2k)``.
+    :param dtype: Real working precision for the internal computation. Defaults to
+        ``None``, in which case the precision is inferred from ``matrix`` (e.g. a
+        ``float32``/``complex64`` input keeps ``float32`` internals). Pass an explicit
+        real dtype to override.
+    :return: Signed Pfaffian of shape ``(...,)``.
+    :rtype: TensorLike
+    """
+    if dtype is None:
+        dtype = infer_real_dtype(matrix)
+    return pfaffian(matrix, sign=True, dtype=dtype)
+
+
+def sector_pfaffian_features(
+    cov_matrix: TensorLike,
+    index_sets: np.ndarray,
+    dtype: Optional[torch.dtype] = None,
 ) -> TensorLike:
-    shape = qml.math.shape(__matrix)
-    p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)
-    p_bar.set_description(f"[det] Computing determinant of {shape} matrix")
+    """
+    Return a ``(..., n_terms)`` tensor of signed Pfaffians of principal submatrices.
 
-    # Quick return if possible
-    if shape[-2] % 2 == 1:
-        p_bar.set_description("Odd-sized matrix")
-        p_bar.close()
-        matrix = qml.math.cast(__matrix, dtype=complex)
-        zero_like = convert_and_cast_like(0, matrix)
-        pfaffian_val = qml.math.convert_like(np.ones(shape[:-2], dtype=complex), matrix)
-        return pfaffian_val * zero_like * matrix[..., 0, 0]
+    Each submatrix is the ``(submatrix_size, submatrix_size)`` principal minor of
+    ``cov_matrix`` indexed by a row of ``index_sets``. The signed Pfaffians are computed
+    in a single vectorized :func:`pfaffian` call with ``sign=True``, which carries the
+    gradient on the skew-symmetric manifold.
 
-    backend = qml.math.get_interface(__matrix)
-    if backend in ["autograd", "numpy"]:
-        det = qml.math.linalg.det(__matrix)
-        pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
+    :param cov_matrix: ``(..., D, D)`` antisymmetric matrix (or batch).
+    :param index_sets: ``(n_terms, submatrix_size)`` integer array of Majorana index tuples.
+    :param dtype: Real working precision for the internal computation. Defaults to
+        ``None``, in which case the precision is inferred from ``cov_matrix`` (e.g. a
+        ``float32``/``complex64`` input keeps ``float32`` internals, avoiding the
+        ~2x memory of forcing ``float64``). Pass an explicit real dtype to override.
+    :return: ``(..., n_terms)`` Pfaffians.
+    :rtype: TensorLike
+    """
+    if dtype is None:
+        dtype = infer_real_dtype(cov_matrix)
+    cov_matrix_t = torch.as_tensor(qml.math.real(cov_matrix), dtype=dtype)
+    index_sets = np.asarray(index_sets)  # (n_terms, submatrix_size)
+    n_terms, submatrix_size = index_sets.shape
+    row_indices = index_sets[:, :, None]  # (n_terms, submatrix_size, 1)
+    col_indices = index_sets[:, None, :]  # (n_terms, 1, submatrix_size)
+    submatrices = cov_matrix_t[..., row_indices, col_indices]  # (..., n_terms, submatrix_size, submatrix_size)
+
+    if submatrix_size == 2:
+        # Fast path: Pf of 2x2 [[0, a], [-a, 0]] = a.
+        result = submatrices[..., 0, 1]  # (..., n_terms)
     else:
-        det = qml.math.det(__matrix)
-        pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
-    p_bar.set_description(f"Determinant of {shape} matrix computed")
-    p_bar.update()
-    p_bar.close()
-    return pf
-
-
-def pfaffian_by_det_cuda(
-    __matrix: TensorLike,
-    p_bar: Optional[tqdm.tqdm] = None,
-    show_progress: bool = False,
-    epsilon: float = 1e-12,
-) -> TensorLike:
-    shape = qml.math.shape(__matrix)
-    p_bar = p_bar or tqdm.tqdm(total=1, disable=not show_progress)
-    p_bar.set_description(f"[cuda_det] Computing determinant of {shape} matrix")
-    backend = qml.math.get_interface(__matrix)
-    cuda_det = torch.det(torch_utils.to_cuda(__matrix))
-    if backend in ["torch"]:
-        if __matrix.device.type == "cuda":
-            det = cuda_det
-        else:
-            det = torch_utils.to_cpu(cuda_det)
-    else:
-        det = torch_utils.to_cpu(cuda_det)
-    det = convert_and_cast_like(det, __matrix)
-    pf = qml.math.sqrt(qml.math.abs(det) + epsilon)
-    p_bar.set_description(f"Determinant of {shape} matrix computed")
-    p_bar.update()
-    p_bar.close()
-    return pf
+        result = pfaffian(submatrices, sign=True)  # (..., n_terms)
+    return convert_and_cast_like(result, cov_matrix)
 
 
 def pfaffian(
-    __matrix: TensorLike,
-    method: Literal["det", "cuda_det", "PfaffianFDBPf"] = "det",
-    epsilon: float = 1e-12,
-    p_bar: Optional[tqdm.tqdm] = None,
-    show_progress: bool = False,
+    matrix: TensorLike,
+    sign: bool = False,
+    epsilon: float = 1e-32,
+    dtype: Optional[torch.dtype] = None,
 ) -> TensorLike:
     """
-    Compute the Pfaffian of a real or complex skew-symmetric
-    matrix A (A=-A^T).
+    Compute the Pfaffian of a real or complex skew-symmetric matrix ``A`` (``A = -A^T``).
 
-    :param __matrix: Matrix to compute the Pfaffian of
-    :type __matrix: TensorLike
-    :param method: Method to use to compute the pfaffian.
-    :type method: Literal["det", "cuda_det", "PfaffianFDBPf"]
-    :param epsilon: Tolerance for the determinant method
-    :type epsilon: float
-    :param p_bar: Progress bar
-    :type p_bar: Optional[tqdm.tqdm]
-    :param show_progress: Whether to show progress bar. If no progress bar is provided, a new one is created
-    :type show_progress: bool
-    :return: Pfaffian of the matrix
+    Delegates to TorchPfaffian. When ``sign`` is ``False`` (default) the magnitude
+    ``sqrt(|det(A)|)`` is returned, which is the quantity needed for probability computations
+    where the sign is irrelevant. When ``sign`` is ``True`` the signed Pfaffian is returned.
+
+    Note: with a complex ``matrix`` this function may not behave as expected. The signed path
+    (``sign=True``) relies on a kernel that discards the imaginary part without warning, so it
+    returns the Pfaffian of the real part only. In normal use the signed path receives real
+    matrices, and the magnitude path (``sign=False``) handles complex inputs correctly. If the
+    complex behaviour is a problem for your use case, please open an issue.
+
+    :param matrix: Matrix to compute the Pfaffian of, of shape ``(..., 2n, 2n)``.
+    :param sign: When ``True`` return the signed Pfaffian, otherwise its magnitude. Defaults
+        to ``False``.
+    :param epsilon: Floor applied to the determinant magnitude in the ``sign=False`` path to
+        avoid numerical instabilities. Defaults to ``1e-32``.
+    :param dtype: Optional working dtype to cast ``matrix`` to before the computation.
+        Defaults to ``None`` (the input dtype is preserved).
+    :return: Pfaffian of the matrix, of shape ``(...,)``.
     :rtype: TensorLike
     """
-    shape = qml.math.shape(__matrix)
-    assert shape[-2] == shape[-1] > 0, "Matrix must be square"
-
-    if method == "det":
-        return pfaffian_by_det(__matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon)
-    elif method == "cuda_det":
-        return pfaffian_by_det_cuda(__matrix, p_bar=p_bar, show_progress=show_progress, epsilon=epsilon)
-    elif method == "PfaffianFDBPf":
-        pf = torch_pfaffian.get_pfaffian_function(method)(torch_utils.to_tensor(__matrix, dtype=torch.complex128))
-        return convert_and_cast_like(pf, __matrix)
-    raise ValueError(f"Invalid method. Got {method}, must be 'det', 'cuda_det', or 'PfaffianFDBPf'.")
+    matrix_t = torch_utils.to_tensor(matrix, dtype=dtype)
+    if sign:
+        result = torch_pfaffian.pfaffian(matrix_t, sign=True)
+    else:
+        # ``PfaffianDet`` differentiates straight through ``det`` and ``sqrt``; its gradient
+        # stays consistent with finite differences for complex matrices, whereas the analytic
+        # backward of the gradient-enabled magnitude strategy does not. The global ``EPSILON``
+        # it reads is mutated under a lock for thread safety.
+        # ``PfaffianDet`` is also faster in general in CPU and can be used with CUDA.
+        with _pfaffian_epsilon_lock:
+            torch_pfaffian.PfaffianStrategy.EPSILON = epsilon
+            result = torch_pfaffian.PfaffianDet.apply(matrix_t)
+    return convert_and_cast_like(result, matrix)

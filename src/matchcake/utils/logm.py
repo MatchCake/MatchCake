@@ -1,5 +1,7 @@
+import warnings
 from typing import Callable
 
+import numpy as np
 import pennylane as qml
 import torch
 from scipy.linalg import logm as scipy_logm
@@ -24,7 +26,10 @@ class TorchLogm(torch.autograd.Function):
     @staticmethod
     def _torch_logm_scipy(tensor: torch.Tensor):
         if tensor.ndim == 2:
-            return torch.from_numpy(scipy_logm(tensor.cpu(), disp=False)[0]).to(tensor.device)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=RuntimeWarning, message="logm result may be inaccurate")
+                result = scipy_logm(tensor.cpu())
+            return torch.from_numpy(np.asarray(result)).to(tensor.device)
         return torch.stack([TorchLogm._torch_logm_scipy(mat) for mat in tensor]).to(tensor.device)
 
     @staticmethod

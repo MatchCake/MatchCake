@@ -1,0 +1,23 @@
+from typing import Optional
+
+from pennylane import Hadamard
+from pennylane.wires import WiresLike
+
+from .state_prep_from_gates import StatePrepFromGates
+
+
+class PlusState(StatePrepFromGates):
+    @classmethod
+    def gate_generator(cls, wires: WiresLike):
+        for wire in wires:
+            yield Hadamard(wire)
+        return
+
+    def __init__(
+        self,
+        wires: Optional[WiresLike] = None,
+    ):
+        super().__init__(gate_generator=self.gate_generator, wires=wires)
+
+    def label(self, decimals=None, base_label=None, cache=None):
+        return "|+⟩"

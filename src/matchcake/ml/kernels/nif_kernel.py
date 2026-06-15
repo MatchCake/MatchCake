@@ -1,5 +1,5 @@
 from functools import cached_property, partial
-from typing import Optional
+from typing import Optional, cast
 
 import numpy as np
 import pennylane as qml
@@ -9,7 +9,7 @@ from tqdm import tqdm
 from ...devices.nif_device import NonInteractingFermionicDevice
 from ...operations import SingleParticleTransitionMatrixOperation
 from ...typing import TensorLike
-from ...utils.torch_utils import to_tensor
+from ...utils.torch_utils import get_torch_dtype, to_tensor
 from .gram_matrix import GramMatrix
 from .kernel import Kernel
 
@@ -25,20 +25,30 @@ class NIFKernel(Kernel):
     The class supports flexible configuration of qubit numbers and processing batch
     sizes.
 
-    :ivar R_DTYPE: Data type used for computation within the kernel.
+    :ivar R_DTYPE: Real floating-point dtype used by the underlying device. Read from the device so
+        the device remains the single source of truth for precision.
     :type R_DTYPE: torch.dtype
+    :ivar C_DTYPE: Complex dtype used by the underlying device.
+    :type C_DTYPE: torch.dtype
     """
 
     DEFAULT_N_QUBITS = 12
-    DEFAULT_GRAM_BATCH_SIZE = 10_000
+    DEFAULT_R_DTYPE = torch.float32
+    DEFAULT_C_DTYPE = torch.complex64
 
     def __init__(
         self,
         *,
-        gram_batch_size: int = DEFAULT_GRAM_BATCH_SIZE,
-        random_state: int = 0,
-        alignment: bool = False,
+        gram_batch_size: int = Kernel.DEFAULT_GRAM_BATCH_SIZE,
+        random_state: int = Kernel.DEFAULT_RANDOM_STATE,
+        alignment: bool = Kernel.DEFAULT_ALIGNMENT,
+        alignment_iterations: int = Kernel.DEFAULT_ALIGNMENT_ITERATIONS,
+        alignment_learning_rate: float = Kernel.DEFAULT_ALIGNMENT_LEARNING_RATE,
+        alignment_early_stopping_patience: int = Kernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
+        alignment_early_stopping_threshold: float = Kernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
         n_qubits: int = DEFAULT_N_QUBITS,
+        r_dtype: Optional[torch.dtype] = None,
+        c_dtype: Optional[torch.dtype] = None,
     ):
         """
         Initializes the class with specific parameters for quantum device configuration and
@@ -46,17 +56,33 @@ class NIFKernel(Kernel):
 
         :param gram_batch_size: The batch size for the Gram computation.
         :param random_state: Seed for the random number generator to ensure reproducibility.
+        :param alignment: A boolean flag indicating whether to perform kernel alignment during fitting.
+        :param alignment_iterations: The maximum number of iterations for kernel alignment optimization.
+        :param alignment_learning_rate: The learning rate for the optimizer used in kernel alignment.
+        :param alignment_early_stopping_patience: The number of iterations to wait for improvement
+            before stopping kernel alignment optimization.
+        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel
+            alignment optimization, used for early stopping criteria.
         :param n_qubits: The number of qubits for the non-interacting fermionic device.
+        :param r_dtype: The real floating-point dtype passed to the non-interacting fermionic device.
+            Defaults to :attr:`DEFAULT_R_DTYPE` when ``None``.
+        :param c_dtype: The complex dtype passed to the non-interacting fermionic device.
+            Defaults to :attr:`DEFAULT_C_DTYPE` when ``None``.
         """
         super().__init__(
             gram_batch_size=gram_batch_size,
             random_state=random_state,
             alignment=alignment,
+            alignment_iterations=alignment_iterations,
+            alignment_learning_rate=alignment_learning_rate,
+            alignment_early_stopping_patience=alignment_early_stopping_patience,
+            alignment_early_stopping_threshold=alignment_early_stopping_threshold,
         )
-        self.R_DTYPE = torch.float32
-        self._q_device = NonInteractingFermionicDevice(n_qubits, r_dtype=self.R_DTYPE)
+        self._r_dtype = get_torch_dtype(r_dtype, self.DEFAULT_R_DTYPE)
+        self._c_dtype = get_torch_dtype(c_dtype, self.DEFAULT_C_DTYPE)
+        self._q_device = NonInteractingFermionicDevice(n_qubits, r_dtype=self._r_dtype, c_dtype=self._c_dtype)
 
-    def forward(self, x0: TensorLike, x1: Optional[TensorLike] = None, **kwargs) -> TensorLike:
+    def forward(self, x0: TensorLike, x1: Optional[TensorLike] = None, **kwargs) -> torch.Tensor:
         """
         Calculates the similarities between input tensors and returns the kernel output.
 
@@ -74,7 +100,7 @@ class NIFKernel(Kernel):
         x0 = to_tensor(x0, dtype=self.R_DTYPE)  # type: ignore
         x1 = to_tensor(x1, dtype=self.R_DTYPE)  # type: ignore
         self.to(dtype=self.R_DTYPE, device=self.device)
-        kernel = self.compute_similarities(x0, x1, **kwargs)  # type: ignore
+        kernel = cast(torch.Tensor, self.compute_similarities(x0, x1, **kwargs))  # type: ignore[arg-type]
         return kernel
 
     def ansatz(self, x: torch.Tensor):
@@ -145,7 +171,9 @@ class NIFKernel(Kernel):
             circuit.
         """
         yield SingleParticleTransitionMatrixOperation(sptm0, wires=self.wires)
-        yield SingleParticleTransitionMatrixOperation(sptm1, wires=self.wires).adjoint()
+        with qml.QueuingManager.stop_recording():
+            sptm1_instance = SingleParticleTransitionMatrixOperation(sptm1, wires=self.wires)
+        yield sptm1_instance.adjoint()
         return
 
     def _x_to_sptm(self, x: TensorLike) -> TensorLike:
@@ -163,15 +191,19 @@ class NIFKernel(Kernel):
         x = to_tensor(x, dtype=self.R_DTYPE)  # type: ignore
         batched_indices = np.array_split(np.arange(len(x)), np.ceil(len(x) / self.gram_batch_size))
         sptms = []
+        assert self._q_device.num_wires is not None
         for batch_indices in batched_indices:
-            bx = to_tensor(x[batch_indices], dtype=self.R_DTYPE, device=self.device)  # type: ignore
+            bx = cast(torch.Tensor, to_tensor(x[batch_indices], dtype=self.R_DTYPE, device=self.device))  # type: ignore[index]
             self._q_device.execute_generator(self.ansatz(bx), reset=True)
-            new_sptm = to_tensor(self._q_device.global_sptm.matrix(), dtype=self.R_DTYPE, device=x.device).reshape(
-                -1, 2 * self._q_device.num_wires, 2 * self._q_device.num_wires
-            )
+            global_sptm = self._q_device.global_sptm
+            assert global_sptm is not None
+            new_sptm = cast(
+                torch.Tensor, to_tensor(global_sptm.matrix(), dtype=self.R_DTYPE, device=cast(torch.Tensor, x).device)
+            ).reshape(-1, 2 * self._q_device.num_wires, 2 * self._q_device.num_wires)
             sptms.append(new_sptm)
+        x_tensor = cast(torch.Tensor, x)
         stacked_sptms = qml.math.concatenate(sptms, axis=0).reshape(
-            x.shape[0], 2 * self._q_device.num_wires, 2 * self._q_device.num_wires
+            x_tensor.shape[0], 2 * self._q_device.num_wires, 2 * self._q_device.num_wires
         )
         return stacked_sptms
 
@@ -205,11 +237,27 @@ class NIFKernel(Kernel):
         :param value: The number of qubits to be set for the quantum device.
         :type value: int
         """
-        self._q_device = NonInteractingFermionicDevice(value, r_dtype=self.R_DTYPE)
+        self._q_device = NonInteractingFermionicDevice(value, r_dtype=self._r_dtype, c_dtype=self._c_dtype)
 
     @property
     def q_device(self):
         return self._q_device
+
+    @property
+    def r_dtype(self) -> torch.dtype:
+        return self._r_dtype
+
+    @property
+    def c_dtype(self) -> torch.dtype:
+        return self._c_dtype
+
+    @property
+    def R_DTYPE(self) -> torch.dtype:
+        return getattr(self._q_device, "R_DTYPE", self._r_dtype)
+
+    @property
+    def C_DTYPE(self) -> torch.dtype:
+        return getattr(self._q_device, "C_DTYPE", self._c_dtype)
 
     @cached_property
     def sptms_train(self) -> TensorLike:

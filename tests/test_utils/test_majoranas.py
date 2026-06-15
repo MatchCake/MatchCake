@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from matchcake import utils
-from matchcake.utils import get_majorana_pauli_string
+from matchcake.utils import MajoranaGetter, get_majorana_pauli_string
 
 from ..configs import (
     ATOL_MATRIX_COMPARISON,
@@ -22,8 +22,7 @@ def test_majorana_output_shape(k: int, n: int):
     out_shape = utils.get_majorana(k, n).shape
     target_shape = (2**n, 2**n)
     assert out_shape == target_shape, (
-        f"The output matrix is not of the correct shape with k={k} and n={n}. "
-        f"Got {out_shape} instead of {target_shape}"
+        f"The output matrix is not of the correct shape with k={k} and n={n}. Got {out_shape} instead of {target_shape}"
     )
 
 
@@ -131,3 +130,38 @@ class TestMajorana:
     def test_get_majorana_pauli_string(self, i, n, join_char, expected):
         result = get_majorana_pauli_string(i, n, join_char)
         assert result == expected, f"Expected {expected} but got {result} for i={i}, n={n}, join_char='{join_char}'"
+
+    def test_majorana_getter_len(self):
+        getter = MajoranaGetter(n=2)
+        assert len(getter) == 2 * 2 + 2 * (2 - 1) // 2
+
+    def test_majorana_getter_iter(self):
+        getter = MajoranaGetter(n=1)
+        items = list(getter)
+        assert len(items) == len(getter)
+
+    def test_majorana_getter_setitem(self):
+        getter = MajoranaGetter(n=2)
+        dummy = np.eye(4)
+        getter[(0, 1)] = dummy
+        np.testing.assert_array_equal(getter[(0, 1)], dummy)
+
+    def test_majorana_getter_cache_item_eviction(self):
+        getter = MajoranaGetter(n=2, maxsize=2)
+        getter[(0, 1)] = np.eye(4)
+        getter[(0, 2)] = np.eye(4)
+        removed = getter.cache_item((0, 3), np.eye(4))
+        assert removed is not None
+        assert (0, 3) in getter.cache
+
+    def test_majorana_getter_clear_cache(self):
+        getter = MajoranaGetter(n=2)
+        _ = getter[0]
+        getter.clear_cache()
+        assert len(getter.cache) == 0
+
+    def test_majorana_getter_pair_from_symmetric(self):
+        getter = MajoranaGetter(n=2)
+        _ = getter[(0, 1)]
+        result = getter[(1, 0)]
+        np.testing.assert_allclose(result, -getter.cache[(0, 1)], atol=ATOL_MATRIX_COMPARISON)

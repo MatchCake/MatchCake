@@ -1,8 +1,6 @@
 import numpy as np
 import pennylane as qml
-from pennylane.wires import Wires
 
-from ...utils.math import convert_and_cast_like
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
@@ -31,7 +29,7 @@ class SptmCompRzRz(SingleParticleTransitionMatrixOperation):
         rn_gen = np.random.default_rng(seed)
         return rn_gen.uniform(0, 2 * np.pi, params_shape)
 
-    def __init__(self, params, wires=None, *, id=None, **kwargs):
+    def __init__(self, params, wires=None, **kwargs):
         params_shape = qml.math.shape(params)
         if params_shape[-1] != 2:
             raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
@@ -43,11 +41,11 @@ class SptmCompRzRz(SingleParticleTransitionMatrixOperation):
         else:
             raise ValueError(f"Invalid shape for the parameters: {params_shape}")
 
-        if params_shape[-1] != 2:
-            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
+        if params_shape[-1] != 2:  # pragma: no cover
+            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")  # pragma: no cover
 
-        if self.hyperparameters.get("check_angles", self.DEFAULT_CHECK_ANGLES):
-            self.check_angles(params)
+        if self.hyperparameters.get("check_angles", self.DEFAULT_CHECK_ANGLES):  # pragma: no cover
+            self.check_angles(params)  # pragma: no cover
         if self.hyperparameters.get("clip_angles", self.DEFAULT_CLIP_ANGLES):
             params = self.clip_angles(params)
 
@@ -67,7 +65,7 @@ class SptmCompRzRz(SingleParticleTransitionMatrixOperation):
         matrix[..., 2, 3] = 1j * (exp_phi - exp_theta) * exp_theta_phi / 2
         matrix[..., 3, 2] = 1j * (exp_theta - exp_phi) * exp_theta_phi / 2
         matrix[..., 3, 3] = (exp_theta + exp_phi) * exp_theta_phi / 2
-        super().__init__(matrix, wires=wires, id=id, **kwargs)
+        super().__init__(matrix, wires=wires, **kwargs)
         self._given_params = params
 
     def to_matchgate(self):

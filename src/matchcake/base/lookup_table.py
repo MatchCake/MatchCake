@@ -1,7 +1,7 @@
 import itertools
-import numbers
+from collections.abc import Callable
 from functools import cached_property
-from typing import Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Iterable, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pennylane as qml
@@ -122,8 +122,10 @@ class NonInteractingFermionicLookupTable:
             index in the getter table.
         """
         if isinstance(item, int):
-            item = utils.math.convert_1d_to_2d_indexes([item], n_rows=3)[0]
-        i, j = item
+            item_2d = utils.math.convert_1d_to_2d_indexes([item], n_rows=3)[0]
+        else:
+            item_2d = item
+        i, j = item_2d
         getter = self.getter_table[i][j]
         return getter()
 
@@ -183,7 +185,11 @@ class NonInteractingFermionicLookupTable:
 
         batch_size = [self.batch_size] if self.batch_size else [1]
         obs_shape = [target_batch_size] + batch_size + [obs_size, obs_size]
-        obs = qml.math.convert_like(np.zeros(obs_shape, dtype=complex), self.transition_matrix)
+        obs = utils.math.convert_like_and_cast_to(
+            np.zeros(obs_shape, dtype=complex),
+            self.transition_matrix,
+            dtype=utils.math.complex_dtype_name_like(self.transition_matrix),
+        )
         obs[..., obs_indices[0], obs_indices[1]] = qml.math.transpose(
             lt_items[new_all_lt_indexes, ..., lt_item_rows, lt_item_cols], (0, -1, -2)
         )
@@ -362,14 +368,13 @@ class NonInteractingFermionicLookupTable:
                 indexes_of_target_states.shape[0], axis=0
             )
 
-        self._assert_binary(system_state)
-        self._assert_binary(target_binary_states)
-        return (
-            system_state,
-            target_binary_states,
-            indexes_of_target_states,
-            initial_ndim,
-        )
+        ss = cast(np.ndarray, np.asarray(system_state))
+        tbs = cast(np.ndarray, target_binary_states)
+        iots = cast(np.ndarray, indexes_of_target_states)
+        ndim = cast(int, initial_ndim)
+        self._assert_binary(ss)
+        self._assert_binary(tbs)
+        return (ss, tbs, iots, ndim)
 
     def _get_bra_ket_indexes(self, system_state: np.ndarray, target_binary_states: np.ndarray, **kwargs):
         """
@@ -398,11 +403,11 @@ class NonInteractingFermionicLookupTable:
               target binary state.
         """
         target_batch_size = target_binary_states.shape[0]
-        ket_majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(system_state)
-        bra_majorana_indexes = list(reversed(ket_majorana_indexes))
+        ket_maj = utils.decompose_binary_state_into_majorana_indexes(system_state)
+        bra_maj = list(reversed(ket_maj))
 
-        ket_majorana_indexes = np.asarray(ket_majorana_indexes)[np.newaxis, :].repeat(target_batch_size, axis=0)
-        bra_majorana_indexes = np.asarray(bra_majorana_indexes)[np.newaxis, :].repeat(target_batch_size, axis=0)
+        ket_majorana_indexes = np.asarray(ket_maj)[np.newaxis, :].repeat(target_batch_size, axis=0)
+        bra_majorana_indexes = np.asarray(bra_maj)[np.newaxis, :].repeat(target_batch_size, axis=0)
         return bra_majorana_indexes, ket_majorana_indexes
 
     def _get_lt_indexes(
@@ -424,8 +429,8 @@ class NonInteractingFermionicLookupTable:
             states, and unmeasured class indexes.
         """
         target_batch_size = target_binary_states.shape[0]
-        unmeasured_cls_indexes = [2 for _ in range(ket_majorana_indexes.shape[-1])]
-        unmeasured_cls_indexes = np.asarray(unmeasured_cls_indexes)[np.newaxis, :].repeat(target_batch_size, axis=0)
+        unmeasured_cls_list = [2 for _ in range(ket_majorana_indexes.shape[-1])]
+        unmeasured_cls_indexes = np.asarray(unmeasured_cls_list)[np.newaxis, :].repeat(target_batch_size, axis=0)
         measure_cls_indexes = np.asarray([np.array([[b, 1 - b] for b in t]).flatten() for t in target_binary_states])
         lt_indexes = np.concatenate(
             [unmeasured_cls_indexes, measure_cls_indexes, unmeasured_cls_indexes],
@@ -469,7 +474,7 @@ class NonInteractingFermionicLookupTable:
         ).astype(int)
         return majorana_indexes
 
-    def _compute_items(self, indexes: Sequence[Tuple[int, int]], close_p_bar: bool = True) -> List[TensorLike]:
+    def _compute_items(self, indexes: Iterable[Tuple[int, int]], close_p_bar: bool = True) -> List[TensorLike]:
         """
         Compute the items of the lookup table corresponding to the indexes.
 
@@ -477,11 +482,10 @@ class NonInteractingFermionicLookupTable:
         :param close_p_bar: Whether to close the progress bar.
         :return: The items of the lookup table corresponding to the indexes.
         """
-        self.initialize_p_bar(total=len(indexes), initial=0, desc="Computing Lookup Table Items")
+        indexes_arr = np.asarray(list(indexes)).reshape(-1, 2)
+        self.initialize_p_bar(total=len(indexes_arr), initial=0, desc="Computing Lookup Table Items")
         items = []
-        indexes = np.asarray(indexes)
-        indexes = indexes.reshape(-1, 2)
-        for i, j in indexes:
+        for i, j in indexes_arr:
             items.append(self[i, j])
             self.update_p_bar()
         if close_p_bar:
@@ -491,7 +495,7 @@ class NonInteractingFermionicLookupTable:
     def _compute_stack_and_pad_items(
         self,
         indexes: Iterable[Tuple[int, int]],
-        pad_value: numbers.Number = 0.0,
+        pad_value: float = 0.0,
         close_p_bar: bool = True,
     ) -> TensorLike:
         """
@@ -523,7 +527,9 @@ class NonInteractingFermionicLookupTable:
                 new_shape = list(item_shape)
                 new_shape[-2] = max_dim_0
                 new_shape[-1] = max_dim_1
-                new_item = qml.math.convert_like(np.full(new_shape, fill_value=pad_value, dtype=complex), item)
+                new_item = utils.math.convert_and_cast_like(
+                    np.full(new_shape, fill_value=pad_value, dtype=complex), item
+                )
                 new_item[..., : item_shape[-2], : item_shape[-1]] = item
                 items[i] = new_item
             items = qml.math.stack(items)
@@ -604,18 +610,22 @@ class NonInteractingFermionicLookupTable:
 
         :return: the :math:`B` matrix.
         """
-        return utils.get_block_diagonal_matrix(self.n_particles)
+        return utils.math.convert_like_and_cast_to(
+            utils.get_block_diagonal_matrix(self.n_particles),
+            self.transition_matrix,
+            dtype=utils.math.complex_dtype_name_like(self.transition_matrix),
+        )
 
     @cached_property
     def block_bm_transition_transpose_matrix(self):
         self.p_bar_set_postfix_str("Computing BT^T matrix.")
-        return qml.math.einsum(f"ij,...kj->...ik", self.block_diagonal_matrix, self.transition_matrix)
+        return qml.math.einsum("ij,...kj->...ik", self.block_diagonal_matrix, self.transition_matrix)
 
     @cached_property
     def block_bm_transition_dagger_matrix(self):
         self.p_bar_set_postfix_str("Computing BT^dagger matrix.")
         return qml.math.einsum(
-            f"ij,...kj->...ik",
+            "ij,...kj->...ik",
             self.block_diagonal_matrix,
             qml.math.conjugate(self.transition_matrix),
         )
@@ -623,7 +633,7 @@ class NonInteractingFermionicLookupTable:
     @cached_property
     def transition_bm_block_matrix(self):
         self.p_bar_set_postfix_str("Computing TB matrix.")
-        return qml.math.einsum(f"...ij,jk->...ik", self.transition_matrix, self.block_diagonal_matrix)
+        return qml.math.einsum("...ij,jk->...ik", self.transition_matrix, self.block_diagonal_matrix)
 
     @cached_property
     def shape(self) -> Tuple[int, int]:
@@ -633,7 +643,7 @@ class NonInteractingFermionicLookupTable:
     def c_d_alpha__c_d_beta(self) -> TensorLike:
         self.p_bar_set_postfix_str("Computing c_d_alpha__c_d_beta.")
         return qml.math.einsum(
-            f"...pj,...kj->...pk",
+            "...pj,...kj->...pk",
             self.transition_bm_block_matrix,
             self.transition_matrix,
         )
@@ -642,7 +652,7 @@ class NonInteractingFermionicLookupTable:
     def c_d_alpha__c_e_beta(self) -> TensorLike:
         self.p_bar_set_postfix_str("Computing c_d_alpha__c_e_beta.")
         return qml.math.einsum(
-            f"...pj,...kj->...pk",
+            "...pj,...kj->...pk",
             self.transition_bm_block_matrix,
             qml.math.conjugate(self.transition_matrix),
         )
@@ -655,7 +665,7 @@ class NonInteractingFermionicLookupTable:
     def c_e_alpha__c_d_beta(self) -> TensorLike:
         self.p_bar_set_postfix_str("Computing c_e_alpha__c_d_beta.")
         return qml.math.einsum(
-            f"...pi,...ik->...pk",
+            "...pi,...ik->...pk",
             qml.math.conjugate(self._transition_matrix),
             self.block_bm_transition_transpose_matrix,
         )
@@ -664,7 +674,7 @@ class NonInteractingFermionicLookupTable:
     def c_e_alpha__c_e_beta(self) -> TensorLike:
         self.p_bar_set_postfix_str("Computing c_e_alpha__c_e_beta.")
         return qml.math.einsum(
-            f"...pi,...ik->...pk",
+            "...pi,...ik->...pk",
             qml.math.conjugate(self._transition_matrix),
             self.block_bm_transition_dagger_matrix,
         )
@@ -673,7 +683,7 @@ class NonInteractingFermionicLookupTable:
     def c_e_alpha__c_2p_beta_m1(self) -> TensorLike:
         self.p_bar_set_postfix_str("Computing c_e_alpha__c_2p_beta_m1.")
         return qml.math.einsum(
-            f"...pi,ij->...pj",
+            "...pi,ij->...pj",
             qml.math.conjugate(self._transition_matrix),
             self.block_diagonal_matrix,
         )
@@ -696,11 +706,11 @@ class NonInteractingFermionicLookupTable:
             matrix[..., :, :] = qml.math.eye(size, dtype=complex)
         else:
             matrix = np.eye(self.transition_matrix.shape[-1])
-        matrix = qml.math.convert_like(matrix, self.transition_matrix)
+        matrix = utils.math.convert_and_cast_like(matrix, self.transition_matrix)
         return matrix
 
     @cached_property
-    def getter_table(self) -> List[List[callable]]:
+    def getter_table(self) -> List[List[Callable]]:
         return [
             [
                 self.get_c_d_alpha__c_d_beta,

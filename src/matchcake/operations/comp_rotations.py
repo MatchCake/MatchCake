@@ -114,7 +114,7 @@ class CompRotation(MatchgateOperation):
         params = cls.random_params(batch_size=batch_size, dtype=dtype, device=device, seed=seed, **kwargs)
         return cls(params, wires=wires, dtype=dtype, device=device, **kwargs)
 
-    def __init__(self, params, directions: Sequence[Literal["X", "Y", "Z"]], wires=None, id=None, **kwargs):
+    def __init__(self, params, directions: Sequence[Literal["X", "Y", "Z"]], wires=None, **kwargs):
         shape = qml.math.shape(params)[-1:]
         n_angles = shape[0]
         if n_angles != 2:
@@ -124,7 +124,6 @@ class CompRotation(MatchgateOperation):
         super().__init__(
             _make_complete_rot_matrix(params, directions),
             wires=wires,
-            id=id,
             _given_params=params,
             _directions="".join(directions),
             **kwargs,
@@ -195,13 +194,13 @@ class CompRotation(MatchgateOperation):
                 [0., 0., 0., 1.]], requires_grad=True)]
 
         """
-        if self.draw_label_params is not None:
-            return super().label(decimals=decimals, base_label=base_label, cache=cache)
+        if self.draw_label_params is not None:  # pragma: no cover
+            return super().label(decimals=decimals, base_label=base_label, cache=cache)  # pragma: no cover
 
         op_label = base_label or self.__class__.__name__
 
-        if self.num_params == 0:
-            return op_label
+        if self.num_params == 0:  # pragma: no cover
+            return op_label  # pragma: no cover
 
         params = self.get_implicit_parameters()
 
@@ -228,9 +227,8 @@ class CompRotation(MatchgateOperation):
         def _format(x):
             try:
                 return format(qml.math.toarray(x), f".{decimals}f")
-            except ValueError:
-                # If the parameter can't be displayed as a float
-                return format(x)
+            except ValueError:  # pragma: no cover
+                return format(x)  # pragma: no cover
 
         param_string = ",\n".join(_format(p) for p in params)
         return f"{op_label}\n({param_string})"
@@ -244,12 +242,12 @@ class CompRxRx(CompRotation):
         U = M(R_X(\theta), R_X(\phi))
     """
 
-    def __init__(self, params, wires=None, id=None, **kwargs):
-        super().__init__(params, directions=["X", "X"], wires=wires, id=id, **kwargs)
+    def __init__(self, params, wires=None, **kwargs):
+        super().__init__(params, directions=["X", "X"], wires=wires, **kwargs)
 
     def to_sptm_operation(self) -> SingleParticleTransitionMatrixOperation:
         return SptmCompRxRx(
-            self._given_params, wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs, clip_angles=False
+            self._given_params, wires=self.wires, **self.hyperparameters, **self.kwargs, clip_angles=False
         )
 
 
@@ -261,12 +259,12 @@ class CompRyRy(CompRotation):
         U = M(R_Y(\theta), R_Y(\phi))
     """
 
-    def __init__(self, params, wires=None, id=None, **kwargs):
-        super().__init__(params, directions=["Y", "Y"], wires=wires, id=id, **kwargs)
+    def __init__(self, params, wires=None, **kwargs):
+        super().__init__(params, directions=["Y", "Y"], wires=wires, **kwargs)
 
     def to_sptm_operation(self) -> SingleParticleTransitionMatrixOperation:
         return SptmCompRyRy(
-            self._given_params, wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs, clip_angles=False
+            self._given_params, wires=self.wires, **self.hyperparameters, **self.kwargs, clip_angles=False
         )
 
 
@@ -278,10 +276,10 @@ class CompRzRz(CompRotation):
         U = M(R_Z(\theta), R_Z(\phi))
     """
 
-    def __init__(self, params, wires=None, id=None, **kwargs):
-        super().__init__(params, directions=["Z", "Z"], wires=wires, id=id, **kwargs)
+    def __init__(self, params, wires=None, **kwargs):
+        super().__init__(params, directions=["Z", "Z"], wires=wires, **kwargs)
 
     def to_sptm_operation(self) -> SingleParticleTransitionMatrixOperation:
         return SptmCompRzRz(
-            self._given_params, wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs, clip_angles=False
+            self._given_params, wires=self.wires, **self.hyperparameters, **self.kwargs, clip_angles=False
         )
