@@ -1,5 +1,3 @@
-from typing import Literal
-
 import numpy as np
 import pennylane as qml
 from pennylane.operation import StatePrepBase
@@ -63,7 +61,7 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
     """
 
     NAME: str = "ProductState"
-    REQUIRES_KWARGS = ["covariance_matrix", "pfaffian_method", "all_wires"]
+    REQUIRES_KWARGS = ["covariance_matrix", "all_wires"]
 
     @staticmethod
     def build_lambda_y(target_binary_state: TensorLike, n_wires: int) -> np.ndarray:
@@ -168,7 +166,6 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
         k = target_arr.shape[-1]
 
         covariance_matrix: TensorLike = kwargs["covariance_matrix"]  # (..., 2n, 2n)
-        pfaffian_method: Literal["det", "cuda_det", "PfaffianFDBPf"] = kwargs["pfaffian_method"]
         all_wires = Wires(kwargs["all_wires"])
         kwargs.pop("show_progress", False)
 
@@ -212,7 +209,7 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
                 )
 
         combined = lambda_t_w + lambda_y
-        prob = (1.0 / 2**k) * qml.math.real(utils.pfaffian(combined, method=pfaffian_method))
+        prob = (1.0 / 2**k) * qml.math.real(utils.pfaffian(combined, sign=False))
         return convert_and_cast_like(prob, covariance_matrix)
 
     def can_execute(self, state_prep_op: StatePrepBase) -> bool:

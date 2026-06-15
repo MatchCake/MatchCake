@@ -72,7 +72,6 @@ class TestNonInteractingFermionicLookupTableGradients:
                 target_binary_states=target_binary_states,
                 wires=np.arange(len(system_state)),
                 all_wires=np.arange(len(system_state)),
-                pfaffian_method="det",
                 lookup_table=lookup_table,
             )
             return probs

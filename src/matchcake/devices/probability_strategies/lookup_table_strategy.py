@@ -1,5 +1,3 @@
-from typing import Literal
-
 import numpy as np
 import pennylane as qml
 from pennylane.operation import StatePrepBase
@@ -16,7 +14,7 @@ from .probability_strategy import ProbabilityStrategy
 
 class LookupTableStrategy(ProbabilityStrategy):
     NAME: str = "LookupTable"
-    REQUIRES_KWARGS = ["lookup_table", "pfaffian_method"]
+    REQUIRES_KWARGS = ["lookup_table"]
 
     def __call__(
         self,
@@ -46,7 +44,6 @@ class LookupTableStrategy(ProbabilityStrategy):
         is_single = target_arr.ndim == 1
 
         lookup_table: NonInteractingFermionicLookupTable = kwargs["lookup_table"]
-        pfaffian_method: Literal["det", "cuda_det", "PfaffianFDBPf"] = kwargs["pfaffian_method"]
         show_progress = kwargs.get("show_progress", False)
         system_state = self.system_basis_state_from_state_prep_op(state_prep_op)
 
@@ -71,7 +68,7 @@ class LookupTableStrategy(ProbabilityStrategy):
                 wire_indices = np.array([all_wires.indices(Wires(w)) for w in batch_wires])  # (B, k)
 
         obs = lookup_table(system_state, target_arr, wire_indices, show_progress=show_progress)
-        return qml.math.real(utils.pfaffian(obs, method=pfaffian_method, show_progress=show_progress))
+        return qml.math.real(utils.pfaffian(obs, sign=False))
 
     def can_execute(self, state_prep_op: StatePrepBase) -> bool:
         """Return True for basis-state inputs.

@@ -53,6 +53,5 @@ class TestProbabilityStrategyBase:
                 state_prep_op=state_prep,
                 target_binary_states=np.array([0, 0]),
                 wires=Wires([0, 1]),
-                pfaffian_method="det",
                 # lookup_table intentionally omitted
             )

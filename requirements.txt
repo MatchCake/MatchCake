@@ -494,7 +494,6 @@ setuptools==82.0.1
     #   matchcake
     #   pythonbasictools
     #   torch
-    #   torchpfaffian
 six==1.17.0
     # via
     #   astunparse
@@ -561,7 +560,7 @@ torch==2.10.0
     # via
     #   matchcake
     #   torchpfaffian
-torchpfaffian==0.0.0
+torchpfaffian==0.0.3
     # via matchcake
 tornado==6.5.5
     # via

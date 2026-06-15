@@ -1820,7 +1820,7 @@ requires-dist = [
     { name = "torch", marker = "extra == 'cpu'", specifier = ">=2.1.2,<3.0.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "matchcake", extra = "cpu" } },
     { name = "torch", marker = "extra == 'cu128'", specifier = ">=2.1.2,<3.0.0", index = "https://download.pytorch.org/whl/cu128", conflict = { package = "matchcake", extra = "cu128" } },
     { name = "torch", marker = "extra == 'cu130'", specifier = ">=2.1.2,<3.0.0", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "matchcake", extra = "cu130" } },
-    { name = "torchpfaffian", specifier = ">=0.0.0" },
+    { name = "torchpfaffian", specifier = ">=0.0.3" },
     { name = "torchvision", marker = "extra == 'cpu'", specifier = ">=0.21.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "matchcake", extra = "cpu" } },
     { name = "torchvision", marker = "extra == 'cu128'", specifier = ">=0.21.0", index = "https://download.pytorch.org/whl/cu128", conflict = { package = "matchcake", extra = "cu128" } },
     { name = "torchvision", marker = "extra == 'cu130'", specifier = ">=0.22.0", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "matchcake", extra = "cu130" } },
@@ -4466,20 +4466,19 @@ wheels = [
 
 [[package]]
 name = "torchpfaffian"
-version = "0.0.0"
+version = "0.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
-    { name = "setuptools" },
     { name = "torch", version = "2.10.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-9-matchcake-cpu') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cupy') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cupy') or (extra == 'extra-9-matchcake-cu130' and extra == 'extra-9-matchcake-cupy')" },
     { name = "torch", version = "2.10.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-9-matchcake-cupy' or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130') or (extra != 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu128' and extra != 'extra-9-matchcake-cu130')" },
     { name = "torch", version = "2.10.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-9-matchcake-cpu') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cupy') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cupy') or (extra == 'extra-9-matchcake-cu130' and extra == 'extra-9-matchcake-cupy')" },
     { name = "torch", version = "2.10.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-9-matchcake-cu128' or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cupy') or (extra == 'extra-9-matchcake-cu130' and extra == 'extra-9-matchcake-cupy')" },
     { name = "torch", version = "2.10.0+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "extra == 'extra-9-matchcake-cu130' or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cupy') or (extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu130' and extra == 'extra-9-matchcake-cupy')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/35/9b/b747bd886298b6345b5949ac75b1a6fa21e10cb58c5a2a8ca6bb37117694/torchpfaffian-0.0.0.tar.gz", hash = "sha256:afe290cb14623567e5734f9a42268f2ef4a31747f3f1e6982b4a9dff82baff5d", size = 9054, upload-time = "2025-02-26T02:28:22.628Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4c/c2/6404cd303cb020bed14b5abb54d5132a7befe6d058f9978272d705ade857/torchpfaffian-0.0.3.tar.gz", hash = "sha256:bcc38a77c1e1b29069f96b781e988d89bbfdc6976e12938e0f875c7091a05d2b", size = 18301, upload-time = "2026-06-15T14:39:54.229Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/55/c7/8f96f22e3d43b557efc24321f3e54439d723bd90508472cbe11bf526d435/torchpfaffian-0.0.0-py3-none-any.whl", hash = "sha256:ce175651fc636796219bd22f248f6b04f94cb2d8b729f31c4fd3323d53184b12", size = 9144, upload-time = "2025-02-26T02:28:21.376Z" },
+    { url = "https://files.pythonhosted.org/packages/69/c4/6e1aa5b9880dceae77367ca5aa795d138b70b5c8d470af0fa86134e51692/torchpfaffian-0.0.3-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9bbd17128bfbb62560cb533c73233d804fc0f440782de3513a2ee4e930fc1171", size = 333100, upload-time = "2026-06-15T14:39:52.783Z" },
 ]
 
 [[package]]
