@@ -20,7 +20,6 @@ class TestLookupTableStrategy:
             target_binary_states=np.array([0]),
             wires=0,
             lookup_table=lookup_table_mock,
-            pfaffian_method="det",
         )
         assert result is not None
 

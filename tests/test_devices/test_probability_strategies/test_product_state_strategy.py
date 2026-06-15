@@ -141,7 +141,6 @@ class TestProductStateProbabilityStrategy:
                     wires=all_wires,
                     all_wires=all_wires,
                     covariance_matrix=lambda_t,
-                    pfaffian_method=nif_dev.pfaffian_method,
                 )
             )
             lut_index = int("".join(map(str, bits)), 2)
@@ -199,7 +198,6 @@ class TestProductStateProbabilityStrategy:
                         wires=all_wires,
                         all_wires=all_wires,
                         covariance_matrix=lambda_t,
-                        pfaffian_method=nif_dev.pfaffian_method,
                     )
                 )
                 for y in all_outcomes
@@ -213,7 +211,6 @@ class TestProductStateProbabilityStrategy:
                 wires=all_wires,
                 all_wires=all_wires,
                 covariance_matrix=lambda_t,
-                pfaffian_method=nif_dev.pfaffian_method,
             )
         )
 
@@ -241,7 +238,6 @@ class TestProductStateProbabilityStrategy:
                 wires=0,
                 all_wires=nif_dev.wires,
                 covariance_matrix=lambda_t,
-                pfaffian_method=nif_dev.pfaffian_method,
             )
         )
         prob_via_list = float(
@@ -251,7 +247,6 @@ class TestProductStateProbabilityStrategy:
                 wires=[0],
                 all_wires=nif_dev.wires,
                 covariance_matrix=lambda_t,
-                pfaffian_method=nif_dev.pfaffian_method,
             )
         )
         np.testing.assert_allclose(prob_via_int, prob_via_list, atol=ATOL_SCALAR_COMPARISON)
@@ -280,7 +275,6 @@ class TestProductStateProbabilityStrategy:
                 wires=all_wires,
                 all_wires=all_wires,
                 covariance_matrix=lambda_t,
-                pfaffian_method=nif_dev.pfaffian_method,
             )
         )
         single_probs = np.array(
@@ -292,7 +286,6 @@ class TestProductStateProbabilityStrategy:
                         wires=all_wires,
                         all_wires=all_wires,
                         covariance_matrix=lambda_t,
-                        pfaffian_method=nif_dev.pfaffian_method,
                     )
                 )
                 for y in all_outcomes
@@ -326,7 +319,6 @@ class TestProductStateProbabilityStrategy:
                 wires=batch_wires,
                 all_wires=all_wires,
                 covariance_matrix=lambda_t,
-                pfaffian_method=nif_dev.pfaffian_method,
             )
         )
         single_probs = np.array(
@@ -338,7 +330,6 @@ class TestProductStateProbabilityStrategy:
                         wires=Wires(batch_wires[i]),
                         all_wires=all_wires,
                         covariance_matrix=lambda_t,
-                        pfaffian_method=nif_dev.pfaffian_method,
                     )
                 )
                 for i in range(len(target_binary_states))
@@ -361,11 +352,11 @@ class TestProductStateProbabilityStrategy:
                 return qml.probs(wires=range(n_wires))
 
             qml.QNode(circuit, nif_dev)()
-            return np.asarray(nif_dev.covariance_matrix), nif_dev.state_prep_op, nif_dev.pfaffian_method
+            return np.asarray(nif_dev.covariance_matrix), nif_dev.state_prep_op
 
         # Two distinct circuits (state preparations) stacked along the covariance batch axis.
-        cov_a, state_prep_op, pfaffian_method = covariance_for(19)
-        cov_b, _, _ = covariance_for(23)
+        cov_a, state_prep_op = covariance_for(19)
+        cov_b, _ = covariance_for(23)
         cov_batched = np.stack([cov_a, cov_b])  # (B=2, 2n, 2n)
 
         # A batch of B_q outcomes queried against B state preparations must produce the full
@@ -380,7 +371,6 @@ class TestProductStateProbabilityStrategy:
                 wires=all_wires,
                 all_wires=all_wires,
                 covariance_matrix=cov_batched,
-                pfaffian_method=pfaffian_method,
             )
         )
 
@@ -394,7 +384,6 @@ class TestProductStateProbabilityStrategy:
                             wires=all_wires,
                             all_wires=all_wires,
                             covariance_matrix=cov,
-                            pfaffian_method=pfaffian_method,
                         )
                     )
                     for cov in (cov_a, cov_b)
@@ -465,7 +454,6 @@ class TestProductStateProbabilityStrategy:
                 wires=all_wires,
                 all_wires=all_wires,
                 covariance_matrix=cov,
-                pfaffian_method="det",
             )
 
         def single_prob(p):
@@ -476,7 +464,6 @@ class TestProductStateProbabilityStrategy:
                 wires=all_wires,
                 all_wires=all_wires,
                 covariance_matrix=cov,
-                pfaffian_method="det",
             )
 
         p = torch.randn(2 * n_wires, 2 * n_wires, dtype=torch.double, requires_grad=True)

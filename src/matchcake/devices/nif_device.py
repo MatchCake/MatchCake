@@ -99,8 +99,6 @@ class NonInteractingFermionicDevice(qml.devices.Device):
     :keyword contraction_method: The contraction method to use. Can be either None or "neighbours".
         Defaults to None.
     :type contraction_method: Optional[str]
-    :keyword pfaffian_method: The method to compute the Pfaffian. Can be either "det" or "P". Defaults to "det".
-    :type pfaffian_method: str
     :keyword n_workers: The number of workers to use for multiprocessing. Defaults to 0.
     :type n_workers: int
     :keyword star_state_finding_strategy: The strategy to find the star state.
@@ -140,8 +138,6 @@ class NonInteractingFermionicDevice(qml.devices.Device):
     DEFAULT_CONTRACTION_METHOD = "neighbours"
     DEFAULT_SAMPLING_STRATEGY = "2QubitBy2QubitSampling"
     DEFAULT_STAR_STATE_FINDING_STRATEGY = "FromSampling"
-    pfaffian_methods = {"det", "cuda_det", "PfaffianFDBPf"}
-    DEFAULT_PFAFFIAN_METHOD = "det"
 
     casting_priorities = [
         "numpy",
@@ -230,10 +226,6 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self._samples: Optional[np.ndarray] = None
         self._current_shots: Optional[int] = None
 
-        self.pfaffian_method = kwargs.get("pfaffian_method", self.DEFAULT_PFAFFIAN_METHOD)
-        assert self.pfaffian_method in self.pfaffian_methods, (
-            f"The pfaffian method must be one of {self.pfaffian_methods}. Got {self.pfaffian_method} instead."
-        )
         self.sampling_strategy: SamplingStrategy = get_sampling_strategy(
             kwargs.get("sampling_strategy", self.DEFAULT_SAMPLING_STRATEGY)
         )
@@ -803,7 +795,6 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             lookup_table=self.lookup_table,
             transition_matrix=self.transition_matrix,
             global_sptm=self.global_sptm.matrix(),
-            pfaffian_method=self.pfaffian_method,
             majorana_getter=self.majorana_getter,
             show_progress=kwargs.pop("show_progress", self.show_progress),
         )
