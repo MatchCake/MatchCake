@@ -1,6 +1,6 @@
 [project]
 name = "matchcake"
-version = "0.2.2"
+version = "0.2.3"
 description = ""
 authors = [{ name = "Jérémie Gince", email = "gincejeremie@gmail.com" }]
 requires-python = ">=3.11,<3.15"
