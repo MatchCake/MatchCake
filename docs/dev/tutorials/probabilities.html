@@ -1,0 +1,528 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Probabilities &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="../static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="../static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Iris classification with FermionicPQCKernel" href="iris_classification.html" />
+    <link rel="prev" title="Expectation Values" href="expectation_values.html" />
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process|mathjax_process|math|output_area'
+  }
+};
+</script>
+
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="../index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a></li>
+        
+          <li><a href="../tutorials.html">Tutorials</a></li>
+        
+      <li>Probabilities</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="../sources/tutorials/probabilities.ipynb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="../search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+
+<div style="padding: 0 0 1em 0;">
+  <label for="version-select" style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 0.3em; color: #555;">Version</label>
+  <select id="version-select" onchange="window.location.href=this.value" style="width: 100%; padding: 0.3em 0.4em; font-size: 0.9em; border: 1px solid #ccc; border-radius: 3px; background: #fff; cursor: pointer;">
+    
+    <option value="probabilities.html" >dev</option>
+    
+    <option value="../../main/index.html" >main</option>
+    
+  </select>
+</div>
+
+
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#cuda-installation">CUDA installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#quick-usage-preview">Quick Usage Preview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#quantum-circuit-simulation-with-matchcake">Quantum Circuit Simulation with MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#data-classification-with-matchcake">Data Classification with MatchCake</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#for-developers">For Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#citation">Citation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#fermionic-machine-learning-paper">Fermionic Machine Learning Paper</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html">MatchCake Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#create-the-noninteractingfermionicdevice">Create the NonInteractingFermionicDevice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#define-the-circuit">Define the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#create-the-qnode">Create the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#define-the-hyperparameters-of-the-circuit">Define the hyperparameters of the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#draw-the-circuit">Draw the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#evaluate-the-qnode">Evaluate the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#print-the-expectation-values">Print the expectation values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="expectation_values.html">Expectation Values</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html">Iris classification with FermionicPQCKernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#visualize-the-results">Visualize the results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html">Nystroem Kernel Approximation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../theory.html">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../docs/expectation_values_theory.html">Computing expectation values using the Covariance-Matrix</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../matchcake.html">matchcake package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#matchcake-matchgate-module">matchcake.matchgate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#matchcake-qs-device-module">matchcake.qs_device module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#matchcake-utils-module">matchcake.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section class="tex2jax_ignore mathjax_ignore" id="probabilities">
+<h1>Probabilities<a class="headerlink" href="#probabilities" title="Permalink to this heading">¶</a></h1>
+<p>MatchCake can efficiently compute computational-basis probabilities</p>
+<div class="math notranslate nohighlight">
+\[
+p(y) = \left|\langle y | V | \psi_\text{prod}\rangle\right|^2, \qquad y \in \{0,1\}^n,
+\]</div>
+<p>for any matchgate circuit <span class="math notranslate nohighlight">\(V\)</span> applied to any qubit product state
+<span class="math notranslate nohighlight">\(|\psi_\text{prod}\rangle = \bigotimes_{k=0}^{n-1}(a_k|0\rangle + b_k|1\rangle)\)</span>.
+This works for computational-basis inputs as well as arbitrary product states
+such as <span class="math notranslate nohighlight">\(|+\rangle^{\otimes n}\)</span>.</p>
+<p>Both the full distribution over all <span class="math notranslate nohighlight">\(2^n\)</span> outcomes and the marginal distribution
+on a subset of wires are available through the standard <code class="docutils literal notranslate"><span class="pre">qml.probs</span></code> measurement.
+Each probability reduces to a Pfaffian of the evolved Majorana covariance matrix, so
+the per-outcome cost is polynomial in <span class="math notranslate nohighlight">\(n\)</span> rather than exponential.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pennylane</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">qml</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matchcake</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matchcake.operations.state_preparation</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProductState</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="matchgate-circuit">
+<h2>Matchgate circuit<a class="headerlink" href="#matchgate-circuit" title="Permalink to this heading">¶</a></h2>
+<p>We use a random single-particle transition matrix (SPTM) on 3 qubits as the
+matchgate circuit <span class="math notranslate nohighlight">\(V\)</span>. The equivalent qubit unitary <code class="docutils literal notranslate"><span class="pre">U</span></code> is used only to
+cross-check against <code class="docutils literal notranslate"><span class="pre">default.qubit</span></code>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">wires</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+<span class="n">sptm</span> <span class="o">=</span> <span class="n">mc</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">SingleParticleTransitionMatrixOperation</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">U</span> <span class="o">=</span> <span class="n">sptm</span><span class="o">.</span><span class="n">to_qubit_operation</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="basis-state-initialization">
+<h2>Basis state initialization<a class="headerlink" href="#basis-state-initialization" title="Permalink to this heading">¶</a></h2>
+<p>We initialize the system in a computational-basis product state using
+<code class="docutils literal notranslate"><span class="pre">ProductState.from_basis_state</span></code>, compute the full distribution with <code class="docutils literal notranslate"><span class="pre">qml.probs</span></code>,
+and verify against <code class="docutils literal notranslate"><span class="pre">default.qubit</span></code>.</p>
+<p>Note that <code class="docutils literal notranslate"><span class="pre">mc.NIFDevice()</span></code> is constructed without a wire count — the device infers
+its wires automatically from the queued operations.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">state_prep</span> <span class="o">=</span> <span class="n">ProductState</span><span class="o">.</span><span class="n">from_basis_state</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">())</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">circuit</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">sptm</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;default.qubit&quot;</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">svs_circuit</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">U</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+
+
+<span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">circuit</span><span class="p">())</span>
+<span class="n">svs_probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">svs_circuit</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;probs = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;sum   = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">probs</span><span class="p">))</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">svs_probs</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Results agree with state-vector simulation.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>probs = [0.005412 0.       0.       0.107289 0.       0.755987 0.131312 0.      ]
+sum   = 1.000000
+Results agree with state-vector simulation.
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="marginal-probabilities">
+<h2>Marginal probabilities<a class="headerlink" href="#marginal-probabilities" title="Permalink to this heading">¶</a></h2>
+<p>Passing a subset of wires to <code class="docutils literal notranslate"><span class="pre">qml.probs</span></code> traces out the remaining qubits and
+returns the marginal distribution on the requested wires.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">())</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">circuit_marginal</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">sptm</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;default.qubit&quot;</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">svs_circuit_marginal</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">U</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+
+<span class="n">marginal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">circuit_marginal</span><span class="p">())</span>
+<span class="n">svs_marginal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">svs_circuit_marginal</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;marginal P(q1) = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">marginal</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">marginal</span><span class="p">,</span> <span class="n">svs_marginal</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Results agree with state-vector simulation.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>marginal P(q1) = [0.7614 0.2386]
+Results agree with state-vector simulation.
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="arbitrary-product-state-initialization">
+<h2>Arbitrary product state initialization<a class="headerlink" href="#arbitrary-product-state-initialization" title="Permalink to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">ProductState</span></code> accepts arbitrary per-qubit amplitudes <span class="math notranslate nohighlight">\((a_k, b_k)\)</span>, enabling
+superposition initial states. Here we initialize all qubits in <span class="math notranslate nohighlight">\(|+\rangle =
+\frac{1}{\sqrt{2}}(|0\rangle + |1\rangle)\)</span> and compute the full distribution.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plus_amplitudes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+<span class="n">state_prep_plus</span> <span class="o">=</span> <span class="n">ProductState</span><span class="p">(</span><span class="n">plus_amplitudes</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">())</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">circuit_plus</span><span class="p">():</span>
+    <span class="n">state_prep_plus</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">sptm</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;default.qubit&quot;</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">svs_circuit_plus</span><span class="p">():</span>
+    <span class="n">state_prep_plus</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">U</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+
+
+<span class="n">probs_plus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">circuit_plus</span><span class="p">())</span>
+<span class="n">svs_probs_plus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">svs_circuit_plus</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;probs_plus = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">probs_plus</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;sum        = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">probs_plus</span><span class="p">))</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">probs_plus</span><span class="p">,</span> <span class="n">svs_probs_plus</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Results agree with state-vector simulation.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>probs_plus = [0.090989 0.353645 0.093942 0.024346 0.010975 0.260667 0.123998 0.041438]
+sum        = 1.000000
+Results agree with state-vector simulation.
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="mixed-product-state">
+<h2>Mixed product state<a class="headerlink" href="#mixed-product-state" title="Permalink to this heading">¶</a></h2>
+<p>Any per-qubit amplitudes are valid. Below we mix <span class="math notranslate nohighlight">\(|+\rangle\)</span>, <span class="math notranslate nohighlight">\(|0\rangle\)</span>, and
+a <span class="math notranslate nohighlight">\(y\)</span>-rotated state to demonstrate the general case.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">3</span>
+<span class="n">mixed_amplitudes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+        <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)],</span>
+    <span class="p">],</span>
+    <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">mixed_amplitudes</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">mixed_amplitudes</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">state_prep_mixed</span> <span class="o">=</span> <span class="n">ProductState</span><span class="p">(</span><span class="n">mixed_amplitudes</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">())</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">circuit_mixed</span><span class="p">():</span>
+    <span class="n">state_prep_mixed</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">sptm</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;default.qubit&quot;</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">svs_circuit_mixed</span><span class="p">():</span>
+    <span class="n">state_prep_mixed</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">U</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+
+
+<span class="n">probs_mixed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">circuit_mixed</span><span class="p">())</span>
+<span class="n">svs_probs_mixed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">svs_circuit_mixed</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;probs_mixed = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">probs_mixed</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;sum         = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">probs_mixed</span><span class="p">))</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">probs_mixed</span><span class="p">,</span> <span class="n">svs_probs_mixed</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Results agree with state-vector simulation.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>probs_mixed = [0.202622 0.386695 0.077915 0.050186 0.001233 0.154149 0.093043 0.034157]
+sum         = 1.000000
+Results agree with state-vector simulation.
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="single-outcome-probability">
+<h2>Single-outcome probability<a class="headerlink" href="#single-outcome-probability" title="Permalink to this heading">¶</a></h2>
+<p>When only one outcome is needed, the probability of a basis state <span class="math notranslate nohighlight">\(|y\rangle\)</span> is the
+expectation value of the projector <span class="math notranslate nohighlight">\(|y\rangle\langle y|\)</span>. Measuring
+<code class="docutils literal notranslate"><span class="pre">qml.expval(qml.Projector(y,</span> <span class="pre">wires))</span></code> evaluates a single Pfaffian directly, avoiding
+the full <span class="math notranslate nohighlight">\(2^n\)</span> enumeration.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">target</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">())</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">circuit_projector</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">sptm</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">Projector</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">))</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;default.qubit&quot;</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">svs_circuit_projector</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">U</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">Projector</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">))</span>
+
+
+<span class="n">p_target</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">circuit_projector</span><span class="p">())</span>
+<span class="n">svs_p_target</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">svs_circuit_projector</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;P(</span><span class="si">{</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="p">))</span><span class="si">}</span><span class="s2">) = </span><span class="si">{</span><span class="n">p_target</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">p_target</span><span class="p">,</span> <span class="n">svs_p_target</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Results agree with state-vector simulation.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>P(101) = 0.755987
+Results agree with state-vector simulation.
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="further-reading">
+<h2>Further reading<a class="headerlink" href="#further-reading" title="Permalink to this heading">¶</a></h2>
+<p>Probabilities and expectation values share the same extended Majorana / covariance
+matrix machinery. For the mathematical details — the displacement vector, the
+covariance matrix, the SPTM lift, and the Pfaffian formula — see
+<a class="reference internal" href="../docs/expectation_values_theory.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">docs/expectation_values_theory.md</span></code></span></a>.</p>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="../static/documentation_options.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <script type="text/javascript" src="../static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="../None"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" src="../static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>
