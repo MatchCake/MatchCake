@@ -428,6 +428,240 @@ class TestMPfaffianExpvalStrategy:
         np.testing.assert_allclose(got, ref, atol=ATOL)
 
 
+class TestMPfaffianDecompositionCache:
+    """Correctness of the memoized Pauli->Majorana decomposition.
+
+    The cache must never change numerical output: it only avoids recomputing a
+    pure function of the observable + device wires. These tests exercise the two
+    cache tiers (weakref-validated identity, and structural) and the hazards the
+    optimization could introduce: shared Pauli structure with different
+    coefficients, object churn / id reuse, batched covariance, and autograd.
+    """
+
+    def setup_method(self):
+        # Start every test from a clean cache so hits/misses are deterministic.
+        from matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy import (
+            _DecompositionCache,
+        )
+
+        self.cache = _DecompositionCache
+        self.cache.clear()
+        self.strat = MPfaffianExpvalStrategy()
+
+    def _setup(self, n, seed):
+        psi = random_product_state(n, seed=seed)
+        wires = list(range(n))
+        prod_state = ProductState(psi, wires=wires)
+        psi_flat = np.array(prod_state.state_vector()).reshape(-1)
+        tilde_L = build_tilde_lambda(prod_state, wires)
+        return prod_state, psi_flat, tilde_L, wires
+
+    def test_repeated_calls_same_object_match(self):
+        """Calling twice with the same observable (a cache hit) matches brute force."""
+        prod, psi_flat, tilde_L, wires = self._setup(3, 1)
+        n = len(wires)
+        H = 0.5 * qml.X(0) + 0.3 * qml.Z(0) @ qml.Z(1) + 0.2 * qml.Y(0) @ qml.X(2)
+        ref = sum(float(c) * brute_force_expval(psi_flat, op, n) for c, op in zip(*H.terms()))
+        first = float(self.strat(prod, H, extended_covariance_matrix=tilde_L))
+        # The identity cache should now hold this observable.
+        assert id(H) in self.cache._id_cache
+        second = float(self.strat(prod, H, extended_covariance_matrix=tilde_L))
+        np.testing.assert_allclose(first, ref, atol=ATOL)
+        np.testing.assert_allclose(second, first, atol=0.0)  # bit-for-bit on a hit
+
+    def test_same_structure_different_coeffs(self):
+        """Two Hamiltonians sharing Pauli structure but different coeffs must not collide.
+
+        They share a structural-cache entry (coeff-independent) yet each must use
+        its own coefficients via the recomputed scalar_coeffs.
+        """
+        prod, psi_flat, tilde_L, wires = self._setup(3, 2)
+        n = len(wires)
+        ops = [qml.X(0) @ qml.X(1), qml.Z(0) @ qml.Z(2), qml.Y(1)]
+        H1 = qml.Hamiltonian([0.5, -0.3, 0.7], ops)
+        H2 = qml.Hamiltonian([1.1, 0.9, -0.2], ops)
+        for H in (H1, H2):
+            ref = sum(float(c) * brute_force_expval(psi_flat, op, n) for c, op in zip(*H.terms()))
+            got = float(self.strat(prod, H, extended_covariance_matrix=tilde_L))
+            np.testing.assert_allclose(got, ref, atol=ATOL, err_msg=f"coeffs={H.terms()[0]}")
+        # Distinct objects -> two identity entries, but a single shared structure.
+        assert len(self.cache._struct_cache) == 1
+
+    def test_stale_id_entry_is_not_trusted(self):
+        """A poisoned identity entry whose object is gone must be ignored, not returned.
+
+        Simulates the id-reuse hazard: a dead weakref in the id cache must never
+        produce a false hit for a different observable that lands on the same id.
+        """
+        prod, psi_flat, tilde_L, wires = self._setup(2, 3)
+        n = len(wires)
+        H = qml.X(0) @ qml.X(1)
+        oid = id(H)
+        # Poison the cache: map this id to a WRONG payload behind a dead weakref.
+        import weakref
+        from collections import OrderedDict
+
+        dead = ProductState(np.array([[1.0, 0.0]], dtype=complex), wires=[0])
+        ref_dead = weakref.ref(dead)
+        del dead  # weakref now dead
+        bogus_payload = OrderedDict({2: (np.array([[0, 1]]), np.array([999.0]))})
+        self.cache._id_cache[oid] = (ref_dead, ((0, 1), 5), bogus_payload)
+
+        ref = brute_force_expval(psi_flat, H, n)
+        got = float(self.strat(prod, H, extended_covariance_matrix=tilde_L))
+        np.testing.assert_allclose(got, ref, atol=ATOL)
+
+    def test_object_churn_no_false_hits(self):
+        """Many freshly created Hamiltonians (ids recycled by GC) all stay correct."""
+        prod, psi_flat, tilde_L, wires = self._setup(3, 4)
+        n = len(wires)
+        rng = np.random.RandomState(123)
+        for _ in range(50):
+            c = rng.uniform(-1, 1, 3)
+            H = qml.Hamiltonian(list(c), [qml.X(0) @ qml.X(1), qml.Y(0) @ qml.Z(2), qml.Z(1)])
+            ref = sum(float(cc) * brute_force_expval(psi_flat, op, n) for cc, op in zip(*H.terms()))
+            got = float(self.strat(prod, H, extended_covariance_matrix=tilde_L))
+            np.testing.assert_allclose(got, ref, atol=ATOL)
+            del H  # free the id for potential reuse next iteration
+
+    def test_batched_covariance(self):
+        """A leading batch dimension on the covariance matrix is preserved."""
+        prod, psi_flat, tilde_L, wires = self._setup(3, 5)
+        H = 0.5 * qml.X(0) + 0.3 * qml.Z(0) @ qml.Z(1) + 0.4 * qml.X(0) @ qml.X(2)
+        scales = torch.tensor([1.0, 0.7, -0.5], dtype=tilde_L.dtype)
+        batched = torch.stack([s * tilde_L for s in scales])
+        got = self.strat(prod, H, extended_covariance_matrix=batched)
+        assert tuple(got.shape) == (3,)
+        for b in range(3):
+            single = float(self.strat(prod, H, extended_covariance_matrix=batched[b]))
+            np.testing.assert_allclose(float(got[b]), single, atol=ATOL)
+
+    def test_cache_hit_preserves_autograd(self):
+        """Gradients w.r.t. the covariance matrix flow on both miss and (cached) hit."""
+        prod, psi_flat, tilde_L, wires = self._setup(2, 6)
+        H = 0.5 * qml.X(0) + 0.3 * qml.Z(0) @ qml.Z(1) + 0.2 * qml.X(0) @ qml.Y(1)
+
+        def value_and_grad():
+            x = tilde_L.clone().to(torch.float64).requires_grad_(True)
+            out = self.strat(prod, H, extended_covariance_matrix=x)
+            out.backward()
+            return float(out.detach()), x.grad.clone()
+
+        v1, g1 = value_and_grad()  # cache miss populates
+        v2, g2 = value_and_grad()  # cache hit
+        np.testing.assert_allclose(v1, v2, atol=ATOL)
+        np.testing.assert_allclose(g1.numpy(), g2.numpy(), atol=ATOL)
+        # Finite-difference check along an antisymmetric direction (the covariance
+        # matrix lives on the skew-symmetric manifold, so a free per-entry FD would
+        # ignore the x_ij = -x_ji coupling that autograd correctly accounts for).
+        rng = np.random.RandomState(0)
+        base = tilde_L.clone().to(torch.float64)
+        M = rng.randn(*base.shape)
+        V = torch.tensor(M - M.T, dtype=torch.float64)  # antisymmetric direction
+        eps = 1e-6
+        plus = float(self.strat(prod, H, extended_covariance_matrix=base + eps * V))
+        minus = float(self.strat(prod, H, extended_covariance_matrix=base - eps * V))
+        fd_dir = (plus - minus) / (2 * eps)
+        analytic_dir = float((g1 * V).sum())
+        np.testing.assert_allclose(analytic_dir, fd_dir, atol=1e-4)
+
+    def test_inplace_coeff_change_same_object_not_stale(self):
+        """Mutating a reused observable's coefficients in place must not return a stale value.
+
+        The cache stores only the coefficient-independent structure; coefficients are
+        read live every call. A regression here would silently return the previous
+        coefficients for a reused Hamiltonian object.
+        """
+        prod, psi_flat, tilde_L, wires = self._setup(2, 7)
+        n = len(wires)
+        c = torch.tensor([0.5, 0.3])
+        H = qml.Hamiltonian(c, [qml.X(0) @ qml.X(1), qml.Z(0) @ qml.Z(1)])
+        self.strat(prod, H, extended_covariance_matrix=tilde_L)  # caches structure
+        with torch.no_grad():
+            c[0] = 5.0
+            c[1] = -1.7
+        got = float(self.strat(prod, H, extended_covariance_matrix=tilde_L))  # same object
+        ref = 5.0 * brute_force_expval(psi_flat, qml.X(0) @ qml.X(1), n) - 1.7 * brute_force_expval(
+            psi_flat, qml.Z(0) @ qml.Z(1), n
+        )
+        np.testing.assert_allclose(got, ref, atol=ATOL)
+
+    def test_same_object_different_device_wires(self):
+        """Reusing one observable object across devices of different size stays correct.
+
+        The identity cache is keyed by (wires, matrix size); a context mismatch must
+        force recomputation rather than returning the wrong-sized decomposition.
+        """
+        H = qml.X(0) @ qml.X(1)  # single object reused below
+        for n, seed in [(2, 0), (4, 1), (2, 0)]:  # revisit n=2 last to test re-entry
+            wires = list(range(n))
+            prod = ProductState(random_product_state(n, seed), wires=wires)
+            psi_flat = np.array(prod.state_vector()).reshape(-1)
+            tilde_L = build_tilde_lambda(prod, wires)
+            ref = brute_force_expval(psi_flat, H, n)
+            got = float(self.strat(prod, H, extended_covariance_matrix=tilde_L))
+            np.testing.assert_allclose(got, ref, atol=ATOL, err_msg=f"n={n}")
+
+    def test_same_object_dtype_switch(self):
+        """A cache hit must honour the covariance matrix dtype of the current call."""
+        prod, psi_flat, tilde_L, wires = self._setup(3, 8)
+        n = len(wires)
+        H = 0.5 * qml.X(0) + 0.3 * qml.Z(0) @ qml.Z(1) + 0.2 * qml.X(0) @ qml.X(2)
+        ref = sum(float(c) * brute_force_expval(psi_flat, op, n) for c, op in zip(*H.terms()))
+        for dtype, r_dtype in [(torch.float64, torch.float64), (torch.float32, torch.float32)]:
+            ext = tilde_L.to(dtype)
+            out = self.strat(prod, H, extended_covariance_matrix=ext)  # 2nd dtype is a hit
+            assert out.dtype == r_dtype
+            np.testing.assert_allclose(float(out), ref, atol=1e-5, err_msg=f"dtype={dtype}")
+
+    def test_lru_eviction_bounds_and_correctness(self):
+        """Exceeding MAXSIZE evicts oldest entries but never corrupts results."""
+        prod, psi_flat, tilde_L, wires = self._setup(3, 4)
+        n = len(wires)
+        # Many structurally distinct observables (different Pauli patterns).
+        pauli = {0: qml.X, 1: qml.Y, 2: qml.Z}
+        observables = []
+        for a in range(3):
+            for b in range(3):
+                for w0 in range(n):
+                    observables.append(pauli[a](w0) @ pauli[b]((w0 + 1) % n))
+        original_maxsize = self.cache.MAXSIZE
+        try:
+            self.cache.MAXSIZE = 5
+            for obs in observables:
+                ref = brute_force_expval(psi_flat, obs, n)
+                got = float(self.strat(prod, obs, extended_covariance_matrix=tilde_L))
+                np.testing.assert_allclose(got, ref, atol=ATOL, err_msg=str(obs))
+                assert len(self.cache._struct_cache) <= self.cache.MAXSIZE
+                assert len(self.cache._id_cache) <= self.cache.MAXSIZE
+        finally:
+            self.cache.MAXSIZE = original_maxsize
+
+    def test_thread_safety_concurrent_observables(self):
+        """Concurrent calls from many threads return correct, uncorrupted results."""
+        from concurrent.futures import ThreadPoolExecutor
+
+        prod, psi_flat, tilde_L, wires = self._setup(3, 11)
+        n = len(wires)
+        rng = np.random.RandomState(7)
+        pauli = {0: qml.X, 1: qml.Y, 2: qml.Z}
+        jobs = []
+        for _ in range(240):
+            a, b = rng.randint(0, 3), rng.randint(0, 3)
+            w0 = rng.randint(0, n)
+            obs = pauli[a](w0) @ pauli[b]((w0 + 1) % n)
+            jobs.append((obs, brute_force_expval(psi_flat, obs, n)))
+
+        def work(job):
+            obs, ref = job
+            got = float(self.strat(prod, obs, extended_covariance_matrix=tilde_L))
+            return abs(got - ref)
+
+        with ThreadPoolExecutor(max_workers=8) as ex:
+            errs = list(ex.map(work, jobs))
+        assert max(errs) < ATOL, f"max error {max(errs)}"
+
+
 class TestMPfaffianEndToEnd:
     """End-to-end test of MPfaffianExpvalStrategy through the full NIF device QNode.
 

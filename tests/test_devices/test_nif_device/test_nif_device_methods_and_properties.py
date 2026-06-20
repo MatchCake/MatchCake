@@ -275,7 +275,7 @@ class TestNIFDeviceMethodsAndProperties:
         dev = _make_zero_state_device(n_wires=2)
         state_prep = StatePrepFromGates(lambda wires: [qml.Hadamard(wires=wires[0])], wires=[0, 1])
         dev._state_prep_op = state_prep
-        observable = qml.X(0) @ qml.Z(1)
+        observable = qml.Projector(np.array([1, 0, 0, 1]) / np.sqrt(2), wires=[0, 1])
         with pytest.raises(DeviceError):
             dev.exact_expval(observable)
 
