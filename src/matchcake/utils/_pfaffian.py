@@ -9,7 +9,7 @@ from pennylane.typing import TensorLike
 
 from . import torch_utils
 from .math import convert_and_cast_like
-from .torch_utils import infer_real_dtype
+from .torch_utils import infer_complex_dtype, infer_real_dtype
 
 _pfaffian_epsilon_lock = threading.Lock()
 
@@ -34,6 +34,35 @@ def signed_pfaffian(matrix: TensorLike, dtype: Optional[torch.dtype] = None) -> 
     if dtype is None:
         dtype = infer_real_dtype(matrix)
     return pfaffian(matrix, sign=True, dtype=dtype)
+
+
+def signed_pfaffian_complex(matrix: TensorLike, dtype: Optional[torch.dtype] = None) -> TensorLike:
+    """
+    Compute the **signed** Pfaffian of a **complex** antisymmetric matrix (or batch).
+
+    Returns the signed Pfaffian ``Pf`` (not its magnitude ``|Pf|``) of a complex skew-symmetric
+    matrix of shape ``(..., 2k, 2k)``, preserving the imaginary part. This is the quantity the
+    SWAP-injection branch formalism needs: its transition Pfaffians are genuinely complex and the
+    branch interference carries the sign, so neither the magnitude path nor the real signed path
+    is usable.
+
+    The computation delegates to ``torch_pfaffian.pfaffian(matrix, sign=True)``, whose dispatch
+    routes complex inputs to the device-native Parlett-Reid strategy (batched, signed, imaginary
+    part preserved). MatchCake's other Pfaffian backends (``det``, ``cuda_det``, ``PfaffianFDBPf``)
+    return the **unsigned** Pfaffian and are unusable here (the sign is required for ``m >= 4``).
+
+    :param matrix: Complex antisymmetric matrix of even size ``(..., 2k, 2k)``.
+    :param dtype: Complex working precision for the internal computation. Defaults to ``None``, in
+        which case the precision is inferred from ``matrix`` (e.g. a ``complex64`` input keeps
+        ``complex64`` internals). Pass an explicit complex dtype to override.
+    :return: Complex signed Pfaffian of shape ``(...,)``.
+    :rtype: TensorLike
+    """
+    if dtype is None:
+        dtype = infer_complex_dtype(matrix)
+    matrix_t = torch_utils.to_tensor(matrix, dtype=dtype)
+    result = torch_pfaffian.pfaffian(matrix_t, sign=True)
+    return convert_and_cast_like(result, matrix_t)
 
 
 def sector_pfaffian_features(

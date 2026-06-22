@@ -12,7 +12,12 @@ from pennylane.wires import Wires
 from scipy import sparse
 
 from . import constants, cuda, majorana, math, operators, torch_utils
-from ._pfaffian import pfaffian, sector_pfaffian_features, signed_pfaffian
+from ._pfaffian import (
+    pfaffian,
+    sector_pfaffian_features,
+    signed_pfaffian,
+    signed_pfaffian_complex,
+)
 from .constants import PAULI_I, PAULI_X, PAULI_Y, PAULI_Z
 from .jordan_wigner import JordanWigner
 from .logm import logm

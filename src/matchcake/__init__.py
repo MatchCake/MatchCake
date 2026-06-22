@@ -20,7 +20,7 @@ from . import (
     utils,
 )
 from . import matchgate_parameter_sets as mgp
-from .devices import NIFDevice, NonInteractingFermionicDevice
+from .devices import NIFDevice, NIFSwapDevice, NonInteractingFermionicDevice, SwapAugmentedFermionicDevice
 from .matchgate_parameter_sets import matchgate_params
 from .matchgate_parameter_sets.matchgate_polar_params import MatchgatePolarParams
 from .matchgate_parameter_sets.matchgate_standard_params import MatchgateStandardParams
