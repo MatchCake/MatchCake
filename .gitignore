@@ -705,3 +705,6 @@ jobs_venv
 pstats
 /benchmark/figures
 /.claude
+
+# Generated documentation PDFs (built in CI / locally)
+docs/_pdf/

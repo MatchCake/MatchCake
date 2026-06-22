@@ -32,6 +32,11 @@ jobs:
         uv venv .venv
         uv sync --locked --dev --group docs --extra cpu
 
+    - name: Install PDF toolchain (pandoc + xelatex)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pandoc texlive-xetex texlive-latex-extra texlive-fonts-recommended
+
     - name: Fetch all branches for multiversion build
       run: |
         git fetch --all
@@ -43,6 +48,10 @@ jobs:
         uv run sphinx-multiversion sphinx/source sphinx/build/html
         printf '<html><head><meta http-equiv="refresh" content="0; url=main/index.html"/></head><body></body></html>' > sphinx/build/html/index.html
         touch sphinx/build/html/.nojekyll
+
+    - name: Build documentation PDFs
+      run: |
+        uv run python docs/build_docs_pdf.py --out-dir sphinx/build/html/_pdf
 
     - name: Checkout gh-pages branch
       run: |
