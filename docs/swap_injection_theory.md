@@ -57,6 +57,31 @@ A circuit built entirely of matchgates is thus a single orthogonal rotation of o
 matrix: free-fermionic, polynomial in $N$. Everything below concerns what happens when that
 structure is interrupted by SWAPs.
 
+**Running example.** We follow one small circuit through every section of this note. Take $N=3$
+qubits, the input $|011\rangle$, and a single matchgate applied before any SWAP: the
+number-conserving hopping (Givens rotation) $V_1 = \exp[-i\tfrac{\theta}{2}(X_0X_1 + Y_0Y_1)]$ on
+qubits $0$ and $1$, with $\theta=\pi/3$. It acts on the input as
+$V_1|011\rangle = \tfrac12|011\rangle - \tfrac{i\sqrt3}{2}|101\rangle$, moving three quarters of the
+particle from qubit $1$ to qubit $0$, so that $\langle n_0\rangle=\tfrac34$,
+$\langle n_1\rangle=\tfrac14$, and $\langle n_2\rangle=1$. With $\cos\theta=\tfrac12$ and
+$\sin\theta=\tfrac{\sqrt3}{2}$, the congruence $\Lambda\to Q^\top\Lambda Q$ takes the input covariance
+to
+
+$$
+\Lambda_{\mathrm{in}} =
+\begin{pmatrix}
+0 & \tfrac12 & -\tfrac{\sqrt3}{2} & 0 & 0 & 0\\
+-\tfrac12 & 0 & 0 & -\tfrac{\sqrt3}{2} & 0 & 0\\
+\tfrac{\sqrt3}{2} & 0 & 0 & -\tfrac12 & 0 & 0\\
+0 & \tfrac{\sqrt3}{2} & \tfrac12 & 0 & 0 & 0\\
+0 & 0 & 0 & 0 & 0 & 1\\
+0 & 0 & 0 & 0 & -1 & 0
+\end{pmatrix}.
+$$
+
+As long as the circuit stays matchgate-only, this single $6\times6$ covariance is the entire state.
+In the next sections we insert a genuine SWAP, which breaks this single-covariance description.
+
 ## 2. A SWAP is not a matchgate
 
 Write the qubit SWAP on the pair $(j,k)$ as
@@ -78,6 +103,13 @@ Majorana to a cubic monomial, e.g. $\mathrm{CZ}\,c_{2j}\,\mathrm{CZ} = c_{2j}Z_k
 c_{2k}c_{2k+1}$. No $2N\times 2N$ orthogonal matrix implements this, so no single covariance
 matrix can survive a $\mathrm{CZ}$. This is the precise sense in which SWAP leaves the
 free-fermion manifold.
+
+**Running example.** We now insert a genuine $\mathrm{SWAP}_{12}$ right after $V_1$, so the circuit
+is $V_1$ followed by $\mathrm{SWAP}_{12} = \mathrm{fSWAP}_{12}\,(1 - 2 n_1 n_2)$. The
+$\mathrm{fSWAP}_{12}$ factor is a matchgate and preserves the covariance description, but the
+$\mathrm{CZ}_{12} = 1 - 2 n_1 n_2$ factor is quartic in the Majoranas. No $6\times6$ orthogonal $Q$
+reproduces its action, so the single $\Lambda_{\mathrm{in}}$ of §1 can no longer carry the state once
+the SWAP acts. We have to branch.
 
 ## 3. The sum-of-Gaussians (branch) decomposition
 
@@ -120,6 +152,44 @@ $$
 $$
 
 so we need matrix elements of Majorana monomials between two *different* Gaussian states.
+
+**Running example.** With a single SWAP the sum has at most $\chi=2^1=2$ branches. Splitting on
+$\mathrm{CZ}_{12}=1-2n_1n_2$ and then applying $\mathrm{fSWAP}_{12}$ to each piece (the explicit steps
+are worked out in §7) produces the covariance tensor $\Lambda=(\Lambda_0,\Lambda_1)$ with
+
+$$
+\Lambda_0 =
+\begin{pmatrix}
+0 & \tfrac12 & 0 & 0 & -\tfrac{\sqrt3}{2} & 0\\
+-\tfrac12 & 0 & 0 & 0 & 0 & -\tfrac{\sqrt3}{2}\\
+0 & 0 & 0 & 1 & 0 & 0\\
+0 & 0 & -1 & 0 & 0 & 0\\
+\tfrac{\sqrt3}{2} & 0 & 0 & 0 & 0 & -\tfrac12\\
+0 & \tfrac{\sqrt3}{2} & 0 & 0 & \tfrac12 & 0
+\end{pmatrix},
+\qquad
+\Lambda_1 =
+\begin{pmatrix}
+0 & -1 & 0 & 0 & 0 & 0\\
+1 & 0 & 0 & 0 & 0 & 0\\
+0 & 0 & 0 & 1 & 0 & 0\\
+0 & 0 & -1 & 0 & 0 & 0\\
+0 & 0 & 0 & 0 & 0 & 1\\
+0 & 0 & 0 & 0 & -1 & 0
+\end{pmatrix},
+$$
+
+and the Hermitian weight matrix
+
+$$
+W = \begin{pmatrix} 1 & -\tfrac12 \\[2pt] -\tfrac12 & 1 \end{pmatrix}.
+$$
+
+Branch $0$ is a genuine (non-basis) Gaussian, while branch $1$ happens to be the computational-basis
+state $|011\rangle$. The diagonal entries $W_{00}=W_{11}=1$ are the branch norms $|\lambda_\alpha|^2$,
+the off-diagonal $W_{01}=-\tfrac12$ holds the (here real) relative-phase data, and
+$\sum_{\alpha\beta}W_{\alpha\beta}=1$. We take this pair $(\Lambda,W)$ as given in §4 through §6, and
+rebuild it from scratch in §7.
 
 ## 4. The transition covariance and the two-state Wick theorem
 
@@ -198,6 +268,26 @@ but its *phase* is not. That phase is precisely the information held in the weig
 the magnitude of each $W_{\alpha\beta}$ is recovered from the covariances through this identity, while
 its phase cannot be, and is carried by $W$ as independent propagated data.
 
+**Running example.** For the two branches of §3, the closed form gives the transition covariance
+
+$$
+\Gamma_{01} =
+\begin{pmatrix}
+0 & -1 & 0 & 0 & -\sqrt3 & i\sqrt3\\
+1 & 0 & 0 & 0 & -i\sqrt3 & -\sqrt3\\
+0 & 0 & 0 & 1 & 0 & 0\\
+0 & 0 & -1 & 0 & 0 & 0\\
+\sqrt3 & i\sqrt3 & 0 & 0 & 0 & 1\\
+-i\sqrt3 & \sqrt3 & 0 & 0 & -1 & 0
+\end{pmatrix},
+$$
+
+which is complex antisymmetric and satisfies $\Gamma_{10}=\Gamma_{01}^{*}$. Its $\{2,3\}$ block is
+$\bigl(\begin{smallmatrix}0&1\\-1&0\end{smallmatrix}\bigr)$, the value both branches share on qubit
+$1$ (both leave it occupied after the fSWAP), while the genuinely complex entries $\pm i\sqrt3$ encode
+the interference between the non-basis branch $0$ and the basis branch $1$. The diagonal cases reduce
+to the ordinary covariances, $\Gamma_{00}=\Lambda_0$ and $\Gamma_{11}=\Lambda_1$.
+
 ## 5. Hamiltonian expectation values
 
 Let $\mathcal H = \sum_P h_P\,P$ be a Pauli sum. The JW dictionary [1] writes each Pauli word as one
@@ -225,6 +315,26 @@ single-state matchgate expectation value of the companion note, since
 $\Gamma_{\alpha\alpha} = \Lambda_\alpha$; the off-diagonal terms are the genuinely new
 inter-branch interference.
 
+**Running example.** Take the data $(\Lambda,W)$ of §3 as given and measure the simplest observable,
+$\mathcal H = Z_0$. Its Jordan-Wigner image is $Z_0 = -i\,c_0 c_1$, so $\kappa_P=-i$, $S_P=\{0,1\}$,
+$m_P=2$, and $i^{-m_P/2}=i^{-1}=-i$. The prefactor is $\kappa_P\,i^{-1}=(-i)(-i)=-1$, and
+$\mathrm{Pf}(\Gamma_{\alpha\beta}|_{\{0,1\}})=(\Gamma_{\alpha\beta})_{01}$. Reading the $01$ entry off
+each branch pair ($\tfrac12$, $-1$, $-1$, $-1$ for $(0,0),(0,1),(1,0),(1,1)$) gives
+
+$$
+\langle Z_0\rangle
+= -\sum_{\alpha\beta} W_{\alpha\beta}\,(\Gamma_{\alpha\beta})_{01}
+= -\Bigl[\,
+\underbrace{(1)(\tfrac12) + (1)(-1)}_{\text{diagonal}\,=\,-\frac12}
++ \underbrace{(-\tfrac12)(-1) + (-\tfrac12)(-1)}_{\text{interference}\,=\,+1}
+\,\Bigr]
+= -\tfrac12 .
+$$
+
+Keeping only the diagonal terms would give $-(-\tfrac12)=+\tfrac12$, the wrong sign; the inter-branch
+interference corrects it to $\langle Z_0\rangle=-\tfrac12$, consistent with $\langle n_0\rangle=\tfrac34$
+through $Z=1-2n$. The same evaluation gives $\langle Z_2\rangle=+\tfrac12$.
+
 ## 6. Basis-state outcome probabilities
 
 The projector onto a full computational outcome $y$ is $P_y = |y\rangle\langle y| = \prod_k(n_k$
@@ -249,6 +359,23 @@ p(y) = \langle\psi|P_y|\psi\rangle
 \;}
 $$
 
+**Running example.** Still using the $(\Lambda,W)$ of §3, ask for the probability of the outcome
+$y=110$. Here $\mathrm{Pf}(\Lambda_y)=\prod_k(2y_k-1)=(+1)(+1)(-1)=-1$ and $2^N=8$. Evaluating
+$\mathrm{Pf}(\Gamma_{\alpha\beta}+\Lambda_y)$ on the four pairs, only the $(0,0)$ pair is nonzero (it
+equals $-6$); the others vanish because branch $1$ is the state $|011\rangle$, which is orthogonal to
+$|110\rangle$. Hence
+
+$$
+p(110) = \frac{-1}{8}\Bigl[(1)(-6) + (-\tfrac12)(0) + (-\tfrac12)(0) + (1)(0)\Bigr]
+= \frac{6}{8} = \tfrac34 .
+$$
+
+The only other reachable outcome is $y=011$, for which all four pairs contribute and the interference
+is essential:
+$p(011)=\tfrac{-1}{8}\bigl[(1)(-2)+(-\tfrac12)(-8)+(-\tfrac12)(-8)+(1)(-8)\bigr]=\tfrac{-1}{8}(-2)=\tfrac14$.
+The two probabilities sum to one, matching the exact final state
+$\tfrac12|011\rangle - \tfrac{i\sqrt3}{2}|110\rangle$.
+
 ## 7. Updating the data through a SWAP
 
 The branch data $(\Lambda, W)$ can be propagated incrementally rather than by expanding the full
@@ -261,19 +388,71 @@ $\mathrm{SWAP}_{jk} = \mathrm{fSWAP}_{jk}\,(1 - 2 n_j n_k)$.
 \sqrt{q_\alpha}$ carrying the weight factor $-2$, where $q_\alpha = \langle\phi_\alpha|n_jn_k|
 \phi_\alpha\rangle$ is the joint occupation.
 
-**Conditioned covariance.** Pinning modes $j,k$ to occupied is a Gaussian projection [1]. With
-$S_4 = \{2j, 2j+1, 2k, 2k+1\}$, $R$ the complementary modes, and the block split
-$\Lambda_\alpha = \begin{pmatrix} A & B \\ -B^\top & C \end{pmatrix}$ on $(S_4, R)$, the projected
-covariance is
+**Conditioned covariance.** Pinning modes $j,k$ to occupied is a Gaussian projection [1]: it
+replaces the local state of qubits $j,k$ by $|1\rangle_j|1\rangle_k$ and propagates the back-action
+of that projection onto every other mode through whatever entanglement was present. Group the $2N$
+Majorana indices into the two pinned pairs and the rest,
 
 $$
-\Lambda'_\alpha\big|_{S_4} = \mathrm{occ}, \qquad
+S_4 = \{2j,\,2j+1,\,2k,\,2k+1\},
+\qquad
+R = \{0,\dots,2N-1\}\setminus S_4,
+$$
+
+so $R$ (the **rest**) is simply every Majorana mode that is *not* being pinned; on the lifted path
+of §9 the two ancilla rows and columns ride along inside $R$. Split the branch covariance into the
+corresponding blocks,
+
+$$
+\Lambda_\alpha =
+\begin{pmatrix} A & B \\ -B^\top & C \end{pmatrix}
+\ \text{on } (S_4, R),
+\qquad
+A = \Lambda_\alpha\big|_{S_4},\quad
+C = \Lambda_\alpha\big|_{R},\quad
+B = \Lambda_\alpha\big|_{S_4, R},
+$$
+
+so $A$ ($4\times4$) is the covariance of the pinned modes, $C$ that of the rest, and the cross-block
+$B$ holds the entanglement between them. Let $\Lambda_{\mathrm{occ}}$ be the covariance of the
+target local configuration $|1\rangle_j|1\rangle_k$; it is exactly the $S_4$ block of the basis
+covariance $\Lambda_y$ of §1 with $y_j=y_k=1$, the block-diagonal $4\times4$ matrix
+
+$$
+\Lambda_{\mathrm{occ}} =
+\begin{pmatrix} 0&1&0&0\\ -1&0&0&0\\ 0&0&0&1\\ 0&0&-1&0 \end{pmatrix},
+\qquad
+(\Lambda_{\mathrm{occ}})_{2j,2j+1} = (\Lambda_{\mathrm{occ}})_{2k,2k+1} = +1 .
+$$
+
+The projected covariance is then
+
+$$
+\boxed{\;
+\Lambda'_\alpha\big|_{S_4} = \Lambda_{\mathrm{occ}}, \qquad
 \Lambda'_\alpha\big|_{S_4, R} = 0, \qquad
-\Lambda'_\alpha\big|_{R} = C + B^\top (A + \mathrm{occ})^{-1} B,
+\Lambda'_\alpha\big|_{R} =
+\underbrace{C}_{\text{prior}}
++ \underbrace{B^\top (A + \Lambda_{\mathrm{occ}})^{-1} B}_{\text{projection back-action}} .
+\;}
 $$
 
-where $\mathrm{occ}$ is the occupied two-mode block, $(\mathrm{occ})_{01} = (\mathrm{occ})_{23} =
-+1$ (and antisymmetric).
+The first two pieces are immediate: the pinned modes now carry the definite occupied configuration
+$\Lambda_{\mathrm{occ}}$, and projecting them onto a product state severs their correlations with
+everything else, so the $S_4$–$R$ cross block is zeroed. The third piece is the only nontrivial
+one. It is the fermionic Schur-complement update of Gaussian conditioning, and its origin is the
+same Grassmann-integral mechanism used in §4: writing $\Lambda_\alpha$ as a Grassmann Gaussian and
+inserting the projector onto $|11\rangle_{jk}$ (itself a Gaussian whose kernel on $S_4$ is
+$\Lambda_{\mathrm{occ}}$) produces a single combined quadratic form; integrating out the pinned
+Grassmann variables leaves the rest with covariance $C$ corrected by the Schur complement of the
+combined pinned block $A+\Lambda_{\mathrm{occ}}$ through the coupling $B$ [1]. It is the exact
+fermionic analogue of classical Gaussian conditioning, where conditioning a joint Gaussian on a
+subset of variables corrects the remaining covariance by $-\Sigma_{RS}\Sigma_{SS}^{-1}\Sigma_{SR}$;
+the shift $A\to A+\Lambda_{\mathrm{occ}}$ is what turns a marginalization into a projection onto the
+specific occupied outcome. When $B=0$, meaning the pinned qubits are unentangled from the rest, the
+back-action vanishes and $\Lambda'_\alpha|_R = C$: pinning already-product modes leaves everything
+else untouched, as it must. The running-example build at the end of this section shows the Schur
+term in action.
 
 **Cross occupations.** The off-diagonal weights need $\langle\phi_\alpha|n_jn_k|\phi_\beta\rangle$,
 obtained from the two-state Wick theorem by expanding $n_jn_k = (1 + i\,c_{2j}c_{2j+1})(1 + i\,
@@ -312,6 +491,59 @@ only when every swapped pair is fully entangled.
 by the SPTM congruence of §1; $W$ is unchanged by a matchgate. After these steps the data is in
 the same form, with up to double the branches, and the next circuit layer is applied identically.
 Matchgate layers between SWAPs are simply the congruence on every branch.
+
+**Running example: building $(\Lambda, W)$ step by step.** We now construct the data of §3 from the
+input by applying the rules above in order.
+
+*Start.* The input $|011\rangle$ is a single branch, $\chi=1$, with covariance the basis value
+$\Lambda_{|011\rangle}$ (on-site blocks $-1,+1,+1$ for qubits $0,1,2$) and weight $W=(1)$.
+
+*Matchgate $V_1$.* The hopping $V_1$ is a matchgate, so it acts by the congruence of §1 on the single
+branch and leaves $W$ unchanged. The result is the $\Lambda_{\mathrm{in}}$ of §1, still with $\chi=1$
+and $W=(1)$.
+
+*SWAP, step 1 (joint occupation).* For $\mathrm{SWAP}_{12}$ we have $j=1$, $k=2$, hence
+$S_4=\{2,3,4,5\}$ and $R=\{0,1\}$ (qubit $0$). With $\chi=1$ the cross-occupation matrix is the scalar
+$q=q_{00}$, read off $\Gamma_{00}=\Lambda_{\mathrm{in}}$:
+
+$$
+q = \tfrac14\Bigl[1 + (\Lambda_{\mathrm{in}})_{2,3} + (\Lambda_{\mathrm{in}})_{4,5}
++ \mathrm{Pf}(\Lambda_{\mathrm{in}}|_{S_4})\Bigr]
+= \tfrac14\Bigl[1 + (-\tfrac12) + 1 + (-\tfrac12)\Bigr] = \tfrac14 .
+$$
+
+*SWAP, step 2 (conditioned covariance).* The type-1 branch pins qubits $1$ and $2$ to occupied.
+Splitting $\Lambda_{\mathrm{in}}$ on $(S_4, R)$,
+
+$$
+A = \begin{pmatrix}0&-\tfrac12&0&0\\ \tfrac12&0&0&0\\ 0&0&0&1\\ 0&0&-1&0\end{pmatrix},
+\qquad
+B = \begin{pmatrix}\tfrac{\sqrt3}{2}&0\\ 0&\tfrac{\sqrt3}{2}\\ 0&0\\ 0&0\end{pmatrix},
+\qquad
+C = \begin{pmatrix}0&\tfrac12\\ -\tfrac12&0\end{pmatrix},
+$$
+
+where the rest block $R$ is qubit $0$, entangled with qubit $1$ through $B$. The Schur term
+$B^\top(A+\Lambda_{\mathrm{occ}})^{-1}B = \bigl(\begin{smallmatrix}0&-\tfrac32\\ \tfrac32&0\end{smallmatrix}\bigr)$
+corrects $C$ to $\Lambda'|_R = \bigl(\begin{smallmatrix}0&-1\\ 1&0\end{smallmatrix}\bigr)$, i.e.
+$(\Lambda')_{0,1}=-1$: forcing qubit $1$ back to occupied empties qubit $0$, exactly as
+particle-number conservation of $V_1$ requires. The conditioned covariance is therefore the basis
+state $|011\rangle$.
+
+*SWAP, step 3 (weights and pruning).* The block rule with $q=\tfrac14$ gives
+
+$$
+W_{\mathrm{new}} =
+\begin{pmatrix} W & -2\,W q \\ -2\,W q & 4\,W q\end{pmatrix}
+= \begin{pmatrix} 1 & -\tfrac12 \\ -\tfrac12 & 1\end{pmatrix} .
+$$
+
+Both diagonal entries are nonzero, so no branch is pruned and $\chi=2$.
+
+*SWAP, step 4 (fSWAP).* Finally apply the matchgate $\mathrm{fSWAP}_{12}$ to both branch covariances
+by congruence, with $W$ unchanged. It sends the type-0 covariance $\Lambda_{\mathrm{in}}$ to
+$\Lambda_0$ and the conditioned covariance to $\Lambda_1$ (the basis state $|011\rangle$ is invariant
+under $\mathrm{fSWAP}_{12}$). The result is precisely the $(\Lambda, W)$ used in §3 through §6.
 
 ## 8. Cost
 

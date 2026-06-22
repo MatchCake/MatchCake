@@ -11,19 +11,23 @@ from ...utils.math import convert_and_cast_like
 from .branch_observables import transition_cov
 from .lift import lift_sptm
 
-# Occupied two-mode block: (occ)_{01} = (occ)_{23} = +1 (swap_injection_theory.md eq 17).
+# Lambda_occ: covariance of the occupied configuration |1>_j |1>_k; (Lambda_occ)_{01} = (Lambda_occ)_{23} = +1.
 _OCCUPIED_BLOCK = torch.tensor([[0, 1, 0, 0], [-1, 0, 0, 0], [0, 0, 0, 1], [0, 0, -1, 0]], dtype=torch.float64)
 
 
 def condition_occupied(covariance: TensorLike, j: int, k: int) -> TensorLike:
     r"""Covariance of branches with modes ``j, k`` projected to occupied (swap_injection_theory.md eq 17), batched.
 
-    With ``S4 = {2j, 2j+1, 2k, 2k+1}`` and ``R`` the complementary modes (the two ancilla rows/cols
-    stay in ``R`` on the lifted path), the block split ``cov = [[A, B], [-B^T, C]]`` gives
+    With ``S4 = {2j, 2j+1, 2k, 2k+1}`` and ``R`` the rest (every Majorana mode not pinned; the two
+    ancilla rows/cols stay in ``R`` on the lifted path), the block split ``cov = [[A, B], [-B^T, C]]``
+    gives, with ``Lambda_occ`` the covariance of the occupied configuration ``|1>_j |1>_k``,
 
     .. math::
-        \Lambda'|_{S4} = \mathrm{occ}, \quad \Lambda'|_{S4, R} = 0, \quad
-        \Lambda'|_R = C + B^T (A + \mathrm{occ})^{-1} B.
+        \Lambda'|_{S4} = \Lambda_{\mathrm{occ}}, \quad \Lambda'|_{S4, R} = 0, \quad
+        \Lambda'|_R = C + B^T (A + \Lambda_{\mathrm{occ}})^{-1} B.
+
+    The last term is the fermionic Schur-complement back-action of the projection (the analogue of
+    classical Gaussian conditioning); see swap_injection_theory.md section 7 for the derivation.
 
     Acts on any leading batch (e.g. the whole ``(chi, ..., D, D)`` branch tensor) at once.
 

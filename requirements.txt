@@ -560,7 +560,7 @@ torch==2.10.0
     # via
     #   matchcake
     #   torchpfaffian
-torchpfaffian==0.0.3
+torchpfaffian==0.0.4
     # via matchcake
 tornado==6.5.5
     # via
