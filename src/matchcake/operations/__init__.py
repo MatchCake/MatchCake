@@ -6,7 +6,6 @@ from .comp_rotations import (
     CompRyRy,
     CompRzRz,
 )
-from .fermionic_controlled_z import FermionicControlledZ, fCZ
 from .fermionic_superposition import FermionicSuperposition
 from .fermionic_swap import CompZX, fSWAP, fswap_chain, fswap_chain_gen
 from .matchgate_identity import MatchgateIdentity
@@ -23,4 +22,5 @@ from .single_particle_transition_matrices import (
     SptmCompZX,
     SptmFermionicSuperposition,
     SptmIdentity,
+    SptmRz,
 )

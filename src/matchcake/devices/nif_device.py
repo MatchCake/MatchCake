@@ -26,6 +26,7 @@ from ..operations.matchgate_operation import MatchgateOperation
 from ..operations.single_particle_transition_matrices.single_particle_transition_matrix import (
     SingleParticleTransitionMatrixOperation,
 )
+from ..operations.single_particle_transition_matrices.sptm_rz import SptmRz
 from ..operations.state_preparation import ProductState, StatePrepFromGates
 from ..typing import TensorLike
 from ..utils import (
@@ -126,6 +127,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         *[c.__name__ for c in utils.get_all_subclasses(MatchgateOperation)],
         SingleParticleTransitionMatrixOperation.__name__,
         *[c.__name__ for c in utils.get_all_subclasses(SingleParticleTransitionMatrixOperation)],
+        "RZ",
         StatePrepFromGates.__name__,
         *[c.__name__ for c in utils.get_all_subclasses(StatePrepFromGates)],
         "BasisEmbedding",
@@ -367,6 +369,10 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         """
         if isinstance(op, (MatchgateOperation, SingleParticleTransitionMatrixOperation)):
             return op
+        # A single-qubit RZ is Gaussian (its generator Z_k = -i c_{2k} c_{2k+1} is quadratic in the
+        # Majorana modes of qubit k), so it maps to the 2x2 single-particle rotation SptmRz.
+        if isinstance(op, qml.RZ):
+            return SptmRz(op.data[0], wires=op.wires)
         if hasattr(op, "to_sptm_operation") or hasattr(op, "single_particle_transition_matrix"):
             return op
         try:

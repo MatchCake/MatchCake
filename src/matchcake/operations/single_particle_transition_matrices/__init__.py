@@ -8,3 +8,4 @@ from .sptm_fermionic_superposition import SptmFermionicSuperposition
 from .sptm_fswap import SptmCompZX
 from .sptm_fswap_hh import SptmFSwapHH
 from .sptm_identity import SptmIdentity
+from .sptm_rz import SptmRz

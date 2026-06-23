@@ -43,6 +43,96 @@ class TestSwapAugmentedFermionicDevice:
         qml.SWAP(wires=[2, 3])
         qml.IsingYY(x[3], wires=[0, 1])
 
+    @staticmethod
+    def _single_cz(x):
+        qml.IsingXX(x[0], wires=[0, 1])
+        qml.CZ(wires=[1, 2])
+        qml.IsingYY(x[1], wires=[0, 1])
+        qml.IsingXX(x[2], wires=[1, 2])
+
+    @staticmethod
+    def _cz_and_swap(x):
+        qml.IsingXX(x[0], wires=[0, 1])
+        qml.CZ(wires=[0, 1])
+        qml.SWAP(wires=[1, 2])
+        qml.IsingYY(x[1], wires=[0, 1])
+
+    @pytest.mark.parametrize("seed", [0, 1, 2])
+    def test_single_cz_probs_match_default_qubit(self, seed):
+        n = 3
+        x = np.random.default_rng(seed).uniform(-2, 2, size=3)
+
+        @qml.qnode(qml.device("default.qubit", wires=n))
+        def ref(x):
+            self._single_cz(x)
+            return qml.probs(wires=range(n))
+
+        @qml.qnode(SwapAugmentedFermionicDevice(wires=n))
+        def got(x):
+            self._single_cz(x)
+            return qml.probs(wires=range(n))
+
+        np.testing.assert_allclose(np.asarray(got(x)), np.asarray(ref(x)), atol=ATOL_MATRIX_COMPARISON)
+
+    def test_single_cz_expval_match_default_qubit(self):
+        n = 3
+        x = np.random.default_rng(3).uniform(-2, 2, size=3)
+
+        @qml.qnode(qml.device("default.qubit", wires=n))
+        def ref(x):
+            self._single_cz(x)
+            return qml.expval(self.OBS)
+
+        @qml.qnode(SwapAugmentedFermionicDevice(wires=n))
+        def got(x):
+            self._single_cz(x)
+            return qml.expval(self.OBS)
+
+        np.testing.assert_allclose(float(got(x)), float(ref(x)), atol=ATOL_MATRIX_COMPARISON)
+
+    def test_cz_and_swap_probs_match_default_qubit(self):
+        n = 3
+        x = np.random.default_rng(4).uniform(-2, 2, size=2)
+
+        @qml.qnode(qml.device("default.qubit", wires=n))
+        def ref(x):
+            self._cz_and_swap(x)
+            return qml.probs(wires=range(n))
+
+        @qml.qnode(SwapAugmentedFermionicDevice(wires=n))
+        def got(x):
+            self._cz_and_swap(x)
+            return qml.probs(wires=range(n))
+
+        np.testing.assert_allclose(np.asarray(got(x)), np.asarray(ref(x)), atol=ATOL_MATRIX_COMPARISON)
+
+    def test_cz_with_rz_match_default_qubit(self):
+        # CZ branching composed with single-qubit R_Z (Gaussian) layers.
+        n = 3
+        x = np.random.default_rng(5).uniform(-2, 2, size=4)
+
+        def body(x):
+            qml.RZ(x[0], wires=0)
+            qml.IsingXX(x[1], wires=[0, 1])
+            qml.CZ(wires=[0, 1])
+            qml.RZ(x[2], wires=2)
+            qml.IsingYY(x[3], wires=[1, 2])
+
+        @qml.qnode(qml.device("default.qubit", wires=n))
+        def ref(x):
+            body(x)
+            return qml.probs(wires=range(n))
+
+        @qml.qnode(SwapAugmentedFermionicDevice(wires=n))
+        def got(x):
+            body(x)
+            return qml.probs(wires=range(n))
+
+        np.testing.assert_allclose(np.asarray(got(x)), np.asarray(ref(x)), atol=ATOL_MATRIX_COMPARISON)
+
+    def test_cz_is_listed_as_supported(self):
+        assert "CZ" in SwapAugmentedFermionicDevice._supported_ops
+
     def test_zero_swap_matches_nif_exactly(self):
         n = 3
         x = np.random.default_rng(0).uniform(-2, 2, size=3)

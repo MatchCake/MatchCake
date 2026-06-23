@@ -35,8 +35,11 @@ class SwapAugmentedFermionicDevice(NonInteractingFermionicDevice):
     The initial product state is lifted once to the even ``(2n+2)`` parity-purified frame (so
     arbitrary product-state inputs work, not just basis states) and then propagated: matchgate layers
     accumulate into a single SPTM that is flushed onto every branch, and each ``SWAP`` branches the
-    state. Observables (``probs``, ``expval``) are read off the branch tensor; sampling, batching, and
-    the rest of the plumbing are inherited from NIF unchanged.
+    state. A genuine qubit ``CZ`` is the non-Gaussian factor of a ``SWAP`` (``CZ = 1 - 2 n_j n_k``,
+    while ``SWAP = fSWAP . CZ``), so it branches the state identically to a ``SWAP`` but without the
+    trailing ``fSWAP`` matchgate; both contribute to the ``chi <= 2^m`` branch count. Observables
+    (``probs``, ``expval``) are read off the branch tensor; sampling, batching, and the rest of the
+    plumbing are inherited from NIF unchanged.
 
     The branch-tensor observables are correct for matchgate circuits with no ``SWAP`` (then identical
     to ``nif.qubit``), a single ``SWAP``, or ``SWAP``s acting on disjoint wire pairs. ``SWAP``s that
@@ -48,7 +51,7 @@ class SwapAugmentedFermionicDevice(NonInteractingFermionicDevice):
 
     name = "nif.swap.qubit"
 
-    _supported_ops = NonInteractingFermionicDevice._supported_ops | {"SWAP"}
+    _supported_ops = NonInteractingFermionicDevice._supported_ops | {"SWAP", "CZ"}
     DEFAULT_CONTRACTION_METHOD = None  # SWAPs are barriers; matchgates accumulate in the global SPTM
 
     @staticmethod
@@ -106,6 +109,11 @@ class SwapAugmentedFermionicDevice(NonInteractingFermionicDevice):
                 self._flush_sptm_to_branches()
                 j, k = (self.wires.index(wire) for wire in op.wires)
                 self._branch_state.apply_swap(j, k)
+                continue
+            if isinstance(op, qml.CZ):
+                self._flush_sptm_to_branches()
+                j, k = (self.wires.index(wire) for wire in op.wires)
+                self._branch_state.apply_cz(j, k)
                 continue
             self.apply_op(self.convert_op_to_supported(op))
         return self

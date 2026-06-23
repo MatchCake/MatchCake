@@ -112,13 +112,52 @@ class SwapBranchState:
         self.cov = qml.math.einsum("a...ij,...jk->a...ik", self.cov, lifted_sptm)
         return self
 
+    def apply_cz(self, j: int, k: int, tol: float = 1e-12) -> "SwapBranchState":
+        r"""Apply a genuine ``CZ(j, k) = 1 - 2 n_j n_k`` (swap_injection_theory.md section 2).
+
+        ``CZ`` is the non-Gaussian (quartic) factor of a ``SWAP``: like a ``SWAP`` it branches each
+        Gaussian into an unchanged "type-0" branch and an occupation-conditioned "type-1" branch, but
+        unlike a ``SWAP`` it does not apply the trailing ``fSWAP`` matchgate. The branching, weight
+        block update (eq 19), and pruning are shared with :meth:`apply_swap` via
+        :meth:`_branch_on_occupation`.
+
+        :param j: First qubit index.
+        :param k: Second qubit index.
+        :param tol: Branches with ``|W_{aa}| < tol`` are pruned.
+        :return: ``self`` (mutated in place).
+        :rtype: SwapBranchState
+        """
+        return self._branch_on_occupation(j, k, tol=tol)
+
     def apply_swap(self, j: int, k: int, tol: float = 1e-12) -> "SwapBranchState":
         r"""Apply a genuine ``SWAP(j, k) = fSWAP(j, k) . (1 - 2 n_j n_k)`` (swap_injection_theory.md section 6).
 
         Splits each branch into the fSWAP-only branch and the CZ-projected (occupation-conditioned)
         branch, updates the weight matrix by the block rule (eq 19), prunes vanished branches, then
-        applies the fSWAP SPTM to every surviving branch. The cross-occupation matrix ``q`` and the
-        conditioning are computed for all branch pairs/branches at once (no per-branch Python loop).
+        applies the fSWAP SPTM to every surviving branch. The branching step is shared with
+        :meth:`apply_cz` (a ``SWAP`` is a ``CZ`` followed by the matchgate ``fSWAP``).
+
+        :param j: First qubit index.
+        :param k: Second qubit index.
+        :param tol: Branches with ``|W_{aa}| < tol`` are pruned.
+        :return: ``self`` (mutated in place).
+        :rtype: SwapBranchState
+        """
+        self._branch_on_occupation(j, k, tol=tol)
+
+        # Apply the fSWAP matchgate to every surviving branch (step E).
+        fswap_sptm = SptmCompZX(wires=[j, k]).pad(Wires(range(self.num_wires))).matrix()
+        self.apply_matchgate_sptm(fswap_sptm)
+        return self
+
+    def _branch_on_occupation(self, j: int, k: int, tol: float = 1e-12) -> "SwapBranchState":
+        r"""Branch each Gaussian on ``1 - 2 n_j n_k`` (swap_injection_theory.md section 7), the shared
+        non-Gaussian core of both ``CZ`` and ``SWAP``.
+
+        Doubles ``chi`` into the unchanged "type-0" branches and the occupation-conditioned "type-1"
+        branches, updates the weight matrix by the block rule (eq 19), and prunes vanished branches.
+        The cross-occupation matrix ``q`` and the conditioning are computed for all branch
+        pairs/branches at once (no per-branch Python loop).
 
         :param j: First qubit index.
         :param k: Second qubit index.
@@ -154,10 +193,6 @@ class SwapBranchState:
         keep = [a for a in range(2 * chi) if float(qml.math.max(diagonal[a])) >= tol]
         self.cov = new_cov[keep]
         self.weights = new_weights[keep][:, keep]
-
-        # Apply the fSWAP matchgate to every surviving branch (step E).
-        fswap_sptm = SptmCompZX(wires=[j, k]).pad(Wires(range(self.num_wires))).matrix()
-        self.apply_matchgate_sptm(fswap_sptm)
         return self
 
     @property
