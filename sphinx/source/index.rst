@@ -30,6 +30,12 @@ Welcome to MatchCake's documentation!
 
    matchcake
 
+.. toctree::
+   :maxdepth: 1
+   :caption: References:
+
+   references
+
 
 .. include:: readme.rst
 

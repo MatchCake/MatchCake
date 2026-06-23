@@ -294,3 +294,100 @@ class TestSingleParticleTransitionMatrixOperation:
         sptm = SingleParticleTransitionMatrixOperation.random(wires=np.arange(size), seed=0)
         with pytest.raises(ValueError):
             _ = sptm @ "invalid"
+
+    def test_random_params_is_orthogonal(self, batch_size, size):
+        q = SingleParticleTransitionMatrixOperation.random_params(
+            batch_size=batch_size, wires=np.arange(size), seed=size
+        )
+        gram = np.einsum("...ji,...jk->...ik", q, q)
+        identity = np.broadcast_to(np.eye(2 * size), gram.shape)
+        np.testing.assert_allclose(
+            gram,
+            identity,
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_random_params_has_unit_determinant(self, batch_size, size):
+        q = SingleParticleTransitionMatrixOperation.random_params(
+            batch_size=batch_size, wires=np.arange(size), seed=size
+        )
+        np.testing.assert_allclose(
+            np.linalg.det(q),
+            np.ones(batch_size),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_random_params_is_real(self, batch_size, size):
+        q = SingleParticleTransitionMatrixOperation.random_params(
+            batch_size=batch_size, wires=np.arange(size), seed=size, dtype=torch.complex128
+        )
+        np.testing.assert_allclose(np.imag(np.asarray(q)), 0.0, atol=ATOL_MATRIX_COMPARISON)
+
+    def test_random_params_batched_shape(self, batch_size, size):
+        q = SingleParticleTransitionMatrixOperation.random_params(
+            batch_size=batch_size, wires=np.arange(size), seed=size
+        )
+        assert q.shape == (batch_size, 2 * size, 2 * size)
+
+    def test_random_params_reproducible_with_seed(self, batch_size, size):
+        kwargs = dict(batch_size=batch_size, wires=np.arange(size), seed=size)
+        q_a = SingleParticleTransitionMatrixOperation.random_params(**kwargs)
+        q_b = SingleParticleTransitionMatrixOperation.random_params(**kwargs)
+        np.testing.assert_array_equal(q_a, q_b)
+
+    def test_random_params_different_seeds_differ(self, batch_size, size):
+        q_a = SingleParticleTransitionMatrixOperation.random_params(
+            batch_size=batch_size, wires=np.arange(size), seed=size
+        )
+        q_b = SingleParticleTransitionMatrixOperation.random_params(
+            batch_size=batch_size, wires=np.arange(size), seed=size + 100
+        )
+        assert not np.allclose(q_a, q_b)
+
+    def test_random_passes_so4_check(self, batch_size, size):
+        sptm = SingleParticleTransitionMatrixOperation.random(batch_size=batch_size, wires=np.arange(size), seed=size)
+        assert sptm.check_is_in_so4()
+
+    def test_random_params_returns_torch_tensor(self, batch_size, size):
+        q = SingleParticleTransitionMatrixOperation.random_params(
+            batch_size=batch_size, wires=np.arange(size), seed=size
+        )
+        assert isinstance(q, torch.Tensor)
+
+    def test_random_params_default_dtype_is_real_float32(self, batch_size, size):
+        q = SingleParticleTransitionMatrixOperation.random_params(
+            batch_size=batch_size, wires=np.arange(size), seed=size
+        )
+        assert q.dtype == torch.float32
+
+    @pytest.mark.parametrize(
+        "dtype",
+        [torch.float32, torch.float64, torch.complex64, torch.complex128],
+    )
+    def test_random_params_respects_dtype(self, batch_size, size, dtype):
+        q = SingleParticleTransitionMatrixOperation.random_params(
+            batch_size=batch_size, wires=np.arange(size), seed=size, dtype=dtype
+        )
+        assert q.dtype == dtype
+        gram = torch.einsum("...ji,...jk->...ik", q, q.conj())
+        identity = torch.eye(2 * size, dtype=dtype).expand_as(gram)
+        torch.testing.assert_close(gram, identity, atol=1e-5, rtol=1e-5)
+
+
+def test_random_params_unbatched_shape():
+    q = SingleParticleTransitionMatrixOperation.random_params(wires=np.arange(2), seed=0)
+    assert q.shape == (4, 4)
+
+
+def test_random_params_is_haar_on_so2():
+    # On SO(2) the Haar measure is a uniform rotation angle. Sampling many matrices and
+    # binning their angles should be close to uniform if the QR construction is correct.
+    n_samples = 20000
+    q = SingleParticleTransitionMatrixOperation.random_params(batch_size=n_samples, wires=np.arange(1), seed=TEST_SEED)
+    angles = np.arctan2(np.real(q[:, 1, 0]), np.real(q[:, 0, 0]))
+    counts, _ = np.histogram(angles, bins=12, range=(-np.pi, np.pi))
+    expected = n_samples / 12
+    # Each bin should be within a few percent of uniform for this many samples.
+    np.testing.assert_allclose(counts, expected, rtol=0.15)

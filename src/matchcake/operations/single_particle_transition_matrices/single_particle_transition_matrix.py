@@ -2,7 +2,6 @@ from typing import Any, Iterable, List, Literal, Optional, Sequence, Union
 
 import numpy as np
 import pennylane as qml
-from pennylane.math import expm
 from pennylane.operation import Operation, Operator
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires, WiresLike
@@ -271,20 +270,50 @@ class SingleParticleTransitionMatrixOperation(Operation):
         return SingleParticleTransitionMatrixOperation(matrix, wires=all_wires, **kwargs)
 
     @classmethod
-    def random_params(cls, batch_size=None, **kwargs):
+    def random_params(cls, batch_size=None, *, dtype=None, device=None, seed=None, **kwargs):
+        r"""
+        Sample a Haar-random single-particle transition matrix in :math:`SO(2N)`.
+
+        A Gaussian matrix is factorized with a QR decomposition and the orthogonal factor is
+        sign-corrected so that the result is distributed according to the Haar measure, following
+        Mezzadri's algorithm :cite:`mezzadri2007random`. A final column sign flip enforces
+        :math:`\det = +1`, placing the matrix in :math:`SO(2N)` rather than the full orthogonal
+        group :math:`O(2N)`.
+
+        :param batch_size: Optional leading batch dimension for the sampled matrices.
+        :param dtype: Torch data type of the returned parameters. Defaults to ``torch.float32``
+            since the single-particle transition matrix is real-valued. A complex dtype is also
+            accepted and yields the same real matrix stored with a zero imaginary part; the
+            Gaussian draw and QR are always done in the matching real precision.
+        :param device: Optional Torch device on which the parameters are created. If ``None``, the
+            default device is used.
+        :param seed: Optional integer seed controlling the random number generator.
+        :param kwargs: Must contain the ``wires`` the matrix acts on.
+
+        :return: A real orthogonal matrix of shape ``(2N, 2N)``, or ``(batch_size, 2N, 2N)`` when
+            ``batch_size`` is given, as a ``torch.Tensor`` of the requested ``dtype``.
+        """
+        import torch
+
+        from ...utils import torch_utils
+
         wires = kwargs.get("wires", None)
         assert wires is not None, "wires kwarg must be set."
-        seed = kwargs.pop("seed", None)
-        rn_gen = np.random.default_rng(seed)
-        params_indexes = np.triu_indices(2 * len(wires), k=1)
-        rn_params = rn_gen.normal(size=(([batch_size] if batch_size is not None else []) + [params_indexes[0].size]))
-        matrix = np.zeros(
-            ([batch_size] if batch_size is not None else []) + [2 * len(wires), 2 * len(wires)], dtype=complex
-        )
-        matrix[..., params_indexes[0], params_indexes[1]] = rn_params
-        matrix[..., params_indexes[1], params_indexes[0]] = -rn_params
-        exp_matrix = expm(4 * matrix)
-        return exp_matrix
+        dtype = torch_utils.get_torch_dtype(dtype, torch.float32)
+        real_dtype = torch_utils.COMPLEX_TO_REAL_DTYPE.get(dtype, dtype)
+        n = 2 * len(wires)
+        shape = tuple(([batch_size] if batch_size is not None else []) + [n, n])
+        generator = None
+        if seed is not None:
+            generator = torch.Generator(device=device or "cpu").manual_seed(int(seed))
+        z = torch.randn(shape, dtype=real_dtype, device=device, generator=generator)
+        q, r = torch.linalg.qr(z)
+        d = torch.sign(torch.diagonal(r, dim1=-2, dim2=-1))
+        d = torch.where(d == 0, torch.ones_like(d), d)
+        q = q * d.unsqueeze(-2)
+        det = torch.linalg.det(q)
+        q[..., :, 0] = q[..., :, 0] * det.unsqueeze(-1)
+        return q.to(dtype)
 
     @classmethod
     def random(cls, wires: Wires, batch_size=None, **kwargs):

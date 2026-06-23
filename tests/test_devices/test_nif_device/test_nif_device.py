@@ -16,7 +16,7 @@ class TestNonInteractingFermionicDevice:
         new_sptm = SingleParticleTransitionMatrixOperation.random(wires=[0, 1], seed=1)
         updated_sptm = dev.update_single_particle_transition_matrix(old_sptm, new_sptm)
         expected_sptm = old_sptm.matrix() @ new_sptm.matrix()
-        np.testing.assert_allclose(updated_sptm, expected_sptm)
+        np.testing.assert_allclose(updated_sptm, expected_sptm, atol=1e-5, rtol=1e-5)
 
     def test_update_single_particle_transition_matrix_with_tensors(self):
         dev = NonInteractingFermionicDevice(wires=2)
@@ -24,7 +24,7 @@ class TestNonInteractingFermionicDevice:
         new_sptm = SingleParticleTransitionMatrixOperation.random(wires=[0, 1], seed=1).matrix()
         updated_sptm = dev.update_single_particle_transition_matrix(old_sptm, new_sptm)
         expected_sptm = old_sptm @ new_sptm
-        np.testing.assert_allclose(updated_sptm, expected_sptm)
+        np.testing.assert_allclose(updated_sptm, expected_sptm, atol=1e-5, rtol=1e-5)
 
     def test_update_single_particle_transition_matrix_with_none(self):
         dev = NonInteractingFermionicDevice(wires=2)
