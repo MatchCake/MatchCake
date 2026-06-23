@@ -185,7 +185,7 @@ class SwapAugmentedFermionicDevice(NonInteractingFermionicDevice):
         displacement = displacement_vector(amplitudes, self.wires)  # (2n,)
         lifted = lift_from_product_state(covariance, displacement)  # (2n+2, 2n+2)
         cov_tensor = lifted[None, ...]  # (1, 2n+2, 2n+2)
-        weights = qml.math.cast(np.array([[1.0]]), self._c_dtype_name)  # (1, 1)
+        weights = qml.math.convert_like(qml.math.cast(np.array([[1.0]]), self._c_dtype_name), cov_tensor)  # (1, 1)
         self._branch_state = SwapBranchState(cov_tensor, weights, lifted=True)
 
     def _flush_sptm_to_branches(self) -> None:

@@ -1,6 +1,7 @@
 import numpy as np
 import pennylane as qml
 import pytest
+import torch
 from pennylane.exceptions import DeviceError
 
 from matchcake import NonInteractingFermionicDevice, SwapAugmentedFermionicDevice
@@ -331,6 +332,38 @@ class TestSwapAugmentedFermionicDevice:
         assert dev.branch_state.chi >= 1
         probs = np.asarray(dev.analytic_probability())
         np.testing.assert_allclose(probs.sum(), 1.0, atol=ATOL_MATRIX_COMPARISON)
+
+    @staticmethod
+    def _swap_expval_torch(theta):
+        # Lower-level device API keeps the torch graph intact across the SWAP branching, unlike the
+        # qnode boundary. A genuine SWAP sits between the two trainable matchgate layers so the
+        # gradient is forced through SwapBranchState.apply_swap.
+        n = 4
+        dev = SwapAugmentedFermionicDevice(wires=n)
+
+        def generator():
+            yield qml.BasisState(np.zeros(n, dtype=int), wires=range(n))
+            yield qml.IsingXX(theta, wires=[0, 1])
+            yield qml.SWAP(wires=[1, 2])
+            yield qml.IsingYY(theta, wires=[2, 3])
+
+        dev.execute_generator(generator(), reset=True, n_ops=8, gc_op=True)
+        observable = qml.Hamiltonian([1.0, 0.5], [qml.Z(2), qml.Z(0)])
+        return dev.exact_expval(observable).real
+
+    def test_swap_gradient_matches_finite_difference(self):
+        theta = torch.tensor(0.5, dtype=torch.float64, requires_grad=True)
+        expectation = self._swap_expval_torch(theta)
+        expectation.backward()
+        grad_autograd = theta.grad
+
+        assert torch.isfinite(grad_autograd)
+        step = 1e-5
+        with torch.no_grad():
+            plus = self._swap_expval_torch(torch.tensor(0.5 + step, dtype=torch.float64))
+            minus = self._swap_expval_torch(torch.tensor(0.5 - step, dtype=torch.float64))
+        grad_finite_difference = (plus - minus) / (2 * step)
+        torch.testing.assert_close(grad_autograd, grad_finite_difference, atol=ATOL_MATRIX_COMPARISON, rtol=0.0)
 
     def test_full_probabilities_sum_to_one(self):
         n = 3
