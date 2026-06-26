@@ -170,13 +170,13 @@ class NonInteractingFermionicLookupTable:
             majorana_indexes[..., obs_indices[1]],
         )
 
-        # compute items needed for the observable
-        all_lt_indexes = np.stack((lt_indexes[..., obs_indices[0]], lt_indexes[..., obs_indices[1]]), axis=-1)
-        all_lt_indexes_raveled = all_lt_indexes.reshape(-1, 2)
+        # compute items needed for the observable.
+        # Build the flat lookup-table indexes directly as row * 3 + col (the row-major linearization
+        # of the 3x3 getter table)
+        all_lt_indexes_1d = lt_indexes[..., obs_indices[0]] * 3 + lt_indexes[..., obs_indices[1]]
+        all_lt_indexes_raveled_1d = all_lt_indexes_1d.reshape(-1)
 
-        all_lt_indexes_raveled_1d = utils.math.convert_2d_to_1d_indexes(all_lt_indexes_raveled, n_rows=3)
-        all_lt_indexes_1d = all_lt_indexes_raveled_1d.reshape(*all_lt_indexes.shape[:-1])
-        unique_lt_indexes_raveled_1d = np.fromiter(set(all_lt_indexes_raveled_1d), dtype=int)
+        unique_lt_indexes_raveled_1d = np.unique(all_lt_indexes_raveled_1d)
         unique_lt_indexes_raveled_2d = utils.math.convert_1d_to_2d_indexes(unique_lt_indexes_raveled_1d, n_rows=3)
 
         lt_items = self._compute_stack_and_pad_items(unique_lt_indexes_raveled_2d, close_p_bar=False)
@@ -549,10 +549,9 @@ class NonInteractingFermionicLookupTable:
         :param unique_indexes: numpy array containing unique index values to serve as mapping references
         :return: numpy array with values replaced based on positions in `unique_indexes`
         """
-        new_all_indexes = np.empty(all_indexes.shape, dtype=int)
-        for i, j in enumerate(unique_indexes):
-            new_all_indexes = np.where(all_indexes == j, i, new_all_indexes)
-        return new_all_indexes
+        sort_idx = np.argsort(unique_indexes)
+        pos = np.searchsorted(unique_indexes, all_indexes, sorter=sort_idx)
+        return sort_idx[pos].astype(int)
 
     @staticmethod
     def _assert_binary(binary_state: np.ndarray) -> bool:
