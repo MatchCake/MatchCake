@@ -14,7 +14,7 @@ from .torch_utils import infer_real_dtype
 _pfaffian_epsilon_lock = threading.Lock()
 
 
-def signed_pfaffian(matrix: TensorLike, dtype: Optional[torch.dtype] = None) -> TensorLike:
+def signed_pfaffian(matrix: TensorLike, dtype: Optional[torch.dtype] = None, **kwargs) -> TensorLike:
     """
     Compute the signed Pfaffian of a real antisymmetric matrix (or batch).
 
@@ -33,13 +33,11 @@ def signed_pfaffian(matrix: TensorLike, dtype: Optional[torch.dtype] = None) -> 
     """
     if dtype is None:
         dtype = infer_real_dtype(matrix)
-    return pfaffian(matrix, sign=True, dtype=dtype)
+    return pfaffian(matrix, sign=True, dtype=dtype, **kwargs)
 
 
 def sector_pfaffian_features(
-    cov_matrix: TensorLike,
-    index_sets: np.ndarray,
-    dtype: Optional[torch.dtype] = None,
+    cov_matrix: TensorLike, index_sets: np.ndarray, dtype: Optional[torch.dtype] = None, **kwargs
 ) -> TensorLike:
     """
     Return a ``(..., n_terms)`` tensor of signed Pfaffians of principal submatrices.
@@ -71,8 +69,27 @@ def sector_pfaffian_features(
         # Fast path: Pf of 2x2 [[0, a], [-a, 0]] = a.
         result = submatrices[..., 0, 1]  # (..., n_terms)
     else:
-        result = pfaffian(submatrices, sign=True)  # (..., n_terms)
+        result = pfaffian(submatrices, sign=True, **kwargs)  # (..., n_terms)
     return convert_and_cast_like(result, cov_matrix)
+
+
+def _pfaffian_kernel(matrix_t: torch.Tensor, sign: bool, epsilon: float) -> torch.Tensor:
+    """Compute the Pfaffian of a batch of matrices already cast to a torch tensor.
+
+    :param matrix_t: Skew-symmetric matrix (or batch) of shape ``(..., 2n, 2n)``.
+    :type matrix_t: torch.Tensor
+    :param sign: When ``True`` return the signed Pfaffian, otherwise its magnitude.
+    :type sign: bool
+    :param epsilon: Floor applied to the determinant magnitude in the ``sign=False`` path.
+    :type epsilon: float
+    :return: Pfaffian of shape ``(...,)``.
+    :rtype: torch.Tensor
+    """
+    if sign:
+        return torch_pfaffian.pfaffian(matrix_t, sign=True)
+    with _pfaffian_epsilon_lock:
+        torch_pfaffian.PfaffianStrategy.EPSILON = epsilon
+        return torch_pfaffian.PfaffianDet.apply(matrix_t)
 
 
 def pfaffian(
@@ -80,6 +97,7 @@ def pfaffian(
     sign: bool = False,
     epsilon: float = 1e-32,
     dtype: Optional[torch.dtype] = None,
+    chunk_size: Optional[int] = None,
 ) -> TensorLike:
     """
     Compute the Pfaffian of a real or complex skew-symmetric matrix ``A`` (``A = -A^T``).
@@ -87,6 +105,11 @@ def pfaffian(
     Delegates to TorchPfaffian. When ``sign`` is ``False`` (default) the magnitude
     ``sqrt(|det(A)|)`` is returned, which is the quantity needed for probability computations
     where the sign is irrelevant. When ``sign`` is ``True`` the signed Pfaffian is returned.
+
+    For a large batch the pfaffian workspace and its backward graph dominate
+    memory and can exceed device memory. Pass ``chunk_size`` to bound that footprint: the
+    leading batch axis is then processed in slices of at most ``chunk_size`` matrices, each
+    reduced independently and concatenated, instead of all at once.
 
     Note: with a complex ``matrix`` this function may not behave as expected. The signed path
     (``sign=True``) relies on a kernel that discards the imaginary part without warning, so it
@@ -101,19 +124,21 @@ def pfaffian(
         avoid numerical instabilities. Defaults to ``1e-32``.
     :param dtype: Optional working dtype to cast ``matrix`` to before the computation.
         Defaults to ``None`` (the input dtype is preserved).
+    :param chunk_size: Maximum number of matrices to reduce at once along the flattened leading
+        batch axis. Defaults to ``None`` (the whole batch is reduced in one shot).
     :return: Pfaffian of the matrix, of shape ``(...,)``.
     :rtype: TensorLike
     """
     matrix_t = torch_utils.to_tensor(matrix, dtype=dtype)
-    if sign:
-        result = torch_pfaffian.pfaffian(matrix_t, sign=True)
+    batch_shape = matrix_t.shape[:-2]
+
+    if chunk_size is not None and len(batch_shape) > 0 and batch_shape.numel() > chunk_size:
+        flat = matrix_t.reshape(-1, matrix_t.shape[-2], matrix_t.shape[-1])  # (B, 2n, 2n)
+        pieces = [
+            _pfaffian_kernel(flat[start : start + chunk_size], sign, epsilon)
+            for start in range(0, flat.shape[0], chunk_size)
+        ]
+        result = torch.cat(pieces, dim=0).reshape(batch_shape)
     else:
-        # ``PfaffianDet`` differentiates straight through ``det`` and ``sqrt``; its gradient
-        # stays consistent with finite differences for complex matrices, whereas the analytic
-        # backward of the gradient-enabled magnitude strategy does not. The global ``EPSILON``
-        # it reads is mutated under a lock for thread safety.
-        # ``PfaffianDet`` is also faster in general in CPU and can be used with CUDA.
-        with _pfaffian_epsilon_lock:
-            torch_pfaffian.PfaffianStrategy.EPSILON = epsilon
-            result = torch_pfaffian.PfaffianDet.apply(matrix_t)
+        result = _pfaffian_kernel(matrix_t, sign, epsilon)
     return convert_and_cast_like(result, matrix)

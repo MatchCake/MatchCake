@@ -109,6 +109,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         transition matrices, lookup table, observables). Defaults to ``torch.complex128`` to preserve maximum
         precision. Set to e.g. ``torch.complex64`` to reduce memory usage and computation cost.
     :type c_dtype: torch.dtype
+    :keyword pfaffian_chunk_size: Max number of matrices reduced per batched Pfaffian call, forwarded to
+        :func:`matchcake.utils.pfaffian` to bound memory. Defaults to ``None`` (no chunking).
+    :type pfaffian_chunk_size: Optional[int]
 
     :Note: This device is a simulator for non-interacting fermions. It is based on the ``default.qubit`` device.
     :Note: This device supports batch execution.
@@ -244,6 +247,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
                 self.DEFAULT_STAR_STATE_FINDING_STRATEGY,
             )
         )
+        self.pfaffian_chunk_size: Optional[int] = kwargs.get("pfaffian_chunk_size", None)
         self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
         self.show_progress = kwargs.get("show_progress", self.p_bar is not None)
         self.apply_metadata: defaultdict = defaultdict()
@@ -533,6 +537,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
                 self.state_prep_op,
                 observable,
                 extended_covariance_matrix=self.extended_covariance_matrix,
+                pfaffian_chunk_size=self.pfaffian_chunk_size,
             )
         if self.clifford_expval_strategy.can_execute(self.state_prep_op, observable):  # pragma: no cover
             return self.clifford_expval_strategy(
@@ -550,6 +555,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
                 extended_covariance_matrix=self.extended_covariance_matrix,
                 global_sptm=self.global_sptm.matrix(),
                 prob_func=self.probability,
+                pfaffian_chunk_size=self.pfaffian_chunk_size,
             )
 
         raise DeviceError(
@@ -797,6 +803,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             global_sptm=self.global_sptm.matrix(),
             majorana_getter=self.majorana_getter,
             show_progress=kwargs.pop("show_progress", self.show_progress),
+            pfaffian_chunk_size=kwargs.pop("pfaffian_chunk_size", self.pfaffian_chunk_size),
         )
         if isinstance(self.state_prep_op, ProductState):
             strategy_kwargs["covariance_matrix"] = self.covariance_matrix

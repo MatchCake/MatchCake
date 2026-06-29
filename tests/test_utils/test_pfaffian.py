@@ -63,6 +63,58 @@ class TestPfaffian:
         )
 
     @pytest.mark.parametrize("sign", [True, False])
+    @pytest.mark.parametrize("batch_shape", [(7,), (3, 5), (2, 3, 4)])
+    # chunk sizes 2, 3 and 4 leave a non-empty remainder chunk for the (7,) and (3, 5) batches
+    # (numel 7 and 15), exercising the case where the batch is not divisible by chunk_size.
+    @pytest.mark.parametrize("chunk_size", [1, 2, 3, 4, 100])
+    def test_pfaffian_chunked_matches_unchunked(self, sign, batch_shape, chunk_size):
+        matrix = self.skew_symmetric(6, batch_size=None)
+        matrix = np.broadcast_to(matrix, batch_shape + matrix.shape).copy()
+        for index in np.ndindex(*batch_shape):
+            matrix[index] = self.skew_symmetric(6, batch_size=None)
+        unchunked = np.asarray(pfaffian(matrix, sign=sign))
+        chunked = np.asarray(pfaffian(matrix, sign=sign, chunk_size=chunk_size))
+        assert chunked.shape == unchunked.shape == batch_shape
+        np.testing.assert_allclose(chunked, unchunked, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+
+    @pytest.mark.parametrize("sign", [True, False])
+    def test_pfaffian_chunk_size_single_matrix_is_noop(self, sign):
+        matrix = self.skew_symmetric(4)
+        chunked = pfaffian(matrix, sign=sign, chunk_size=1)
+        unchunked = pfaffian(matrix, sign=sign)
+        np.testing.assert_allclose(float(chunked), float(unchunked), atol=ATOL_SCALAR_COMPARISON)
+
+    @pytest.mark.parametrize("chunk_size", [1, 3, 100])
+    def test_signed_pfaffian_chunk_size_passthrough(self, chunk_size):
+        matrix = self.skew_symmetric(6, batch_size=7)
+        unchunked = np.asarray(signed_pfaffian(matrix))
+        chunked = np.asarray(signed_pfaffian(matrix, chunk_size=chunk_size))
+        np.testing.assert_allclose(chunked, unchunked, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+
+    @pytest.mark.parametrize("chunk_size", [1, 3, 100])
+    def test_sector_pfaffian_chunk_size_passthrough(self, chunk_size):
+        cov_matrix = self.skew_symmetric(8, batch_size=7)
+        index_sets = np.array([[0, 1, 2, 3], [2, 3, 4, 5], [4, 5, 6, 7]])
+        unchunked = np.asarray(sector_pfaffian_features(cov_matrix, index_sets))
+        chunked = np.asarray(sector_pfaffian_features(cov_matrix, index_sets, chunk_size=chunk_size))
+        np.testing.assert_allclose(chunked, unchunked, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+
+    def test_pfaffian_chunked_grads_on_skew_manifold(self):
+        n = 6
+        n_upper = n * (n - 1) // 2
+        theta = torch.randn(5, n_upper, dtype=torch.float64).requires_grad_()
+
+        def chunked_signed(flat_upper):
+            upper = torch.zeros(flat_upper.shape[0], n, n, dtype=flat_upper.dtype)
+            idx = torch.triu_indices(n, n, offset=1)
+            upper = upper.clone()
+            upper[:, idx[0], idx[1]] = flat_upper
+            matrix = upper - upper.transpose(-1, -2)
+            return pfaffian(matrix, sign=True, chunk_size=2)
+
+        assert gradcheck(chunked_signed, (theta,), atol=ATOL_APPROX_COMPARISON, rtol=10 * RTOL_APPROX_COMPARISON)
+
+    @pytest.mark.parametrize("sign", [True, False])
     def test_pfaffian_odd_size_is_zero(self, sign):
         matrix = self.skew_symmetric(3)
         pf = pfaffian(matrix, sign=sign)

@@ -1,16 +1,41 @@
+import itertools
 from unittest.mock import Mock
 
 import numpy as np
 import pennylane as qml
 import pytest
 
+from matchcake import NonInteractingFermionicDevice
 from matchcake.devices.probability_strategies import LookupTableStrategy
+from matchcake.operations import MatchgateOperation
+
+from ...configs import ATOL_SCALAR_COMPARISON, set_seed
 
 
 class TestLookupTableStrategy:
     @pytest.fixture
     def strategy(self):
         return LookupTableStrategy()
+
+    @pytest.mark.parametrize("chunk_size", [1, 2, 100])
+    def test_chunked_matches_unchunked(self, strategy, chunk_size):
+        set_seed()
+        n_wires = 3
+        gate_seeds = [40 + idx for idx in range(n_wires - 1)]
+        nif_dev = NonInteractingFermionicDevice(wires=range(n_wires))
+
+        def circuit():
+            qml.BasisState(np.zeros(n_wires, dtype=int), wires=range(n_wires))
+            for idx, seed in enumerate(gate_seeds):
+                MatchgateOperation.random(wires=[idx, idx + 1], seed=seed)
+            return qml.probs(wires=range(n_wires))
+
+        qml.QNode(circuit, nif_dev)()
+        outcomes = np.array(list(itertools.product([0, 1], repeat=n_wires)))  # (8, 3)
+
+        unchunked = np.asarray(nif_dev.get_states_probability(outcomes, nif_dev.wires))
+        chunked = np.asarray(nif_dev.get_states_probability(outcomes, nif_dev.wires, pfaffian_chunk_size=chunk_size))
+        np.testing.assert_allclose(chunked, unchunked, atol=ATOL_SCALAR_COMPARISON)
 
     def test_wires_as_int(self, strategy):
         lookup_table_mock = Mock()
