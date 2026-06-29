@@ -149,6 +149,11 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
         and returns ``(B,)``. When all outcomes share the same wires (the device default),
         the batch is handled in one vectorized determinant call over a ``(B, 2k, 2k)`` stack.
 
+        Pass ``pfaffian_chunk_size`` to bound peak memory: the Pfaffian over the
+        ``(..., 2k, 2k)`` stack is then reduced in slices of at most that many matrices along the
+        flattened batch axis instead of all at once, which caps the determinant/backward
+        workspace. Defaults to ``None`` (no chunking).
+
         :param state_prep_op: State preparation operation (not used directly; the evolved
             covariance matrix is passed via ``covariance_matrix``).
         :type state_prep_op: StatePrepBase
@@ -209,7 +214,8 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
                 )
 
         combined = lambda_t_w + lambda_y
-        prob = (1.0 / 2**k) * qml.math.real(utils.pfaffian(combined, sign=False))
+        chunk_size = kwargs.get("pfaffian_chunk_size", None)
+        prob = (1.0 / 2**k) * qml.math.real(utils.pfaffian(combined, sign=False, chunk_size=chunk_size))
         return convert_and_cast_like(prob, covariance_matrix)
 
     def can_execute(self, state_prep_op: StatePrepBase) -> bool:
