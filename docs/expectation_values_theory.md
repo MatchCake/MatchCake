@@ -84,11 +84,11 @@ This covariance matrix can be computed via the SPTM
 
 ```math
 \begin{aligned}
-\Lambda_{\mu\nu} &= i\,\langle \psi_0|V^\dagger c_\mu V V^\dagger c_\nu V|\psi_0\rangle \\
-&= i\,\left\langle \psi_0\left|\left(\sum_j R_{j\mu}\,c_j\right)\left(\sum_\ell R_{\ell\nu}\,c_\ell\right)\right|\psi_0\right\rangle \\
-&= i\sum_{j,\ell} R_{j\mu} R_{\ell\nu} \langle \psi_0|c_j c_\ell|\psi_0\rangle \\
-&= i\sum_{j,\ell} R_{j\mu} \langle \psi_0|c_j c_\ell|\psi_0\rangle R_{\ell\nu} \\
-&= \sum_{j,\ell} R_{j\mu} (\Lambda_0)_{j\ell} R_{\ell\nu}
+\Lambda_{\mu\nu} &= i\,\langle \psi_0|V^\dagger c_\mu V V^\dagger c_\nu V|\psi_0\rangle
+\\ &= i\,\left\langle \psi_0\left|\left(\sum_j R_{j\mu}\,c_j\right)\left(\sum_\ell R_{\ell\nu}\,c_\ell\right)\right|\psi_0\right\rangle
+\\ &= i\sum_{j,\ell} R_{j\mu} R_{\ell\nu} \langle \psi_0|c_j c_\ell|\psi_0\rangle
+\\ &= i\sum_{j,\ell} R_{j\mu} \langle \psi_0|c_j c_\ell|\psi_0\rangle R_{\ell\nu}
+\\ &= \sum_{j,\ell} R_{j\mu} (\Lambda_0)_{j\ell} R_{\ell\nu}
 \end{aligned}
 ```
 
@@ -117,8 +117,8 @@ $`S = (\mu_1,\ldots,\mu_m)`$ and $`\Lambda|_S`$ the $`m\times m`$ principal subm
 ```math
 \langle c_{\mu_1}\cdots c_{\mu_m}\rangle =
 \begin{cases}
-i^{-m/2}\,\mathrm{Pf}(\Lambda|_S) & m \text{ even}, \\
-0 & m \text{ odd}.
+i^{-m/2}\,\mathrm{Pf}(\Lambda|_S) & m \text{ even},
+\\ 0 & m \text{ odd}.
 \end{cases}
 ```
 
