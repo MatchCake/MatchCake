@@ -42,3 +42,8 @@ Methods within a class must appear in this order:
 6. Protected methods (`_method`)
 7. Private methods (`__method`)
 8. Properties (`@property`)
+
+## Documentation math (GitHub-rendered markdown)
+The theory documents under `docs/` are read through GitHub's markdown viewer, whose sanitizer corrupts the inside of inline `$...$` math (it strips the backslash off `\#`, eats underscores it reads as emphasis, and treats `<` as an HTML tag).
+- Write inline math with the protected `` $`...`$ `` (dollar-backtick) delimiter, never bare `$...$`. This hands the expression to MathJax untouched.
+- Display math (`$$...$$`) is fine, but GitHub ignores top-level `\\` line breaks. Multi-line derivations must use an environment such as `\begin{aligned} ... \end{aligned}` (align on `&=`); bare `\\` between equations collapses them onto one overflowing line.
