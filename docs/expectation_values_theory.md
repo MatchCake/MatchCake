@@ -14,9 +14,9 @@ We use the convention $`\langle A\rangle_\rho = \mathrm{Tr}[\rho A]`$ throughout
 Jordan–Wigner (JW) transformation maps $`n`$ qubits to $`2n`$ Hermitian Majorana operators
 (0-indexed),
 
-$$
+```math
 c_{2k} = Z_0\cdots Z_{k-1}\,X_k, \qquad c_{2k+1} = Z_0\cdots Z_{k-1}\,Y_k,
-$$
+```
 
 obeying the Clifford algebra $`\{c_\mu, c_\nu\} = 2\delta_{\mu\nu}`$. The computation of the expectation values
 goes by four stages: initial covariance, single-particle transition matrix, evolved covariance, and
@@ -44,9 +44,9 @@ expectation vanishes and $`(\Lambda_0)_{\mu\nu} = 0`$.
 
 Only the indices $`2k`$ and $`2k+1`$ are coupled, so $`\Lambda_0`$ is block-diagonal:
 
-$$
+```math
 \Lambda_0 = \bigoplus_{k=0}^{n-1} (-z_k) \begin{pmatrix} 0 & 1 \\ -1 & 0 \end{pmatrix}.
-$$
+```
 
 The overall sign follows the convention $`c_{2k} c_{2k+1} = i Z_k`$.
 
@@ -55,12 +55,12 @@ The overall sign follows the convention $`c_{2k} c_{2k+1} = i Z_k`$.
 A matchgate circuit $`V`$ acts by conjugation as a rotation of the Majorana operators into
 one another. We fix the convention
 
-$$
+```math
 V\,c_\mu\,V^\dagger = \sum_\nu R_{\mu\nu}\,c_\nu,
 \qquad\text{equivalently}\qquad
 V^\dagger c_\mu V = \sum_\nu R_{\nu\mu}\,c_\nu,
 \qquad R \in O(2n),
-$$
+```
 
 where $`R`$ is the **single-particle transition matrix (SPTM)**. Each elementary matchgate
 contributes a local orthogonal rotation on a small Majorana subspace, and the global $`R_G`$ is
@@ -73,16 +73,16 @@ $`\mathcal{O}(n^2)`$.
 
 The evolved state is $`|\psi\rangle = V|\psi_0\rangle`$ which can be describe by the evolved covariance matrix defined as
 
-$$
+```math
 \Lambda_{\mu\nu} = i\,\langle \psi_0|V^\dagger c_\mu c_\nu V|\psi_0\rangle, \quad \mu\neq\nu,
-$$
+```
 
 or defined by commutators
 $`\Lambda_{\mu\nu} = \tfrac{i}{2}\langle \psi_0|V^\dagger[c_\mu, c_\nu]V|\psi_0\rangle`$.
 
 This covariance matrix can be computed via the SPTM
 
-$$
+```math
 \begin{aligned}
 \Lambda_{\mu\nu} &= i\,\langle \psi_0|V^\dagger c_\mu V V^\dagger c_\nu V|\psi_0\rangle \\
 &= i\,\left\langle \psi_0\left|\left(\sum_j R_{j\mu}\,c_j\right)\left(\sum_\ell R_{\ell\nu}\,c_\ell\right)\right|\psi_0\right\rangle \\
@@ -90,13 +90,13 @@ $$
 &= i\sum_{j,\ell} R_{j\mu} \langle \psi_0|c_j c_\ell|\psi_0\rangle R_{\ell\nu} \\
 &= \sum_{j,\ell} R_{j\mu} (\Lambda_0)_{j\ell} R_{\ell\nu}
 \end{aligned}
-$$
+```
 
 so that
 
-$$
+```math
 \boxed{\;\Lambda = R^\top \Lambda_0\, R\;}
-$$
+```
 
 Note that the placement of the transposes is fixed by the SPTM convention of
 Section 2; the mirrored index convention $`V^\dagger c_\mu V = \sum_\nu R_{\mu\nu}c_\nu`$
@@ -114,13 +114,13 @@ sorting the indices, and accumulating $`(-1)^{\#\text{transpositions}}`$.
 **Wick's theorem in Pfaffian form.** For the Gaussian state, with
 $`S = (\mu_1,\ldots,\mu_m)`$ and $`\Lambda|_S`$ the $`m\times m`$ principal submatrix,
 
-$$
+```math
 \langle c_{\mu_1}\cdots c_{\mu_m}\rangle =
 \begin{cases}
 i^{-m/2}\,\mathrm{Pf}(\Lambda|_S) & m \text{ even}, \\
 0 & m \text{ odd}.
 \end{cases}
-$$
+```
 
 Odd-$`m`$ products vanish because computational-basis states preserve fermion parity.
 
@@ -134,22 +134,22 @@ We now repeat Stages 1–4 for a generic initialization
 $`|\psi_\text{prod}\rangle = \bigotimes_k (a_k|0\rangle + b_k|1\rangle)`$, with per-qubit
 Bloch components
 
-$$
+```math
 x_k = \langle X_k\rangle = 2\,\mathrm{Re}(a_k^* b_k), \quad
 y_k = \langle Y_k\rangle = 2\,\mathrm{Im}(a_k^* b_k), \quad
 z_k = \langle Z_k\rangle = |a_k|^2 - |b_k|^2.
-$$
+```
 
 ### 5.1 Initial covariance, and why $`\Lambda_0`$ alone is insufficient
 
 The two-point matrix is defined exactly as before, but transverse components now propagate
 across qubits through the JW $`Z`$-string, so $`\Lambda_0`$ is no longer block-diagonal:
 
-$$
+```math
 (\Lambda_0)_{2k,2k+1} = -z_k, \qquad
 (\Lambda_0)_{2j,2k} = y_j\,p_{jk}\,x_k \;\;(j<k), \quad
 p_{jk} = \prod_{j<l<k} z_l,
-$$
+```
 
 with analogous expressions for the mixed index pairs. Crucially, a generic product state is
 *not* fermionic Gaussian: it carries nonzero single-Majorana expectations
@@ -159,11 +159,11 @@ here $`\langle c_0\rangle = \langle X\rangle = 1`$ yet $`\Lambda_0 = 0`$, so the
 returns $`\langle X\rangle = 0`$, which is wrong. The missing data is collected in the
 **displacement vector**
 
-$$
+```math
 d_\mu = \langle\psi_\text{prod}|c_\mu|\psi_\text{prod}\rangle, \qquad
 d_{2k} = x_k\!\prod_{l<k} z_l, \qquad
 d_{2k+1} = y_k\!\prod_{l<k} z_l.
-$$
+```
 
 ### 5.2 Restoring Gaussianity: the extended covariance matrix
 
@@ -175,12 +175,12 @@ Gaussian, because the parity-breaking linear data becomes a genuine two-point co
 with the parity mode. The **extended covariance matrix** is the
 $`(2n+1)\times(2n+1)`$ real antisymmetric matrix
 
-$$
+```math
 \boxed{\;
 \widetilde\Lambda = \begin{pmatrix} \Lambda & d \\ -d^\top & 0 \end{pmatrix},
 \qquad d_\mu = \langle c_\mu\rangle,
 \;}
-$$
+```
 
 where the index $`2n`$ labels $`c'_\text{par}`$. The upper-left block is the ordinary covariance
 matrix and the border is the displacement.
@@ -191,19 +191,19 @@ A matchgate has no linear (single-Majorana) generators, so it leaves the parity 
 invariant, $`V^\dagger c_\text{par} V = c_\text{par}`$. The SPTM therefore lifts
 block-diagonally,
 
-$$
+```math
 \widetilde R = \begin{pmatrix} R & 0 \\ 0 & 1 \end{pmatrix} \in O(2n+1),
 \qquad
 \widetilde\Lambda = \widetilde R^\top \widetilde\Lambda_0\, \widetilde R.
-$$
+```
 
 Expanding the product reproduces both evolution laws at once,
 
-$$
+```math
 \widetilde R^\top \widetilde\Lambda_0 \widetilde R =
 \begin{pmatrix} R^\top \Lambda_0 R & R^\top d_0 \\ -(R^\top d_0)^\top & 0 \end{pmatrix} =
 \begin{pmatrix} \Lambda & d \\ -d^\top & 0 \end{pmatrix},
-$$
+```
 
 that is, $`\Lambda = R^\top\Lambda_0 R`$ exactly as in Stage 3, together with $`d = R^\top d_0`$:
 the displacement rotates under the same SPTM. No additional circuit data is required, only
@@ -221,9 +221,9 @@ $`P = \alpha\,c_{\mu_1}\cdots c_{\mu_m}`$:
 
 Then
 
-$$
+```math
 \langle P\rangle = \widetilde\alpha\,i^{-|\widetilde S|/2}\,\mathrm{Pf}(\widetilde\Lambda|_{\widetilde S}).
-$$
+```
 
 The odd-$`m`$ terms that previously vanished now acquire the parity index $`2n`$, pad to even
 length, and take a real value. This is precisely what allows us to work with $`|+\rangle`$: the expectation
@@ -236,13 +236,13 @@ collapsing to zero.
 Let us now bring everything together to compute the energy of a system evolving under a free-fermionic evolution. The
 energy,
 
-$$
+```math
 \varepsilon = \langle \mathcal{H} \rangle = \sum_j \beta_j \langle P_j \rangle,
-$$
+```
 
 can then be evaluated as
 
-$$
+```math
 \boxed{\;
 \varepsilon = \sum_j \beta_j \widetilde{\alpha}_j \, i^{-|\widetilde{S}_j|/2}
 \, \mathrm{Pf}\!\left(
@@ -250,7 +250,7 @@ $$
 \big|_{\widetilde{S}_j}
 \right)
 \;}.
-$$
+```
 
 To summarize, the expectation value of a Hamiltonian can be computed in polynomial time by tracking the SPTMs associated
 with each matchgate in the circuit, together with the initial covariance matrix. Once these quantities are available, we

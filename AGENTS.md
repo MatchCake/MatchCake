@@ -44,6 +44,9 @@ Methods within a class must appear in this order:
 8. Properties (`@property`)
 
 ## Documentation math (GitHub-rendered markdown)
-The theory documents under `docs/` are read through GitHub's markdown viewer, whose sanitizer corrupts the inside of inline `$...$` math (it strips the backslash off `\#`, eats underscores it reads as emphasis, and treats `<` as an HTML tag).
-- Write inline math with the protected `` $`...`$ `` (dollar-backtick) delimiter, never bare `$...$`. This hands the expression to MathJax untouched.
-- Display math (`$$...$$`) is fine, but GitHub ignores top-level `\\` line breaks. Multi-line derivations must use an environment such as `\begin{aligned} ... \end{aligned}` (align on `&=`); bare `\\` between equations collapses them onto one overflowing line.
+The theory documents under `docs/` are read through GitHub's markdown viewer. Its markdown processor runs over math content before MathJax sees it and applies backslash-escape and emphasis processing, corrupting LaTeX (it strips the backslash off `\#`, `\,`, `\;`, collapses the `\\` row separator in matrices to a single `\`, eats underscores it reads as emphasis, and treats `<` as an HTML tag). The fix is to keep math content literal by putting it in code-span / code-fence contexts:
+- Inline math: use the protected `` $`...`$ `` (dollar-backtick) delimiter, never bare `$...$`.
+- Display math: use a ` ```math ` fenced code block, never bare `$$...$$`. The fence preserves `\\`, `\,`, `\;` and matrix/`cases`/`aligned` row separators intact.
+- For multi-line display derivations, wrap the body in `\begin{aligned} ... \end{aligned}` (align on `&=`); GitHub does not honor top-level `\\` line breaks outside such an environment.
+
+These same files are also built by Sphinx (`myst_nb`), whose `dollarmath` expects `$...$` / `$$...$$` and would break on the GitHub forms. A `source-read` hook in `sphinx/source/conf.py` (`github_math_to_myst`) rewrites `` $`...`$ `` to `$...$` and ` ```math ` fences to `$$...$$` at build time, so the source stays GitHub-flavored while Sphinx still renders it. Keep that hook in sync if the GitHub math conventions change.
