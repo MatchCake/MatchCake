@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import numpy as np
 import pennylane as qml
@@ -52,7 +52,11 @@ def transition_cov(cov_a: TensorLike, cov_b: TensorLike, marker: Optional[int] =
     proj_b = (eye + 1j * matrix_b) / 2
     proj_bar_a = (eye - 1j * matrix_a) / 2
     proj_bar_b = (eye - 1j * matrix_b) / 2
-    gamma = 1j * (2 * proj_bar_a @ torch.linalg.inv(proj_bar_a + proj_b) @ proj_bar_b)
+    # (proj_bar_a + proj_b) is singular exactly when the two branches are orthogonal. That case
+    # only arises during branching, where the (finite, meaningless) pseudo-inverse result is
+    # multiplied by the vanishing overlap weight and the state is flagged degenerate (observables
+    # then reroute to the string engine); pinv matches inv whenever the pair is nonsingular.
+    gamma = 1j * (2 * proj_bar_a @ torch.linalg.pinv(proj_bar_a + proj_b) @ proj_bar_b)
 
     if marker is not None:
         gamma[..., marker, :] = gamma[..., marker, :] * (-1j)
@@ -67,6 +71,7 @@ def basis_state_probability(
     weights: TensorLike,
     target_state: TensorLike,
     measured_qubits: Optional[List[int]] = None,
+    pair_mask: Optional[np.ndarray] = None,
 ) -> TensorLike:
     r"""Outcome probability ``p(y)`` from branch data (swap_injection_theory.md eq 15), vectorized over branch pairs.
 
@@ -78,10 +83,16 @@ def basis_state_probability(
     the marker). For a marginal over ``k`` measured qubits, both ``Gamma`` and ``Lambda_y`` are
     restricted to the ``2k`` Majorana modes of those qubits. ``Pf(Lambda_y) = prod_k (2 y_k - 1)``.
 
+    When ``pair_mask`` is given (the :attr:`SwapBranchState.string_pair_mask` of a degenerate
+    state), the masked pairs are excluded: their weights are zeroed and their transition
+    covariances replaced by a benign nonsingular placeholder, so neither the value nor the gradient
+    ever touches the ill-defined ``0 x inf`` pairs. The caller adds those pairs back overlap-free.
+
     :param branch_covariances: Real branch covariance tensor of shape ``(chi, ..., D, D)``.
     :param weights: Complex Hermitian weight matrix of shape ``(chi, chi)`` (or ``(chi, chi, ...)``).
     :param target_state: Outcome bits of the measured qubits, an array of ``k`` bits.
     :param measured_qubits: Qubit indices the bits refer to. Defaults to ``range(k)``.
+    :param pair_mask: Boolean ``(chi, chi)`` mask of branch pairs to exclude, or ``None``.
     :return: Real probability ``p(y)`` (scalar or ``(...)``).
     :rtype: TensorLike
     """
@@ -93,12 +104,13 @@ def basis_state_probability(
 
     complex_dtype = infer_complex_dtype(branch_covariances[0])
     device = torch.as_tensor(qml.math.toarray(branch_covariances[0])).device
-    weights = torch.as_tensor(qml.math.toarray(weights), dtype=complex_dtype, device=device)
+    weights = _weights_to_tensor(weights, complex_dtype, device)
     lambda_y = _build_lambda_y_block(bits, 2 * n_measured, complex_dtype, device)
     pf_lambda_y = float(np.prod(2 * bits - 1))  # Pf(Lambda_y), real
     mode_index = torch.as_tensor(measured_modes, dtype=torch.long)
 
     gamma = transition_cov(branch_covariances[:, None], branch_covariances[None, :])  # (chi, chi, ..., D, D)
+    gamma, weights = _exclude_masked_pairs(gamma, weights, pair_mask)
     gamma_measured = gamma.index_select(-2, mode_index).index_select(-1, mode_index)
     pfaffians = signed_pfaffian_complex(gamma_measured + lambda_y)  # (chi, chi, ...)
 
@@ -113,6 +125,7 @@ def hamiltonian_expval(
     observable: Operator,
     wires: List,
     marker: Optional[int] = None,
+    pair_mask: Optional[np.ndarray] = None,
 ) -> TensorLike:
     r"""Expectation value ``<H>`` of a Pauli-sum observable from branch data (swap_injection_theory.md eq 13 / 24).
 
@@ -136,6 +149,9 @@ def hamiltonian_expval(
     :param observable: A Pauli-decomposable observable (exposing ``observable.terms()``).
     :param wires: Device wire labels in qubit order.
     :param marker: Parity-marker index ``D - 1`` on the lifted path, or ``None`` on the basis path.
+    :param pair_mask: Boolean ``(chi, chi)`` mask of branch pairs to exclude (weights zeroed,
+        transition covariances replaced by a benign placeholder, exactly as in
+        :func:`basis_state_probability`), or ``None``.
     :return: Real expectation value ``<H>`` (scalar or ``(...)``).
     :rtype: TensorLike
     """
@@ -146,7 +162,7 @@ def hamiltonian_expval(
 
     complex_dtype = infer_complex_dtype(branch_covariances[0])
     device = torch.as_tensor(qml.math.toarray(branch_covariances[0])).device
-    weights = torch.as_tensor(qml.math.toarray(weights), dtype=complex_dtype, device=device)
+    weights = _weights_to_tensor(weights, complex_dtype, device)
 
     try:
         coefficients, operators = observable.terms()
@@ -156,6 +172,7 @@ def hamiltonian_expval(
     gammas = transition_cov(
         branch_covariances[:, None], branch_covariances[None, :], marker=marker
     )  # (chi,chi,...,D,D)
+    gammas, weights = _exclude_masked_pairs(gammas, weights, pair_mask)
 
     total = 0.0 + 0.0j
     for coefficient, operator in zip(coefficients, operators):
@@ -180,6 +197,54 @@ def hamiltonian_expval(
 
     expectation = qml.math.real(total)
     return convert_and_cast_like(expectation, qml.math.real(branch_covariances[0]))
+
+
+def _weights_to_tensor(weights: TensorLike, dtype: torch.dtype, device) -> torch.Tensor:
+    """Convert the weight matrix to a torch tensor without detaching it from the autograd graph.
+
+    The weights carry the circuit parameters' gradient through the cross occupations of every
+    branching, so converting through ``qml.math.toarray`` (which detaches) would silently drop
+    ``dW / d theta`` from every branch-path gradient.
+
+    :param weights: Complex weight matrix of shape ``(chi, chi)`` (or ``(chi, chi, ...)``).
+    :param dtype: Complex working dtype.
+    :param device: Torch device of the branch covariances.
+    :return: The weight matrix as a torch tensor on ``device``.
+    :rtype: torch.Tensor
+    """
+    if isinstance(weights, torch.Tensor):
+        return weights.to(dtype=dtype, device=device)
+    return torch.as_tensor(qml.math.toarray(weights), dtype=dtype, device=device)
+
+
+def _exclude_masked_pairs(
+    gamma: torch.Tensor,
+    weights: torch.Tensor,
+    pair_mask: Optional[np.ndarray],
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Zero the weights and neutralize the transition covariances of the masked branch pairs.
+
+    The masked pairs are (near-)orthogonal or of tainted lineage, so their ``gamma`` holds a
+    meaningless pseudo-inverse result. Replacing it with the (nonsingular, antisymmetric) all-ones
+    basis covariance keeps every downstream Pfaffian and its gradient finite, while the zeroed
+    weight removes the pair's contribution; the caller adds the pair back overlap-free.
+
+    :param gamma: Transition covariances of shape ``(chi, chi, ..., D, D)``.
+    :param weights: Complex weight matrix of shape ``(chi, chi)`` (or ``(chi, chi, ...)``).
+    :param pair_mask: Boolean ``(chi, chi)`` mask of pairs to exclude, or ``None`` for a no-op.
+    :return: The neutralized ``(gamma, weights)`` pair.
+    :rtype: Tuple[torch.Tensor, torch.Tensor]
+    """
+    if pair_mask is None or not pair_mask.any():
+        return gamma, weights
+    dim = gamma.shape[-1]
+    benign = _build_lambda_y_block(np.ones(dim // 2, dtype=int), dim, gamma.dtype, gamma.device)
+    mask = torch.as_tensor(pair_mask, device=gamma.device)
+    gamma_mask = mask.reshape(mask.shape + (1,) * (gamma.ndim - 2))
+    gamma = torch.where(gamma_mask, benign, gamma)
+    weight_mask = mask.reshape(mask.shape + (1,) * (weights.ndim - 2))
+    weights = torch.where(weight_mask, torch.zeros((), dtype=weights.dtype, device=weights.device), weights)
+    return gamma, weights
 
 
 def _build_lambda_y_block(bits: np.ndarray, dim: int, dtype, device) -> torch.Tensor:

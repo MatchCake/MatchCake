@@ -3,10 +3,13 @@ from .branch_observables import (
     hamiltonian_expval,
     transition_cov,
 )
-from .branch_state import SwapBranchState, condition_occupied
+from .branch_state import DEGENERATE_OVERLAP_TOL, SwapBranchState, condition_occupied
 from .lift import lift_from_product_state, lift_sptm
+from .string_engine import CzStringEngine
 
 __all__ = [
+    "CzStringEngine",
+    "DEGENERATE_OVERLAP_TOL",
     "SwapBranchState",
     "basis_state_probability",
     "condition_occupied",

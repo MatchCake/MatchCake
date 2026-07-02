@@ -2,6 +2,7 @@ import itertools
 
 import numpy as np
 import pennylane as qml
+import pytest
 
 from matchcake.devices.probability_strategies.product_state_strategy import (
     ProductStateProbabilityStrategy,
@@ -202,9 +203,46 @@ class TestBranchState:
 
     def test_pruning_removes_vanished_ancilla_branch(self):
         n = 3
-        # qubit 2 stays in |0>; SWAP(0, 2) projects onto n_0 n_2 = 0 -> type-1 branch vanishes.
+        # qubit 1 stays in |0>; SWAP(0, 1) projects onto n_0 n_1 = 0 -> type-1 branch vanishes.
         x0 = [1, 0, 0]
         lambda0 = ProductStateProbabilityStrategy.build_lambda_y(np.array(x0), n).astype(float)
         state = SwapBranchState(np.stack([lambda0]), np.array([[1.0 + 0j]]), lifted=False)
-        state.apply_swap(0, 2)
+        state.apply_swap(0, 1)
         assert state.chi == 1  # the occupied-projection branch had |W| = 0 and was pruned
+
+    def test_histories_track_branching_choices(self):
+        n = 3
+        lambda0 = ProductStateProbabilityStrategy.build_lambda_y(np.array([1, 1, 0]), n).astype(float)
+        state = SwapBranchState(np.stack([lambda0]), np.array([[1.0 + 0j]]), lifted=False)
+        assert state.histories == [()]
+        state.apply_cz(0, 1)  # q = 1: both the type-0 and the type-1 branch survive
+        assert state.histories == [(0,), (1,)]
+        state.apply_cz(1, 2)  # q = 0 on |110>-like branches: type-1 children are pruned
+        assert all(len(history) == 2 for history in state.histories)
+        assert len(state.histories) == state.chi
+
+    def test_string_pair_mask_inherits_taint(self):
+        n = 3
+        lambda0 = ProductStateProbabilityStrategy.build_lambda_y(np.array([1, 1, 0]), n).astype(float)
+        state = SwapBranchState(np.stack([lambda0]), np.array([[1.0 + 0j]]), lifted=False)
+        state.apply_cz(0, 1)
+        assert not state.degenerate
+        state._pair_needs_string[0, 1] = state._pair_needs_string[1, 0] = True
+        state.apply_cz(0, 1)
+        # every child pair of the tainted parent pair stays masked, whatever its new overlap
+        mask = state.string_pair_mask
+        assert state.degenerate
+        parents = [history[0] for history in state.histories]
+        for row, row_parent in enumerate(parents):
+            for col, col_parent in enumerate(parents):
+                if {row_parent, col_parent} == {0, 1}:
+                    assert mask[row, col]
+
+    def test_apply_swap_rejects_non_adjacent_wires(self):
+        # A non-adjacent qubit SWAP is not fSWAP . CZ (it carries crossed-mode parity phases);
+        # the device decomposes it, and apply_swap itself must refuse it loudly.
+        n = 3
+        lambda0 = ProductStateProbabilityStrategy.build_lambda_y(np.array([1, 0, 0]), n).astype(float)
+        state = SwapBranchState(np.stack([lambda0]), np.array([[1.0 + 0j]]), lifted=False)
+        with pytest.raises(ValueError, match="adjacent"):
+            state.apply_swap(0, 2)
