@@ -103,6 +103,48 @@ class CzStringEngine:
             return tensor
         return tensor[index]
 
+    @staticmethod
+    def _expand_product_strings(
+        per_factor_terms: Sequence[Sequence[Tuple[complex, List[torch.Tensor]]]],
+    ) -> List[Tuple[complex, List[torch.Tensor]]]:
+        """Cartesian product of per-factor ``(coefficient, vectors)`` choices, one string per combo.
+
+        Each factor offers a small menu of monomial terms; a string picks one term per factor,
+        multiplies the coefficients, and concatenates the vectors in factor order (so the first
+        factor sits leftmost). Callers that need a different vector order feed the factors in the
+        matching order. Replaces the hand-rolled per-factor doubling loop that the ``4^m``
+        expansions and the ``2^k`` marginal expansion each duplicated.
+
+        :param per_factor_terms: Per factor, its list of ``(coefficient, vectors)`` terms.
+        :return: One ``(coefficient, vectors)`` string per term combination.
+        :rtype: List[Tuple[complex, List[torch.Tensor]]]
+        """
+        strings: List[Tuple[complex, List[torch.Tensor]]] = [(1.0 + 0.0j, [])]
+        for factor_terms in per_factor_terms:
+            strings = [
+                (coefficient * term_coefficient, vectors + term_vectors)
+                for coefficient, vectors in strings
+                for term_coefficient, term_vectors in factor_terms
+            ]
+        return strings
+
+    @staticmethod
+    def _event_terms(
+        bilinear_vectors: Dict[str, List[torch.Tensor]],
+        expansion_terms: Tuple[Tuple[complex, Tuple[str, ...]], ...],
+    ) -> List[Tuple[complex, List[torch.Tensor]]]:
+        """Materialize one event's monomial menu from a ``Z``-bilinear expansion table.
+
+        :param bilinear_vectors: The event's ``Z_j`` and ``Z_k`` bilinear vector pairs.
+        :param expansion_terms: A ``(coefficient, qubit-name tuple)`` monomial table.
+        :return: ``(coefficient, vectors)`` terms of the event.
+        :rtype: List[Tuple[complex, List[torch.Tensor]]]
+        """
+        return [
+            (term_coefficient, [vector for name in term_qubits for vector in bilinear_vectors[name]])
+            for term_coefficient, term_qubits in expansion_terms
+        ]
+
     def __init__(
         self,
         lifted_covariance: TensorLike,
@@ -278,15 +320,10 @@ class CzStringEngine:
         :return: List of ``(coefficient, vectors)`` strings, vectors of shape ``(..., D)``.
         :rtype: List[Tuple[complex, List[torch.Tensor]]]
         """
-        strings: List[Tuple[complex, List[torch.Tensor]]] = [(1.0 + 0.0j, [])]
-        for bilinear_vectors in self._event_vectors:
-            new_strings: List[Tuple[complex, List[torch.Tensor]]] = []
-            for coefficient, vectors in strings:
-                for term_coefficient, term_qubits in CZ_EXPANSION_TERMS:
-                    term_vectors = [vector for name in term_qubits for vector in bilinear_vectors[name]]
-                    new_strings.append((coefficient * term_coefficient, term_vectors + vectors))
-            strings = new_strings
-        return strings
+        per_event_terms = [
+            self._event_terms(bilinear_vectors, CZ_EXPANSION_TERMS) for bilinear_vectors in self._event_vectors
+        ]
+        return self._expand_product_strings(list(reversed(per_event_terms)))
 
     def _build_branch_strings(self, history: Tuple[int, ...]) -> List[Tuple[complex, List[torch.Tensor]]]:
         """Strings of one branch's unnormalized state ``lambda |phi> = prod_t [1 or -2 n_j n_k] |G>``.
@@ -299,17 +336,12 @@ class CzStringEngine:
         :return: List of ``(coefficient, vectors)`` strings, vectors of shape ``(..., D)``.
         :rtype: List[Tuple[complex, List[torch.Tensor]]]
         """
-        strings: List[Tuple[complex, List[torch.Tensor]]] = [(1.0 + 0.0j, [])]
-        for choice, bilinear_vectors in zip(history, self._event_vectors):
-            if choice == 0:
-                continue
-            new_strings: List[Tuple[complex, List[torch.Tensor]]] = []
-            for coefficient, vectors in strings:
-                for term_coefficient, term_qubits in TYPE1_EXPANSION_TERMS:
-                    term_vectors = [vector for name in term_qubits for vector in bilinear_vectors[name]]
-                    new_strings.append((coefficient * term_coefficient, term_vectors + vectors))
-            strings = new_strings
-        return strings
+        per_event_terms = [
+            self._event_terms(bilinear_vectors, TYPE1_EXPANSION_TERMS)
+            for choice, bilinear_vectors in zip(history, self._event_vectors)
+            if choice != 0
+        ]
+        return self._expand_product_strings(list(reversed(per_event_terms)))
 
     def _build_string_groups(
         self,
@@ -448,6 +480,32 @@ class CzStringEngine:
         """
         return self._bucketed_jobs_sum([(self._bra_groups, self._ket_groups)], weighted_observables, contraction)
 
+    def _stack_sandwich(self, bras: torch.Tensor, observable: torch.Tensor, kets: torch.Tensor) -> torch.Tensor:
+        """Stack every bra-observable-ket sandwich of one length bucket along the pair axis.
+
+        Broadcasts the ``n_bras`` bras against the ``n_kets`` kets (with the shared observable in the
+        middle) so every string pair becomes one row of the returned factor stack.
+
+        :param bras: Bra factors of shape ``(n_bras, *batch, bra_length, D)``.
+        :param observable: Observable factors of shape ``(*batch, n_observable, D)``.
+        :param kets: Ket factors of shape ``(n_kets, *batch, ket_length, D)``.
+        :return: Stacked factors of shape ``(n_bras * n_kets, *batch, length, D)``.
+        :rtype: torch.Tensor
+        """
+        batch_shape = self._batch_shape()
+        n_bras, bra_length = bras.shape[0], bras.shape[-2]
+        n_kets, ket_length = kets.shape[0], kets.shape[-2]
+        n_observable = observable.shape[-2]
+        length = bra_length + n_observable + ket_length
+        return torch.cat(
+            [
+                bras[:, None].expand(n_bras, n_kets, *batch_shape, bra_length, self.dim),
+                observable[None, None].expand(n_bras, n_kets, *batch_shape, n_observable, self.dim),
+                kets[None, :].expand(n_bras, n_kets, *batch_shape, ket_length, self.dim),
+            ],
+            dim=-2,
+        ).reshape(n_bras * n_kets, *batch_shape, length, self.dim)
+
     def _bucketed_jobs_sum(
         self,
         jobs: List[Tuple[Dict[int, Tuple[torch.Tensor, torch.Tensor]], Dict[int, Tuple[torch.Tensor, torch.Tensor]]]],
@@ -474,34 +532,25 @@ class CzStringEngine:
             for observable_weight, observable_vectors in weighted_observables
         ]
         buckets: Dict[int, Tuple[List[torch.Tensor], List[torch.Tensor]]] = {}
-        for job_bra_groups, job_ket_groups in jobs:
-            for observable_weight, observable in observables:
-                n_observable = observable.shape[-2]
-                for bra_length, (bra_coefficients, bras) in job_bra_groups.items():
-                    for ket_length, (ket_coefficients, kets) in job_ket_groups.items():
-                        length = bra_length + n_observable + ket_length
-                        if length % 2 == 1:
-                            continue
-                        weights = observable_weight * (
-                            torch.conj(bra_coefficients)[:, None] * ket_coefficients[None, :]
-                        ).reshape(-1)
-                        if length == 0:
-                            total = total + weights.sum() * torch.ones(
-                                batch_shape, dtype=self._complex_dtype, device=self._device
-                            )
-                            continue
-                        n_bras, n_kets = bras.shape[0], kets.shape[0]
-                        stacked = torch.cat(
-                            [
-                                bras[:, None].expand(n_bras, n_kets, *batch_shape, bra_length, self.dim),
-                                observable[None, None].expand(n_bras, n_kets, *batch_shape, n_observable, self.dim),
-                                kets[None, :].expand(n_bras, n_kets, *batch_shape, ket_length, self.dim),
-                            ],
-                            dim=-2,
-                        ).reshape(n_bras * n_kets, *batch_shape, length, self.dim)
-                        bucket_weights, bucket_stacks = buckets.setdefault(length, ([], []))
-                        bucket_weights.append(weights)
-                        bucket_stacks.append(stacked)
+        for (job_bra_groups, job_ket_groups), (observable_weight, observable) in itertools.product(jobs, observables):
+            n_observable = observable.shape[-2]
+            for (bra_length, (bra_coefficients, bras)), (ket_length, (ket_coefficients, kets)) in itertools.product(
+                job_bra_groups.items(), job_ket_groups.items()
+            ):
+                length = bra_length + n_observable + ket_length
+                if length % 2 == 1:
+                    continue
+                weights = observable_weight * (
+                    torch.conj(bra_coefficients)[:, None] * ket_coefficients[None, :]
+                ).reshape(-1)
+                if length == 0:
+                    total = total + weights.sum() * torch.ones(
+                        batch_shape, dtype=self._complex_dtype, device=self._device
+                    )
+                    continue
+                bucket_weights, bucket_stacks = buckets.setdefault(length, ([], []))
+                bucket_weights.append(weights)
+                bucket_stacks.append(self._stack_sandwich(bras, observable, kets))
         for length, (bucket_weights, bucket_stacks) in buckets.items():
             weights = torch.cat(bucket_weights, dim=0)  # (P,)
             stacked = torch.cat(bucket_stacks, dim=0)  # (P, *batch, length, D)
@@ -557,13 +606,14 @@ class CzStringEngine:
         unit_weight = np.ones((1, 1))
         bits: List[int] = []
         for mode in range(n_modes):
-            candidates = []
-            for bit in (0, 1):
-                probability = basis_state_probability(
-                    single_branch, unit_weight, np.asarray(bits + [bit]), list(range(mode + 1))
-                )
-                candidates.append(torch.as_tensor(qml.math.toarray(probability)))
-            bits.append(int((candidates[1] > candidates[0]).flatten()[0]))
+            measured = list(range(mode + 1))
+            probability_zero = torch.as_tensor(
+                qml.math.toarray(basis_state_probability(single_branch, unit_weight, np.asarray(bits + [0]), measured))
+            )
+            probability_one = torch.as_tensor(
+                qml.math.toarray(basis_state_probability(single_branch, unit_weight, np.asarray(bits + [1]), measured))
+            )
+            bits.append(int((probability_one > probability_zero).flatten()[0]))
         reference_bits = np.asarray(bits)
         reference_probability = self._to_complex_tensor(
             basis_state_probability(single_branch, unit_weight, reference_bits, list(range(n_modes)))
@@ -585,12 +635,9 @@ class CzStringEngine:
         :return: Ordered unit vectors of the flip monomial.
         :rtype: List[torch.Tensor]
         """
-        vectors: List[torch.Tensor] = []
-        for mode in np.nonzero(reference_bits != target_bits)[0]:
-            for lower_mode in range(int(mode)):
-                vectors += [self._eye[2 * lower_mode], self._eye[2 * lower_mode + 1]]
-            vectors.append(self._eye[2 * int(mode)])
-        return vectors
+        mismatched_modes = np.nonzero(reference_bits != target_bits)[0]
+        indices = [index for mode in mismatched_modes for index in range(2 * int(mode) + 1)]
+        return [self._eye[index] for index in indices]
 
     def _full_state_probability(self, qubit_order_bits: np.ndarray) -> torch.Tensor:
         """Probability of a full physical outcome via lifted amplitudes, summed over the ancilla.
@@ -697,14 +744,11 @@ class CzStringEngine:
         :return: ``(weight, vectors)`` pairs, one per subset of measured qubits.
         :rtype: List[Tuple[complex, List[torch.Tensor]]]
         """
-        weighted_observables: List[Tuple[complex, List[torch.Tensor]]] = []
-        for subset_mask in itertools.product((0, 1), repeat=len(measured_qubits)):
-            sign = 1.0 + 0.0j
-            observable_vectors: List[torch.Tensor] = []
-            for position, included in enumerate(subset_mask):
-                if included:
-                    qubit = measured_qubits[position]
-                    sign *= (1 - 2 * bits[position]) * (-1j)
-                    observable_vectors += [self._eye[2 * qubit], self._eye[2 * qubit + 1]]
-            weighted_observables.append((sign, observable_vectors))
-        return weighted_observables
+        per_qubit_terms = [
+            [
+                (1.0 + 0.0j, []),
+                (complex((1 - 2 * bits[position]) * (-1j)), [self._eye[2 * qubit], self._eye[2 * qubit + 1]]),
+            ]
+            for position, qubit in enumerate(measured_qubits)
+        ]
+        return self._expand_product_strings(per_qubit_terms)
