@@ -14,7 +14,7 @@ from matchcake.devices.swap_injection import (
     transition_cov,
 )
 
-from ...configs import ATOL_MATRIX_COMPARISON
+from ...configs import ATOL_MATRIX_COMPARISON, ATOL_SCALAR_COMPARISON
 from . import _oracle as oracle
 
 
@@ -147,3 +147,30 @@ class TestBranchObservables:
         exact = (psi.conj() @ dense @ psi).real
         got = float(hamiltonian_expval(state.cov, state.weights, hamiltonian, list(range(n)), marker=None))
         np.testing.assert_allclose(got, exact, atol=ATOL_MATRIX_COMPARISON)
+
+    def test_term_dense_hamiltonian_matches_statevector(self):
+        # A term-dense random Hamiltonian (many words, mixed support sizes, identity included) exercises the
+        # multi-group batched Pfaffian path against the exact statevector expectation.
+        rng = np.random.default_rng(11)
+        state, psi, n = self._one_swap(rng)
+        words = ["".join(rng.choice(list("IXYZ"), size=n)) for _ in range(40)] + ["I" * n]
+        terms = [(rng.normal(), word) for word in words]
+        hamiltonian = qml.Hamiltonian([c for c, _ in terms], [qml.pauli.string_to_pauli_word(p) for _, p in terms])
+        dense = sum(c * oracle.kron_list([oracle.PAULI_MAP[ch] for ch in p]) for c, p in terms)
+        exact = (psi.conj() @ dense @ psi).real
+        got = float(hamiltonian_expval(state.cov, state.weights, hamiltonian, list(range(n)), marker=None))
+        np.testing.assert_allclose(got, exact, atol=ATOL_MATRIX_COMPARISON)
+
+    def test_hamiltonian_expval_pfaffian_chunk_size_invariance(self):
+        # pfaffian_chunk_size bounds the batched Pfaffian reduction (PR #147); the result must not change.
+        rng = np.random.default_rng(13)
+        state, psi, n = self._one_swap(rng)
+        terms = [(rng.normal(), "".join(rng.choice(list("IXYZ"), size=n))) for _ in range(12)]
+        hamiltonian = qml.Hamiltonian([c for c, _ in terms], [qml.pauli.string_to_pauli_word(p) for _, p in terms])
+        unchunked = float(hamiltonian_expval(state.cov, state.weights, hamiltonian, list(range(n)), marker=None))
+        chunked = float(
+            hamiltonian_expval(
+                state.cov, state.weights, hamiltonian, list(range(n)), marker=None, pfaffian_chunk_size=1
+            )
+        )
+        np.testing.assert_allclose(chunked, unchunked, atol=ATOL_SCALAR_COMPARISON)

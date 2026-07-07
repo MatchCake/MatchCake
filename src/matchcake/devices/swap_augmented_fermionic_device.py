@@ -174,7 +174,14 @@ class SwapAugmentedFermionicDevice(NonInteractingFermionicDevice):
             branch = self.branch_state
             if branch.degenerate:
                 return self._degenerate_expval(observable)
-            return hamiltonian_expval(branch.cov, branch.weights, observable, list(self.wires), marker=branch.marker)
+            return hamiltonian_expval(
+                branch.cov,
+                branch.weights,
+                observable,
+                list(self.wires),
+                marker=branch.marker,
+                pfaffian_chunk_size=self.pfaffian_chunk_size,
+            )
         return super().exact_expval(observable)
 
     def get_states_probability(
@@ -291,7 +298,13 @@ class SwapAugmentedFermionicDevice(NonInteractingFermionicDevice):
         if self._prefer_full_engine(pair_mask):
             return self.string_engine.hamiltonian_expval(observable, list(self.wires))
         healthy = hamiltonian_expval(
-            branch.cov, branch.weights, observable, list(self.wires), marker=branch.marker, pair_mask=pair_mask
+            branch.cov,
+            branch.weights,
+            observable,
+            list(self.wires),
+            marker=branch.marker,
+            pair_mask=pair_mask,
+            pfaffian_chunk_size=self.pfaffian_chunk_size,
         )
         masked = self.string_engine.branch_pair_hamiltonian_expval(
             observable, list(self.wires), branch.histories, pair_mask

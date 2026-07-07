@@ -36,7 +36,7 @@ def signed_pfaffian(matrix: TensorLike, dtype: Optional[torch.dtype] = None, **k
     return pfaffian(matrix, sign=True, dtype=dtype, **kwargs)
 
 
-def signed_pfaffian_complex(matrix: TensorLike, dtype: Optional[torch.dtype] = None) -> TensorLike:
+def signed_pfaffian_complex(matrix: TensorLike, dtype: Optional[torch.dtype] = None, **kwargs) -> TensorLike:
     """
     Compute the **signed** Pfaffian of a **complex** antisymmetric matrix (or batch).
 
@@ -61,7 +61,7 @@ def signed_pfaffian_complex(matrix: TensorLike, dtype: Optional[torch.dtype] = N
     if dtype is None:
         dtype = infer_complex_dtype(matrix)
     matrix_t = torch_utils.to_tensor(matrix, dtype=dtype)
-    result = torch_pfaffian.pfaffian(matrix_t, sign=True)
+    result = pfaffian(matrix_t, sign=True, dtype=dtype, **kwargs)
     return convert_and_cast_like(result, matrix_t)
 
 

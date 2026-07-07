@@ -5,6 +5,7 @@ from .branch_observables import (
 )
 from .branch_state import DEGENERATE_OVERLAP_TOL, SwapBranchState, condition_occupied
 from .lift import lift_from_product_state, lift_sptm
+from .majorana_term_groups import MajoranaTermGroups
 from .string_engine import CzStringEngine
 
 __all__ = [
@@ -14,6 +15,7 @@ __all__ = [
     "basis_state_probability",
     "condition_occupied",
     "hamiltonian_expval",
+    "MajoranaTermGroups",
     "transition_cov",
     "lift_from_product_state",
     "lift_sptm",

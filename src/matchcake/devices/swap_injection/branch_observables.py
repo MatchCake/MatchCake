@@ -3,14 +3,13 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pennylane as qml
 import torch
-from pennylane.operation import Operator, TermsUndefinedError
-from pennylane.pauli import pauli_word_to_string
+from pennylane.operation import Operator
 
 from ...typing import TensorLike
-from ...utils import JordanWigner
 from ...utils._pfaffian import signed_pfaffian_complex
 from ...utils.math import convert_and_cast_like
 from ...utils.torch_utils import infer_complex_dtype
+from .majorana_term_groups import MajoranaTermGroups
 
 
 def transition_cov(cov_a: TensorLike, cov_b: TensorLike, marker: Optional[int] = None) -> TensorLike:
@@ -126,6 +125,7 @@ def hamiltonian_expval(
     wires: List,
     marker: Optional[int] = None,
     pair_mask: Optional[np.ndarray] = None,
+    pfaffian_chunk_size: Optional[int] = None,
 ) -> TensorLike:
     r"""Expectation value ``<H>`` of a Pauli-sum observable from branch data (swap_injection_theory.md eq 13 / 24).
 
@@ -152,48 +152,39 @@ def hamiltonian_expval(
     :param pair_mask: Boolean ``(chi, chi)`` mask of branch pairs to exclude (weights zeroed,
         transition covariances replaced by a benign placeholder, exactly as in
         :func:`basis_state_probability`), or ``None``.
+    :param pfaffian_chunk_size: Max number of matrices reduced per batched Pfaffian call, forwarded as
+        ``chunk_size`` to bound the reduction's memory (requires the chunked ``pfaffian``; the device passes its
+        own ``pfaffian_chunk_size`` here). Defaults to ``None`` (no chunking).
     :return: Real expectation value ``<H>`` (scalar or ``(...)``).
     :rtype: TensorLike
     """
     wires = list(wires)
-    n_qubits = len(wires)
-    jordan_wigner = JordanWigner(n_qubits)
-    wire_map = {wire: index for index, wire in enumerate(wires)}
 
     complex_dtype = infer_complex_dtype(branch_covariances[0])
     device = torch.as_tensor(qml.math.toarray(branch_covariances[0])).device
     weights = _weights_to_tensor(weights, complex_dtype, device)
-
-    try:
-        coefficients, operators = observable.terms()
-    except TermsUndefinedError:
-        coefficients, operators = [1.0], [observable]  # a bare Pauli word has no terms() decomposition
 
     gammas = transition_cov(
         branch_covariances[:, None], branch_covariances[None, :], marker=marker
     )  # (chi,chi,...,D,D)
     gammas, weights = _exclude_masked_pairs(gammas, weights, pair_mask)
 
+    # Pfaffian calls are batched ACROSS TERMS as well as across branch pairs: the parsed Majorana term structure
+    # is cached on the observable (MajoranaTermGroups), and each support-size group rides the Pfaffian batch
+    # dimension as one call, so the kernel-dispatch count is the number of distinct support sizes per evaluation.
+    term_groups = MajoranaTermGroups.from_observable(observable, wires, marker)
     total = 0.0 + 0.0j
-    for coefficient, operator in zip(coefficients, operators):
-        pauli_str = pauli_word_to_string(operator, wire_map=wire_map)
-        support, kappa = jordan_wigner.pauli_to_majorana(pauli_str, wires)
-        rank = len(support)
-        if rank % 2 == 0:
-            indices, wick_exponent = list(support), rank // 2
-        else:
-            if marker is None:
-                continue  # parity-odd term vanishes on the (parity-even) basis path
-            indices, wick_exponent = list(support) + [marker], (rank + 1) // 2
-        phase = (1j) ** (-wick_exponent)
-        coefficient_value = complex(coefficient.item() if isinstance(coefficient, torch.Tensor) else coefficient)
-        if indices:
-            index_tensor = torch.as_tensor(indices, dtype=torch.long)
-            submatrices = gammas.index_select(-2, index_tensor).index_select(-1, index_tensor)
-            pfaffians = signed_pfaffian_complex(submatrices)  # (chi, chi, ...)
-        else:
-            pfaffians = torch.ones(gammas.shape[:-2], dtype=complex_dtype, device=device)
-        total = total + qml.math.sum(weights * (coefficient_value * kappa * phase) * pfaffians, axis=(0, 1))
+    if term_groups.identity_weight != 0:
+        total = total + term_groups.identity_weight * qml.math.sum(weights, axis=(0, 1))  # all-ones Pfaffian grid
+    for size, index_tensor, weight_values in term_groups.groups:
+        weight_tensor = weight_values.to(dtype=complex_dtype, device=device)
+        rows = index_tensor[:, :, None].expand(-1, size, size)
+        cols = index_tensor[:, None, :].expand(-1, size, size)
+        submatrices = gammas[..., rows, cols]  # (chi, chi, ..., n_terms, size, size)
+        pfaffian_kwargs = {} if pfaffian_chunk_size is None else {"chunk_size": pfaffian_chunk_size}
+        pfaffians = signed_pfaffian_complex(submatrices, **pfaffian_kwargs)  # (chi, chi, ..., n_terms)
+        term_sum = (pfaffians * weight_tensor).sum(-1)  # (chi, chi, ...)
+        total = total + qml.math.sum(weights * term_sum, axis=(0, 1))
 
     expectation = qml.math.real(total)
     return convert_and_cast_like(expectation, qml.math.real(branch_covariances[0]))
