@@ -68,7 +68,8 @@ class LookupTableStrategy(ProbabilityStrategy):
                 wire_indices = np.array([all_wires.indices(Wires(w)) for w in batch_wires])  # (B, k)
 
         obs = lookup_table(system_state, target_arr, wire_indices, show_progress=show_progress)
-        return qml.math.real(utils.pfaffian(obs, sign=False))
+        chunk_size = kwargs.get("pfaffian_chunk_size", None)
+        return qml.math.real(utils.pfaffian(obs, sign=False, chunk_size=chunk_size))
 
     def can_execute(self, state_prep_op: StatePrepBase) -> bool:
         """Return True for basis-state inputs.

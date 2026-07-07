@@ -353,6 +353,23 @@ class TestMPfaffianExpvalStrategy:
         got = float(self.strat(prod_state, H, extended_covariance_matrix=tilde_L))
         np.testing.assert_allclose(got, ref, atol=ATOL)
 
+    @pytest.mark.parametrize("chunk_size", [1, 2, 100])
+    def test_chunk_size_matches_unchunked(self, chunk_size):
+        n = 3
+        psi = random_product_state(n, seed=7)
+        wires = list(range(n))
+        prod_state = ProductState(psi, wires=wires)
+        tilde_L = build_tilde_lambda(prod_state, wires)
+        # Several terms whose Majorana ranks land in the sector_pfaffian_features (sector >= 4)
+        # path, with more than one term per sector so the chunking actually engages.
+        H = qml.Hamiltonian(
+            [0.5, 1.3, -0.7, 0.9],
+            [qml.X(0) @ qml.Y(1), qml.Y(0) @ qml.X(2), qml.Z(0) @ qml.X(1) @ qml.Y(2), qml.X(1) @ qml.X(2)],
+        )
+        unchunked = float(self.strat(prod_state, H, extended_covariance_matrix=tilde_L))
+        chunked = float(self.strat(prod_state, H, extended_covariance_matrix=tilde_L, pfaffian_chunk_size=chunk_size))
+        np.testing.assert_allclose(chunked, unchunked, atol=ATOL)
+
     @pytest.mark.parametrize("n,seed", [(1, 0), (2, 1), (3, 2), (2, 3)])
     def test_single_qubit_xyz(self, n, seed):
         """X, Y, Z expectations match brute-force for all qubits."""
