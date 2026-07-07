@@ -285,6 +285,7 @@ class MPfaffianExpvalStrategy(ExpvalStrategy):
 
         payload = _DecompositionCache.get_payload(observable, self._terms_of, device_wires_tuple, n_total)
 
+        chunk_size = kwargs.get("pfaffian_chunk_size", None)
         r_dtype = infer_real_dtype(ext_cov_matrix)
         ext_cov_matrix_t: Optional[TensorLike] = None  # lazily built for the sector-2 read
         total_re: Any = np.float64(0.0)
@@ -298,7 +299,9 @@ class MPfaffianExpvalStrategy(ExpvalStrategy):
                 j_idx = index_sets[:, 1]
                 pf_values = ext_cov_matrix_t[..., i_idx, j_idx]  # (..., n_terms)
             else:
-                pf_values = sector_pfaffian_features(ext_cov_matrix, index_sets, dtype=r_dtype)  # (..., n_terms)
+                pf_values = sector_pfaffian_features(
+                    ext_cov_matrix, index_sets, dtype=r_dtype, chunk_size=chunk_size
+                )  # (..., n_terms)
 
             scalar_coeffs_t = torch.as_tensor(scalar_coeffs, dtype=pf_values.dtype, device=pf_values.device)
             total_re = total_re + pf_values @ scalar_coeffs_t  # (...)
