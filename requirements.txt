@@ -33,7 +33,10 @@ babel==2.18.0
 backports-tarfile==1.2.0 ; python_full_version < '3.12' and platform_machine != 'ppc64le' and platform_machine != 's390x'
     # via jaraco-context
 beautifulsoup4==4.14.3
-    # via nbconvert
+    # via
+    #   markdown-analysis
+    #   markdownify
+    #   nbconvert
 bleach==6.3.0
     # via nbconvert
 build==1.4.2
@@ -200,11 +203,14 @@ latexcodec==3.0.1
     # via pybtex
 librt==0.8.1 ; platform_python_implementation != 'PyPy'
     # via mypy
+markdown-analysis==0.1.5
 markdown-it-py==3.0.0
     # via
     #   mdit-py-plugins
     #   myst-parser
     #   rich
+markdownify==1.2.3
+    # via markdown-analysis
 markupsafe==3.0.3
     # via
     #   jinja2
@@ -458,6 +464,7 @@ referencing==0.37.0
     #   jsonschema-specifications
 requests==2.33.0
     # via
+    #   markdown-analysis
     #   pennylane
     #   requests-toolbelt
     #   sphinx
@@ -497,6 +504,7 @@ setuptools==82.0.1
 six==1.17.0
     # via
     #   astunparse
+    #   markdownify
     #   python-dateutil
 snowballstemmer==3.0.1
     # via sphinx
@@ -600,6 +608,7 @@ tzdata==2025.3 ; sys_platform == 'emscripten' or sys_platform == 'win32'
 urllib3==2.6.3
     # via
     #   id
+    #   markdown-analysis
     #   requests
     #   twine
 virtualenv==21.2.0
