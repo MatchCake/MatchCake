@@ -1,3 +1,5 @@
+from typing import cast
+
 import numpy as np
 import pennylane as qml
 import torch
@@ -7,6 +9,7 @@ from pennylane.ops.qubit import Projector
 from pennylane.pauli import pauli_word_to_string
 
 from .... import utils
+from ....operations.state_preparation.state_prep_from_gates import StatePrepFromGates
 from ....typing import TensorLike
 from ....utils.majorana import majorana_to_pauli
 from ....utils.torch_utils import to_tensor
@@ -27,8 +30,13 @@ class CliffordExpvalStrategy(ExpvalStrategy):
             if isinstance(state_prep_op, BasisState):
                 for op in state_prep_op.decomposition():
                     op.queue()
+            elif isinstance(state_prep_op, StatePrepFromGates):
+                for op in state_prep_op.decomposition_generator():
+                    op.queue()
             else:
-                raise NotImplementedError("Only BasisState is implemented for Clifford subroutine.")
+                raise NotImplementedError(
+                    "Only BasisState & StatePrepFromGates are implemented for Clifford subroutine."
+                )
             return [qml.expval(majorana_to_pauli(mu) @ majorana_to_pauli(nu)) for mu, nu in zip(*triu_indices)]
 
         return clifford_circuit()
@@ -80,10 +88,13 @@ class CliffordExpvalStrategy(ExpvalStrategy):
     def _compute_full_clifford_expvals(self, state_prep_op: StatePrepBase, global_sptm):
         triu_indices = np.triu_indices(global_sptm.shape[-1], k=1)
         expvals = torch.eye(global_sptm.shape[-1], dtype=global_sptm.dtype, device=global_sptm.device)
-        expvals[triu_indices[0], triu_indices[1]] = to_tensor(
-            qml.math.stack(self.compute_clifford_expvals(state_prep_op)),
-            dtype=global_sptm.dtype,
-            device=global_sptm.device,
+        expvals[triu_indices[0], triu_indices[1]] = cast(
+            torch.Tensor,
+            to_tensor(
+                qml.math.stack(self.compute_clifford_expvals(state_prep_op)),
+                dtype=global_sptm.dtype,
+                device=global_sptm.device,
+            ),
         )
         expvals[triu_indices[1], triu_indices[0]] = -expvals[triu_indices[0], triu_indices[1]]
         return expvals
@@ -100,7 +111,9 @@ class CliffordExpvalStrategy(ExpvalStrategy):
         return result
 
     def _create_transition_tensor(self, global_sptm: TensorLike, majorana_indices: TensorLike) -> TensorLike:
-        transition_matrices = qml.math.einsum("...kij->i...kj", global_sptm[..., majorana_indices, :])
+        sptm = cast(torch.Tensor, global_sptm)
+        mi = cast(torch.Tensor, majorana_indices)
+        transition_matrices = qml.math.einsum("...kij->i...kj", sptm[..., mi, :])
         return utils.recursive_2in_operator(self._outer_prod, transition_matrices)
 
     def _prepare_summands(
@@ -109,7 +122,8 @@ class CliffordExpvalStrategy(ExpvalStrategy):
         observable: Operator,
         global_sptm: TensorLike,
     ):
-        global_sptm = to_tensor(global_sptm, dtype=torch.complex128)
+        is_complex = "complex" in qml.math.get_dtype_name(global_sptm).lower()
+        global_sptm = to_tensor(global_sptm, dtype=None if is_complex else torch.complex128)
         global_sptm = qml.math.einsum("...ij->...ji", global_sptm)  # TODO: why do I need this transpose?
         expvals = self._compute_full_clifford_expvals(state_prep_op, global_sptm)
         hamiltonian = self._format_observable(observable)

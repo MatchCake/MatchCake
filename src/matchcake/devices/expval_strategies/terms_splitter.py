@@ -1,5 +1,4 @@
-from copy import deepcopy
-from typing import Sequence, Union
+from typing import Sequence
 
 import pennylane as qml
 import torch

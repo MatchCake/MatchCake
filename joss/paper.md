@@ -38,32 +38,32 @@ header-includes: |
 
 # Summary
 
-We introduce `MatchCake`, a new Python package that implements a simulator of matchgate quantum circuits 
-(also known as matchcircuits). Matchgates form a restricted class of unitaries that preserves parity and act 
-on nearest-neighbor qubits. These circuits are equivalent to a hamiltonian evolution of 
-non-interacting Majorana fermions, which makes them 
-classically simulable in polynomial time while retaining rich quantum structure. `MatchCake` provides a practical 
-framework for exploring this class of circuits within PennyLane [@bergholm2022pennylane] and 
-PyTorch [@Ansel_PyTorch_2_Faster_2024], enabling research on classically simulable 
-quantum machine learning models with automatic differentiation. We demonstrate its capabilities through applications 
+We introduce `MatchCake`, a new Python package that implements a simulator of matchgate quantum circuits
+(also known as matchcircuits). Matchgates form a restricted class of unitaries that preserves parity and act
+on nearest-neighbor qubits. These circuits are equivalent to a hamiltonian evolution of
+non-interacting Majorana fermions, which makes them
+classically simulable in polynomial time while retaining rich quantum structure. `MatchCake` provides a practical
+framework for exploring this class of circuits within PennyLane [@bergholm2022pennylane] and
+PyTorch [@Ansel_PyTorch_2_Faster_2024], enabling research on classically simulable
+quantum machine learning models with automatic differentiation. We demonstrate its capabilities through applications
 in quantum kernel methods, including classification [@10821385], regression, and beyond.
 
 
 
 # Statement of need
 
-In quantum computing, quantum circuits provide a formal framework for representing the discrete time evolution of a 
-quantum state under a sequence of operations known as quantum gates. They constitute the backbone of quantum algorithms, 
-quantum system simulations, and broader quantum information processing tasks. They are therefore central to the research 
-and development of methods that exploit quantum resources such as superposition, entanglement, and interference. 
-However, since quantum hardware is still under active development, it is crucial to have efficient tools for simulating 
-and analyzing quantum circuits on classical computers. Indeed, the classical simulation of quantum circuits is 
-essential for the study of quantum systems, the design of quantum algorithms, and the development of quantum computers 
-themselves. Moreover, the study of classically simulable circuit families is itself a key avenue for understanding the 
-boundary between classical and quantum computational power. As a result, a large number of quantum circuit simulators 
-have been developed to address this need. In general, the state space of an $N$-qubit system has dimension $\bigO(2^N)$, 
-so an explicit representation of a generic quantum state requires exponentially many parameters, which leads most 
-simulation approaches to scale exponentially in the number of qubits. Nonetheless, efficient simulation becomes 
+In quantum computing, quantum circuits provide a formal framework for representing the discrete time evolution of a
+quantum state under a sequence of operations known as quantum gates. They constitute the backbone of quantum algorithms,
+quantum system simulations, and broader quantum information processing tasks. They are therefore central to the research
+and development of methods that exploit quantum resources such as superposition, entanglement, and interference.
+However, since quantum hardware is still under active development, it is crucial to have efficient tools for simulating
+and analyzing quantum circuits on classical computers. Indeed, the classical simulation of quantum circuits is
+essential for the study of quantum systems, the design of quantum algorithms, and the development of quantum computers
+themselves. Moreover, the study of classically simulable circuit families is itself a key avenue for understanding the
+boundary between classical and quantum computational power. As a result, a large number of quantum circuit simulators
+have been developed to address this need. In general, the state space of an $N$-qubit system has dimension $\bigO(2^N)$,
+so an explicit representation of a generic quantum state requires exponentially many parameters, which leads most
+simulation approaches to scale exponentially in the number of qubits. Nonetheless, efficient simulation becomes
 possible for restricted families of circuits whose states or evolutions admit compact, polynomial-size representations.
 
 Quantum circuit simulators are differentiated by the classes of circuits they can simulate efficiently. For example, Stim [@gidney2021stim] is designed for stabilizer circuits and achieves polynomial complexity, $\bigO(N^2)$ where $N$ is the system size, when simulating circuits composed of Clifford gates. On the other hand, quimb [@gray2018quimb] leverages tensor network methods [@biamonte_tensor_2017], such as matrix product states (MPS), to efficiently simulate circuits with limited entanglement at a cost of $\bigO(N\chi^3)$, where $\chi$ is the bond dimension, which is a proxy for the amount of entanglement in the system.
@@ -72,7 +72,7 @@ At a higher level of abstraction, PennyLane [@bergholm2022pennylane] provides a 
 
 Specifically, PennyLane primarily relies on universal state-vector simulators (SVS), which, although capable of simulating arbitrary quantum circuits, suffer from an exponential scaling in the number of qubits, thereby are fundamentally not scalable. PennyLane also provides wrappers around specialized simulators such as Stim and quimb, enabling more efficient simulation for certain restricted classes of circuits. However, none of these backends target the subclass of quantum circuits composed of matchgates (matchcircuits [@valiant_quantum_2001]). Consequently, users interested in simulating matchgate-based circuits are forced to rely on exponentially scaling simulators, despite the fact that such circuits theoretically admit polynomial-time $\bigO(N^3)$ classical simulation [@brod_efficient_2016; @bravyi_contraction_2008; @PhysRevA.102.052604].
 
-Unlike tensor-network-based methods, whose efficiency relies on restricting entanglement growth, the efficient simulability of matchcircuits arises from an underlying free-fermionic (Gaussian) structure, allowing them to support arbitrarily large entanglement while remaining tractable. In contrast to Clifford circuits, which are efficiently simulable due to a discrete and non-parametrized gate set, matchcircuits are composed of matchgates [@jozsa_matchgates_2008], a continuously parametrized class of two-qubit unitary gates corresponding to free-fermionic operations. Despite their theoretical importance and favorable resource trade-offs, there is currently no clear, dedicated tool for their simulation within general-purpose quantum software frameworks. 
+Unlike tensor-network-based methods, whose efficiency relies on restricting entanglement growth, the efficient simulability of matchcircuits arises from an underlying free-fermionic (Gaussian) structure, allowing them to support arbitrarily large entanglement while remaining tractable. In contrast to Clifford circuits, which are efficiently simulable due to a discrete and non-parametrized gate set, matchcircuits are composed of matchgates [@jozsa_matchgates_2008], a continuously parametrized class of two-qubit unitary gates corresponding to free-fermionic operations. Despite their theoretical importance and favorable resource trade-offs, there is currently no clear, dedicated tool for their simulation within general-purpose quantum software frameworks.
 
 On a technical side, a two-qubit matchgate written in the computational basis
 
@@ -95,7 +95,7 @@ is a parity-preserving nearest-neighbour unitary gate defined by two submatrices
             a & b\\
             c & d\\
         \end{matrix}
-        \right], 
+        \right],
     W = \left[
         \begin{matrix}
             w & x\\
@@ -137,20 +137,20 @@ of observables $F_j$ that can be efficiently decomposed into Gaussian Majorana o
     F_j \in &\left\{\Proj{y}: y \in \{0,1\}^N \right\}
     \\ \nonumber
     &\cup
-    \left\{ 
-        \bigcup_{i=0}^{N-1} 
+    \left\{
+        \bigcup_{i=0}^{N-1}
         \left\{ Z_{i}I_{i+1}, X_{i}X_{i+1}, Y_{i}Y_{i+1}, Y_{i}X_{i+1}, X_{i}Y_{i+1}, I_{i}Z_{i+1} \right\}
     \right\}
     \\ \nonumber
     &\cup
-    \left\{ 
-        \bigcup_{i<k=0}^{N-1} 
-        \left\{ Z_{i}Z_{k} \right\} 
+    \left\{
+        \bigcup_{i<k=0}^{N-1}
+        \left\{ Z_{i}Z_{k} \right\}
     \right\}
 \end{align}
 
-where $\Ket{y}$ is any computational-basis state, $X_i$, $Y_i$, and $Z_i$ denote the Pauli matrices 
-acting on qubits $i$ of a linear register of $N$ qubits, $i \in \{0,\dots,N-2\}$ labels nearest-neighbour sites, 
+where $\Ket{y}$ is any computational-basis state, $X_i$, $Y_i$, and $Z_i$ denote the Pauli matrices
+acting on qubits $i$ of a linear register of $N$ qubits, $i \in \{0,\dots,N-2\}$ labels nearest-neighbour sites,
 and $k \in \{1,\dots,N-1\}$ denotes an arbitrary qubit index. In return, `MatchCake` computes the expectation value
 
 \begin{align}
@@ -216,15 +216,15 @@ def circuit(params, wires, initial_state):
 # Create a QNode
 nif_qnode = qml.QNode(circuit, nif_device)
 qml.draw_mpl(nif_qnode)(
-    params=np.array([0.1, 0.2]), 
-    wires=nif_device.wires, 
+    params=np.array([0.1, 0.2]),
+    wires=nif_device.wires,
     initial_state=initial_state
 )
 
 # Evaluate the QNode
 expval = nif_qnode(
-    params=np.array([0.1, 0.2]), 
-    wires=nif_device.wires, 
+    params=np.array([0.1, 0.2]),
+    wires=nif_device.wires,
     initial_state=initial_state
 )
 print(f"Expectation value: {expval:.4f}")
@@ -309,7 +309,7 @@ cv_viz.plot(
 ```
 
 ![ Output of the machine learning example code. On the left:
-Example of a decision boundaries for the Fermionic Linear classifier on the iris dataset. 
+Example of a decision boundaries for the Fermionic Linear classifier on the iris dataset.
 On the right: Violin plots showing the distribution of training and testing accuracies across different cross-validation folds for both the Fermionic PQC and Fermionic Linear classifiers.
 \label{fig:minimal_example_quantum_machine_learning}](./images/minimal_example_quantum_machine_learning.svg){
 width="100%" height="20%" fig-env="figure" fig-align="center"
@@ -323,10 +323,10 @@ The author thanks Victor Drouin-Touchette for comments on the main text and Stef
 
 # AI usage disclosure
 
-The author acknowledges the use of AI-assisted tools during the preparation of this manuscript to improve grammar, 
-style, and clarity of presentation. AI tools were also used to assist in drafting limited portions of the source code 
-documentation for the purpose of improving readability. No scientific content, results, or conclusions were generated 
-by AI tools. The author has reviewed, edited, and validated all AI-assisted content and assumes full responsibility 
+The author acknowledges the use of AI-assisted tools during the preparation of this manuscript to improve grammar,
+style, and clarity of presentation. AI tools were also used to assist in drafting limited portions of the source code
+documentation for the purpose of improving readability. No scientific content, results, or conclusions were generated
+by AI tools. The author has reviewed, edited, and validated all AI-assisted content and assumes full responsibility
 for the final version of the manuscript and the software.
 
 # References

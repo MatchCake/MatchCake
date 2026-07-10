@@ -14,7 +14,10 @@ def specific_ops_circuit(cls_params_wires_list, initial_state=None, **kwargs):
     if kwargs.get("adjoint", False):
         adjoint_func = qml.adjoint
     else:
-        adjoint_func = lambda x: x
+
+        def adjoint_func(x):
+            return x
+
     for cpw in cls_params_wires_list:
         if len(cpw) == 2:
             cls, wires = cpw

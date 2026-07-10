@@ -1,4 +1,4 @@
-from pennylane.operation import AnyWires, Operation
+from pennylane.operation import Operation
 from pennylane.wires import Wires
 
 from .comp_hh import CompHH
@@ -19,12 +19,12 @@ class FermionicSuperposition(Operation):
     it supports features such as decomposition into fundamental gates.
     """
 
-    num_wires = AnyWires
+    num_wires = None
     grad_method = None
 
     @classmethod
     def random(cls, wires: Wires, **kwargs):
-        return cls(wires=wires, id=kwargs.get("id", None))
+        return cls(wires=wires)
 
     @staticmethod
     def compute_decomposition(*params, wires=None, **hyperparameters):
@@ -43,4 +43,4 @@ class FermionicSuperposition(Operation):
         return 0
 
     def to_sptm_operation(self) -> SptmFermionicSuperposition:
-        return SptmFermionicSuperposition(wires=self.wires, id=self.id, **self.hyperparameters)
+        return SptmFermionicSuperposition(wires=self.wires, **self.hyperparameters)

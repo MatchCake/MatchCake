@@ -24,7 +24,7 @@ class GreedyStrategy(StarStateFindingStrategy):
             total=device.num_wires,
             desc=f"[{self.NAME}] Finding Star State",
             disable=not kwargs.get("show_progress", False),
-            unit=f"wire",
+            unit="wire",
         )
         k = 2
         added_states = device.states_to_binary(np.arange(int(2**k)), k)

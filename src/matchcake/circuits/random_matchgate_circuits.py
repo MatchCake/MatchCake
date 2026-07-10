@@ -1,4 +1,5 @@
-from typing import Any, List, Optional, Sequence, Type, Union
+from collections.abc import Sequence as SequenceABC
+from typing import Any, Optional, Sequence, Type, Union
 
 import numpy as np
 import pennylane as qml
@@ -23,7 +24,7 @@ class RandomMatchgateOperationsGenerator(RandomOperationsGenerator):
         wires: Union[Sequence[int], int],
         n_ops: Optional[int] = None,
         batch_size: Optional[int] = None,
-        op_types: List[Type[MatchgateOperation]] = (
+        op_types: SequenceABC[Type[MatchgateOperation]] = (
             MatchgateOperation,
             CompRxRx,
             fSWAP,
@@ -71,7 +72,7 @@ class RandomMatchgateHaarOperationsGenerator(RandomMatchgateOperationsGenerator)
         initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
         **kwargs,
     ):
-        n_ops = n_ops if n_ops is not None else 4 * len(wires)
+        n_ops = n_ops if n_ops is not None else 4 * (wires if isinstance(wires, int) else len(wires))
         super().__init__(
             wires=wires,
             n_ops=n_ops,

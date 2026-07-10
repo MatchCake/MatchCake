@@ -7,10 +7,7 @@ from matchcake.operations import MAngleEmbedding, MAngleEmbeddings
 
 from ..configs import (
     ATOL_APPROX_COMPARISON,
-    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
-    TEST_SEED,
-    set_seed,
 )
 from ..test_devices import devices_init
 from . import specific_ops_circuit

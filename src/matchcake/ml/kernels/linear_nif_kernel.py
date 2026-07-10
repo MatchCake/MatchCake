@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 import torch
 
@@ -41,6 +43,8 @@ class LinearNIFKernel(NIFKernel):
         alignment_early_stopping_patience: int = NIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_PATIENCE,
         alignment_early_stopping_threshold: float = NIFKernel.DEFAULT_ALIGNMENT_EARLY_STOPPING_THRESHOLD,
         n_qubits: int = NIFKernel.DEFAULT_N_QUBITS,
+        r_dtype: Optional[torch.dtype] = None,
+        c_dtype: Optional[torch.dtype] = None,
         bias: bool = DEFAULT_BIAS,
         encoder_activation: str = DEFAULT_ENCODER_ACTIVATION,
     ):
@@ -61,12 +65,18 @@ class LinearNIFKernel(NIFKernel):
         :type alignment_iterations: int
         :param alignment_learning_rate: The learning rate for the optimizer used in kernel alignment.
         :type alignment_learning_rate: float
-        :param alignment_early_stopping_patience: The number of iterations to wait for improvement before stopping kernel alignment optimization.
+        :param alignment_early_stopping_patience: The number of iterations to wait for improvement
+            before stopping kernel alignment optimization.
         :type alignment_early_stopping_patience: int
-        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel alignment optimization, used for early stopping criteria.
+        :param alignment_early_stopping_threshold: The threshold for determining improvement in kernel
+            alignment optimization, used for early stopping criteria.
         :type alignment_early_stopping_threshold: float
         :param n_qubits: Number of qubits used in the quantum computation process.
         :type n_qubits: int
+        :param r_dtype: The real floating-point dtype passed to the non-interacting fermionic device.
+        :type r_dtype: Optional[torch.dtype]
+        :param c_dtype: The complex dtype passed to the non-interacting fermionic device.
+        :type c_dtype: Optional[torch.dtype]
         :param bias: Determines if the linear layers in the encoder should include a
             bias term.
         :type bias: bool
@@ -83,6 +93,8 @@ class LinearNIFKernel(NIFKernel):
             alignment_early_stopping_patience=alignment_early_stopping_patience,
             alignment_early_stopping_threshold=alignment_early_stopping_threshold,
             n_qubits=n_qubits,
+            r_dtype=r_dtype,
+            c_dtype=c_dtype,
         )
         self._bias = bias
         self._encoder_activation = encoder_activation
@@ -120,7 +132,7 @@ class LinearNIFKernel(NIFKernel):
 
     @n_qubits.setter
     def n_qubits(self, value: int):
-        self._q_device = NonInteractingFermionicDevice(value, r_dtype=self.R_DTYPE)
+        self._q_device = NonInteractingFermionicDevice(value, r_dtype=self._r_dtype, c_dtype=self._c_dtype)
         self.encoder[1] = torch.nn.LazyLinear(self.encoder_out_indices[0].size, bias=self.bias, dtype=self.R_DTYPE)
 
     @property

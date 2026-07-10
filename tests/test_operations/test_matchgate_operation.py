@@ -88,6 +88,15 @@ class TestMatchgateOperation:
                     [0.0, 0, 0, 1.0],
                 ]
             ),
+            # CNOT: unitary with equal sub-determinants but without the matchgate structure.
+            np.array(
+                [
+                    [1.0, 0, 0, 0.0],
+                    [0, 1.0, 0.0, 0],
+                    [0, 0.0, 0.0, 1.0],
+                    [0.0, 0, 1.0, 0],
+                ]
+            ),
         ],
     )
     def test_init_from_not_matchgate(self, input_matrix):
@@ -224,16 +233,15 @@ class TestMatchgateOperation:
                     theta3=0.5 * np.pi,
                     theta4=0.5 * np.pi,
                 ),
-                dict(a=0.2079, b=0, c=0, d=0.2079, w=0.2079, x=0, y=0, z=0.2079),
+                dict(a=1j, b=0, c=0, d=1j, w=1j, x=0, y=0, z=1j),
             ),
         ],
     )
     def test_from_polar_params(self, polar_params, std_params):
         mgo = MatchgateOperation.from_polar_params(**polar_params, wires=[0, 1])
         for k, v in std_params.items():
-            assert (
-                torch.allclose(getattr(mgo, k), torch.tensor(v, dtype=getattr(mgo, k).dtype)),
-                f"Convertion from polar to std doesnt work. For {k=}, Got: {getattr(mgo, k)}, expected: {v}.",
+            assert torch.allclose(getattr(mgo, k), torch.tensor(v, dtype=getattr(mgo, k).dtype)), (
+                f"Convertion from polar to std doesnt work. For {k=}, Got: {getattr(mgo, k)}, expected: {v}."
             )
 
     def test_grads(self, comp_hh01):
@@ -264,3 +272,20 @@ class TestMatchgateOperation:
         pred_padded_matrix = comp_hh01.get_padded_single_particle_transition_matrix(wires=all_wires)
         assert isinstance(pred_padded_matrix, SingleParticleTransitionMatrixOperation)
         assert pred_padded_matrix.wires.tolist() == all_wires
+
+    def test_init_wires_none(self, comp_hh01):
+        with pytest.raises(ValueError):
+            MatchgateOperation(comp_hh01.matrix(), wires=None)
+
+    def test_matmul_invalid_type_raises(self, fswap01):
+        with pytest.raises(ValueError):
+            _ = fswap01 @ "invalid"
+
+    def test_label_with_draw_label_params(self):
+        mgo = MatchgateOperation.random(wires=[0, 1], seed=0, draw_label_params="r0=0.5")
+        label = mgo.label()
+        assert "r0=0.5" in label
+
+    def test_shape_with_batch_size(self):
+        mgo = MatchgateOperation.random(wires=[0, 1], batch_size=3, seed=0)
+        assert mgo.shape == (3, 4, 4)

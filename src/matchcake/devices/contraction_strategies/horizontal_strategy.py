@@ -1,8 +1,4 @@
-from pennylane.wires import Wires
-
-from ...operations import SingleParticleTransitionMatrixOperation
 from ...operations.matchgate_operation import MatchgateOperation
-from ...utils.math import circuit_matmul
 from ..device_utils import circuit_or_fop_matmul
 from .contraction_container import (
     _ContractionMatchgatesContainer,

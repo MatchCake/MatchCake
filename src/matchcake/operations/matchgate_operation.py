@@ -68,6 +68,10 @@ class MatchgateOperation(Operation):
     num_wires = 2
     par_domain = "A"
 
+    # Positions of the matchgate matrix that must be zero (everything outside the outer
+    # corners and the inner 2x2 block, see the class docstring for the matrix layout).
+    MATCHGATE_ZERO_POSITIONS = ((0, 1), (0, 2), (1, 0), (1, 3), (2, 0), (2, 3), (3, 1), (3, 2))
+
     grad_method = "A"
     grad_recipe = None
 
@@ -278,7 +282,7 @@ class MatchgateOperation(Operation):
     ):
         return [qml.QubitUnitary(params[0], wires=wires)]
 
-    def __new__(cls, *params: TensorLike, wires: Optional[WiresLike] = None, id: Optional[str] = None, **kwargs):
+    def __new__(cls, *params: TensorLike, wires: Optional[WiresLike] = None, **kwargs):
         is_matchgate = False
         if len(params) == 1 and isinstance(params[0], MatchgateParams):
             is_matchgate = True
@@ -294,7 +298,6 @@ class MatchgateOperation(Operation):
         self,
         matrix: Union[TensorLike, MatchgateParams],
         wires=None,
-        id=None,
         default_dtype: torch.dtype = torch.complex128,
         default_device: Optional[torch.device] = None,
         **kwargs,
@@ -310,7 +313,7 @@ class MatchgateOperation(Operation):
             matrix = to_tensor(matrix, dtype=default_dtype, device=default_device)
         self.draw_label_params = kwargs.get("draw_label_params", None)
         self.kwargs = kwargs
-        super().__init__(matrix, wires=wires, id=id)
+        super().__init__(matrix, wires=wires)
         self._check_is_matchgate()
 
     def __matmul__(self, other) -> Union["MatchgateOperation", SingleParticleTransitionMatrixOperation]:
@@ -398,6 +401,18 @@ class MatchgateOperation(Operation):
             )
         return check
 
+    def _check_structure_constraint(self) -> bool:
+        with torch.no_grad():
+            matrix = to_cpu(self.matrix())
+            off_structure = torch.stack([matrix[..., r, c] for r, c in self.MATCHGATE_ZERO_POSITIONS], dim=-1)
+            check = torch.allclose(off_structure, torch.zeros_like(off_structure), atol=1e-5)
+        if not check:
+            raise ValueError(
+                rf"The matrix does not have the matchgate structure. Expected zeros outside the "
+                rf"outer corners and the inner 2x2 block. Got {off_structure}."
+            )
+        return check
+
     def _check_det_constraint(self) -> bool:
         with torch.no_grad():
             outer_determinant = torch.linalg.det(self.outer_gate_data)
@@ -411,6 +426,7 @@ class MatchgateOperation(Operation):
         return check
 
     def _check_is_matchgate(self):
+        self._check_structure_constraint()
         self._check_m_m_dagger_constraint()
         self._check_m_dagger_m_constraint()  # pragma: no cover
         self._check_det_constraint()
@@ -547,3 +563,18 @@ class MatchgateOperation(Operation):
     @property
     def device(self) -> torch.device:
         return self.matrix().device
+
+
+import copy as _copy  # noqa: E402
+
+from pennylane.ops.functions import bind_new_parameters as _bind_new_parameters  # noqa: E402
+
+
+@_bind_new_parameters.register(MatchgateOperation)
+def _bind_new_parameters_matchgate(op, params):
+    """Reconstruct a MatchgateOperation with updated parameters without using __new__ redirection."""
+    new_op = _copy.copy(op)
+    new_op.__dict__.pop("batch_size", None)
+    new_op.__dict__.pop("single_particle_transition_matrix", None)
+    new_op.data = tuple(params)
+    return new_op

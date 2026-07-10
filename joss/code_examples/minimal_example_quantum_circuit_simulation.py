@@ -1,7 +1,8 @@
-import matchcake as mc
 import numpy as np
 import pennylane as qml
 from pennylane.ops.qubit.observables import BasisStateProjector
+
+import matchcake as mc
 
 # Create a Non-Interacting Fermionic Device with 4 qubits/wires
 nif_device = mc.NonInteractingFermionicDevice(wires=4)
@@ -31,14 +32,10 @@ def circuit(params, wires, initial_state):
 
 # Create a QNode
 nif_qnode = qml.QNode(circuit, nif_device)
-qml.draw_mpl(nif_qnode)(
-    params=np.array([0.1, 0.2]), wires=nif_device.wires, initial_state=initial_state
-)
+qml.draw_mpl(nif_qnode)(params=np.array([0.1, 0.2]), wires=nif_device.wires, initial_state=initial_state)
 
 # Evaluate the QNode
-expval = nif_qnode(
-    params=np.array([0.1, 0.2]), wires=nif_device.wires, initial_state=initial_state
-)
+expval = nif_qnode(params=np.array([0.1, 0.2]), wires=nif_device.wires, initial_state=initial_state)
 print(f"Expectation value: {expval:.4f}")
 
 if __name__ == "__main__":

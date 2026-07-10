@@ -214,3 +214,13 @@ class TestSptmFermionicSuperposition:
     def test_sptm_fermionic_superposition_unitary(self, wires):
         sptm = SptmFermionicSuperposition(wires=wires)
         assert sptm.check_is_unitary(atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
+
+    def test_adjoint_returns_self(self):
+        sptm = SptmFermionicSuperposition(wires=[0, 1])
+        adj = sptm.adjoint()
+        assert adj is sptm
+
+    def test_to_matchgate(self):
+        sptm = SptmFermionicSuperposition(wires=[0, 1])
+        mg = sptm.to_matchgate()
+        assert isinstance(mg, FermionicSuperposition)

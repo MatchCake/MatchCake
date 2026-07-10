@@ -1,14 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Callable, Tuple
 
-import numpy as np
 import pennylane as qml
-import tqdm
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
-
-from matchcake.utils.math import random_index
-from matchcake.utils.torch_utils import to_numpy
 
 
 class StarStateFindingStrategy(ABC):

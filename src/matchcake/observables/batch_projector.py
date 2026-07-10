@@ -1,9 +1,9 @@
 import pennylane as qml
-from pennylane.operation import Observable
+from pennylane.operation import Operator
 from pennylane.wires import Wires
 
 
-class BatchProjector(Observable):
+class BatchProjector(Operator):
     def __init__(self, states, wires, **kwargs):
         wires = Wires(wires, _override=True)
         wires_array = wires.toarray()

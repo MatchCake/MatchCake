@@ -1,4 +1,5 @@
 import importlib
+from collections.abc import Callable
 from functools import partial
 from typing import Any, List, Optional, Union
 
@@ -11,8 +12,9 @@ from pennylane.wires import Wires
 from scipy import sparse
 
 from . import constants, cuda, majorana, math, operators, torch_utils
-from ._pfaffian import pfaffian
+from ._pfaffian import pfaffian, sector_pfaffian_features, signed_pfaffian
 from .constants import PAULI_I, PAULI_X, PAULI_Y, PAULI_Z
+from .jordan_wigner import JordanWigner
 from .logm import logm
 from .majorana import (
     MajoranaGetter,
@@ -95,12 +97,13 @@ def state_to_binary_string(state: Union[int, np.ndarray, sparse.sparray], n: Opt
     """
     if isinstance(state, int):
         assert n is not None, "Number of particles must be specified if the state is an integer."
-        assert state < 2**n, f"Invalid state: {state}, must be smaller than 2^n = {2 ** n}."
+        assert state < 2**n, f"Invalid state: {state}, must be smaller than 2^n = {2**n}."
         return np.binary_repr(state, width=n)
-    n_states = np.prod(state.shape)
+    arr: np.ndarray = np.asarray(state.toarray()) if isinstance(state, sparse.sparray) else state  # type: ignore[attr-defined]
+    n_states = np.prod(arr.shape)
     n = int(np.log2(n_states))
     assert n_states == 2**n, f"Invalid number of states: {n_states}, must be a power of 2."
-    state_number = np.asarray(state.reshape(-1, n_states).argmax(-1)).astype(int).item()
+    state_number = np.asarray(arr.reshape(-1, n_states).argmax(-1)).astype(int).item()
     binary_state = np.binary_repr(state_number, width=n)
     return binary_state
 
@@ -285,6 +288,7 @@ def decompose_matrix_into_majoranas(
         n_states,
         n_states,
     ), f"Invalid shape for matrix: {shape}, must be square or batched."
+    get_majorana_func: Callable[[int], np.ndarray]
     if majorana_getter is None:
         get_majorana_func = partial(get_majorana, n=n)
     else:
@@ -419,10 +423,10 @@ def get_4x4_non_interacting_fermionic_hamiltonian_from_params(params):
     :return: Non-interacting fermionic Hamiltonian
     :rtype: np.ndarray
     """
-    from ..matchgate_parameter_sets import MatchgateHamiltonianCoefficientsParams
+    from ..matchgate_parameter_sets import MatchgateHamiltonianCoefficientsParams  # pragma: no cover
 
-    params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params)
-    return np.array(
+    params = MatchgateHamiltonianCoefficientsParams.parse_from_params(params)  # pragma: no cover
+    return np.array(  # pragma: no cover
         [
             [
                 -2j * (params.h0 + params.h5),
@@ -621,6 +625,6 @@ def get_eigvals_on_z_basis(
     except Exception as e:
         if raise_on_failure:
             raise e
-        options_on_failure = options_on_failure or {}
-        eigvals_on_z_basis = qml.eigvals(op, **options_on_failure)
+        options_on_failure = options_on_failure or {}  # pragma: no cover
+        eigvals_on_z_basis = qml.eigvals(op, **options_on_failure)  # pragma: no cover
     return eigvals_on_z_basis

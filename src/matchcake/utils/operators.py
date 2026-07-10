@@ -1,6 +1,6 @@
 import functools
 import importlib
-from typing import Any, Callable, Generator, Iterable, Iterator, List, Union
+from typing import Any, Callable, Generator, Iterator, List
 
 import numpy as np
 import pennylane as qml

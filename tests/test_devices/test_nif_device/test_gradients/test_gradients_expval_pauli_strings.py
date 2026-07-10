@@ -48,7 +48,7 @@ rn_test_data = [
     )
     for n_wires in range(2, 6)
     for i in range(N_RANDOM_TESTS_PER_CASE)
-    for contraction_strategy in contraction_strategy_map.keys()
+    for contraction_strategy in sorted(contraction_strategy_map.keys())
     for p0 in [qml.PauliX, qml.PauliY, qml.PauliZ]
     for p1 in [qml.PauliX, qml.PauliY, qml.PauliZ]
 ]

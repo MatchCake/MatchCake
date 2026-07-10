@@ -13,7 +13,6 @@ from matchcake.operations import (
     CompHH,
     CompZX,
     MatchgateIdentity,
-    SingleParticleTransitionMatrixOperation,
 )
 from matchcake.utils import get_block_diagonal_matrix
 from matchcake.utils.torch_utils import to_tensor
@@ -231,3 +230,17 @@ class TestCliffordExpvalStrategy:
         state_prep = qml.BasisState(initial_state, wires=np.arange(initial_state.size))
         expval = strategy(state_prep_op=state_prep, observable=hamiltonian, global_sptm=sptm)
         np.testing.assert_allclose(expval, expval_target, atol=ATOL_APPROX_COMPARISON, rtol=ATOL_APPROX_COMPARISON)
+
+    def test_can_execute_projector_returns_false(self, strategy):
+        from pennylane.ops.qubit.observables import BasisStateProjector
+
+        state_prep = qml.BasisState(np.zeros(2), [0, 1])
+        projector = BasisStateProjector([0, 0], wires=[0, 1])
+        assert strategy.can_execute(state_prep, projector) is False
+
+    def test_format_observable_terms_undefined(self, strategy):
+        from pennylane.ops.qubit.observables import BasisStateProjector
+
+        projector = BasisStateProjector([0, 0], wires=[0, 1])
+        hamiltonian = strategy._format_observable(projector)
+        assert hamiltonian is not None

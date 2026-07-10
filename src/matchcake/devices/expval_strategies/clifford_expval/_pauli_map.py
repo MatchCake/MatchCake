@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from typing import Any
 
-from pennylane.pauli import PauliWord, pauli_word_to_string
+from pennylane.pauli import pauli_word_to_string
 
 
 class _PauliMap(OrderedDict):

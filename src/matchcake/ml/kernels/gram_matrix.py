@@ -1,4 +1,3 @@
-from numbers import Number
 from pathlib import Path
 from tempfile import mkstemp
 from typing import Any, Callable, Iterator, Tuple
@@ -172,7 +171,7 @@ class GramMatrix:
         try:
             self._memmap = None
             self._filepath.unlink(missing_ok=True)
-        except:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pass  # pragma: no cover
 
     def indices_batch_generator(self, batch_size: int = 32) -> Iterator[NDArray[np.int64]]:

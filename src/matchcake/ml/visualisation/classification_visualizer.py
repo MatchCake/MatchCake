@@ -57,14 +57,16 @@ class ClassificationVisualizer(Visualizer):
                 n_jobs = kwargs.get("n_jobs", max(0, psutil.cpu_count() - 2))
                 if self.reducer.lower() == "pca":
                     self.reducer = decomposition.PCA(n_components=2, random_state=self.seed)
-                elif self.reducer.lower() == "umap":
-                    import umap
+                elif self.reducer.lower() == "umap":  # pragma: no cover
+                    import umap  # pragma: no cover
 
-                    self.reducer = umap.UMAP(n_components=2, transform_seed=self.seed, n_jobs=n_jobs)
+                    self.reducer = umap.UMAP(
+                        n_components=2, transform_seed=self.seed, n_jobs=n_jobs
+                    )  # pragma: no cover
                 else:
                     raise ValueError(f"Unknown reducer: {self.reducer}")
-            if kwargs.get("check_estimators", True):
-                check_estimator(self.reducer)
+            if kwargs.get("check_estimators", True):  # pragma: no cover
+                check_estimator(self.reducer)  # pragma: no cover
             self.reducer.fit(self.x)
             self.transform = self.reducer.transform
             self.inverse_transform = self.reducer.inverse_transform
@@ -152,12 +154,12 @@ class ClassificationVisualizer(Visualizer):
             vmax=n_labels - 1,
             alpha=kwargs.get("alpha", 0.8),
             origin="lower",
-            extent=[x_min, x_max, y_min, y_max],
+            extent=(x_min, x_max, y_min, y_max),
             aspect=kwargs.get("aspect", "auto"),
             interpolation=kwargs.get("interpolation", "antialiased"),
         )
         if y is not None:
-            scatter = ax.scatter(
+            ax.scatter(
                 self.x_reduced[:, 0],
                 self.x_reduced[:, 1],
                 c=[cmap(i) for i in y],

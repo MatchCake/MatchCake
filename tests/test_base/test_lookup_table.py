@@ -276,3 +276,41 @@ class TestNonInteractingFermionicLookupTable:
     def test_shape(self):
         lt = NonInteractingFermionicLookupTable(np.random.rand(2, 4))
         assert lt.shape == (3, 3)
+
+    def test_assert_binary_raises_on_non_binary(self):
+        with pytest.raises(ValueError, match="must contain only zeros and ones"):
+            NonInteractingFermionicLookupTable._assert_binary(np.array([0, 1, 2]))
+
+    def test_assert_binary_accepts_binary(self):
+        assert NonInteractingFermionicLookupTable._assert_binary(np.array([0, 1, 1, 0])) is True
+
+    def test_stacked_items_shape(self):
+        lt = NonInteractingFermionicLookupTable(np.random.rand(2, 4))
+        # 9 = 3 x 3 lookup entries, each a (2n, 2n) block.
+        assert np.shape(lt.stacked_items) == (9, 4, 4)
+
+    def test_p_bar_helpers_when_initialized(self):
+        lt = NonInteractingFermionicLookupTable(np.random.rand(2, 4), show_progress=True)
+        lt.initialize_p_bar(total=3)
+        lt.p_bar_set_n(2)
+        assert lt.p_bar.n == 2
+        lt.p_bar_set_postfix({"foo": 1})
+        lt.close_p_bar()
+
+    def test_p_bar_helpers_noop_when_not_initialized(self):
+        lt = NonInteractingFermionicLookupTable(np.random.rand(2, 4))
+        # No progress bar set: these must be no-ops and not raise.
+        assert lt.p_bar is None
+        lt.p_bar_set_n(5)
+        lt.p_bar_set_postfix({"foo": 1})
+        lt.update_p_bar()
+
+    def test_setup_inputs_from_indexes_only(self):
+        # target_binary_states omitted but indexes provided -> ones are filled in.
+        lt = NonInteractingFermionicLookupTable(np.random.rand(2, 4))
+        system_state = utils.binary_string_to_vector("00")
+        obs = lt.compute_observables_of_target_states(
+            system_state=system_state,
+            indexes_of_target_states=np.array([[0, 1]]),
+        )
+        assert np.shape(obs) == (1, 4, 4)

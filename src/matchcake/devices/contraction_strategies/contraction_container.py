@@ -1,5 +1,5 @@
 import warnings
-from typing import Callable, Iterable, List, Literal, Optional, Union
+from typing import Callable, Iterable, List, Optional, Union, cast
 
 from pennylane.wires import Wires
 
@@ -86,7 +86,7 @@ class _ContractionMatchgatesContainer:
         for i, op in enumerate(ops):  # pragma: no cover
             if not self.try_add(op):
                 return i
-        return -1
+        return -1  # pragma: no cover
 
     def clear(self):
         self.op_container.clear()
@@ -124,7 +124,7 @@ class _ContractionMatchgatesContainer:
         for i, op in enumerate(operations):
             if not isinstance(op, tuple(self.ALLOWED_GATE_CLASSES)):
                 if self:
-                    new_operations.append(self.contract_and_clear())
+                    new_operations.append(cast(SingleParticleTransitionMatrixOperation, self.contract_and_clear()))
                 new_operations.append(op)
                 if callback is not None:
                     callback(i)
@@ -135,5 +135,5 @@ class _ContractionMatchgatesContainer:
             if callback is not None:
                 callback(i)
         if self:
-            new_operations.append(self.contract_and_clear())
+            new_operations.append(cast(SingleParticleTransitionMatrixOperation, self.contract_and_clear()))
         return new_operations

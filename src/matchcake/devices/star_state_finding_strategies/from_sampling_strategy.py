@@ -26,7 +26,8 @@ class FromSamplingStrategy(StarStateFindingStrategy):
         #                                 (n_samples, batch_size, sample_size)
         samples_reshaped = samples.reshape(samples.shape[0], -1, samples.shape[-1])
 
-        star_states, star_probs = [], []
+        star_states_list: list = []
+        star_probs_list: list = []
         for bi in range(samples_reshaped.shape[1]):
             batch_samples = samples_reshaped[:, bi, :]
 
@@ -34,9 +35,9 @@ class FromSamplingStrategy(StarStateFindingStrategy):
             unique_probs = unique_counts / samples.shape[0]
             star_state = unique_samples[np.argmax(unique_counts)]
             star_prob = unique_probs[np.argmax(unique_counts)]
-            star_states.append(star_state)
-            star_probs.append(star_prob)
+            star_states_list.append(star_state)
+            star_probs_list.append(star_prob)
 
-        star_states = np.stack(star_states, axis=0).reshape(samples.shape[1:])
-        star_probs = np.stack(star_probs, axis=0).reshape(samples.shape[1:-1])
+        star_states = np.stack(star_states_list, axis=0).reshape(samples.shape[1:])
+        star_probs = np.stack(star_probs_list, axis=0).reshape(samples.shape[1:-1])
         return star_states, star_probs

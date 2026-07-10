@@ -10,13 +10,16 @@ __copyright__ = "Copyright 2023, Jérémie Gince"
 __license__ = "Apache 2.0"
 __url__ = "https://github.com/MatchCake/MatchCake"
 __package__ = "matchcake"
-__version__ = importlib_metadata.version(__package__)
+__version__: str = importlib_metadata.version(__package__)
 
 import warnings
 
-from . import matchgate_parameter_sets  # Alias
+from . import (
+    matchgate_parameter_sets,  # Alias
+    ml,
+    utils,
+)
 from . import matchgate_parameter_sets as mgp
-from . import ml, utils
 from .devices import NIFDevice, NonInteractingFermionicDevice
 from .matchgate_parameter_sets import matchgate_params
 from .matchgate_parameter_sets.matchgate_polar_params import MatchgatePolarParams

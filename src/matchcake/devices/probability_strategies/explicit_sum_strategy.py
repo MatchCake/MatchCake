@@ -1,15 +1,14 @@
 import warnings
-from typing import Callable
 
 import numpy as np
 import pennylane as qml
 import pythonbasictools as pbt
 from pennylane import numpy as pnp
+from pennylane.operation import StatePrepBase
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 
 from ... import utils
-from ...base.lookup_table import NonInteractingFermionicLookupTable
 from .probability_strategy import ProbabilityStrategy
 
 
@@ -36,10 +35,30 @@ class ExplicitSumStrategy(ProbabilityStrategy):
         state = qml.math.cast(state, dtype=complex)
         return np.reshape(state, [2] * num_wires)
 
-    def __call__(
+    def can_execute(self, state_prep_op: StatePrepBase) -> bool:
+        """Return True for basis-state inputs (BasisState, StatePrepFromGates, or ProductState that is a basis state).
+
+        :param state_prep_op: State preparation operation.
+        :type state_prep_op: StatePrepBase
+        :return: True if the state is a computational-basis state.
+        :rtype: bool
+        """
+        from pennylane.ops.qubit.state_preparation import BasisState
+
+        from ...operations.state_preparation import StatePrepFromGates
+        from ...operations.state_preparation.product_state import ProductState
+
+        if isinstance(state_prep_op, (BasisState, StatePrepFromGates)):
+            return True
+        if isinstance(state_prep_op, ProductState):
+            is_basis = state_prep_op.is_basis_state
+            return bool(is_basis) if isinstance(is_basis, bool) else bool(qml.math.all(is_basis))
+        return False
+
+    def _compute_single(
         self,
         *,
-        system_state: TensorLike,
+        state_prep_op: StatePrepBase,
         target_binary_state: TensorLike,
         wires: Wires,
         **kwargs,
@@ -57,11 +76,12 @@ class ExplicitSumStrategy(ProbabilityStrategy):
 
         if len(target_binary_state) > 4:
             warnings.warn(
-                f"Computing the probability of a target state with more than 4 bits "
-                f"may take a long time. Please consider using the lookup table strategy instead.",
+                "Computing the probability of a target state with more than 4 bits "
+                "may take a long time. Please consider using the lookup table strategy instead.",
                 UserWarning,
-            )
+            )  # pragma: no cover
 
+        system_state = self.system_basis_state_from_state_prep_op(state_prep_op)
         ket_majorana_indexes = utils.decompose_binary_state_into_majorana_indexes(system_state)
         bra_majorana_indexes = list(reversed(ket_majorana_indexes))
         zero_state = self._create_basis_state(0, num_wires).flatten()

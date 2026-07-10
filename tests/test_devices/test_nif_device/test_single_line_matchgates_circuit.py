@@ -4,11 +4,9 @@ import pytest
 
 from matchcake import MatchgateOperation
 from matchcake import matchgate_parameter_sets as mgp
-from matchcake import utils
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
-    N_RANDOM_TESTS_PER_CASE,
     RTOL_APPROX_COMPARISON,
     TEST_SEED,
     set_seed,

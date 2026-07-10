@@ -2,10 +2,12 @@ import numpy as np
 import pennylane as qml
 import pytest
 import torch
+from pennylane import BasisState
 from pennylane.ops.qubit.observables import BasisStateProjector
 from scipy.linalg import expm
 
 from matchcake import NonInteractingFermionicDevice, utils
+from matchcake.devices.probability_strategies import LookupTableStrategy
 from matchcake.operations.single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
 )
@@ -111,12 +113,12 @@ class TestNonInteractingFermionicDeviceGradients:
             nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
             transition_matrix = utils.make_transition_matrix_from_action_matrix(matrix)
             nif_device.transition_matrix = transition_matrix
-            return nif_device.prob_strategy.batch_call(
-                system_state=system_state,
+            return LookupTableStrategy()(
+                state_prep_op=BasisState(system_state, wires=np.arange(len(system_state))),
                 target_binary_states=target_binary_states,
-                batch_wires=None,
+                wires=nif_device.wires,
+                all_wires=nif_device.wires,
                 lookup_table=nif_device.lookup_table,
-                pfaffian_method="det",
             )
 
         assert torch.autograd.gradcheck(
@@ -134,12 +136,12 @@ class TestNonInteractingFermionicDeviceGradients:
         def circuit(sptm_matrix):
             nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
             nif_device.global_sptm = sptm_matrix
-            return nif_device.prob_strategy.batch_call(
-                system_state=nif_device.binary_state,
+            return LookupTableStrategy()(
+                state_prep_op=nif_device.state_prep_op,
                 target_binary_states=target_binary_states,
-                batch_wires=None,
+                wires=nif_device.wires,
+                all_wires=nif_device.wires,
                 lookup_table=nif_device.lookup_table,
-                pfaffian_method="det",
             )
 
         assert torch.autograd.gradcheck(
@@ -156,12 +158,12 @@ class TestNonInteractingFermionicDeviceGradients:
             op = SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2))
             nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
             nif_device.apply_op(op)
-            return nif_device.prob_strategy.batch_call(
-                system_state=nif_device.binary_state,
+            return LookupTableStrategy()(
+                state_prep_op=nif_device.state_prep_op,
                 target_binary_states=target_binary_states,
-                batch_wires=None,
+                wires=nif_device.wires,
+                all_wires=nif_device.wires,
                 lookup_table=nif_device.lookup_table,
-                pfaffian_method="det",
             )
 
         assert torch.autograd.gradcheck(
@@ -176,7 +178,7 @@ class TestNonInteractingFermionicDeviceGradients:
     def test_sptm_circuit_probability_gradient_check(self, expm_input_matrix):
         def circuit(p):
             op = SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2))
-            nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2, pfaffian_method="det")
+            nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
             nif_device.execute_generator([op])
             return nif_device.probability(nif_device.wires)
 
@@ -224,7 +226,7 @@ class TestNonInteractingFermionicDeviceGradients:
 
         def circuit(p):
             op = SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2))
-            nif_device = NonInteractingFermionicDevice(wires=input_matrix.shape[-1] // 2, pfaffian_method="det")
+            nif_device = NonInteractingFermionicDevice(wires=input_matrix.shape[-1] // 2)
             nif_device.execute_generator([op])
             return nif_device.exact_expval(obs)
 
@@ -240,7 +242,7 @@ class TestNonInteractingFermionicDeviceGradients:
     def test_sptm_circuit_analytic_probability_gradient_check(self, input_matrix):
         def circuit(p):
             op = SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2))
-            nif_device = NonInteractingFermionicDevice(wires=input_matrix.shape[-1] // 2, pfaffian_method="det")
+            nif_device = NonInteractingFermionicDevice(wires=input_matrix.shape[-1] // 2)
             nif_device.execute_generator([op])
             return nif_device.analytic_probability(nif_device.wires)
 
@@ -256,7 +258,7 @@ class TestNonInteractingFermionicDeviceGradients:
     def test_sptm_circuit_get_states_probability_gradient_check(self, expm_input_matrix, target_binary_states):
         def circuit(p):
             op = SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2))
-            nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2, pfaffian_method="det")
+            nif_device = NonInteractingFermionicDevice(wires=expm_input_matrix.shape[-1] // 2)
             nif_device.execute_generator([op])
             return nif_device.get_states_probability(target_binary_states)
 

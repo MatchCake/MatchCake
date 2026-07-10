@@ -1,15 +1,16 @@
 import matplotlib as mpl
-from matchcake.ml import CrossValidation, CrossValidationVisualizer
-from matchcake.ml.kernels import FermionicPQCKernel
-from matchcake.ml.kernels.linear_nif_kernel import LinearNIFKernel
-from matchcake.ml.visualisation import ClassificationVisualizer
-from matchcake.ml.visualisation.mpl_rcparams import MPL_RC_DEFAULT_PARAMS
 from matplotlib import pyplot as plt
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import SVC
+
+from matchcake.ml import CrossValidation, CrossValidationVisualizer
+from matchcake.ml.kernels import FermionicPQCKernel
+from matchcake.ml.kernels.linear_nif_kernel import LinearNIFKernel
+from matchcake.ml.visualisation import ClassificationVisualizer
+from matchcake.ml.visualisation.mpl_rcparams import MPL_RC_DEFAULT_PARAMS
 
 mpl.rcParams.update(MPL_RC_DEFAULT_PARAMS)
 

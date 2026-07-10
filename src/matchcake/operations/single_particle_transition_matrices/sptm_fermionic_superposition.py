@@ -24,14 +24,14 @@ class SptmFermionicSuperposition(SingleParticleTransitionMatrixOperation):
     def random(cls, wires: Wires, batch_size=None, **kwargs):
         return cls(wires=wires, **kwargs)
 
-    def __init__(self, wires=None, id=None, **kwargs):
+    def __init__(self, wires=None, **kwargs):
         all_wires = make_wires_continuous(wires)
         n_wires = len(all_wires)
         matrix = np.zeros((2 * n_wires, 2 * n_wires), dtype=int)
         matrix[..., ::2, ::2] = np.eye(n_wires)
         matrix[..., np.arange(3, 2 * n_wires, 2), np.arange(1, 2 * n_wires - 2, 2)] = -1
         matrix[..., 1, -1] = 1
-        super().__init__(matrix, wires=wires, id=id, **kwargs)
+        super().__init__(matrix, wires=wires, **kwargs)
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
         return self

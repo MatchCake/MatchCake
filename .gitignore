@@ -704,3 +704,4 @@ tests/tmp
 jobs_venv
 pstats
 /benchmark/figures
+/.claude

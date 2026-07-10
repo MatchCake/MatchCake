@@ -1,6 +1,5 @@
 import numpy as np
 import pennylane as qml
-from pennylane.operation import AnyWires
 
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
@@ -29,9 +28,9 @@ class SptmBlockDiagAngleEmbedding(SingleParticleTransitionMatrixOperation):
 
     """
 
-    num_wires = AnyWires
+    num_wires = None
 
-    def __init__(self, params, wires=None, id=None):
+    def __init__(self, params, wires=None):
         params_shape = qml.math.shape(params)
         params_batched = qml.math.reshape(params, (-1, *params_shape[-2:]))
         params_batched_flatten = qml.math.reshape(params_batched, (params_shape[0], -1))
@@ -39,8 +38,7 @@ class SptmBlockDiagAngleEmbedding(SingleParticleTransitionMatrixOperation):
         n_wires = len(wires)
         if n_required_wires > n_wires:
             raise ValueError(
-                f"Number of wires must be at least {n_required_wires} for the given parameters. "
-                f"Got {n_wires} wires."
+                f"Number of wires must be at least {n_required_wires} for the given parameters. Got {n_wires} wires."
             )
         matrix = qml.math.zeros((params_shape[0], 2 * n_wires, 2 * n_wires), dtype=complex)
         matrix = qml.math.convert_like(matrix, params)
@@ -53,4 +51,4 @@ class SptmBlockDiagAngleEmbedding(SingleParticleTransitionMatrixOperation):
             matrix[..., i, i + 1] = -qml.math.sin(params_batched_flatten[..., p_idx])
             matrix[..., i + 1, i + 1] = qml.math.cos(params_batched_flatten[..., p_idx])
 
-        super().__init__(matrix, wires=wires, id=id, normalize=False)
+        super().__init__(matrix, wires=wires, normalize=False)

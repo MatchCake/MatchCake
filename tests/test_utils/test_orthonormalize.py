@@ -15,7 +15,7 @@ set_seed(TEST_SEED)
 
 
 class __SpecialOrthonormalizedTensor:
-    IDS = []
+    IDS: list = []
 
     def __init__(self, tensor):
         self.tensor = tensor

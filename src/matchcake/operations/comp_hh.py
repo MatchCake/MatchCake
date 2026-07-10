@@ -30,7 +30,6 @@ class CompHH(MatchgateOperation):
     def __init__(
         self,
         wires=None,
-        id=None,
         default_dtype: torch.dtype = torch.complex128,
         default_device: Optional[torch.device] = None,
         **kwargs,
@@ -38,7 +37,6 @@ class CompHH(MatchgateOperation):
         super().__init__(
             mgp.MatchgateStandardParams.from_sub_matrices(CLIFFORD_H, CLIFFORD_H),
             wires=wires,
-            id=id,
             default_dtype=default_dtype,
             default_device=default_device,
             **kwargs,
@@ -48,4 +46,4 @@ class CompHH(MatchgateOperation):
         return base_label or self.name
 
     def to_sptm_operation(self) -> SingleParticleTransitionMatrixOperation:
-        return SptmCompHH(wires=self.wires, id=self.id, **self.hyperparameters, **self.kwargs)
+        return SptmCompHH(wires=self.wires, **self.hyperparameters, **self.kwargs)

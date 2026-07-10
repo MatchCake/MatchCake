@@ -46,7 +46,7 @@ $$
 \end{equation}
 $$
 
-which is related to the free-fermionic hamiltonian of the particule. Then we call those operations as `Sptm{M}` where `M` is the matchgate nomenclature explain in the last section. 
+which is related to the free-fermionic hamiltonian of the particule. Then we call those operations as `Sptm{M}` where `M` is the matchgate nomenclature explain in the last section.
 
 
 ## Fermionic Operators
@@ -57,4 +57,3 @@ We call `fermionic_{*}` operations that are special fermionic operations that ar
 
 # Others
 - https://pennylane.ai/codebook/circuits-with-many-qubits/multi-qubit-systems
-

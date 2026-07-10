@@ -1,6 +1,3 @@
-from typing import Union
-
-import pennylane as qml
 from pennylane.operation import Operator, StatePrepBase
 
 from ...typing import TensorLike

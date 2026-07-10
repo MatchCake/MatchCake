@@ -1,5 +1,5 @@
 import json
-from typing import Any, List, Optional, Sequence, Type, Union
+from typing import Any, Optional, Sequence, Type, Union
 
 import numpy as np
 import pennylane as qml
@@ -21,11 +21,13 @@ class RandomOperationsGenerator:
         initial_state: Optional[Union[Sequence[int], np.ndarray]] = None,
         **kwargs,
     ):
+        wires_arr: np.ndarray
         if isinstance(wires, int):
-            wires = np.arange(wires)
-        wires = np.sort(np.asarray(wires))
-        self.wires = wires
-        self.n_ops = n_ops if n_ops is not None else 2 * len(wires) * len(op_types)
+            wires_arr = np.arange(wires)
+        else:
+            wires_arr = np.sort(np.asarray(wires))
+        self.wires = wires_arr
+        self.n_ops = n_ops if n_ops is not None else 2 * len(wires_arr) * len(op_types)
         self.batch_size = batch_size
         self.op_types = op_types
         self.use_cuda = use_cuda
@@ -65,8 +67,8 @@ class RandomOperationsGenerator:
             rn_wire0 = rn_gen.choice(wires[:-1])
             rn_wire1 = rn_wire0 + 1
             op = cls.random(wires=[rn_wire0, rn_wire1], batch_size=self.batch_size, seed=self.seed)
-            if self.use_cuda:
-                op = op.to_cuda()
+            if self.use_cuda:  # pragma: no cover
+                op = op.to_cuda()  # pragma: no cover
             yield op
         return
 
