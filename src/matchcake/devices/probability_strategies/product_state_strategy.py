@@ -6,8 +6,12 @@ from pennylane.wires import Wires
 
 from ... import utils
 from ...operations.state_preparation.product_state import ProductState
+from ...utils._pfaffian_family import OutcomeFamily
 from ...utils.math import convert_and_cast_like
+from ...utils.torch_utils import to_tensor
 from .probability_strategy import ProbabilityStrategy
+
+_TREE_CROSSOVER_K = 8
 
 
 class ProductStateProbabilityStrategy(ProbabilityStrategy):
@@ -135,6 +139,38 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
         )  # (B, 2k)
         return covariance_matrix[..., majorana_batch[:, :, None], majorana_batch[:, None, :]]  # (..., B, 2k, 2k)
 
+    @staticmethod
+    def _is_full_outcome_set(target_arr: np.ndarray, k: int) -> bool:
+        r"""Return True if ``target_arr`` is all of :math:`\{0,1\}^k` in big-endian order.
+
+        The big-endian enumeration (``y_0`` most significant) is the order produced by
+        ``NIFDevice.states_to_binary(arange(2**k), k)`` and consumed by
+        :class:`~matchcake.utils._pfaffian_family.OutcomeFamily`, so a match means the tree's
+        outcome axis lines up with the requested outcomes without any permutation.
+
+        :param target_arr: Requested binary outcomes of shape ``(B, k)``.
+        :type target_arr: np.ndarray
+        :param k: Number of measured wires.
+        :type k: int
+        :return: True when the outcome set is the complete big-endian enumeration.
+        :rtype: bool
+        """
+        if target_arr.shape != (2**k, k):
+            return False
+        expected = (np.arange(2**k)[:, None] >> np.arange(k - 1, -1, -1)[None, :]) & 1
+        return np.array_equal(target_arr, expected)
+
+    @staticmethod
+    def _is_complex_matrix(matrix: TensorLike) -> bool:
+        """Return True when ``matrix`` has a complex dtype, across numpy and torch backends.
+
+        :param matrix: Any array/tensor with a ``dtype`` attribute.
+        :type matrix: TensorLike
+        :return: True if the dtype is complex.
+        :rtype: bool
+        """
+        return "complex" in str(getattr(matrix, "dtype", ""))
+
     def __call__(
         self,
         *,
@@ -197,6 +233,24 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
                 lambda_t_w = self._extract_majorana_submatrix_batch(
                     covariance_matrix, all_wires, batch_wires, k
                 )  # (..., B, 2k, 2k)
+
+        # Full-distribution fast path: for the complete outcome set on shared wires above the size
+        # crossover, evaluate every ``p(y) = 2^-k |Pf(Lambda(t) + Lambda_y)|`` with the shared-Schur
+        # tree, which is O(2^k) instead of the batched det's O(2^k (2k)^3) and never materializes the
+        # (2^k, 2k, 2k) stack. The tree requires a real covariance (physical family); complex inputs
+        # fall through to the batched path. Its outcome axis is big-endian, matching ``target_arr``.
+        # The complex-ness is checked on the untouched covariance because ``to_tensor`` strips the
+        # imaginary part; a genuinely complex covariance must reach the batched path (which takes the
+        # real part of the Pfaffian), not a tree evaluated on the discarded real part.
+        if (
+            not is_single
+            and same_wires
+            and k >= _TREE_CROSSOVER_K
+            and self._is_full_outcome_set(target_arr, k)
+            and not self._is_complex_matrix(lambda_t_w)
+        ):
+            probs = OutcomeFamily(to_tensor(lambda_t_w)).all_probabilities().movedim(-1, 0)  # (2^k, ...)
+            return convert_and_cast_like(probs, covariance_matrix)
 
         lambda_y = convert_and_cast_like(self.build_lambda_y(target_arr, k), covariance_matrix)
 

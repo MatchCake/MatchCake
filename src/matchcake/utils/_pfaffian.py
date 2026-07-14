@@ -1,4 +1,3 @@
-import threading
 from typing import Optional
 
 import numpy as np
@@ -10,8 +9,6 @@ from pennylane.typing import TensorLike
 from . import torch_utils
 from .math import convert_and_cast_like
 from .torch_utils import infer_complex_dtype, infer_real_dtype
-
-_pfaffian_epsilon_lock = threading.Lock()
 
 
 def signed_pfaffian(matrix: TensorLike, dtype: Optional[torch.dtype] = None, **kwargs) -> TensorLike:
@@ -109,16 +106,18 @@ def _pfaffian_kernel(matrix_t: torch.Tensor, sign: bool, epsilon: float) -> torc
     :type matrix_t: torch.Tensor
     :param sign: When ``True`` return the signed Pfaffian, otherwise its magnitude.
     :type sign: bool
-    :param epsilon: Floor applied to the determinant magnitude in the ``sign=False`` path.
+    :param epsilon: Floor applied to the Pfaffian magnitude in the ``sign=False`` path; the magnitude
+        ``|Pf|`` is floored at ``sqrt(epsilon)``.
     :type epsilon: float
     :return: Pfaffian of shape ``(...,)``.
     :rtype: torch.Tensor
     """
     if sign:
         return torch_pfaffian.pfaffian(matrix_t, sign=True)
-    with _pfaffian_epsilon_lock:
-        torch_pfaffian.PfaffianStrategy.EPSILON = epsilon
-        return torch_pfaffian.PfaffianDet.apply(matrix_t)
+    # Magnitude path: |Pf| = sqrt(|det|) floored at sqrt(epsilon), with epsilon a local argument.
+    # Kept det-based through the new dispatch because the log-domain magnitude kernel is slower here with no
+    # gradient benefit (the value and gradient are identical to this floor).
+    return torch.sqrt(torch.clamp(torch.abs(torch.linalg.det(matrix_t)), min=epsilon))
 
 
 def pfaffian(
@@ -131,26 +130,24 @@ def pfaffian(
     """
     Compute the Pfaffian of a real or complex skew-symmetric matrix ``A`` (``A = -A^T``).
 
-    Delegates to TorchPfaffian. When ``sign`` is ``False`` (default) the magnitude
-    ``sqrt(|det(A)|)`` is returned, which is the quantity needed for probability computations
-    where the sign is irrelevant. When ``sign`` is ``True`` the signed Pfaffian is returned.
+    Delegates to TorchPfaffian. When ``sign`` is ``False`` (default) the magnitude ``|Pf(A)|`` is
+    returned, floored at ``sqrt(epsilon)``, which is the quantity needed for probability computations
+    where the sign is
+    irrelevant. When ``sign`` is ``True`` the signed Pfaffian is returned. Both paths preserve the
+    imaginary part of a complex ``matrix``: the TorchPfaffian Parlett-Reid strategies compute the
+    complex signed Pfaffian without discarding it.
 
     For a large batch the pfaffian workspace and its backward graph dominate
     memory and can exceed device memory. Pass ``chunk_size`` to bound that footprint: the
     leading batch axis is then processed in slices of at most ``chunk_size`` matrices, each
     reduced independently and concatenated, instead of all at once.
 
-    Note: with a complex ``matrix`` this function may not behave as expected. The signed path
-    (``sign=True``) relies on a kernel that discards the imaginary part without warning, so it
-    returns the Pfaffian of the real part only. In normal use the signed path receives real
-    matrices, and the magnitude path (``sign=False``) handles complex inputs correctly. If the
-    complex behaviour is a problem for your use case, please open an issue.
-
     :param matrix: Matrix to compute the Pfaffian of, of shape ``(..., 2n, 2n)``.
     :param sign: When ``True`` return the signed Pfaffian, otherwise its magnitude. Defaults
         to ``False``.
-    :param epsilon: Floor applied to the determinant magnitude in the ``sign=False`` path to
-        avoid numerical instabilities. Defaults to ``1e-32``.
+    :param epsilon: Floor applied to the Pfaffian magnitude in the ``sign=False`` path (``|Pf|`` is
+        floored at ``sqrt(epsilon)``). Passed per call, so concurrent calls with different values do
+        not interfere. Defaults to ``1e-32``.
     :param dtype: Optional working dtype to cast ``matrix`` to before the computation.
         Defaults to ``None`` (the input dtype is preserved).
     :param chunk_size: Maximum number of matrices to reduce at once along the flattened leading

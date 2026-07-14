@@ -153,6 +153,62 @@ class TestPfaffian:
             rtol=10 * RTOL_APPROX_COMPARISON,
         )
 
+    def test_pfaffian_epsilon_respected_per_call(self):
+        matrix = torch.tensor([[0.0, 1e-10], [-1e-10, 0.0]], dtype=torch.float64)
+        floored = float(pfaffian(matrix, sign=False, epsilon=1e-16))
+        unfloored = float(pfaffian(matrix, sign=False, epsilon=1e-40))
+        assert floored == pytest.approx(1e-8, rel=RTOL_SCALAR_COMPARISON)
+        assert unfloored == pytest.approx(1e-10, rel=RTOL_SCALAR_COMPARISON)
+
+    @pytest.mark.parametrize("n", [2, 4, 8])
+    def test_pfaffian_magnitude_matches_floored_det_formula(self, n):
+        matrix = torch.from_numpy(self.skew_symmetric(n))
+        for scale in [1.0, 1e-3]:
+            scaled = scale * matrix
+            reference = torch.sqrt(torch.clamp(torch.abs(torch.linalg.det(scaled)), min=1e-8))
+            result = pfaffian(scaled, sign=False, epsilon=1e-8)
+            torch.testing.assert_close(result, reference, rtol=RTOL_MATRIX_COMPARISON, atol=ATOL_MATRIX_COMPARISON)
+
+    def test_pfaffian_magnitude_gradient_matches_floored_det_formula(self):
+        base = torch.from_numpy(self.skew_symmetric(8))
+        for scale in [1.0, 1e-3]:
+            scaled = (scale * base).clone()
+            first = scaled.clone().requires_grad_()
+            pfaffian(first, sign=False, epsilon=1e-8).sum().backward()
+            second = scaled.clone().requires_grad_()
+            torch.sqrt(torch.clamp(torch.abs(torch.linalg.det(second)), min=1e-8)).sum().backward()
+            torch.testing.assert_close(
+                first.grad, second.grad, rtol=RTOL_MATRIX_COMPARISON, atol=ATOL_MATRIX_COMPARISON
+            )
+
+    def test_pfaffian_epsilon_thread_safe(self):
+        import threading
+
+        # |Pf| = 1e-10; a large epsilon floors it to 1e-8, a small one leaves it at 1e-10. If epsilon
+        # were a shared global, interleaved threads would read each other's floor. Barrier-synced start
+        # plus a per-iteration assert over thousands of iterations would surface such a race.
+        matrix = torch.tensor([[0.0, 1e-10], [-1e-10, 0.0]], dtype=torch.float64)
+        cases = [(1e-16, 1e-8), (1e-40, 1e-10)]
+        n_threads, iterations = 8, 2000
+        barrier = threading.Barrier(n_threads)
+        errors = []
+
+        def worker(index):
+            epsilon, expected = cases[index % 2]
+            barrier.wait()
+            for _ in range(iterations):
+                value = float(pfaffian(matrix, sign=False, epsilon=epsilon))
+                if abs(value - expected) > 1e-14:
+                    errors.append((index, value, expected))
+                    return
+
+        threads = [threading.Thread(target=worker, args=(index,)) for index in range(n_threads)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        assert not errors, errors
+
     def test_pfaffian_signed_grads_on_skew_manifold(self):
         # The signed Pfaffian gradient is the antisymmetric (pf/2) A^{-T}; it is only
         # consistent with finite differences when perturbations preserve skew-symmetry,
@@ -235,6 +291,18 @@ class TestPfaffian:
         )
         result = sector_pfaffian_features(matrix, np.array([[0, 1, 2, 3]]))
         np.testing.assert_allclose(float(result[0]), a * f - b * e + c * d, atol=10 * ATOL_SCALAR_COMPARISON)
+
+    @pytest.mark.parametrize("submatrix_size", [4, 6, 8])
+    def test_sector_pfaffian_features_matches_reference_across_crossover(self, submatrix_size):
+        # The pfaffian dispatch auto-routes submatrix size <= 6 to the unrolled kernel and >= 8 to the
+        # Rust path; the batched sector result must equal a per-submatrix signed Pfaffian at every size.
+        rng = np.random.default_rng(submatrix_size)
+        dimension, n_terms = 12, 5
+        cov = torch.from_numpy(self.skew_symmetric(dimension))
+        index_sets = np.stack([np.sort(rng.choice(dimension, submatrix_size, replace=False)) for _ in range(n_terms)])
+        result = sector_pfaffian_features(cov, index_sets)
+        reference = torch.stack([signed_pfaffian(cov[np.ix_(idx, idx)]) for idx in index_sets])
+        torch.testing.assert_close(result, reference, rtol=RTOL_MATRIX_COMPARISON, atol=ATOL_MATRIX_COMPARISON)
 
     def test_sector_pfaffian_2x2_grads(self):
         cov = torch.tensor(

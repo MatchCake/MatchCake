@@ -15,10 +15,12 @@ from ..operations.state_preparation import ProductState
 from ..typing import TensorLike
 from .expval_strategies.m_pfaffian._extended_covariance import displacement_vector
 from .nif_device import NonInteractingFermionicDevice
+from .probability_strategies.product_state_strategy import ProductStateProbabilityStrategy
 from .swap_injection import (
     CzStringEngine,
     SwapBranchState,
     basis_state_probability,
+    basis_states_probabilities,
     hamiltonian_expval,
     lift_from_product_state,
     lift_sptm,
@@ -209,6 +211,21 @@ class SwapAugmentedFermionicDevice(NonInteractingFermionicDevice):
             return basis_state_probability(branch.cov, branch.weights, target, measured_qubits)
 
         wires_array = np.broadcast_to(np.asarray(wires), target.shape)
+        num_measured = target.shape[-1]
+        same_wires = target.shape[0] <= 1 or bool(np.all(wires_array == wires_array[0]))
+        # Full-distribution fast path: the complete big-endian outcome set on shared measured wires
+        # (the analytic_probability case) hoists the outcome-independent transition covariance grid out
+        # of the per-outcome loop and evaluates every outcome's Pfaffian in one shared-Schur tree call,
+        # O(2^k) instead of the loop's O(2^k) pseudo-inverse grids. Degenerate states keep the
+        # string-engine loop (out of scope for the tree).
+        if (
+            not branch.degenerate
+            and same_wires
+            and ProductStateProbabilityStrategy._is_full_outcome_set(target, num_measured)
+        ):
+            measured_qubits = [self.wires.index(wire) for wire in wires_array[0]]
+            return basis_states_probabilities(branch.cov, branch.weights, measured_qubits)
+
         if branch.degenerate:
             probabilities = [
                 self._degenerate_probability(

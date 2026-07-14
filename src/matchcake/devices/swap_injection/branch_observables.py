@@ -7,8 +7,9 @@ from pennylane.operation import Operator
 
 from ...typing import TensorLike
 from ...utils._pfaffian import signed_pfaffian_complex
+from ...utils._pfaffian_family import OutcomeFamily, outcome_bits
 from ...utils.math import convert_and_cast_like
-from ...utils.torch_utils import infer_complex_dtype
+from ...utils.torch_utils import infer_complex_dtype, infer_real_dtype
 from .majorana_term_groups import MajoranaTermGroups
 
 
@@ -118,6 +119,74 @@ def basis_state_probability(
     return convert_and_cast_like(probability, qml.math.real(branch_covariances[0]))
 
 
+def basis_states_probabilities(
+    branch_covariances: TensorLike,
+    weights: TensorLike,
+    measured_qubits: List[int],
+    hermitian_halving: bool = True,
+) -> TensorLike:
+    r"""Full-distribution probabilities ``p(y)`` for every ``y`` in ``{0,1}^k`` on shared measured qubits.
+
+    Computes the same probabilities as :func:`basis_state_probability` (swap_injection_theory.md eq 15)
+    but for the complete big-endian outcome set in one shot. The outcome-independent transition
+    covariance grid ``Gamma_{ab}`` (``marker=None``) and its measured submatrix are built once, and the
+    ``2^k`` Pfaffians ``Pf(Gamma_{ab}|_{meas} + Lambda_y)`` of every outcome are evaluated together by the
+    shared-Schur tree :class:`~matchcake.utils._pfaffian_family.OutcomeFamily`, replacing the
+    per-outcome ``signed_pfaffian_complex`` grid that recomputes ``Gamma`` (including its pseudo-inverse)
+    for every outcome:
+
+    .. math::
+        p(y) = \frac{\mathrm{Pf}(\Lambda_y)}{2^k}\,
+               \mathrm{Re}\!\Bigl[\sum_{a, b} W_{ab}\,
+               \mathrm{Pf}\bigl(\Gamma_{ab}|_{\mathrm{meas}} + \Lambda_y\bigr)\Bigr],
+        \qquad \mathrm{Pf}(\Lambda_y) = \prod_j (2 y_j - 1).
+
+    The outcome axis is big-endian (``y_0`` most significant), matching
+    ``NIFDevice.states_to_binary(arange(2^k), k)`` and the tree's own ordering. The complex grid is fed
+    to :meth:`~matchcake.utils._pfaffian_family.OutcomeFamily.all_slog_pfaffians` with
+    ``zero_pivot_fallback=True`` so structured/basis-state/deterministic-shared-wire branch pairs (which
+    hit exact-zero intermediate pivots) are recomputed with a pivoted Pfaffian instead of returning a
+    spurious zero.
+
+    This is the non-degenerate probability path only (``marker=None``); the produced grid must never be
+    reused for an expectation value, which needs ``marker != None``.
+
+    :param branch_covariances: Real branch covariance tensor of shape ``(chi, ..., D, D)``.
+    :param weights: Complex Hermitian weight matrix of shape ``(chi, chi)`` (or ``(chi, chi, ...)``).
+    :param measured_qubits: Qubit indices of the ``k`` measured wires, shared by every outcome.
+    :param hermitian_halving: When ``True`` (default) exploit ``Gamma_{ba} = conj(Gamma_{ab})`` and the
+        real diagonal ``Gamma_{aa} = M_a`` to evaluate only the ``chi (chi - 1) / 2`` strict-upper complex
+        pairs plus the ``chi`` real diagonal pairs, reconstructing the lower triangle by conjugation; when
+        ``False`` the full ``chi x chi`` complex grid is evaluated in one call. Both give identical
+        probabilities.
+    :return: Real probabilities of shape ``(2^k, ...)`` with the outcome axis first, one per big-endian
+        outcome (matching the per-outcome loop's stacked output).
+    :rtype: TensorLike
+    """
+    measured_qubits = list(measured_qubits)
+    n_measured = len(measured_qubits)
+    measured_modes = [2 * qubit + offset for qubit in measured_qubits for offset in (0, 1)]
+
+    complex_dtype = infer_complex_dtype(branch_covariances[0])
+    device = torch.as_tensor(qml.math.toarray(branch_covariances[0])).device
+    weights = _weights_to_tensor(weights, complex_dtype, device)
+    mode_index = torch.as_tensor(measured_modes, dtype=torch.long, device=device)
+
+    pfaffian_grid = _pair_pfaffian_grid(branch_covariances, mode_index, complex_dtype, hermitian_halving)
+    # (chi, chi, ..., 2^k)
+
+    bits = outcome_bits(n_measured, device=device)  # (2^k, k), big-endian
+    pf_lambda_y = torch.prod(2 * bits - 1, dim=-1).to(dtype=complex_dtype)  # (2^k,), Pf(Lambda_y) per outcome
+
+    weight_extra = pfaffian_grid.ndim - 1 - weights.ndim  # covariance batch axes between (chi, chi) and outcomes
+    weight_expanded = weights.reshape(*weights.shape, *([1] * weight_extra), 1)
+    weighted = (weight_expanded * pfaffian_grid).sum(dim=(0, 1))  # (..., 2^k)
+
+    total = weighted * pf_lambda_y * (2.0**-n_measured)  # (..., 2^k)
+    probabilities = qml.math.real(total).movedim(-1, 0)  # (2^k, ...)
+    return convert_and_cast_like(probabilities, qml.math.real(branch_covariances[0]))
+
+
 def hamiltonian_expval(
     branch_covariances: TensorLike,
     weights: TensorLike,
@@ -206,6 +275,64 @@ def _weights_to_tensor(weights: TensorLike, dtype: torch.dtype, device) -> torch
     if isinstance(weights, torch.Tensor):
         return weights.to(dtype=dtype, device=device)
     return torch.as_tensor(qml.math.toarray(weights), dtype=dtype, device=device)
+
+
+def _pair_pfaffian_grid(
+    branch_covariances: TensorLike,
+    mode_index: torch.Tensor,
+    complex_dtype: torch.dtype,
+    hermitian_halving: bool,
+) -> torch.Tensor:
+    r"""Complex grid of ``Pf(Gamma_{ab}|_{meas} + Lambda_y)`` for every branch pair and every outcome.
+
+    The measured transition covariance of every branch pair is built once and its ``2^k`` outcome
+    Pfaffians are evaluated together by :class:`~matchcake.utils._pfaffian_family.OutcomeFamily` (the
+    complex path uses ``zero_pivot_fallback=True`` to repair the unpivoted sweep's spurious zeros on
+    structured inputs). With ``hermitian_halving`` only the ``chi (chi - 1) / 2`` strict-upper pairs go
+    through the complex tree, the ``chi`` diagonal pairs go through the real tree (``Gamma_{aa} = M_a`` is
+    real), and the lower triangle is reconstructed from ``Pf_{ba}(y) = conj(Pf_{ab}(y))``.
+
+    :param branch_covariances: Real branch covariance tensor of shape ``(chi, ..., D, D)``.
+    :param mode_index: Long tensor of the ``2k`` measured Majorana modes.
+    :param complex_dtype: Complex working dtype of the returned grid.
+    :param hermitian_halving: When ``True`` evaluate only the upper triangle and the real diagonal.
+    :return: Complex Pfaffian grid of shape ``(chi, chi, ..., 2^k)``.
+    :rtype: torch.Tensor
+    """
+    if not hermitian_halving:
+        gamma = transition_cov(branch_covariances[:, None], branch_covariances[None, :])  # (chi, chi, ..., D, D)
+        gamma_measured = gamma.index_select(-2, mode_index).index_select(-1, mode_index)  # (chi, chi, ..., 2k, 2k)
+        phase, log_abs = OutcomeFamily(gamma_measured).all_slog_pfaffians(zero_pivot_fallback=True)
+        return phase * torch.exp(log_abs).to(phase.dtype)  # (chi, chi, ..., 2^k)
+
+    if isinstance(branch_covariances, torch.Tensor):
+        branch_tensor = branch_covariances  # keep the autograd graph
+    else:
+        branch_tensor = torch.as_tensor(qml.math.toarray(branch_covariances))
+    chi = branch_tensor.shape[0]
+    n_outcomes = 1 << (mode_index.shape[0] // 2)
+    real_dtype = infer_real_dtype(branch_covariances[0])
+
+    triu = torch.triu_indices(chi, chi, offset=1, device=branch_tensor.device)
+    upper_row, upper_col = triu[0], triu[1]
+    gamma_upper = transition_cov(branch_tensor[upper_row], branch_tensor[upper_col])  # (n_pairs, ..., D, D)
+    gamma_upper = gamma_upper.index_select(-2, mode_index).index_select(-1, mode_index)  # (n_pairs, ..., 2k, 2k)
+    phase_upper, log_upper = OutcomeFamily(gamma_upper).all_slog_pfaffians(zero_pivot_fallback=True)
+    pfaffian_upper = phase_upper * torch.exp(log_upper).to(phase_upper.dtype)  # (n_pairs, ..., 2^k)
+
+    # Gamma_{aa} = M_a is real (transition_cov(M, M) = M): the diagonal rides the cheaper real tree, and a
+    # zero pivot there is a genuine zero marginal (no fallback needed, as in all_probabilities).
+    diagonal = branch_tensor.index_select(-2, mode_index).index_select(-1, mode_index).to(real_dtype)
+    phase_diag, log_diag = OutcomeFamily(diagonal).all_slog_pfaffians()
+    pfaffian_diag = (phase_diag * torch.exp(log_diag)).to(complex_dtype)  # (chi, ..., 2^k)
+
+    batch_shape = pfaffian_upper.shape[1:-1]  # covariance batch axes between the pair axis and the outcomes
+    pfaffian_grid = torch.zeros(chi, chi, *batch_shape, n_outcomes, dtype=complex_dtype, device=branch_tensor.device)
+    pfaffian_grid[upper_row, upper_col] = pfaffian_upper
+    pfaffian_grid[upper_col, upper_row] = pfaffian_upper.conj()
+    diagonal_index = torch.arange(chi, device=branch_tensor.device)
+    pfaffian_grid[diagonal_index, diagonal_index] = pfaffian_diag
+    return pfaffian_grid
 
 
 def _exclude_masked_pairs(

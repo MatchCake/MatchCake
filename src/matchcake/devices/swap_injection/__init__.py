@@ -1,5 +1,6 @@
 from .branch_observables import (
     basis_state_probability,
+    basis_states_probabilities,
     hamiltonian_expval,
     transition_cov,
 )
@@ -13,6 +14,7 @@ __all__ = [
     "DEGENERATE_OVERLAP_TOL",
     "SwapBranchState",
     "basis_state_probability",
+    "basis_states_probabilities",
     "condition_occupied",
     "hamiltonian_expval",
     "MajoranaTermGroups",

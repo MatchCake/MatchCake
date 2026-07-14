@@ -6,8 +6,12 @@ import tqdm
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 
+from ...utils._pfaffian_family import sample_outcomes
 from ...utils.math import random_index
+from ...utils.torch_utils import to_tensor
 from .sampling_strategy import SamplingStrategy
+
+_SAMPLER_CROSSOVER_K = 10
 
 
 class KQubitsByKQubitsSampling(SamplingStrategy):
@@ -51,6 +55,65 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
         n_wires_left = num_wires % k
         n_full_steps = len(range(k, num_wires - n_wires_left, k))
         return [size for size in ([k] * n_full_steps) + [n_wires_left] if size > 0]
+
+    @staticmethod
+    def _device_covariance(device: qml.devices.QubitDevice) -> Optional[TensorLike]:
+        """Return the device's real Majorana covariance, or None when it is unavailable.
+
+        The covariance exists only for a product-state preparation, whose evolved
+        ``Lambda(t)`` is a valid Pfaffian probability family for :func:`sample_outcomes`. A
+        complex-dtyped covariance is rejected: the sampler needs a real family and ``to_tensor``
+        would silently discard the imaginary part.
+
+        :param device: Device providing ``covariance_matrix``.
+        :type device: qml.devices.QubitDevice
+        :return: The real covariance matrix, or None.
+        :rtype: Optional[TensorLike]
+        """
+        try:
+            covariance = device.covariance_matrix
+        except (ValueError, AttributeError):
+            return None
+        if "complex" in str(getattr(covariance, "dtype", "")):
+            return None
+        return covariance
+
+    @staticmethod
+    def _covariance_in_wire_label_order(covariance: TensorLike, device: qml.devices.QubitDevice) -> TensorLike:
+        """Reorder the covariance Majorana blocks from device wire-position order to wire-label order.
+
+        ``device.covariance_matrix`` is built in ``device.wires`` position order, but samples must be
+        emitted in wire-label order (PennyLane's ``q_0, q_1, ...`` convention, which the per-step loop
+        follows via ``all_wires.indices``). For identity labels (``wires = range(n)``) this is a no-op.
+
+        :param covariance: Covariance ``(..., 2n, 2n)`` in device wire-position order.
+        :type covariance: TensorLike
+        :param device: Device providing the wire labels.
+        :type device: qml.devices.QubitDevice
+        :return: Covariance reordered so block ``i`` corresponds to wire label ``i``.
+        :rtype: TensorLike
+        """
+        positions = np.asarray(device.wires.indices(Wires(range(device.num_wires))))  # position of label i
+        majorana = np.stack([2 * positions, 2 * positions + 1], axis=1).ravel()  # (2n,)
+        return covariance[..., majorana[:, None], majorana[None, :]]
+
+    @staticmethod
+    def _sample_from_covariance(covariance: TensorLike, shots: int) -> np.ndarray:
+        """Draw all-wire samples directly from the covariance family.
+
+        Uses the closed-form autoregressive conditionals (``O(k^3)`` per shot, no full-matrix
+        Pfaffian), which also avoids the additive-epsilon normalization bias of the per-step
+        ``random_index`` sampler at large wire counts.
+
+        :param covariance: Real Majorana covariance ``(..., 2k, 2k)``.
+        :type covariance: TensorLike
+        :param shots: Number of samples.
+        :type shots: int
+        :return: Samples ``(shots, ..., k)`` (big-endian per wire).
+        :rtype: np.ndarray
+        """
+        shots = int(getattr(shots, "total_shots", shots))
+        return np.asarray(sample_outcomes(to_tensor(covariance), shots))
 
     @classmethod
     def extend_states(cls, states: TensorLike, added_states: TensorLike, unique: bool = True) -> TensorLike:
@@ -138,6 +201,15 @@ class KQubitsByKQubitsSampling(SamplingStrategy):
             :math:`|\\langle x | \\psi \\rangle|^2`.
         :rtype: TensorLike
         """
+        # Covariance fast path: for a product-state family above the size crossover, draw all wires
+        # at once with the O(k^3)/shot autoregressive sampler instead of the per-step batched-prefix
+        # loop. Same distribution, no full-matrix Pfaffian, and no random_index normalization bias.
+        if device.num_wires >= _SAMPLER_CROSSOVER_K:
+            covariance = self._device_covariance(device)
+            if covariance is not None:
+                covariance = self._covariance_in_wire_label_order(covariance, device)
+                return self._sample_from_covariance(covariance, device.shots)
+
         p_bar = tqdm.tqdm(
             total=device.num_wires,
             desc=f"[{self.NAME}] Generating Samples by Subsets of {k}",

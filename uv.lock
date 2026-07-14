@@ -1820,7 +1820,7 @@ requires-dist = [
     { name = "torch", marker = "extra == 'cpu'", specifier = ">=2.1.2,<3.0.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "matchcake", extra = "cpu" } },
     { name = "torch", marker = "extra == 'cu128'", specifier = ">=2.1.2,<3.0.0", index = "https://download.pytorch.org/whl/cu128", conflict = { package = "matchcake", extra = "cu128" } },
     { name = "torch", marker = "extra == 'cu130'", specifier = ">=2.1.2,<3.0.0", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "matchcake", extra = "cu130" } },
-    { name = "torchpfaffian", specifier = ">=0.0.4" },
+    { name = "torchpfaffian", specifier = ">=0.0.5" },
     { name = "torchvision", marker = "extra == 'cpu'", specifier = ">=0.21.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "matchcake", extra = "cpu" } },
     { name = "torchvision", marker = "extra == 'cu128'", specifier = ">=0.21.0", index = "https://download.pytorch.org/whl/cu128", conflict = { package = "matchcake", extra = "cu128" } },
     { name = "torchvision", marker = "extra == 'cu130'", specifier = ">=0.22.0", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "matchcake", extra = "cu130" } },
@@ -4466,7 +4466,7 @@ wheels = [
 
 [[package]]
 name = "torchpfaffian"
-version = "0.0.4"
+version = "0.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
@@ -4476,11 +4476,11 @@ dependencies = [
     { name = "torch", version = "2.10.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-9-matchcake-cu128' or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu130') or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cupy') or (extra == 'extra-9-matchcake-cu130' and extra == 'extra-9-matchcake-cupy')" },
     { name = "torch", version = "2.10.0+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "extra == 'extra-9-matchcake-cu130' or (extra == 'extra-9-matchcake-cpu' and extra == 'extra-9-matchcake-cu128') or (extra == 'extra-9-matchcake-cu128' and extra == 'extra-9-matchcake-cupy') or (extra == 'extra-9-matchcake-cpu' and extra != 'extra-9-matchcake-cu130' and extra == 'extra-9-matchcake-cupy')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/08/76/5951ce47d2dfd230edaf2b056911359f55734402daa8d360c780a034c70e/torchpfaffian-0.0.4.tar.gz", hash = "sha256:7b2bb907e841215226c97300f6bb53ba087221a0a054984d8c91fc90b6c0aef3", size = 21535, upload-time = "2026-06-22T21:27:17.045Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/98/b1/52b741b6dc99b681fa05e29786c25f8f59d5da3b4bba5d64cf40c9e70fd3/torchpfaffian-0.0.5.tar.gz", hash = "sha256:7fb8b259da91bf6368159c4803ee66422c717ad08a647dcbea0cb899723915b2", size = 31675, upload-time = "2026-07-13T21:52:26.206Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/29/d4/855e880263d0194c0ef2e9578a776b683703d4ab476e9c0c420ee699c48b/torchpfaffian-0.0.4-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:0b0623135c40fe6587e935c2d5f6399022995aa43564c995bdf7a4ddccba3dd3", size = 350775, upload-time = "2026-06-22T21:27:12.495Z" },
-    { url = "https://files.pythonhosted.org/packages/0b/a2/a6acbae1742431ba0967032d6d17c6bdaebb14fa0e64c24565417c7d5fec/torchpfaffian-0.0.4-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:70efc27ddc46a8e7ac979688c77195dc4ec5b251caed9848e5beea5fce69eae2", size = 360443, upload-time = "2026-06-22T21:27:14.358Z" },
-    { url = "https://files.pythonhosted.org/packages/80/23/9b1e0d5ecc04b11da4e515c49acf4dffaa83b394db2e1b6569da93af1f2f/torchpfaffian-0.0.4-cp310-abi3-win_amd64.whl", hash = "sha256:28a87f600f6f845b39394ccdb6b87b9e037bff3b3aa56db0b9618cdcb0f30371", size = 238680, upload-time = "2026-06-22T21:27:15.91Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/e9/79895965d21f796a52193343738d43ff69720ad4f25498e5d83bf38eeb29/torchpfaffian-0.0.5-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:3939ad259db3f727d6b84f4b00d24eded0052e650637ad9c02f9bf0dac7d1ec3", size = 383936, upload-time = "2026-07-13T21:52:21.816Z" },
+    { url = "https://files.pythonhosted.org/packages/0e/fa/a76b9cab3944fcc9544f276658929c474129c5ec96dd9ca0603bd6aa7673/torchpfaffian-0.0.5-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:66973fd6e0aab694040ea4613957ceb570369183d264ea08dc8427096ed1a54b", size = 392398, upload-time = "2026-07-13T21:52:23.47Z" },
+    { url = "https://files.pythonhosted.org/packages/03/5f/fcd64680da45fff3fe0733f602e443c4548342f4357b0150e638c15148cb/torchpfaffian-0.0.5-cp310-abi3-win_amd64.whl", hash = "sha256:0d1a24309eb72b997caf9a50b0b9d8bb139f05070c9154605af418407f400f34", size = 275653, upload-time = "2026-07-13T21:52:24.922Z" },
 ]
 
 [[package]]

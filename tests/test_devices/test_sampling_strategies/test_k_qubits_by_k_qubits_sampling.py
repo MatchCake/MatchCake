@@ -3,8 +3,10 @@ import pennylane as qml
 import pytest
 import torch
 
+import matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling as k_qubits_sampling_module
 from matchcake.circuits import random_sptm_operations_generator
 from matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling import (
+    _SAMPLER_CROSSOVER_K,
     KQubitsByKQubitsSampling,
 )
 from matchcake.operations import SptmCompRxRx
@@ -203,6 +205,144 @@ class TestKQubitsByKQubitsSampling:
         empirical = _empirical_distribution(samples, num_wires)
 
         np.testing.assert_allclose(empirical, exact, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
+
+    def test_covariance_fast_path_matches_exact_distribution(self, monkeypatch):
+        set_seed(TEST_SEED)
+        num_wires = 10
+        rng = np.random.default_rng(TEST_SEED)
+        device = init_nif_device(wires=num_wires, shots=int(60000))
+        device.apply_state_prep(_non_basis_product_state(num_wires, rng))
+        device.apply([SptmCompRxRx(rng.uniform(0, np.pi, 2), wires=[i, i + 1]) for i in range(num_wires - 1)])
+        assert num_wires >= _SAMPLER_CROSSOVER_K
+        assert KQubitsByKQubitsSampling._device_covariance(device) is not None
+        exact = _exact_distribution(device, num_wires)
+
+        # Spy on sample_outcomes so a silent fall-through to the per-step loop fails loudly.
+        fast_calls = {"count": 0}
+        real_sample_outcomes = k_qubits_sampling_module.sample_outcomes
+
+        def _spy(*args, **kwargs):
+            fast_calls["count"] += 1
+            return real_sample_outcomes(*args, **kwargs)
+
+        monkeypatch.setattr(k_qubits_sampling_module, "sample_outcomes", _spy)
+        samples = _KSampling().batch_generate_samples(device, device.get_states_probability)
+        assert fast_calls["count"] == 1
+        assert np.asarray(samples).shape == (60000, num_wires)
+        empirical = _empirical_distribution(samples, num_wires)
+        total_variation = 0.5 * np.abs(empirical - exact).sum()
+        assert total_variation < 0.05
+
+    def test_covariance_fast_path_respects_wire_labels(self, monkeypatch):
+        num_wires = 10
+        labels = [1, 0] + list(range(2, num_wires))  # non-identity wire labels: swap labels 0 and 1
+
+        def build_device():
+            rng = np.random.default_rng(TEST_SEED)
+            angles = rng.uniform(0.3, np.pi - 0.3, num_wires)
+            amplitudes = np.stack([np.cos(angles / 2), np.sin(angles / 2)], axis=-1).astype(complex)
+            gate_angles = rng.uniform(0, np.pi, (num_wires - 1, 2))
+            device = init_nif_device(wires=labels, shots=int(30000))
+            device.apply_state_prep(ProductState(amplitudes, wires=labels))
+            device.apply([SptmCompRxRx(gate_angles[i], wires=[labels[i], labels[i + 1]]) for i in range(num_wires - 1)])
+            return device
+
+        set_seed(TEST_SEED)
+        device_fast = build_device()
+        fast = _KSampling().batch_generate_samples(device_fast, device_fast.get_states_probability)
+        monkeypatch.setattr(k_qubits_sampling_module, "_SAMPLER_CROSSOVER_K", num_wires + 1)
+        device_loop = build_device()
+        loop = _KSampling().batch_generate_samples(device_loop, device_loop.get_states_probability)
+
+        fast_marginals = np.asarray(fast).astype(int).reshape(-1, num_wires).mean(0)
+        loop_marginals = np.asarray(loop).astype(int).reshape(-1, num_wires).mean(0)
+        np.testing.assert_allclose(fast_marginals, loop_marginals, atol=ATOL_APPROX_COMPARISON)
+
+    def test_covariance_fast_path_batched_respects_wire_labels(self, monkeypatch):
+        num_wires, batch_size = 10, 3
+        labels = [1, 0] + list(range(2, num_wires))  # non-identity labels; gate-free (matchgates need ascending wires)
+
+        def build_device():
+            rng = np.random.default_rng(TEST_SEED)
+            angles = rng.uniform(0.3, np.pi - 0.3, (batch_size, num_wires))
+            amplitudes = np.stack([np.cos(angles / 2), np.sin(angles / 2)], axis=-1).astype(complex)
+            device = init_nif_device(wires=labels, shots=int(30000))
+            device.apply_state_prep(ProductState(amplitudes, wires=labels))
+            return device
+
+        set_seed(TEST_SEED)
+        device_fast = build_device()
+        fast = _KSampling().batch_generate_samples(device_fast, device_fast.get_states_probability)
+        monkeypatch.setattr(k_qubits_sampling_module, "_SAMPLER_CROSSOVER_K", num_wires + 1)
+        device_loop = build_device()
+        loop = _KSampling().batch_generate_samples(device_loop, device_loop.get_states_probability)
+
+        assert np.asarray(fast).shape == (30000, batch_size, num_wires)
+        fast_marginals = np.asarray(fast).astype(int).mean(0)  # (batch, num_wires)
+        loop_marginals = np.asarray(loop).astype(int).mean(0)
+        np.testing.assert_allclose(fast_marginals, loop_marginals, atol=ATOL_APPROX_COMPARISON)
+
+    def test_covariance_fast_path_batched_matches_exact(self):
+        set_seed(TEST_SEED)
+        num_wires, batch_size = 10, 3
+        rng = np.random.default_rng(TEST_SEED)
+        device = init_nif_device(wires=num_wires, shots=int(60000))
+        device.apply_state_prep(_non_basis_product_state(num_wires, rng, batch_size=batch_size))
+        assert num_wires >= _SAMPLER_CROSSOVER_K
+        exact = _exact_distribution_batched(device, num_wires)
+
+        samples = _KSampling().batch_generate_samples(device, device.get_states_probability)
+        assert np.asarray(samples).shape == (60000, batch_size, num_wires)
+        empirical = _empirical_distribution_batched(samples, num_wires, batch_size)
+        for batch_index in range(batch_size):
+            total_variation = 0.5 * np.abs(empirical[:, batch_index] - exact[:, batch_index]).sum()
+            assert total_variation < 0.05
+
+    def test_fast_path_falls_back_when_covariance_none(self, monkeypatch):
+        set_seed(TEST_SEED)
+        num_wires = _SAMPLER_CROSSOVER_K
+        rng = np.random.default_rng(TEST_SEED)
+        device = init_nif_device(wires=num_wires, shots=64)
+        device.apply_state_prep(_non_basis_product_state(num_wires, rng))
+        monkeypatch.setattr(KQubitsByKQubitsSampling, "_device_covariance", staticmethod(lambda device: None))
+        samples = _KSampling().batch_generate_samples(device, device.get_states_probability)
+        assert np.asarray(samples).shape == (64, num_wires)
+
+    def test_device_covariance_none_for_non_product_state(self):
+        class _NoCovDevice:
+            @property
+            def covariance_matrix(self):
+                raise ValueError("not a product state")
+
+        assert KQubitsByKQubitsSampling._device_covariance(_NoCovDevice()) is None
+
+    def test_device_covariance_rejects_complex(self):
+        class _ComplexCovDevice:
+            covariance_matrix = torch.zeros(4, 4, dtype=torch.complex128)
+
+        assert KQubitsByKQubitsSampling._device_covariance(_ComplexCovDevice()) is None
+
+    def test_device_covariance_returns_real_covariance(self):
+        device = init_nif_device(wires=3, shots=10)
+        device.apply_state_prep(_non_basis_product_state(3, np.random.default_rng(0)))
+        covariance = KQubitsByKQubitsSampling._device_covariance(device)
+        assert covariance is not None
+        assert "complex" not in str(covariance.dtype)
+
+    def test_sample_from_covariance_shape_and_values(self):
+        rng = np.random.default_rng(0)
+        k = 4
+        blocks = np.zeros((2 * k, 2 * k))
+        idx = np.arange(k)
+        blocks[2 * idx, 2 * idx + 1] = -1.0
+        blocks[2 * idx + 1, 2 * idx] = 1.0
+        q, r = np.linalg.qr(rng.standard_normal((2 * k, 2 * k)))
+        q = q * np.sign(np.diag(r))
+        covariance = torch.from_numpy(q.T @ blocks @ q)
+        samples = KQubitsByKQubitsSampling._sample_from_covariance(covariance, 32)
+        assert isinstance(samples, np.ndarray)
+        assert samples.shape == (32, k)
+        assert set(np.unique(samples).tolist()) <= {0, 1}
 
     @pytest.mark.parametrize("num_wires", [3, 4])
     def test_samples_match_exact_distribution_from_batched_product_state(self, num_wires):

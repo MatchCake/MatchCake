@@ -11,7 +11,8 @@ from matchcake import NonInteractingFermionicDevice
 from matchcake.devices.probability_strategies import ProductStateProbabilityStrategy
 from matchcake.operations import MatchgateOperation, Rxx
 from matchcake.operations.state_preparation.product_state import ProductState
-from matchcake.utils import signed_pfaffian
+from matchcake.utils import pfaffian, signed_pfaffian
+from matchcake.utils._pfaffian_family import OutcomeFamily
 
 from ...configs import ATOL_APPROX_COMPARISON, ATOL_SCALAR_COMPARISON, RTOL_APPROX_COMPARISON, set_seed
 
@@ -59,6 +60,78 @@ class TestProductStateProbabilityStrategy:
         ref_probs = _run_product_state_circuit(per_qubit, n_wires, gate_seeds, ref_dev, list(range(n_wires)))
 
         np.testing.assert_allclose(nif_probs, ref_probs, atol=ATOL_SCALAR_COMPARISON)
+
+    def test_is_full_outcome_set(self) -> None:
+        strategy_cls = ProductStateProbabilityStrategy
+        full = (np.arange(2**3)[:, None] >> np.arange(2, -1, -1)[None, :]) & 1
+        assert strategy_cls._is_full_outcome_set(full, 3)
+        assert not strategy_cls._is_full_outcome_set(full[:-1], 3)
+        assert not strategy_cls._is_full_outcome_set(full[::-1], 3)
+        assert not strategy_cls._is_full_outcome_set(np.zeros((8, 3), dtype=int), 3)
+
+    @pytest.mark.parametrize("n_wires", [8, 9])
+    def test_full_distribution_tree_matches_batched_and_reference(self, n_wires: int, monkeypatch) -> None:
+        import matchcake.devices.probability_strategies.product_state_strategy as product_state_module
+
+        set_seed()
+        per_qubit = _random_qubit_amplitudes(n_wires, seed=42)
+        gate_seeds = list(range(n_wires - 1))
+        out_wires = list(range(n_wires))
+
+        ref_probs = _run_product_state_circuit(
+            per_qubit, n_wires, gate_seeds, qml.device("default.qubit", wires=range(n_wires)), out_wires
+        )
+        assert n_wires >= product_state_module._TREE_CROSSOVER_K
+        # Spy on OutcomeFamily so a silent fall-through to the batched path fails loudly.
+        tree_calls = {"count": 0}
+        real_outcome_family = product_state_module.OutcomeFamily
+
+        def _spy(*args, **kwargs):
+            tree_calls["count"] += 1
+            return real_outcome_family(*args, **kwargs)
+
+        monkeypatch.setattr(product_state_module, "OutcomeFamily", _spy)
+        tree_probs = _run_product_state_circuit(
+            per_qubit, n_wires, gate_seeds, NonInteractingFermionicDevice(wires=range(n_wires)), out_wires
+        )
+        assert tree_calls["count"] > 0
+        monkeypatch.setattr(product_state_module, "OutcomeFamily", real_outcome_family)
+        monkeypatch.setattr(product_state_module, "_TREE_CROSSOVER_K", n_wires + 1)
+        batched_probs = _run_product_state_circuit(
+            per_qubit, n_wires, gate_seeds, NonInteractingFermionicDevice(wires=range(n_wires)), out_wires
+        )
+        np.testing.assert_allclose(tree_probs, batched_probs, atol=ATOL_SCALAR_COMPARISON)
+        np.testing.assert_allclose(tree_probs, ref_probs, atol=ATOL_SCALAR_COMPARISON)
+
+    def test_is_complex_matrix(self) -> None:
+        strategy_cls = ProductStateProbabilityStrategy
+        assert strategy_cls._is_complex_matrix(torch.zeros(2, 2, dtype=torch.complex128))
+        assert strategy_cls._is_complex_matrix(np.zeros((2, 2), dtype=complex))
+        assert not strategy_cls._is_complex_matrix(torch.zeros(2, 2, dtype=torch.float64))
+        assert not strategy_cls._is_complex_matrix(np.zeros((2, 2)))
+
+    def test_full_distribution_complex_covariance_uses_batched_path(self) -> None:
+        n_wires = 8
+        rng = np.random.default_rng(0)
+        raw_real = rng.standard_normal((2 * n_wires, 2 * n_wires))
+        raw_imag = rng.standard_normal((2 * n_wires, 2 * n_wires))
+        cov = torch.from_numpy((raw_real - raw_real.T) + 1j * (raw_imag - raw_imag.T))  # complex skew, nonzero imag
+        target = (np.arange(2**n_wires)[:, None] >> np.arange(n_wires - 1, -1, -1)[None, :]) & 1
+        wires = Wires(range(n_wires))
+        strategy = ProductStateProbabilityStrategy()
+
+        probs = np.asarray(
+            strategy(
+                state_prep_op=None, target_binary_states=target, wires=wires, covariance_matrix=cov, all_wires=wires
+            )
+        )
+        # Independent batched reference on the full complex matrix (the path the guard routes to).
+        lambda_y = torch.from_numpy(strategy.build_lambda_y(target, n_wires)).to(cov.dtype)
+        reference = (2.0**-n_wires) * torch.real(pfaffian(cov.unsqueeze(0) + lambda_y, sign=False))
+        np.testing.assert_allclose(probs, np.asarray(reference), atol=ATOL_SCALAR_COMPARISON)
+        # The imaginary part must matter: the tree evaluated on the discarded real part would differ.
+        tree_on_real = np.asarray(OutcomeFamily(torch.real(cov)).all_probabilities())
+        assert not np.allclose(probs, tree_on_real, atol=ATOL_APPROX_COMPARISON)
 
     @pytest.mark.parametrize("n_wires", [2, 3, 4])
     def test_against_default_qubit_wire_marginals(self, n_wires: int) -> None:

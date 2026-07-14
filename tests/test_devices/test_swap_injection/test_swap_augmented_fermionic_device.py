@@ -808,3 +808,90 @@ class TestSwapAugmentedFermionicDevice:
         probs = np.asarray(got(x))
         np.testing.assert_allclose(probs.sum(), 1.0, atol=ATOL_MATRIX_COMPARISON)
         assert np.all(probs >= -ATOL_MATRIX_COMPARISON)
+
+    @staticmethod
+    def _spy_full_distribution(monkeypatch):
+        """Wrap the device's full-distribution helper with a call counter and return the counter list."""
+        import matchcake.devices.swap_augmented_fermionic_device as module
+
+        calls = []
+        original = module.basis_states_probabilities
+
+        def spy(*args, **kwargs):
+            calls.append(1)
+            return original(*args, **kwargs)
+
+        monkeypatch.setattr(module, "basis_states_probabilities", spy)
+        return calls
+
+    def test_full_distribution_uses_fast_path_and_matches_default_qubit(self, monkeypatch):
+        # The full outcome set on shared wires routes through basis_states_probabilities exactly once,
+        # and the result matches default.qubit and the per-outcome loop.
+        n = 3
+        x = np.random.default_rng(7).uniform(-2, 2, size=3)
+        calls = self._spy_full_distribution(monkeypatch)
+
+        dev = SwapAugmentedFermionicDevice(wires=n)
+
+        @qml.qnode(dev)
+        def got(x):
+            self._single_swap(x)
+            return qml.probs(wires=range(n))
+
+        @qml.qnode(qml.device("default.qubit", wires=n))
+        def ref(x):
+            self._single_swap(x)
+            return qml.probs(wires=range(n))
+
+        probs = np.asarray(got(x))
+        assert len(calls) == 1  # fast path taken
+        assert not dev.branch_state.degenerate
+        np.testing.assert_allclose(probs, np.asarray(ref(x)), atol=ATOL_MATRIX_COMPARISON)
+
+        target = SwapAugmentedFermionicDevice.states_to_binary(np.arange(2**n), n)
+        loop = np.stack(
+            [np.asarray(dev.get_states_probability(target[i], qml.wires.Wires(range(n)))) for i in range(2**n)]
+        )
+        np.testing.assert_allclose(probs, loop, atol=ATOL_MATRIX_COMPARISON)
+
+    def test_partial_outcome_set_skips_fast_path(self, monkeypatch):
+        # A strict subset of outcomes stays on the per-outcome loop, not the tree.
+        n = 3
+        x = np.random.default_rng(7).uniform(-2, 2, size=3)
+        dev = SwapAugmentedFermionicDevice(wires=n)
+
+        @qml.qnode(dev)
+        def run(x):
+            self._single_swap(x)
+            return qml.expval(qml.PauliZ(0))
+
+        run(x)
+        calls = self._spy_full_distribution(monkeypatch)
+        target = np.array([[0, 0, 0], [1, 0, 1], [0, 1, 1]])  # not the full big-endian {0,1}^3 set
+        probs = np.asarray(dev.get_states_probability(target, qml.wires.Wires(range(n))))
+        assert len(calls) == 0  # loop path
+        loop = np.stack([np.asarray(dev.get_states_probability(row, qml.wires.Wires(range(n)))) for row in target])
+        np.testing.assert_allclose(probs, loop, atol=ATOL_MATRIX_COMPARISON)
+
+    def test_degenerate_full_distribution_skips_fast_path(self, monkeypatch):
+        # A wire-sharing (degenerate) circuit must not use the tree fast path; it routes to the string engine.
+        n = 3
+        x = np.random.default_rng(0).uniform(-2, 2, size=5)
+        calls = self._spy_full_distribution(monkeypatch)
+
+        dev = SwapAugmentedFermionicDevice(wires=n)
+
+        @qml.qnode(dev)
+        def got(x):
+            self._wire_sharing_swaps(x)
+            return qml.probs(wires=range(n))
+
+        @qml.qnode(qml.device("default.qubit", wires=n))
+        def ref(x):
+            self._wire_sharing_swaps(x)
+            return qml.probs(wires=range(n))
+
+        probs = np.asarray(got(x))
+        assert dev.branch_state.degenerate
+        assert len(calls) == 0  # fast path bypassed for the degenerate state
+        np.testing.assert_allclose(probs, np.asarray(ref(x)), atol=ATOL_MATRIX_COMPARISON)
