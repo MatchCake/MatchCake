@@ -5,6 +5,10 @@ import pennylane as qml
 from pennylane.ops.qubit.observables import BasisStateProjector
 
 from matchcake import MatchgateOperation, NonInteractingFermionicDevice, utils
+from matchcake.devices.probability_strategies import (
+    ProbabilityFuncDispatcher,
+    get_probability_strategy,
+)
 
 _majorana_getters: dict = {}
 
@@ -56,14 +60,20 @@ def init_nif_device(*args, **kwargs) -> NonInteractingFermionicDevice:
         utils.majorana.MajoranaGetter(n_particles, maxsize=kwargs.pop("maxsize", 1024)),
     )
     _majorana_getters[n_particles] = majorana_getter
+    # The device resolves probability strategies through a fixed chain. Tests that need to
+    # exercise one specific strategy pin it by replacing the dispatcher after construction.
+    # The pin is exclusive: the pinned strategy is the only one in the chain, so a state prep
+    # it rejects raises instead of falling back. Pass no prob_strategy to get the full chain.
+    prob_strategy = kwargs.pop("prob_strategy", None)
     nif_device = NonInteractingFermionicDevice(
         wires=wires,
-        prob_strategy=kwargs.pop("prob_strategy", "LookupTable"),
         majorana_getter=kwargs.pop("majorana_getter", majorana_getter),
         n_workers=kwargs.pop("n_workers", 0),
         contraction_strategy=kwargs.pop("contraction_strategy", None),
         **kwargs,
     )
+    if prob_strategy is not None:
+        nif_device.prob_dispatcher = ProbabilityFuncDispatcher([get_probability_strategy(prob_strategy)])
     return nif_device
 
 

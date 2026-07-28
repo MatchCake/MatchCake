@@ -7,7 +7,6 @@ from pennylane.wires import Wires
 
 from ... import utils
 from ...base.lookup_table import NonInteractingFermionicLookupTable
-from ...operations.state_preparation import StatePrepFromGates
 from ...operations.state_preparation.product_state import ProductState
 from .probability_strategy import ProbabilityStrategy
 
@@ -72,16 +71,33 @@ class LookupTableStrategy(ProbabilityStrategy):
         return qml.math.real(utils.pfaffian(obs, sign=False, chunk_size=chunk_size))
 
     def can_execute(self, state_prep_op: StatePrepBase) -> bool:
-        """Return True for basis-state inputs.
+        """Return True for preparations reducible to one system basis state.
+
+        Accepts :class:`~pennylane.BasisState` unconditionally, and a
+        :class:`~matchcake.operations.state_preparation.ProductState` only when it is
+        unbatched and encodes a computational-basis state. Subclasses of ``ProductState``
+        such as :class:`~matchcake.operations.state_preparation.StatePrepFromGates` are
+        covered by that same check, so a non-basis preparation like
+        :class:`~matchcake.operations.state_preparation.PlusState` falls through to
+        :class:`~matchcake.devices.probability_strategies.ProductStateProbabilityStrategy`
+        instead of reaching a code path that cannot represent it.
+
+        A batched ``ProductState`` is rejected: the observable assembled by the lookup table
+        is a ``2 * (k + hamming_weight(system_state))`` square matrix, so preparations with
+        different Hamming weights produce Pfaffian matrices of different sizes that cannot
+        be stacked along a common batch axis. Such inputs fall through to
+        :class:`~matchcake.devices.probability_strategies.ProductStateProbabilityStrategy`,
+        whose matrices are uniformly ``2k x 2k``.
 
         :param state_prep_op: State preparation operation.
         :type state_prep_op: StatePrepBase
-        :return: True when the state encodes a computational-basis state.
+        :return: True when this strategy can consume the preparation as one system state.
         :rtype: bool
         """
-        if isinstance(state_prep_op, (BasisState, StatePrepFromGates)):
+        if isinstance(state_prep_op, BasisState):
             return True
         if isinstance(state_prep_op, ProductState):
-            is_basis = state_prep_op.is_basis_state
-            return bool(is_basis) if isinstance(is_basis, bool) else bool(qml.math.all(is_basis))
+            if state_prep_op.batch_size is not None:
+                return False
+            return bool(state_prep_op.is_basis_state)
         return False

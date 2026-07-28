@@ -6,6 +6,12 @@ from pennylane.wires import Wires
 from matchcake import utils
 from matchcake.devices.probability_strategies import ExplicitSumStrategy
 from matchcake.operations import SingleParticleTransitionMatrixOperation
+from matchcake.operations.state_preparation import (
+    MinusState,
+    PlusState,
+    ProductState,
+    StatePrepFromGates,
+)
 
 
 class TestExplicitSumStrategy:
@@ -49,3 +55,39 @@ class TestExplicitSumStrategy:
 
     def test_can_execute_non_state_false(self, strategy):
         assert strategy.can_execute(qml.PauliX(0)) is False
+
+    def test_can_execute_unbatched_basis_product_state_true(self, strategy):
+        prep = ProductState.from_basis_state(np.array([1, 0]), wires=[0, 1])
+        assert strategy.can_execute(prep) is True
+
+    def test_can_execute_batched_basis_product_state_false(self, strategy):
+        # The explicit sum contracts the Majorana decomposition of a single system state,
+        # so a batched preparation must fall through rather than raise downstream.
+        prep = ProductState.from_basis_state(np.array([[0, 0], [1, 1]]), wires=[0, 1])
+        assert prep.batch_size == 2
+        assert strategy.can_execute(prep) is False
+
+    def test_can_execute_non_basis_product_state_false(self, strategy):
+        amplitudes = np.full((2, 2), 1.0 / np.sqrt(2), dtype=complex)
+        prep = ProductState(amplitudes, wires=[0, 1])
+        assert strategy.can_execute(prep) is False
+
+    def test_can_execute_basis_state_prep_from_gates_true(self, strategy):
+        prep = StatePrepFromGates(lambda wires: (qml.X(w) for w in wires), wires=[0, 1])
+        assert strategy.can_execute(prep) is True
+
+    @pytest.mark.parametrize("prep_class", [PlusState, MinusState])
+    def test_can_execute_non_basis_state_prep_from_gates_false(self, strategy, prep_class):
+        # ``StatePrepFromGates`` is a ``ProductState`` subclass, so accepting it
+        # unconditionally would send a non-basis preparation into a path that cannot
+        # represent it. It must fall through to ProductStateProbabilityStrategy instead.
+        assert strategy.can_execute(prep_class(wires=[0, 1])) is False
+
+    @pytest.mark.parametrize("prep_class", [PlusState, MinusState])
+    def test_can_execute_false_implies_no_system_basis_state(self, strategy, prep_class):
+        # The load-bearing invariant: ``can_execute`` and the basis-state extraction must
+        # agree, so that a preparation accepted by the former is always convertible.
+        prep = prep_class(wires=[0, 1])
+        assert strategy.can_execute(prep) is False
+        with pytest.raises(ValueError):
+            strategy.system_basis_state_from_state_prep_op(prep)

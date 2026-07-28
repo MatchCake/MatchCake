@@ -53,9 +53,11 @@ from .expval_strategies.m_pfaffian._extended_covariance import (
 )
 from .expval_strategies.terms_splitter import TermsSplitter
 from .probability_strategies import (
+    CliffordSumStrategy,
+    ExplicitSumStrategy,
+    LookupTableStrategy,
     ProbabilityFuncDispatcher,
     ProductStateProbabilityStrategy,
-    get_probability_strategy,
 )
 from .sampling_strategies import SamplingStrategy, get_sampling_strategy
 from .star_state_finding_strategies import (
@@ -91,9 +93,6 @@ class NonInteractingFermionicDevice(qml.devices.Device):
 
     :kwargs: Additional keyword arguments
 
-    :keyword prob_strategy: The strategy to compute the probabilities. Can be either "lookup_table" or "explicit_sum".
-        Defaults to "lookup_table".
-    :type prob_strategy: str
     :keyword majorana_getter: The Majorana getter to use. Defaults to a new instance of MajoranaGetter.
     :type majorana_getter: MajoranaGetter
     :keyword contraction_method: The contraction method to use. Can be either None or "neighbours".
@@ -115,6 +114,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
 
     :Note: This device is a simulator for non-interacting fermions. It is based on the ``default.qubit`` device.
     :Note: This device supports batch execution.
+    :Note: Probabilities are routed by :attr:`prob_dispatcher`, a fixed ordered chain of strategies resolved by
+        each strategy's ``can_execute``. There is no keyword to select a strategy; to pin one, replace
+        :attr:`prob_dispatcher` on the constructed device.
     :Note: This device is in development, and its API is subject to change.
     """
 
@@ -137,7 +139,6 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         ProductState.__name__,
     }
 
-    DEFAULT_PROB_STRATEGY = "LookupTable"
     DEFAULT_CONTRACTION_METHOD = "neighbours"
     DEFAULT_SAMPLING_STRATEGY = "2QubitBy2QubitSampling"
     DEFAULT_STAR_STATE_FINDING_STRATEGY = "FromSampling"
@@ -234,8 +235,10 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         )
         self.prob_dispatcher: ProbabilityFuncDispatcher = ProbabilityFuncDispatcher(
             [
-                get_probability_strategy(kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY)),
+                LookupTableStrategy(),
                 ProductStateProbabilityStrategy(),
+                CliffordSumStrategy(),
+                ExplicitSumStrategy(),
             ]
         )
         self.contraction_strategy: ContractionStrategy = get_contraction_strategy(

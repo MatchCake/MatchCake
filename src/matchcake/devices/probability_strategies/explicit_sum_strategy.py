@@ -36,23 +36,37 @@ class ExplicitSumStrategy(ProbabilityStrategy):
         return np.reshape(state, [2] * num_wires)
 
     def can_execute(self, state_prep_op: StatePrepBase) -> bool:
-        """Return True for basis-state inputs (BasisState, StatePrepFromGates, or ProductState that is a basis state).
+        """Return True for preparations reducible to one system basis state.
+
+        Accepts :class:`~pennylane.BasisState` unconditionally, and a
+        :class:`~matchcake.operations.state_preparation.ProductState` only when it is
+        unbatched and encodes a computational-basis state. Subclasses of ``ProductState``
+        such as :class:`~matchcake.operations.state_preparation.StatePrepFromGates` are
+        covered by that same check, so a non-basis preparation like
+        :class:`~matchcake.operations.state_preparation.PlusState` falls through to
+        :class:`~matchcake.devices.probability_strategies.ProductStateProbabilityStrategy`
+        instead of reaching a code path that cannot represent it.
+
+        A batched ``ProductState`` is rejected: the explicit sum contracts a single Majorana
+        decomposition of one system state, so a batch of preparations has no single bra/ket
+        pair to sum over. Such inputs fall through to
+        :class:`~matchcake.devices.probability_strategies.ProductStateProbabilityStrategy`.
 
         :param state_prep_op: State preparation operation.
         :type state_prep_op: StatePrepBase
-        :return: True if the state is a computational-basis state.
+        :return: True when this strategy can consume the preparation as one system state.
         :rtype: bool
         """
         from pennylane.ops.qubit.state_preparation import BasisState
 
-        from ...operations.state_preparation import StatePrepFromGates
         from ...operations.state_preparation.product_state import ProductState
 
-        if isinstance(state_prep_op, (BasisState, StatePrepFromGates)):
+        if isinstance(state_prep_op, BasisState):
             return True
         if isinstance(state_prep_op, ProductState):
-            is_basis = state_prep_op.is_basis_state
-            return bool(is_basis) if isinstance(is_basis, bool) else bool(qml.math.all(is_basis))
+            if state_prep_op.batch_size is not None:
+                return False
+            return bool(state_prep_op.is_basis_state)
         return False
 
     def _compute_single(

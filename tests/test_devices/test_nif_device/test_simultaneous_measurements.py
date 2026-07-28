@@ -6,6 +6,10 @@ from matchcake import MatchgateOperation, NonInteractingFermionicDevice, utils
 from matchcake import matchgate_parameter_sets as mgp
 from matchcake.circuits import RandomMatchgateOperationsGenerator
 from matchcake.devices.contraction_strategies import contraction_strategy_map
+from matchcake.devices.probability_strategies import (
+    ExplicitSumStrategy,
+    ProbabilityFuncDispatcher,
+)
 from matchcake.operations import (
     CompHH,
     CompRxRx,
@@ -41,7 +45,8 @@ class TestNIFDeviceProbabilities:
         prob = 1.0
 
         initial_binary_state = utils.binary_string_to_vector(initial_binary_string)
-        device = NonInteractingFermionicDevice(wires=wires, prob_strategy="ExplicitSum")
+        device = NonInteractingFermionicDevice(wires=wires)
+        device.prob_dispatcher = ProbabilityFuncDispatcher([ExplicitSumStrategy()])
         operations = [
             qml.BasisState(initial_binary_state, wires=device.wires),
             MatchgateOperation(params, wires=wires),
