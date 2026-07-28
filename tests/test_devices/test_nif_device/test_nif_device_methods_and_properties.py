@@ -1,3 +1,5 @@
+import inspect
+
 import numpy as np
 import pennylane as qml
 import pytest
@@ -188,6 +190,48 @@ class TestNIFDeviceMethodsAndProperties:
         bar = dev.initialize_p_bar(total=5, desc="test")
         assert isinstance(bar, tqdm.tqdm)
         bar.close()
+
+    @pytest.mark.parametrize("parameter_name", ["pfaffian_chunk_size", "show_progress"])
+    def test_parameter_is_explicit_keyword_only(self, parameter_name):
+        parameters = inspect.signature(NonInteractingFermionicDevice.__init__).parameters
+        assert parameter_name in parameters, f"{parameter_name} must be explicit, not hidden in **kwargs."
+        assert parameters[parameter_name].kind is inspect.Parameter.KEYWORD_ONLY
+        assert parameters[parameter_name].default is None
+
+    @pytest.mark.parametrize("parameter_name, value", [("pfaffian_chunk_size", 4), ("show_progress", True)])
+    def test_parameter_is_not_captured_by_init_kwargs(self, parameter_name, value):
+        dev = NonInteractingFermionicDevice(wires=2, **{parameter_name: value})
+        assert parameter_name not in dev._init_kwargs
+
+    @pytest.mark.parametrize("chunk_size", [None, 1, 8])
+    def test_pfaffian_chunk_size_is_stored_verbatim(self, chunk_size):
+        dev = NonInteractingFermionicDevice(wires=2, pfaffian_chunk_size=chunk_size)
+        assert dev.pfaffian_chunk_size == chunk_size
+
+    def test_show_progress_defaults_to_false_without_p_bar(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        assert dev.show_progress is False
+
+    def test_show_progress_defaults_to_true_with_p_bar(self):
+        bar = tqdm.tqdm(total=5, disable=True)
+        dev = NonInteractingFermionicDevice(wires=2, p_bar=bar)
+        assert dev.show_progress is True
+        bar.close()
+
+    @pytest.mark.parametrize("show_progress", [True, False])
+    def test_show_progress_explicit_value_overrides_p_bar_default(self, show_progress):
+        bar = tqdm.tqdm(total=5, disable=True)
+        dev = NonInteractingFermionicDevice(wires=2, p_bar=bar, show_progress=show_progress)
+        assert dev.show_progress is show_progress
+        bar.close()
+
+    @pytest.mark.parametrize("p_bar_given, expected", [(False, False), (True, True)])
+    def test_explicit_none_show_progress_resolves_to_the_p_bar_default(self, p_bar_given, expected):
+        bar = tqdm.tqdm(total=5, disable=True) if p_bar_given else None
+        dev = NonInteractingFermionicDevice(wires=2, p_bar=bar, show_progress=None)
+        assert dev.show_progress is expected
+        if bar is not None:
+            bar.close()
 
     def test_update_p_bar_with_active_bar(self):
         dev = NonInteractingFermionicDevice(wires=2, show_progress=True)
