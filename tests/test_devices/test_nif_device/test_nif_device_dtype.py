@@ -1,3 +1,5 @@
+import inspect
+
 import numpy as np
 import pennylane as qml
 import pytest
@@ -56,6 +58,18 @@ class TestNIFDeviceDtype:
         device = NonInteractingFermionicDevice(wires=2, c_dtype=np.complex64, r_dtype=np.float32)
         assert device.C_DTYPE == torch.complex64
         assert device.R_DTYPE == torch.float32
+
+    @pytest.mark.parametrize("dtype_name", ["r_dtype", "c_dtype"])
+    def test_dtype_is_an_explicit_keyword_only_parameter(self, dtype_name):
+        parameters = inspect.signature(NonInteractingFermionicDevice.__init__).parameters
+        assert dtype_name in parameters, f"{dtype_name} must be explicit in the signature, not hidden in **kwargs."
+        assert parameters[dtype_name].kind is inspect.Parameter.KEYWORD_ONLY
+        assert parameters[dtype_name].default is None
+
+    @pytest.mark.parametrize("dtype_name, dtype", [("r_dtype", torch.float32), ("c_dtype", torch.complex64)])
+    def test_dtype_is_not_captured_by_init_kwargs(self, dtype_name, dtype):
+        device = NonInteractingFermionicDevice(wires=2, **{dtype_name: dtype})
+        assert dtype_name not in device._init_kwargs
 
     @pytest.mark.parametrize("r_dtype, real_name, complex_name", _DTYPE_CASES)
     def test_global_sptm_is_real_and_transition_matrix_is_complex(self, r_dtype, real_name, complex_name):
