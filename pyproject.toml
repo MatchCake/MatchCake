@@ -48,6 +48,9 @@ homepage = "https://github.com/MatchCake/MatchCake"
 Documentation = "https://github.com/MatchCake/MatchCake"
 Source = "https://MatchCake.github.io/MatchCake"
 
+[project.entry-points."pennylane.plugins"]
+"nif.qubit" = "matchcake.devices.nif_device:NonInteractingFermionicDevice"
+
 [tool.pytest.ini_options]
 pythonpath = [
     ".", "src",
