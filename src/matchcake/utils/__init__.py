@@ -11,9 +11,20 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 from scipy import sparse
 
-from . import constants, cuda, majorana, math, operators, torch_utils
-from ._pfaffian import pfaffian, sector_pfaffian_features, signed_pfaffian
+from . import constants, covariance, cuda, majorana, math, operators, torch_utils
+from ._pfaffian import pfaffian, sector_pfaffian_features, signed_pfaffian, signed_pfaffian_complex
+from ._pfaffian_family import sample_outcomes
 from .constants import PAULI_I, PAULI_X, PAULI_Y, PAULI_Z
+from .covariance import (
+    DEGENERATE_OVERLAP_TOL,
+    DISPLACEMENT_TOL,
+    basis_state_covariance_block,
+    condition_occupied,
+    degenerate_overlap_tol,
+    lift_from_product_state,
+    lift_sptm,
+    transition_cov,
+)
 from .jordan_wigner import JordanWigner
 from .logm import logm
 from .majorana import (
