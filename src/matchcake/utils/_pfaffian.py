@@ -172,7 +172,7 @@ def pfaffian(
     batch_shape = matrix_t.shape[:-2]
 
     if chunk_size is not None and len(batch_shape) > 0 and batch_shape.numel() > chunk_size:
-        flat = matrix_t.reshape(-1, matrix_t.shape[-2], matrix_t.shape[-1])  # (B, 2n, 2n)
+        flat = matrix_t.reshape(batch_shape.numel(), matrix_t.shape[-2], matrix_t.shape[-1])  # (B, 2n, 2n)
         pieces = [
             _pfaffian_kernel(flat[start : start + chunk_size], sign, epsilon)
             for start in range(0, flat.shape[0], chunk_size)

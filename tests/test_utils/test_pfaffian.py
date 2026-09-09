@@ -413,6 +413,19 @@ class TestPfaffian:
             rtol=RTOL_SCALAR_COMPARISON,
         )
 
+    @pytest.mark.parametrize("batch_shape", [(5, 3), (4,)])
+    def test_a_zero_by_zero_batch_survives_chunking(self, batch_shape):
+        """The chunked path reshaped with ``-1``, which is ambiguous once the matrices are 0x0 and
+        the tensor is empty, so a weight-zero batch crashed instead of returning ones. Reachable
+        from any caller that chunks a monomial sum containing an empty support."""
+        matrix = torch.zeros(*batch_shape, 0, 0, dtype=torch.complex128)
+        chunked = signed_pfaffian_complex(matrix, chunk_size=2)
+        assert tuple(chunked.shape) == batch_shape
+        np.testing.assert_allclose(chunked.numpy(), np.ones(batch_shape), atol=ATOL_SCALAR_COMPARISON, rtol=0)
+        np.testing.assert_allclose(
+            chunked.numpy(), signed_pfaffian_complex(matrix).numpy(), atol=ATOL_SCALAR_COMPARISON, rtol=0
+        )
+
     def test_signed_pfaffian_complex_odd_size_is_zero(self):
         matrix = self.complex_skew_symmetric(3, seed=51)
         np.testing.assert_allclose(complex(signed_pfaffian_complex(matrix)), 0.0 + 0.0j, atol=ATOL_SCALAR_COMPARISON)
