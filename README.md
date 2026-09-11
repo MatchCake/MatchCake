@@ -5,7 +5,7 @@
 
 [![Star on GitHub](https://img.shields.io/github/stars/MatchCake/MatchCake.svg?style=social)](https://github.com/MatchCake/MatchCake/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/MatchCake/MatchCake?style=social)](https://github.com/MatchCake/MatchCake/network/members)
-[![Python 3.6](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-310/)
+[![Python 3.11 to 3.14](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/downloads/)
 [![downloads](https://img.shields.io/pypi/dm/MatchCake)](https://pypi.org/project/MatchCake)
 [![PyPI version](https://img.shields.io/pypi/v/MatchCake)](https://pypi.org/project/MatchCake)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
@@ -32,6 +32,24 @@ Machine (SVM).
 Note that this package is built on PennyLane and PyTorch. This means that only the NumPy and PyTorch backends are compatible.
 Other backends provided by Autoray, such as JAX and TensorFlow, are not supported.
 We highly recommend using PyTorch as the backend when working with MatchCake.
+
+
+# Requirements
+
+| Requirement   | Supported                  |
+|---------------|----------------------------|
+| **Python**    | 3.11, 3.12, 3.13, 3.14     |
+| **Platforms** | Linux, Windows             |
+
+Every one of these Python versions is tested on both Linux and Windows on each pull request, in
+[continuous integration](https://github.com/MatchCake/MatchCake/actions/workflows/tests.yml).
+Installation is also resolved for Linux on aarch64, though that architecture is not covered by the
+test suite.
+
+macOS is not supported. MatchCake contains no platform specific code and may well run there, but it
+is not tested. If you need macOS support, please
+[open an issue](https://github.com/MatchCake/MatchCake/issues/new/choose) and we will look into
+adding it to the continuous integration matrix.
 
 
 # Installation
