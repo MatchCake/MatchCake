@@ -138,7 +138,7 @@ viz.plot_2d_decision_boundaries(model=pipeline, y=y, show=True)
 
 # For Developers
 
-To contribute to the development of MatchCake, please refer to the [contributing guidelines](.github/CONTRIBUTING.md).
+To contribute to the development of MatchCake, please refer to the [contributing guidelines](https://github.com/MatchCake/MatchCake/blob/dev/CONTRIBUTING.md).
 
 
 
