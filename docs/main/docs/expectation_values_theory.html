@@ -1,0 +1,508 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Computing expectation values using the Covariance-Matrix &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="../static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="../static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="matchcake package" href="../matchcake.html" />
+    <link rel="prev" title="Theory" href="../theory.html" />
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process|mathjax_process|math|output_area'
+  }
+};
+</script>
+
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="../index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a></li>
+        
+          <li><a href="../theory.html">Theory</a></li>
+        
+      <li>Computing expectation values using the Covariance-Matrix</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="../sources/docs/expectation_values_theory.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="../search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+
+<div style="padding: 0 0 1em 0;">
+  <label for="version-select" style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 0.3em; color: #555;">Version</label>
+  <select id="version-select" onchange="window.location.href=this.value" style="width: 100%; padding: 0.3em 0.4em; font-size: 0.9em; border: 1px solid #ccc; border-radius: 3px; background: #fff; cursor: pointer;">
+    
+    <option value="../../dev/index.html" >dev</option>
+    
+    <option value="expectation_values_theory.html" >main</option>
+    
+  </select>
+</div>
+
+
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#cuda-installation">CUDA installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#quick-usage-preview">Quick Usage Preview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#quantum-circuit-simulation-with-matchcake">Quantum Circuit Simulation with MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#data-classification-with-matchcake">Data Classification with MatchCake</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#for-developers">For Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#citation">Citation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#fermionic-machine-learning-paper">Fermionic Machine Learning Paper</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html">MatchCake Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#create-the-noninteractingfermionicdevice">Create the NonInteractingFermionicDevice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#define-the-circuit">Define the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#create-the-qnode">Create the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#define-the-hyperparameters-of-the-circuit">Define the hyperparameters of the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#draw-the-circuit">Draw the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#evaluate-the-qnode">Evaluate the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#print-the-expectation-values">Print the expectation values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/expectation_values.html">Expectation Values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/probabilities.html">Probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html">Iris classification with FermionicPQCKernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#visualize-the-results">Visualize the results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html">Nystroem Kernel Approximation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../theory.html">Theory</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Computing expectation values using the Covariance-Matrix</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../matchcake.html">matchcake package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#matchcake-matchgate-module">matchcake.matchgate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#matchcake-qs-device-module">matchcake.qs_device module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#matchcake-utils-module">matchcake.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section class="tex2jax_ignore mathjax_ignore" id="computing-expectation-values-using-the-covariance-matrix">
+<h1>Computing expectation values using the Covariance-Matrix<a class="headerlink" href="#computing-expectation-values-using-the-covariance-matrix" title="Permalink to this heading">¶</a></h1>
+<p>This document explains how MatchCake turns a matchgates circuit into a Pauli expectation
+value through the Majorana covariance matrix. First, we explain how it works with
+computational-basis initial states and then show how it works with arbitrary product states.</p>
+<p>For references, the Gaussian formalism is due to Bravyi [3]; the
+extension to arbitrary product states follows Jozsa, Miyake &amp; Strelchuk [1] and
+Projansky, Necaise &amp; Whitfield [2].</p>
+<section id="setting">
+<h2>Setting<a class="headerlink" href="#setting" title="Permalink to this heading">¶</a></h2>
+<p>We use the convention <span class="math notranslate nohighlight">\(\langle A\rangle_\rho = \mathrm{Tr}[\rho A]\)</span> throughout. The
+Jordan–Wigner (JW) transformation maps <span class="math notranslate nohighlight">\(n\)</span> qubits to <span class="math notranslate nohighlight">\(2n\)</span> Hermitian Majorana operators
+(0-indexed),</p>
+<div class="math notranslate nohighlight">
+\[
+c_{2k} = Z_0\cdots Z_{k-1}\,X_k, \qquad c_{2k+1} = Z_0\cdots Z_{k-1}\,Y_k,
+\]</div>
+<p>obeying the Clifford algebra <span class="math notranslate nohighlight">\(\{c_\mu, c_\nu\} = 2\delta_{\mu\nu}\)</span>. The computation of the expectation values
+goes by four stages: initial covariance, single-particle transition matrix, evolved covariance, and
+Pfaffian readout.</p>
+</section>
+<section id="the-initial-covariance-matrix-lambda-0-for-a-computational-basis-state">
+<h2>1. The initial covariance matrix <span class="math notranslate nohighlight">\(\Lambda_0\)</span> for a computational-basis state<a class="headerlink" href="#the-initial-covariance-matrix-lambda-0-for-a-computational-basis-state" title="Permalink to this heading">¶</a></h2>
+<p>The initial state is a computational-basis state <span class="math notranslate nohighlight">\(|x\rangle = |x_1 \cdots x_n\rangle\)</span>.
+Set <span class="math notranslate nohighlight">\(z_k = (-1)^{x_k}\)</span> and recall <span class="math notranslate nohighlight">\(c_{2k} = Z_{&lt;k} X_k\)</span>, <span class="math notranslate nohighlight">\(c_{2k+1} = Z_{&lt;k} Y_k\)</span>. The
+element is <span class="math notranslate nohighlight">\((\Lambda_0)_{\mu\nu} = i \langle x | c_\mu c_\nu | x \rangle\)</span>, and the
+expectation <span class="math notranslate nohighlight">\(\langle x | P | x \rangle\)</span> is nonzero only when the Pauli string <span class="math notranslate nohighlight">\(P\)</span> is
+diagonal, i.e. composed of <span class="math notranslate nohighlight">\(Z\)</span> and <span class="math notranslate nohighlight">\(I\)</span>.</p>
+<p>In the diagonal (<span class="math notranslate nohighlight">\(\mu = \nu\)</span>), the strings <span class="math notranslate nohighlight">\(Z_{&lt;k}\)</span> square to identity and
+<span class="math notranslate nohighlight">\(X_k^2 = Y_k^2 = I\)</span>, so <span class="math notranslate nohighlight">\(c_\mu c_\mu = I\)</span> and <span class="math notranslate nohighlight">\(i \langle I \rangle = i\)</span>. The definition
+removes this term, hence <span class="math notranslate nohighlight">\((\Lambda_0)_{\mu\mu} = 0\)</span>.</p>
+<p>In the upper/lower diagonal (<span class="math notranslate nohighlight">\(\{\mu, \nu\} = \{2k, 2k+1\}\)</span>), the strings <span class="math notranslate nohighlight">\(Z_{&lt;k}\)</span>
+cancel and <span class="math notranslate nohighlight">\(c_{2k} c_{2k+1} = X_k Y_k = i Z_k\)</span>, which is diagonal. Then
+<span class="math notranslate nohighlight">\((\Lambda_0)_{2k, 2k+1} = i \langle i Z_k \rangle = -z_k\)</span> and
+<span class="math notranslate nohighlight">\((\Lambda_0)_{2k+1, 2k} = +z_k\)</span>.</p>
+<p>Otherwise, the product retains an unpaired <span class="math notranslate nohighlight">\(X\)</span> or <span class="math notranslate nohighlight">\(Y\)</span>, which is off-diagonal, so the
+expectation vanishes and <span class="math notranslate nohighlight">\((\Lambda_0)_{\mu\nu} = 0\)</span>.</p>
+<p>Only the indices <span class="math notranslate nohighlight">\(2k\)</span> and <span class="math notranslate nohighlight">\(2k+1\)</span> are coupled, so <span class="math notranslate nohighlight">\(\Lambda_0\)</span> is block-diagonal:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\Lambda_0 = \bigoplus_{k=0}^{n-1} (-z_k) \begin{pmatrix} 0 &amp; 1 \\ -1 &amp; 0 \end{pmatrix}.
+\end{split}\]</div>
+<p>The overall sign follows the convention <span class="math notranslate nohighlight">\(c_{2k} c_{2k+1} = i Z_k\)</span>.</p>
+</section>
+<section id="the-single-particle-transition-matrix-from-v">
+<h2>2. The single-particle transition matrix from <span class="math notranslate nohighlight">\(V\)</span><a class="headerlink" href="#the-single-particle-transition-matrix-from-v" title="Permalink to this heading">¶</a></h2>
+<p>A matchgate circuit <span class="math notranslate nohighlight">\(V\)</span> acts by conjugation as a rotation of the Majorana operators into
+one another. We fix the convention</p>
+<div class="math notranslate nohighlight">
+\[
+V\,c_\mu\,V^\dagger = \sum_\nu R_{\mu\nu}\,c_\nu,
+\qquad\text{equivalently}\qquad
+V^\dagger c_\mu V = \sum_\nu R_{\nu\mu}\,c_\nu,
+\qquad R \in O(2n),
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(R\)</span> is the <strong>single-particle transition matrix (SPTM)</strong>. Each elementary matchgate
+contributes a local orthogonal rotation on a small Majorana subspace, and the global <span class="math notranslate nohighlight">\(R_G\)</span> is
+their ordered product, assembled in <span class="math notranslate nohighlight">\(\mathcal{O}(\mathrm{poly}\,n)\)</span> time. This single
+matrix captures the entire effect of the circuit, which is a free-fermionic evolution.
+MatchCake tracks <span class="math notranslate nohighlight">\(R_G\)</span> explicitly, so it is always available in
+<span class="math notranslate nohighlight">\(\mathcal{O}(n^2)\)</span>.</p>
+</section>
+<section id="the-evolved-covariance-matrix-lambda">
+<h2>3. The evolved covariance matrix <span class="math notranslate nohighlight">\(\Lambda\)</span><a class="headerlink" href="#the-evolved-covariance-matrix-lambda" title="Permalink to this heading">¶</a></h2>
+<p>The evolved state is <span class="math notranslate nohighlight">\(|\psi\rangle = V|\psi_0\rangle\)</span> which can be describe by the evolved covariance matrix defined as</p>
+<div class="math notranslate nohighlight">
+\[
+\Lambda_{\mu\nu} = i\,\langle \psi_0|V^\dagger c_\mu c_\nu V|\psi_0\rangle, \quad \mu\neq\nu,
+\]</div>
+<p>or defined by commutators
+<span class="math notranslate nohighlight">\(\Lambda_{\mu\nu} = \tfrac{i}{2}\langle \psi_0|V^\dagger[c_\mu, c_\nu]V|\psi_0\rangle\)</span>.</p>
+<p>This covariance matrix can be computed via the SPTM</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\Lambda_{\mu\nu} = i\,\langle \psi_0|V^\dagger c_\mu V V^\dagger c_\nu V|\psi_0\rangle \\
+= i\,\left\langle \psi_0\left|\left(\sum_j R_{j\mu}\,c_j\right)\left(\sum_\ell R_{\ell\nu}\,c_\ell\right)\right|\psi_0\right\rangle \\
+= i\sum_{j,\ell} R_{j\mu} R_{\ell\nu} \langle \psi_0|c_j c_\ell|\psi_0\rangle \\
+= i\sum_{j,\ell} R_{j\mu} \langle \psi_0|c_j c_\ell|\psi_0\rangle R_{\ell\nu} \\
+= \sum_{j,\ell} R_{j\mu} (\Lambda_0)_{j\ell} R_{\ell\nu}
+\end{split}\]</div>
+<p>so that</p>
+<div class="math notranslate nohighlight">
+\[
+\boxed{\;\Lambda = R^\top \Lambda_0\, R\;}
+\]</div>
+<p>Note that the placement of the transposes is fixed by the SPTM convention of
+Section 2; the mirrored index convention <span class="math notranslate nohighlight">\(V^\dagger c_\mu V = \sum_\nu R_{\mu\nu}c_\nu\)</span>
+produces <span class="math notranslate nohighlight">\(\Lambda = R\,\Lambda_0\,R^\top\)</span> instead, the two are equivalent provided <span class="math notranslate nohighlight">\(R\)</span>.</p>
+</section>
+<section id="expectation-values-from-lambda-pfaffian-and-jordanwigner">
+<h2>4. Expectation values from <span class="math notranslate nohighlight">\(\Lambda\)</span>, Pfaffian, and Jordan–Wigner<a class="headerlink" href="#expectation-values-from-lambda-pfaffian-and-jordanwigner" title="Permalink to this heading">¶</a></h2>
+<p>A Pauli expectation <span class="math notranslate nohighlight">\(\langle P\rangle\)</span> is obtained in three steps.</p>
+<p><strong>Majorana decomposition.</strong> Every Pauli word is a single ordered Majorana product,
+<span class="math notranslate nohighlight">\(P = \alpha\,c_{\mu_1}\cdots c_{\mu_m}\)</span> with <span class="math notranslate nohighlight">\(\mu_1 &lt; \cdots &lt; \mu_m\)</span> and a known
+unit-modulus phase <span class="math notranslate nohighlight">\(\alpha\)</span>, obtained by applying the <span class="math notranslate nohighlight">\(\{X_k, Y_k, Z_k\}\to c\)</span> dictionary,
+sorting the indices, and accumulating <span class="math notranslate nohighlight">\((-1)^{\#\text{transpositions}}\)</span>.</p>
+<p><strong>Wick’s theorem in Pfaffian form.</strong> For the Gaussian state, with
+<span class="math notranslate nohighlight">\(S = (\mu_1,\ldots,\mu_m)\)</span> and <span class="math notranslate nohighlight">\(\Lambda|_S\)</span> the <span class="math notranslate nohighlight">\(m\times m\)</span> principal submatrix,</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\langle c_{\mu_1}\cdots c_{\mu_m}\rangle =
+\begin{cases}
+i^{-m/2}\,\mathrm{Pf}(\Lambda|_S) &amp; m \text{ even}, \\
+0 &amp; m \text{ odd}.
+\end{cases}
+\end{split}\]</div>
+<p>Odd-<span class="math notranslate nohighlight">\(m\)</span> products vanish because computational-basis states preserve fermion parity.</p>
+<p><strong>Assembly.</strong> Therefore <span class="math notranslate nohighlight">\(\langle P\rangle = \alpha\,i^{-m/2}\,\mathrm{Pf}(\Lambda|_S)\)</span> for
+even <span class="math notranslate nohighlight">\(m\)</span>, and a Hamiltonian is evaluated term by term,
+<span class="math notranslate nohighlight">\(\langle\mathcal{H}\rangle = \sum_j \beta_j\langle P_j\rangle\)</span>.</p>
+</section>
+<section id="arbitrary-product-state">
+<h2>5. Arbitrary product state<a class="headerlink" href="#arbitrary-product-state" title="Permalink to this heading">¶</a></h2>
+<p>We now repeat Stages 1–4 for a generic initialization
+<span class="math notranslate nohighlight">\(|\psi_\text{prod}\rangle = \bigotimes_k (a_k|0\rangle + b_k|1\rangle)\)</span>, with per-qubit
+Bloch components</p>
+<div class="math notranslate nohighlight">
+\[
+x_k = \langle X_k\rangle = 2\,\mathrm{Re}(a_k^* b_k), \quad
+y_k = \langle Y_k\rangle = 2\,\mathrm{Im}(a_k^* b_k), \quad
+z_k = \langle Z_k\rangle = |a_k|^2 - |b_k|^2.
+\]</div>
+<section id="initial-covariance-and-why-lambda-0-alone-is-insufficient">
+<h3>5.1 Initial covariance, and why <span class="math notranslate nohighlight">\(\Lambda_0\)</span> alone is insufficient<a class="headerlink" href="#initial-covariance-and-why-lambda-0-alone-is-insufficient" title="Permalink to this heading">¶</a></h3>
+<p>The two-point matrix is defined exactly as before, but transverse components now propagate
+across qubits through the JW <span class="math notranslate nohighlight">\(Z\)</span>-string, so <span class="math notranslate nohighlight">\(\Lambda_0\)</span> is no longer block-diagonal:</p>
+<div class="math notranslate nohighlight">
+\[
+(\Lambda_0)_{2k,2k+1} = -z_k, \qquad
+(\Lambda_0)_{2j,2k} = y_j\,p_{jk}\,x_k \;\;(j&lt;k), \quad
+p_{jk} = \prod_{j&lt;l&lt;k} z_l,
+\]</div>
+<p>with analogous expressions for the mixed index pairs. Crucially, a generic product state is
+<em>not</em> fermionic Gaussian: it carries nonzero single-Majorana expectations
+<span class="math notranslate nohighlight">\(\langle c_\mu\rangle \neq 0\)</span>, and a real antisymmetric matrix has no slot in which to store
+them. The diagnosis is immediate on <span class="math notranslate nohighlight">\(|+\rangle = \tfrac{1}{\sqrt 2}(|0\rangle + |1\rangle)\)</span>:
+here <span class="math notranslate nohighlight">\(\langle c_0\rangle = \langle X\rangle = 1\)</span> yet <span class="math notranslate nohighlight">\(\Lambda_0 = 0\)</span>, so the Pfaffian formula
+returns <span class="math notranslate nohighlight">\(\langle X\rangle = 0\)</span>, which is wrong. The missing data is collected in the
+<strong>displacement vector</strong></p>
+<div class="math notranslate nohighlight">
+\[
+d_\mu = \langle\psi_\text{prod}|c_\mu|\psi_\text{prod}\rangle, \qquad
+d_{2k} = x_k\!\prod_{l&lt;k} z_l, \qquad
+d_{2k+1} = y_k\!\prod_{l&lt;k} z_l.
+\]</div>
+</section>
+<section id="restoring-gaussianity-the-extended-covariance-matrix">
+<h3>5.2 Restoring Gaussianity: the extended covariance matrix<a class="headerlink" href="#restoring-gaussianity-the-extended-covariance-matrix" title="Permalink to this heading">¶</a></h3>
+<p>The fix is to extend the algebra by one mode. With the total-parity operator
+<span class="math notranslate nohighlight">\(c_\text{par} = \prod_\mu c_\mu\)</span>, define the primed Majoranas <span class="math notranslate nohighlight">\(c'_\mu = i\,c_\mu c_\text{par}\)</span>
+and <span class="math notranslate nohighlight">\(c'_{2n} = c_\text{par}\)</span>; these <span class="math notranslate nohighlight">\(2n+1\)</span> operators are Hermitian and satisfy
+<span class="math notranslate nohighlight">\(\{c'_\mu, c'_\nu\} = 2\delta_{\mu\nu}\)</span>. In this enlarged algebra every product state is
+Gaussian, because the parity-breaking linear data becomes a genuine two-point correlator
+with the parity mode. The <strong>extended covariance matrix</strong> is the
+<span class="math notranslate nohighlight">\((2n+1)\times(2n+1)\)</span> real antisymmetric matrix</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\boxed{\;
+\widetilde\Lambda = \begin{pmatrix} \Lambda &amp; d \\ -d^\top &amp; 0 \end{pmatrix},
+\qquad d_\mu = \langle c_\mu\rangle,
+\;}
+\end{split}\]</div>
+<p>where the index <span class="math notranslate nohighlight">\(2n\)</span> labels <span class="math notranslate nohighlight">\(c'_\text{par}\)</span>. The upper-left block is the ordinary covariance
+matrix and the border is the displacement.</p>
+</section>
+<section id="sptm-lift">
+<h3>5.3 SPTM lift<a class="headerlink" href="#sptm-lift" title="Permalink to this heading">¶</a></h3>
+<p>A matchgate has no linear (single-Majorana) generators, so it leaves the parity mode
+invariant, <span class="math notranslate nohighlight">\(V^\dagger c_\text{par} V = c_\text{par}\)</span>. The SPTM therefore lifts
+block-diagonally,</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\widetilde R = \begin{pmatrix} R &amp; 0 \\ 0 &amp; 1 \end{pmatrix} \in O(2n+1),
+\qquad
+\widetilde\Lambda = \widetilde R^\top \widetilde\Lambda_0\, \widetilde R.
+\end{split}\]</div>
+<p>Expanding the product reproduces both evolution laws at once,</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\widetilde R^\top \widetilde\Lambda_0 \widetilde R =
+\begin{pmatrix} R^\top \Lambda_0 R &amp; R^\top d_0 \\ -(R^\top d_0)^\top &amp; 0 \end{pmatrix} =
+\begin{pmatrix} \Lambda &amp; d \\ -d^\top &amp; 0 \end{pmatrix},
+\end{split}\]</div>
+<p>that is, <span class="math notranslate nohighlight">\(\Lambda = R^\top\Lambda_0 R\)</span> exactly as in Stage 3, together with <span class="math notranslate nohighlight">\(d = R^\top d_0\)</span>:
+the displacement rotates under the same SPTM. No additional circuit data is required, only
+one fixed extra row and column.</p>
+</section>
+<section id="expectation-values">
+<h3>5.4 Expectation values<a class="headerlink" href="#expectation-values" title="Permalink to this heading">¶</a></h3>
+<p>The readout is identical to Stage 4, performed on <span class="math notranslate nohighlight">\(\widetilde\Lambda\)</span>, with one rule that
+keeps every submatrix even-sized so the Pfaffian remains well-defined. For
+<span class="math notranslate nohighlight">\(P = \alpha\,c_{\mu_1}\cdots c_{\mu_m}\)</span>:</p>
+<ul class="simple">
+<li><p>if <span class="math notranslate nohighlight">\(m\)</span> is even, <span class="math notranslate nohighlight">\(\widetilde S = (\mu_1,\ldots,\mu_m)\)</span> and <span class="math notranslate nohighlight">\(\widetilde\alpha = \alpha\)</span>;</p></li>
+<li><p>if <span class="math notranslate nohighlight">\(m\)</span> is odd, <span class="math notranslate nohighlight">\(\widetilde S = (\mu_1,\ldots,\mu_m, 2n)\)</span> and
+<span class="math notranslate nohighlight">\(\widetilde\alpha = \alpha\,i^m(-1)^{m(m-1)/2}\)</span>.</p></li>
+</ul>
+<p>Then</p>
+<div class="math notranslate nohighlight">
+\[
+\langle P\rangle = \widetilde\alpha\,i^{-|\widetilde S|/2}\,\mathrm{Pf}(\widetilde\Lambda|_{\widetilde S}).
+\]</div>
+<p>The odd-<span class="math notranslate nohighlight">\(m\)</span> terms that previously vanished now acquire the parity index <span class="math notranslate nohighlight">\(2n\)</span>, pad to even
+length, and take a real value. This is precisely what allows us to work with <span class="math notranslate nohighlight">\(|+\rangle\)</span>: the expectation
+<span class="math notranslate nohighlight">\(\langle X\rangle = \langle c_0\rangle\)</span> is read from
+<span class="math notranslate nohighlight">\(\mathrm{Pf}(\widetilde\Lambda|_{\{0,2n\}}) = \widetilde\Lambda_{0,2n} = d_0\)</span> instead of
+collapsing to zero.</p>
+</section>
+</section>
+<section id="computing-hamiltonian-energy">
+<h2>Computing Hamiltonian Energy<a class="headerlink" href="#computing-hamiltonian-energy" title="Permalink to this heading">¶</a></h2>
+<p>Let us now bring everything together to compute the energy of a system evolving under a free-fermionic evolution. The
+energy,</p>
+<div class="math notranslate nohighlight">
+\[
+\varepsilon = \langle \mathcal{H} \rangle = \sum_j \beta_j \langle P_j \rangle,
+\]</div>
+<p>can then be evaluated as</p>
+<div class="math notranslate nohighlight">
+\[
+\boxed{\;
+\varepsilon = \sum_j \beta_j \widetilde{\alpha}_j \, i^{-|\widetilde{S}_j|/2}
+\, \mathrm{Pf}\!\left(
+\widetilde{R}^{\top} \widetilde{\Lambda}_0 \widetilde{R}
+\big|_{\widetilde{S}_j}
+\right)
+\;}.
+\]</div>
+<p>To summarize, the expectation value of a Hamiltonian can be computed in polynomial time by tracking the SPTMs associated
+with each matchgate in the circuit, together with the initial covariance matrix. Once these quantities are available, we
+compute the Jordan-Wigner transformation of the Pauli operators appearing in the Hamiltonian and evaluate a batch of
+Pfaffians to obtain the final energy.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this heading">¶</a></h2>
+<p>[1] Jozsa, Richard, Akimasa Miyake, and Sergii Strelchuk. “Jordan-Wigner formalism for
+arbitrary 2-input 2-output matchgates and their classical simulation.” arXiv preprint
+arXiv:1311.3046 (2013).</p>
+<p>[2] Projansky, Andrew M., Jason Necaise, and James D. Whitfield. “Gaussianity and
+simulability of Cliffords and matchgates.” Journal of Physics A: Mathematical and
+Theoretical 58, no. 19 (2025): 195302.</p>
+<p>[3] Bravyi, Sergey. “Lagrangian representation for fermionic linear optics.” arXiv preprint
+quant-ph/0404180 (2004).</p>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="../static/documentation_options.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <script type="text/javascript" src="../static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="../None"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" src="../static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>
