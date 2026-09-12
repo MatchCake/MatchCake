@@ -20,7 +20,7 @@ To set up the development environment, please follow these steps:
     ```bash
      uv sync --dev --extra <extra-option>
     ```
-    - Extra options: See the [README.md](README.md) for details on extra options for installation.
+    - Extra options: See the [README.md](../README.md) for details on extra options for installation.
 5. Set up Pre-commit hooks:
     ```bash
      uv run pre-commit install
