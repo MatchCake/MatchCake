@@ -108,6 +108,14 @@ linkcheck_timeout = 30
 linkcheck_ignore = [
     # GitHub answers 404 to unauthenticated clients on this path.
     r"https://github\.com/MatchCake/MatchCake/stargazers",
+    # Links into this repository's own tree cannot be resolved over HTTP from a pull request that
+    # adds or moves the file they point to, because the branch only gains it once the pull request
+    # is merged. The .github/scripts/resolve_repository_links.py script, run by the Link-Check job
+    # of .github/workflows/docs.yml, checks these against the checkout instead. Sphinx matches an
+    # entry against the start of the link, so the trailing "." keeps a link that names a branch
+    # without a path out of the entry: that link has nothing to resolve on disk and is still
+    # checked over HTTP.
+    r"https://github\.com/MatchCake/MatchCake/(blob|tree)/[^/]+/.",
 ]
 
 

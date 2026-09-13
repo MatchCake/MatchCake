@@ -705,3 +705,6 @@ jobs_venv
 pstats
 /benchmark/figures
 /.claude
+
+# The venv template above ignores any directory named "scripts", which would swallow the CI helpers.
+!.github/scripts/
