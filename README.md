@@ -8,7 +8,7 @@
 [![Python 3.6](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-310/)
 [![downloads](https://img.shields.io/pypi/dm/MatchCake)](https://pypi.org/project/MatchCake)
 [![PyPI version](https://img.shields.io/pypi/v/MatchCake)](https://pypi.org/project/MatchCake)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/MatchCake/MatchCake/blob/dev/LICENSE)
 [![status](https://joss.theoj.org/papers/91f77a47cbd519daac9794a1d2144361/status.svg)](https://joss.theoj.org/papers/91f77a47cbd519daac9794a1d2144361)
 
 ![Tests Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/tests.yml/badge.svg)
@@ -167,7 +167,7 @@ Fund.
 
 
 # License
-[Apache License 2.0](LICENSE)
+[Apache License 2.0](https://github.com/MatchCake/MatchCake/blob/dev/LICENSE)
 
 
 
