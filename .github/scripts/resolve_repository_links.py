@@ -7,9 +7,9 @@ import urllib.parse
 from collections.abc import Iterable
 
 REPOSITORY_LINK_PATTERN = re.compile(
-    r"""https://github\.com/MatchCake/MatchCake/(?:blob|tree)/[^/]+/([^)\s"'>?#`|]+)"""
+    r"""https://github\.com/MatchCake/MatchCake/(?:blob|tree)/[^/]+/([^)\s"'>?#`|\\]+)"""
 )
-SOURCE_FILE_PATTERNS = ("*.md", "*.rst")
+SOURCE_FILE_PATTERNS = ("*.md", "*.rst", "*.ipynb")
 TRAILING_PUNCTUATION = ".,;:*"
 
 
@@ -21,7 +21,8 @@ def find_repository_links(text: str) -> list[tuple[int, str]]:
     over HTTP. Only the path it points to is returned, percent-decoded and stripped of any anchor,
     query string and trailing sentence or markup punctuation. A branch whose own name contains a
     slash is not supported, since nothing in the URL marks where the branch ends and the path
-    begins.
+    begins. A backslash ends a path too, so that a link held in the JSON of a notebook stops at the
+    escaped quotation mark that closes its ``href`` attribute.
 
     :param text: Content of a documentation source.
     :type text: str
@@ -41,7 +42,7 @@ def list_source_files(root: pathlib.Path) -> list[pathlib.Path]:
 
     :param root: Path to the root of the repository.
     :type root: pathlib.Path
-    :return: The tracked Markdown and reStructuredText files, relative to the root.
+    :return: The tracked Markdown, reStructuredText and notebook files, relative to the root.
     :rtype: list[pathlib.Path]
     """
     completed_process = subprocess.run(
