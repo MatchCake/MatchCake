@@ -1,5 +1,5 @@
 MatchCake
-====
+=========
 
 .. toctree::
    :maxdepth: 4
