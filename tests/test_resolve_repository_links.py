@@ -102,7 +102,7 @@ class TestResolveRepositoryLinks:
             {"README.md": "", "docs/theory.rst": "", "src/matchcake.py": "", "pyproject.toml": ""},
         )
         source_files = resolve_repository_links.list_source_files(tmp_path)
-        assert sorted(source_files) == [pathlib.Path("README.md"), pathlib.Path("docs/theory.rst")]
+        assert set(source_files) == {pathlib.Path("README.md"), pathlib.Path("docs/theory.rst")}
 
     def test_find_broken_links_reports_a_missing_target(self, tmp_path):
         (tmp_path / "README.md").write_text(
