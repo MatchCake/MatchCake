@@ -4,6 +4,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import os
+import re
 import shutil
 import sys
 
@@ -14,6 +15,9 @@ import matchcake
 _html_folders_formatted = {}
 _allowed_special_methods = ["__init__", "__call__"]
 
+_GITHUB_MATH_FENCE = re.compile(r"^```math[ \t]*\n(.*?)\n^```[ \t]*$", re.DOTALL | re.MULTILINE)
+_GITHUB_INLINE_MATH = re.compile(r"\$`([^`\n]+?)`\$")
+
 
 def skip(app, what, name, obj, would_skip, options):
     if name in _allowed_special_methods:
@@ -21,7 +25,24 @@ def skip(app, what, name, obj, would_skip, options):
     return would_skip
 
 
+def github_math_to_myst(app, docname, source):
+    """
+    Rewrite GitHub-flavored math delimiters to MyST dollarmath before parsing.
+
+    The markdown sources under ``docs/`` use GitHub-flavored math so they render on
+    github.com: inline math is wrapped in ``$`...`$`` and display math in ```` ```math ````
+    fences, both of which keep the LaTeX literal and protect it from GitHub's markdown
+    sanitizer. MyST's dollarmath expects ``$...$`` and ``$$...$$`` instead, so this handler
+    converts the GitHub forms in place when Sphinx reads each source.
+    """
+    text = source[0]
+    text = _GITHUB_MATH_FENCE.sub(lambda match: "$$\n" + match.group(1) + "\n$$", text)
+    text = _GITHUB_INLINE_MATH.sub(lambda match: "$" + match.group(1) + "$", text)
+    source[0] = text
+
+
 def setup(app):
+    app.connect("source-read", github_math_to_myst)
     app.connect("autodoc-skip-member", skip)
     app.connect("html-page-context", change_pathto)
     app.connect("build-finished", move_private_folders)
