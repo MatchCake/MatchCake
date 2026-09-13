@@ -97,7 +97,18 @@ bibtex_bibfiles = ["references.bib"]
 templates_path = ["_templates"]
 exclude_patterns = ["tutorials/README.md"]
 
-suppress_warnings = ["myst.xref_missing", "myst.header"]
+suppress_warnings = ["myst.header"]
+
+
+# -- Options for the linkcheck builder ---------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-the-linkcheck-builder
+
+linkcheck_retries = 3
+linkcheck_timeout = 30
+linkcheck_ignore = [
+    # GitHub answers 404 to unauthenticated clients on this path.
+    r"https://github\.com/MatchCake/MatchCake/stargazers",
+]
 
 
 # -- Options for HTML output -------------------------------------------------

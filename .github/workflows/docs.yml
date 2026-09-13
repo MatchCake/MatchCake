@@ -3,12 +3,78 @@ name: Docs
 on:
   push:
     branches: ["main", "dev"]
+  pull_request:
+    branches: ["main", "dev"]
 
 
 jobs:
+  Check-Docs:
+    name: Check docs
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.9.2"
+        python-version: "3.11"
+        enable-cache: true
+
+    - name: Install dependencies
+      run: |
+        uv venv .venv
+        uv sync --locked --dev --group docs --extra cpu
+
+    - name: Fail on unresolved cross-references
+      run: |
+        set -eo pipefail
+        uv run sphinx-build -b html sphinx/source sphinx/build/check 2>&1 | tee sphinx-build.log
+        if grep -q "myst.xref_missing" sphinx-build.log; then
+          echo "::error::Unresolved cross-references found. A relative link that does not point to a document in the docs renders as a dead same-page anchor."
+          grep "myst.xref_missing" sphinx-build.log
+          exit 1
+        fi
+
+  Link-Check:
+    name: Check docs links
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.9.2"
+        python-version: "3.11"
+        enable-cache: true
+
+    - name: Install dependencies
+      run: |
+        uv venv .venv
+        uv sync --locked --dev --group docs --extra cpu
+
+    - name: Run the linkcheck builder
+      run: |
+        uv run sphinx-build -b linkcheck sphinx/source sphinx/build/linkcheck
+
   Build-Docs:
     name: Build docs
     runs-on: ubuntu-latest
+    needs: Check-Docs
+    if: github.event_name == 'push'
 
     steps:
     - uses: actions/checkout@v3
