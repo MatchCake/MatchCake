@@ -162,6 +162,15 @@ linkcheck_ignore = [
     # checked over HTTP.
     r"https://github\.com/MatchCake/MatchCake/(blob|tree)/[^/]+/.",
 ]
+linkcheck_anchors_ignore = [
+    # The default of Sphinx: an anchor that a script builds once the page is loaded.
+    "^!",
+    # GitHub serves only the first page of a long issue thread, so the comment that an anchor names
+    # is missing from the answer even though a browser reaches it. The page itself is still checked.
+    r"^issuecomment-\d+$",
+    # IOPscience builds the abstract of an article in the browser, so its anchor is missing too.
+    "^artAbst$",
+]
 
 
 # -- Options for HTML output -------------------------------------------------
