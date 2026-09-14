@@ -8,7 +8,13 @@ import re
 import shutil
 import sys
 
-basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+# sphinx_multiversion builds every ref with the configuration of the ref that triggered the run,
+# and only the documentation sources come from the ref being built. Resolving the package next to
+# those sources instead of next to this file makes autodoc import the code of the ref being built,
+# so the API reference of a tag describes the release that carries it.
+_MULTIVERSION_SOURCEDIR = os.environ.get("SPHINX_MULTIVERSION_SOURCEDIR")
+
+basedir = os.path.abspath(os.path.join(_MULTIVERSION_SOURCEDIR or os.path.dirname(__file__), "..", "..", "src"))
 sys.path.insert(0, basedir)
 import matchcake
 
@@ -17,6 +23,7 @@ _allowed_special_methods = ["__init__", "__call__"]
 
 _GITHUB_MATH_FENCE = re.compile(r"^```math[ \t]*\n(.*?)\n^```[ \t]*$", re.DOTALL | re.MULTILINE)
 _GITHUB_INLINE_MATH = re.compile(r"\$`([^`\n]+?)`\$")
+_VERSION_COMPONENT = re.compile(r"\d+")
 
 
 def skip(app, what, name, obj, would_skip, options):
@@ -60,15 +67,63 @@ def drop_mathjax3_config(app):
     app.config.mathjax3_config = None
 
 
+def _version_sort_key(name: str) -> tuple:
+    """
+    Order a version by the numbers it holds rather than by its characters.
+
+    :param name: name of the git ref a version was built from.
+    :return: the numbers of the name, in order, so that ``0.10.0`` sorts above ``0.2.0``.
+    :rtype: tuple
+    """
+    return tuple(int(component) for component in _VERSION_COMPONENT.findall(name))
+
+
+def name_version_after_ref(app, config):
+    """
+    Label a version built from a tag with the name of that tag.
+
+    ``sphinx_multiversion`` reads the configuration of every ref in the process that launches the
+    builds, and copies the ``version`` it finds there over ``config.version`` on ``config-inited``.
+    That value comes from ``importlib.metadata``, which answers with the version installed in the
+    environment, so a tag would otherwise carry the version of the ref that triggered the run. This
+    handler is connected with a priority above the one ``sphinx_multiversion`` registers with, so it
+    always runs after the value it sets.
+    """
+    metadata = getattr(config, "smv_metadata", None) or {}
+    current_version = getattr(config, "smv_current_version", "")
+    if metadata.get(current_version, {}).get("source") != "tags":
+        return
+    config.version = current_version
+    config.release = current_version
+
+
+def order_versions(app, pagename, templatename, context, doctree):
+    """
+    Order the entries of the version selector: the branches first, then the tags, newest first.
+
+    ``sphinx_multiversion`` hands the template a mapping whose order follows the refs as git lists
+    them, which sorts ``0.10.0`` below ``0.2.0``. The handler is connected with a priority above the
+    one ``sphinx_multiversion`` registers with, so the mapping it builds is already in the context.
+    """
+    versions = context.get("versions")
+    if versions is None:
+        return
+    context["ordered_versions"] = list(versions.branches) + sorted(
+        versions.tags, key=lambda version: _version_sort_key(version.name), reverse=True
+    )
+
+
 def setup(app):
     # sphinx.ext.mathjax only loads MathJax on a page whose own document holds math, so a page
     # that merely quotes a math-bearing section title, such as the toctree of theory.rst, would
     # show the LaTeX source of that title instead of the formula.
     app.set_html_assets_policy("always")
     app.connect("builder-inited", drop_mathjax3_config, priority=800)
+    app.connect("config-inited", name_version_after_ref, priority=800)
     app.connect("source-read", github_math_to_myst)
     app.connect("autodoc-skip-member", skip)
     app.connect("html-page-context", change_pathto)
+    app.connect("html-page-context", order_versions, priority=800)
     app.connect("build-finished", move_private_folders)
 
 
@@ -127,9 +182,13 @@ extensions = [
 ]
 
 smv_branch_whitelist = r"^(main|dev)$"
-smv_tag_whitelist = r"^$"
+# Release tags only: a pre-release such as 0.0.4-beta1 is left out of the version selector.
+# sphinx_multiversion reads the conf.py of every ref it selects before building it, and drops the
+# ref when that read fails, so a tag whose sources no longer import under the dependencies pinned
+# today is skipped with a "Failed load config" line in the build log instead of failing the run.
+smv_tag_whitelist = r"^\d+\.\d+\.\d+$"
 smv_remote_whitelist = r"^origin$"
-smv_released_pattern = r"^$"
+smv_released_pattern = r"^refs/tags/.*$"
 smv_outputdir_format = "{ref.name}"
 smv_prefer_remote_refs = True
 
