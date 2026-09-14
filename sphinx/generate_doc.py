@@ -4,7 +4,10 @@ import sys
 
 def generate_doc(path_to_root_dir: str = "."):
     commands = [
-        rf"sphinx-apidoc -f -o {path_to_root_dir}/sphinx/source {path_to_root_dir}/src/matchcake",
+        # -d 3 stops the generated toctrees one level above the members of a class. Sphinx puts every
+        # documented object in the table of contents, so the default depth of 4 lists every method of
+        # every class on the package page, burying the submodules the page is there to show.
+        rf"sphinx-apidoc -f -d 3 -o {path_to_root_dir}/sphinx/source {path_to_root_dir}/src/matchcake",
         rf"{path_to_root_dir}\sphinx\make clean html",
         rf"{path_to_root_dir}\sphinx\make html",
     ]

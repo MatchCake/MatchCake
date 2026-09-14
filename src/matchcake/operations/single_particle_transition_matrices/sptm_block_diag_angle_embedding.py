@@ -13,7 +13,6 @@ class SptmBlockDiagAngleEmbedding(SingleParticleTransitionMatrixOperation):
     block diagonal angle embedding:
 
     .. math::
-        \begin{align}
         R = \begin{bmatrix}
             \cos(f_0) & -\sin(f_0) & 0 & 0 & \cdots & 0 \\
             \sin(f_0) & \cos(f_0) & 0 & 0 & \cdots & 0 \\
