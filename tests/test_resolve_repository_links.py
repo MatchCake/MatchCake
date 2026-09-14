@@ -41,6 +41,17 @@ class TestResolveRepositoryLinks:
             (2, "images/logo/Logo.svg"),
         ]
 
+    def test_find_repository_links_stops_at_an_escaped_quotation_mark(self):
+        text = (
+            '    "    <a href=\\"https://github.com/MatchCake/MatchCake/blob/main/tutorials/'
+            'matchcake_basics.ipynb\\"><img src=\\"https://github.com/MatchCake/MatchCake/blob/main/'
+            'images/logo/Logo.svg?raw=true\\" />Download notebook</a>\\n",'
+        )
+        assert resolve_repository_links.find_repository_links(text) == [
+            (1, "tutorials/matchcake_basics.ipynb"),
+            (1, "images/logo/Logo.svg"),
+        ]
+
     def test_find_repository_links_strips_trailing_punctuation(self):
         text = (
             "See https://github.com/MatchCake/MatchCake/blob/dev/LICENSE, "
@@ -99,10 +110,20 @@ class TestResolveRepositoryLinks:
     def test_list_source_files_lists_tracked_documentation(self, tmp_path):
         self.make_repository(
             tmp_path,
-            {"README.md": "", "docs/theory.rst": "", "src/matchcake.py": "", "pyproject.toml": ""},
+            {
+                "README.md": "",
+                "docs/theory.rst": "",
+                "tutorials/demonstration.ipynb": "",
+                "src/matchcake.py": "",
+                "pyproject.toml": "",
+            },
         )
         source_files = resolve_repository_links.list_source_files(tmp_path)
-        assert set(source_files) == {pathlib.Path("README.md"), pathlib.Path("docs/theory.rst")}
+        assert set(source_files) == {
+            pathlib.Path("README.md"),
+            pathlib.Path("docs/theory.rst"),
+            pathlib.Path("tutorials/demonstration.ipynb"),
+        }
 
     def test_find_broken_links_reports_a_missing_target(self, tmp_path):
         (tmp_path / "README.md").write_text(
