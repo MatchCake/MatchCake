@@ -35,9 +35,6 @@ Welcome to MatchCake's documentation!
    matchcake
 
 
-.. include:: readme.rst
-
-
 Indices and tables
 ==================
 
