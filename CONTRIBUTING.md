@@ -188,7 +188,8 @@ the outputs rendered on the site are the ones stored in the notebook files. Use 
 the notebooks still run.
 
 The published site is built by [`.github/workflows/docs.yml`](.github/workflows/docs.yml) with `sphinx-multiversion`, which
-builds the `main` and `dev` branches from the remote. It therefore never reflects uncommitted work, so use
+builds the `main` and `dev` branches from the remote as well as every release tag it can still build, each reachable
+from the version selector in the sidebar. It therefore never reflects uncommitted work, so use
 `uv run make -C sphinx html` when you are developing.
 
 

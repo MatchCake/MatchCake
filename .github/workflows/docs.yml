@@ -3,8 +3,10 @@ name: Docs
 on:
   push:
     branches: ["main", "dev"]
+    tags: ["[0-9]+.[0-9]+.[0-9]+"]
   pull_request:
     branches: ["main", "dev"]
+  workflow_dispatch:
 
 
 jobs:
@@ -82,7 +84,7 @@ jobs:
     name: Build docs
     runs-on: ubuntu-latest
     needs: Check-Docs
-    if: github.event_name == 'push'
+    if: github.event_name != 'pull_request'
 
     steps:
     - uses: actions/checkout@v3
@@ -106,9 +108,9 @@ jobs:
         uv venv .venv
         uv sync --locked --dev --group docs --extra cpu
 
-    - name: Fetch all branches for multiversion build
+    - name: Fetch all branches and tags for multiversion build
       run: |
-        git fetch --all
+        git fetch --all --tags --force
 
     - name: Build the sphinx docs
       run: |
