@@ -1,0 +1,364 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>matchcake.devices.expval_strategies.m_pfaffian package &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="matchcake.devices.probability_strategies package" href="matchcake.devices.probability_strategies.html" />
+    <link rel="prev" title="matchcake.devices.expval_strategies.clifford_expval package" href="matchcake.devices.expval_strategies.clifford_expval.html" />
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process|mathjax_process|math|output_area'
+  }
+};
+</script>
+
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="index.html">Docs</a></li>
+        
+          <li><a href="matchcake.html">matchcake package</a></li>
+        
+          <li><a href="matchcake.devices.html">matchcake.devices package</a></li>
+        
+          <li><a href="matchcake.devices.expval_strategies.html">matchcake.devices.expval_strategies package</a></li>
+        
+      <li>matchcake.devices.expval_strategies.m_pfaffian package</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="sources/matchcake.devices.expval_strategies.m_pfaffian.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+
+<div style="padding: 0 0 1em 0;">
+  <label for="version-select" style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 0.3em; color: #555;">Version</label>
+  <select id="version-select" onchange="window.location.href=this.value" style="width: 100%; padding: 0.3em 0.4em; font-size: 0.9em; border: 1px solid #ccc; border-radius: 3px; background: #fff; cursor: pointer;">
+    
+    <option value="matchcake.devices.expval_strategies.m_pfaffian.html" selected>dev</option>
+    
+    <option value="../main/index.html" >main</option>
+    
+    <option value="../0.2.3/index.html" >0.2.3</option>
+    
+  </select>
+</div>
+
+
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#requirements">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#cuda-installation">CUDA installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#quick-usage-preview">Quick Usage Preview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#quantum-circuit-simulation-with-matchcake">Quantum Circuit Simulation with MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#data-classification-with-matchcake">Data Classification with MatchCake</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#for-developers">For Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#citation">Citation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#fermionic-machine-learning-paper">Fermionic Machine Learning Paper</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/matchcake_basics.html">MatchCake Example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#create-the-noninteractingfermionicdevice">Create the NonInteractingFermionicDevice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#define-the-circuit">Define the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#create-the-qnode">Create the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#define-the-hyperparameters-of-the-circuit">Define the hyperparameters of the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#draw-the-circuit">Draw the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#evaluate-the-qnode">Evaluate the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#print-the-expectation-values">Print the expectation values</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/expectation_values.html">Expectation Values</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#hamiltonian">Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/probabilities.html">Probabilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#marginal-probabilities">Marginal probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#single-outcome-probability">Single-outcome probability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/iris_classification.html">Iris classification with FermionicPQCKernel</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html">Nystroem Kernel Approximation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="docs/expectation_values_theory.html">Computing expectation values using the Covariance-Matrix</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="matchcake.html">matchcake package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="matchcake.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section id="matchcake-devices-expval-strategies-m-pfaffian-package">
+<h1>matchcake.devices.expval_strategies.m_pfaffian package<a class="headerlink" href="#matchcake-devices-expval-strategies-m-pfaffian-package" title="Permalink to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy">
+<span id="matchcake-devices-expval-strategies-m-pfaffian-m-pfaffian-expval-strategy-module"></span><h2>matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy module<a class="headerlink" href="#module-matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy.MPfaffianExpvalStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy.</span></span><span class="sig-name descname"><span class="pre">MPfaffianExpvalStrategy</span></span><a class="headerlink" href="#matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy.MPfaffianExpvalStrategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="matchcake.devices.expval_strategies.html#matchcake.devices.expval_strategies.expval_strategy.ExpvalStrategy" title="matchcake.devices.expval_strategies.expval_strategy.ExpvalStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExpvalStrategy</span></code></a></p>
+<p>Compute &lt;P&gt; for arbitrary Pauli observables via the extended-encoding m-Pfaffian.</p>
+<p>Uses the extended (2n+1)-Majorana algebra so that arbitrary qubit product states
+are supported as initial states (not just computational basis states).</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">extended_covariance_matrix</span></code> kwarg must be the extended covariance matrix
+of shape (…, 2n+1, 2n+1), laid out with the parity index at position 2n:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>ext_cov_matrix = [[ cov_matrix,  d   ],</dt><dd><p>[ -d^T,        0   ]]</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>where cov_matrix is the 2n x 2n standard covariance matrix and d[mu] = &lt;c_mu&gt; is
+the displacement vector for the initial product state.</p>
+<p>The expectation value formula for each Pauli term P = coeff * pauli_op is:</p>
+<blockquote>
+<div><p>&lt;P&gt; = Re( coeff * ext_phase * (-i)^{<a href="#id1"><span class="problematic" id="id2">|ext_index_set|</span></a>/2} * Pf(ext_cov_matrix|_{ext_index_set}) )</p>
+</div></blockquote>
+<p>The Pauli -&gt; Majorana decomposition (index sets, sectors, phases) is a pure
+function of the observable’s Pauli operators and the device wires, so it is
+memoized (see <code class="xref py py-class docutils literal notranslate"><span class="pre">_DecompositionCache</span></code>); each forward pass folds in the live
+coefficients and re-evaluates only the Pfaffian math against the current
+covariance matrix.</p>
+<p>Mid-circuit gates must all be matchgates (matchgate evolution preserves the
+lift’s identity-block structure on the parity index). This is a device-level
+invariant enforced upstream.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy.MPfaffianExpvalStrategy.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'MPfaffianExpvalStrategy'</span></em><a class="headerlink" href="#matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy.MPfaffianExpvalStrategy.NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy.MPfaffianExpvalStrategy.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_prep_op</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">StatePrepBase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Operator</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></span><a class="headerlink" href="#matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy.MPfaffianExpvalStrategy.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call self as a function.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy.MPfaffianExpvalStrategy.can_execute">
+<span class="sig-name descname"><span class="pre">can_execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_prep_op</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">StatePrepBase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Operator</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy.MPfaffianExpvalStrategy.can_execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True iff this strategy can compute &lt;observable&gt;.</p>
+<dl class="simple">
+<dt>Conditions:</dt><dd><ol class="arabic simple">
+<li><p>state_prep_op is a BasisState or a ProductState.</p></li>
+<li><p>observable decomposes into a sum of Pauli strings.</p></li>
+</ol>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy.extend_majorana_indices">
+<span class="sig-prename descclassname"><span class="pre">matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy.</span></span><span class="sig-name descname"><span class="pre">extend_majorana_indices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">complex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parity_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">complex</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matchcake.devices.expval_strategies.m_pfaffian.m_pfaffian_expval_strategy.extend_majorana_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return (ext_index_set, ext_phase) per the parity rule.</p>
+<p>For rank even:  ext_index_set = mu,                          ext_phase = alpha.
+For rank odd:   ext_index_set = concat(mu, [parity_index]),</p>
+<blockquote>
+<div><p>ext_phase = alpha * i^rank * (-1)^{rank(rank-1)/2}.</p>
+</div></blockquote>
+<p>Since parity_index = 2n is the largest index, appending it keeps ext_index_set sorted.</p>
+</dd></dl>
+
+</section>
+<section id="module-matchcake.devices.expval_strategies.m_pfaffian">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-matchcake.devices.expval_strategies.m_pfaffian" title="Permalink to this heading">¶</a></h2>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="static/documentation_options.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" src="static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>
