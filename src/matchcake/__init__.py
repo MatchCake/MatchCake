@@ -2,7 +2,7 @@
 MatchCake is a Python library for simulating non-interacting systems of fermions using Matchgate Circuits.
 """
 
-import importlib_metadata
+from importlib.metadata import version
 
 __author__ = "Jérémie Gince"
 __email__ = "gincejeremie@gmail.com"
@@ -10,7 +10,7 @@ __copyright__ = "Copyright 2023, Jérémie Gince"
 __license__ = "Apache 2.0"
 __url__ = "https://github.com/MatchCake/MatchCake"
 __package__ = "matchcake"
-__version__: str = importlib_metadata.version(__package__)
+__version__: str = version(__package__)
 
 import warnings
 
