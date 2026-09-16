@@ -41,10 +41,10 @@ We highly recommend using PyTorch as the backend when working with MatchCake.
 | **Python**    | 3.11, 3.12, 3.13, 3.14     |
 | **Platforms** | Linux, Windows             |
 
-Every one of these Python versions is tested on both Linux and Windows on each pull request, in
-[continuous integration](https://github.com/MatchCake/MatchCake/actions/workflows/tests.yml).
-Installation is also resolved for Linux on aarch64, though that architecture is not covered by the
-test suite.
+Every one of these Python versions is tested on Linux (x86-64 and aarch64) and on Windows on each pull
+request, in [continuous integration](https://github.com/MatchCake/MatchCake/actions/workflows/tests.yml).
+On Linux, a glibc based distribution is required. PyTorch publishes no musl wheels, so MatchCake cannot be
+installed on Alpine.
 
 macOS is not supported. MatchCake contains no platform specific code and may well run there, but it
 is not tested. If you need macOS support, please
@@ -54,26 +54,99 @@ adding it to the continuous integration matrix.
 
 # Installation
 
-| Method     | Commands                                                 |
-|------------|----------------------------------------------------------|
-| **poetry** | `poetry add matchcake`                                   |
-| **uv**     | `uv add matchcake`                                       |
-| **PyPi**   | `pip install MatchCake`                                  |
-| **source** | `pip install git+https://github.com/MatchCake/MatchCake` |
+MatchCake is published on PyPI as `matchcake`.
+
+### Set up a project or an environment
+
+Install MatchCake into a virtual environment and not into the system interpreter, which recent Linux
+distributions refuse with `error: externally-managed-environment`. If you do not have one yet, create it:
+
+```bash
+uv init myproject && cd myproject                    # uv
+poetry new myproject && cd myproject                 # poetry (then cap requires-python, see below)
+python -m venv .venv && source .venv/bin/activate    # plain virtual environment
+```
+
+On Windows, activate the virtual environment with `.venv\Scripts\activate` instead.
+
+### Install MatchCake
+
+| Method     | Commands                                                          |
+|------------|-------------------------------------------------------------------|
+| **pip**    | `pip install matchcake`                                           |
+| **uv**     | `uv add matchcake` in a uv project, or `uv pip install matchcake` |
+| **poetry** | `poetry add matchcake` in a poetry project                        |
+| **source** | `pip install "git+https://github.com/MatchCake/MatchCake@main"`   |
+
+A few things useful to know during the installation:
+
+- `uv add` and `poetry add` are project commands: they record a dependency in the `pyproject.toml` of the
+  project you are standing in. In a directory without one they stop with
+  `No pyproject.toml found in current directory or any parent directory`. Note that `uv add` also searches
+  parent directories, so running it inside an unrelated project modifies that project. Use
+  `uv pip install matchcake` when you only want the package in an environment.
+- `poetry add matchcake` additionally requires your project to put an upper bound on its Python range, for
+  example `requires-python = ">=3.11,<3.15"`. `poetry new` writes an open ended range such as `>=3.12`, and
+  poetry then declines to resolve because `torchpfaffian` supports Python `<3.15` only.
+- The `source` row needs `git` available on your `PATH`. It installs the latest release from the `main`
+  branch; see below for the development branch.
 
 
 ### Last unstable version
-To install the latest unstable version, download the latest version from `https://github.com/MatchCake/MatchCake@dev`.
+
+To install the development branch, use the `@dev` reference:
+
+```bash
+pip install "git+https://github.com/MatchCake/MatchCake@dev"
+```
+
+The uv equivalent is `uv add "matchcake @ git+https://github.com/MatchCake/MatchCake@dev"`.
 
 
-### CUDA installation
-To use MatchCake with cuda, you can add `--extra cu128` to the installation commands above.
-This will install pytorch with CUDA 12.8.
+### PyTorch build and installation size
 
-Extra options:
-- `--extra cpu`: Install MatchCake with PyTorch CPU only.
-- `--extra cu128`: Install MatchCake with PyTorch CUDA 12.8.
-- `--extra cu130`: Install MatchCake with PyTorch CUDA 13.0.
+MatchCake depends on PyTorch, and on Linux the default PyTorch wheel on PyPI is the CUDA build. A plain
+`pip install matchcake` therefore downloads PyTorch together with around twenty NVIDIA packages and occupies
+roughly 6 GB, whether or not the machine has a GPU. This comes from how PyTorch is packaged, not from
+MatchCake.
+
+For a CPU only environment, install PyTorch from the PyTorch CPU index first, then install MatchCake on top.
+The requirement is already satisfied at that point, so nothing pulls the CUDA build in, and the result is
+about 1.6 GB with no NVIDIA packages:
+
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+pip install matchcake
+```
+
+Swap the index for a specific CUDA version, for instance `https://download.pytorch.org/whl/cu128` for
+CUDA 12.8 or `https://download.pytorch.org/whl/cu130` for CUDA 13.0.
+
+With uv, declare the index in your own `pyproject.toml` and add `torch` alongside `matchcake`:
+
+```toml
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+```
+
+```bash
+uv add matchcake torch
+```
+
+Listing `torch` explicitly is important: `[tool.uv.sources]` only redirects dependencies that your own project
+declares, so a `torch` pulled in solely through `matchcake` still comes from PyPI.
+
+MatchCake declares `cpu`, `cu128` and `cu130` extras, but they only select these indexes when MatchCake
+itself is built from a clone, through `[tool.uv.sources]` in its `pyproject.toml`. That mechanism belongs to
+uv and is not part of the metadata published to PyPI, so `pip install "matchcake[cpu]"` and
+`uv add matchcake --extra cpu` resolve exactly the same PyTorch as no extra at all. Use the index based
+recipe above. The extras are documented for contributors in
+[CONTRIBUTING.md](https://github.com/MatchCake/MatchCake/blob/dev/CONTRIBUTING.md).
 
 
 # Quick Usage Preview

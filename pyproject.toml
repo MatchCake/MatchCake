@@ -1,14 +1,14 @@
 [project]
 name = "matchcake"
 version = "0.2.3"
-description = ""
+description = "Classical simulation of matchgate (free-fermion) quantum circuits, as a PennyLane device and scikit-learn compatible quantum kernels."
 authors = [{ name = "Jérémie Gince", email = "gincejeremie@gmail.com" }]
 requires-python = ">=3.11,<3.15"
-license = { file = "LICENSE" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -39,7 +39,6 @@ dependencies = [
     "pennylane-lightning (>=0.45.0)",
     "torchpfaffian (>=0.0.3)",
     "opt-einsum (>=3.4)",
-    "importlib-metadata (>=8.7,<9.0)",
     "stim>=1.15",
     "autoray>=0.8",
     "array-api-compat>=1.13.0",
@@ -48,9 +47,10 @@ dependencies = [
 dynamic = ["readme"]
 
 [project.urls]
-homepage = "https://github.com/MatchCake/MatchCake"
-Documentation = "https://github.com/MatchCake/MatchCake"
-Source = "https://MatchCake.github.io/MatchCake"
+Homepage = "https://github.com/MatchCake/MatchCake"
+Documentation = "https://MatchCake.github.io/MatchCake"
+Source = "https://github.com/MatchCake/MatchCake"
+Issues = "https://github.com/MatchCake/MatchCake/issues"
 
 [project.entry-points."pennylane.plugins"]
 "nif.qubit" = "matchcake.devices.nif_device:NonInteractingFermionicDevice"
@@ -124,7 +124,6 @@ conflicts = [
         { extra = "cpu" },
         { extra = "cu128" },
         { extra = "cu130" },
-        { extra = "cupy" },
     ],
 ]
 required-environments = [
@@ -143,9 +142,6 @@ cu128 = [
 cu130 = [
     "torch (>=2.1.2,<3.0.0)",
     "torchvision (>=0.22.0)",
-]
-cupy = [
-    "cupy>=13.6.0",
 ]
 
 [tool.uv.sources]
@@ -177,7 +173,7 @@ explicit = true
 
 [build-system]
 requires = [
-    "setuptools>=57.0.0",
+    "setuptools>=77",
     "wheel>=0.45.1,<0.46",
     "build>=1.2.2.post1,<2",
     "twine>=6.1.0,<7",
