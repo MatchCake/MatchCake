@@ -205,7 +205,7 @@
     </mxGraphModel>
   </diagram>
   <diagram name="algorithm-detailed-v2" id="soANJfxOBudvrnBvlTPl">
-    <mxGraphModel dx="317" dy="804" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
+    <mxGraphModel dx="385" dy="739" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
       <root>
         <mxCell id="9B-zVijRv6ikipZfTS63-0" />
         <mxCell id="9B-zVijRv6ikipZfTS63-1" parent="9B-zVijRv6ikipZfTS63-0" />
@@ -354,7 +354,7 @@
           <mxGeometry height="30" width="190" x="1930" y="1430" as="geometry" />
         </mxCell>
         <mxCell id="Kj1i_W3DxaklZc9c3uIM-50" parent="9B-zVijRv6ikipZfTS63-1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=25;" value="For \( j = 1 \dots M \)" vertex="1">
-          <mxGeometry height="30" width="190" x="2243.62" y="1341" as="geometry" />
+          <mxGeometry height="43.75" width="196.38" x="2243.62" y="1328" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
