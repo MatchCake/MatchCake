@@ -1,7 +1,7 @@
 name: Draft JOSS PDF
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "dev"]
     paths:
       - joss/**
       - .github/workflows/draft-joss.yml
