@@ -10,7 +10,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/MatchCake)](https://pypi.org/project/MatchCake)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/MatchCake/MatchCake/blob/dev/LICENSE)
 [![status](https://joss.theoj.org/papers/91f77a47cbd519daac9794a1d2144361/status.svg)](https://joss.theoj.org/papers/91f77a47cbd519daac9794a1d2144361)
-[![DOI](https://zenodo.org/badge/699543422.svg)](https://doi.org/10.5281/zenodo.22917735)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22917735.svg)](https://doi.org/10.5281/zenodo.22917735)
 
 ![Tests Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/tests.yml/badge.svg)
 ![Dist Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/build_dist.yml/badge.svg)
