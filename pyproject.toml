@@ -1,6 +1,6 @@
 [project]
 name = "matchcake"
-version = "0.2.3"
+version = "1.0.0"
 description = "Classical simulation of matchgate (free-fermion) quantum circuits, as a PennyLane device and scikit-learn compatible quantum kernels."
 authors = [{ name = "Jérémie Gince", email = "gincejeremie@gmail.com" }]
 requires-python = ">=3.11,<3.15"

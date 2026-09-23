@@ -1704,7 +1704,7 @@ wheels = [
 
 [[package]]
 name = "matchcake"
-version = "0.2.3"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "array-api-compat" },
