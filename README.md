@@ -10,6 +10,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/MatchCake)](https://pypi.org/project/MatchCake)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/MatchCake/MatchCake/blob/dev/LICENSE)
 [![status](https://joss.theoj.org/papers/91f77a47cbd519daac9794a1d2144361/status.svg)](https://joss.theoj.org/papers/91f77a47cbd519daac9794a1d2144361)
+[![DOI](https://zenodo.org/badge/699543422.svg)](https://doi.org/10.5281/zenodo.22917735)
 
 ![Tests Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/tests.yml/badge.svg)
 ![Dist Workflow](https://github.com/MatchCake/MatchCake/actions/workflows/build_dist.yml/badge.svg)
@@ -262,16 +263,17 @@ Fund.
 
 
 
-# Citation
+# Citations
 
-Repository:
+Software, archived on [Zenodo](https://doi.org/10.5281/zenodo.22917735) (this DOI resolves to the latest version):
 ```
-@misc{matchcake_Gince2023,
-  title={MatchCake},
-  author={Jérémie Gince},
-  year={2023},
-  publisher={Université de Sherbrooke},
-  url={https://github.com/MatchCake/MatchCake},
+@software{matchcake_Gince2026,
+  title={MatchCake: A Python Simulator for Non-Interacting Fermionic Quantum Circuits with Machine Learning Applications},
+  author={Gince, Jérémie},
+  year={2026},
+  publisher={Zenodo},
+  doi={10.5281/zenodo.22917735},
+  url={https://doi.org/10.5281/zenodo.22917735},
 }
 ```
 
