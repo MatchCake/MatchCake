@@ -563,9 +563,10 @@ def make_single_particle_transition_matrix_from_gate(u: Any, majorana_getter: Op
     Compute the single particle transition matrix. This matrix is the matrix :math:`R` such that
 
     .. math::
-        R_{\mu\nu} &= \frac{1}{4} \text{Tr}{\left(U c_\mu U^\dagger\right)c_\nu}
+        R_{\mu\nu} = \frac{1}{2^n} \text{Tr}\left[\left(U c_\mu U^\dagger\right)c_\nu\right]
 
-    where :math:`U` is the matchgate and :math:`c_\mu` is the :math:`\mu`-th Majorana operator.
+    where :math:`U` is the matchgate, :math:`c_\mu` is the :math:`\mu`-th Majorana operator and
+    :math:`n` is the number of particles.
 
     :Note: This operation is of polynomial complexity only when the number of particles is equal or less than 2
         and of exponential complexity otherwise.

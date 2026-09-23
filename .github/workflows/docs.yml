@@ -3,12 +3,88 @@ name: Docs
 on:
   push:
     branches: ["main", "dev"]
+    tags: ["[0-9]+.[0-9]+.[0-9]+"]
+  pull_request:
+    branches: ["main", "dev"]
+  workflow_dispatch:
 
 
 jobs:
+  Check-Docs:
+    name: Check docs
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.9.2"
+        python-version: "3.11"
+        enable-cache: true
+
+    - name: Install dependencies
+      run: |
+        uv venv .venv
+        uv sync --locked --dev --group docs --extra cpu
+
+    - name: Fail on unresolved cross-references
+      run: |
+        set -eo pipefail
+        uv run sphinx-build -b html sphinx/source sphinx/build/check 2>&1 | tee sphinx-build.log
+        if grep -q "myst.xref_missing" sphinx-build.log; then
+          echo "::error::Unresolved cross-references found. A relative link that does not point to a document in the docs renders as a dead same-page anchor."
+          grep "myst.xref_missing" sphinx-build.log
+          exit 1
+        fi
+
+    - name: Fail on math that is left unrendered
+      run: |
+        uv run python .github/scripts/check_math_rendering.py --build-dir sphinx/build/check
+
+  Link-Check:
+    name: Check docs links
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.9.2"
+        python-version: "3.11"
+        enable-cache: true
+
+    - name: Install dependencies
+      run: |
+        uv venv .venv
+        uv sync --locked --dev --group docs --extra cpu
+
+    - name: Run the linkcheck builder
+      run: |
+        uv run sphinx-build -b linkcheck sphinx/source sphinx/build/linkcheck
+
+    - name: Resolve links into this repository
+      run: |
+        uv run python .github/scripts/resolve_repository_links.py
+
   Build-Docs:
     name: Build docs
     runs-on: ubuntu-latest
+    needs: Check-Docs
+    if: github.event_name != 'pull_request'
 
     steps:
     - uses: actions/checkout@v3
@@ -32,9 +108,9 @@ jobs:
         uv venv .venv
         uv sync --locked --dev --group docs --extra cpu
 
-    - name: Fetch all branches for multiversion build
+    - name: Fetch all branches and tags for multiversion build
       run: |
-        git fetch --all
+        git fetch --all --tags --force
 
     - name: Build the sphinx docs
       run: |

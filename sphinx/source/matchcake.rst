@@ -1,32 +1,22 @@
 matchcake package
-============
+=================
 
-Submodules
-----------
+Subpackages
+-----------
 
-matchcake.matchgate module
----------------------
+.. toctree::
+   :maxdepth: 3
 
-.. automodule:: matchcake.matchgate
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-matchcake.qs\_device module
-----------------------
-
-.. automodule:: matchcake.qs_device
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-matchcake.utils module
------------------
-
-.. automodule:: matchcake.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   matchcake.base
+   matchcake.circuits
+   matchcake.constants
+   matchcake.devices
+   matchcake.matchgate_parameter_sets
+   matchcake.ml
+   matchcake.observables
+   matchcake.operations
+   matchcake.typing
+   matchcake.utils
 
 Module contents
 ---------------

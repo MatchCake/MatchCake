@@ -9,7 +9,6 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 from pythonbasictools.multiprocessing_tools import apply_func_multiprocess
 
-from matchcake.operations.state_preparation import StatePrepFromGates
 from matchcake.operations.state_preparation.product_state import ProductState
 
 
@@ -21,17 +20,34 @@ class ProbabilityStrategy(ABC):
     def system_basis_state_from_state_prep_op(cls, state_prep_op: StatePrepBase) -> TensorLike:
         """Extract the computational-basis bit string from a state-preparation op.
 
+        Every :class:`~matchcake.operations.state_preparation.ProductState`, including
+        subclasses such as
+        :class:`~matchcake.operations.state_preparation.StatePrepFromGates`, goes through
+        :meth:`~matchcake.operations.state_preparation.ProductState.basis_state_bits`. This
+        keeps a single definition of basis-ness shared with ``can_execute``, which gates on
+        the matching ``is_basis_state``, so a preparation accepted by ``can_execute`` is
+        always one this method can convert.
+
         :param state_prep_op: The state preparation operation.
         :type state_prep_op: StatePrepBase
         :return: Integer bit array of shape ``(n,)``.
         :rtype: TensorLike
+        :raises ValueError: If ``state_prep_op`` is a batched
+            :class:`~matchcake.operations.state_preparation.ProductState`, which has no single
+            bit string, or if it is not a computational-basis state. Strategies consuming one
+            system state declare this by returning False from ``can_execute``, so the
+            dispatcher routes such preparations elsewhere.
         """
         if isinstance(state_prep_op, BasisState):
             return state_prep_op.parameters[0]
-        elif isinstance(state_prep_op, StatePrepFromGates):
-            return state_prep_op.to_basis_state().parameters[0]
         elif isinstance(state_prep_op, ProductState):
-            return state_prep_op.as_basis_state().parameters[0]
+            if state_prep_op.batch_size is not None:
+                raise ValueError(
+                    f"{cls.__name__} needs a single system basis state, but the given ProductState "
+                    f"is batched (batch_size={state_prep_op.batch_size}). Use a strategy that "
+                    f"supports batched preparations, such as ProductStateProbabilityStrategy."
+                )
+            return state_prep_op.basis_state_bits()
         else:
             raise NotImplementedError(f"{cls.__name__} cannot be used with {type(state_prep_op)}")
 

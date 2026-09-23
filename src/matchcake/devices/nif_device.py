@@ -53,9 +53,11 @@ from .expval_strategies.m_pfaffian._extended_covariance import (
 )
 from .expval_strategies.terms_splitter import TermsSplitter
 from .probability_strategies import (
+    CliffordSumStrategy,
+    ExplicitSumStrategy,
+    LookupTableStrategy,
     ProbabilityFuncDispatcher,
     ProductStateProbabilityStrategy,
-    get_probability_strategy,
 )
 from .sampling_strategies import SamplingStrategy, get_sampling_strategy
 from .star_state_finding_strategies import (
@@ -88,30 +90,49 @@ class NonInteractingFermionicDevice(qml.devices.Device):
 
     :param wires: The number of wires of the device
     :type wires: Union[int, Wires, List[int]]
+    :param shots: The number of shots used by the device. Defaults to ``None`` (analytic mode).
+    :type shots: Optional[int]
+    :param r_dtype: The real floating-point dtype used for real-valued tensors. Accepts a ``torch.dtype``, a
+        numpy scalar type (e.g. ``np.float32``) or a Python builtin (e.g. ``float``). Defaults to the class
+        attribute :attr:`R_DTYPE` (``torch.float64``).
+    :type r_dtype: Optional[Union[torch.dtype, type]]
+    :param c_dtype: The complex dtype used for complex-valued tensors throughout the pipeline (single-particle
+        transition matrices, lookup table, observables). Accepts a ``torch.dtype``, a numpy scalar type
+        (e.g. ``np.complex64``) or a Python builtin (e.g. ``complex``). Defaults to the class attribute
+        :attr:`C_DTYPE` (``torch.complex128``) to preserve maximum precision. Set to e.g. ``torch.complex64``
+        to reduce memory usage and computation cost.
+    :type c_dtype: Optional[Union[torch.dtype, type]]
+    :param pfaffian_chunk_size: Max number of matrices reduced per batched Pfaffian call, forwarded to
+        :func:`matchcake.utils.pfaffian` to bound memory. Defaults to ``None`` (no chunking).
+    :type pfaffian_chunk_size: Optional[int]
+    :param show_progress: Whether to display progress bars while applying operations and computing
+        probabilities. Defaults to ``None``, meaning progress is shown only when an external progress bar is
+        supplied through the ``p_bar`` keyword argument.
+    :type show_progress: Optional[bool]
 
     :kwargs: Additional keyword arguments
 
-    :keyword prob_strategy: The strategy to compute the probabilities. Can be either "lookup_table" or "explicit_sum".
-        Defaults to "lookup_table".
-    :type prob_strategy: str
     :keyword majorana_getter: The Majorana getter to use. Defaults to a new instance of MajoranaGetter.
     :type majorana_getter: MajoranaGetter
-    :keyword contraction_method: The contraction method to use. Can be either None or "neighbours".
-        Defaults to None.
-    :type contraction_method: Optional[str]
-    :keyword n_workers: The number of workers to use for multiprocessing. Defaults to 0.
-    :type n_workers: int
-    :keyword star_state_finding_strategy: The strategy to find the star state.
+    :keyword contraction_strategy: The contraction strategy used to merge consecutive operations. Accepts a
+        strategy name or instance, or ``None`` to disable contraction. Defaults to
+        :attr:`DEFAULT_CONTRACTION_METHOD`.
+    :type contraction_strategy: Optional[Union[str, ContractionStrategy]]
+    :keyword sampling_strategy: The strategy used to draw samples in finite-shot mode. Defaults to
+        :attr:`DEFAULT_SAMPLING_STRATEGY`.
+    :type sampling_strategy: Union[str, SamplingStrategy]
+    :keyword star_state_finding_strategy: The strategy to find the star state. Defaults to
+        :attr:`DEFAULT_STAR_STATE_FINDING_STRATEGY`.
     :type star_state_finding_strategy: Union[str, StarStateFindingStrategy]
-    :keyword r_dtype: The real floating-point dtype used for real-valued tensors. Defaults to ``torch.float64``.
-    :type r_dtype: torch.dtype
-    :keyword c_dtype: The complex dtype used for complex-valued tensors throughout the pipeline (single-particle
-        transition matrices, lookup table, observables). Defaults to ``torch.complex128`` to preserve maximum
-        precision. Set to e.g. ``torch.complex64`` to reduce memory usage and computation cost.
-    :type c_dtype: torch.dtype
+    :keyword p_bar: An external progress bar reused by the device instead of creating its own. Defaults to
+        ``None``. Supplying one turns ``show_progress`` on unless ``show_progress`` is given a boolean value.
+    :type p_bar: Optional[tqdm.tqdm]
 
     :Note: This device is a simulator for non-interacting fermions. It is based on the ``default.qubit`` device.
     :Note: This device supports batch execution.
+    :Note: Probabilities are routed by :attr:`prob_dispatcher`, a fixed ordered chain of strategies resolved by
+        each strategy's ``can_execute``. There is no keyword to select a strategy; to pin one, replace
+        :attr:`prob_dispatcher` on the constructed device.
     :Note: This device is in development, and its API is subject to change.
     """
 
@@ -134,7 +155,6 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         ProductState.__name__,
     }
 
-    DEFAULT_PROB_STRATEGY = "LookupTable"
     DEFAULT_CONTRACTION_METHOD = "neighbours"
     DEFAULT_SAMPLING_STRATEGY = "2QubitBy2QubitSampling"
     DEFAULT_STAR_STATE_FINDING_STRATEGY = "FromSampling"
@@ -199,6 +219,10 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         wires: Optional[Union[int, Wires, List[int]]] = None,
         *,
         shots: Optional[int] = None,
+        r_dtype: Optional[Union[torch.dtype, type]] = None,
+        c_dtype: Optional[Union[torch.dtype, type]] = None,
+        pfaffian_chunk_size: Optional[int] = None,
+        show_progress: Optional[bool] = None,
         **kwargs,
     ):
         if wires is not None:
@@ -211,8 +235,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self._debugger = kwargs.get("debugger", None)
         self._init_kwargs = kwargs
 
-        self.R_DTYPE = torch_utils.get_torch_dtype(kwargs.get("r_dtype"), type(self).R_DTYPE)
-        self.C_DTYPE = torch_utils.get_torch_dtype(kwargs.get("c_dtype"), type(self).C_DTYPE)
+        self.R_DTYPE = torch_utils.get_torch_dtype(r_dtype, type(self).R_DTYPE)
+        self.C_DTYPE = torch_utils.get_torch_dtype(c_dtype, type(self).C_DTYPE)
         self._c_dtype_name = str(self.C_DTYPE).rsplit(".", 1)[-1]
         self._r_dtype_name = str(self.R_DTYPE).rsplit(".", 1)[-1]
 
@@ -231,8 +255,10 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         )
         self.prob_dispatcher: ProbabilityFuncDispatcher = ProbabilityFuncDispatcher(
             [
-                get_probability_strategy(kwargs.get("prob_strategy", self.DEFAULT_PROB_STRATEGY)),
+                LookupTableStrategy(),
                 ProductStateProbabilityStrategy(),
+                CliffordSumStrategy(),
+                ExplicitSumStrategy(),
             ]
         )
         self.contraction_strategy: ContractionStrategy = get_contraction_strategy(
@@ -244,8 +270,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
                 self.DEFAULT_STAR_STATE_FINDING_STRATEGY,
             )
         )
+        self.pfaffian_chunk_size: Optional[int] = pfaffian_chunk_size
         self.p_bar: Optional[tqdm.tqdm] = kwargs.get("p_bar", None)
-        self.show_progress = kwargs.get("show_progress", self.p_bar is not None)
+        self.show_progress: bool = (self.p_bar is not None) if show_progress is None else show_progress
         self.apply_metadata: defaultdict = defaultdict()
         self.clifford_expval_strategy = CliffordExpvalStrategy()
         self.expval_from_probabilities_strategy = ExpvalFromProbabilitiesStrategy()
@@ -533,6 +560,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
                 self.state_prep_op,
                 observable,
                 extended_covariance_matrix=self.extended_covariance_matrix,
+                pfaffian_chunk_size=self.pfaffian_chunk_size,
             )
         if self.clifford_expval_strategy.can_execute(self.state_prep_op, observable):  # pragma: no cover
             return self.clifford_expval_strategy(
@@ -550,6 +578,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
                 extended_covariance_matrix=self.extended_covariance_matrix,
                 global_sptm=self.global_sptm.matrix(),
                 prob_func=self.probability,
+                pfaffian_chunk_size=self.pfaffian_chunk_size,
             )
 
         raise DeviceError(
@@ -797,6 +826,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             global_sptm=self.global_sptm.matrix(),
             majorana_getter=self.majorana_getter,
             show_progress=kwargs.pop("show_progress", self.show_progress),
+            pfaffian_chunk_size=kwargs.pop("pfaffian_chunk_size", self.pfaffian_chunk_size),
         )
         if isinstance(self.state_prep_op, ProductState):
             strategy_kwargs["covariance_matrix"] = self.covariance_matrix

@@ -22,7 +22,7 @@ class NonInteractingFermionicLookupTable:
 
     .. math::
 
-        p(y^{*}|x) &= \prod_{\gamma = 1}^{k}\sum_{m_{\gamma},n_{\gamma} = 1}^{2N} T_{j_\gamma,m_\gamma}T_{j_\gamma,n_\gamma}^*
+        p(y^{*}|x) = \prod_{\gamma = 1}^{k}\sum_{m_{\gamma},n_{\gamma} = 1}^{2N} T_{j_\gamma,m_\gamma}T_{j_\gamma,n_\gamma}^*
          \left\langle \boldsymbol{0} \left|c_{2p_{\ell}}..c_{2p_1}\left(\prod_{\gamma = 1}^{k} c_{m_{\gamma}}c_{n_{\gamma}}\right)c_{2p_1}..c_{2p_{\ell}} \right|\boldsymbol{0}\right\rangle.
 
     where :math:`c` are the majoranas fermions, :math:`y^*` is the target output state, :math:`x` is the system state

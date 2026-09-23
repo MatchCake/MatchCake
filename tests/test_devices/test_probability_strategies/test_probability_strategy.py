@@ -7,6 +7,12 @@ from matchcake.devices.probability_strategies import (
     LookupTableStrategy,
     ProbabilityStrategy,
 )
+from matchcake.operations.state_preparation import (
+    MinusState,
+    PlusState,
+    ProductState,
+    StatePrepFromGates,
+)
 
 
 class _ConstStrategy(ProbabilityStrategy):
@@ -41,6 +47,41 @@ class TestProbabilityStrategyBase:
         )
         assert tuple(qml.math.shape(out)) == (2,)
         np.testing.assert_array_equal(np.asarray(out), [1, 2])
+
+    def test_system_basis_state_from_unbatched_product_state(self):
+        prep = ProductState.from_basis_state(np.array([1, 0, 1]), wires=[0, 1, 2])
+        bits = ProbabilityStrategy.system_basis_state_from_state_prep_op(prep)
+        np.testing.assert_array_equal(np.asarray(bits), [1, 0, 1])
+
+    def test_system_basis_state_from_batched_product_state_raises(self):
+        prep = ProductState.from_basis_state(np.array([[1, 0], [0, 1]]), wires=[0, 1])
+        with pytest.raises(ValueError, match="needs a single system basis state"):
+            ProbabilityStrategy.system_basis_state_from_state_prep_op(prep)
+
+    def test_system_basis_state_from_unsupported_op_raises(self):
+        with pytest.raises(NotImplementedError):
+            ProbabilityStrategy.system_basis_state_from_state_prep_op(qml.PauliX(0))
+
+    def test_system_basis_state_from_basis_state_prep_from_gates(self):
+        prep = StatePrepFromGates(lambda wires: (qml.X(w) for w in wires), wires=[0, 1, 2])
+        bits = ProbabilityStrategy.system_basis_state_from_state_prep_op(prep)
+        np.testing.assert_array_equal(np.asarray(bits), [1, 1, 1])
+
+    def test_system_basis_state_from_gates_matches_to_basis_state(self):
+        # ``StatePrepFromGates`` is routed through the ``ProductState`` branch, so the bits
+        # it yields must agree with its own gate-counting ``to_basis_state``.
+        prep = StatePrepFromGates(
+            lambda wires: (qml.X(w) for w in wires if w % 2 == 0),
+            wires=[0, 1, 2, 3],
+        )
+        bits = ProbabilityStrategy.system_basis_state_from_state_prep_op(prep)
+        np.testing.assert_array_equal(np.asarray(bits), np.asarray(prep.to_basis_state().parameters[0]))
+
+    @pytest.mark.parametrize("prep_class", [PlusState, MinusState])
+    def test_system_basis_state_from_non_basis_state_prep_from_gates_raises(self, prep_class):
+        prep = prep_class(wires=[0, 1])
+        with pytest.raises(ValueError, match="not a computational-basis state"):
+            ProbabilityStrategy.system_basis_state_from_state_prep_op(prep)
 
     def test_check_required_kwargs_missing_raises(self, strategy):
         with pytest.raises(ValueError, match="Missing required keyword argument"):

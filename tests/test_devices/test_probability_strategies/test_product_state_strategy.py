@@ -395,6 +395,127 @@ class TestProductStateProbabilityStrategy:
         assert grid_probs.shape == (3, 2)
         np.testing.assert_allclose(grid_probs, ref_probs, atol=ATOL_SCALAR_COMPARISON)
 
+    @pytest.mark.parametrize("chunk_size", [1, 2, 3, 5, 8, 100])
+    def test_chunked_grid_matches_unchunked(self, strategy: ProductStateProbabilityStrategy, chunk_size: int) -> None:
+        set_seed()
+        n_wires = 3
+        per_qubit = _random_qubit_amplitudes(n_wires, seed=82)
+        all_wires = Wires(range(n_wires))
+
+        def covariance_for(seed: int):
+            nif_dev = NonInteractingFermionicDevice(wires=range(n_wires))
+
+            def circuit():
+                ProductState(per_qubit, wires=range(n_wires))
+                MatchgateOperation.random(wires=[0, 1], seed=seed)
+                MatchgateOperation.random(wires=[1, 2], seed=seed + 1)
+                return qml.probs(wires=range(n_wires))
+
+            qml.QNode(circuit, nif_dev)()
+            return np.asarray(nif_dev.covariance_matrix), nif_dev.state_prep_op
+
+        cov_a, state_prep_op = covariance_for(31)
+        cov_b, _ = covariance_for(33)
+        cov_c, _ = covariance_for(35)
+        cov_batched = np.stack([cov_a, cov_b, cov_c])  # (B_in=3, 2n, 2n)
+        outcomes = np.array(list(itertools.product([0, 1], repeat=n_wires)))  # (B_out=8, n=3)
+
+        unchunked = np.asarray(
+            strategy(
+                state_prep_op=state_prep_op,
+                target_binary_states=outcomes,
+                wires=all_wires,
+                all_wires=all_wires,
+                covariance_matrix=cov_batched,
+            )
+        )
+        chunked = np.asarray(
+            strategy(
+                state_prep_op=state_prep_op,
+                target_binary_states=outcomes,
+                wires=all_wires,
+                all_wires=all_wires,
+                covariance_matrix=cov_batched,
+                pfaffian_chunk_size=chunk_size,
+            )
+        )
+        assert chunked.shape == unchunked.shape == (8, 3)
+        np.testing.assert_allclose(chunked, unchunked, atol=ATOL_SCALAR_COMPARISON)
+
+    def test_chunked_single_outcome_matches_unchunked(self, strategy: ProductStateProbabilityStrategy) -> None:
+        set_seed()
+        n_wires = 2
+        per_qubit = _random_qubit_amplitudes(n_wires, seed=84)
+
+        nif_dev = NonInteractingFermionicDevice(wires=range(n_wires))
+
+        def circuit():
+            ProductState(per_qubit, wires=range(n_wires))
+            MatchgateOperation.random(wires=[0, 1], seed=25)
+            return qml.probs(wires=range(n_wires))
+
+        qml.QNode(circuit, nif_dev)()
+        lambda_t = nif_dev.covariance_matrix
+        all_wires = nif_dev.wires
+        outcome = np.array([1, 0])
+
+        unchunked = float(
+            strategy(
+                state_prep_op=nif_dev.state_prep_op,
+                target_binary_states=outcome,
+                wires=all_wires,
+                all_wires=all_wires,
+                covariance_matrix=lambda_t,
+            )
+        )
+        chunked = float(
+            strategy(
+                state_prep_op=nif_dev.state_prep_op,
+                target_binary_states=outcome,
+                wires=all_wires,
+                all_wires=all_wires,
+                covariance_matrix=lambda_t,
+                pfaffian_chunk_size=1,
+            )
+        )
+        np.testing.assert_allclose(chunked, unchunked, atol=ATOL_SCALAR_COMPARISON)
+
+    def test_chunked_device_matches_unchunked_device(self) -> None:
+        set_seed()
+        n_wires = 3
+        per_qubit = _random_qubit_amplitudes(n_wires, seed=86)
+        gate_seeds = [40 + idx for idx in range(n_wires - 1)]
+
+        chunked_dev = NonInteractingFermionicDevice(wires=range(n_wires), pfaffian_chunk_size=2)
+        plain_dev = NonInteractingFermionicDevice(wires=range(n_wires))
+
+        chunked_probs = _run_product_state_circuit(per_qubit, n_wires, gate_seeds, chunked_dev, list(range(n_wires)))
+        plain_probs = _run_product_state_circuit(per_qubit, n_wires, gate_seeds, plain_dev, list(range(n_wires)))
+
+        np.testing.assert_allclose(chunked_probs, plain_probs, atol=ATOL_SCALAR_COMPARISON)
+        np.testing.assert_allclose(chunked_probs.sum(), 1.0, atol=ATOL_SCALAR_COMPARISON)
+
+    def test_chunked_gradient_flow_gradcheck(self, strategy: ProductStateProbabilityStrategy) -> None:
+        set_seed()
+        n_wires = 2
+        sp = ProductState(np.array([0.6, 0.8, 0.6, 0.8], dtype=complex), wires=[0, 1])
+        all_outcomes = np.array(list(itertools.product([0, 1], repeat=n_wires)))  # (4, 2)
+        all_wires = Wires(range(n_wires))
+
+        def batch_probs(p):
+            cov = p - p.t()
+            return strategy(
+                state_prep_op=sp,
+                target_binary_states=all_outcomes,
+                wires=all_wires,
+                all_wires=all_wires,
+                covariance_matrix=cov,
+                pfaffian_chunk_size=2,
+            )
+
+        p = torch.randn(2 * n_wires, 2 * n_wires, dtype=torch.double, requires_grad=True)
+        assert torch.autograd.gradcheck(batch_probs, (p,), atol=1e-5, rtol=1e-4)
+
     def test_build_lambda_y_single(self, strategy: ProductStateProbabilityStrategy) -> None:
         y = np.array([0, 1, 0])
         lam = strategy.build_lambda_y(y, 3)
