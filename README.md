@@ -265,15 +265,15 @@ Fund.
 
 # Citations
 
-Software, archived on [Zenodo](https://doi.org/10.5281/zenodo.22917737) (this DOI resolves to the latest version):
+Software, archived on [Zenodo](https://doi.org/10.5281/zenodo.22917735) (this DOI resolves to the latest version):
 ```
 @software{matchcake_Gince2026,
   title={MatchCake: A Python Simulator for Non-Interacting Fermionic Quantum Circuits with Machine Learning Applications},
   author={Gince, Jérémie},
   year={2026},
   publisher={Zenodo},
-  doi={10.5281/zenodo.22917737},
-  url={https://doi.org/10.5281/zenodo.22917737},
+  doi={10.5281/zenodo.22917735},
+  url={https://doi.org/10.5281/zenodo.22917735},
 }
 ```
 

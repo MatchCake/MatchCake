@@ -3,7 +3,7 @@ message: If you use this software, please cite it as below.
 title: 'MatchCake: A Python Simulator for Non-Interacting Fermionic Quantum Circuits with Machine Learning
   Applications'
 type: software
-doi: 10.5281/zenodo.22917737
+doi: 10.5281/zenodo.22917735
 authors:
 - given-names: Jérémie
   family-names: Gince
