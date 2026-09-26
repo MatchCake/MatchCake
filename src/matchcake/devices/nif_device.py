@@ -1,7 +1,7 @@
 from collections import defaultdict
 from dataclasses import replace as _dataclass_replace
 from functools import partial
-from typing import Any, Iterable, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Iterable, List, Literal, Optional, Union
 
 import numpy as np
 import pennylane as qml
@@ -64,6 +64,9 @@ from .star_state_finding_strategies import (
     StarStateFindingStrategy,
     get_star_state_finding_strategy,
 )
+
+if TYPE_CHECKING:
+    from ..states.mixed_gaussian_state import MixedGaussianState
 
 _UNSET = object()  # sentinel distinguishing "shots not provided" from an explicit ``shots=None``
 
@@ -890,6 +893,105 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         if self.p_bar is not None:
             self.p_bar.total = total
             self.p_bar.refresh()
+
+    def partial_trace(self, wires: Union[Wires, List[int]], **kwargs) -> "MixedGaussianState":
+        r"""
+        Trace out the given wires of the current state and return the state of the remaining ones.
+
+        See :meth:`reduced_state` for the semantics of the result; this method takes the wires to remove
+        instead of the wires to keep.
+
+        :param wires: Wires to trace out.
+        :type wires: Union[Wires, List[int]]
+        :param kwargs: Forwarded to :meth:`reduced_state`.
+        :return: The state of the remaining wires, possibly mixed.
+        :rtype: MixedGaussianState
+        """
+        traced = Wires(wires)
+        missing = [wire for wire in traced.tolist() if wire not in self.wires]
+        if missing:
+            raise ValueError(f"Wires {missing} are not wires of the device ({self.wires.tolist()}).")
+        kept = [wire for wire in self.wires.tolist() if wire not in traced]
+        return self.reduced_state(kept, **kwargs)
+
+    def reduced_state(
+        self,
+        wires: Union[Wires, List[int]],
+        *,
+        reduced_wires: Optional[Union[Wires, List[int]]] = None,
+        atol: Optional[float] = None,
+    ) -> "MixedGaussianState":
+        r"""
+        Keep the given wires of the current state and trace out the others.
+
+        The current state is the initial computational-basis state evolved by the operations applied so far,
+        a pure fermionic Gaussian state with covariance matrix :attr:`covariance_matrix`. Its reduced state on
+        the kept wires is again Gaussian, with the principal submatrix of the covariance matrix on the Majorana
+        indices of those wires, and is returned as a :class:`~matchcake.states.MixedGaussianState`. That object
+        decomposes the (generally mixed) reduced state into pure states the device can prepare, so that a
+        follow-up circuit can be run on each of them and the results recombined.
+
+        The reduction is the fermionic partial trace: the Majorana operators of the reduced state, hence the
+        Jordan-Wigner strings of the operators measured on it, run through the kept wires only. When the kept
+        wires form a contiguous block, this coincides with the qubit partial trace (the initial state has a
+        definite fermion parity). For non-contiguous kept wires, a Pauli word on the reduced state corresponds
+        in the original system to the same word dressed with a :math:`Z` on every traced-out wire that sits
+        between two of its :math:`X` or :math:`Y` factors.
+
+        Only computational-basis initial states are supported: a product state with superposed qubits carries a
+        nonzero displacement, and its reduced state is not a Gaussian state of the Majorana algebra of the kept
+        wires alone.
+
+        :param wires: Wires to keep. They are ordered as in the device.
+        :type wires: Union[Wires, List[int]]
+        :param reduced_wires: Labels of the wires of the reduced state, which must be consecutive integers.
+            Defaults to ``range(k)`` for ``k`` kept wires.
+        :type reduced_wires: Optional[Union[Wires, List[int]]]
+        :param atol: Purity tolerance of the reduced state; see
+            :class:`~matchcake.states.MixedGaussianState`. Defaults to its default.
+        :type atol: Optional[float]
+        :return: The reduced state, carrying the dtypes and the Pfaffian chunk size of this device.
+        :rtype: MixedGaussianState
+        :raises NotImplementedError: If the initial state is not a computational-basis state.
+        """
+        from ..states.mixed_gaussian_state import MixedGaussianState
+
+        state_prep = self.state_prep_op
+        if not isinstance(state_prep, ProductState):
+            raise ValueError(
+                f"The reduced state can only be computed for a ProductState initial state, got {type(state_prep)}."
+            )
+        is_basis = state_prep.is_basis_state
+        if state_prep.batch_size is not None:
+            is_basis = bool(qml.math.all(is_basis))
+        if not is_basis:
+            raise NotImplementedError(
+                "The partial trace is only implemented for computational-basis initial states. A product state "
+                "with superposed qubits has a nonzero displacement vector and its reduced state is not a "
+                "Gaussian state of the Majorana algebra of the kept wires."
+            )
+        kept = Wires(wires)
+        missing = [wire for wire in kept.tolist() if wire not in self.wires]
+        if missing:
+            raise ValueError(f"Wires {missing} are not wires of the device ({self.wires.tolist()}).")
+        if len(kept) == 0:
+            raise ValueError("At least one wire must be kept.")
+        positions = sorted(self.wires.indices(kept))
+        indices = MixedGaussianState.majorana_indices(positions)
+        covariance_matrix: Any = self.covariance_matrix
+        covariance = covariance_matrix[..., indices[:, None], indices[None, :]]
+        state_kwargs = {} if atol is None else {"atol": atol}
+        return MixedGaussianState(
+            covariance,
+            wires=reduced_wires,
+            device_kwargs={
+                "r_dtype": self.R_DTYPE,
+                "c_dtype": self.C_DTYPE,
+                "pfaffian_chunk_size": self.pfaffian_chunk_size,
+            },
+            source_wires=[self.wires.tolist()[position] for position in positions],
+            **state_kwargs,
+        )
 
     def preprocess_transforms(self, execution_config: Optional[ExecutionConfig] = None) -> CompilePipeline:
         """Return the compile pipeline for preprocessing circuits before execution.
