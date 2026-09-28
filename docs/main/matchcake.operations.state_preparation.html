@@ -1,0 +1,739 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>matchcake.operations.state_preparation package &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="matchcake.typing package" href="matchcake.typing.html" />
+    <link rel="prev" title="matchcake.operations.single_particle_transition_matrices package" href="matchcake.operations.single_particle_transition_matrices.html" />
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process|mathjax_process|math|output_area'
+  }
+};
+</script>
+
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="index.html">Docs</a></li>
+        
+          <li><a href="matchcake.html">matchcake package</a></li>
+        
+          <li><a href="matchcake.operations.html">matchcake.operations package</a></li>
+        
+      <li>matchcake.operations.state_preparation package</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="sources/matchcake.operations.state_preparation.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+
+<div style="padding: 0 0 1em 0;">
+  <label for="version-select" style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 0.3em; color: #555;">Version</label>
+  <select id="version-select" onchange="window.location.href=this.value" style="width: 100%; padding: 0.3em 0.4em; font-size: 0.9em; border: 1px solid #ccc; border-radius: 3px; background: #fff; cursor: pointer;">
+    
+    <option value="../dev/matchcake.operations.state_preparation.html" >dev</option>
+    
+    <option value="matchcake.operations.state_preparation.html" selected>main</option>
+    
+    <option value="../1.0.0/matchcake.operations.state_preparation.html" >1.0.0</option>
+    
+    <option value="../0.2.3/index.html" >0.2.3</option>
+    
+  </select>
+</div>
+
+
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#requirements">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#set-up-a-project-or-an-environment">Set up a project or an environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#install-matchcake">Install MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#pytorch-build-and-installation-size">PyTorch build and installation size</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#quick-usage-preview">Quick Usage Preview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#quantum-circuit-simulation-with-matchcake">Quantum Circuit Simulation with MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#data-classification-with-matchcake">Data Classification with MatchCake</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#for-developers">For Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#citation">Citation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#fermionic-machine-learning-paper">Fermionic Machine Learning Paper</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/matchcake_basics.html">MatchCake Example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#create-the-noninteractingfermionicdevice">Create the NonInteractingFermionicDevice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#define-the-circuit">Define the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#create-the-qnode">Create the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#define-the-hyperparameters-of-the-circuit">Define the hyperparameters of the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#draw-the-circuit">Draw the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#evaluate-the-qnode">Evaluate the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#print-the-expectation-values">Print the expectation values</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/expectation_values.html">Expectation Values</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#hamiltonian">Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/probabilities.html">Probabilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#marginal-probabilities">Marginal probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#single-outcome-probability">Single-outcome probability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/iris_classification.html">Iris classification with FermionicPQCKernel</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html">Nystroem Kernel Approximation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="docs/expectation_values_theory.html">Computing expectation values using the Covariance-Matrix</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="matchcake.html">matchcake package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="matchcake.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section id="matchcake-operations-state-preparation-package">
+<h1>matchcake.operations.state_preparation package<a class="headerlink" href="#matchcake-operations-state-preparation-package" title="Permalink to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-matchcake.operations.state_preparation.minus_state">
+<span id="matchcake-operations-state-preparation-minus-state-module"></span><h2>matchcake.operations.state_preparation.minus_state module<a class="headerlink" href="#module-matchcake.operations.state_preparation.minus_state" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.minus_state.MinusState">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.state_preparation.minus_state.</span></span><span class="sig-name descname"><span class="pre">MinusState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.state_preparation.minus_state.MinusState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates" title="matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates"><code class="xref py py-class docutils literal notranslate"><span class="pre">StatePrepFromGates</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.minus_state.MinusState.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.state_preparation.minus_state.MinusState.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Add control of dtypes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state</strong> – Per-qubit amplitudes as a flat <code class="docutils literal notranslate"><span class="pre">(2n,)</span></code> vector, an
+<code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">2)</span></code> matrix, or their batched counterparts <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">2n)</span></code> /
+<code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">n,</span> <span class="pre">2)</span></code>.</p></li>
+<li><p><strong>wires</strong> – </p></li>
+<li><p><strong>validate_norm</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.minus_state.MinusState.gate_generator">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gate_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.state_preparation.minus_state.MinusState.gate_generator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.minus_state.MinusState.label">
+<span class="sig-name descname"><span class="pre">label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">decimals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.state_preparation.minus_state.MinusState.label" title="Permalink to this definition">¶</a></dt>
+<dd><p>A customizable string representation of the operator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>decimals=None</strong> (<em>int</em>) – If <code class="docutils literal notranslate"><span class="pre">None</span></code>, no parameters are included. Else,
+specifies how to round the parameters.</p></li>
+<li><p><strong>base_label=None</strong> (<em>str</em>) – overwrite the non-parameter component of the label</p></li>
+<li><p><strong>cache=None</strong> (<em>dict</em>) – dictionary that carries information between label calls
+in the same drawing</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>label to use in drawings</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p><strong>Example:</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">op</span> <span class="o">=</span> <span class="n">qp</span><span class="o">.</span><span class="n">RX</span><span class="p">(</span><span class="mf">1.23456</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op</span><span class="o">.</span><span class="n">label</span><span class="p">()</span>
+<span class="go">&#39;RX&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">base_label</span><span class="o">=</span><span class="s2">&quot;my_label&quot;</span><span class="p">)</span>
+<span class="go">&#39;my_label&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op</span> <span class="o">=</span> <span class="n">qp</span><span class="o">.</span><span class="n">RX</span><span class="p">(</span><span class="mf">1.23456</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op</span><span class="o">.</span><span class="n">label</span><span class="p">()</span>
+<span class="go">&#39;RX&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">decimals</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">&#39;RX\n(1.23)&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">base_label</span><span class="o">=</span><span class="s2">&quot;my_label&quot;</span><span class="p">)</span>
+<span class="go">&#39;my_label&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">decimals</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">base_label</span><span class="o">=</span><span class="s2">&quot;my_label&quot;</span><span class="p">)</span>
+<span class="go">&#39;my_label\n(1.23)&#39;</span>
+</pre></div>
+</div>
+<p>If the operation has a matrix-valued parameter and a cache dictionary is provided,
+unique matrices will be cached in the <code class="docutils literal notranslate"><span class="pre">'matrices'</span></code> key list. The label will contain
+the index of the matrix in the <code class="docutils literal notranslate"><span class="pre">'matrices'</span></code> list.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">op2</span> <span class="o">=</span> <span class="n">qp</span><span class="o">.</span><span class="n">QubitUnitary</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">wires</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cache</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;matrices&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op2</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">cache</span><span class="o">=</span><span class="n">cache</span><span class="p">)</span>
+<span class="go">&#39;U\n(M0)&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cache</span><span class="p">[</span><span class="s1">&#39;matrices&#39;</span><span class="p">]</span>
+<span class="go">[tensor([[1., 0.],</span>
+<span class="go"> [0., 1.]], requires_grad=True)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op3</span> <span class="o">=</span> <span class="n">qp</span><span class="o">.</span><span class="n">QubitUnitary</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="n">wires</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op3</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">cache</span><span class="o">=</span><span class="n">cache</span><span class="p">)</span>
+<span class="go">&#39;U\n(M1)&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cache</span><span class="p">[</span><span class="s1">&#39;matrices&#39;</span><span class="p">]</span>
+<span class="go">[tensor([[1., 0.],</span>
+<span class="go">        [0., 1.]], requires_grad=True),</span>
+<span class="go">tensor([[1., 0., 0., 0.],</span>
+<span class="go">        [0., 1., 0., 0.],</span>
+<span class="go">        [0., 0., 1., 0.],</span>
+<span class="go">        [0., 0., 0., 1.]], requires_grad=True)]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.state_preparation.plus_state">
+<span id="matchcake-operations-state-preparation-plus-state-module"></span><h2>matchcake.operations.state_preparation.plus_state module<a class="headerlink" href="#module-matchcake.operations.state_preparation.plus_state" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.plus_state.PlusState">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.state_preparation.plus_state.</span></span><span class="sig-name descname"><span class="pre">PlusState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.state_preparation.plus_state.PlusState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates" title="matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates"><code class="xref py py-class docutils literal notranslate"><span class="pre">StatePrepFromGates</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.plus_state.PlusState.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.state_preparation.plus_state.PlusState.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Add control of dtypes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state</strong> – Per-qubit amplitudes as a flat <code class="docutils literal notranslate"><span class="pre">(2n,)</span></code> vector, an
+<code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">2)</span></code> matrix, or their batched counterparts <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">2n)</span></code> /
+<code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">n,</span> <span class="pre">2)</span></code>.</p></li>
+<li><p><strong>wires</strong> – </p></li>
+<li><p><strong>validate_norm</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.plus_state.PlusState.gate_generator">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gate_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.state_preparation.plus_state.PlusState.gate_generator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.plus_state.PlusState.label">
+<span class="sig-name descname"><span class="pre">label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">decimals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.state_preparation.plus_state.PlusState.label" title="Permalink to this definition">¶</a></dt>
+<dd><p>A customizable string representation of the operator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>decimals=None</strong> (<em>int</em>) – If <code class="docutils literal notranslate"><span class="pre">None</span></code>, no parameters are included. Else,
+specifies how to round the parameters.</p></li>
+<li><p><strong>base_label=None</strong> (<em>str</em>) – overwrite the non-parameter component of the label</p></li>
+<li><p><strong>cache=None</strong> (<em>dict</em>) – dictionary that carries information between label calls
+in the same drawing</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>label to use in drawings</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p><strong>Example:</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">op</span> <span class="o">=</span> <span class="n">qp</span><span class="o">.</span><span class="n">RX</span><span class="p">(</span><span class="mf">1.23456</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op</span><span class="o">.</span><span class="n">label</span><span class="p">()</span>
+<span class="go">&#39;RX&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">base_label</span><span class="o">=</span><span class="s2">&quot;my_label&quot;</span><span class="p">)</span>
+<span class="go">&#39;my_label&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op</span> <span class="o">=</span> <span class="n">qp</span><span class="o">.</span><span class="n">RX</span><span class="p">(</span><span class="mf">1.23456</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op</span><span class="o">.</span><span class="n">label</span><span class="p">()</span>
+<span class="go">&#39;RX&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">decimals</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">&#39;RX\n(1.23)&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">base_label</span><span class="o">=</span><span class="s2">&quot;my_label&quot;</span><span class="p">)</span>
+<span class="go">&#39;my_label&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">decimals</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">base_label</span><span class="o">=</span><span class="s2">&quot;my_label&quot;</span><span class="p">)</span>
+<span class="go">&#39;my_label\n(1.23)&#39;</span>
+</pre></div>
+</div>
+<p>If the operation has a matrix-valued parameter and a cache dictionary is provided,
+unique matrices will be cached in the <code class="docutils literal notranslate"><span class="pre">'matrices'</span></code> key list. The label will contain
+the index of the matrix in the <code class="docutils literal notranslate"><span class="pre">'matrices'</span></code> list.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">op2</span> <span class="o">=</span> <span class="n">qp</span><span class="o">.</span><span class="n">QubitUnitary</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">wires</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cache</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;matrices&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op2</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">cache</span><span class="o">=</span><span class="n">cache</span><span class="p">)</span>
+<span class="go">&#39;U\n(M0)&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cache</span><span class="p">[</span><span class="s1">&#39;matrices&#39;</span><span class="p">]</span>
+<span class="go">[tensor([[1., 0.],</span>
+<span class="go"> [0., 1.]], requires_grad=True)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op3</span> <span class="o">=</span> <span class="n">qp</span><span class="o">.</span><span class="n">QubitUnitary</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="n">wires</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">op3</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">cache</span><span class="o">=</span><span class="n">cache</span><span class="p">)</span>
+<span class="go">&#39;U\n(M1)&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cache</span><span class="p">[</span><span class="s1">&#39;matrices&#39;</span><span class="p">]</span>
+<span class="go">[tensor([[1., 0.],</span>
+<span class="go">        [0., 1.]], requires_grad=True),</span>
+<span class="go">tensor([[1., 0., 0., 0.],</span>
+<span class="go">        [0., 1., 0., 0.],</span>
+<span class="go">        [0., 0., 1., 0.],</span>
+<span class="go">        [0., 0., 0., 1.]], requires_grad=True)]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.state_preparation.product_state">
+<span id="matchcake-operations-state-preparation-product-state-module"></span><h2>matchcake.operations.state_preparation.product_state module<a class="headerlink" href="#module-matchcake.operations.state_preparation.product_state" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.state_preparation.product_state.</span></span><span class="sig-name descname"><span class="pre">ProductState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">StatePrepBase</span></code></p>
+<p>Prepare a product state from per-qubit amplitudes.</p>
+<p>A single state is given either as a flat <code class="docutils literal notranslate"><span class="pre">(2n,)</span></code> vector or as an
+<code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">2)</span></code> matrix of per-qubit <code class="docutils literal notranslate"><span class="pre">(alpha_k,</span> <span class="pre">beta_k)</span></code> pairs.  A <em>batch</em> of
+<code class="docutils literal notranslate"><span class="pre">B</span></code> states can also be passed as a <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">2n)</span></code> or <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">n,</span> <span class="pre">2)</span></code> array; in
+that case <code class="xref py py-attr docutils literal notranslate"><span class="pre">batch_size</span></code> is <code class="docutils literal notranslate"><span class="pre">B</span></code> and the per-state outputs
+(<a class="reference internal" href="#matchcake.operations.state_preparation.product_state.ProductState.state_vector" title="matchcake.operations.state_preparation.product_state.ProductState.state_vector"><code class="xref py py-meth docutils literal notranslate"><span class="pre">state_vector()</span></code></a>, <a class="reference internal" href="#matchcake.operations.state_preparation.product_state.ProductState.covariance_matrix" title="matchcake.operations.state_preparation.product_state.ProductState.covariance_matrix"><code class="xref py py-attr docutils literal notranslate"><span class="pre">covariance_matrix</span></code></a>, …) gain a leading batch
+axis.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState.ATOL">
+<span class="sig-name descname"><span class="pre">ATOL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1e-12</span></em><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState.ATOL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Add control of dtypes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state</strong> – Per-qubit amplitudes as a flat <code class="docutils literal notranslate"><span class="pre">(2n,)</span></code> vector, an
+<code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">2)</span></code> matrix, or their batched counterparts <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">2n)</span></code> /
+<code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">n,</span> <span class="pre">2)</span></code>.</p></li>
+<li><p><strong>wires</strong> – </p></li>
+<li><p><strong>validate_norm</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState.as_basis_state">
+<span class="sig-name descname"><span class="pre">as_basis_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">BasisState</span></span></span><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState.as_basis_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an equivalent <code class="xref py py-class docutils literal notranslate"><span class="pre">pennylane.BasisState</span></code> operation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – if this state is not a computational-basis state,
+or if it is batched (<code class="docutils literal notranslate"><span class="pre">qml.BasisState</span></code> has no batch dimension; use
+<a class="reference internal" href="#matchcake.operations.state_preparation.product_state.ProductState.basis_state_bits" title="matchcake.operations.state_preparation.product_state.ProductState.basis_state_bits"><code class="xref py py-meth docutils literal notranslate"><span class="pre">basis_state_bits()</span></code></a> to obtain the per-state bit arrays).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState.basis_state_bits">
+<span class="sig-name descname"><span class="pre">basis_state_bits</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState.basis_state_bits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integer bit array. Raises <code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code> if not a basis state.</p>
+<p>Shape is <code class="docutils literal notranslate"><span class="pre">(n,)</span></code> for a single state and <code class="docutils literal notranslate"><span class="pre">(batch,</span> <span class="pre">n)</span></code> when batched.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState.compute_decomposition">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compute_decomposition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState.compute_decomposition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decompose into a single <code class="docutils literal notranslate"><span class="pre">StatePrep</span></code> from the full state vector. This lets
+devices that don’t natively support <a class="reference internal" href="#matchcake.operations.state_preparation.product_state.ProductState" title="matchcake.operations.state_preparation.product_state.ProductState"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProductState</span></code></a> execute it
+by falling back to the standard state-prep machinery.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState.covariance_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">covariance_matrix</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></em><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState.covariance_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Majorana covariance matrix <span class="math notranslate nohighlight">\(\Lambda_0\)</span> of the prepared state.</p>
+<p>Returns a real antisymmetric <code class="docutils literal notranslate"><span class="pre">(2n,</span> <span class="pre">2n)</span></code> tensor (or <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">2n,</span> <span class="pre">2n)</span></code> for
+a batched state) with the convention</p>
+<div class="math notranslate nohighlight">
+\[(\Lambda_0)_{\mu\nu} = i\, \langle\Psi|\, c_\mu c_\nu\, |\Psi\rangle,
+\quad \mu \neq \nu,\]</div>
+<p>using the Jordan-Wigner mapping
+<span class="math notranslate nohighlight">\(c_{2k} = Z_{&lt;k} X_k\)</span>, <span class="math notranslate nohighlight">\(c_{2k+1} = Z_{&lt;k} Y_k\)</span> (0-indexed
+Majoranas and qubits).</p>
+<p>For a product state, the matrix has a simple closed form in terms of
+the per-qubit Bloch vectors <span class="math notranslate nohighlight">\((x_k, y_k, z_k)\)</span>:</p>
+<ul>
+<li><p>Same-qubit entries: <span class="math notranslate nohighlight">\((\Lambda_0)_{2k, 2k+1} = -z_k\)</span>.</p></li>
+<li><p>Different-qubit entries (for <span class="math notranslate nohighlight">\(j &lt; k\)</span>):</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+(\Lambda_0)_{2j,\,2k}     &amp;= +y_j\, p_{jk}\, x_k, \\
+(\Lambda_0)_{2j,\,2k+1}   &amp;= +y_j\, p_{jk}\, y_k, \\
+(\Lambda_0)_{2j+1,\,2k}   &amp;= -x_j\, p_{jk}\, x_k, \\
+(\Lambda_0)_{2j+1,\,2k+1} &amp;= -x_j\, p_{jk}\, y_k,
+\end{aligned}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(p_{jk} = \prod_{j &lt; l &lt; k} z_l\)</span> is the parity-string
+factor (and <span class="math notranslate nohighlight">\(p_{jk} = 1\)</span> if <span class="math notranslate nohighlight">\(k = j+1\)</span>).</p>
+</li>
+</ul>
+<p>The remaining entries are filled by antisymmetry.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState.from_basis_state">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_basis_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basis_state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.operations.state_preparation.product_state.ProductState" title="matchcake.operations.state_preparation.product_state.ProductState"><span class="pre">ProductState</span></a></span></span><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState.from_basis_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a <a class="reference internal" href="#matchcake.operations.state_preparation.product_state.ProductState" title="matchcake.operations.state_preparation.product_state.ProductState"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProductState</span></code></a> from a computational-basis state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>basis_state</strong> – A <code class="xref py py-class docutils literal notranslate"><span class="pre">pennylane.BasisState</span></code> operation <strong>or</strong> an
+integer tensor-like of shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code> (a single state) or
+<code class="docutils literal notranslate"><span class="pre">(batch,</span> <span class="pre">n)</span></code> (a batch of states) whose <span class="math notranslate nohighlight">\(k\)</span>-th entry is
+0 or 1 (the bit for qubit <em>k</em>).</p></li>
+<li><p><strong>wires</strong> – Wire labels for the resulting operation.  Ignored when
+<em>basis_state</em> is a <code class="xref py py-class docutils literal notranslate"><span class="pre">BasisState</span></code> (the wires are
+taken from that object instead).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference internal" href="#matchcake.operations.state_preparation.product_state.ProductState" title="matchcake.operations.state_preparation.product_state.ProductState"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProductState</span></code></a> encoding the same computational-basis
+state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState.grad_method">
+<span class="sig-name descname"><span class="pre">grad_method</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState.grad_method" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState.has_decomposition">
+<span class="sig-name descname"><span class="pre">has_decomposition</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState.has_decomposition" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState.is_basis_state">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_basis_state</span></span><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState.is_basis_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether every qubit is in a computational-basis state, i.e. one of
+<span class="math notranslate nohighlight">\(\alpha_k, \beta_k\)</span> is zero within <a class="reference internal" href="#matchcake.operations.state_preparation.product_state.ProductState.ATOL" title="matchcake.operations.state_preparation.product_state.ProductState.ATOL"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ATOL</span></code></a>.</p>
+<p>Returns a single <code class="docutils literal notranslate"><span class="pre">bool</span></code> for an unbatched state, or a boolean tensor of
+shape <code class="docutils literal notranslate"><span class="pre">(batch,)</span></code> when batched (one entry per state).</p>
+<p>This is independent of any global phase on each qubit: a qubit in
+<span class="math notranslate nohighlight">\(-|1\rangle\)</span> is still considered to be in basis state
+<span class="math notranslate nohighlight">\(|1\rangle\)</span>.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState.ndim_params">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ndim_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span></em><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState.ndim_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of dimensions per trainable parameter of the operator.</p>
+<p>By default, this property returns the numbers of dimensions of the parameters used
+for the operator creation. If the parameter sizes for an operator subclass are fixed,
+this property can be overwritten to return the fixed value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of dimensions for each trainable parameter.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState.num_params">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState.num_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of trainable parameters that the operator depends on.</p>
+<p>By default, this property returns as many parameters as were used for the
+operator creation. If the number of parameters for an operator subclass is fixed,
+this property can be overwritten to return the fixed value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>number of parameters</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState.num_wires">
+<span class="sig-name descname"><span class="pre">num_wires</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState.num_wires" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of wires the operator acts on.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.product_state.ProductState.state_vector">
+<span class="sig-name descname"><span class="pre">state_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wire_order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></span><a class="headerlink" href="#matchcake.operations.state_preparation.product_state.ProductState.state_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Full <span class="math notranslate nohighlight">\(2^n\)</span>-dim state vector obtained by tensoring per-qubit factors.</p>
+<p>Implements the <code class="xref py py-class docutils literal notranslate"><span class="pre">pennylane.operation.StatePrepBase</span></code> contract so
+non-NIF devices (e.g. <code class="docutils literal notranslate"><span class="pre">default.qubit</span></code>) can fall back to the explicit
+Kronecker product when the <code class="docutils literal notranslate"><span class="pre">ProductState</span></code> op is executed.  For a
+batched state the result carries a leading batch axis.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.state_preparation.state_prep_from_gates">
+<span id="matchcake-operations-state-preparation-state-prep-from-gates-module"></span><h2>matchcake.operations.state_preparation.state_prep_from_gates module<a class="headerlink" href="#module-matchcake.operations.state_preparation.state_prep_from_gates" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.operations.state_preparation.state_prep_from_gates.</span></span><span class="sig-name descname"><span class="pre">StatePrepFromGates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gate_generator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">Operation</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.operations.state_preparation.product_state.ProductState" title="matchcake.operations.state_preparation.product_state.ProductState"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProductState</span></code></a></p>
+<p>Prepare a state by listing the gates that build it from <span class="math notranslate nohighlight">\(|0\ldots0\rangle\)</span>.</p>
+<p>This is a <code class="xref py py-class docutils literal notranslate"><span class="pre">ProductState</span></code> whose per-qubit amplitudes are obtained by
+applying the gates yielded by <code class="docutils literal notranslate"><span class="pre">gate_generator</span></code> to the all-zero state. Only
+<em>single-qubit</em> gate generators (one or more gates acting on individual wires)
+describe a product state and are therefore supported; a multi-qubit gate would
+entangle the qubits and cannot be represented as a <code class="xref py py-class docutils literal notranslate"><span class="pre">ProductState</span></code>.</p>
+<p>Because it is a genuine <code class="xref py py-class docutils literal notranslate"><span class="pre">ProductState</span></code>, it works with every strategy that
+accepts product-state inputs (e.g. the m-Pfaffian expectation-value strategy),
+while still decomposing into its defining gates for the gate-based paths.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gate_generator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">Operation</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Add control of dtypes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state</strong> – Per-qubit amplitudes as a flat <code class="docutils literal notranslate"><span class="pre">(2n,)</span></code> vector, an
+<code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">2)</span></code> matrix, or their batched counterparts <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">2n)</span></code> /
+<code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">n,</span> <span class="pre">2)</span></code>.</p></li>
+<li><p><strong>wires</strong> – </p></li>
+<li><p><strong>validate_norm</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates.compute_decomposition">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compute_decomposition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">hyperparameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Operation</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates.compute_decomposition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decompose into a single <code class="docutils literal notranslate"><span class="pre">StatePrep</span></code> from the full state vector. This lets
+devices that don’t natively support <code class="xref py py-class docutils literal notranslate"><span class="pre">ProductState</span></code> execute it
+by falling back to the standard state-prep machinery.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates.decomposition_generator">
+<span class="sig-name descname"><span class="pre">decomposition_generator</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">Operation</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates.decomposition_generator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates.is_basis_state">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_basis_state</span></span><a class="headerlink" href="#matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates.is_basis_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether every qubit is in a computational-basis state, i.e. one of
+<span class="math notranslate nohighlight">\(\alpha_k, \beta_k\)</span> is zero within <code class="xref py py-attr docutils literal notranslate"><span class="pre">ATOL</span></code>.</p>
+<p>Returns a single <code class="docutils literal notranslate"><span class="pre">bool</span></code> for an unbatched state, or a boolean tensor of
+shape <code class="docutils literal notranslate"><span class="pre">(batch,)</span></code> when batched (one entry per state).</p>
+<p>This is independent of any global phase on each qubit: a qubit in
+<span class="math notranslate nohighlight">\(-|1\rangle\)</span> is still considered to be in basis state
+<span class="math notranslate nohighlight">\(|1\rangle\)</span>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates.to_basis_state">
+<span class="sig-name descname"><span class="pre">to_basis_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">BasisState</span></span></span><a class="headerlink" href="#matchcake.operations.state_preparation.state_prep_from_gates.StatePrepFromGates.to_basis_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.operations.state_preparation">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-matchcake.operations.state_preparation" title="Permalink to this heading">¶</a></h2>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="static/documentation_options.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" src="static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>

@@ -1,0 +1,508 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>matchcake.ml package &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="matchcake.ml.kernels package" href="matchcake.ml.kernels.html" />
+    <link rel="prev" title="matchcake.matchgate_parameter_sets package" href="matchcake.matchgate_parameter_sets.html" />
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process|mathjax_process|math|output_area'
+  }
+};
+</script>
+
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="index.html">Docs</a></li>
+        
+          <li><a href="matchcake.html">matchcake package</a></li>
+        
+      <li>matchcake.ml package</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="sources/matchcake.ml.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+
+<div style="padding: 0 0 1em 0;">
+  <label for="version-select" style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 0.3em; color: #555;">Version</label>
+  <select id="version-select" onchange="window.location.href=this.value" style="width: 100%; padding: 0.3em 0.4em; font-size: 0.9em; border: 1px solid #ccc; border-radius: 3px; background: #fff; cursor: pointer;">
+    
+    <option value="matchcake.ml.html" selected>dev</option>
+    
+    <option value="../main/matchcake.ml.html" >main</option>
+    
+    <option value="../1.0.0/matchcake.ml.html" >1.0.0</option>
+    
+    <option value="../0.2.3/index.html" >0.2.3</option>
+    
+  </select>
+</div>
+
+
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#requirements">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#set-up-a-project-or-an-environment">Set up a project or an environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#install-matchcake">Install MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#pytorch-build-and-installation-size">PyTorch build and installation size</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#quick-usage-preview">Quick Usage Preview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#quantum-circuit-simulation-with-matchcake">Quantum Circuit Simulation with MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#data-classification-with-matchcake">Data Classification with MatchCake</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#for-developers">For Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#citations">Citations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#fermionic-machine-learning-paper">Fermionic Machine Learning Paper</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/matchcake_basics.html">MatchCake Example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#create-the-noninteractingfermionicdevice">Create the NonInteractingFermionicDevice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#define-the-circuit">Define the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#create-the-qnode">Create the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#define-the-hyperparameters-of-the-circuit">Define the hyperparameters of the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#draw-the-circuit">Draw the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#evaluate-the-qnode">Evaluate the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#print-the-expectation-values">Print the expectation values</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/expectation_values.html">Expectation Values</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#hamiltonian">Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/probabilities.html">Probabilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#marginal-probabilities">Marginal probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#single-outcome-probability">Single-outcome probability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/iris_classification.html">Iris classification with FermionicPQCKernel</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html">Nystroem Kernel Approximation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="docs/expectation_values_theory.html">Computing expectation values using the Covariance-Matrix</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="matchcake.html">matchcake package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="matchcake.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section id="matchcake-ml-package">
+<h1>matchcake.ml package<a class="headerlink" href="#matchcake-ml-package" title="Permalink to this heading">¶</a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.ml.kernels.html">matchcake.ml.kernels package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.kernels.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.fermionic_pqc_kernel">matchcake.ml.kernels.fermionic_pqc_kernel module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.fermionic_pqc_kernel.FermionicPQCKernel"><code class="docutils literal notranslate"><span class="pre">FermionicPQCKernel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.gram_matrix">matchcake.ml.kernels.gram_matrix module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.gram_matrix.GramMatrix"><code class="docutils literal notranslate"><span class="pre">GramMatrix</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.kernel">matchcake.ml.kernels.kernel module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.kernel.Kernel"><code class="docutils literal notranslate"><span class="pre">Kernel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.linear_nif_kernel">matchcake.ml.kernels.linear_nif_kernel module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.linear_nif_kernel.LinearNIFKernel"><code class="docutils literal notranslate"><span class="pre">LinearNIFKernel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.nif_kernel">matchcake.ml.kernels.nif_kernel module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nif_kernel.NIFKernel"><code class="docutils literal notranslate"><span class="pre">NIFKernel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels.nystroem">matchcake.ml.kernels.nystroem module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.kernels.html#matchcake.ml.kernels.nystroem.Nystroem"><code class="docutils literal notranslate"><span class="pre">Nystroem</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.kernels.html#module-matchcake.ml.kernels">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.ml.visualisation.html">matchcake.ml.visualisation package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.visualisation.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.visualisation.html#module-matchcake.ml.visualisation.classification_visualizer">matchcake.ml.visualisation.classification_visualizer module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.visualisation.html#matchcake.ml.visualisation.classification_visualizer.ClassificationVisualizer"><code class="docutils literal notranslate"><span class="pre">ClassificationVisualizer</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.visualisation.html#module-matchcake.ml.visualisation.cross_validation_visualizer">matchcake.ml.visualisation.cross_validation_visualizer module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.visualisation.html#matchcake.ml.visualisation.cross_validation_visualizer.CrossValidationVisualizer"><code class="docutils literal notranslate"><span class="pre">CrossValidationVisualizer</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.visualisation.html#module-matchcake.ml.visualisation.mpl_rcparams">matchcake.ml.visualisation.mpl_rcparams module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.visualisation.html#module-matchcake.ml.visualisation.visualizer">matchcake.ml.visualisation.visualizer module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.ml.visualisation.html#matchcake.ml.visualisation.visualizer.Visualizer"><code class="docutils literal notranslate"><span class="pre">Visualizer</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.ml.visualisation.html#module-matchcake.ml.visualisation">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-matchcake.ml.cross_validation">
+<span id="matchcake-ml-cross-validation-module"></span><h2>matchcake.ml.cross_validation module<a class="headerlink" href="#module-matchcake.ml.cross_validation" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.ml.cross_validation.CrossValidation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.ml.cross_validation.</span></span><span class="sig-name descname"><span class="pre">CrossValidation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">estimators</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">BaseEstimator</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cross_validate_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.cross_validation.CrossValidation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The CrossValidation class defines an object to encapsulate the handling and the outputs of scikit-learn
+Cross-validation module.</p>
+<p>It can run multiple estimators one after another to test the performance of each of them in a reproducible manner.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ESTIMATOR_NAME_KEY</strong> – Internal key name for estimator names.</p></li>
+<li><p><strong>INDICES_NAME_KEY</strong> – Internal key name for indices.</p></li>
+<li><p><strong>INDICES_TRAIN_KEY</strong> – Internal key name for training indices.</p></li>
+<li><p><strong>INDICES_TEST_KEY</strong> – Internal key name for testing indices.</p></li>
+<li><p><strong>estimators</strong> – The dictionary mapping estimator names to the estimator.</p></li>
+<li><p><strong>x</strong> – The independant variable.</p></li>
+<li><p><strong>y</strong> – The dependant variable.</p></li>
+<li><p><strong>cv</strong> – The Cross-Validation method. If none is passed, it will default to a
+StratifiedShuffleSplit with 20 splits and a train-test ration of 80-20</p></li>
+<li><p><strong>cross_validator_kwargs</strong> – Additional arguments to pass to the cross-validator.
+See <a class="reference external" href="https://scikit-learn.org/stable/modules/cross_validation.html">https://scikit-learn.org/stable/modules/cross_validation.html</a></p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.ml.cross_validation.CrossValidation.ESTIMATOR_NAME_KEY">
+<span class="sig-name descname"><span class="pre">ESTIMATOR_NAME_KEY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'estimator_name'</span></em><a class="headerlink" href="#matchcake.ml.cross_validation.CrossValidation.ESTIMATOR_NAME_KEY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.ml.cross_validation.CrossValidation.INDICES_NAME_KEY">
+<span class="sig-name descname"><span class="pre">INDICES_NAME_KEY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'indices'</span></em><a class="headerlink" href="#matchcake.ml.cross_validation.CrossValidation.INDICES_NAME_KEY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.ml.cross_validation.CrossValidation.INDICES_TEST_KEY">
+<span class="sig-name descname"><span class="pre">INDICES_TEST_KEY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'test'</span></em><a class="headerlink" href="#matchcake.ml.cross_validation.CrossValidation.INDICES_TEST_KEY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.ml.cross_validation.CrossValidation.INDICES_TRAIN_KEY">
+<span class="sig-name descname"><span class="pre">INDICES_TRAIN_KEY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'train'</span></em><a class="headerlink" href="#matchcake.ml.cross_validation.CrossValidation.INDICES_TRAIN_KEY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.cross_validation.CrossValidation.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">estimators</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">BaseEstimator</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cross_validate_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.cross_validation.CrossValidation.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the Cross-Validator with the estimators to validate and the data to train it on.</p>
+<p>Passed cross-validator kwargs can have the form:
+<a href="#id1"><span class="problematic" id="id2">``</span></a>`
+{</p>
+<blockquote>
+<div><p>‘return_train_score’: True,
+‘return_estimator’: True,
+‘return_indices’: True,</p>
+</div></blockquote>
+<section id="id3">
+<h3>}<a class="headerlink" href="#id3" title="Permalink to this heading">¶</a></h3>
+<p>These kwargs are optional. By default, <cite>return_train_score</cite> will be True.
+See <a class="reference external" href="https://scikit-learn.org/stable/modules/cross_validation.html">https://scikit-learn.org/stable/modules/cross_validation.html</a> for information on these parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param estimators<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary mapping estimator names to the estimator</p>
+</dd>
+<dt class="field-even">param x<span class="colon">:</span></dt>
+<dd class="field-even"><p>Independant variable to be processed.</p>
+</dd>
+<dt class="field-odd">param y<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dependant variable to be processed.</p>
+</dd>
+<dt class="field-even">type y<span class="colon">:</span></dt>
+<dd class="field-even"><p>Any tensor-compatible object.</p>
+</dd>
+<dt class="field-odd">param cv<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The cross-validator. Will use a StratifiedShuffleSplit with 20 splits by default.</p>
+</dd>
+<dt class="field-even">type cv<span class="colon">:</span></dt>
+<dd class="field-even"><p>An initialised cross-validator.</p>
+</dd>
+<dt class="field-odd">ivar cross_validator_kwargs<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Additional arguments to pass to the cross-validator.
+See <a class="reference external" href="https://scikit-learn.org/stable/modules/cross_validation.html">https://scikit-learn.org/stable/modules/cross_validation.html</a> .</p>
+</dd>
+<dt class="field-even">type cross_validator_kwargs<span class="colon">:</span></dt>
+<dd class="field-even"><p>A mapping between the arguments and their True/False value.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.cross_validation.CrossValidation.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.ml.cross_validation.CrossValidationOutput" title="matchcake.ml.cross_validation.CrossValidationOutput"><span class="pre">CrossValidationOutput</span></a></span></span><a class="headerlink" href="#matchcake.ml.cross_validation.CrossValidation.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the cross-validation. It will run all estimators with the same data and cross-validation method.
+Outputs of the cross-validation will be saved in a CrossValidationOutput object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>verbose</strong> – If to show progress.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A CrossValidationOutput object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.ml.cross_validation.CrossValidationOutput">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.ml.cross_validation.</span></span><span class="sig-name descname"><span class="pre">CrossValidationOutput</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">estimators</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">BaseEstimator</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">results_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimator_name_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'estimator_name'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.cross_validation.CrossValidationOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The CrossValidation class defines an object to encapsulate the handling and the outputs
+of scikit-learn Cross-validation module.</p>
+<p>It can run multiple estimators one after another to test the performance of each of them in a reproducible manner.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ESTIMATOR_NAME_KEY</strong> – Internal key name for estimator names</p></li>
+<li><p><strong>estimators</strong> – The dictionary mapping estimator names to the estimator.</p></li>
+<li><p><strong>results_df</strong> – The dataframe containing the results of the cross-validation test.</p></li>
+<li><p><strong>estimator_name_key</strong> – The key to the estimator name</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.ml.cross_validation.CrossValidationOutput.ESTIMATOR_NAME_KEY">
+<span class="sig-name descname"><span class="pre">ESTIMATOR_NAME_KEY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'estimator_name'</span></em><a class="headerlink" href="#matchcake.ml.cross_validation.CrossValidationOutput.ESTIMATOR_NAME_KEY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.ml.cross_validation.CrossValidationOutput.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">estimators</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">BaseEstimator</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">results_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimator_name_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'estimator_name'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.ml.cross_validation.CrossValidationOutput.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the CrossValidationOutput.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>estimators</strong> – The tested estimators</p></li>
+<li><p><strong>results_df</strong> – The results of the cross-validation</p></li>
+<li><p><strong>estimator_name_key</strong> – The name to access the estimator name in the Dataframe.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.ml.cross_validation.CrossValidationOutput.score_columns">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">score_columns</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#matchcake.ml.cross_validation.CrossValidationOutput.score_columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns only the columns with score values from the Dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of columns containing the score values.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.ml">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-matchcake.ml" title="Permalink to this heading">¶</a></h2>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="static/documentation_options.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" src="static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>
