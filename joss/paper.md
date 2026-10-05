@@ -219,7 +219,7 @@ width="80%" fig-env="figure" fig-align="center"
 ## Minimal Example - QML
 
 The next example builds quantum kernel classifiers with the `FermionicPQCKernel` and `LinearNIFKernel` classes and
-evaluates them on the iris dataset [@iris_53] using 20-fold cross-validation. `MatchCake.ml` builds on
+evaluates them on the Iris dataset [@iris_53] using 20-fold cross-validation. `MatchCake.ml` builds on
 `scikit-learn` [@scikit-learn; @sklearn_api], giving a familiar interface for machine learning practitioners.
 
 ```python
@@ -235,7 +235,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import SVC
 
-# Load the iris dataset
+# Load the Iris dataset
 dataset = datasets.load_iris(as_frame=True)
 X, y = dataset.data, dataset.target
 
@@ -291,7 +291,7 @@ cv_viz.plot(
 ```
 
 ![ Output of the machine learning example, using 8-qubit kernels and 20-fold cross-validation. Left: decision
-boundaries for the Fermionic Linear classifier on the iris dataset. Right: violin plots of training and testing
+boundaries for the Fermionic Linear classifier on the Iris dataset. Right: violin plots of training and testing
 accuracies across the cross-validation folds for the Fermionic PQC and Fermionic Linear classifiers.
 \label{fig:minimal_example_quantum_machine_learning}](./images/minimal_example_quantum_machine_learning.svg){
 width="100%" fig-env="figure" fig-align="center"

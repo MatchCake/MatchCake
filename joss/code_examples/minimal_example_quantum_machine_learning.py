@@ -14,7 +14,7 @@ from matchcake.ml.visualisation.mpl_rcparams import MPL_RC_DEFAULT_PARAMS
 
 mpl.rcParams.update(MPL_RC_DEFAULT_PARAMS)
 
-# Load the iris dataset
+# Load the Iris dataset
 dataset = datasets.load_iris(as_frame=True)
 X, y = dataset.data, dataset.target
 
