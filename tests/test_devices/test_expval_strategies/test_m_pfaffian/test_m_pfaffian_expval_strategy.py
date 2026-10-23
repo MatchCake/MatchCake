@@ -326,6 +326,14 @@ class TestMPfaffianExpvalStrategy:
         bs = qml.BasisState([0, 1], wires=[0, 1])
         assert self.strat.can_execute(bs, qml.X(0))
 
+    def test_can_execute_a_sum_whose_non_pauli_part_cancels(self):
+        """``observable.terms()`` simplifies the cancelled projector away, leaving a Pauli sum."""
+        projector = qml.Projector([0], wires=[1])
+        observable = qml.sum(qml.Z(0), projector, -1.0 * projector)
+        _, operators = self.strat._terms_of(observable)
+        assert [type(operator) for operator in operators] == [qml.Z]
+        assert self.strat.can_execute(qml.BasisState([0, 1], wires=[0, 1]), observable)
+
     def test_cannot_execute_hermitian(self):
         op = ProductState(np.array([[1.0, 0.0]], dtype=complex), wires=[0])
         obs = qml.Hermitian(np.eye(2), wires=[0])

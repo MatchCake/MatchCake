@@ -1,6 +1,5 @@
 import pennylane as qml
-import torch
-from pennylane.operation import Operator, StatePrepBase, TermsUndefinedError
+from pennylane.operation import Operator, StatePrepBase
 from pennylane.ops.op_math import Prod
 from pennylane.ops.qubit import Projector
 from pennylane.pauli import pauli_sentence, pauli_word_to_string
@@ -8,7 +7,7 @@ from pennylane.pauli import pauli_sentence, pauli_word_to_string
 from ...observables.batch_hamiltonian import BatchHamiltonian
 from ...operations.state_preparation import StatePrepFromGates
 from ...typing import TensorLike
-from ...utils import get_eigvals_on_z_basis
+from ...utils import get_eigvals_on_z_basis, live_pauli_terms
 from .expval_strategy import ExpvalStrategy
 
 
@@ -58,8 +57,8 @@ class ExpvalFromProbabilitiesStrategy(ExpvalStrategy):
         if isinstance(observable, Prod):
             return qml.Hamiltonian([1.0], [observable])
         try:
-            terms = observable.terms()
-        except TermsUndefinedError:
-            terms = torch.ones((1,)), [observable]
+            terms = live_pauli_terms(observable)
+        except TypeError:
+            terms = live_pauli_terms(observable, keep_non_pauli=True)
         hamiltonian = qml.Hamiltonian(*terms)
         return hamiltonian

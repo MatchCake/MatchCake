@@ -4,13 +4,14 @@ import numpy as np
 import pennylane as qml
 import torch
 from pennylane import BasisState, qnode
-from pennylane.operation import Operator, StatePrepBase, TermsUndefinedError
+from pennylane.operation import Operator, StatePrepBase
 from pennylane.ops.qubit import Projector
 from pennylane.pauli import pauli_word_to_string
 
 from .... import utils
 from ....operations.state_preparation.state_prep_from_gates import StatePrepFromGates
 from ....typing import TensorLike
+from ....utils import live_pauli_terms
 from ....utils.majorana import majorana_to_pauli
 from ....utils.torch_utils import to_tensor
 from ..expval_strategy import ExpvalStrategy
@@ -76,9 +77,9 @@ class CliffordExpvalStrategy(ExpvalStrategy):
     @staticmethod
     def _format_observable(observable):
         try:
-            terms = observable.terms()
-        except TermsUndefinedError:
-            terms = torch.ones((1,)), [observable]
+            terms = live_pauli_terms(observable)
+        except TypeError:
+            terms = live_pauli_terms(observable, keep_non_pauli=True)
         return qml.Hamiltonian(*terms)
 
     @staticmethod

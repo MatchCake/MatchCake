@@ -7,12 +7,12 @@ import numpy as np
 import pennylane as qml
 import torch
 from pennylane import BasisState
-from pennylane.operation import Operator, StatePrepBase, TermsUndefinedError
+from pennylane.operation import Operator, StatePrepBase
 from pennylane.pauli import pauli_word_to_string
 
 from ....operations.state_preparation.product_state import ProductState
 from ....typing import TensorLike
-from ....utils import JordanWigner
+from ....utils import JordanWigner, live_pauli_terms
 from ....utils._pfaffian import infer_real_dtype, sector_pfaffian_features
 from ....utils.math import convert_and_cast_like
 from ..expval_strategy import ExpvalStrategy
@@ -48,8 +48,8 @@ class _DecompositionCache:
     kernel is cheap (e.g. float32 internals). This class memoizes it.
 
     Both tiers cache only the *coefficient-independent* structure; the coefficients
-    are read live from ``observable.terms()`` on every call (which is cheap and does
-    not rebuild anything) and folded in afterwards. An observable whose coefficients
+    are read live on every call (see ``MPfaffianExpvalStrategy._terms_of``) and folded
+    in afterwards. An observable whose coefficients
     change in place between calls -- even when the same object is reused -- therefore
     always produces correct values, never a stale cached coefficient.
 
@@ -105,7 +105,7 @@ class _DecompositionCache:
         coefficients are treated as constants exactly as before, so gradients flow only
         through the covariance matrix.
         """
-        if isinstance(coeff, torch.Tensor):
+        if isinstance(coeff, (torch.Tensor, np.ndarray)):
             return complex(coeff.item())
         return complex(coeff)
 
@@ -257,15 +257,20 @@ class MPfaffianExpvalStrategy(ExpvalStrategy):
     def _terms_of(observable: Operator) -> tuple:
         """Return ``(coeffs, ops)`` for the observable as a sum of Pauli terms.
 
-        Uses ``observable.terms()`` directly (which does not rebuild anything),
-        falling back to a trivial single-term wrapping for operators that do not
-        define a terms decomposition. Reading the coefficients here every call is
-        what keeps the cache correct under in-place coefficient changes.
+        Uses :func:`~matchcake.utils.pauli_decomposition.live_pauli_terms`, which reads a
+        Hamiltonian of plain Pauli words through its own ``terms()`` and walks any other
+        expression tree. An observable without a Pauli decomposition is reduced as
+        ``observable.terms()`` would reduce it, keeping its parts without one as terms of
+        their own, which :meth:`can_execute` then declines; a cancelled part disappears.
+        Reading the coefficients here every call is what keeps the cache correct under
+        in-place coefficient changes; ``observable.terms()`` itself would not, because for a
+        sum or a product it serves PennyLane's cached ``pauli_rep`` and can accumulate into
+        the caller's coefficient tensors.
         """
         try:
-            return observable.terms()
-        except TermsUndefinedError:
-            return (torch.ones(1),), [observable]
+            return live_pauli_terms(observable)
+        except TypeError:
+            return live_pauli_terms(observable, keep_non_pauli=True)
 
     def __call__(
         self,

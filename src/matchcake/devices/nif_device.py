@@ -37,6 +37,7 @@ from ..utils.math import (
     fermionic_operator_matmul,
 )
 from .contraction_strategies import ContractionStrategy, get_contraction_strategy
+from .device_utils import UNSET
 from .expval_strategies.clifford_expval.clifford_expval_strategy import (
     CliffordExpvalStrategy,
 )
@@ -52,6 +53,7 @@ from .expval_strategies.m_pfaffian._extended_covariance import (
     sptm_lift as _sptm_lift,
 )
 from .expval_strategies.terms_splitter import TermsSplitter
+from .nif_preprocessing import nif_split_non_commuting
 from .probability_strategies import (
     CliffordSumStrategy,
     ExplicitSumStrategy,
@@ -64,20 +66,6 @@ from .star_state_finding_strategies import (
     StarStateFindingStrategy,
     get_star_state_finding_strategy,
 )
-
-_UNSET = object()  # sentinel distinguishing "shots not provided" from an explicit ``shots=None``
-
-
-@qml.transform
-def _nif_split_non_commuting(tape: QuantumScript):
-    """Pass BatchHamiltonian measurements through unchanged; otherwise delegate to split_non_commuting."""
-    if (
-        len(tape.measurements) == 1
-        and tape.measurements[0].obs is not None
-        and isinstance(tape.measurements[0].obs, BatchHamiltonian)
-    ):
-        return [tape], lambda results: results[0]
-    return qml.transforms.split_non_commuting(tape, grouping_strategy="wires")
 
 
 class NonInteractingFermionicDevice(qml.devices.Device):
@@ -612,7 +600,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         observable: Optional[Any] = None,
         output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
         *,
-        shots: Any = _UNSET,
+        shots: Any = UNSET,
         **kwargs,
     ) -> Optional[Any]:
         """
@@ -654,7 +642,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         observable: Optional[Any] = None,
         output_type: Optional[Literal["samples", "expval", "probs", "star_state", "*state"]] = None,
         *,
-        shots: Any = _UNSET,
+        shots: Any = UNSET,
         **kwargs,
     ) -> Optional[Any]:
         """
@@ -683,7 +671,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         """
         if output_type is None:
             return None
-        if shots is not _UNSET:
+        if shots is not UNSET:
             if shots != self._current_shots:
                 self._samples = None
             self._current_shots = shots
@@ -909,7 +897,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             name=self.name,
             strict=False,
         )
-        program.add_transform(_nif_split_non_commuting)
+        program.add_transform(nif_split_non_commuting, r_dtype=self.R_DTYPE)
         return program
 
     def probability(

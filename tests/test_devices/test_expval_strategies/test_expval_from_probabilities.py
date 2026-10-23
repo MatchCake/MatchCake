@@ -11,7 +11,12 @@ from matchcake.devices.expval_strategies.expval_from_probabilities import (
 from matchcake.operations import CompHH, CompZX, SingleParticleTransitionMatrixOperation
 from matchcake.operations.state_preparation.state_prep_from_gates import StatePrepFromGates
 
-from ...configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
+from ...configs import (
+    ATOL_APPROX_COMPARISON,
+    ATOL_SCALAR_COMPARISON,
+    RTOL_APPROX_COMPARISON,
+    RTOL_SCALAR_COMPARISON,
+)
 
 
 class TestExpvalFromProbabilities:
@@ -154,6 +159,12 @@ class TestExpvalFromProbabilities:
         hamiltonian = strategy._format_observable(projector)
         assert hamiltonian is not None
 
+    def test_format_observable_drops_a_cancelled_non_pauli_part_as_terms_would(self, strategy):
+        """``observable.terms()`` simplifies the cancelled projector away, leaving ``Z_0`` alone."""
+        projector = qml.Projector([0], wires=[2])
+        hamiltonian = strategy._format_observable(qml.sum(qml.Z(0), projector, -1.0 * projector))
+        assert [type(operator) for operator in hamiltonian.ops] == [qml.Z]
+
     def test_long_range_hamiltonian(self, strategy):
         long_range_hamiltonian = qml.Hamiltonian(
             [0.5, -0.3, 0.8],
@@ -187,4 +198,31 @@ class TestExpvalFromProbabilities:
             ground_truth_energy,
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
+        )
+
+    def test_a_scaled_identity_keeps_its_wires(self, strategy):
+        """A rebuilt identity term with no wires would leave no wires to gather probabilities over."""
+        nif_device = NIFDevice(wires=3)
+        state_prep_op = qml.BasisState(np.array([0, 1, 0]), wires=range(3))
+        nif_device.apply_state_prep(state_prep_op)
+        np.testing.assert_allclose(
+            np.ravel(strategy(state_prep_op, 0.7 * qml.Identity(0), prob_func=nif_device.probability)),
+            [0.7],
+            atol=ATOL_SCALAR_COMPARISON,
+            rtol=RTOL_SCALAR_COMPARISON,
+        )
+
+    def test_a_one_element_tensor_coefficient_is_read_as_a_scalar(self, strategy):
+        """``(n, 1)`` coefficients would not fit the strategy's ``k,...ki,ki`` contraction."""
+        import torch
+
+        nif_device = NIFDevice(wires=3)
+        state_prep_op = qml.BasisState(np.array([0, 1, 0]), wires=range(3))
+        nif_device.apply_state_prep(state_prep_op)
+        weight = torch.tensor([0.5], dtype=torch.float64)
+        np.testing.assert_allclose(
+            np.ravel(strategy(state_prep_op, weight * qml.Z(0) + 0.25 * qml.Z(1), prob_func=nif_device.probability)),
+            [0.5 * 1.0 + 0.25 * -1.0],
+            atol=ATOL_SCALAR_COMPARISON,
+            rtol=RTOL_SCALAR_COMPARISON,
         )

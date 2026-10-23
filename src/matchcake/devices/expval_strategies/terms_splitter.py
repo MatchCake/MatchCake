@@ -1,11 +1,11 @@
-from typing import Sequence
+from typing import List, Sequence
 
 import pennylane as qml
-import torch
-from pennylane.operation import Operator, StatePrepBase, TermsUndefinedError
+from pennylane.operation import Operator, StatePrepBase
 from pennylane.ops.op_math import SProd
 
 from ...typing import TensorLike
+from ...utils import live_pauli_terms, stacked_coefficients
 from .expval_strategy import ExpvalStrategy
 
 
@@ -27,7 +27,7 @@ class TermsSplitter(ExpvalStrategy):
             raise ValueError(f"Cannot execute {self.NAME} strategy for {observable}.")
         splits = self.split(state_prep_op, observable)
         out = sum(
-            sum(op.scalar * strategy(state_prep_op, op, **kwargs) for op in split)
+            sum(op.scalar * strategy(state_prep_op, op.base, **kwargs) for op in split)
             for split, strategy in zip(splits, self.strategies)
         )
         return out
@@ -38,10 +38,12 @@ class TermsSplitter(ExpvalStrategy):
         observable: Operator,
     ) -> Sequence[Sequence[SProd]]:
         hamiltonian = self._format_observable(observable)
-        splits = [
-            [SProd(c, op) for c, op in zip(*hamiltonian.terms()) if strategy.can_execute(state_prep_op, op)]
-            for strategy in self.strategies
-        ]
+        splits: List[List[SProd]] = [[] for _ in self.strategies]
+        for coefficient, operator in zip(*hamiltonian.terms()):
+            for split, strategy in zip(splits, self.strategies):
+                if strategy.can_execute(state_prep_op, operator):
+                    split.append(SProd(coefficient, operator))
+                    break
         return splits
 
     def can_execute(
@@ -54,11 +56,10 @@ class TermsSplitter(ExpvalStrategy):
 
     @staticmethod
     def _format_observable(observable):
-        try:
-            terms = observable.terms()
-        except TermsUndefinedError:
-            terms = torch.ones((1,)), [observable]
-        return qml.Hamiltonian(*terms)
+        coefficients, operators = live_pauli_terms(observable, keep_non_pauli=True)
+        if not operators:
+            return qml.Hamiltonian([], [])
+        return qml.Hamiltonian(stacked_coefficients(list(coefficients)), operators)
 
     @property
     def strategies(self) -> Sequence[ExpvalStrategy]:
