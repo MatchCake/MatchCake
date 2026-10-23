@@ -34,6 +34,14 @@ from .majorana import (
     get_majorana_pauli_string,
 )
 from .operators import recursive_2in_operator, recursive_kron
+from .pauli_decomposition import (
+    has_live_terms,
+    live_pauli_sentence,
+    live_pauli_terms,
+    pauli_word_product,
+    read_coefficient,
+    stacked_coefficients,
+)
 
 
 def binary_string_to_vector(binary_string: str, encoding: str = "ascii") -> np.ndarray:
