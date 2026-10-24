@@ -85,7 +85,7 @@ y & z
 \end{align}
 
 subject to the constraint $\det(A) = \det(W)$. On a linear register, such matchcircuits evolve as non-interacting
-Majorana fermions [@nielsen2005fermionic; @dai_extracting_2015]. Recent work [@projansky2025gaussianity] connects them
+Majorana fermions [@dai_extracting_2015]. Recent work [@projansky2025gaussianity] connects them
 to Clifford circuits through fermionic Gaussian operations, framing matchcircuits as a natural generalization that
 interpolates between stabilizer dynamics and more general fermionic evolutions. Their extensions are also practically
 relevant: augmenting matchcircuits with $ZZ$ interactions enables efficient simulation of interaction-limited
@@ -105,7 +105,7 @@ matchgate circuits.
 
 Its universal state-vector simulators (SVS) handle arbitrary circuits but scale exponentially in $N$, and its wrappers
 around
-specialized backends such as Stim and quimb do not target matchgates (matchcircuits [@valiant_quantum_2001]). Users are
+specialized backends such as Stim and quimb do not target matchcircuits [@valiant_quantum_2001]. Users are
 therefore forced onto exponentially scaling simulators, even though matchcircuits admit polynomial-time $\bigO(N^3)$
 classical simulation [@brod_efficient_2016; @bravyi_contraction_2008; @PhysRevA.102.052604]. Unlike tensor-network
 methods, whose efficiency relies on limited entanglement, matchcircuits derive their tractability from an underlying
@@ -139,7 +139,7 @@ computes, in time polynomial in $N$, the expectation value
 
 As shown in \autoref{fig:matchgate-algorithm}, $\mathcal{F}$ is evaluated term by term. The circuit $C$ is mapped to
 its transition matrix $R_C$ [@brod_efficient_2016], and each term is Majorana-decomposed through the Jordan–Wigner
-transformation [@jordan_uber_1928; @nielsen2005fermionic]. When $\Ket{\psi_\text{initial}}$ is a computational-basis
+transformation [@jordan_uber_1928]. When $\Ket{\psi_\text{initial}}$ is a computational-basis
 state and $F_j$ is diagonal in that basis, the per-term expectation $\varepsilon_j$ is read from a lookup table of
 Wick's contractions [@wick_evaluation_1950; @brod_efficient_2016]; otherwise it is obtained from the covariance matrix
 of the circuit-evolved state. Both routes reduce to Pfaffian computation, and the per-term values are accumulated
