@@ -1,0 +1,77 @@
+matchcake.utils package
+=======================
+
+Submodules
+----------
+
+matchcake.utils.constants module
+--------------------------------
+
+.. automodule:: matchcake.utils.constants
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.utils.cuda module
+---------------------------
+
+.. automodule:: matchcake.utils.cuda
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.utils.jordan\_wigner module
+-------------------------------------
+
+.. automodule:: matchcake.utils.jordan_wigner
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.utils.logm module
+---------------------------
+
+.. automodule:: matchcake.utils.logm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.utils.majorana module
+-------------------------------
+
+.. automodule:: matchcake.utils.majorana
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.utils.math module
+---------------------------
+
+.. automodule:: matchcake.utils.math
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.utils.operators module
+--------------------------------
+
+.. automodule:: matchcake.utils.operators
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.utils.torch\_utils module
+-----------------------------------
+
+.. automodule:: matchcake.utils.torch_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: matchcake.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:

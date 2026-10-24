@@ -1,0 +1,61 @@
+matchcake.devices.probability\_strategies package
+=================================================
+
+Submodules
+----------
+
+matchcake.devices.probability\_strategies.clifford\_sum\_strategy module
+------------------------------------------------------------------------
+
+.. automodule:: matchcake.devices.probability_strategies.clifford_sum_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.devices.probability\_strategies.explicit\_sum\_strategy module
+------------------------------------------------------------------------
+
+.. automodule:: matchcake.devices.probability_strategies.explicit_sum_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.devices.probability\_strategies.lookup\_table\_strategy module
+------------------------------------------------------------------------
+
+.. automodule:: matchcake.devices.probability_strategies.lookup_table_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.devices.probability\_strategies.probability\_func\_dispatcher module
+------------------------------------------------------------------------------
+
+.. automodule:: matchcake.devices.probability_strategies.probability_func_dispatcher
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.devices.probability\_strategies.probability\_strategy module
+----------------------------------------------------------------------
+
+.. automodule:: matchcake.devices.probability_strategies.probability_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.devices.probability\_strategies.product\_state\_strategy module
+-------------------------------------------------------------------------
+
+.. automodule:: matchcake.devices.probability_strategies.product_state_strategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: matchcake.devices.probability_strategies
+   :members:
+   :undoc-members:
+   :show-inheritance:
