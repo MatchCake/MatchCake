@@ -1,12 +1,28 @@
-cff-version: 1.2.0
-message: If you use this software, please cite it as below.
-title: 'MatchCake: A Python Simulator for Non-Interacting Fermionic Quantum Circuits with Machine Learning
-  Applications'
-type: software
-doi: 10.5281/zenodo.22917735
+cff-version: "1.2.0"
 authors:
-- given-names: Jérémie
-  family-names: Gince
-  orcid: https://orcid.org/0009-0002-7179-375X
-repository-code: https://github.com/MatchCake/MatchCake
-license: Apache-2.0
+- family-names: Gince
+  given-names: Jérémie
+  orcid: "https://orcid.org/0009-0002-7179-375X"
+doi: 10.5281/zenodo.22917737
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Gince
+    given-names: Jérémie
+    orcid: "https://orcid.org/0009-0002-7179-375X"
+  date-published: 2026-10-24
+  doi: 10.21105/joss.11033
+  issn: 2475-9066
+  issue: 126
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 11033
+  title: "MatchCake: A Python Simulator for Non-Interacting Fermionic
+    Quantum Circuits with Machine Learning Applications"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.11033"
+  volume: 11
+title: "MatchCake: A Python Simulator for Non-Interacting Fermionic
+  Quantum Circuits with Machine Learning Applications"
