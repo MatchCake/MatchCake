@@ -9,6 +9,7 @@ from matchcake.utils._pfaffian import (
     pfaffian,
     sector_pfaffian_features,
     signed_pfaffian,
+    signed_pfaffian_complex,
 )
 
 from ..configs import (
@@ -19,6 +20,10 @@ from ..configs import (
     RTOL_MATRIX_COMPARISON,
     RTOL_SCALAR_COMPARISON,
 )
+
+# A Pfaffian whose imaginary part survives is O(1); this only has to exclude an exact zero,
+# which is what the pre-0.0.5 truncating kernel would have returned.
+MIN_NONZERO_IMAGINARY_PART = 1e-3
 
 
 class TestPfaffian:
@@ -39,6 +44,26 @@ class TestPfaffian:
         upper = upper.clone()
         upper[idx[0], idx[1]] = theta
         return upper - upper.transpose(-1, -2)
+
+    @staticmethod
+    def pfaffian_by_expansion(matrix):
+        # Independent oracle: the recursive first-row expansion
+        # Pf(A) = sum_{j>0} (-1)^(j+1) A[0, j] Pf(A with row/col 0 and j removed).
+        size = matrix.shape[0]
+        if size == 0:
+            return np.array(1.0 + 0.0j)
+        total = 0.0 + 0.0j
+        for column in range(1, size):
+            keep = [index for index in range(1, size) if index != column]
+            minor = matrix[np.ix_(keep, keep)]
+            total += ((-1) ** (column + 1)) * matrix[0, column] * TestPfaffian.pfaffian_by_expansion(minor)
+        return total
+
+    @staticmethod
+    def complex_skew_symmetric(n, batch_shape=(), dtype=torch.complex128, seed=0):
+        generator = torch.Generator().manual_seed(seed)
+        matrix = torch.randn(*batch_shape, n, n, dtype=dtype, generator=generator)
+        return matrix - matrix.transpose(-1, -2)
 
     @pytest.mark.parametrize("n, batch_size", [(2, None), (4, None), (2, 3), (4, 3)])
     def test_pfaffian_magnitude_squared_is_abs_det(self, n, batch_size):
@@ -292,3 +317,140 @@ class TestPfaffian:
     def test_infer_real_dtype_numpy(self):
         assert infer_real_dtype(np.zeros((2, 2), dtype=np.float32)) == torch.float32
         assert infer_real_dtype(np.zeros((2, 2), dtype=np.complex128)) == torch.float64
+
+    @pytest.mark.parametrize("n", [2, 4, 6])
+    def test_signed_pfaffian_complex_matches_the_recursive_expansion(self, n):
+        matrix = self.complex_skew_symmetric(n, seed=n)
+        np.testing.assert_allclose(
+            complex(signed_pfaffian_complex(matrix)),
+            complex(self.pfaffian_by_expansion(matrix.numpy())),
+            atol=ATOL_SCALAR_COMPARISON,
+            rtol=RTOL_SCALAR_COMPARISON,
+        )
+
+    @pytest.mark.parametrize("n", [2, 4, 6])
+    def test_signed_pfaffian_complex_squared_is_the_determinant(self, n):
+        matrix = self.complex_skew_symmetric(n, seed=n + 20)
+        np.testing.assert_allclose(
+            complex(signed_pfaffian_complex(matrix) ** 2),
+            complex(torch.linalg.det(matrix)),
+            atol=10 * ATOL_SCALAR_COMPARISON,
+            rtol=10 * RTOL_SCALAR_COMPARISON,
+        )
+
+    def test_signed_pfaffian_complex_preserves_the_imaginary_part(self):
+        # Regression guard for the TorchPfaffian < 0.0.5 behaviour, where the signed path silently
+        # returned the Pfaffian of the real part. A matrix whose real part has Pfaffian zero makes
+        # that failure unmissable: the truncating implementation returns 0, the correct one does not.
+        matrix = torch.tensor(
+            [[0.0, 2.0j, 0.0, 0.0], [-2.0j, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 3.0j], [0.0, 0.0, -3.0j, 0.0]],
+            dtype=torch.complex128,
+        )
+        result = complex(signed_pfaffian_complex(matrix))
+        np.testing.assert_allclose(result, -6.0 + 0.0j, atol=ATOL_SCALAR_COMPARISON)
+        assert (
+            abs(complex(signed_pfaffian_complex(self.complex_skew_symmetric(4, seed=5))).imag)
+            > MIN_NONZERO_IMAGINARY_PART
+        )
+
+    def test_pfaffian_signed_preserves_the_imaginary_part(self):
+        # The same guard one level down, on the function signed_pfaffian_complex delegates to.
+        matrix = self.complex_skew_symmetric(6, seed=77)
+        np.testing.assert_allclose(
+            complex(pfaffian(matrix, sign=True)),
+            complex(self.pfaffian_by_expansion(matrix.numpy())),
+            atol=ATOL_SCALAR_COMPARISON,
+            rtol=RTOL_SCALAR_COMPARISON,
+        )
+
+    @pytest.mark.parametrize("batch_shape", [(3,), (2, 4)])
+    def test_signed_pfaffian_complex_supports_leading_batch_dimensions(self, batch_shape):
+        matrix = self.complex_skew_symmetric(4, batch_shape=batch_shape, seed=13)
+        batched = signed_pfaffian_complex(matrix)
+        assert tuple(batched.shape) == batch_shape
+        for index in np.ndindex(*batch_shape):
+            np.testing.assert_allclose(
+                complex(batched[index]),
+                complex(signed_pfaffian_complex(matrix[index])),
+                atol=ATOL_SCALAR_COMPARISON,
+                rtol=RTOL_SCALAR_COMPARISON,
+            )
+
+    def test_signed_pfaffian_complex_keeps_the_input_backend(self):
+        matrix = self.complex_skew_symmetric(4, seed=31)
+        assert isinstance(signed_pfaffian_complex(matrix), torch.Tensor)
+        assert isinstance(signed_pfaffian_complex(matrix.numpy()), np.ndarray)
+
+    @pytest.mark.parametrize(
+        "in_dtype, expected_dtype",
+        [(torch.complex64, torch.complex64), (torch.complex128, torch.complex128)],
+    )
+    def test_signed_pfaffian_complex_infers_the_complex_working_precision(self, in_dtype, expected_dtype):
+        matrix = self.complex_skew_symmetric(4, dtype=in_dtype, seed=41)
+        assert signed_pfaffian_complex(matrix).dtype == expected_dtype
+
+    def test_signed_pfaffian_complex_explicit_dtype_override(self):
+        matrix = self.complex_skew_symmetric(4, dtype=torch.complex64, seed=43)
+        result = signed_pfaffian_complex(matrix, dtype=torch.complex128)
+        assert result.dtype == torch.complex128
+        np.testing.assert_allclose(
+            complex(result),
+            complex(signed_pfaffian_complex(matrix)),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_signed_pfaffian_complex_on_a_real_input_returns_a_complex_result(self):
+        # A real input must not be cast back down: the whole point of this function is that the
+        # imaginary part survives, so the result dtype follows the working precision, not the input.
+        matrix = torch.from_numpy(self.skew_symmetric(4))
+        result = signed_pfaffian_complex(matrix)
+        assert result.dtype == torch.complex128
+        np.testing.assert_allclose(
+            complex(result).real,
+            float(signed_pfaffian(matrix)),
+            atol=ATOL_SCALAR_COMPARISON,
+            rtol=RTOL_SCALAR_COMPARISON,
+        )
+
+    def test_signed_pfaffian_complex_odd_size_is_zero(self):
+        matrix = self.complex_skew_symmetric(3, seed=51)
+        np.testing.assert_allclose(complex(signed_pfaffian_complex(matrix)), 0.0 + 0.0j, atol=ATOL_SCALAR_COMPARISON)
+
+    def test_signed_pfaffian_complex_via_utils_namespace(self):
+        matrix = torch.tensor([[0.0, 3.0 + 1.0j], [-3.0 - 1.0j, 0.0]], dtype=torch.complex128)
+        np.testing.assert_allclose(
+            complex(utils.signed_pfaffian_complex(matrix)), 3.0 + 1.0j, atol=ATOL_SCALAR_COMPARISON
+        )
+
+    def test_signed_pfaffian_complex_grads_on_skew_manifold(self):
+        # As for the real signed path, perturbations must preserve skew-symmetry; here the
+        # parameterization is complex, so real and imaginary upper triangles vary independently.
+        n = 4
+        n_upper = n * (n - 1) // 2
+        theta = torch.randn(2, n_upper, dtype=torch.float64).requires_grad_()
+
+        def complex_skew_from_upper(flat_upper):
+            entries = flat_upper[0] + 1j * flat_upper[1]
+            upper = torch.zeros(n, n, dtype=torch.complex128)
+            idx = torch.triu_indices(n, n, offset=1)
+            upper = upper.clone()
+            upper[idx[0], idx[1]] = entries
+            return signed_pfaffian_complex(upper - upper.transpose(-1, -2))
+
+        assert gradcheck(
+            complex_skew_from_upper, (theta,), atol=ATOL_APPROX_COMPARISON, rtol=10 * RTOL_APPROX_COMPARISON
+        )
+
+    def test_signed_pfaffian_complex_rejects_a_real_dtype_override(self):
+        """A real working dtype truncates the input before the reduction, so the result would be
+        Pf(Re M), which is not Re(Pf M). Silently upgrading the request to complex would ignore an
+        explicit argument; returning the degraded value labelled complex (what an earlier draft of
+        this port did) is the exact failure mode the torchpfaffian floor bump exists to remove.
+        """
+        matrix = self.complex_skew_symmetric(4, seed=97)
+        assert matrix.imag.abs().max() > 0
+        with pytest.raises(ValueError, match="requires a complex working dtype"):
+            signed_pfaffian_complex(matrix, dtype=torch.float64)
+        with pytest.raises(ValueError, match="requires a complex working dtype"):
+            signed_pfaffian_complex(matrix, dtype=torch.float32)
