@@ -13,6 +13,9 @@ RTOL_APPROX_COMPARISON = 5e-2
 ATOL_SHAPE_COMPARISON = 0
 RTOL_SHAPE_COMPARISON = 0
 
+GRADCHECK_EPS = 1e-6
+GRADCHECK_ATOL = 1e-5
+
 
 def set_seed(seed: int = TEST_SEED):
     import numpy as np
