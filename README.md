@@ -187,6 +187,40 @@ expval = nif_qnode(np.random.random(2), wires=nif_device.wires, initial_state=in
 print(f"Expectation value: {expval}")
 ```
 
+## Tracing Out Wires
+
+After a circuit, the device can trace out wires. The reduced state is generally mixed, but it stays a
+fermionic Gaussian state, described by a principal submatrix of the covariance matrix, so expectation values,
+probabilities, samples and the entanglement entropy of the cut are computed from it in polynomial time.
+
+```python
+import matchcake as mc
+import pennylane as qml
+import numpy as np
+
+nif_device = mc.NonInteractingFermionicDevice(wires=6)
+nif_device.apply([
+    qml.BasisState(np.array([1, 0, 1, 0, 1, 0]), wires=range(6)),
+    mc.operations.CompRxRx(np.array([0.3, 0.7]), wires=[0, 1]),
+    mc.operations.CompRyRy(np.array([0.2, 1.1]), wires=[2, 3]),
+    mc.operations.CompRxRx(np.array([0.9, 0.4]), wires=[3, 4]),
+    mc.operations.CompRyRy(np.array([0.5, 0.6]), wires=[4, 5]),
+    mc.operations.CompRzRz(np.array([0.8, 0.1]), wires=[1, 2]),
+])
+
+# Trace out wires 4 and 5: a mixed state on the remaining wires, relabeled 0..3
+mixed_state = nif_device.partial_trace([4, 5])
+print(mixed_state.entropy(), mixed_state.purity)  # entanglement entropy of the cut, purity of the reduced state
+
+observable = qml.PauliZ(0) @ qml.PauliZ(1) + 0.5 * qml.PauliX(2) @ qml.PauliX(3)
+expval = mixed_state.expval(observable)
+probs = mixed_state.probs(wires=[0, 1])
+```
+
+The kept wires are reduced with the fermionic partial trace, which coincides with the qubit partial trace when
+they form a contiguous block. See the [theory page](https://github.com/MatchCake/MatchCake/blob/dev/docs/partial_trace_theory.md)
+for the details.
+
 ## Data Classification with MatchCake
 
 ```python
