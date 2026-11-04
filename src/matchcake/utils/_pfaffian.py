@@ -8,8 +8,8 @@ import torch_pfaffian
 from pennylane.typing import TensorLike
 
 from . import torch_utils
-from .math import convert_and_cast_like
-from .torch_utils import infer_real_dtype
+from .math import complex_dtype_name_like, convert_and_cast_like, convert_like_and_cast_to
+from .torch_utils import infer_complex_dtype, infer_real_dtype
 
 _pfaffian_epsilon_lock = threading.Lock()
 
@@ -34,6 +34,45 @@ def signed_pfaffian(matrix: TensorLike, dtype: Optional[torch.dtype] = None, **k
     if dtype is None:
         dtype = infer_real_dtype(matrix)
     return pfaffian(matrix, sign=True, dtype=dtype, **kwargs)
+
+
+def signed_pfaffian_complex(matrix: TensorLike, dtype: Optional[torch.dtype] = None, **kwargs) -> TensorLike:
+    """
+    Compute the signed Pfaffian of a complex antisymmetric matrix (or batch).
+
+    Returns the signed Pfaffian ``Pf`` (not its magnitude ``|Pf|``) of a complex skew-symmetric
+    matrix of shape ``(..., 2k, 2k)``, preserving the imaginary part. This is the quantity the
+    branch formalism needs: its transition Pfaffians are genuinely complex and the branch
+    interference carries the sign, so neither the magnitude path nor the real signed path is
+    usable.
+
+    The computation delegates to :func:`pfaffian` with ``sign=True``, whose dispatch routes
+    complex inputs to the device-native Parlett-Reid strategy (batched, signed, imaginary part
+    preserved). The magnitude path (``sign=False``) and :func:`signed_pfaffian` both discard the
+    information this function exists to keep, the former by taking a modulus and the latter by
+    inferring a real working precision.
+
+    :param matrix: Complex antisymmetric matrix of even size ``(..., 2k, 2k)``.
+    :param dtype: Complex working precision for the internal computation. Defaults to ``None``,
+        in which case the precision is inferred from ``matrix`` (e.g. a ``complex64`` input keeps
+        ``complex64`` internals). Pass an explicit complex dtype to override.
+    :return: Complex signed Pfaffian of shape ``(...,)``.
+    :rtype: TensorLike
+    :raises ValueError: if ``dtype`` is given and is not a complex dtype.
+    """
+    if dtype is None:
+        dtype = infer_complex_dtype(matrix)
+    elif not dtype.is_complex:
+        raise ValueError(
+            f"signed_pfaffian_complex requires a complex working dtype, got {dtype}. A real dtype "
+            f"truncates the matrix before the reduction, so the result would be Pf(Re M), which is "
+            f"not Re(Pf M). Use signed_pfaffian for the real signed Pfaffian."
+        )
+    matrix_t = torch_utils.to_tensor(matrix, dtype=dtype)
+    result = pfaffian(matrix_t, sign=True, dtype=dtype, **kwargs)
+    # Cast to the complex working dtype rather than to ``matrix``: a real-dtyped input would
+    # otherwise strip the imaginary part this function exists to preserve.
+    return convert_like_and_cast_to(result, matrix, dtype=complex_dtype_name_like(matrix_t))
 
 
 def sector_pfaffian_features(
@@ -111,11 +150,11 @@ def pfaffian(
     leading batch axis is then processed in slices of at most ``chunk_size`` matrices, each
     reduced independently and concatenated, instead of all at once.
 
-    Note: with a complex ``matrix`` this function may not behave as expected. The signed path
-    (``sign=True``) relies on a kernel that discards the imaginary part without warning, so it
-    returns the Pfaffian of the real part only. In normal use the signed path receives real
-    matrices, and the magnitude path (``sign=False``) handles complex inputs correctly. If the
-    complex behaviour is a problem for your use case, please open an issue.
+    Both paths handle complex inputs. The signed path preserves the imaginary part from
+    TorchPfaffian 0.0.5 onwards, which is the floor this package declares; earlier releases
+    silently returned the Pfaffian of the real part instead. Use
+    :func:`signed_pfaffian_complex` for a complex input rather than passing an explicit real
+    ``dtype``, so that the complex working precision is inferred rather than truncated.
 
     :param matrix: Matrix to compute the Pfaffian of, of shape ``(..., 2n, 2n)``.
     :param sign: When ``True`` return the signed Pfaffian, otherwise its magnitude. Defaults
