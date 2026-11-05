@@ -18,6 +18,3 @@ class SptmFSwapHH(SingleParticleTransitionMatrixOperation):
         matrix[..., np.arange(1, 2 * n_wires - 2, 4), np.arange(3, 2 * n_wires, 4)] = 1
         matrix[..., np.arange(3, 2 * n_wires, 4), np.arange(1, 2 * n_wires - 2, 4)] = -1
         super().__init__(matrix, wires=wires, **kwargs)
-
-    def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
-        return self
