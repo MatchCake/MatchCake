@@ -15,11 +15,14 @@ from matchcake.operations import (
 from matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition import (
     SptmFermionicSuperposition,
 )
+from matchcake.utils import make_single_particle_transition_matrix_from_gate
 from matchcake.utils.torch_utils import to_numpy
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
+    ATOL_MATRIX_COMPARISON,
     RTOL_APPROX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
     TEST_SEED,
     set_seed,
 )
@@ -215,10 +218,59 @@ class TestSptmFermionicSuperposition:
         sptm = SptmFermionicSuperposition(wires=wires)
         assert sptm.check_is_unitary(atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON)
 
-    def test_adjoint_returns_self(self):
+    @pytest.mark.parametrize("wires", [np.arange(n) for n in range(2, 6)])
+    def test_adjoint_is_transpose(self, wires):
+        sptm = SptmFermionicSuperposition(wires=wires)
+        np.testing.assert_allclose(
+            to_numpy(sptm.adjoint().matrix()),
+            to_numpy(sptm.matrix()).T,
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    @pytest.mark.parametrize("wires", [np.arange(n) for n in range(2, 6)])
+    def test_adjoint_inverts_matrix(self, wires):
+        sptm = SptmFermionicSuperposition(wires=wires)
+        product = to_numpy(sptm.matrix()) @ to_numpy(sptm.adjoint().matrix())
+        np.testing.assert_allclose(
+            product,
+            np.eye(product.shape[-1]),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_adjoint_matches_sptm_of_unitary_dagger(self):
+        unitary = to_numpy(qml.matrix(FermionicSuperposition(wires=[0, 1])))
+        expected = to_numpy(make_single_particle_transition_matrix_from_gate(unitary.conj().T))
         sptm = SptmFermionicSuperposition(wires=[0, 1])
-        adj = sptm.adjoint()
-        assert adj is sptm
+        np.testing.assert_allclose(
+            to_numpy(sptm.adjoint().matrix()),
+            expected,
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    @pytest.mark.parametrize("theta", [0.4, 1.1])
+    def test_apply_then_adjoint_is_identity_in_circuit(self, theta):
+        wires = [0, 1]
+        forward = SptmFermionicSuperposition(wires=wires)
+        backward = SptmFermionicSuperposition(wires=wires).adjoint()
+
+        @qml.qnode(qml.device("nif.qubit", wires=len(wires)))
+        def circuit(apply_pair: bool):
+            qml.BasisState(np.array([1, 0]), wires=wires)
+            qml.IsingXY(theta, wires=wires)
+            if apply_pair:
+                qml.apply(forward)
+                qml.apply(backward)
+            return qml.probs(wires=wires)
+
+        np.testing.assert_allclose(
+            to_numpy(circuit(True)),
+            to_numpy(circuit(False)),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
 
     def test_to_matchgate(self):
         sptm = SptmFermionicSuperposition(wires=[0, 1])
