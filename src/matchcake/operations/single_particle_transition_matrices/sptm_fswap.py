@@ -27,7 +27,19 @@ class SptmCompZX(SingleParticleTransitionMatrixOperation):
         super().__init__(matrix, wires=wires, **kwargs)
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
-        return self
+        """Return the inverse of this fermionic swap.
+
+        On adjacent wires the SPTM is a symmetric permutation, so the gate is its own inverse. With a
+        gap between the wires the SPTM is a cyclic permutation of the modes in between, and its
+        inverse is the transpose.
+
+        :return: The adjoint operation.
+        :rtype: SingleParticleTransitionMatrixOperation
+        """
+        wire0, wire1 = np.sort(Wires(self.wires).toarray())
+        if wire1 - wire0 == 1:
+            return self
+        return super().adjoint()
 
     def to_matchgate(self):
         from ..fermionic_swap import CompZX

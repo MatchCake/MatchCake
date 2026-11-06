@@ -39,7 +39,7 @@ class TestHorizontalContainer:
         container = strategy.get_container()
         container.add(op)
         np.testing.assert_allclose(
-            container.contract().matrix(),
+            container.contract().sptm_matrix(),
             op.single_particle_transition_matrix,
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
@@ -124,8 +124,8 @@ class TestHorizontalContainer:
             if isinstance(new_op, mc.MatchgateOperation):
                 new_op = new_op.get_padded_single_particle_transition_matrix(op.wires)
             np.testing.assert_allclose(
-                new_op.matrix(),
-                op.get_padded_single_particle_transition_matrix(op.wires).matrix(),
+                new_op.sptm_matrix(),
+                op.get_padded_single_particle_transition_matrix(op.wires).sptm_matrix(),
                 atol=ATOL_APPROX_COMPARISON,
                 rtol=RTOL_APPROX_COMPARISON,
             )

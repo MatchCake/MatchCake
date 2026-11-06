@@ -14,7 +14,7 @@ class TestSptmCompHH:
     def test_matchgate_equal_to_sptm_fhh(self):
         matchgate = CompHH(wires=[0, 1])
         m_sptm = make_single_particle_transition_matrix_from_gate(matchgate.matrix())
-        sptm = SptmCompHH(wires=[0, 1]).matrix()
+        sptm = SptmCompHH(wires=[0, 1]).sptm_matrix()
         np.testing.assert_allclose(
             sptm,
             m_sptm,
@@ -25,7 +25,7 @@ class TestSptmCompHH:
     def test_matchgate_equal_to_sptm_fhh_adjoint(self):
         matchgate = CompHH(wires=[0, 1]).adjoint()
         m_sptm = make_single_particle_transition_matrix_from_gate(matchgate.matrix())
-        sptm = SptmCompHH(wires=[0, 1]).adjoint().matrix()
+        sptm = SptmCompHH(wires=[0, 1]).adjoint().sptm_matrix()
         np.testing.assert_allclose(
             sptm,
             m_sptm,

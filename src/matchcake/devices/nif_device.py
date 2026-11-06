@@ -13,6 +13,7 @@ from pennylane.devices.preprocess import decompose
 from pennylane.exceptions import DeviceError
 from pennylane.measurements import ExpectationMP, ProbabilityMP, SampleMP, Shots
 from pennylane.operation import Operation, StatePrepBase
+from pennylane.ops.op_math import Adjoint, Pow
 from pennylane.ops.qubit.observables import BasisStateProjector
 from pennylane.tape import QuantumScript
 from pennylane.transforms.core import CompilePipeline
@@ -184,6 +185,21 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         states_sampled_base_ten = samples[..., None] & powers_of_two
         return (states_sampled_base_ten > 0).astype(dtype)[..., ::-1]
 
+    @staticmethod
+    def _has_sptm_interface(op: qml.operation.Operator) -> bool:
+        """Return True when an operator is an SPTM or knows how to produce one.
+
+        :param op: The operator to check.
+        :type op: qml.operation.Operator
+        :return: True if ``op`` is a :class:`MatchgateOperation`, a
+            :class:`SingleParticleTransitionMatrixOperation`, or exposes a ``to_sptm_operation``
+            method or a ``single_particle_transition_matrix`` attribute.
+        :rtype: bool
+        """
+        if isinstance(op, (MatchgateOperation, SingleParticleTransitionMatrixOperation)):
+            return True
+        return hasattr(op, "to_sptm_operation") or hasattr(op, "single_particle_transition_matrix")
+
     @classmethod
     def update_single_particle_transition_matrix(
         cls,
@@ -199,11 +215,11 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :return: The updated single particle transition matrix.
         """
         if isinstance(new_sptm, Operation):
-            new_sptm = new_sptm.matrix()
+            new_sptm = SingleParticleTransitionMatrixOperation.from_operation(new_sptm).sptm_matrix()
         if old_sptm is None:
             return new_sptm
         if isinstance(old_sptm, Operation):
-            old_sptm = old_sptm.matrix()
+            old_sptm = SingleParticleTransitionMatrixOperation.from_operation(old_sptm).sptm_matrix()
         old_interface = qml.math.get_interface(old_sptm)
         new_interface = qml.math.get_interface(new_sptm)
         old_priority = cls.casting_priorities.index(old_interface)
@@ -366,7 +382,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self.p_bar_set_n(self.apply_metadata["n_operations"])
         self.p_bar_set_postfix_str("Computing transition matrix")
         if kwargs.get("cache_global_sptm", False):
-            self.apply_metadata["global_sptm"] = torch_utils.to_numpy(self.global_sptm.matrix())
+            self.apply_metadata["global_sptm"] = torch_utils.to_numpy(self.global_sptm.sptm_matrix())
         self.p_bar_set_postfix_str(
             f"Global Sptm matrix computed. Compression: {self.apply_metadata.get('percentage_contracted', 0):.2f}%"
         )
@@ -381,7 +397,10 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :class:`SingleParticleTransitionMatrixOperation` (or a subclass of either), or if it
         already knows how to produce a single-particle transition matrix (it exposes a
         ``to_sptm_operation`` method or a ``single_particle_transition_matrix`` attribute), it is
-        returned unchanged and handled downstream by :meth:`apply_op`. Otherwise, the operation's
+        returned unchanged and handled downstream by :meth:`apply_op`. Nested lazy
+        :class:`~pennylane.ops.op_math.Adjoint` and integer :class:`~pennylane.ops.op_math.Pow`
+        wrappers around one of these are converted directly to the corresponding SPTM, without
+        decomposing. Otherwise, the operation's
         matrix is fed to the :class:`MatchgateOperation` constructor, which validates that it is a
         matchgate. If the matrix is a matchgate, the resulting :class:`MatchgateOperation` is
         returned; if not, a :class:`DeviceError` is raised.
@@ -392,10 +411,15 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :rtype: qml.operation.Operation
         :raises DeviceError: If ``op`` is neither a supported operation nor a matchgate.
         """
-        if isinstance(op, (MatchgateOperation, SingleParticleTransitionMatrixOperation)):
+        if self._has_sptm_interface(op):
             return op
-        if hasattr(op, "to_sptm_operation") or hasattr(op, "single_particle_transition_matrix"):
-            return op
+        base = op
+        while isinstance(base, Adjoint) or (
+            isinstance(base, Pow) and SingleParticleTransitionMatrixOperation._is_integer_exponent(base.z)
+        ):
+            base = base.base
+        if base is not op and self._has_sptm_interface(base):
+            return SingleParticleTransitionMatrixOperation.from_operation(op)
         try:
             return MatchgateOperation(op.matrix(), wires=op.wires)
         except Exception as error:
@@ -420,7 +444,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :return: The updated single-particle transition matrix, represented as an
             instance of ``SingleParticleTransitionMatrixOperation``.
         """
-        op_sptm = SingleParticleTransitionMatrixOperation.from_operation(op).pad(self.wires).matrix()
+        op_sptm = SingleParticleTransitionMatrixOperation.from_operation(op).pad(self.wires).sptm_matrix()
         op_sptm = qml.math.cast(op_sptm, self._r_dtype_name)
         self._batched = self._batched or (qml.math.ndim(op_sptm) > 2)
         self.global_sptm = self.update_single_particle_transition_matrix(self._global_sptm, op_sptm)
@@ -564,7 +588,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             )
         if self.clifford_expval_strategy.can_execute(self.state_prep_op, observable):  # pragma: no cover
             return self.clifford_expval_strategy(
-                self.state_prep_op, observable, global_sptm=self.global_sptm.matrix()
+                self.state_prep_op, observable, global_sptm=self.global_sptm.sptm_matrix()
             )  # pragma: no cover
         if self.expval_from_probabilities_strategy.can_execute(self.state_prep_op, observable):
             return self.expval_from_probabilities_strategy(self.state_prep_op, observable, prob_func=self.probability)
@@ -576,7 +600,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
                 self.state_prep_op,
                 observable,
                 extended_covariance_matrix=self.extended_covariance_matrix,
-                global_sptm=self.global_sptm.matrix(),
+                global_sptm=self.global_sptm.sptm_matrix(),
                 prob_func=self.probability,
                 pfaffian_chunk_size=self.pfaffian_chunk_size,
             )
@@ -823,7 +847,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             all_wires=self.wires,
             lookup_table=self.lookup_table,
             transition_matrix=self.transition_matrix,
-            global_sptm=self.global_sptm.matrix(),
+            global_sptm=self.global_sptm.sptm_matrix(),
             majorana_getter=self.majorana_getter,
             show_progress=kwargs.pop("show_progress", self.show_progress),
             pfaffian_chunk_size=kwargs.pop("pfaffian_chunk_size", self.pfaffian_chunk_size),
@@ -1157,7 +1181,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
                 f"Got {type(self.state_prep_op)} instead of ProductState."
             )
         cov0 = self.state_prep_op.covariance_matrix
-        sptm = self.global_sptm.matrix(self.wires)
+        sptm = self.global_sptm.sptm_matrix(self.wires)
         return qml.math.einsum("...ij,...ik,...kl->...jl", sptm, cov0, sptm)
 
     @property
@@ -1187,7 +1211,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         ext_cov0 = _extended_covariance_matrix(cov0, d0)  # (2n+1, 2n+1)
 
         # Lift SPTM: \tilde{R} = R ⊕ 1
-        sptm = self.global_sptm.matrix(self.wires)  # (2n, 2n)
+        sptm = self.global_sptm.sptm_matrix(self.wires)  # (2n, 2n)
         lifted_sptm = _sptm_lift(sptm)  # (2n+1, 2n+1)
 
         # Evolve: tilde_Lambda(t) = tilde_Q^T tilde_Lambda_0 tilde_Q
@@ -1214,7 +1238,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             value = SingleParticleTransitionMatrixOperation.from_operation(value)
         if not isinstance(value, SingleParticleTransitionMatrixOperation):
             value = SingleParticleTransitionMatrixOperation(value, wires=self.wires)
-        matrix = qml.math.cast(value.matrix(), self._r_dtype_name)
+        matrix = qml.math.cast(value.sptm_matrix(), self._r_dtype_name)
         self._global_sptm = SingleParticleTransitionMatrixOperation(matrix, wires=value.wires, **value._hyperparameters)
         self.transition_matrix = None
 
@@ -1311,13 +1335,13 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :rtype: Optional[TensorLike]
         """
         if self._transition_matrix is None and self.global_sptm is not None:
-            self._transition_matrix = utils.make_transition_matrix_from_action_matrix(self.global_sptm.matrix())
+            self._transition_matrix = utils.make_transition_matrix_from_action_matrix(self.global_sptm.sptm_matrix())
         return self._transition_matrix
 
     @transition_matrix.setter
     def transition_matrix(self, value: Optional[TensorLike]) -> None:
         if self._global_sptm is not None and value is not None:
-            global_sptm_matrix = self._global_sptm.matrix()
+            global_sptm_matrix = self._global_sptm.sptm_matrix()
             value = convert_like_and_cast_to(
                 value, global_sptm_matrix, dtype=complex_dtype_name_like(global_sptm_matrix)
             )

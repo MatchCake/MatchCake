@@ -2,10 +2,13 @@ from typing import Any, Iterable, List, Literal, Optional, Sequence, Union
 
 import numpy as np
 import pennylane as qml
+from pennylane.exceptions import MatrixUndefinedError, PowUndefinedError
 from pennylane.math import expm
 from pennylane.operation import Operation, Operator
+from pennylane.ops.op_math import Adjoint, Pow
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires, WiresLike
+from scipy.linalg import schur as scipy_schur
 
 from ... import utils
 from ...utils import make_wires_continuous
@@ -59,6 +62,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
         "torch",  # greater index means higher priority
     ]
     DEFAULT_CHECK_MATRIX = False
+    has_matrix = False  # matrix() raises, the stored matrix is the SPTM and not the qubit unitary
 
     ALLOWED_ANGLES: Optional[List[float]] = None
     EQUAL_ALLOWED_ANGLES: Optional[List[float]] = None
@@ -67,6 +71,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
     DEFAULT_NORMALIZE = False
     DEFAULT_CHECK_REAL = True
     REAL_PART_ATOL = 1e-6
+    MINUS_ONE_EIGVAL_ATOL = 1e-8
 
     @staticmethod
     def make_wires_continuous(wires: Wires):
@@ -81,7 +86,104 @@ class SingleParticleTransitionMatrixOperation(Operation):
         **hyperparameters: dict[str, Any],
     ):
         unitary = SingleParticleTransitionMatrixOperation.to_unitary_matrix(params[0])
-        return [qml.QubitUnitary(unitary, wires=wires)]
+        decomposition_wires = Wires(wires)
+        if 2 * len(decomposition_wires) != qml.math.shape(params[0])[-1]:
+            # An SPTM on integer wires with gaps is stored on their continuous span.
+            decomposition_wires = make_wires_continuous(decomposition_wires)
+        return [qml.QubitUnitary(unitary, wires=decomposition_wires)]
+
+    @staticmethod
+    def _is_integer_exponent(z: Any) -> bool:
+        """Return True when ``z`` is an integer or an integer-valued float (booleans excluded).
+
+        :param z: The exponent.
+        :type z: Any
+        :return: True if ``z`` is an integer power.
+        :rtype: bool
+        """
+        if isinstance(z, (bool, np.bool_)):
+            return False
+        if isinstance(z, (int, np.integer)):
+            return True
+        return isinstance(z, (float, np.floating)) and float(z).is_integer()
+
+    @staticmethod
+    def _real_logm_from_schur(matrix: np.ndarray) -> np.ndarray:
+        r"""Return a real antisymmetric logarithm of a real orthogonal matrix with determinant one.
+
+        The real Schur form of an orthogonal matrix is block diagonal, with 2 by 2 rotation blocks and
+        1 by 1 blocks equal to :math:`\pm 1`. Rotation blocks map to their angle, the :math:`+1`
+        blocks to zero, and the :math:`-1` blocks are paired into planes rotated by :math:`\pi`. This
+        stays real where the principal logarithm assigns :math:`i\pi` to every :math:`-1` eigenvalue.
+
+        :param matrix: Real orthogonal matrix, shape (2n, 2n).
+        :type matrix: np.ndarray
+        :return: Real antisymmetric matrix ``log`` such that ``expm(log) == matrix``, shape (2n, 2n).
+        :rtype: np.ndarray
+        :raises ValueError: If ``matrix`` has an odd number of :math:`-1` eigenvalues (determinant -1).
+        """
+        atol = SingleParticleTransitionMatrixOperation.MINUS_ONE_EIGVAL_ATOL
+        schur_form, schur_vectors = scipy_schur(matrix, output="real")
+        size = matrix.shape[-1]
+        log_form = np.zeros((size, size))
+        minus_one_indices = []
+        index = 0
+        while index < size:
+            if index + 1 < size and abs(schur_form[index + 1, index]) > atol:
+                angle = np.arctan2(schur_form[index + 1, index], schur_form[index, index])
+                log_form[index + 1, index] = angle
+                log_form[index, index + 1] = -angle
+                index += 2
+                continue
+            if schur_form[index, index] < 0:
+                minus_one_indices.append(index)
+            index += 1
+        if len(minus_one_indices) % 2 != 0:
+            raise ValueError(
+                "The single-particle transition matrix has an odd number of -1 eigenvalues, so its "
+                "determinant is -1 and it has no real logarithm."
+            )
+        for first_index, second_index in zip(minus_one_indices[::2], minus_one_indices[1::2]):
+            log_form[second_index, first_index] = np.pi
+            log_form[first_index, second_index] = -np.pi
+        return schur_vectors @ log_form @ schur_vectors.T
+
+    @staticmethod
+    def _orthogonal_logm(matrix: TensorLike) -> TensorLike:
+        r"""Return a real antisymmetric logarithm of a (batch of) SPTM(s).
+
+        The differentiable principal logarithm :func:`logm` is used, except for matrices with a real
+        negative eigenvalue (an exact :math:`-1`, or a :math:`-1` pair split by rounding), where it is
+        complex and not a valid generator. Those are computed with :meth:`_real_logm_from_schur`,
+        which is not differentiable, and are replaced by the identity before calling :func:`logm`.
+
+        :param matrix: The SPTM(s), shape (..., 2n, 2n).
+        :type matrix: TensorLike
+        :return: The logarithm(s), shape (..., 2n, 2n), with the backend of :func:`logm`.
+        :rtype: TensorLike
+        """
+        shape = qml.math.shape(matrix)
+        numpy_batch = np.real(np.asarray(qml.math.to_numpy(matrix))).reshape(-1, *shape[-2:])
+        atol = SingleParticleTransitionMatrixOperation.MINUS_ONE_EIGVAL_ATOL
+        needs_schur = np.array(
+            [
+                np.any((np.real(eigvals) < 0) & (np.abs(np.imag(eigvals)) < atol))
+                for eigvals in (np.linalg.eigvals(sub) for sub in numpy_batch)
+            ]
+        )
+        if not np.any(needs_schur):
+            return logm(matrix)
+        mask = qml.math.real(convert_and_cast_like(needs_schur.reshape(*shape[:-2], 1, 1), matrix)) > 0
+        identity = convert_and_cast_like(np.eye(shape[-1]), matrix)
+        log_matrix = logm(qml.math.where(mask, identity, matrix))
+        replacement = np.zeros((len(numpy_batch), *shape[-2:]))
+        for batch_index in np.flatnonzero(needs_schur):
+            replacement[batch_index] = SingleParticleTransitionMatrixOperation._real_logm_from_schur(
+                numpy_batch[batch_index]
+            )
+        replacement = convert_and_cast_like(replacement.reshape(shape), log_matrix)
+        mask = qml.math.real(convert_and_cast_like(needs_schur.reshape(*shape[:-2], 1, 1), log_matrix)) > 0
+        return qml.math.where(mask, replacement, log_matrix)
 
     @staticmethod
     def _enforce_real(matrix: TensorLike, check_real: bool) -> TensorLike:
@@ -194,7 +296,10 @@ class SingleParticleTransitionMatrixOperation(Operation):
         It also checks if the provided operator has the `to_sptm_operation` method or
         the `single_particle_transition_matrix` attribute. If it's the case, the SPTM will be
         constructed from `to_sptm_operation` or from `single_particle_transition_matrix` if the first
-        doesn't exist. When none of the required attributes or
+        doesn't exist. A lazy :class:`~pennylane.ops.op_math.Adjoint` wrapper is converted by
+        converting its base and taking the adjoint of the resulting SPTM, and a
+        :class:`~pennylane.ops.op_math.Pow` wrapper with an integer exponent by raising the converted
+        base SPTM to that power. When none of the required attributes or
         methods are present, we try to build a MatchGateOperation from the given operation matrix.
         If nothing works, a ValueError is raised.
 
@@ -210,6 +315,10 @@ class SingleParticleTransitionMatrixOperation(Operation):
 
         if isinstance(op, SingleParticleTransitionMatrixOperation):
             return op
+        if isinstance(op, Adjoint):
+            return cls.from_operation(op.base, **kwargs).adjoint()
+        if isinstance(op, Pow) and cls._is_integer_exponent(op.z):
+            return cls.from_operation(op.base, **kwargs)._integer_power(op.z)
         if hasattr(op, "to_sptm_operation") and callable(op.to_sptm_operation):
             return op.to_sptm_operation()
         if hasattr(op, "single_particle_transition_matrix"):
@@ -257,7 +366,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
             matrix = np.zeros((batch_size, 2 * len(all_wires), 2 * len(all_wires)), dtype=complex)
             matrix[:, ...] = np.eye(2 * len(all_wires), dtype=matrix.dtype)
 
-        ops_sptms = [op.matrix() for op in ops]
+        ops_sptms = [op.sptm_matrix() for op in ops]
         ops_sptms = utils.math.convert_tensors_to_same_type_and_cast_to(
             ops_sptms, cls.casting_priorities, dtype=complex
         )
@@ -353,12 +462,41 @@ class SingleParticleTransitionMatrixOperation(Operation):
                 raise ValueError(f"Matrix is not in SO(4): {matrix}")
         self.kwargs = kwargs
 
-    def matrix(self, wire_order=None) -> TensorLike:
+    def matrix(self, wire_order: Optional[WiresLike] = None) -> TensorLike:
+        r"""
+        Refuse to return a qubit matrix for this operation.
+
+        PennyLane's :meth:`~pennylane.operation.Operator.matrix` contract is the
+        :math:`2^n \times 2^n` qubit unitary, while this operation only stores its
+        :math:`2n \times 2n` single-particle transition matrix. Raising here makes generic
+        PennyLane code (``qml.matrix``, ``default.qubit``, lazy wrappers such as ``qml.adjoint``
+        or ``qml.pow``) fall back to :meth:`compute_decomposition` instead of silently treating the
+        SPTM as a unitary. Use :meth:`sptm_matrix` to get the SPTM and :meth:`to_qubit_unitary` to
+        get the qubit unitary.
+
+        :param wire_order: Ignored.
+        :type wire_order: Optional[WiresLike]
+        :raises MatrixUndefinedError: Always.
+        """
+        raise MatrixUndefinedError(
+            f"{self.__class__.__name__} does not define a qubit matrix. Use sptm_matrix() for the "
+            f"single-particle transition matrix or to_qubit_unitary() for the qubit unitary."
+        )
+
+    def sptm_matrix(self, wire_order: Optional[WiresLike] = None) -> TensorLike:
+        """
+        Return the single-particle transition matrix, padded with the identity to ``wire_order``.
+
+        :param wire_order: The wires to pad the SPTM to. Defaults to the operation's wires.
+        :type wire_order: Optional[WiresLike]
+        :return: The SPTM, shape (..., 2n, 2n) where n is the number of continuous wires.
+        :rtype: TensorLike
+        """
         wires = Wires(self.wires) if wire_order is None else Wires(wire_order)
         return self.pad(wires)._matrix
 
     def check_is_in_so4(self, atol=1e-6, rtol=1e-6):
-        matrix = self.matrix()
+        matrix = self.sptm_matrix()
         if self.batch_size is None:
             matrix = matrix[None, ...]
         for sub_matrix in matrix:
@@ -369,7 +507,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
         return True
 
     def check_is_unitary(self, atol=1e-6, rtol=1e-6):
-        matrix = self.matrix()
+        matrix = self.sptm_matrix()
         if self.batch_size is None:
             matrix = matrix[None, ...]
         eye = np.eye(matrix.shape[-1])
@@ -408,8 +546,8 @@ class SingleParticleTransitionMatrixOperation(Operation):
         all_wires = Wires.all_wires([self.wires, other.wires], sort=True)
         wires = self.make_wires_continuous(all_wires)
 
-        _self = self.pad(wires).matrix()
-        other = self.from_operation(other, **self._hyperparameters).pad(wires).matrix()
+        _self = self.pad(wires).sptm_matrix()
+        other = self.from_operation(other, **self._hyperparameters).pad(wires).sptm_matrix()
 
         return SingleParticleTransitionMatrixOperation(
             qml.math.einsum("...ij,...jk->...ik", _self, other),
@@ -418,13 +556,36 @@ class SingleParticleTransitionMatrixOperation(Operation):
         )
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
-        return SingleParticleTransitionMatrixOperation(dagger(self.matrix()), wires=self.wires, **self._hyperparameters)
+        return SingleParticleTransitionMatrixOperation(
+            dagger(self.sptm_matrix()), wires=self.wires, **self._hyperparameters
+        )
+
+    def pow(self, z: float) -> List[Operator]:
+        """
+        Decompose this operation raised to the power ``z``.
+
+        Integer powers (including integer-valued floats and numpy integers) give a single SPTM
+        operation whose matrix is the SPTM raised to ``z``. A negative power uses the transpose,
+        which is the inverse of an SPTM. Other powers are not defined, since a fractional power of an
+        SPTM depends on the branch of its logarithm.
+
+        :param z: The exponent.
+        :type z: float
+        :return: A single operation equal to this operation raised to the power ``z``.
+        :rtype: List[Operator]
+        :raises PowUndefinedError: If ``z`` is not an integer.
+        """
+        with qml.QueuingManager.stop_recording():
+            powered = self._integer_power(z)
+        if qml.QueuingManager.recording():
+            powered = qml.apply(powered)
+        return [powered]
 
     def to_cuda(self):  # pragma: no cover
         from ...utils import torch_utils  # pragma: no cover
 
         return SingleParticleTransitionMatrixOperation(  # pragma: no cover
-            torch_utils.to_cuda(self.matrix(), dtype=None),  # pragma: no cover
+            torch_utils.to_cuda(self.sptm_matrix(), dtype=None),  # pragma: no cover
             wires=self.wires,  # pragma: no cover
             **self._hyperparameters,  # pragma: no cover
         )  # pragma: no cover
@@ -433,30 +594,30 @@ class SingleParticleTransitionMatrixOperation(Operation):
         from ...utils import torch_utils
 
         return SingleParticleTransitionMatrixOperation(
-            torch_utils.to_tensor(self.matrix(), dtype=None),
+            torch_utils.to_tensor(self.sptm_matrix(), dtype=None),
             wires=self.wires,
             **self._hyperparameters,
         )
 
     def __round__(self, n=None):
         return SingleParticleTransitionMatrixOperation(
-            qml.math.round(self.matrix(), n), wires=self.wires, **self._hyperparameters
+            qml.math.round(self.sptm_matrix(), n), wires=self.wires, **self._hyperparameters
         )
 
     def real(self):
         return SingleParticleTransitionMatrixOperation(
-            qml.math.real(self.matrix()), wires=self.wires, **self._hyperparameters
+            qml.math.real(self.sptm_matrix()), wires=self.wires, **self._hyperparameters
         )
 
     def __trunc__(self):
         return SingleParticleTransitionMatrixOperation(
-            qml.math.trunc(self.matrix()), wires=self.wires, **self._hyperparameters
+            qml.math.trunc(self.sptm_matrix()), wires=self.wires, **self._hyperparameters
         )
 
     def to_matchgate(self):
         from ..matchgate_operation import MatchgateOperation
 
-        unitary = self.to_unitary_matrix(self.matrix())
+        unitary = self.to_unitary_matrix(self.sptm_matrix())
         return MatchgateOperation(unitary, wires=self.wires, **self.hyperparameters)
 
     def to_qubit_unitary(self) -> qml.QubitUnitary:
@@ -468,7 +629,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
         :return: A `qml.QubitUnitary` object that represents the unitary operation acting on the specified wires.
         :rtype: qml.QubitUnitary
         """
-        return qml.QubitUnitary(self.to_unitary_matrix(self.matrix()), wires=self.wires, unitary_check=True)
+        return qml.QubitUnitary(self.to_unitary_matrix(self.sptm_matrix()), wires=self.wires, unitary_check=True)
 
     def to_qubit_operation(self) -> Operation:
         """
@@ -500,7 +661,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
         """
         wires = np.arange(matrix.shape[-1] // 2)
         majorana_tensor = MajoranaGetter(n=len(wires)).majorana_tensor
-        h = (1 / 4) * logm(matrix)
+        h = (1 / 4) * SingleParticleTransitionMatrixOperation._orthogonal_logm(matrix)
         unitary = qml.math.expm(
             -1.0
             * qml.math.einsum(
@@ -512,6 +673,36 @@ class SingleParticleTransitionMatrixOperation(Operation):
             )
         )
         return unitary
+
+    def _integer_power(self, z: float) -> "SingleParticleTransitionMatrixOperation":
+        """
+        Return this operation raised to an integer power as a single SPTM operation.
+
+        :param z: The exponent, an integer or an integer-valued float.
+        :type z: float
+        :return: The SPTM operation whose matrix is the SPTM raised to ``z``, shape (..., 2n, 2n).
+        :rtype: SingleParticleTransitionMatrixOperation
+        :raises PowUndefinedError: If ``z`` is not an integer.
+        """
+        if not self._is_integer_exponent(z):
+            raise PowUndefinedError(f"{self.__class__.__name__} only supports integer powers, got {z}.")
+        exponent = int(round(float(z)))
+        matrix = self.sptm_matrix() if exponent >= 0 else dagger(self.sptm_matrix())
+        powered = qml.math.linalg.matrix_power(matrix, abs(exponent))
+        return SingleParticleTransitionMatrixOperation(powered, wires=self.wires, **self._hyperparameters)
+
+    @property
+    def single_particle_transition_matrix(self) -> TensorLike:
+        """
+        The single-particle transition matrix on the operation's own wires.
+
+        Same name as :attr:`MatchgateOperation.single_particle_transition_matrix`, so generic code
+        can read the SPTM of either operation family.
+
+        :return: The SPTM, shape (..., 2n, 2n).
+        :rtype: TensorLike
+        """
+        return self._matrix
 
     @property
     def shape(self):

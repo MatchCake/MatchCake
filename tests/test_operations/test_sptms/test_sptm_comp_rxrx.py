@@ -32,7 +32,7 @@ class TestCompRxRx:
         params = SptmCompRxRx.clip_angles(params)
         matchgate = CompRxRx(params, wires=[0, 1])
         m_sptm = make_single_particle_transition_matrix_from_gate(matchgate.matrix())
-        sptm = SptmCompRxRx(params, wires=[0, 1]).matrix()
+        sptm = SptmCompRxRx(params, wires=[0, 1]).sptm_matrix()
         np.testing.assert_allclose(
             sptm,
             m_sptm,
@@ -53,7 +53,7 @@ class TestCompRxRx:
             matchgate = circuit_matmul(matchgate, mg)
 
         m_sptm = matchgate.single_particle_transition_matrix
-        sptms = [SptmCompRxRx(p, wires=[0, 1]).matrix() for p in params]
+        sptms = [SptmCompRxRx(p, wires=[0, 1]).sptm_matrix() for p in params]
         sptm = sptms[0]
         for s in sptms[1:]:
             sptm = circuit_matmul(sptm, s, operator="einsum")
@@ -71,7 +71,7 @@ class TestCompRxRx:
         params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
         matchgate = CompRxRx(params, wires=[0, 1]).adjoint()
         m_sptm = matchgate.single_particle_transition_matrix
-        sptm = SptmCompRxRx(params, wires=[0, 1]).adjoint().matrix()
+        sptm = SptmCompRxRx(params, wires=[0, 1]).adjoint().sptm_matrix()
         np.testing.assert_allclose(
             sptm,
             m_sptm,
@@ -92,7 +92,7 @@ class TestCompRxRx:
         phi = np.random.uniform(-4 * np.pi, 4 * np.pi, batch_size).squeeze()
 
         def sptm_sum(p):
-            return torch.sum(SptmCompRxRx(p, wires=[0, 1]).matrix())
+            return torch.sum(SptmCompRxRx(p, wires=[0, 1]).sptm_matrix())
 
         torch.autograd.gradcheck(
             sptm_sum,

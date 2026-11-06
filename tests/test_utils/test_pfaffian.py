@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import torch
+import torch_pfaffian
 from torch.autograd import gradcheck
 
 from matchcake import utils
@@ -39,6 +40,17 @@ class TestPfaffian:
         upper = upper.clone()
         upper[idx[0], idx[1]] = theta
         return upper - upper.transpose(-1, -2)
+
+    @staticmethod
+    def rotated_block_matrix(block_values, dtype, seed=0):
+        # Skew-symmetric matrix with Pf = prod(block_values), in a random orthogonal basis.
+        size = 2 * len(block_values)
+        blocks = torch.zeros(size, size, dtype=torch.float64)
+        for index, value in enumerate(block_values):
+            blocks[2 * index, 2 * index + 1] = value
+            blocks[2 * index + 1, 2 * index] = -value
+        rotation = torch.from_numpy(np.linalg.qr(np.random.default_rng(seed).normal(size=(size, size)))[0])
+        return (rotation @ blocks @ rotation.T).to(dtype)
 
     @pytest.mark.parametrize("n, batch_size", [(2, None), (4, None), (2, 3), (4, 3)])
     def test_pfaffian_magnitude_squared_is_abs_det(self, n, batch_size):
@@ -152,6 +164,101 @@ class TestPfaffian:
             atol=ATOL_APPROX_COMPARISON,
             rtol=10 * RTOL_APPROX_COMPARISON,
         )
+
+    @pytest.mark.parametrize("mask_roundoff_gradient", [False, True])
+    @pytest.mark.parametrize("dtype", [torch.float64, torch.complex128, torch.float32, torch.complex64])
+    def test_pfaffian_magnitude_small_well_conditioned_is_exact(self, dtype, mask_roundoff_gradient):
+        # Pf = 1e-9 from a well-conditioned matrix: neither the value nor the gradient may be floored.
+        matrix = self.rotated_block_matrix([1e-3, 1e-3, 1e-3], dtype).requires_grad_()
+        magnitude = torch.real(pfaffian(matrix, sign=False, mask_roundoff_gradient=mask_roundoff_gradient))
+        (gradient,) = torch.autograd.grad(magnitude, matrix)
+        reference_matrix = matrix.detach().clone().requires_grad_()
+        reference = torch.sqrt(torch.abs(torch.linalg.det(reference_matrix)))
+        (reference_gradient,) = torch.autograd.grad(reference, reference_matrix)
+        np.testing.assert_allclose(magnitude.item(), 1e-9, rtol=RTOL_MATRIX_COMPARISON)
+        assert torch.abs(gradient).max() > 0
+        np.testing.assert_allclose(
+            gradient.detach().numpy(),
+            reference_gradient.numpy(),
+            atol=ATOL_MATRIX_COMPARISON * torch.abs(reference_gradient).max().item(),
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    @pytest.mark.parametrize("mask_roundoff_gradient", [False, True])
+    def test_pfaffian_magnitude_complex_gradcheck(self, mask_roundoff_gradient):
+        generator = np.random.default_rng(1)
+        matrix = generator.normal(size=(6, 6)) + 1j * generator.normal(size=(6, 6))
+        matrix = torch.from_numpy(matrix - matrix.T).requires_grad_()
+        assert gradcheck(
+            lambda x: pfaffian(x, sign=False, mask_roundoff_gradient=mask_roundoff_gradient),
+            (matrix,),
+            atol=ATOL_APPROX_COMPARISON,
+            rtol=10 * RTOL_APPROX_COMPARISON,
+        )
+
+    def test_pfaffian_magnitude_unmasked_matches_det_autograd(self):
+        matrix = torch.from_numpy(self.skew_symmetric(6, batch_size=3)).requires_grad_()
+        (gradient,) = torch.autograd.grad(pfaffian(matrix, sign=False).sum(), matrix)
+        reference_matrix = matrix.detach().clone().requires_grad_()
+        reference = torch.sqrt(torch.clamp(torch.abs(torch.linalg.det(reference_matrix)), min=1e-32))
+        (reference_gradient,) = torch.autograd.grad(reference.sum(), reference_matrix)
+        np.testing.assert_allclose(gradient.numpy(), reference_gradient.numpy(), rtol=RTOL_MATRIX_COMPARISON)
+
+    def test_pfaffian_magnitude_chunked_roundoff_zero_has_zero_grad(self):
+        regular = self.rotated_block_matrix([2.0, 1.5, 1.0], torch.float64, seed=1)
+        vanishing = self.rotated_block_matrix([2.0, 1.5, 0.25 * torch.finfo(torch.float64).eps], torch.float64)
+        matrix = torch.stack([regular, vanishing, regular, vanishing]).requires_grad_()
+        magnitude = pfaffian(matrix, sign=False, chunk_size=3, mask_roundoff_gradient=True)
+        (gradient,) = torch.autograd.grad(magnitude.sum(), matrix)
+        assert torch.all(gradient[1] == 0) and torch.all(gradient[3] == 0)
+        assert torch.abs(gradient[0]).max() > 0 and torch.abs(gradient[2]).max() > 0
+
+    @pytest.mark.parametrize("dtype", [torch.float64, torch.complex128, torch.float32, torch.complex64])
+    def test_pfaffian_magnitude_roundoff_zero_has_zero_grad(self, dtype):
+        # Pf = a * b * delta with delta at the rounding level: a vanishing Pfaffian computed as round-off.
+        matrix = self.rotated_block_matrix([2.0, 1.5, 0.25 * torch.finfo(dtype).eps], dtype).requires_grad_()
+        magnitude = torch.real(pfaffian(matrix, sign=False, mask_roundoff_gradient=True))
+        (gradient,) = torch.autograd.grad(magnitude, matrix)
+        assert torch.all(gradient == 0)
+
+    @pytest.mark.parametrize("dtype", [torch.float64, torch.complex128, torch.float32, torch.complex64])
+    def test_pfaffian_magnitude_masked_clamped_has_zero_grad(self, dtype):
+        # Well-conditioned matrix whose |det| = 1e-6 is below epsilon = 1e-3: the clamp must stop the gradient.
+        matrix = self.rotated_block_matrix([0.1, 0.1, 0.1], dtype).requires_grad_()
+        magnitude = torch.real(pfaffian(matrix, sign=False, epsilon=1e-3, mask_roundoff_gradient=True))
+        (gradient,) = torch.autograd.grad(magnitude, matrix)
+        np.testing.assert_allclose(magnitude.item(), 1e-3**0.5, rtol=RTOL_MATRIX_COMPARISON)
+        assert torch.all(gradient == 0)
+
+    def test_pfaffian_magnitude_masked_nan_input_has_finite_grad(self):
+        regular = self.rotated_block_matrix([2.0, 1.5, 1.0], torch.float64)
+        invalid = torch.full_like(regular, float("nan"))
+        matrix = torch.stack([regular, invalid]).requires_grad_()
+        magnitude = pfaffian(matrix, sign=False, mask_roundoff_gradient=True)
+        (gradient,) = torch.autograd.grad(magnitude[0], matrix)
+        assert torch.all(torch.isfinite(gradient))
+        assert torch.all(gradient[1] == 0)
+
+    def test_pfaffian_magnitude_default_epsilon(self):
+        np.testing.assert_allclose(
+            pfaffian(torch.zeros(4, 4, dtype=torch.float64), sign=False).item(),
+            1e-16,
+            rtol=RTOL_SCALAR_COMPARISON,
+        )
+
+    def test_pfaffian_magnitude_explicit_epsilon_is_used(self):
+        matrix = torch.zeros(4, 4, dtype=torch.float64)
+        np.testing.assert_allclose(
+            pfaffian(matrix, sign=False, epsilon=1e-10).item(),
+            1e-5,
+            atol=ATOL_SCALAR_COMPARISON,
+            rtol=RTOL_SCALAR_COMPARISON,
+        )
+
+    def test_pfaffian_magnitude_does_not_mutate_torch_pfaffian_epsilon(self):
+        epsilon_before = torch_pfaffian.PfaffianStrategy.EPSILON
+        pfaffian(torch.from_numpy(self.skew_symmetric(4)), sign=False, epsilon=1e-3)
+        assert torch_pfaffian.PfaffianStrategy.EPSILON == epsilon_before
 
     def test_pfaffian_signed_grads_on_skew_manifold(self):
         # The signed Pfaffian gradient is the antisymmetric (pf/2) A^{-T}; it is only

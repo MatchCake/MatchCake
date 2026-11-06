@@ -101,7 +101,7 @@ class TestCliffordExpvalStrategy:
             return qml.expval(hamiltonian)
 
         ground_truth_energy = ground_truth_circuit()
-        sptm = nif_device.apply_generator(circuit).global_sptm.matrix()
+        sptm = nif_device.apply_generator(circuit).global_sptm.sptm_matrix()
         clifford_energy = strategy(state_prep_op, hamiltonian, global_sptm=sptm)
         np.testing.assert_allclose(
             clifford_energy,

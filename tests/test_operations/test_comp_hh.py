@@ -19,7 +19,7 @@ class TestCompHH:
 
     def test_to_sptm_operation(self):
         mg = CompHH(wires=[0, 1])
-        sptm = mg.to_sptm_operation().matrix()
+        sptm = mg.to_sptm_operation().sptm_matrix()
         true_sptm = make_single_particle_transition_matrix_from_gate(mg.matrix())
         np.testing.assert_allclose(sptm, true_sptm)
 

@@ -41,8 +41,8 @@ class TestCliffordSumStrategy:
             target_binary_states=target_state,
             wires=wires,
             all_wires=wires,
-            global_sptm=global_sptm.matrix(),
-            transition_matrix=utils.make_transition_matrix_from_action_matrix(global_sptm.matrix()),
+            global_sptm=global_sptm.sptm_matrix(),
+            transition_matrix=utils.make_transition_matrix_from_action_matrix(global_sptm.sptm_matrix()),
         )
 
         qubit_probs = ground_truth_circuit()
@@ -57,7 +57,7 @@ class TestCliffordSumStrategy:
         num_wires = 2
         wires = np.arange(num_wires)
         global_sptm = SingleParticleTransitionMatrixOperation.random(wires=wires, seed=42)
-        transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm.matrix())
+        transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm.sptm_matrix())
         state_prep_op = qml.BasisState(np.zeros(num_wires, dtype=int), wires)
         result = strategy(
             state_prep_op=state_prep_op,
@@ -72,7 +72,7 @@ class TestCliffordSumStrategy:
         num_wires = 2
         wires = np.arange(num_wires)
         global_sptm = SingleParticleTransitionMatrixOperation.random(wires=wires, seed=42)
-        transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm.matrix())
+        transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm.sptm_matrix())
         state_prep_op = qml.BasisState(np.zeros(num_wires, dtype=int), wires)
         result = strategy._compute_single(
             state_prep_op=state_prep_op,

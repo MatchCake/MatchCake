@@ -15,13 +15,13 @@ class TestNonInteractingFermionicDevice:
         old_sptm = SingleParticleTransitionMatrixOperation.random(wires=[0, 1], seed=0)
         new_sptm = SingleParticleTransitionMatrixOperation.random(wires=[0, 1], seed=1)
         updated_sptm = dev.update_single_particle_transition_matrix(old_sptm, new_sptm)
-        expected_sptm = old_sptm.matrix() @ new_sptm.matrix()
+        expected_sptm = old_sptm.sptm_matrix() @ new_sptm.sptm_matrix()
         np.testing.assert_allclose(updated_sptm, expected_sptm)
 
     def test_update_single_particle_transition_matrix_with_tensors(self):
         dev = NonInteractingFermionicDevice(wires=2)
-        old_sptm = SingleParticleTransitionMatrixOperation.random(wires=[0, 1], seed=0).matrix()
-        new_sptm = SingleParticleTransitionMatrixOperation.random(wires=[0, 1], seed=1).matrix()
+        old_sptm = SingleParticleTransitionMatrixOperation.random(wires=[0, 1], seed=0).sptm_matrix()
+        new_sptm = SingleParticleTransitionMatrixOperation.random(wires=[0, 1], seed=1).sptm_matrix()
         updated_sptm = dev.update_single_particle_transition_matrix(old_sptm, new_sptm)
         expected_sptm = old_sptm @ new_sptm
         np.testing.assert_allclose(updated_sptm, expected_sptm)
@@ -31,7 +31,7 @@ class TestNonInteractingFermionicDevice:
         old_sptm = None
         new_sptm = SingleParticleTransitionMatrixOperation.random(wires=[0, 1], seed=1)
         updated_sptm = dev.update_single_particle_transition_matrix(old_sptm, new_sptm)
-        expected_sptm = new_sptm.matrix()
+        expected_sptm = new_sptm.sptm_matrix()
         np.testing.assert_allclose(updated_sptm, expected_sptm)
 
     def test_lookup_table_property(self):

@@ -222,8 +222,8 @@ class TestSptmFermionicSuperposition:
     def test_adjoint_is_transpose(self, wires):
         sptm = SptmFermionicSuperposition(wires=wires)
         np.testing.assert_allclose(
-            to_numpy(sptm.adjoint().matrix()),
-            to_numpy(sptm.matrix()).T,
+            to_numpy(sptm.adjoint().sptm_matrix()),
+            to_numpy(sptm.sptm_matrix()).T,
             atol=ATOL_MATRIX_COMPARISON,
             rtol=RTOL_MATRIX_COMPARISON,
         )
@@ -231,7 +231,7 @@ class TestSptmFermionicSuperposition:
     @pytest.mark.parametrize("wires", [np.arange(n) for n in range(2, 6)])
     def test_adjoint_inverts_matrix(self, wires):
         sptm = SptmFermionicSuperposition(wires=wires)
-        product = to_numpy(sptm.matrix()) @ to_numpy(sptm.adjoint().matrix())
+        product = to_numpy(sptm.sptm_matrix()) @ to_numpy(sptm.adjoint().sptm_matrix())
         np.testing.assert_allclose(
             product,
             np.eye(product.shape[-1]),
@@ -244,7 +244,7 @@ class TestSptmFermionicSuperposition:
         expected = to_numpy(make_single_particle_transition_matrix_from_gate(unitary.conj().T))
         sptm = SptmFermionicSuperposition(wires=[0, 1])
         np.testing.assert_allclose(
-            to_numpy(sptm.adjoint().matrix()),
+            to_numpy(sptm.adjoint().sptm_matrix()),
             expected,
             atol=ATOL_MATRIX_COMPARISON,
             rtol=RTOL_MATRIX_COMPARISON,

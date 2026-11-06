@@ -61,7 +61,7 @@ def test_global_sptm_unitary(operations_generator: RandomSptmOperationsGenerator
         reset=True,
         cache_global_sptm=True,
     )
-    global_sptm = nif_device.global_sptm.matrix()
+    global_sptm = nif_device.global_sptm.sptm_matrix()
     expected_eye = np.einsum("...ij,...jk->...ik", global_sptm, dagger(global_sptm))
     eye = np.zeros_like(expected_eye)
     eye[
