@@ -196,7 +196,7 @@ latexcodec==3.0.1
 librt==0.16.0 ; platform_python_implementation != 'PyPy'
     # via mypy
 markdown-analysis==0.1.5
-markdown-it-py==3.0.0
+markdown-it-py==4.2.0
     # via
     #   mdit-py-plugins
     #   myst-parser
