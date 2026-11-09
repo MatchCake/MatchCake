@@ -90,7 +90,10 @@ def _pfaffian_kernel(
     if sign:
         return torch_pfaffian.pfaffian(matrix_t, sign=True)
     if mask_roundoff_gradient:
-        return torch_pfaffian.pfaffian(matrix_t, sign=False, epsilon=epsilon, mask_roundoff_gradient=True)
+        # check_finite=False keeps the call free of host syncs, like the unmasked path below.
+        return torch_pfaffian.pfaffian(
+            matrix_t, sign=False, epsilon=epsilon, mask_roundoff_gradient=True, check_finite=False
+        )
     return torch.sqrt(torch.clamp(torch.abs(torch.linalg.det(matrix_t)), min=epsilon))
 
 

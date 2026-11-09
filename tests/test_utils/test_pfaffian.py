@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 import torch
@@ -238,6 +240,14 @@ class TestPfaffian:
         (gradient,) = torch.autograd.grad(magnitude[0], matrix)
         assert torch.all(torch.isfinite(gradient))
         assert torch.all(gradient[1] == 0)
+
+    def test_pfaffian_magnitude_masked_nan_input_does_not_warn(self):
+        regular = self.rotated_block_matrix([2.0, 1.5, 1.0], torch.float64)
+        matrix = torch.stack([regular, torch.full_like(regular, float("nan"))])
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            magnitude = pfaffian(matrix, sign=False, mask_roundoff_gradient=True)
+        assert torch.isfinite(magnitude[0])
 
     def test_pfaffian_magnitude_default_epsilon(self):
         np.testing.assert_allclose(
