@@ -20,14 +20,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
     - name: Set up Python 3.11
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v7
       with:
         python-version: "3.11"
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@v7
       with:
         version: "0.9.2"
         python-version: "3.11"
@@ -39,7 +39,7 @@ jobs:
 
     - name: Gather new package version
       id: version
-      uses: anothrNick/github-tag-action@1.61.0
+      uses: anothrNick/github-tag-action@1.75.0
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         WITH_V: false
@@ -73,7 +73,7 @@ jobs:
 
     - name: Create Tag
       id: tag
-      uses: anothrNick/github-tag-action@1.61.0
+      uses: anothrNick/github-tag-action@1.75.0
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         WITH_V: false
@@ -81,7 +81,7 @@ jobs:
         DRY_RUN: false
 
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v3
       with:
         tag_name: ${{ steps.tag.outputs.new_tag }}
         generate_release_notes: true
