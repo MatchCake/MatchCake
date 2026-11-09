@@ -129,7 +129,7 @@ class _ContractionMatchgatesContainer:
                 if callback is not None:
                     callback(i)
                 continue
-            new_op = self.push_contract(op)
+            new_op = self.push_contract(cast(MatchgateOperation, op))
             if new_op is not None:
                 new_operations.append(new_op)
             if callback is not None:

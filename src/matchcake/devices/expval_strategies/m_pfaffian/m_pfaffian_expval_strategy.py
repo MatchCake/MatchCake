@@ -287,7 +287,7 @@ class MPfaffianExpvalStrategy(ExpvalStrategy):
 
         chunk_size = kwargs.get("pfaffian_chunk_size", None)
         r_dtype = infer_real_dtype(ext_cov_matrix)
-        ext_cov_matrix_t: Optional[TensorLike] = None  # lazily built for the sector-2 read
+        ext_cov_matrix_t: Optional[torch.Tensor] = None  # lazily built for the sector-2 read
         total_re: Any = np.float64(0.0)
         for sector, (index_sets, scalar_coeffs) in payload.items():
             if sector == 0:

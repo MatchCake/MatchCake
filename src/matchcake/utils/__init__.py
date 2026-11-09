@@ -100,7 +100,7 @@ def state_to_binary_string(state: Union[int, np.ndarray, sparse.sparray], n: Opt
         assert state < 2**n, f"Invalid state: {state}, must be smaller than 2^n = {2**n}."
         return np.binary_repr(state, width=n)
     arr: np.ndarray = np.asarray(state.toarray()) if isinstance(state, sparse.sparray) else state  # type: ignore[attr-defined]
-    n_states = np.prod(arr.shape)
+    n_states = int(np.prod(arr.shape))
     n = int(np.log2(n_states))
     assert n_states == 2**n, f"Invalid number of states: {n_states}, must be a power of 2."
     state_number = np.asarray(arr.reshape(-1, n_states).argmax(-1)).astype(int).item()

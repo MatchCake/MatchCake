@@ -11,7 +11,7 @@ from .visualizer import Visualizer
 
 class CrossValidationVisualizer(Visualizer):
     def __init__(self, cross_validation_output: CrossValidationOutput):
-        mpl.rcParams.update(MPL_RC_DEFAULT_PARAMS)
+        mpl.rcParams.update(MPL_RC_DEFAULT_PARAMS)  # type: ignore[arg-type]
         self.cvo = cross_validation_output
 
     def plot(

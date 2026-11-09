@@ -189,7 +189,7 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
         else:
             if batch_wires.ndim == 1:
                 batch_wires = np.broadcast_to(batch_wires, target_arr.shape)
-            same_wires = len(target_arr) <= 1 or np.all(batch_wires == batch_wires[0])
+            same_wires = len(target_arr) <= 1 or bool(np.all(batch_wires == batch_wires[0]))
             if same_wires:
                 wire_indices = all_wires.indices(Wires(batch_wires[0]))
                 lambda_t_w = self.extract_majorana_submatrix(covariance_matrix, wire_indices)  # (..., 2k, 2k)

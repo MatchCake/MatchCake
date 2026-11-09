@@ -7,6 +7,7 @@ REPOSITORY_ROOT = pathlib.Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPOSITORY_ROOT / ".github" / "scripts" / "check_math_rendering.py"
 
 _SPEC = importlib.util.spec_from_file_location("check_math_rendering", SCRIPT_PATH)
+assert _SPEC is not None and _SPEC.loader is not None
 check_math_rendering = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(check_math_rendering)
 

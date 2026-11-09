@@ -26,6 +26,7 @@ def load_sphinx_conf(multiversion_sourcedir: str | None = None) -> types.ModuleT
     if multiversion_sourcedir is not None:
         environment["SPHINX_MULTIVERSION_SOURCEDIR"] = multiversion_sourcedir
     spec = importlib.util.spec_from_file_location("matchcake_sphinx_conf", SPHINX_CONF_PATH)
+    assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     with unittest.mock.patch.dict(os.environ, environment, clear=True):
         spec.loader.exec_module(module)
