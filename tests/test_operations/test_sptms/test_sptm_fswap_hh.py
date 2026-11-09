@@ -18,20 +18,20 @@ class TestSptmFSwapHH:
 
     def test_init_matrix_shape(self):
         op = SptmFSwapHH(wires=[0, 1])
-        mat = op.matrix()
+        mat = op.sptm_matrix()
         assert mat.shape == (4, 4)
 
     def test_init_four_wires(self):
         op = SptmFSwapHH(wires=[0, 1, 2, 3])
-        mat = op.matrix()
+        mat = op.sptm_matrix()
         assert mat.shape == (8, 8)
 
     @pytest.mark.parametrize("wires", [[0, 1], [0, 1, 2, 3]])
     def test_adjoint_is_transpose(self, wires):
         op = SptmFSwapHH(wires=wires)
         np.testing.assert_allclose(
-            to_numpy(op.adjoint().matrix()),
-            to_numpy(op.matrix()).T,
+            to_numpy(op.adjoint().sptm_matrix()),
+            to_numpy(op.sptm_matrix()).T,
             atol=ATOL_MATRIX_COMPARISON,
             rtol=RTOL_MATRIX_COMPARISON,
         )
@@ -39,7 +39,7 @@ class TestSptmFSwapHH:
     @pytest.mark.parametrize("wires", [[0, 1], [0, 1, 2, 3]])
     def test_adjoint_inverts_matrix(self, wires):
         op = SptmFSwapHH(wires=wires)
-        product = to_numpy(op.matrix()) @ to_numpy(op.adjoint().matrix())
+        product = to_numpy(op.sptm_matrix()) @ to_numpy(op.adjoint().sptm_matrix())
         np.testing.assert_allclose(
             product,
             np.eye(product.shape[-1]),

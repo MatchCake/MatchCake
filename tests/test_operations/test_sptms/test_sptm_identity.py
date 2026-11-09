@@ -7,7 +7,7 @@ from tests.configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON
 
 class TestSptmIdentity:
     def test_matchgate_equal_to_sptm_identity(self):
-        sptm = SptmIdentity(wires=[0, 1]).matrix()
+        sptm = SptmIdentity(wires=[0, 1]).sptm_matrix()
         np.testing.assert_allclose(
             sptm,
             np.eye(4),
@@ -19,8 +19,8 @@ class TestSptmIdentity:
         op = SptmIdentity(wires=[0, 1])
         adj = op.adjoint()
         np.testing.assert_allclose(
-            adj.matrix(),
-            op.matrix(),
+            adj.sptm_matrix(),
+            op.sptm_matrix(),
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )

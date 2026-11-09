@@ -108,5 +108,5 @@ class TestNIFKernel:
         tape = qnode._tape.circuit[:-1]
         assert len(tape) == 2, f"Expected 2 operations, got {len(tape)} from {tape}."
 
-        global_sptm = kernel.q_device.global_sptm.matrix()
+        global_sptm = kernel.q_device.global_sptm.sptm_matrix()
         np.testing.assert_allclose(matmul(sptm0, dagger(sptm1)), global_sptm)

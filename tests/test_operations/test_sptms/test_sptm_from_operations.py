@@ -37,7 +37,9 @@ class TestSptmFromOperations:
         active_wire1 = np.random.choice(all_wires_wo_mg0)
         mg1 = MatchgateOperation.random(wires=qml.wires.Wires([active_wire1, active_wire1 + 1]))
 
-        padded_sptm = SingleParticleTransitionMatrixOperation.from_operations([mg0, mg1]).pad(wires=all_wires).matrix()
+        padded_sptm = (
+            SingleParticleTransitionMatrixOperation.from_operations([mg0, mg1]).pad(wires=all_wires).sptm_matrix()
+        )
 
         mg0_matrix = mg0.matrix()
         mg1_matrix = mg1.matrix()

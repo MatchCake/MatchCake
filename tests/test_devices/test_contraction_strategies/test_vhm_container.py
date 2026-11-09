@@ -3,7 +3,7 @@ import pytest
 
 import matchcake as mc
 from matchcake.devices.contraction_strategies import get_contraction_strategy
-from matchcake.operations import SptmCompRxRx
+from matchcake.operations import SingleParticleTransitionMatrixOperation, SptmCompRxRx
 
 from ...configs import (
     ATOL_APPROX_COMPARISON,
@@ -106,7 +106,7 @@ class TestVhmContainer:
         container = strategy.get_container()
         container.add(op)
         np.testing.assert_allclose(
-            container.contract().matrix(),
+            container.contract().sptm_matrix(),
             op.single_particle_transition_matrix,
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
@@ -140,7 +140,7 @@ class TestVhmContainer:
         )
 
         target_t = contract_ops.single_particle_transition_matrix
-        pred_t = container.contract().matrix()
+        pred_t = container.contract().sptm_matrix()
         np.testing.assert_allclose(
             pred_t,
             target_t,
@@ -176,8 +176,8 @@ class TestVhmContainer:
             contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(all_wires)
 
         np.testing.assert_allclose(
-            container.contract().matrix(),
-            contract_ops.matrix(),
+            container.contract().sptm_matrix(),
+            contract_ops.sptm_matrix(),
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
@@ -224,8 +224,8 @@ class TestVhmContainer:
             assert len(container) == 1
             assert container.wires_set == set(new_op0.wires.labels)
             np.testing.assert_allclose(
-                container.op_container[new_op0.wires].matrix(),
-                (new_op0 @ new_op1).matrix(),
+                container.op_container[new_op0.wires].sptm_matrix(),
+                (new_op0 @ new_op1).sptm_matrix(),
                 atol=ATOL_APPROX_COMPARISON,
                 rtol=RTOL_APPROX_COMPARISON,
             )
@@ -234,14 +234,16 @@ class TestVhmContainer:
             assert len(container) == 2
             assert container.wires_set == set(new_op0.wires.labels) | set(new_op1.wires.labels)
             np.testing.assert_allclose(
-                container.op_container[new_op0.wires].matrix(),
-                new_op0.matrix(),
+                container.op_container[new_op0.wires].sptm_matrix(),
+                new_op0.sptm_matrix(),
                 atol=ATOL_APPROX_COMPARISON,
                 rtol=RTOL_APPROX_COMPARISON,
             )
             np.testing.assert_allclose(
-                container.op_container[new_op1.wires].matrix(),
-                new_op1.matrix(),
+                SingleParticleTransitionMatrixOperation.from_operation(
+                    container.op_container[new_op1.wires]
+                ).sptm_matrix(),
+                SingleParticleTransitionMatrixOperation.from_operation(new_op1).sptm_matrix(),
                 atol=ATOL_APPROX_COMPARISON,
                 rtol=RTOL_APPROX_COMPARISON,
             )

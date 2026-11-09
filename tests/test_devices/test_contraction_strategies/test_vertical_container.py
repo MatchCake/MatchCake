@@ -37,7 +37,7 @@ class TestVerticalContainer:
         container = strategy.get_container()
         container.add(op)
         np.testing.assert_allclose(
-            container.contract().matrix(),
+            container.contract().sptm_matrix(),
             op.single_particle_transition_matrix,
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
@@ -71,8 +71,8 @@ class TestVerticalContainer:
             contract_ops = contract_ops @ op.get_padded_single_particle_transition_matrix(all_wires)
 
         np.testing.assert_allclose(
-            container.contract().matrix(),
-            contract_ops.matrix(),
+            container.contract().sptm_matrix(),
+            contract_ops.sptm_matrix(),
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )
@@ -111,8 +111,8 @@ class TestVerticalContainer:
             pred_contract_ops = fermionic_operator_matmul(pred_contract_ops.pad(all_wires), op.pad(all_wires))
 
         np.testing.assert_allclose(
-            pred_contract_ops.matrix(),
-            contract_ops.matrix(),
+            pred_contract_ops.sptm_matrix(),
+            contract_ops.sptm_matrix(),
             atol=ATOL_APPROX_COMPARISON,
             rtol=RTOL_APPROX_COMPARISON,
         )

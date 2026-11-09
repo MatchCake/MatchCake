@@ -24,7 +24,7 @@ class TestExplicitSumStrategy:
         num_wires = 2
         wires = np.arange(num_wires)
         global_sptm = SingleParticleTransitionMatrixOperation.random(wires=wires, seed=42)
-        transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm.matrix())
+        transition_matrix = utils.make_transition_matrix_from_action_matrix(global_sptm.sptm_matrix())
         state_prep_op = qml.BasisState(np.zeros(num_wires, dtype=int), wires)
         return wires, transition_matrix, state_prep_op
 

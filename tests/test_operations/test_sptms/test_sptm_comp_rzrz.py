@@ -37,7 +37,7 @@ class TestSptmRzRz:
         params = np.asarray([theta, phi]).reshape(-1, 2).squeeze()
         matchgate = CompRzRz(params, wires=[0, 1])
         m_sptm = make_single_particle_transition_matrix_from_gate(matchgate.matrix())
-        sptm = SptmCompRzRz(params, wires=[0, 1]).matrix()
+        sptm = SptmCompRzRz(params, wires=[0, 1]).sptm_matrix()
         np.testing.assert_allclose(
             sptm,
             m_sptm,
@@ -93,7 +93,7 @@ class TestSptmRzRz:
         params = SptmCompRzRz.clip_angles(params)
         matchgate = CompRzRz(params, wires=[0, 1]).adjoint()
         m_sptm = make_single_particle_transition_matrix_from_gate(matchgate.matrix())
-        sptm = SptmCompRzRz(params, wires=[0, 1]).adjoint().matrix()
+        sptm = SptmCompRzRz(params, wires=[0, 1]).adjoint().sptm_matrix()
         np.testing.assert_allclose(
             sptm,
             m_sptm,

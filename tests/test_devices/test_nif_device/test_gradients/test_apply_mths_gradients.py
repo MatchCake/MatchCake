@@ -55,7 +55,7 @@ class TestNonInteractingFermionicDeviceGradients:
             nif_device = NonInteractingFermionicDevice(wires=input_matrix.shape[-1] // 2)
             op = SingleParticleTransitionMatrixOperation(matrix=p, wires=np.arange(p.shape[-1] // 2))
             new_op = nif_device.apply_op(op)
-            return new_op.matrix()
+            return new_op.sptm_matrix()
 
         assert torch.autograd.gradcheck(
             circuit,

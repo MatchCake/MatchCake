@@ -35,7 +35,7 @@ class TestSingleParticleTransitionMatrixOperationPadding:
     def test_matchgate_to_sptm_with_padding(self, active_wire0, n_wires):
         all_wires = qml.wires.Wires(list(range(n_wires)))
         mg = MatchgateOperation.random(wires=qml.wires.Wires([active_wire0, active_wire0 + 1]))
-        padded_sptm = mg.to_sptm_operation().pad(wires=all_wires).matrix()
+        padded_sptm = mg.to_sptm_operation().pad(wires=all_wires).sptm_matrix()
 
         # compute the sptm from the matchgate explicitly using tensor products
         mg_matrix = mg.matrix()
@@ -68,7 +68,7 @@ class TestSingleParticleTransitionMatrixOperationPadding:
             wires = np.arange(0, p.shape[-1] // 2, dtype=int)
             op = SingleParticleTransitionMatrixOperation(matrix=p, wires=wires)
             new_op = op.pad(wires)
-            return new_op.matrix()
+            return new_op.sptm_matrix()
 
         assert torch.autograd.gradcheck(
             func,
@@ -92,7 +92,7 @@ class TestSingleParticleTransitionMatrixOperationPadding:
         def func(p):
             op = SingleParticleTransitionMatrixOperation(matrix=p, wires=wires)
             new_op = op.pad(new_wires)
-            return new_op.matrix()
+            return new_op.sptm_matrix()
 
         assert torch.autograd.gradcheck(
             func,

@@ -110,7 +110,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
 
         ground_truth_energy = ground_truth_circuit()
         nif_device.reset()
-        sptm = nif_device.apply_generator(random_op_gen).global_sptm.matrix()
+        sptm = nif_device.apply_generator(random_op_gen).global_sptm.sptm_matrix()
         clifford_energy = strategy(state_prep_op, random_hamiltonian, global_sptm=sptm)
         np.testing.assert_allclose(
             clifford_energy,
@@ -135,7 +135,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
 
         ground_truth_energy = ground_truth_circuit()
         nif_device.reset()
-        sptm = nif_device.apply_generator(random_op_gen).global_sptm.matrix()
+        sptm = nif_device.apply_generator(random_op_gen).global_sptm.sptm_matrix()
         clifford_energy = strategy(state_prep_op, random_hamiltonian, global_sptm=sptm)
         np.testing.assert_allclose(
             clifford_energy,
@@ -160,7 +160,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
 
         ground_truth_energy = ground_truth_circuit()
         nif_device.reset()
-        sptm = nif_device.apply_generator(random_op_gen).global_sptm.matrix()
+        sptm = nif_device.apply_generator(random_op_gen).global_sptm.sptm_matrix()
         clifford_energy = strategy(state_prep_op, random_hamiltonian, global_sptm=sptm)
         np.testing.assert_allclose(
             clifford_energy,
@@ -188,7 +188,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
 
         ground_truth_energy = ground_truth_circuit()
         nif_device.reset()
-        sptm = nif_device.apply_generator(random_op_gen).global_sptm.matrix()
+        sptm = nif_device.apply_generator(random_op_gen).global_sptm.sptm_matrix()
         clifford_energy = strategy(state_prep_op, hamiltonian, global_sptm=sptm)
         np.testing.assert_allclose(
             clifford_energy,
@@ -215,7 +215,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
 
         ground_truth_energy = ground_truth_circuit()
         nif_device.reset()
-        clifford_energy = strategy(state_prep_op, hamiltonian, global_sptm=global_sptm.matrix())
+        clifford_energy = strategy(state_prep_op, hamiltonian, global_sptm=global_sptm.sptm_matrix())
         np.testing.assert_allclose(
             clifford_energy,
             ground_truth_energy,
@@ -285,7 +285,7 @@ class TestCliffordExpvalStrategyOnRandomInstances:
             return qml.expval(random_hamiltonian)
 
         ground_truth_energy = ground_truth_circuit()
-        clifford_energy = strategy(state_prep_op, random_hamiltonian, global_sptm=global_sptm.matrix())
+        clifford_energy = strategy(state_prep_op, random_hamiltonian, global_sptm=global_sptm.sptm_matrix())
         np.testing.assert_allclose(
             clifford_energy,
             ground_truth_energy,

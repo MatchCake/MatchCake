@@ -198,7 +198,8 @@ class NIFKernel(Kernel):
             global_sptm = self._q_device.global_sptm
             assert global_sptm is not None
             new_sptm = cast(
-                torch.Tensor, to_tensor(global_sptm.matrix(), dtype=self.R_DTYPE, device=cast(torch.Tensor, x).device)
+                torch.Tensor,
+                to_tensor(global_sptm.sptm_matrix(), dtype=self.R_DTYPE, device=cast(torch.Tensor, x).device),
             ).reshape(-1, 2 * self._q_device.num_wires, 2 * self._q_device.num_wires)
             sptms.append(new_sptm)
         x_tensor = cast(torch.Tensor, x)

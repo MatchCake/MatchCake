@@ -10,10 +10,21 @@ from pennylane.exceptions import DeviceError
 from matchcake import NonInteractingFermionicDevice
 from matchcake.observables.batch_hamiltonian import BatchHamiltonian
 from matchcake.observables.batch_projector import BatchProjector
-from matchcake.operations import CompZX
+from matchcake.operations import CompRxRx, CompRyRy, CompZX, SptmCompRxRx, SptmCompRyRy
+from matchcake.operations.single_particle_transition_matrices import (
+    SingleParticleTransitionMatrixOperation,
+    SptmCompHH,
+    SptmCompZX,
+    SptmFermionicSuperposition,
+)
 from matchcake.operations.state_preparation.state_prep_from_gates import StatePrepFromGates
 
-from ...configs import TEST_SEED, set_seed
+from ...configs import (
+    ATOL_MATRIX_COMPARISON,
+    RTOL_MATRIX_COMPARISON,
+    TEST_SEED,
+    set_seed,
+)
 from .. import init_nif_device
 
 
@@ -360,7 +371,7 @@ class TestNIFDeviceMethodsAndProperties:
         sptm = SingleParticleTransitionMatrixOperation(np.eye(4), wires=[0, 1])
         dev.global_sptm = sptm
         assert dev._global_sptm.dtype == "float64"
-        np.testing.assert_allclose(dev._global_sptm.matrix(), np.eye(4))
+        np.testing.assert_allclose(dev._global_sptm.sptm_matrix(), np.eye(4))
 
     def test_execute_single_quantum_script_directly(self):
         dev = NonInteractingFermionicDevice(wires=2)
@@ -434,7 +445,7 @@ class TestNIFDeviceMethodsAndProperties:
         dev._batched = True
         dev._global_sptm = None
         sptm = dev.global_sptm
-        assert sptm.matrix().shape == (1, 4, 4)
+        assert sptm.sptm_matrix().shape == (1, 4, 4)
 
     def test_convert_op_to_supported_passthrough_matchgate(self):
         from matchcake.operations.matchgate_operation import MatchgateOperation
@@ -461,6 +472,238 @@ class TestNIFDeviceMethodsAndProperties:
         dev = NonInteractingFermionicDevice(wires=2)
         with pytest.raises(DeviceError, match="MatchgateOperation or SingleParticleTransitionMatrixOperation"):
             dev.convert_op_to_supported(qml.CNOT(wires=[0, 1]))
+
+    @pytest.mark.parametrize("n_wires", [2, 3])
+    def test_convert_op_to_supported_adjoint_sptm(self, n_wires):
+        dev = NonInteractingFermionicDevice(wires=n_wires)
+        sptm = SingleParticleTransitionMatrixOperation.random(wires=range(n_wires), seed=TEST_SEED)
+        converted = dev.convert_op_to_supported(qml.adjoint(sptm))
+        assert isinstance(converted, SingleParticleTransitionMatrixOperation)
+        np.testing.assert_allclose(
+            converted.sptm_matrix(),
+            sptm.adjoint().sptm_matrix(),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_convert_op_to_supported_nested_adjoint_sptm(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        sptm = SptmCompRxRx(np.array([0.1, 0.4]), wires=[0, 1])
+        converted = dev.convert_op_to_supported(qml.adjoint(qml.adjoint(sptm)))
+        assert isinstance(converted, SingleParticleTransitionMatrixOperation)
+        np.testing.assert_allclose(
+            converted.sptm_matrix(),
+            sptm.sptm_matrix(),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_convert_op_to_supported_adjoint_native_matchgate(self):
+        from matchcake.operations.matchgate_operation import MatchgateOperation
+
+        dev = NonInteractingFermionicDevice(wires=2)
+        converted = dev.convert_op_to_supported(qml.adjoint(qml.IsingXX(0.5, wires=[0, 1])))
+        assert isinstance(converted, MatchgateOperation)
+
+    def test_has_sptm_interface_to_sptm_operation_only(self):
+        class _OpWithToSptm:
+            def to_sptm_operation(self):
+                return None
+
+        assert NonInteractingFermionicDevice._has_sptm_interface(_OpWithToSptm()) is True
+
+    def test_has_sptm_interface_sptm_attribute_only(self):
+        class _OpWithSptmAttribute:
+            single_particle_transition_matrix = None
+
+        assert NonInteractingFermionicDevice._has_sptm_interface(_OpWithSptmAttribute()) is True
+
+    def test_has_sptm_interface_plain_operator(self):
+        assert NonInteractingFermionicDevice._has_sptm_interface(qml.IsingXX(0.5, wires=[0, 1])) is False
+
+    @pytest.mark.parametrize("n_adjoints", [1, 2, 3])
+    def test_qnode_adjoint_sptm_matches_unitary_adjoint(self, n_adjoints):
+        params = np.array([0.1, 0.4])
+        unitary = qml.math.to_numpy(qml.matrix(CompRxRx(params, wires=[0, 1])))
+        if n_adjoints % 2 == 1:
+            unitary = unitary.conj().T
+
+        def apply_nested_adjoint():
+            op = SptmCompRxRx(params, wires=[0, 1])
+            for _ in range(n_adjoints):
+                op = qml.adjoint(op)
+            return op
+
+        def make_circuit(device, apply_gate):
+            @qml.qnode(device)
+            def circuit():
+                qml.BasisState(np.array([1, 0, 1]), wires=[0, 1, 2])
+                qml.IsingXY(0.4, wires=[0, 1])
+                qml.IsingXY(0.9, wires=[1, 2])
+                apply_gate()
+                return qml.probs(wires=[0, 1, 2])
+
+            return circuit
+
+        expected = make_circuit(
+            qml.device("default.qubit", wires=3),
+            lambda: qml.QubitUnitary(unitary, wires=[0, 1]),
+        )()
+        actual = make_circuit(NonInteractingFermionicDevice(wires=3), apply_nested_adjoint)()
+        np.testing.assert_allclose(
+            qml.math.to_numpy(actual),
+            qml.math.to_numpy(expected),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    @pytest.mark.parametrize(
+        "wrapper, expected_unitary",
+        [
+            ("pow2", lambda u, v: u @ u),
+            ("pow3", lambda u, v: u @ u @ u),
+            ("pow-1", lambda u, v: u.conj().T),
+            ("pow-2", lambda u, v: (u @ u).conj().T),
+            ("pow0", lambda u, v: np.eye(4)),
+            ("prod_same", lambda u, v: u @ u),
+            ("prod_mixed", lambda u, v: v @ u),
+            ("prod_matchgate", lambda u, v: u @ v),
+            ("sprod", lambda u, v: u),
+            ("adjoint_pow", lambda u, v: (u @ u).conj().T),
+            ("adjoint_prod", lambda u, v: (v @ u).conj().T),
+            ("pow_eager-2", lambda u, v: (u @ u).conj().T),
+            ("pow_eager3", lambda u, v: u @ u @ u),
+            ("pow_int64", lambda u, v: u @ u),
+            ("pow_float", lambda u, v: u @ u),
+            ("pow_adjoint-2", lambda u, v: u @ u),
+        ],
+    )
+    def test_qnode_wrapped_sptm_matches_unitary(self, wrapper, expected_unitary):
+        rxrx_params = np.array([0.37, 1.1])
+        ryry_params = np.array([0.2, -0.5])
+        rxrx_unitary = qml.math.to_numpy(qml.matrix(CompRxRx(rxrx_params, wires=[0, 1])))
+        ryry_unitary = qml.math.to_numpy(qml.matrix(CompRyRy(ryry_params, wires=[0, 1])))
+
+        def rxrx():
+            return SptmCompRxRx(rxrx_params, wires=[0, 1])
+
+        def ryry():
+            return SptmCompRyRy(ryry_params, wires=[0, 1])
+
+        # Each entry builds its own operators so no unused operator gets queued in the QNode.
+        wrapped = {
+            "pow2": lambda: qml.pow(rxrx(), 2),
+            "pow3": lambda: qml.pow(rxrx(), 3),
+            "pow-1": lambda: qml.pow(rxrx(), -1),
+            "pow-2": lambda: qml.pow(rxrx(), -2),
+            "pow0": lambda: qml.pow(rxrx(), 0),
+            "prod_same": lambda: qml.prod(rxrx(), rxrx()),
+            "prod_mixed": lambda: qml.prod(ryry(), rxrx()),
+            "prod_matchgate": lambda: qml.prod(rxrx(), CompRyRy(ryry_params, wires=[0, 1])),
+            "sprod": lambda: qml.s_prod(1.0, rxrx()),
+            "adjoint_pow": lambda: qml.adjoint(qml.pow(rxrx(), 2)),
+            "adjoint_prod": lambda: qml.adjoint(qml.prod(ryry(), rxrx())),
+            "pow_eager-2": lambda: qml.pow(rxrx(), -2, lazy=False),
+            "pow_eager3": lambda: qml.pow(rxrx(), 3, lazy=False),
+            "pow_int64": lambda: qml.pow(rxrx(), np.int64(2)),
+            "pow_float": lambda: qml.pow(rxrx(), 2.0),
+            "pow_adjoint-2": lambda: qml.pow(qml.adjoint(rxrx()), -2),
+        }
+
+        def make_circuit(device, apply_gate):
+            @qml.qnode(device)
+            def circuit():
+                qml.BasisState(np.array([1, 0, 1]), wires=[0, 1, 2])
+                qml.IsingXY(0.4, wires=[0, 1])
+                qml.IsingXY(0.9, wires=[1, 2])
+                apply_gate()
+                return qml.probs(wires=[0, 1, 2])
+
+            return circuit
+
+        expected = make_circuit(
+            qml.device("default.qubit", wires=3),
+            lambda: qml.QubitUnitary(expected_unitary(rxrx_unitary, ryry_unitary), wires=[0, 1]),
+        )()
+        actual = make_circuit(NonInteractingFermionicDevice(wires=3), wrapped[wrapper])()
+        np.testing.assert_allclose(
+            qml.math.to_numpy(actual),
+            qml.math.to_numpy(expected),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_convert_op_to_supported_integer_pow_sptm(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        sptm = SptmCompRxRx(np.array([0.1, 0.4]), wires=[0, 1])
+        converted = dev.convert_op_to_supported(qml.pow(sptm, 2))
+        assert isinstance(converted, SingleParticleTransitionMatrixOperation)
+        np.testing.assert_allclose(
+            converted.sptm_matrix(),
+            (sptm @ sptm).sptm_matrix(),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_update_single_particle_transition_matrix_with_matchgate_operands(self):
+        from matchcake.operations.matchgate_operation import MatchgateOperation
+
+        old_op = MatchgateOperation.random(wires=[0, 1], seed=TEST_SEED)
+        new_op = qml.adjoint(MatchgateOperation.random(wires=[0, 1], seed=TEST_SEED + 1))
+        updated = NonInteractingFermionicDevice.update_single_particle_transition_matrix(old_op, new_op)
+        old_sptm = SingleParticleTransitionMatrixOperation.from_operation(old_op).sptm_matrix()
+        new_sptm = SingleParticleTransitionMatrixOperation.from_operation(new_op).sptm_matrix()
+        np.testing.assert_allclose(
+            qml.math.to_numpy(updated),
+            qml.math.to_numpy(
+                NonInteractingFermionicDevice.update_single_particle_transition_matrix(old_sptm, new_sptm)
+            ),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    @pytest.mark.parametrize(
+        "make_sptm",
+        [
+            lambda: SptmCompZX(wires=[0, 1]),
+            lambda: SptmCompZX(wires=[1, 0]),
+            lambda: SptmCompZX(wires=[0, 2]),
+            lambda: SptmCompHH(wires=[1, 2]),
+            lambda: SptmFermionicSuperposition(wires=[0, 1]),
+            lambda: SptmFermionicSuperposition(wires=[0, 1, 2, 3]),
+            lambda: SptmCompRxRx(np.array([np.pi, np.pi]), wires=[0, 1]),
+            lambda: SingleParticleTransitionMatrixOperation(-np.eye(8), wires=[0, 1, 2, 3]),
+            lambda: SingleParticleTransitionMatrixOperation(np.diag([-1.0, 1, 1, 1, 1, -1, 1, 1]), wires=[0, 1, 2, 3]),
+            lambda: SingleParticleTransitionMatrixOperation.random(wires=[0, 1, 2, 3], seed=TEST_SEED),
+        ],
+    )
+    def test_default_qubit_decomposition_matches_nif(self, make_sptm):
+        n_wires = 4
+
+        def make_circuit(device):
+            @qml.qnode(device)
+            def circuit():
+                qml.BasisState(np.array([1, 0, 1, 0]), wires=range(n_wires))
+                for wire in range(n_wires - 1):
+                    qml.IsingXY(0.3 + 0.2 * wire, wires=[wire, wire + 1])
+                qml.apply(make_sptm())
+                for wire in range(n_wires - 1):
+                    qml.IsingXY(0.7 - 0.1 * wire, wires=[wire, wire + 1])
+                return qml.probs(wires=range(n_wires))
+
+            return circuit
+
+        np.testing.assert_allclose(
+            qml.math.to_numpy(make_circuit(qml.device("default.qubit", wires=n_wires))()),
+            qml.math.to_numpy(make_circuit(NonInteractingFermionicDevice(wires=n_wires))()),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_convert_op_to_supported_fractional_pow_sptm_raises(self):
+        dev = NonInteractingFermionicDevice(wires=2)
+        with pytest.raises(DeviceError):
+            dev.convert_op_to_supported(qml.pow(SptmCompRxRx(np.array([0.1, 0.4]), wires=[0, 1]), 0.5))
 
     def test_apply_generator_converts_native_matchgate(self):
         dev = NonInteractingFermionicDevice(wires=2)

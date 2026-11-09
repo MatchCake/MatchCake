@@ -68,7 +68,8 @@ class LookupTableStrategy(ProbabilityStrategy):
 
         obs = lookup_table(system_state, target_arr, wire_indices, show_progress=show_progress)
         chunk_size = kwargs.get("pfaffian_chunk_size", None)
-        return qml.math.real(utils.pfaffian(obs, sign=False, chunk_size=chunk_size))
+        # Outcomes forbidden by the parity of the basis state are exact zeros computed as round-off.
+        return qml.math.real(utils.pfaffian(obs, sign=False, chunk_size=chunk_size, mask_roundoff_gradient=True))
 
     def can_execute(self, state_prep_op: StatePrepBase) -> bool:
         """Return True for preparations reducible to one system basis state.

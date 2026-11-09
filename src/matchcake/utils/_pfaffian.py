@@ -1,4 +1,3 @@
-import threading
 from typing import Optional
 
 import numpy as np
@@ -10,8 +9,6 @@ from pennylane.typing import TensorLike
 from . import torch_utils
 from .math import convert_and_cast_like
 from .torch_utils import infer_real_dtype
-
-_pfaffian_epsilon_lock = threading.Lock()
 
 
 def signed_pfaffian(matrix: TensorLike, dtype: Optional[torch.dtype] = None, **kwargs) -> TensorLike:
@@ -73,7 +70,9 @@ def sector_pfaffian_features(
     return convert_and_cast_like(result, cov_matrix)
 
 
-def _pfaffian_kernel(matrix_t: torch.Tensor, sign: bool, epsilon: float) -> torch.Tensor:
+def _pfaffian_kernel(
+    matrix_t: torch.Tensor, sign: bool, epsilon: float, mask_roundoff_gradient: bool = False
+) -> torch.Tensor:
     """Compute the Pfaffian of a batch of matrices already cast to a torch tensor.
 
     :param matrix_t: Skew-symmetric matrix (or batch) of shape ``(..., 2n, 2n)``.
@@ -82,14 +81,20 @@ def _pfaffian_kernel(matrix_t: torch.Tensor, sign: bool, epsilon: float) -> torc
     :type sign: bool
     :param epsilon: Floor applied to the determinant magnitude in the ``sign=False`` path.
     :type epsilon: float
+    :param mask_roundoff_gradient: In the ``sign=False`` path, delegate to TorchPfaffian's masked
+        magnitude, which gives a zero gradient to Pfaffians that vanish up to round-off.
+    :type mask_roundoff_gradient: bool
     :return: Pfaffian of shape ``(...,)``.
     :rtype: torch.Tensor
     """
     if sign:
         return torch_pfaffian.pfaffian(matrix_t, sign=True)
-    with _pfaffian_epsilon_lock:
-        torch_pfaffian.PfaffianStrategy.EPSILON = epsilon
-        return torch_pfaffian.PfaffianDet.apply(matrix_t)
+    if mask_roundoff_gradient:
+        # check_finite=False keeps the call free of host syncs, like the unmasked path below.
+        return torch_pfaffian.pfaffian(
+            matrix_t, sign=False, epsilon=epsilon, mask_roundoff_gradient=True, check_finite=False
+        )
+    return torch.sqrt(torch.clamp(torch.abs(torch.linalg.det(matrix_t)), min=epsilon))
 
 
 def pfaffian(
@@ -98,6 +103,7 @@ def pfaffian(
     epsilon: float = 1e-32,
     dtype: Optional[torch.dtype] = None,
     chunk_size: Optional[int] = None,
+    mask_roundoff_gradient: bool = False,
 ) -> TensorLike:
     """
     Compute the Pfaffian of a real or complex skew-symmetric matrix ``A`` (``A = -A^T``).
@@ -111,11 +117,9 @@ def pfaffian(
     leading batch axis is then processed in slices of at most ``chunk_size`` matrices, each
     reduced independently and concatenated, instead of all at once.
 
-    Note: with a complex ``matrix`` this function may not behave as expected. The signed path
-    (``sign=True``) relies on a kernel that discards the imaginary part without warning, so it
-    returns the Pfaffian of the real part only. In normal use the signed path receives real
-    matrices, and the magnitude path (``sign=False``) handles complex inputs correctly. If the
-    complex behaviour is a problem for your use case, please open an issue.
+    Both paths accept real and complex matrices. With a complex ``matrix`` the signed path
+    (``sign=True``) returns the complex Pfaffian, and both paths backpropagate with PyTorch's
+    Wirtinger convention.
 
     :param matrix: Matrix to compute the Pfaffian of, of shape ``(..., 2n, 2n)``.
     :param sign: When ``True`` return the signed Pfaffian, otherwise its magnitude. Defaults
@@ -126,6 +130,9 @@ def pfaffian(
         Defaults to ``None`` (the input dtype is preserved).
     :param chunk_size: Maximum number of matrices to reduce at once along the flattened leading
         batch axis. Defaults to ``None`` (the whole batch is reduced in one shot).
+    :param mask_roundoff_gradient: In the ``sign=False`` path, give a zero gradient to Pfaffians
+        that vanish up to round-off, see TorchPfaffian's ``mask_roundoff_gradient``. Use it when such exact zeros
+        are expected, as for parity-forbidden outcomes of a basis state. Defaults to ``False``.
     :return: Pfaffian of the matrix, of shape ``(...,)``.
     :rtype: TensorLike
     """
@@ -135,10 +142,10 @@ def pfaffian(
     if chunk_size is not None and len(batch_shape) > 0 and batch_shape.numel() > chunk_size:
         flat = matrix_t.reshape(-1, matrix_t.shape[-2], matrix_t.shape[-1])  # (B, 2n, 2n)
         pieces = [
-            _pfaffian_kernel(flat[start : start + chunk_size], sign, epsilon)
+            _pfaffian_kernel(flat[start : start + chunk_size], sign, epsilon, mask_roundoff_gradient)
             for start in range(0, flat.shape[0], chunk_size)
         ]
         result = torch.cat(pieces, dim=0).reshape(batch_shape)
     else:
-        result = _pfaffian_kernel(matrix_t, sign, epsilon)
+        result = _pfaffian_kernel(matrix_t, sign, epsilon, mask_roundoff_gradient)
     return convert_and_cast_like(result, matrix)
