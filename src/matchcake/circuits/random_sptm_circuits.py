@@ -43,7 +43,7 @@ def random_sptm_operations_generator(
         wires_arr = np.sort(np.asarray(wires))
     rn_gen = np.random.default_rng(seed)
     for _ in range(n_ops):
-        cls = rn_gen.choice(op_types)
+        cls = op_types[int(rn_gen.integers(0, len(op_types)))]
         rn_wire0 = rn_gen.choice(wires_arr[:-1])
         rn_wire1 = rn_wire0 + 1
         op = cls.random(wires=[rn_wire0, rn_wire1], batch_size=batch_size, seed=seed)

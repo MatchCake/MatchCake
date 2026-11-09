@@ -9,6 +9,7 @@ SCRIPT_PATH = REPOSITORY_ROOT / ".github" / "scripts" / "resolve_repository_link
 SPHINX_CONF_PATH = REPOSITORY_ROOT / "sphinx" / "source" / "conf.py"
 
 _SPEC = importlib.util.spec_from_file_location("resolve_repository_links", SCRIPT_PATH)
+assert _SPEC is not None and _SPEC.loader is not None
 resolve_repository_links = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(resolve_repository_links)
 

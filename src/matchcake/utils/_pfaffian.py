@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, cast
 
 import numpy as np
 import pennylane as qml
@@ -136,7 +136,7 @@ def pfaffian(
     :return: Pfaffian of the matrix, of shape ``(...,)``.
     :rtype: TensorLike
     """
-    matrix_t = torch_utils.to_tensor(matrix, dtype=dtype)
+    matrix_t = cast(torch.Tensor, torch_utils.to_tensor(matrix, dtype=dtype))
     batch_shape = matrix_t.shape[:-2]
 
     if chunk_size is not None and len(batch_shape) > 0 and batch_shape.numel() > chunk_size:

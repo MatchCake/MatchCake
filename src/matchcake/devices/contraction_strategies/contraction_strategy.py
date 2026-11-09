@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence
+from typing import Optional, Sequence, cast
 
 import tqdm
 from pennylane.operation import Operation
@@ -27,7 +27,7 @@ class ContractionStrategy(ABC):
     def get_next_operations(self, operation) -> Sequence[Optional[Operation]]:
         if not isinstance(operation, tuple(self.container.ALLOWED_GATE_CLASSES)):
             return [self.container.contract_and_clear(), operation]
-        return [self.container.push_contract(operation)]
+        return [self.container.push_contract(cast(MatchgateOperation, operation))]
 
     def get_reminding(self):
         return self.container.contract_and_clear()

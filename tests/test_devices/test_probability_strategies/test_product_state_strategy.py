@@ -94,7 +94,7 @@ class TestProductStateProbabilityStrategy:
         for bits in itertools.product([0, 1], repeat=n_wires):
             y = np.array(bits, dtype=int)
             expected = self._sector_sum_oracle(lambda_t, y)
-            actual = float(nif_dev.get_state_probability(y))
+            actual = float(np.asarray(nif_dev.get_state_probability(y)))
             np.testing.assert_allclose(actual, expected, atol=ATOL_SCALAR_COMPARISON)
 
     @pytest.mark.parametrize("n_wires", [2, 3, 4])
