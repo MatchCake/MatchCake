@@ -382,7 +382,7 @@ class MatchgateOperation(Operation):
     def _check_m_m_dagger_constraint(self) -> bool:
         with torch.no_grad():
             m_m_dagger = torch.einsum("...ij,...kj->...ik", self.matrix(), torch.conj(self.matrix()))
-            expected_zero = to_cpu(m_m_dagger) - torch.eye(4)
+            expected_zero = to_cpu(m_m_dagger, dtype=torch.complex128) - torch.eye(4, dtype=torch.complex128)
             check = torch.allclose(expected_zero, torch.zeros_like(expected_zero), atol=1e-5)
         if not check:
             raise ValueError(
@@ -393,7 +393,7 @@ class MatchgateOperation(Operation):
     def _check_m_dagger_m_constraint(self) -> bool:
         with torch.no_grad():
             m_dagger_m = torch.einsum("...ji,...jk->...ik", torch.conj(self.matrix()), self.matrix())
-            expected_zero = to_cpu(m_dagger_m) - torch.eye(4)
+            expected_zero = to_cpu(m_dagger_m, dtype=torch.complex128) - torch.eye(4, dtype=torch.complex128)
             check = torch.allclose(expected_zero, torch.zeros_like(expected_zero), atol=1e-5)
         if not check:
             raise ValueError(
@@ -403,7 +403,7 @@ class MatchgateOperation(Operation):
 
     def _check_structure_constraint(self) -> bool:
         with torch.no_grad():
-            matrix = to_cpu(self.matrix())
+            matrix = to_cpu(self.matrix(), dtype=torch.complex128)
             off_structure = torch.stack([matrix[..., r, c] for r, c in self.MATCHGATE_ZERO_POSITIONS], dim=-1)
             check = torch.allclose(off_structure, torch.zeros_like(off_structure), atol=1e-5)
         if not check:
