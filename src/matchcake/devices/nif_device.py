@@ -200,6 +200,27 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             return True
         return hasattr(op, "to_sptm_operation") or hasattr(op, "single_particle_transition_matrix")
 
+    @staticmethod
+    def _is_computational_basis_diagonal(observable: qml.operation.Operator) -> bool:
+        """Return True when an observable is diagonal in the computational basis.
+
+        Shot-based estimates are computed from computational basis samples, so they are only
+        valid for such observables. Observables with a Pauli representation are diagonal when
+        every Pauli word contains only ``Z`` and identity factors. Other observables are
+        considered diagonal when they need no diagonalizing gates.
+
+        :param observable: The observable to check.
+        :type observable: qml.operation.Operator
+        :return: True if the observable is diagonal in the computational basis.
+        :rtype: bool
+        """
+        pauli_rep = observable.pauli_rep
+        if pauli_rep is not None:
+            return all(set(pauli_word.values()) <= {"Z"} for pauli_word in pauli_rep)
+        if not observable.has_diagonalizing_gates:
+            return False
+        return len(observable.diagonalizing_gates()) == 0
+
     @classmethod
     def update_single_particle_transition_matrix(
         cls,
@@ -752,6 +773,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         """
         if self._active_shots is None:
             return self.exact_expval(observable)
+        self._check_observable_can_be_sampled(observable)
         mp = ExpectationMP(obs=observable)
         return mp.process_samples(self._samples, wire_order=self.wires, shot_range=shot_range, bin_size=bin_size)
 
@@ -1095,6 +1117,26 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             x = qml.math.real(x)
         return qml.math.cast(torch_utils.to_cpu(x, dtype=dtype), dtype=dtype)
 
+    def _check_observable_can_be_sampled(self, observable: Optional[qml.operation.Operator]) -> None:
+        """Raise when a shot-based estimate of an observable would be wrong.
+
+        Samples are drawn in the computational basis and the device does not rotate them into
+        the eigenbasis of the observable, so only observables diagonal in the computational
+        basis can be estimated from them.
+
+        :param observable: The observable to estimate from samples, or None when there is none.
+        :type observable: Optional[qml.operation.Operator]
+        :return: None
+        :raises DeviceError: If the observable is not diagonal in the computational basis.
+        """
+        if observable is None or self._is_computational_basis_diagonal(observable):
+            return
+        raise DeviceError(
+            f"The observable {observable} is not diagonal in the computational basis and cannot be "
+            f"estimated from shots on {self.name}. Use analytic mode (shots=None) or an observable "
+            f"made only of Z and identity factors."
+        )
+
     def _dot(self, a: TensorLike, b: TensorLike) -> TensorLike:
         r"""
         Compute the dot product of two arrays.
@@ -1144,6 +1186,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         if isinstance(measurement, SampleMP):
             if measurement.obs is None:
                 return self._samples
+            self._check_observable_can_be_sampled(measurement.obs)
             return measurement.process_samples(self._samples, wire_order=self.wires)
         raise NotImplementedError(f"Measurement {type(measurement).__name__} is not supported by {self.name}.")
 
