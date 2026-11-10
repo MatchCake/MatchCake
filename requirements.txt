@@ -231,7 +231,7 @@ more-itertools==11.2.1 ; platform_machine != 'ppc64le' and platform_machine != '
     #   jaraco-functools
 mpmath==1.4.1
     # via sympy
-mypy==1.20.2
+mypy==2.4.1
 mypy-extensions==1.2.0
     # via
     #   isort
