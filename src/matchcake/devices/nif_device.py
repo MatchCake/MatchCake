@@ -90,7 +90,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
     The initial state of the device is the Z-zero state :math:`|0\rangle_{Z}^{\otimes N}` unless a state preparation
     operation is applied at the beginning of the circuit.
 
-    :param wires: The number of wires of the device
+    :param wires: The number of wires of the device, or its wire labels. Labels must be the consecutive
+        integers ``0, 1, ..., N - 1`` (see the note on wire labels below).
     :type wires: Union[int, Wires, List[int]]
     :param shots: The number of shots used by the device. Defaults to ``None`` (analytic mode).
     :type shots: Optional[int]
@@ -135,6 +136,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
     :Note: Probabilities are routed by :attr:`prob_dispatcher`, a fixed ordered chain of strategies resolved by
         each strategy's ``can_execute``. There is no keyword to select a strategy; to pin one, replace
         :attr:`prob_dispatcher` on the constructed device.
+    :Note: Only the wire labels ``0, 1, ..., N - 1`` are supported, in this order. Custom labels such as
+        ``[10, 20, 30]`` or ``["a", "b", "c"]`` are not supported and raise an error at execution time.
+        Wires used in circuits and measurements (e.g. ``qml.sample(wires=[2, 0])``) must refer to these labels.
     :Note: This device is in development, and its API is subject to change.
     """
 
@@ -1261,7 +1265,10 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             return self.probability(wires=measurement.wires or self.wires)
         if isinstance(measurement, SampleMP):
             if measurement.obs is None:
-                return self._samples
+                if not measurement.wires:
+                    return self._samples
+                # samples: (shots, ..., num_wires) -> (shots, ..., len(measurement.wires))
+                return self._samples[..., self.wires.indices(measurement.wires)]
             mp = self._build_sampled_measurement(SampleMP, measurement.obs)
             return mp.process_samples(self._samples, wire_order=self.wires)
         raise NotImplementedError(f"Measurement {type(measurement).__name__} is not supported by {self.name}.")
