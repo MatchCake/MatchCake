@@ -126,7 +126,7 @@ idna==3.20
     # via requests
 imagesize==2.0.1
     # via sphinx
-importlib-metadata==8.9.0
+importlib-metadata==10.1.0
     # via
     #   jupyter-cache
     #   keyring
