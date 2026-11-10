@@ -620,7 +620,7 @@ traitlets==5.16.1
     #   nbsphinx
 triton==3.9.0 ; sys_platform == 'linux'
     # via torch
-twine==6.2.0
+twine==7.0.0
 typing-extensions==4.16.0
     # via
     #   beautifulsoup4

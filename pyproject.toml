@@ -87,7 +87,7 @@ dev = [
     "nbmake>=1.5,<2",
     "wheel>=0.46.2,<0.49",
     "build>=1.4,<2",
-    "twine>=6.1,<7",
+    "twine>=6.1,<8",
     "pytest-xdist>=3.7,<4",
     "pytest-timeout>=2.4",
     "pip>=25",
@@ -99,7 +99,7 @@ dev = [
 docs = [
     "wheel>=0.46.2,<0.49",
     "build>=1.4,<2",
-    "twine>=6.1,<7",
+    "twine>=6.1,<8",
     "sphinx>=6.2,<6.3",
     "docutils>=0.18,<0.20",
     "sphinx-rtd-theme>=3.0,<4",
@@ -176,7 +176,7 @@ requires = [
     "setuptools>=77",
     "wheel>=0.46.2,<0.49",
     "build>=1.2.2.post1,<2",
-    "twine>=6.1.0,<7",
+    "twine>=6.1.0,<8",
 ]
 build-backend = "setuptools.build_meta"
 
