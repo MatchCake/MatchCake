@@ -1,4 +1,5 @@
 import numpy as np
+import pennylane as qml
 import pytest
 import torch
 
@@ -97,6 +98,17 @@ class TestMatchgateOperation:
                     [0.0, 0, 1.0, 0],
                 ]
             ),
+            # CY: purely imaginary off-structure entries.
+            np.array(
+                [
+                    [1.0, 0, 0, 0.0],
+                    [0, 1.0, 0.0, 0],
+                    [0, 0.0, 0.0, -1.0j],
+                    [0.0, 0, 1.0j, 0],
+                ]
+            ),
+            # CRX(1.2): purely imaginary off-structure entries.
+            qml.matrix(qml.CRX(1.2, wires=[0, 1])),
         ],
     )
     def test_init_from_not_matchgate(self, input_matrix):
