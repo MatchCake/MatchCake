@@ -482,7 +482,7 @@ pyzmq==27.3.0
     # via
     #   ipykernel
     #   jupyter-client
-readme-renderer==43.0
+readme-renderer==46.0
     # via twine
 referencing==0.37.0
     # via
