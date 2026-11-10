@@ -332,7 +332,7 @@ nvidia-cuda-nvrtc==13.5.37 ; sys_platform == 'linux'
     #   nvidia-cublas
 nvidia-cuda-runtime==13.5.37 ; (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')
     # via cuda-toolkit
-nvidia-cudnn-cu13==9.28.0.42 ; sys_platform == 'linux'
+nvidia-cudnn-cu13==9.28.1.4 ; sys_platform == 'linux'
     # via torch
 nvidia-cufft==12.5.0.14 ; (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')
     # via cuda-toolkit
