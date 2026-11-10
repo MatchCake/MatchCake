@@ -1,6 +1,7 @@
 from collections import defaultdict
 from dataclasses import replace as _dataclass_replace
 from functools import partial
+from itertools import product
 from typing import Any, Iterable, List, Literal, Optional, Union
 
 import numpy as np
@@ -201,17 +202,18 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         return hasattr(op, "to_sptm_operation") or hasattr(op, "single_particle_transition_matrix")
 
     @staticmethod
-    def _is_computational_basis_diagonal(observable: qml.operation.Operator) -> bool:
-        """Return True when an observable is diagonal in the computational basis.
+    def _can_process_samples_directly(observable: qml.operation.Operator) -> bool:
+        """Return True when computational basis samples can be processed with the observable itself.
 
-        Shot-based estimates are computed from computational basis samples, so they are only
-        valid for such observables. Observables with a Pauli representation are diagonal when
-        every Pauli word contains only ``Z`` and identity factors. Other observables are
-        considered diagonal when they need no diagonalizing gates.
+        PennyLane maps samples to the eigenvalues of the observable assuming its diagonalizing
+        gates were applied, which this device never does. This is only correct when the
+        observable is diagonal and its eigenvalues are given in computational basis order:
+        Pauli words made only of ``Z`` and identity factors, or observables that need no
+        diagonalizing gates.
 
         :param observable: The observable to check.
         :type observable: qml.operation.Operator
-        :return: True if the observable is diagonal in the computational basis.
+        :return: True if the samples can be processed with the observable itself.
         :rtype: bool
         """
         pauli_rep = observable.pauli_rep
@@ -220,6 +222,27 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         if not observable.has_diagonalizing_gates:
             return False
         return len(observable.diagonalizing_gates()) == 0
+
+    @staticmethod
+    def _diagonal_matrix_eigvals(observable: qml.operation.Operator) -> Optional[np.ndarray]:
+        """Return the eigenvalues of an observable with a diagonal matrix, in computational basis order.
+
+        This covers diagonal observables such as a diagonal ``qml.Hermitian``, whose
+        ``eigvals`` are sorted and therefore not aligned with the computational basis states.
+
+        :param observable: The observable to inspect.
+        :type observable: qml.operation.Operator
+        :return: The diagonal of the matrix of the observable, shape (2^k,) for k wires, or None
+            if the observable has no matrix, is batched, or is not diagonal.
+        :rtype: Optional[np.ndarray]
+        """
+        if not observable.has_matrix or observable.batch_size is not None:
+            return None
+        matrix = qml.math.to_numpy(observable.matrix())
+        diagonal = np.diagonal(matrix)
+        if not np.allclose(matrix, np.diag(diagonal)):
+            return None
+        return np.real(diagonal)
 
     @classmethod
     def update_single_particle_transition_matrix(
@@ -584,8 +607,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         cannot be computed using any of the defined strategies, an error is raised.
 
         :param observable: The observable for which the expectation value is to be
-            computed. It must be of a compatible type such as BasisStateProjector
-            or BatchProjector, or match the supported execution strategies.
+            computed. It must be of a compatible type such as BasisStateProjector,
+            BatchProjector or Hermitian (decomposed into Pauli words), or match the supported
+            execution strategies.
         :type observable: qml.operation.Operator
         :return: The computed expectation value of the given observable.
         :rtype: TensorLike
@@ -600,6 +624,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             return self.get_state_probability(observable.parameters[0], observable.wires)
         if isinstance(observable, BatchProjector):
             return self.get_states_probability(observable.get_states(), observable.get_batch_wires())
+        if isinstance(observable, qml.Hermitian):
+            return self._hermitian_exact_expval(observable)
         if self.m_pfaffian_expval_strategy.can_execute(self.state_prep_op, observable):
             return self.m_pfaffian_expval_strategy(
                 self.state_prep_op,
@@ -773,8 +799,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         """
         if self._active_shots is None:
             return self.exact_expval(observable)
-        self._check_observable_can_be_sampled(observable)
-        mp = ExpectationMP(obs=observable)
+        mp = self._build_sampled_measurement(ExpectationMP, observable)
         return mp.process_samples(self._samples, wire_order=self.wires, shot_range=shot_range, bin_size=bin_size)
 
     def generate_samples(self) -> np.ndarray:
@@ -1117,25 +1142,76 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             x = qml.math.real(x)
         return qml.math.cast(torch_utils.to_cpu(x, dtype=dtype), dtype=dtype)
 
-    def _check_observable_can_be_sampled(self, observable: Optional[qml.operation.Operator]) -> None:
-        """Raise when a shot-based estimate of an observable would be wrong.
+    def _build_sampled_measurement(
+        self,
+        measurement_type: type[Union[ExpectationMP, SampleMP]],
+        observable: Optional[qml.operation.Operator],
+    ) -> Union[ExpectationMP, SampleMP]:
+        """Build a measurement process that correctly processes computational basis samples.
 
         Samples are drawn in the computational basis and the device does not rotate them into
         the eigenbasis of the observable, so only observables diagonal in the computational
-        basis can be estimated from them.
+        basis can be estimated from them. Diagonal observables whose eigenvalues are not in
+        computational basis order (e.g. a diagonal ``qml.Hermitian``) are measured through the
+        diagonal of their matrix.
 
+        :param measurement_type: The measurement process class to build.
+        :type measurement_type: type[Union[ExpectationMP, SampleMP]]
         :param observable: The observable to estimate from samples, or None when there is none.
         :type observable: Optional[qml.operation.Operator]
-        :return: None
+        :return: The measurement process to call ``process_samples`` on.
+        :rtype: Union[ExpectationMP, SampleMP]
         :raises DeviceError: If the observable is not diagonal in the computational basis.
         """
-        if observable is None or self._is_computational_basis_diagonal(observable):
-            return
+        if observable is None or self._can_process_samples_directly(observable):
+            return measurement_type(obs=observable)
+        eigvals = self._diagonal_matrix_eigvals(observable)
+        if eigvals is not None:
+            return measurement_type(eigvals=eigvals, wires=observable.wires)
         raise DeviceError(
             f"The observable {observable} is not diagonal in the computational basis and cannot be "
             f"estimated from shots on {self.name}. Use analytic mode (shots=None) or an observable "
-            f"made only of Z and identity factors."
+            f"diagonal in the computational basis."
         )
+
+    def _hermitian_exact_expval(self, observable: qml.Hermitian) -> TensorLike:
+        """Compute the exact expectation value of a Hermitian observable.
+
+        A Hermitian matrix ``H`` on k wires decomposes as ``H = sum_P tr(P H) / 2^k P`` over the
+        4^k Pauli words ``P``, which the Pauli word strategies evaluate exactly. When the matrix
+        is not trainable, the words with a non-zero coefficient are evaluated together as a
+        single Pauli sum. The strategies do not propagate gradients through the coefficients of
+        a sum, so when the matrix is trainable each word is evaluated separately and weighted
+        here instead.
+
+        :param observable: The Hermitian observable.
+        :type observable: qml.Hermitian
+        :return: The expectation value of the observable, shape (...) for batched circuits.
+        :rtype: TensorLike
+        """
+        matrix = observable.matrix()
+        wires = observable.wires
+        dimension = 2 ** len(wires)
+        is_trainable = qml.math.requires_grad(matrix)
+        coeffs, pauli_words = [], []
+        for letters in product("IXYZ", repeat=len(wires)):
+            pauli_word = qml.pauli.PauliWord({wire: letter for wire, letter in zip(wires, letters) if letter != "I"})
+            word_matrix = qml.math.convert_like(pauli_word.to_mat(wire_order=wires), matrix)
+            coeff = qml.math.real(qml.math.trace(qml.math.dot(word_matrix, matrix))) / dimension
+            # The identity word is always kept so that the decomposition is never empty.
+            is_identity = len(pauli_word) == 0
+            if not is_identity and not is_trainable and qml.math.allclose(coeff, 0.0):
+                continue
+            coeffs.append(coeff)
+            pauli_words.append(pauli_word.operation(wire_order=wires))
+        if not is_trainable:
+            return qml.math.real(self.exact_expval(qml.Hamiltonian(coeffs, pauli_words)))
+        weighted_terms = []
+        for coeff, pauli_word in zip(coeffs, pauli_words):
+            word_expval = qml.math.real(self.exact_expval(pauli_word))  # (...)
+            weighted_terms.append(utils.math.convert_and_cast_like(coeff, word_expval) * word_expval)
+        # The sum broadcasts the unbatched identity term over the batch dimensions.
+        return sum(weighted_terms[1:], weighted_terms[0])
 
     def _dot(self, a: TensorLike, b: TensorLike) -> TensorLike:
         r"""
@@ -1186,8 +1262,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         if isinstance(measurement, SampleMP):
             if measurement.obs is None:
                 return self._samples
-            self._check_observable_can_be_sampled(measurement.obs)
-            return measurement.process_samples(self._samples, wire_order=self.wires)
+            mp = self._build_sampled_measurement(SampleMP, measurement.obs)
+            return mp.process_samples(self._samples, wire_order=self.wires)
         raise NotImplementedError(f"Measurement {type(measurement).__name__} is not supported by {self.name}.")
 
     def _stopping_condition(self, op: qml.operation.Operator) -> bool:
