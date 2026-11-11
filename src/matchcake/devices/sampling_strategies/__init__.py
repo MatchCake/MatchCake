@@ -1,4 +1,5 @@
 from ...utils import get_all_subclasses
+from .product_basis_sampling import ProductBasisSampling
 from .qubit_by_qubit_sampling import QubitByQubitSampling
 from .sampling_strategy import SamplingStrategy
 from .two_qubits_by_two_qubits_sampling import TwoQubitsByTwoQubitsSampling

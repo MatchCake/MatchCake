@@ -29,19 +29,18 @@ DIAGONAL_OBSERVABLES = [
     qml.Hermitian(np.diag([4.0, -1.0, 2.0, 0.0]), wires=[1, 0]),
 ]
 
-NON_DIAGONAL_OBSERVABLES = [
+# Sampled in a product basis of single-qubit Paulis.
+PAULI_PRODUCT_BASIS_OBSERVABLES = [
     qml.X(0),
     qml.Y(1),
     qml.X(0) @ qml.X(1),
     qml.Z(0) @ qml.Y(1),
     qml.Z(0) + qml.X(1),
     qml.Hamiltonian([1.0, 2.0], [qml.Z(0), qml.X(0) @ qml.X(1)]),
-    qml.Hermitian(np.array([[0.0, 1.0], [1.0, 0.0]]), wires=0),
 ]
 
-# PennyLane rejects ``qml.sample`` of sums before they reach the device.
-NON_DIAGONAL_SAMPLE_OBSERVABLES = [
-    observable for observable in NON_DIAGONAL_OBSERVABLES if not isinstance(observable, qml.ops.Sum)
+NON_DIAGONAL_OBSERVABLES = [
+    qml.Hermitian(np.array([[0.0, 1.0], [1.0, 0.0]]), wires=0),
 ]
 
 
@@ -72,13 +71,23 @@ class TestNonInteractingFermionicDeviceShotsObservables:
             float(estimate), float(expected), atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON
         )
 
+    @pytest.mark.parametrize("observable", PAULI_PRODUCT_BASIS_OBSERVABLES)
+    def test_pauli_product_basis_observable_expval_matches_analytic(self, observable):
+        analytic_device = qml.device("default.qubit", wires=2)
+        shots_device = NonInteractingFermionicDevice(wires=2, shots=N_SHOTS)
+        expected = qml.QNode(self.circuit, analytic_device)(observable)
+        estimate = qml.QNode(self.circuit, shots_device)(observable)
+        np.testing.assert_allclose(
+            float(estimate), float(expected), atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON
+        )
+
     @pytest.mark.parametrize("observable", NON_DIAGONAL_OBSERVABLES)
     def test_non_diagonal_observable_expval_raises_with_shots(self, observable):
         shots_device = NonInteractingFermionicDevice(wires=2, shots=N_SHOTS)
         with pytest.raises(DeviceError, match="not diagonal in the computational basis"):
             qml.QNode(self.circuit, shots_device)(observable)
 
-    @pytest.mark.parametrize("observable", NON_DIAGONAL_SAMPLE_OBSERVABLES)
+    @pytest.mark.parametrize("observable", NON_DIAGONAL_OBSERVABLES)
     def test_non_diagonal_observable_sample_raises_with_shots(self, observable):
         shots_device = NonInteractingFermionicDevice(wires=2, shots=N_SHOTS)
         with pytest.raises(DeviceError, match="not diagonal in the computational basis"):
@@ -162,3 +171,55 @@ class TestNonInteractingFermionicDeviceShotsObservables:
         measurement = shots_device._build_sampled_measurement(ExpectationMP, None)
         assert isinstance(measurement, ExpectationMP)
         assert measurement.obs is None
+
+    @staticmethod
+    def batched_circuit(theta, measurement_fn):
+        qml.BasisState(np.array([0, 1]), wires=[0, 1])
+        qml.SingleExcitation(theta, wires=[0, 1])
+        return measurement_fn()
+
+    @pytest.mark.parametrize(
+        "measurement_fn",
+        [
+            lambda: qml.expval(qml.Z(0)),
+            lambda: qml.expval(qml.X(0) @ qml.X(1)),
+            lambda: qml.probs(wires=[0]),
+            lambda: (qml.expval(qml.Z(1)), qml.probs(wires=[0, 1])),
+        ],
+    )
+    def test_batched_circuit_matches_default_qubit(self, measurement_fn):
+        theta = np.array([0.1, 0.8, 2.0])
+        expected = qml.set_shots(qml.QNode(self.batched_circuit, qml.device("default.qubit", wires=2)), None)(
+            theta, measurement_fn
+        )
+        estimate = qml.QNode(self.batched_circuit, NonInteractingFermionicDevice(wires=2, shots=N_SHOTS))(
+            theta, measurement_fn
+        )
+        if not isinstance(expected, tuple):
+            expected, estimate = (expected,), (estimate,)
+        for expected_result, estimated_result in zip(expected, estimate):
+            np.testing.assert_allclose(
+                np.asarray(estimated_result, dtype=float),
+                np.asarray(expected_result, dtype=float),
+                atol=ATOL_APPROX_COMPARISON,
+                rtol=RTOL_APPROX_COMPARISON,
+            )
+
+    @pytest.mark.parametrize(
+        "measurement_fn, expected_shape",
+        [
+            (lambda: qml.sample(), (3, N_SHOTS, 2)),
+            (lambda: qml.sample(wires=[1]), (3, N_SHOTS, 1)),
+            (lambda: qml.sample(qml.Z(0)), (3, N_SHOTS)),
+            (lambda: qml.sample(qml.X(0) @ qml.X(1)), (3, N_SHOTS)),
+        ],
+    )
+    def test_batched_circuit_sample_shape(self, measurement_fn, expected_shape):
+        samples = qml.QNode(self.batched_circuit, NonInteractingFermionicDevice(wires=2, shots=N_SHOTS))(
+            np.array([0.1, 0.8, 2.0]), measurement_fn
+        )
+        assert np.shape(samples) == expected_shape
+
+    def test_samples_in_pennylane_layout_without_samples_raises(self):
+        with pytest.raises(ValueError, match="No samples have been generated"):
+            NonInteractingFermionicDevice(wires=2)._samples_in_pennylane_layout()

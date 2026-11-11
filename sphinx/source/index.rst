@@ -19,6 +19,7 @@ Welcome to MatchCake's documentation!
    tutorials/matchcake_basics.ipynb
    tutorials/expectation_values.ipynb
    tutorials/probabilities.ipynb
+   tutorials/sampling.ipynb
    tutorials/iris_classification.ipynb
    tutorials/nystroem_kernel_approximation.ipynb
 

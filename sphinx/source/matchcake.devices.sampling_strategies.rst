@@ -12,6 +12,14 @@ matchcake.devices.sampling\_strategies.k\_qubits\_by\_k\_qubits\_sampling module
    :undoc-members:
    :show-inheritance:
 
+matchcake.devices.sampling\_strategies.product\_basis\_sampling module
+----------------------------------------------------------------------
+
+.. automodule:: matchcake.devices.sampling_strategies.product_basis_sampling
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 matchcake.devices.sampling\_strategies.qubit\_by\_qubit\_sampling module
 ------------------------------------------------------------------------
 

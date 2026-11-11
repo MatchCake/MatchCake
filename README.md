@@ -224,6 +224,7 @@ viz.plot_2d_decision_boundaries(model=pipeline, y=y, show=True)
 # Tutorials
 - [MatchCake Basics](https://github.com/MatchCake/MatchCake/blob/main/tutorials/matchcake_basics.ipynb)
 - [Compute Expectation Values with MatchCake](https://github.com/MatchCake/MatchCake/blob/main/tutorials/expectation_values.ipynb)
+- [Sampling with MatchCake](https://github.com/MatchCake/MatchCake/blob/main/tutorials/sampling.ipynb)
 - [Iris Classification with MatchCake](https://github.com/MatchCake/MatchCake/blob/main/tutorials/iris_classification.ipynb)
 - [Nystroem Kernel Approximation](https://github.com/MatchCake/MatchCake/blob/main/tutorials/nystroem_kernel_approximation.ipynb)
 

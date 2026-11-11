@@ -89,4 +89,5 @@ class TestNonInteractingFermionicDeviceSampleWires:
         sample_wires = [2, 0]
 
         samples = device._process_measurement(qml.sample(wires=sample_wires))
-        np.testing.assert_array_equal(samples, device._samples[..., sample_wires])
+        # PennyLane layout: (batch, shots, len(sample_wires))
+        np.testing.assert_array_equal(samples, np.moveaxis(device._samples, 0, -2)[..., sample_wires])
