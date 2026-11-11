@@ -1,3 +1,4 @@
+from .merge_blocks import merge_blocks
 from .random_generator import RandomOperationsGenerator
 from .random_matchgate_circuits import (
     RandomMatchgateHaarOperationsGenerator,

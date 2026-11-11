@@ -1,10 +1,10 @@
-from typing import Any, Iterable, List, Literal, Optional, Sequence, Union
+from typing import Any, Callable, Iterable, List, Literal, Optional, Sequence, Union
 
 import numpy as np
 import pennylane as qml
 from pennylane.exceptions import MatrixUndefinedError, PowUndefinedError
 from pennylane.math import expm
-from pennylane.operation import Operation, Operator
+from pennylane.operation import Operation, Operator, StatePrepBase
 from pennylane.ops.op_math import Adjoint, Pow
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires, WiresLike
@@ -17,6 +17,7 @@ from ...utils.majorana import MajoranaGetter
 from ...utils.math import (
     convert_and_cast_like,
     dagger,
+    fermionic_operator_matmul,
     orthonormalize,
 )
 
@@ -281,6 +282,52 @@ class SingleParticleTransitionMatrixOperation(Operation):
             raise ValueError(f"Invalid angles: {angles}. Expected: {cls.EQUAL_ALLOWED_ANGLES}")
 
         return True
+
+    @classmethod
+    def from_circuit(
+        cls, circuit: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> "SingleParticleTransitionMatrixOperation":
+        """
+        Contract every operation of a quantum function into a single SPTM operation.
+
+        The quantum function is recorded with ``*args`` and ``**kwargs`` (its measurements are ignored),
+        and its operations are multiplied in circuit order, the same way the
+        :class:`~matchcake.devices.nif_device.NonInteractingFermionicDevice` applies them. The result
+        acts on the continuous span of the wires used by the circuit, so it can be merged with other
+        circuits on disjoint wires using :meth:`from_operations` and chained with ``@``. When called
+        inside a QNode, only the returned operation is queued, so the circuit is applied once as a
+        single gate.
+
+        :param circuit: The quantum function to contract.
+        :type circuit: Callable[..., Any]
+        :param args: Positional arguments passed to ``circuit``.
+        :type args: Any
+        :param kwargs: Keyword arguments passed to ``circuit``.
+        :type kwargs: Any
+        :return: The SPTM of the whole circuit, shape (..., 2n, 2n).
+        :rtype: SingleParticleTransitionMatrixOperation
+        :raises ValueError: If the circuit contains a state preparation or no operation.
+        """
+        # Only the returned operation is queued, like any other operation constructor.
+        with qml.QueuingManager.stop_recording():
+            tape = qml.tape.make_qscript(circuit)(*args, **kwargs)
+            ops = [op for op in tape.operations if not isinstance(op, qml.Identity)]
+            state_preps = [op for op in ops if isinstance(op, StatePrepBase)]
+            if state_preps:
+                raise ValueError(
+                    f"Cannot contract the state preparation(s) {state_preps} into a {cls.__name__}, "
+                    f"since it only represents a free fermionic evolution."
+                )
+            if len(ops) == 0:
+                raise ValueError(f"Cannot build a {cls.__name__} from a circuit without operations.")
+            sptm_ops = [cls.from_operation(op) for op in ops]
+            all_wires = cls.make_wires_continuous(Wires.all_wires([op.wires for op in sptm_ops], sort=True))
+            matrices = [op.pad(all_wires).sptm_matrix() for op in sptm_ops]
+            matrices = utils.math.convert_tensors_to_same_type_and_cast_to(matrices, cls.casting_priorities)
+            matrix = matrices[0]
+            for next_matrix in matrices[1:]:
+                matrix = fermionic_operator_matmul(matrix, next_matrix, operator="einsum")
+        return SingleParticleTransitionMatrixOperation(matrix, wires=all_wires)
 
     @classmethod
     def from_operation(
