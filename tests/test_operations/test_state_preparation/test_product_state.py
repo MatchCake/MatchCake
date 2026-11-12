@@ -160,10 +160,73 @@ class TestProductState:
         expected[0b010] = 1.0
         np.testing.assert_allclose(psi, expected, atol=1e-12)
 
+    def test_state_vector_embeds_torch_state_into_larger_wire_order(self):
+        op = ProductState(torch.tensor([[0.0, 1.0]], dtype=torch.complex128), wires=[1])
+
+        psi = op.state_vector(wire_order=[0, 1, 2])
+
+        assert isinstance(psi, torch.Tensor)
+        expected = np.zeros(8, dtype=complex)
+        expected[0b010] = 1.0
+        np.testing.assert_allclose(psi.reshape(-1).numpy(), expected, atol=ATOL_MATRIX_COMPARISON)
+
     def test_state_vector_rejects_incomplete_wire_order(self):
         op = ProductState(np.array([1, 0, 0, 1], dtype=complex), wires=[0, 1])
         with pytest.raises(ValueError, match="must contain"):
             op.state_vector(wire_order=[0])
+
+    @pytest.mark.parametrize(
+        "op_wires, target_wires",
+        [
+            ([1, 2], [0, 1, 2, 3]),
+            ([3, 2, 1, 0], [0, 1, 2, 3]),
+            ([2, 0], [0, 1, 2]),
+            (["b", "a"], ["a", "b", "c"]),
+        ],
+    )
+    def test_to_wires_matches_embedded_state_vector(self, op_wires, target_wires):
+        op = ProductState(_random_product_state(len(op_wires), seed=3), wires=op_wires)
+
+        moved = op.to_wires(target_wires)
+
+        np.testing.assert_equal(moved.wires.tolist(), target_wires)
+        np.testing.assert_allclose(
+            np.asarray(moved.state_vector()),
+            np.asarray(op.state_vector(wire_order=target_wires)),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_to_wires_returns_self_on_same_wires(self):
+        op = ProductState(_random_product_state(2), wires=[0, 1])
+
+        assert op.to_wires([0, 1]) is op
+
+    def test_to_wires_keeps_batch_axis(self):
+        state = np.stack([_random_product_state(2, seed=seed).reshape(2, 2) for seed in range(3)])
+        op = ProductState(state, wires=[2, 0])
+
+        moved = op.to_wires([0, 1, 2])
+
+        np.testing.assert_equal(qml.math.shape(moved.data[0]), (3, 3, 2))
+        np.testing.assert_allclose(moved.data[0][:, 0], state[:, 1], atol=ATOL_MATRIX_COMPARISON)
+        np.testing.assert_allclose(moved.data[0][:, 1], np.tile([1.0, 0.0], (3, 1)), atol=ATOL_MATRIX_COMPARISON)
+        np.testing.assert_allclose(moved.data[0][:, 2], state[:, 0], atol=ATOL_MATRIX_COMPARISON)
+
+    def test_to_wires_propagates_gradient(self):
+        state = torch.tensor(_random_product_state(2).reshape(2, 2), requires_grad=True)
+        op = ProductState(state, wires=[1, 0])
+
+        moved = op.to_wires([0, 1, 2])
+        qml.math.sum(qml.math.real(moved.data[0][..., 1])).backward()
+
+        np.testing.assert_allclose(state.grad.numpy(), [[0, 1], [0, 1]], atol=ATOL_MATRIX_COMPARISON)
+
+    def test_to_wires_rejects_missing_wires(self):
+        op = ProductState(_random_product_state(2), wires=[0, 1])
+
+        with pytest.raises(ValueError, match="do not contain the wires"):
+            op.to_wires([0, 2])
 
     @pytest.mark.parametrize(
         "bits",

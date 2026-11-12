@@ -34,10 +34,10 @@ def merge_generators(
     in memory. For the same reason, shared wires and state preparations placed after a gate are only
     detected when the offending operation is reached, and raise a ``ValueError`` at that point.
 
-    The merged state preparation must cover every wire of the device. It covers the wires of the state
-    preparations, the ``wires`` attribute of the generators that have one (as
-    :class:`~matchcake.circuits.RandomOperationsGenerator`), and the extra ``wires``. Those extra wires
-    start in :math:`|0\rangle`.
+    The merged state preparation covers the wires of the state preparations, the ``wires`` attribute of
+    the generators that have one (as :class:`~matchcake.circuits.RandomOperationsGenerator`), and the
+    extra ``wires``. Those extra wires start in :math:`|0\rangle`, like every device wire the merged
+    state preparation does not cover.
 
     Operations are created without being queued, so the merged generator can be consumed inside a QNode
     with :func:`~pennylane.apply`.

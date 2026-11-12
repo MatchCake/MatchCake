@@ -522,6 +522,11 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         only if the operation is a state preparation operation and then return True. Otherwise, it will
         return False.
 
+        A product state preparation (:class:`~pennylane.BasisState` or
+        :class:`~matchcake.operations.state_preparation.ProductState`) is extended to the device wires in
+        the device wire order, so it can act on part of the wires or list them in any order. The other
+        wires start in :math:`|0\rangle`.
+
         :param operation: The operation to apply
         :type operation: qml.operation.Operation
         :param kwargs: Additional keyword arguments
@@ -537,7 +542,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
 
         is_applied = True
         if isinstance(operation, BasisState):
-            self._state_prep_op = ProductState.from_basis_state(operation)
+            operation = ProductState.from_basis_state(operation)
+        if isinstance(operation, ProductState) and self._wires is not None:
+            self._state_prep_op = operation.to_wires(self.wires)
         elif isinstance(operation, StatePrepBase):
             self._state_prep_op = operation
         else:

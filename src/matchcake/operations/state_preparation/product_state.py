@@ -261,6 +261,39 @@ class ProductState(StatePrepBase):
         bits = self.basis_state_bits()
         return qml.BasisState(bits, wires=self.wires)
 
+    def to_wires(self, wires: WiresLike) -> "ProductState":
+        r"""
+        Return the same product state on ``wires``, in the order of ``wires``.
+
+        The amplitudes of each wire of this state are moved to the position of that wire in ``wires``,
+        and the wires of ``wires`` that this state does not act on start in :math:`|0\rangle`. A device
+        uses this to extend a state preparation on part of its wires, or in another wire order, to its
+        full register. Gradients flow through the amplitudes.
+
+        :param wires: The wires of the new state. They must contain every wire of this state.
+        :type wires: WiresLike
+        :return: This state if ``wires`` already matches its wires, otherwise a new
+            :class:`ProductState` on ``wires``.
+        :rtype: ProductState
+        :raises ValueError: If ``wires`` misses a wire of this state.
+        """
+        wires = Wires(wires)
+        if wires == self.wires:
+            return self
+        missing_wires = [wire for wire in self.wires if wire not in wires]
+        if missing_wires:
+            raise ValueError(f"The wires {wires.tolist()} do not contain the wires {missing_wires} of {self}.")
+        amplitudes = self.data[0]  # (..., n, 2)
+        zero_amplitude = qml.math.zeros_like(amplitudes[..., 0, :])
+        zero_amplitude = qml.math.stack(
+            [qml.math.ones_like(zero_amplitude[..., 0]), zero_amplitude[..., 1]],
+            axis=-1,
+        )
+        per_wire = [
+            amplitudes[..., self.wires.index(wire), :] if wire in self.wires else zero_amplitude for wire in wires
+        ]
+        return ProductState(qml.math.stack(per_wire, axis=-2), wires=wires, validate_norm=False)
+
     def state_vector(self, wire_order: Optional[WiresLike] = None) -> TensorLike:
         r"""
         Full :math:`2^n`-dim state vector obtained by tensoring per-qubit factors.
@@ -300,7 +333,7 @@ class ProductState(StatePrepBase):
             return qml.math.transpose(psi, full_perm)
         # Embed into a larger Hilbert space by padding extra wires with |0>.
         extra_wires = [w for w in wire_order if w not in self.wires]
-        zero = qml.math.asarray([1.0, 0.0], dtype=psi_flat.dtype)
+        zero = qml.math.cast_like(qml.math.convert_like(np.array([1.0, 0.0]), psi_flat), psi_flat)
         full = psi_flat
         for _ in extra_wires:
             full = qml.math.reshape(
