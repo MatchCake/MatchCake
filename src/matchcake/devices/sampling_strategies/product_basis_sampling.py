@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Optional, Sequence, Tuple, cast
+from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
 import pennylane as qml
@@ -66,8 +66,7 @@ class ProductBasisSampling(SamplingStrategy):
     After the rotation qubit :math:`k` is left in a computational basis state, which is what
     makes :math:`\sigma_{k+1}` a number for the next step. The rotation and the update only
     change the probabilities of the qubits already measured, not those of the others, so the
-    outcomes follow the distribution of the original measurement. With the rank-2 updates,
-    a sample costs :math:`O(n^3)` and no Pfaffian is needed. When all the bases are the
+    outcomes follow the distribution of the original measurement. When all the bases are the
     computational basis, the rotations are the identity and the sampler draws ordinary
     computational basis samples.
 
@@ -76,10 +75,44 @@ class ProductBasisSampling(SamplingStrategy):
     subset of the qubits are not provided, since whether they can be computed efficiently is
     open [Brod2016]_ (Sec. IV).
 
-    :param shots_chunk_size: Maximum number of shots processed together. Every shot holds its
-        own :math:`(2n+1) \times (2n+1)` matrix, so this bounds the memory used. Defaults to
-        :attr:`DEFAULT_SHOTS_CHUNK_SIZE`.
+    **Cost and implementation.** Step :math:`k` touches a matrix of size
+    :math:`d = 2(n - k) + 1`: :math:`O(d)` for the rotation and :math:`O(d^2)` for the rank-2
+    update, so a shot costs :math:`\sum_k d^2 \approx \tfrac{4}{3} n^3 = O(n^3)`, with no
+    Pfaffian. The work is organized to be efficient on both CPU and GPU:
+
+    * The ancilla is kept as the last index, so the matrix of the unmeasured qubits is always a
+      trailing block of a single buffer, updated in place. The update uses ``baddbmm_`` on CPU
+      and two ``addcmul_`` on CUDA, the fastest kernels on each.
+    * The two rotations of each qubit (one per sign :math:`\sigma_k`) are computed once, and the
+      random numbers are drawn on the compute device, so the loop over the qubits runs without
+      host synchronization once every shot has its own matrix.
+    * Shots with the same outcomes so far share a single matrix, together with the number of
+      shots that follow it (prefix deduplication). The split of these shots between the two
+      outcomes of the next qubit is drawn from a binomial distribution, which is the same as
+      drawing each shot independently. This saves most of the work for states with few likely
+      outcomes. Once the number of distinct prefixes exceeds :attr:`DEDUPLICATION_THRESHOLD`
+      times the number of shots, every shot gets its own matrix.
+    * The shots are processed in chunks that fit a memory budget, so the matrices of a chunk
+      stay within memory. See :meth:`shots_per_chunk`.
+
+    :param shots_chunk_size: Number of shots processed together. Defaults to None, in which case
+        it is computed from ``memory_budget`` by :meth:`shots_per_chunk`.
     :type shots_chunk_size: Optional[int]
+    :param memory_budget: Memory, in bytes, that the matrices of a chunk may use. Defaults to
+        None: :attr:`DEFAULT_CPU_MEMORY_BUDGET` on CPU, and :attr:`DEFAULT_CUDA_MEMORY_FRACTION`
+        of the free memory on CUDA.
+    :type memory_budget: Optional[int]
+    :param device: Torch device the samples are computed on, e.g. ``"cuda"``. Defaults to None,
+        the device of the extended covariance matrix.
+    :type device: Optional[Union[str, torch.device]]
+    :param dtype: Floating point dtype of the computation. Defaults to None, the dtype of the
+        extended covariance matrix when it is ``float32`` or ``float64``, and ``float64``
+        otherwise. ``float32`` is faster, in particular on consumer GPUs, at the cost of
+        precision on large circuits.
+    :type dtype: Optional[torch.dtype]
+    :param deduplicate: Whether shots with the same outcomes so far share their matrix.
+        Defaults to True.
+    :type deduplicate: bool
 
     .. [Brod2016] D. J. Brod, "Efficient classical simulation of matchgate circuits with
         generalized inputs and measurements," Phys. Rev. A 93, 062332 (2016),
@@ -87,7 +120,11 @@ class ProductBasisSampling(SamplingStrategy):
     """
 
     NAME = "ProductBasisSampling"
-    DEFAULT_SHOTS_CHUNK_SIZE: int = 1024
+    DEFAULT_CPU_MEMORY_BUDGET: int = 256 * 2**20
+    DEFAULT_CUDA_MEMORY_FRACTION: float = 0.5
+    DEDUPLICATION_THRESHOLD: float = 0.25
+    # A chunk holds about twice its matrices when the deduplicated prefixes are expanded.
+    MEMORY_OVERHEAD_FACTOR: float = 2.0
     PAULI_BLOCH_VECTORS: Dict[str, Tuple[float, float, float]] = {
         "X": (1.0, 0.0, 0.0),
         "Y": (0.0, 1.0, 0.0),
@@ -140,8 +177,25 @@ class ProductBasisSampling(SamplingStrategy):
             raise ValueError(f"Unknown Pauli bases {unknown}. Expected 'X', 'Y' or 'Z'.")
         return np.array([cls.PAULI_BLOCH_VECTORS[basis] for basis in bases], dtype=float).reshape(-1, 3)
 
-    def __init__(self, shots_chunk_size: Optional[int] = None):
-        self.shots_chunk_size = shots_chunk_size or self.DEFAULT_SHOTS_CHUNK_SIZE
+    def __init__(
+        self,
+        shots_chunk_size: Optional[int] = None,
+        memory_budget: Optional[int] = None,
+        device: Optional[Union[str, torch.device]] = None,
+        dtype: Optional[torch.dtype] = None,
+        deduplicate: bool = True,
+    ):
+        if shots_chunk_size is not None and shots_chunk_size < 1:
+            raise ValueError(f"shots_chunk_size must be positive. Got {shots_chunk_size}.")
+        if memory_budget is not None and memory_budget < 1:
+            raise ValueError(f"memory_budget must be positive. Got {memory_budget}.")
+        if dtype is not None and dtype not in (torch.float32, torch.float64):
+            raise ValueError(f"dtype must be torch.float32 or torch.float64. Got {dtype}.")
+        self.shots_chunk_size = shots_chunk_size
+        self.memory_budget = memory_budget
+        self.device = None if device is None else torch.device(device)
+        self.dtype = dtype
+        self.deduplicate = deduplicate
 
     def batch_generate_samples(
         self,
@@ -214,18 +268,39 @@ class ProductBasisSampling(SamplingStrategy):
         :rtype: TensorLike
         """
         gamma, bloch_vectors_t = self._prepare_inputs(extended_covariance_matrix, bloch_vectors)
-        outcomes_t = torch.as_tensor(np.asarray(qml.math.unwrap(outcomes)), dtype=torch.long)
+        n_qubits = bloch_vectors_t.shape[0]
+        outcomes_t = torch.as_tensor(np.asarray(qml.math.unwrap(outcomes)), dtype=torch.long, device=gamma.device)
         outcomes_t = outcomes_t.reshape(-1, outcomes_t.shape[-1])  # (m, n)
-        if outcomes_t.shape[-1] != bloch_vectors_t.shape[0]:
-            raise ValueError(
-                f"Expected outcomes on {bloch_vectors_t.shape[0]} qubits. Got {outcomes_t.shape[-1]} instead."
-            )
-        batch_ndim = gamma.ndim - 2
-        # (m, n) -> (m, ..., n), broadcast over the batch axes of the covariance matrix.
-        outcomes_t = outcomes_t.reshape(outcomes_t.shape[:1] + (1,) * batch_ndim + outcomes_t.shape[1:])
-        outcomes_t = outcomes_t.expand(outcomes_t.shape[:1] + gamma.shape[:-2] + outcomes_t.shape[-1:])
-        _, probabilities = self._measure_sequentially(gamma, bloch_vectors_t, outcomes=outcomes_t)
-        return convert_and_cast_like(probabilities, extended_covariance_matrix)
+        if outcomes_t.shape[-1] != n_qubits:
+            raise ValueError(f"Expected outcomes on {n_qubits} qubits. Got {outcomes_t.shape[-1]} instead.")
+        batch_shape = tuple(gamma.shape[:-2])
+        roots = gamma.reshape((-1,) + gamma.shape[-2:])  # (b, 2n+1, 2n+1)
+        n_roots, n_outcomes = roots.shape[0], outcomes_t.shape[0]
+        frames = self._frames_by_sign(bloch_vectors_t)
+        chunk = self.shots_per_chunk(n_qubits, n_roots, gamma.dtype, gamma.device)
+        probabilities = []
+        for start in range(0, n_outcomes, chunk):
+            chunk_outcomes = outcomes_t[start : start + chunk]  # (c, n)
+            n_chunk = chunk_outcomes.shape[0]
+            # Rows ordered as (outcome, root), so that the result reshapes to (c, b).
+            buffer = roots.repeat(n_chunk, 1, 1)  # (c * b, 2n+1, 2n+1)
+            forced_bits = chunk_outcomes.repeat_interleave(n_roots, dim=0)  # (c * b, n)
+            chunk_probabilities = torch.ones(n_chunk * n_roots, dtype=gamma.dtype, device=gamma.device)
+            signs = torch.ones_like(chunk_probabilities)
+            for k in range(n_qubits):
+                probability_of_zero, block, rest = self._rotate(buffer, 2 * k, frames[k], signs)
+                bit = forced_bits[:, k]
+                probability, eigenvalue = self._project(
+                    buffer[:, 2 * k + 2 :, 2 * k + 2 :], block, rest, bit, probability_of_zero
+                )
+                chunk_probabilities = chunk_probabilities * probability
+                signs = signs * eigenvalue
+            probabilities.append(chunk_probabilities.reshape((n_chunk,) + batch_shape))
+        if not probabilities:
+            result = torch.zeros((0,) + batch_shape, dtype=gamma.dtype, device=gamma.device)
+        else:
+            result = torch.cat(probabilities, dim=0)
+        return convert_and_cast_like(result, extended_covariance_matrix)
 
     def sample(
         self,
@@ -235,6 +310,8 @@ class ProductBasisSampling(SamplingStrategy):
         show_progress: bool = False,
     ) -> np.ndarray:
         """Draw samples in the given product basis.
+
+        The random numbers are drawn from the torch generator of the compute device.
 
         :param extended_covariance_matrix: The evolved extended covariance matrix,
             shape (..., 2n+1, 2n+1).
@@ -251,118 +328,246 @@ class ProductBasisSampling(SamplingStrategy):
         gamma, bloch_vectors_t = self._prepare_inputs(extended_covariance_matrix, bloch_vectors)
         n_qubits = bloch_vectors_t.shape[0]
         batch_shape = tuple(gamma.shape[:-2])
+        roots = gamma.reshape((-1,) + gamma.shape[-2:])  # (b, 2n+1, 2n+1)
+        frames = self._frames_by_sign(bloch_vectors_t)
+        chunk = self.shots_per_chunk(n_qubits, roots.shape[0], gamma.dtype, gamma.device)
         chunks = []
         for start in tqdm.trange(
-            0,
-            shots,
-            self.shots_chunk_size,
-            desc=f"[{self.NAME}] Generating Samples",
-            disable=not show_progress,
-            unit="chunk",
+            0, shots, chunk, desc=f"[{self.NAME}] Generating Samples", disable=not show_progress, unit="chunk"
         ):
-            n_chunk = min(self.shots_chunk_size, shots - start)
-            uniforms = torch.from_numpy(np.random.random((n_chunk,) + batch_shape + (n_qubits,)))
-            bits, _ = self._measure_sequentially(gamma, bloch_vectors_t, uniforms=uniforms)
-            chunks.append(bits.numpy())
+            bits = self._sample_chunk(roots, frames, min(chunk, shots - start))  # (b, c, n)
+            chunks.append(bits.transpose(0, 1).cpu().numpy())  # (c, b, n)
         if not chunks:
             return np.zeros((0,) + batch_shape + (n_qubits,), dtype=np.int64)
-        return np.concatenate(chunks, axis=0)
+        samples = np.concatenate(chunks, axis=0)  # (shots, b, n)
+        return samples.reshape((shots,) + batch_shape + (n_qubits,))
 
-    def _measure_sequentially(
-        self,
-        gamma: torch.Tensor,
-        bloch_vectors: torch.Tensor,
-        *,
-        uniforms: Optional[torch.Tensor] = None,
-        outcomes: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Measure the qubits one after the other, drawing or imposing the outcomes.
+    def shots_per_chunk(self, n_qubits: int, batch_size: int, dtype: torch.dtype, device: torch.device) -> int:
+        """Return the number of shots processed together.
 
-        :param gamma: The extended covariance matrix, shape (..., 2n+1, 2n+1).
-        :type gamma: torch.Tensor
+        This is :attr:`shots_chunk_size` when it is set. Otherwise, the number of shots whose
+        matrices, one :math:`(2n+1) \\times (2n+1)` matrix per shot and circuit batch element,
+        fit in the memory budget, counting :attr:`MEMORY_OVERHEAD_FACTOR` for the temporaries.
+
+        :param n_qubits: Number of qubits.
+        :type n_qubits: int
+        :param batch_size: Number of circuit batch elements.
+        :type batch_size: int
+        :param dtype: Floating point dtype of the computation.
+        :type dtype: torch.dtype
+        :param device: Torch device of the computation.
+        :type device: torch.device
+        :return: The number of shots per chunk, at least 1.
+        :rtype: int
+        """
+        if self.shots_chunk_size is not None:
+            return self.shots_chunk_size
+        budget = self.memory_budget
+        if budget is None:
+            budget = self.DEFAULT_CPU_MEMORY_BUDGET
+            if device.type == "cuda":  # pragma: no cover
+                free_memory, _ = torch.cuda.mem_get_info(device)
+                budget = int(self.DEFAULT_CUDA_MEMORY_FRACTION * free_memory)
+        dim = 2 * n_qubits + 1
+        bytes_per_shot = self.MEMORY_OVERHEAD_FACTOR * max(batch_size, 1) * dim * dim * torch.finfo(dtype).bits // 8
+        return max(1, int(budget // bytes_per_shot))
+
+    def _frames_by_sign(self, bloch_vectors: torch.Tensor) -> List[Optional[torch.Tensor]]:
+        """Precompute the rotations of every qubit for both signs.
+
         :param bloch_vectors: Unit Bloch vectors, shape (n, 3).
         :type bloch_vectors: torch.Tensor
-        :param uniforms: Uniform random numbers used to draw the outcomes, shape (m, ..., n).
-        :type uniforms: Optional[torch.Tensor]
-        :param outcomes: Imposed outcome bits, shape (m, ..., n). Used when ``uniforms`` is None.
-        :type outcomes: Optional[torch.Tensor]
-        :return: The outcome bits, shape (m, ..., n), and their probabilities, shape (m, ...).
+        :return: For each qubit, the rotations for the signs ``+1`` and ``-1``, shape (2, 3, 3),
+            or None when the basis is the computational basis and the rotation is the identity.
+        :rtype: List[Optional[torch.Tensor]]
+        """
+        signs = torch.tensor([1.0, -1.0], dtype=bloch_vectors.dtype, device=bloch_vectors.device)
+        frames = self.measurement_frames(bloch_vectors[:, None, :], signs[None, :])  # (n, 2, 3, 3)
+        is_computational = (torch.abs(bloch_vectors[:, 2] - 1.0) < 1e-12).tolist()
+        return [None if is_identity else frames[k] for k, is_identity in enumerate(is_computational)]
+
+    def _project(
+        self,
+        next_block: torch.Tensor,
+        block: torch.Tensor,
+        rest: torch.Tensor,
+        bit: torch.Tensor,
+        probability_of_zero: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Project the matrices onto the measured outcomes, in place.
+
+        :param next_block: The matrices of the unmeasured qubits and the ancilla, the ancilla
+            last, shape (m, d - 2, d - 2). Updated in place.
+        :type next_block: torch.Tensor
+        :param block: The rotated triple block, in the order (ancilla, even, odd), shape (m, 3, 3).
+        :type block: torch.Tensor
+        :param rest: The rotated triple rows on the unmeasured qubits, shape (m, 3, d - 3).
+        :type rest: torch.Tensor
+        :param bit: The outcome bits, shape (m,).
+        :type bit: torch.Tensor
+        :param probability_of_zero: The probability of the outcome 0, shape (m,).
+        :type probability_of_zero: torch.Tensor
+        :return: The probability of each outcome and its eigenvalue, both of shape (m,).
         :rtype: Tuple[torch.Tensor, torch.Tensor]
         """
-        draws = uniforms if uniforms is not None else outcomes
-        assert draws is not None
-        n_qubits = bloch_vectors.shape[0]
-        # Move the ancilla to index 0, so that the qubit measured next always sits at indices 1
-        # and 2. The rows and columns of a measured qubit are dropped, and the matrix shrinks by
-        # two at each step.
-        order = [2 * n_qubits] + list(range(2 * n_qubits))
-        gamma = gamma[..., order, :][..., :, order]
-        gamma = gamma.expand(draws.shape[:-1] + gamma.shape[-2:])  # (m, ..., 2n+1, 2n+1)
-        signs = torch.ones(draws.shape[:-1], dtype=gamma.dtype)  # (m, ...)
-        probabilities = torch.ones(draws.shape[:-1], dtype=gamma.dtype)  # (m, ...)
-        bits = []
+        eigenvalue = 1.0 - 2.0 * bit.to(next_block.dtype)
+        probability = torch.where(bit == 0, probability_of_zero, 1.0 - probability_of_zero)
+        # Impossible imposed outcomes have a zero probability already. Their matrices are left
+        # without the update instead of dividing by zero.
+        denominator = 2.0 * probability
+        scale = torch.where(denominator > 0, eigenvalue / torch.where(denominator > 0, denominator, 1.0), 0.0)
+
+        ancilla_row = rest[:, 0, :]  # (m, d - 3)
+        next_block[:, -1, :-1] = ancilla_row
+        next_block[:, :-1, -1] = -ancilla_row
+        row_even = torch.cat([rest[:, 1, :], block[:, 1, :1]], dim=-1)  # (m, d - 2), ancilla last
+        row_odd = torch.cat([rest[:, 2, :], block[:, 2, :1]], dim=-1)  # (m, d - 2)
+        # Rank-2 update scale * (row_even row_odd^T - row_odd row_even^T).
+        if next_block.is_cuda:  # pragma: no cover
+            scaled_even = (scale[:, None] * row_even)[:, :, None]
+            scaled_odd = (scale[:, None] * row_odd)[:, :, None]
+            next_block.addcmul_(scaled_even, row_odd[:, None, :])
+            next_block.addcmul_(scaled_odd, row_even[:, None, :], value=-1.0)
+        else:
+            left = scale[:, None, None] * torch.stack([row_even, row_odd], dim=-1)  # (m, d - 2, 2)
+            right = torch.stack([row_odd, -row_even], dim=-2)  # (m, 2, d - 2)
+            next_block.baddbmm_(left, right)
+        return probability, eigenvalue
+
+    def _rotate(
+        self,
+        buffer: torch.Tensor,
+        start: int,
+        frames: Optional[torch.Tensor],
+        signs: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Rotate the triple of the next qubit and read the probability of its outcome 0.
+
+        :param buffer: The matrices, with the unmeasured block ``buffer[:, start:, start:]``,
+            whose first two indices are the next qubit and last index is the ancilla.
+        :type buffer: torch.Tensor
+        :param start: Index of the first Majorana of the next qubit in the buffer.
+        :type start: int
+        :param frames: The rotations of the qubit for the signs ``+1`` and ``-1``, shape (2, 3, 3),
+            or None for the identity.
+        :type frames: Optional[torch.Tensor]
+        :param signs: The signs of each matrix, shape (m,).
+        :type signs: torch.Tensor
+        :return: The probability of the outcome 0, shape (m,), the rotated triple block in the
+            order (ancilla, even, odd), shape (m, 3, 3), and the rotated triple rows on the
+            unmeasured qubits, shape (m, 3, d - 3).
+        :rtype: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+        """
+        live = buffer[:, start:, start:]  # (m, d, d)
+        dim = live.shape[-1]
+        triple = [dim - 1, 0, 1]
+        rows = live[:, triple, :]  # (m, 3, d), a copy
+        block = rows[:, :, triple]  # (m, 3, 3)
+        rest = rows[:, :, 2 : dim - 1]  # (m, 3, d - 3)
+        if frames is not None:
+            signed_frames = frames[(signs < 0).long()]  # (m, 3, 3)
+            block = signed_frames @ block @ signed_frames.transpose(-1, -2)
+            rest = signed_frames @ rest
+        probability_of_zero = torch.clamp((1.0 - block[:, 1, 2]) / 2.0, 0.0, 1.0)
+        return probability_of_zero, block, rest
+
+    def _sample_chunk(self, roots: torch.Tensor, frames: List[Optional[torch.Tensor]], shots: int) -> torch.Tensor:
+        """Draw one chunk of shots for every circuit batch element.
+
+        :param roots: The extended covariance matrices, shape (b, 2n+1, 2n+1).
+        :type roots: torch.Tensor
+        :param frames: The rotations of each qubit, from :meth:`_frames_by_sign`.
+        :type frames: List[Optional[torch.Tensor]]
+        :param shots: The number of shots per batch element.
+        :type shots: int
+        :return: The outcome bits, shape (b, shots, n).
+        :rtype: torch.Tensor
+        """
+        n_roots, n_qubits = roots.shape[0], len(frames)
+        dtype, device = roots.dtype, roots.device
+        total = n_roots * shots
+        groups = torch.arange(n_roots, device=device)
+        deduplicated = self.deduplicate and shots > 1
+        if deduplicated:
+            # One path per batch element, followed by all its shots.
+            buffer = roots.clone()
+            counts = torch.full((n_roots,), float(shots), dtype=dtype, device=device)
+        else:
+            buffer = roots.repeat_interleave(shots, dim=0)
+            groups = groups.repeat_interleave(shots)
+            counts = torch.ones(total, dtype=dtype, device=device)
+        start = 0
+        signs = torch.ones(buffer.shape[0], dtype=dtype, device=device)
+        bits = torch.zeros(buffer.shape[0], n_qubits, dtype=torch.long, device=device)
         for k in range(n_qubits):
-            frames = self.measurement_frames(bloch_vectors[k], signs)  # (m, ..., 3, 3)
-            # Rows of the new (ancilla, even, odd) triple, on the triple and on the rest.
-            triple_rows = gamma[..., :3, :]  # (m, ..., 3, d)
-            triple_block = frames @ triple_rows[..., :3] @ frames.transpose(-1, -2)  # (m, ..., 3, 3)
-            rest_rows = frames @ triple_rows[..., 3:]  # (m, ..., 3, d - 3)
-
-            correlation = triple_block[..., 1, 2]  # (m, ...)
-            probability_of_zero = torch.clamp((1.0 - correlation) / 2.0, 0.0, 1.0)
-            if uniforms is not None:
-                bit = (uniforms[..., k] >= probability_of_zero).long()
-            else:
-                assert outcomes is not None
-                bit = outcomes[..., k].long()
-            eigenvalue = 1.0 - 2.0 * bit.to(gamma.dtype)  # (m, ...)
-            probability = torch.where(bit == 0, probability_of_zero, 1.0 - probability_of_zero)
-            probabilities = probabilities * probability
-            bits.append(bit)
-
-            # The matrix kept for the next steps, on the new ancilla and the unmeasured qubits.
-            ancilla_row = rest_rows[..., 0, :]  # (m, ..., d - 3)
-            corner = torch.zeros(ancilla_row.shape[:-1] + (1, 1), dtype=gamma.dtype)  # (m, ..., 1, 1)
-            kept = torch.cat(
-                [
-                    torch.cat([corner, ancilla_row[..., None, :]], dim=-1),
-                    torch.cat([-ancilla_row[..., :, None], gamma[..., 3:, 3:]], dim=-1),
-                ],
-                dim=-2,
-            )  # (m, ..., d - 2, d - 2)
-            row_even = torch.cat([triple_block[..., 1, :1], rest_rows[..., 1, :]], dim=-1)  # (m, ..., d - 2)
-            row_odd = torch.cat([triple_block[..., 2, :1], rest_rows[..., 2, :]], dim=-1)  # (m, ..., d - 2)
-            # Impossible imposed outcomes have a zero probability already. Their matrices are
-            # left unchanged instead of dividing by zero.
-            denominator = 2.0 * probability
-            scale = torch.where(denominator > 0, eigenvalue / torch.where(denominator > 0, denominator, 1.0), 0.0)
-            # Rank-2 update scale * (row_even row_odd^T - row_odd row_even^T) as a single batched product.
-            left = scale[..., None, None] * torch.stack([row_even, row_odd], dim=-1)  # (m, ..., d - 2, 2)
-            right = torch.stack([row_odd, -row_even], dim=-2)  # (m, ..., 2, d - 2)
-            size = kept.shape[-1]
-            gamma = torch.baddbmm(
-                kept.reshape(-1, size, size), left.reshape(-1, size, 2), right.reshape(-1, 2, size)
-            ).reshape(kept.shape)
-            signs = signs * eigenvalue
-        return torch.stack(bits, dim=-1), probabilities
+            probability_of_zero, block, rest = self._rotate(buffer, start, frames[k], signs)
+            if not deduplicated:
+                bit = (torch.rand(buffer.shape[0], dtype=dtype, device=device) >= probability_of_zero).long()
+                _, eigenvalue = self._project(
+                    buffer[:, start + 2 :, start + 2 :], block, rest, bit, probability_of_zero
+                )
+                bits[:, k] = bit
+                signs = signs * eigenvalue
+                start += 2
+                continue
+            # Split the shots of each path between the outcomes 0 and 1.
+            zeros_count = torch.binomial(counts, probability_of_zero)
+            ones_count = counts - zeros_count
+            zero_paths = torch.nonzero(zeros_count > 0).flatten()
+            one_paths = torch.nonzero(ones_count > 0).flatten()
+            parents = torch.cat([zero_paths, one_paths])
+            bit = torch.cat([torch.zeros_like(zero_paths), torch.ones_like(one_paths)])
+            counts = torch.cat([zeros_count[zero_paths], ones_count[one_paths]])
+            buffer = buffer[:, start + 2 :, start + 2 :][parents]  # (m', d - 2, d - 2), a copy
+            start = 0
+            _, eigenvalue = self._project(buffer, block[parents], rest[parents], bit, probability_of_zero[parents])
+            signs = signs[parents] * eigenvalue
+            groups = groups[parents]
+            bits = bits[parents]
+            bits[:, k] = bit
+            if parents.shape[0] > self.DEDUPLICATION_THRESHOLD * total and k + 1 < n_qubits:
+                # Too many distinct prefixes: every shot gets its own matrix.
+                repeats = counts.long()
+                buffer = buffer.repeat_interleave(repeats, dim=0, output_size=total)
+                signs = signs.repeat_interleave(repeats, dim=0, output_size=total)
+                groups = groups.repeat_interleave(repeats, dim=0, output_size=total)
+                bits = bits.repeat_interleave(repeats, dim=0, output_size=total)
+                counts = torch.ones(total, dtype=dtype, device=device)
+                deduplicated = False
+        if deduplicated:
+            repeats = counts.long()
+            groups = groups.repeat_interleave(repeats, dim=0, output_size=total)
+            bits = bits.repeat_interleave(repeats, dim=0, output_size=total)
+        if self.deduplicate and shots > 1:
+            # The deduplicated shots come grouped by outcome. Shuffle them within each batch element.
+            keys = groups.to(dtype) + torch.rand(total, dtype=dtype, device=device)
+            bits = bits[torch.argsort(keys)]
+        return bits.reshape(n_roots, shots, n_qubits)
 
     def _prepare_inputs(
         self,
         extended_covariance_matrix: TensorLike,
         bloch_vectors: TensorLike,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Convert the inputs to float64 torch tensors and check their shapes.
+        """Convert the inputs to torch tensors on the compute device and check their shapes.
 
         :param extended_covariance_matrix: The extended covariance matrix, shape (..., 2n+1, 2n+1).
         :type extended_covariance_matrix: TensorLike
         :param bloch_vectors: The Bloch vectors, shape (n, 3).
         :type bloch_vectors: TensorLike
-        :return: The covariance matrix and the normalized Bloch vectors.
+        :return: The covariance matrix and the normalized Bloch vectors, with the compute dtype
+            and device.
         :rtype: Tuple[torch.Tensor, torch.Tensor]
         :raises ValueError: If the shapes do not match or a Bloch vector is zero.
         """
-        gamma = cast(torch.Tensor, to_tensor(detach(qml.math.real(extended_covariance_matrix)))).cpu()
-        bloch_vectors_t = cast(torch.Tensor, to_tensor(detach(qml.math.real(bloch_vectors)))).cpu()
+        gamma = cast(torch.Tensor, to_tensor(detach(qml.math.real(extended_covariance_matrix)), dtype=None))
+        dtype = self.dtype
+        if dtype is None:
+            dtype = gamma.dtype if gamma.dtype in (torch.float32, torch.float64) else torch.float64
+        device = self.device if self.device is not None else gamma.device
+        gamma = gamma.to(dtype=dtype, device=device)
+        bloch_vectors_t = cast(torch.Tensor, to_tensor(detach(qml.math.real(bloch_vectors)), dtype=None))
+        bloch_vectors_t = bloch_vectors_t.to(dtype=dtype, device=device)
         if bloch_vectors_t.ndim != 2 or bloch_vectors_t.shape[-1] != 3:
             raise ValueError(f"The Bloch vectors must have shape (n, 3). Got {tuple(bloch_vectors_t.shape)} instead.")
         expected_dim = 2 * bloch_vectors_t.shape[0] + 1

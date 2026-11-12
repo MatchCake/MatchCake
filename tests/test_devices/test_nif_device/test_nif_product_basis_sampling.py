@@ -24,6 +24,10 @@ class TestNonInteractingFermionicDeviceProductBasisSampling:
     def setup_class(cls):
         set_seed(TEST_SEED)
 
+    def setup_method(self):
+        # The statistical tests must not depend on the tests run before them on the same worker.
+        set_seed(TEST_SEED)
+
     @staticmethod
     def operations() -> list:
         return [
@@ -262,3 +266,11 @@ class TestNonInteractingFermionicDeviceProductBasisSampling:
         device.apply(self.operations())
         assert not isinstance(device.sampling_strategy, ProductBasisSampling)
         assert device.generate_samples().shape == (10, N_WIRES)
+
+    def test_sampling_strategy_instance_is_used_for_every_basis(self):
+        strategy = ProductBasisSampling(shots_chunk_size=7)
+        device = NonInteractingFermionicDevice(wires=N_WIRES, shots=10, sampling_strategy=strategy)
+        assert device.sampling_strategy is strategy
+        assert device.product_basis_sampling_strategy is strategy
+        device.apply(self.operations())
+        assert device.generate_samples(bases={0: "X"}).shape == (10, N_WIRES)

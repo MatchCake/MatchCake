@@ -49,6 +49,10 @@ class TestNonInteractingFermionicDeviceShotsObservables:
     def setup_class(cls):
         set_seed(TEST_SEED)
 
+    def setup_method(self):
+        # The statistical tests must not depend on the tests run before them on the same worker.
+        set_seed(TEST_SEED)
+
     @staticmethod
     def circuit(observable: qml.operation.Operator):
         qml.BasisState(np.array([0, 1]), wires=[0, 1])
