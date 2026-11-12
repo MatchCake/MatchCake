@@ -2,6 +2,7 @@ from typing import Any, Callable, Iterable, List, Literal, Optional, Sequence, U
 
 import numpy as np
 import pennylane as qml
+import torch
 from pennylane.exceptions import MatrixUndefinedError, PowUndefinedError
 from pennylane.math import expm
 from pennylane.operation import Operation, Operator, StatePrepBase
@@ -629,10 +630,21 @@ class SingleParticleTransitionMatrixOperation(Operation):
         return [powered]
 
     def to_cuda(self):  # pragma: no cover
+        """Return the same operation with its SPTM on the GPU.
+
+        Integer matrices (as for the fermionic swap or the identity) are cast to float64, since the
+        batched matrix products of the NIF device are not implemented for integer tensors on CUDA.
+
+        :return: The operation on the GPU.
+        :rtype: SingleParticleTransitionMatrixOperation
+        """
         from ...utils import torch_utils  # pragma: no cover
 
+        matrix = torch_utils.to_cuda(self.sptm_matrix(), dtype=None)  # pragma: no cover
+        if not (matrix.is_floating_point() or matrix.is_complex()):  # pragma: no cover
+            matrix = matrix.to(torch.float64)  # pragma: no cover
         return SingleParticleTransitionMatrixOperation(  # pragma: no cover
-            torch_utils.to_cuda(self.sptm_matrix(), dtype=None),  # pragma: no cover
+            matrix,  # pragma: no cover
             wires=self.wires,  # pragma: no cover
             **self._hyperparameters,  # pragma: no cover
         )  # pragma: no cover
