@@ -580,3 +580,12 @@ class TestSingleParticleTransitionMatrixOperation:
         sptm = SingleParticleTransitionMatrixOperation.random(wires=np.arange(size), seed=0)
         with pytest.raises(ValueError):
             _ = sptm @ "invalid"
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is not available.")
+    def test_to_cuda_casts_integer_matrix_to_float(self, batch_size, size):
+        matrix = np.tile(np.eye(2 * size, dtype=int), (batch_size, 1, 1))
+        sptm = SingleParticleTransitionMatrixOperation(matrix=matrix, wires=np.arange(size)).to_cuda()
+
+        assert sptm.sptm_matrix().is_cuda
+        assert sptm.sptm_matrix().dtype == torch.float64
+        np.testing.assert_allclose(torch_utils.to_numpy(sptm.sptm_matrix()), matrix, atol=ATOL_MATRIX_COMPARISON)
