@@ -102,15 +102,29 @@ def _split_blocks(tapes: List[qml.tape.QuantumScript]) -> Tuple[List[ProductStat
                 raise ValueError(
                     f"The state preparation {op} of block {block_index} must come before the gates of its block."
                 )
-            if isinstance(op, qml.BasisState):
-                op = ProductState.from_basis_state(op)
-            if not isinstance(op, ProductState):
-                raise ValueError(
-                    f"Only product state preparations (BasisState or ProductState) can be merged, but block "
-                    f"{block_index} uses {op}."
-                )
-            state_preps.append(op)
+            state_preps.append(_as_product_state(op, f"block {block_index}"))
     return state_preps, gates
+
+
+def _as_product_state(op: StatePrepBase, owner: str) -> ProductState:
+    """
+    Convert a state preparation to a product state.
+
+    :param op: The state preparation.
+    :type op: StatePrepBase
+    :param owner: The block or generator the state preparation comes from, used in error messages.
+    :type owner: str
+    :return: The state preparation as a product state.
+    :rtype: ProductState
+    :raises ValueError: If the state preparation is not a product state.
+    """
+    if isinstance(op, qml.BasisState):
+        return ProductState.from_basis_state(op)
+    if not isinstance(op, ProductState):
+        raise ValueError(
+            f"Only product state preparations (BasisState or ProductState) can be merged, but {owner} uses {op}."
+        )
+    return op
 
 
 def _merge_state_preps(state_preps: List[ProductState], wires: Wires) -> ProductState:
