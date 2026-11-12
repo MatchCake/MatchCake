@@ -12,6 +12,14 @@ matchcake.utils.constants module
    :undoc-members:
    :show-inheritance:
 
+matchcake.utils.covariance module
+---------------------------------
+
+.. automodule:: matchcake.utils.covariance
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 matchcake.utils.cuda module
 ---------------------------
 
