@@ -26,6 +26,10 @@ class TestProductBasisSampling:
     def setup_class(cls):
         set_seed(TEST_SEED)
 
+    def setup_method(self):
+        # The statistical tests must not depend on the tests run before them on the same worker.
+        set_seed(TEST_SEED)
+
     @staticmethod
     def random_amplitudes(n_qubits: int, rng: np.random.Generator) -> np.ndarray:
         amplitudes = rng.normal(size=(n_qubits, 2)) + 1j * rng.normal(size=(n_qubits, 2))
@@ -104,8 +108,9 @@ class TestProductBasisSampling:
         expected = self.reference_probabilities(amplitudes, operations, bloch_vectors)
         np.testing.assert_allclose(probabilities.numpy(), expected, atol=ATOL_SCALAR_COMPARISON)
 
+    @pytest.mark.parametrize("sampler_kind", ["deduplicated", "per_shot", "early_switch"])
     @pytest.mark.parametrize("input_kind", ["even", "odd", "product"])
-    def test_x_basis_samples_match_default_qubit_with_hadamard_layer(self, input_kind):
+    def test_x_basis_samples_match_default_qubit_with_hadamard_layer(self, input_kind, sampler_kind):
         set_seed(TEST_SEED)
         rng = np.random.default_rng(TEST_SEED)
         n_qubits = 3
@@ -126,7 +131,11 @@ class TestProductBasisSampling:
             return qml.probs()
 
         expected = np.asarray(hadamard_layer_circuit())
-        samples = ProductBasisSampling().sample(
+        strategy = ProductBasisSampling(deduplicate=sampler_kind != "per_shot")
+        if sampler_kind == "early_switch":
+            # Every shot gets its own matrix right after the first qubit.
+            strategy.DEDUPLICATION_THRESHOLD = 0.0
+        samples = strategy.sample(
             self.extended_covariance_matrix(amplitudes, operations),
             ProductBasisSampling.pauli_bloch_vectors(["X"] * n_qubits),
             N_SHOTS,
@@ -218,9 +227,107 @@ class TestProductBasisSampling:
         )
         np.testing.assert_array_equal(samples, np.broadcast_to([1, 0, 1], (50, 3)))
 
-    def test_default_chunk_size(self):
-        assert ProductBasisSampling().shots_chunk_size == ProductBasisSampling.DEFAULT_SHOTS_CHUNK_SIZE
-        assert ProductBasisSampling(shots_chunk_size=3).shots_chunk_size == 3
+    def test_shots_per_chunk(self):
+        cpu = torch.device("cpu")
+        assert ProductBasisSampling(shots_chunk_size=3).shots_per_chunk(10, 2, torch.float64, cpu) == 3
+        # 2 * 2 batch elements * 5 * 5 matrix entries * 8 bytes = 800 bytes per shot.
+        assert ProductBasisSampling(memory_budget=8000).shots_per_chunk(2, 2, torch.float64, cpu) == 10
+        assert ProductBasisSampling(memory_budget=8000).shots_per_chunk(2, 2, torch.float32, cpu) == 20
+        assert ProductBasisSampling(memory_budget=1).shots_per_chunk(2, 2, torch.float64, cpu) == 1
+        default_chunk = ProductBasisSampling().shots_per_chunk(2, 1, torch.float64, cpu)
+        assert default_chunk == int(ProductBasisSampling.DEFAULT_CPU_MEMORY_BUDGET // 400)
+
+    @pytest.mark.parametrize(
+        "kwargs, match",
+        [
+            ({"shots_chunk_size": 0}, "shots_chunk_size must be positive"),
+            ({"memory_budget": 0}, "memory_budget must be positive"),
+            ({"dtype": torch.complex128}, "dtype must be torch.float32 or torch.float64"),
+        ],
+    )
+    def test_invalid_constructor_arguments_raise(self, kwargs, match):
+        with pytest.raises(ValueError, match=match):
+            ProductBasisSampling(**kwargs)
+
+    def test_float32_computation(self):
+        rng = np.random.default_rng(TEST_SEED)
+        n_qubits = 4
+        amplitudes = self.random_amplitudes(n_qubits, rng)
+        operations = self.random_operations(n_qubits, rng)
+        bloch_vectors = rng.normal(size=(n_qubits, 3))
+        extended_covariance_matrix = self.extended_covariance_matrix(amplitudes, operations)
+        strategy = ProductBasisSampling(dtype=torch.float32)
+        probabilities = strategy.outcome_probabilities(
+            extended_covariance_matrix, bloch_vectors, self.all_outcomes(n_qubits)
+        )
+        assert probabilities.dtype == extended_covariance_matrix.dtype
+        expected = self.reference_probabilities(amplitudes, operations, bloch_vectors)
+        np.testing.assert_allclose(probabilities.numpy(), expected, atol=ATOL_MATRIX_COMPARISON)
+        assert strategy.sample(extended_covariance_matrix, bloch_vectors, 5).shape == (5, n_qubits)
+
+    def test_float32_input_keeps_float32(self):
+        extended_covariance_matrix = self.extended_covariance_matrix(self.basis_amplitudes([0, 1]), []).float()
+        gamma, bloch_vectors = ProductBasisSampling()._prepare_inputs(
+            extended_covariance_matrix, ProductBasisSampling.pauli_bloch_vectors(["X", "Z"])
+        )
+        assert gamma.dtype == torch.float32
+        assert bloch_vectors.dtype == torch.float32
+
+    def test_explicit_device(self):
+        extended_covariance_matrix = self.extended_covariance_matrix(self.basis_amplitudes([0, 1]), [])
+        strategy = ProductBasisSampling(device="cpu")
+        assert strategy.device == torch.device("cpu")
+        probabilities = strategy.outcome_probabilities(
+            extended_covariance_matrix, ProductBasisSampling.pauli_bloch_vectors(["X", "Z"]), np.array([[0, 1]])
+        )
+        np.testing.assert_allclose(probabilities.numpy(), [0.5], atol=ATOL_SCALAR_COMPARISON)
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is not available.")
+    def test_cuda_matches_cpu(self):  # pragma: no cover
+        rng = np.random.default_rng(TEST_SEED)
+        n_qubits = 4
+        amplitudes = self.random_amplitudes(n_qubits, rng)
+        operations = self.random_operations(n_qubits, rng)
+        bloch_vectors = rng.normal(size=(n_qubits, 3))
+        extended_covariance_matrix = self.extended_covariance_matrix(amplitudes, operations)
+        outcomes = self.all_outcomes(n_qubits)
+        cuda_probabilities = ProductBasisSampling(device="cuda").outcome_probabilities(
+            extended_covariance_matrix, bloch_vectors, outcomes
+        )
+        expected = self.reference_probabilities(amplitudes, operations, bloch_vectors)
+        np.testing.assert_allclose(cuda_probabilities.cpu().numpy(), expected, atol=ATOL_SCALAR_COMPARISON)
+        set_seed(TEST_SEED)
+        samples = ProductBasisSampling(device="cuda").sample(extended_covariance_matrix, bloch_vectors, N_SHOTS)
+        empirical = np.bincount(samples @ (1 << np.arange(n_qubits)[::-1]), minlength=2**n_qubits) / N_SHOTS
+        np.testing.assert_allclose(empirical, expected, atol=ATOL_APPROX_COMPARISON)
+
+    def test_outcome_probabilities_in_chunks(self):
+        rng = np.random.default_rng(TEST_SEED)
+        n_qubits = 3
+        extended_covariance_matrix = self.extended_covariance_matrix(
+            self.random_amplitudes(n_qubits, rng), self.random_operations(n_qubits, rng)
+        )
+        bloch_vectors = rng.normal(size=(n_qubits, 3))
+        outcomes = self.all_outcomes(n_qubits)
+        chunked = ProductBasisSampling(shots_chunk_size=3).outcome_probabilities(
+            extended_covariance_matrix, bloch_vectors, outcomes
+        )
+        whole = ProductBasisSampling().outcome_probabilities(extended_covariance_matrix, bloch_vectors, outcomes)
+        np.testing.assert_allclose(chunked.numpy(), whole.numpy(), atol=ATOL_SCALAR_COMPARISON)
+
+    def test_outcome_probabilities_without_outcomes(self):
+        extended_covariance_matrix = self.extended_covariance_matrix(self.basis_amplitudes([0, 1]), [])
+        probabilities = ProductBasisSampling().outcome_probabilities(
+            extended_covariance_matrix, ProductBasisSampling.pauli_bloch_vectors(["X", "Z"]), np.zeros((0, 2))
+        )
+        assert tuple(probabilities.shape) == (0,)
+
+    def test_single_shot(self):
+        extended_covariance_matrix = self.extended_covariance_matrix(self.basis_amplitudes([1, 0]), [])
+        samples = ProductBasisSampling().sample(
+            extended_covariance_matrix, ProductBasisSampling.pauli_bloch_vectors(["Z", "Z"]), 1
+        )
+        np.testing.assert_array_equal(samples, [[1, 0]])
 
     @pytest.mark.parametrize("use_batch_method", [True, False])
     def test_generate_samples_from_device(self, use_batch_method):

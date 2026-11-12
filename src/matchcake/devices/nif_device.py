@@ -121,8 +121,11 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         strategy name or instance, or ``None`` to disable contraction. Defaults to
         :attr:`DEFAULT_CONTRACTION_METHOD`.
     :type contraction_strategy: Optional[Union[str, ContractionStrategy]]
-    :keyword sampling_strategy: The strategy used to draw samples in the computational basis in finite-shot
-        mode. Defaults to :attr:`DEFAULT_SAMPLING_STRATEGY`. The default
+    :keyword sampling_strategy: The strategy used to draw samples in finite-shot mode, as a name or an
+        instance. Defaults to :attr:`DEFAULT_SAMPLING_STRATEGY`. A
+        :class:`~matchcake.devices.sampling_strategies.ProductBasisSampling` instance is also used for the
+        samples in other bases, so that e.g. ``ProductBasisSampling(device="cuda")`` samples every basis on
+        the GPU. The default
         :class:`~matchcake.devices.sampling_strategies.ProductBasisSampling` needs a product state (or basis
         state) input, and :attr:`FALLBACK_SAMPLING_STRATEGY` is used instead for other state preparations.
     :type sampling_strategy: Union[str, SamplingStrategy]
@@ -327,7 +330,11 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             kwargs.get("sampling_strategy", self.DEFAULT_SAMPLING_STRATEGY)
         )
         self.fallback_sampling_strategy: SamplingStrategy = get_sampling_strategy(self.FALLBACK_SAMPLING_STRATEGY)
-        self.product_basis_sampling_strategy = ProductBasisSampling()
+        self.product_basis_sampling_strategy: ProductBasisSampling = (
+            self.sampling_strategy
+            if isinstance(self.sampling_strategy, ProductBasisSampling)
+            else ProductBasisSampling()
+        )
         self.prob_dispatcher: ProbabilityFuncDispatcher = ProbabilityFuncDispatcher(
             [
                 LookupTableStrategy(),
