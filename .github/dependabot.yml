@@ -6,6 +6,22 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    ignore:
+      # Pinned exactly by torch: they follow torch through uv.lock.
+      - dependency-name: "nvidia-*"
+      - dependency-name: "cuda-*"
+      # pythonbasictools requires importlib-metadata<9.
+      - dependency-name: "importlib-metadata"
+        versions: [">=9"]
+      # readme-renderer 44+ requires docutils>=0.21.2; docutils is pinned <0.20.
+      - dependency-name: "readme-renderer"
+        versions: [">=44"]
+      # pennylane 0.45 requires autograd<1.9.
+      - dependency-name: "autograd"
+        versions: [">=1.9"]
+      # sympy 1.14 requires mpmath<1.4.
+      - dependency-name: "mpmath"
+        versions: [">=1.4"]
     groups:
       security-updates:
         applies-to: security-updates
