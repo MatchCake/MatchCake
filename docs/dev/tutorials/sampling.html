@@ -1,0 +1,701 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Sampling &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="../static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="../static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Iris classification with FermionicPQCKernel" href="iris_classification.html" />
+    <link rel="prev" title="Probabilities" href="probabilities.html" />
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process|mathjax_process|math|output_area'
+  }
+};
+</script>
+
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="../index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a></li>
+        
+      <li>Sampling</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="../sources/tutorials/sampling.ipynb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="../search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+
+<div style="padding: 0 0 1em 0;">
+  <label for="version-select" style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 0.3em; color: #555;">Version</label>
+  <select id="version-select" onchange="window.location.href=this.value" style="width: 100%; padding: 0.3em 0.4em; font-size: 0.9em; border: 1px solid #ccc; border-radius: 3px; background: #fff; cursor: pointer;">
+    
+    <option value="sampling.html" selected>dev</option>
+    
+    <option value="../../main/index.html" >main</option>
+    
+    <option value="../../1.0.0/index.html" >1.0.0</option>
+    
+    <option value="../../0.2.3/index.html" >0.2.3</option>
+    
+  </select>
+</div>
+
+
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#requirements">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#set-up-a-project-or-an-environment">Set up a project or an environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#install-matchcake">Install MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#pytorch-build-and-installation-size">PyTorch build and installation size</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#quick-usage-preview">Quick Usage Preview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#quantum-circuit-simulation-with-matchcake">Quantum Circuit Simulation with MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#data-classification-with-matchcake">Data Classification with MatchCake</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#for-developers">For Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#citations">Citations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#fermionic-machine-learning-paper">Fermionic Machine Learning Paper</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="matchcake_basics.html">MatchCake Example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#create-the-noninteractingfermionicdevice">Create the NonInteractingFermionicDevice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#define-the-circuit">Define the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#create-the-qnode">Create the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#define-the-hyperparameters-of-the-circuit">Define the hyperparameters of the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#draw-the-circuit">Draw the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#evaluate-the-qnode">Evaluate the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#print-the-expectation-values">Print the expectation values</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="expectation_values.html">Expectation Values</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="expectation_values.html#hamiltonian">Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="expectation_values.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="expectation_values.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="expectation_values.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="expectation_values.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="probabilities.html">Probabilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="probabilities.html#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="probabilities.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="probabilities.html#marginal-probabilities">Marginal probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="probabilities.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="probabilities.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="probabilities.html#single-outcome-probability">Single-outcome probability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="probabilities.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Sampling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#computational-basis-samples">Computational basis samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#expectation-values-from-shots">Expectation values from shots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sampling-in-the-x-basis">Sampling in the X basis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pauli-products-and-hamiltonians">Pauli products and Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#arbitrary-product-bases">Arbitrary product bases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#batched-circuits">Batched circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scaling-to-many-qubits">Scaling to many qubits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-on-a-gpu">Running on a GPU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="iris_classification.html">Iris classification with FermionicPQCKernel</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="nystroem_kernel_approximation.html">Nystroem Kernel Approximation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../theory.html">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../docs/expectation_values_theory.html">Computing expectation values using the Covariance-Matrix</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../matchcake.html">matchcake package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section class="tex2jax_ignore mathjax_ignore" id="sampling">
+<h1>Sampling<a class="headerlink" href="#sampling" title="Permalink to this heading">¶</a></h1>
+<p>With a finite number of shots, MatchCake draws samples of a matchgate circuit <span class="math notranslate nohighlight">\(V\)</span> applied
+to a qubit product state <span class="math notranslate nohighlight">\(|\psi_\text{prod}\rangle = \bigotimes_{k=0}^{n-1}(a_k|0\rangle + b_k|1\rangle)\)</span>.
+The samples are used by <code class="docutils literal notranslate"><span class="pre">qml.sample</span></code>, and by <code class="docutils literal notranslate"><span class="pre">qml.expval</span></code> and <code class="docutils literal notranslate"><span class="pre">qml.probs</span></code> when shots are set.</p>
+<p>Samples are not limited to the computational basis. Each qubit can be measured in its own
+single-qubit basis, such as the <span class="math notranslate nohighlight">\(X\)</span> or <span class="math notranslate nohighlight">\(Y\)</span> basis, even though the rotation to that basis
+(e.g. a Hadamard) is not a matchgate. Brod showed that such measurements can still be sampled
+efficiently <a class="reference external" href="https://arxiv.org/abs/1602.03539">[1]</a>. MatchCake measures the qubits one at a time
+on the evolved Majorana covariance matrix, so a sample costs <span class="math notranslate nohighlight">\(O(n^3)\)</span>, in any product basis.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pennylane</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">qml</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matchcake</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matchcake.devices.sampling_strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProductBasisSampling</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matchcake.operations.state_preparation</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProductState</span>
+
+<span class="c1"># The samples are drawn from the torch random generator.</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="matchgate-circuit">
+<h2>Matchgate circuit<a class="headerlink" href="#matchgate-circuit" title="Permalink to this heading">¶</a></h2>
+<p>We use a random single-particle transition matrix (SPTM) on 4 qubits as the matchgate
+circuit <span class="math notranslate nohighlight">\(V\)</span>, applied to the basis state <span class="math notranslate nohighlight">\(|1010\rangle\)</span>. The equivalent qubit unitary <code class="docutils literal notranslate"><span class="pre">U</span></code> is
+used only to cross-check against <code class="docutils literal notranslate"><span class="pre">default.qubit</span></code>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">wires</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+<span class="n">n_shots</span> <span class="o">=</span> <span class="mi">20_000</span>
+<span class="n">state_prep</span> <span class="o">=</span> <span class="n">ProductState</span><span class="o">.</span><span class="n">from_basis_state</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+<span class="n">sptm</span> <span class="o">=</span> <span class="n">mc</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">SingleParticleTransitionMatrixOperation</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">U</span> <span class="o">=</span> <span class="n">sptm</span><span class="o">.</span><span class="n">to_qubit_operation</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">bits_to_indices</span><span class="p">(</span><span class="n">bits</span><span class="p">):</span>
+    <span class="c1"># (shots, n) bits -&gt; (shots,) basis state indices, the first wire being the most significant bit.</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bits</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span> <span class="o">@</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">frequencies</span><span class="p">(</span><span class="n">bits</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">bits_to_indices</span><span class="p">(</span><span class="n">bits</span><span class="p">),</span> <span class="n">minlength</span><span class="o">=</span><span class="mi">2</span> <span class="o">**</span> <span class="n">bits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="computational-basis-samples">
+<h2>Computational basis samples<a class="headerlink" href="#computational-basis-samples" title="Permalink to this heading">¶</a></h2>
+<p>Shots are given with <code class="docutils literal notranslate"><span class="pre">qml.set_shots</span></code> (or with <code class="docutils literal notranslate"><span class="pre">shots=</span></code> when the device is built).
+<code class="docutils literal notranslate"><span class="pre">qml.sample()</span></code> returns one row of bits per shot. Their frequencies match the exact
+probabilities of <code class="docutils literal notranslate"><span class="pre">qml.probs</span></code> up to statistical fluctuations of order <span class="math notranslate nohighlight">\(1/\sqrt{\text{shots}}\)</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nd">@qml</span><span class="o">.</span><span class="n">set_shots</span><span class="p">(</span><span class="n">n_shots</span><span class="p">)</span>
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">())</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_circuit</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">sptm</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"default.qubit"</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">svs_probs_circuit</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">U</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+
+
+<span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sample_circuit</span><span class="p">())</span>
+<span class="n">empirical</span> <span class="o">=</span> <span class="n">frequencies</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+<span class="n">exact</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">svs_probs_circuit</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"samples shape = </span><span class="si">{</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"first samples =</span><span class="se">\n</span><span class="si">{</span><span class="n">samples</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"empirical     = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">empirical</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"exact         = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">exact</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">empirical</span><span class="p">,</span> <span class="n">exact</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">2e-2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Frequencies agree with state-vector simulation."</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>samples shape = (20000, 4)
+first samples =
+[[1 1 1 1]
+ [1 0 1 0]
+ [0 1 1 0]]
+empirical     = [0.03  0.    0.    0.342 0.    0.081 0.112 0.    0.    0.051 0.089 0.
+ 0.022 0.    0.    0.274]
+exact         = [0.03  0.    0.    0.343 0.    0.081 0.111 0.    0.    0.052 0.09  0.
+ 0.022 0.    0.    0.272]
+Frequencies agree with state-vector simulation.
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="expectation-values-from-shots">
+<h2>Expectation values from shots<a class="headerlink" href="#expectation-values-from-shots" title="Permalink to this heading">¶</a></h2>
+<p>With shots, <code class="docutils literal notranslate"><span class="pre">qml.expval</span></code> is estimated from the samples instead of being computed exactly.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">observable</span> <span class="o">=</span> <span class="n">qml</span><span class="o">.</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">set_shots</span><span class="p">(</span><span class="n">n_shots</span><span class="p">)</span>
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">())</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">expval_circuit</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">sptm</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">observable</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"default.qubit"</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">svs_expval_circuit</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">U</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">observable</span><span class="p">)</span>
+
+
+<span class="n">estimate</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">expval_circuit</span><span class="p">())</span>
+<span class="n">exact_expval</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">svs_expval_circuit</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"&lt;Z0 Z1&gt; estimate = </span><span class="si">{</span><span class="n">estimate</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, exact = </span><span class="si">{</span><span class="n">exact_expval</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">estimate</span><span class="p">,</span> <span class="n">exact_expval</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">2e-2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Results agree with state-vector simulation."</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;Z0 Z1&gt; estimate = 0.3277, exact = 0.3319
+Results agree with state-vector simulation.
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="sampling-in-the-x-basis">
+<h2>Sampling in the X basis<a class="headerlink" href="#sampling-in-the-x-basis" title="Permalink to this heading">¶</a></h2>
+<p>Measuring a qubit in the <span class="math notranslate nohighlight">\(X\)</span> basis amounts to applying a Hadamard before a computational basis
+measurement. The Hadamard is not a matchgate, so it cannot be part of the circuit on the NIF
+device. Instead, it is given by the observable: <code class="docutils literal notranslate"><span class="pre">qml.sample(qml.X(k))</span></code> returns the eigenvalue
+<span class="math notranslate nohighlight">\(\pm 1\)</span> of <span class="math notranslate nohighlight">\(X_k\)</span> for each shot.</p>
+<p>Measuring every wire in the <span class="math notranslate nohighlight">\(X\)</span> basis in the same circuit gives the joint <span class="math notranslate nohighlight">\(X\)</span>-basis outcomes.
+Bit <span class="math notranslate nohighlight">\(0\)</span> stands for the eigenvalue <span class="math notranslate nohighlight">\(+1\)</span> and bit <span class="math notranslate nohighlight">\(1\)</span> for <span class="math notranslate nohighlight">\(-1\)</span>, so the frequencies match the
+computational basis probabilities of <code class="docutils literal notranslate"><span class="pre">default.qubit</span></code> with a final layer of Hadamards.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nd">@qml</span><span class="o">.</span><span class="n">set_shots</span><span class="p">(</span><span class="n">n_shots</span><span class="p">)</span>
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">())</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">x_sample_circuit</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">sptm</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">qml</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="n">wire</span><span class="p">))</span> <span class="k">for</span> <span class="n">wire</span> <span class="ow">in</span> <span class="n">wires</span><span class="p">]</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"default.qubit"</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">svs_hadamard_layer_circuit</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">U</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">wire</span> <span class="ow">in</span> <span class="n">wires</span><span class="p">:</span>
+        <span class="n">qml</span><span class="o">.</span><span class="n">Hadamard</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">wire</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+
+
+<span class="n">x_eigenvalues</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">x_sample_circuit</span><span class="p">()],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (shots, n)</span>
+<span class="n">x_bits</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x_eigenvalues</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+<span class="n">x_empirical</span> <span class="o">=</span> <span class="n">frequencies</span><span class="p">(</span><span class="n">x_bits</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+<span class="n">x_exact</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">svs_hadamard_layer_circuit</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"empirical = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">x_empirical</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"exact     = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">x_exact</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">x_empirical</span><span class="p">,</span> <span class="n">x_exact</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">2e-2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Frequencies agree with state-vector simulation."</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>empirical = [0.069 0.068 0.013 0.071 0.107 0.012 0.084 0.072 0.074 0.083 0.013 0.11
+ 0.072 0.012 0.067 0.072]
+exact     = [0.067 0.07  0.012 0.073 0.111 0.012 0.083 0.073 0.073 0.083 0.012 0.111
+ 0.073 0.012 0.07  0.067]
+Frequencies agree with state-vector simulation.
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="pauli-products-and-hamiltonians">
+<h2>Pauli products and Hamiltonians<a class="headerlink" href="#pauli-products-and-hamiltonians" title="Permalink to this heading">¶</a></h2>
+<p>Any product of single-qubit Paulis can be sampled, as long as each wire is measured in a single
+basis within a circuit. A Hamiltonian is split by PennyLane into groups of terms that commute
+qubit-wise, and each group is estimated from its own shots.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">hamiltonian</span> <span class="o">=</span> <span class="n">qml</span><span class="o">.</span><span class="n">Hamiltonian</span><span class="p">(</span>
+    <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.2</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span>
+    <span class="p">[</span><span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">qml</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">qml</span><span class="o">.</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">Z</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="mi">3</span><span class="p">)],</span>
+<span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">set_shots</span><span class="p">(</span><span class="n">n_shots</span><span class="p">)</span>
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">())</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">hamiltonian_circuit</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">sptm</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">hamiltonian</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"default.qubit"</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">svs_hamiltonian_circuit</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">U</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">hamiltonian</span><span class="p">)</span>
+
+
+<span class="n">estimate</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">hamiltonian_circuit</span><span class="p">())</span>
+<span class="n">exact_expval</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">svs_hamiltonian_circuit</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"&lt;H&gt; estimate = </span><span class="si">{</span><span class="n">estimate</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, exact = </span><span class="si">{</span><span class="n">exact_expval</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">estimate</span><span class="p">,</span> <span class="n">exact_expval</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">5e-2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Results agree with state-vector simulation."</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;H&gt; estimate = -0.7076, exact = -0.7103
+Results agree with state-vector simulation.
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="arbitrary-product-bases">
+<h2>Arbitrary product bases<a class="headerlink" href="#arbitrary-product-bases" title="Permalink to this heading">¶</a></h2>
+<p>The device method <code class="docutils literal notranslate"><span class="pre">generate_samples</span></code> takes the basis of each wire explicitly, either as a
+Pauli letter or as a Bloch vector <span class="math notranslate nohighlight">\(\hat{n}\)</span>. A wire with Bloch vector <span class="math notranslate nohighlight">\(\hat{n}\)</span> is measured
+along <span class="math notranslate nohighlight">\(\hat{n} \cdot \vec{\sigma}\)</span>, with bit <span class="math notranslate nohighlight">\(0\)</span> for the eigenvalue <span class="math notranslate nohighlight">\(+1\)</span>. Wires that are not
+listed are measured in the computational basis.</p>
+<p>Here, wire 0 is measured in the <span class="math notranslate nohighlight">\(Y\)</span> basis and wire 1 along <span class="math notranslate nohighlight">\(\hat{n} = (\sin\theta, 0, \cos\theta)\)</span>,
+which is the same as applying <span class="math notranslate nohighlight">\(R_Y(-\theta)\)</span> before a computational basis measurement. The
+operations are applied to the device directly with <code class="docutils literal notranslate"><span class="pre">apply</span></code>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">3</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="n">n_shots</span><span class="p">)</span>
+<span class="n">device</span><span class="o">.</span><span class="n">apply</span><span class="p">([</span><span class="n">state_prep</span><span class="p">,</span> <span class="n">sptm</span><span class="p">])</span>
+<span class="n">bases</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">"Y"</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)]}</span>
+<span class="n">basis_samples</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">generate_samples</span><span class="p">(</span><span class="n">bases</span><span class="o">=</span><span class="n">bases</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"default.qubit"</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">svs_rotated_circuit</span><span class="p">():</span>
+    <span class="n">state_prep</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">U</span><span class="o">.</span><span class="n">queue</span><span class="p">()</span>
+    <span class="n">qml</span><span class="o">.</span><span class="n">adjoint</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="n">qml</span><span class="o">.</span><span class="n">Hadamard</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">qml</span><span class="o">.</span><span class="n">RY</span><span class="p">(</span><span class="o">-</span><span class="n">theta</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+
+
+<span class="n">basis_empirical</span> <span class="o">=</span> <span class="n">frequencies</span><span class="p">(</span><span class="n">basis_samples</span><span class="p">)</span>
+<span class="n">basis_exact</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">svs_rotated_circuit</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"empirical = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">basis_empirical</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"exact     = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">basis_exact</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">basis_empirical</span><span class="p">,</span> <span class="n">basis_exact</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">2e-2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Frequencies agree with state-vector simulation."</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>empirical = [0.003 0.018 0.011 0.053 0.023 0.049 0.091 0.251 0.025 0.04  0.08  0.274
+ 0.001 0.025 0.017 0.039]
+exact     = [0.003 0.019 0.011 0.053 0.023 0.048 0.089 0.254 0.025 0.041 0.084 0.272
+ 0.001 0.026 0.016 0.035]
+Frequencies agree with state-vector simulation.
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="batched-circuits">
+<h2>Batched circuits<a class="headerlink" href="#batched-circuits" title="Permalink to this heading">¶</a></h2>
+<p>Parameter broadcasting works with shots too: a batch of parameters gives one estimate per
+batch entry, and <code class="docutils literal notranslate"><span class="pre">qml.sample</span></code> returns samples of shape <code class="docutils literal notranslate"><span class="pre">(batch,</span> <span class="pre">shots,</span> <span class="pre">...)</span></code>, as on
+<code class="docutils literal notranslate"><span class="pre">default.qubit</span></code>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">angles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">batched_circuit</span><span class="p">(</span><span class="n">theta</span><span class="p">):</span>
+    <span class="n">qml</span><span class="o">.</span><span class="n">BasisState</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">qml</span><span class="o">.</span><span class="n">SingleExcitation</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+
+<span class="n">batched_estimate</span> <span class="o">=</span> <span class="n">qml</span><span class="o">.</span><span class="n">set_shots</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">QNode</span><span class="p">(</span><span class="n">batched_circuit</span><span class="p">,</span> <span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">()),</span> <span class="n">n_shots</span><span class="p">)(</span><span class="n">angles</span><span class="p">)</span>
+<span class="n">batched_exact</span> <span class="o">=</span> <span class="n">qml</span><span class="o">.</span><span class="n">QNode</span><span class="p">(</span><span class="n">batched_circuit</span><span class="p">,</span> <span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"default.qubit"</span><span class="p">))(</span><span class="n">angles</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"estimates = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">batched_estimate</span><span class="p">,</span><span class="w"> </span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"exact     = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">batched_exact</span><span class="p">,</span><span class="w"> </span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">batched_estimate</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="n">batched_exact</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">2e-2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Results agree with state-vector simulation."</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>estimates = [0.099 0.72  0.91 ]
+exact     = [0.1   0.717 0.909]
+Results agree with state-vector simulation.
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="scaling-to-many-qubits">
+<h2>Scaling to many qubits<a class="headerlink" href="#scaling-to-many-qubits" title="Permalink to this heading">¶</a></h2>
+<p>A sample costs <span class="math notranslate nohighlight">\(O(n^3)\)</span> and the samples are drawn in vectorized chunks of shots, so circuits far
+beyond the reach of state-vector simulation can be sampled. Below, a random matchgate circuit on
+50 qubits is sampled in the <span class="math notranslate nohighlight">\(X\)</span> basis on every wire.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n_large</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">large_wires</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_large</span><span class="p">))</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">set_shots</span><span class="p">(</span><span class="mi">1_000</span><span class="p">)</span>
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">())</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">large_circuit</span><span class="p">():</span>
+    <span class="n">ProductState</span><span class="o">.</span><span class="n">from_basis_state</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_large</span> <span class="o">//</span> <span class="mi">2</span><span class="p">),</span> <span class="n">wires</span><span class="o">=</span><span class="n">large_wires</span><span class="p">)</span>
+    <span class="n">mc</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">SingleParticleTransitionMatrixOperation</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">large_wires</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+
+<span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+<span class="n">large_estimate</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">large_circuit</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"&lt;X0 X1&gt; on </span><span class="si">{</span><span class="n">n_large</span><span class="si">}</span><span class="s2"> qubits = </span><span class="si">{</span><span class="n">large_estimate</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> s for 1000 shots)"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;X0 X1&gt; on 50 qubits = -0.0240 (0.28 s for 1000 shots)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="running-on-a-gpu">
+<h2>Running on a GPU<a class="headerlink" href="#running-on-a-gpu" title="Permalink to this heading">¶</a></h2>
+<p>The sampler runs on the device of its choice. Passing a
+<code class="docutils literal notranslate"><span class="pre">ProductBasisSampling(device=&quot;cuda&quot;)</span></code> instance as the <code class="docutils literal notranslate"><span class="pre">sampling_strategy</span></code> of the NIF device draws
+the samples of every basis on the GPU, where large batches of shots are processed in parallel. Use
+<code class="docutils literal notranslate"><span class="pre">dtype=torch.float32</span></code> for more speed on consumer GPUs, at the cost of precision on large circuits.
+The cell below falls back to the CPU when no GPU is available.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">compute_device</span> <span class="o">=</span> <span class="s2">"cuda"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span>
+<span class="n">n_gpu</span> <span class="o">=</span> <span class="mi">128</span>
+<span class="n">gpu_wires</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_gpu</span><span class="p">))</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">set_shots</span><span class="p">(</span><span class="mi">10_000</span><span class="p">)</span>
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">(</span><span class="n">sampling_strategy</span><span class="o">=</span><span class="n">ProductBasisSampling</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">compute_device</span><span class="p">)))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gpu_circuit</span><span class="p">():</span>
+    <span class="n">ProductState</span><span class="o">.</span><span class="n">from_basis_state</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_gpu</span> <span class="o">//</span> <span class="mi">2</span><span class="p">),</span> <span class="n">wires</span><span class="o">=</span><span class="n">gpu_wires</span><span class="p">)</span>
+    <span class="n">mc</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">SingleParticleTransitionMatrixOperation</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">gpu_wires</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+
+<span class="n">gpu_circuit</span><span class="p">()</span>  <span class="c1"># warm-up</span>
+<span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+<span class="n">gpu_estimate</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gpu_circuit</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"&lt;X0 X1&gt; on </span><span class="si">{</span><span class="n">n_gpu</span><span class="si">}</span><span class="s2"> qubits = </span><span class="si">{</span><span class="n">gpu_estimate</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> "</span>
+    <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> s for 10000 shots on </span><span class="si">{</span><span class="n">compute_device</span><span class="si">}</span><span class="s2">)"</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;X0 X1&gt; on 128 qubits = 0.0898 (2.52 s for 10000 shots on cuda)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="further-reading">
+<h2>Further reading<a class="headerlink" href="#further-reading" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>The sampler is
+<a class="reference external" href="https://github.com/MatchCake/MatchCake/blob/main/src/matchcake/devices/sampling_strategies/product_basis_sampling.py"><code class="docutils literal notranslate"><span class="pre">ProductBasisSampling</span></code></a>,
+whose docstring details the construction and its implementation on CPU and GPU. It is the default sampling strategy of the
+NIF device for product state inputs.</p></li>
+<li><p>D. J. Brod, <em>Efficient classical simulation of matchgate circuits with generalized inputs and
+measurements</em>, Phys. Rev. A <strong>93</strong>, 062332 (2016), <a class="reference external" href="https://arxiv.org/abs/1602.03539">arXiv:1602.03539</a>.</p></li>
+<li><p>The covariance matrix machinery shared with probabilities and expectation values is described
+in <a class="reference internal" href="../docs/expectation_values_theory.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">docs/expectation_values_theory.md</span></code></span></a>.</p></li>
+</ul>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="../static/documentation_options.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <script type="text/javascript" src="../static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" src="../static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>

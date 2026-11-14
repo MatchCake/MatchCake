@@ -1,0 +1,876 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>matchcake.devices.sampling_strategies package &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="matchcake.devices.star_state_finding_strategies package" href="matchcake.devices.star_state_finding_strategies.html" />
+    <link rel="prev" title="matchcake.devices.probability_strategies package" href="matchcake.devices.probability_strategies.html" />
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process|mathjax_process|math|output_area'
+  }
+};
+</script>
+
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="index.html">Docs</a></li>
+        
+          <li><a href="matchcake.html">matchcake package</a></li>
+        
+          <li><a href="matchcake.devices.html">matchcake.devices package</a></li>
+        
+      <li>matchcake.devices.sampling_strategies package</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="sources/matchcake.devices.sampling_strategies.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+
+<div style="padding: 0 0 1em 0;">
+  <label for="version-select" style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 0.3em; color: #555;">Version</label>
+  <select id="version-select" onchange="window.location.href=this.value" style="width: 100%; padding: 0.3em 0.4em; font-size: 0.9em; border: 1px solid #ccc; border-radius: 3px; background: #fff; cursor: pointer;">
+    
+    <option value="matchcake.devices.sampling_strategies.html" selected>dev</option>
+    
+    <option value="../main/matchcake.devices.sampling_strategies.html" >main</option>
+    
+    <option value="../1.0.0/matchcake.devices.sampling_strategies.html" >1.0.0</option>
+    
+    <option value="../0.2.3/index.html" >0.2.3</option>
+    
+  </select>
+</div>
+
+
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#requirements">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#set-up-a-project-or-an-environment">Set up a project or an environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#install-matchcake">Install MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#pytorch-build-and-installation-size">PyTorch build and installation size</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#quick-usage-preview">Quick Usage Preview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#quantum-circuit-simulation-with-matchcake">Quantum Circuit Simulation with MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#data-classification-with-matchcake">Data Classification with MatchCake</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#for-developers">For Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#citations">Citations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#fermionic-machine-learning-paper">Fermionic Machine Learning Paper</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/matchcake_basics.html">MatchCake Example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#create-the-noninteractingfermionicdevice">Create the NonInteractingFermionicDevice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#define-the-circuit">Define the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#create-the-qnode">Create the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#define-the-hyperparameters-of-the-circuit">Define the hyperparameters of the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#draw-the-circuit">Draw the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#evaluate-the-qnode">Evaluate the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#print-the-expectation-values">Print the expectation values</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/expectation_values.html">Expectation Values</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#hamiltonian">Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/probabilities.html">Probabilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#marginal-probabilities">Marginal probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#single-outcome-probability">Single-outcome probability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/sampling.html">Sampling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#computational-basis-samples">Computational basis samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#expectation-values-from-shots">Expectation values from shots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#sampling-in-the-x-basis">Sampling in the X basis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#pauli-products-and-hamiltonians">Pauli products and Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#arbitrary-product-bases">Arbitrary product bases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#batched-circuits">Batched circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#scaling-to-many-qubits">Scaling to many qubits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#running-on-a-gpu">Running on a GPU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/iris_classification.html">Iris classification with FermionicPQCKernel</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html">Nystroem Kernel Approximation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="docs/expectation_values_theory.html">Computing expectation values using the Covariance-Matrix</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="matchcake.html">matchcake package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="matchcake.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section id="matchcake-devices-sampling-strategies-package">
+<h1>matchcake.devices.sampling_strategies package<a class="headerlink" href="#matchcake-devices-sampling-strategies-package" title="Permalink to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling">
+<span id="matchcake-devices-sampling-strategies-k-qubits-by-k-qubits-sampling-module"></span><h2>matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling module<a class="headerlink" href="#module-matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.</span></span><span class="sig-name descname"><span class="pre">KQubitsByKQubitsSampling</span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy" title="matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingStrategy</span></code></a></p>
+<p>Autoregressive sampler that draws <code class="docutils literal notranslate"><span class="pre">K</span></code> qubits per step.</p>
+<p>Samples are generated block by block following the chain rule of
+probability:</p>
+<ol class="arabic simple">
+<li><p>Sample <span class="math notranslate nohighlight">\(x_0\)</span> from the marginal <span class="math notranslate nohighlight">\(\pi_0(x_0)\)</span>.</p></li>
+<li><p>For <span class="math notranslate nohighlight">\(j = 1\)</span> to <span class="math notranslate nohighlight">\(n - 1\)</span>, sample <span class="math notranslate nohighlight">\(x_j\)</span> from the
+conditional <span class="math notranslate nohighlight">\(\pi_j(x_0, \dots, x_{j-1}, x_j) /
+\pi_{j-1}(x_0, \dots, x_{j-1})\)</span>.</p></li>
+<li><p>Return <span class="math notranslate nohighlight">\(x_0 \dots x_{n-1}\)</span>.</p></li>
+</ol>
+<p>The implementation is backend agnostic. The probability callback may return
+NumPy arrays, Torch tensors, or any other <code class="docutils literal notranslate"><span class="pre">qml.math</span></code> backend; all
+probability arithmetic stays in that backend and only the discrete binary
+samples are materialised as NumPy integers. Arbitrary leading batch
+dimensions on the probability outputs are supported.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.K">
+<span class="sig-name descname"><span class="pre">K</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.K" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'kQubitBykQubitSampling'</span></em><a class="headerlink" href="#matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.batch_generate_samples">
+<span class="sig-name descname"><span class="pre">batch_generate_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QubitDevice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">states_prob_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Wires</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.batch_generate_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate batched samples using <code class="docutils literal notranslate"><span class="pre">K</span></code> (or 1) wires per step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> (<em>qml.devices.QubitDevice</em>) – Device to sample from.</p></li>
+<li><p><strong>states_prob_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>TensorLike</em><em>, </em><em>Wires</em><em>]</em><em>, </em><em>TensorLike</em><em>]</em>) – Batched probability callback.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Samples of shape <code class="docutils literal notranslate"><span class="pre">(shots,</span> <span class="pre">*batch,</span> <span class="pre">num_wires)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TensorLike</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.batch_generate_samples_by_subsets_of_k">
+<span class="sig-name descname"><span class="pre">batch_generate_samples_by_subsets_of_k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QubitDevice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">states_prob_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Wires</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.batch_generate_samples_by_subsets_of_k" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate samples <code class="docutils literal notranslate"><span class="pre">k</span></code> wires at a time using the chain rule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> (<em>qml.devices.QubitDevice</em>) – Device providing <code class="docutils literal notranslate"><span class="pre">num_wires</span></code>, <code class="docutils literal notranslate"><span class="pre">shots</span></code> and binary helpers.</p></li>
+<li><p><strong>states_prob_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>TensorLike</em><em>, </em><em>Wires</em><em>]</em><em>, </em><em>TensorLike</em><em>]</em>) – Callback returning the probabilities of a batch
+of binary states on the given wires.</p></li>
+<li><p><strong>k</strong> (<em>int</em>) – Number of wires sampled per step.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Samples of shape <code class="docutils literal notranslate"><span class="pre">(shots,</span> <span class="pre">*batch,</span> <span class="pre">num_wires)</span></code> drawn from
+<span class="math notranslate nohighlight">\(|\langle x | \psi \rangle|^2\)</span>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TensorLike</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.build_subset_sizes">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">build_subset_sizes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.build_subset_sizes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split <code class="docutils literal notranslate"><span class="pre">num_wires</span></code> into the per-step block sizes used by the sampler.</p>
+<p>The first <code class="docutils literal notranslate"><span class="pre">k</span></code> wires are sampled by the marginal step, so this returns
+the sizes of the remaining steps. Every step samples <code class="docutils literal notranslate"><span class="pre">k</span></code> wires except
+a final step covering <code class="docutils literal notranslate"><span class="pre">num_wires</span> <span class="pre">%</span> <span class="pre">k</span></code> leftover wires when <code class="docutils literal notranslate"><span class="pre">k</span></code> does
+not divide <code class="docutils literal notranslate"><span class="pre">num_wires</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_wires</strong> (<em>int</em>) – Total number of wires to sample.</p></li>
+<li><p><strong>k</strong> (<em>int</em>) – Number of wires sampled per step.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of block sizes for the steps following the marginal step.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.extend_states">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extend_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">states</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">added_states</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unique</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.extend_states" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append every candidate block to the (unique) prefixes seen so far.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>states</strong> (<em>TensorLike</em>) – Already sampled prefixes, shape <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">prefix_len)</span></code>.</p></li>
+<li><p><strong>added_states</strong> (<em>TensorLike</em>) – Candidate blocks to append, shape <code class="docutils literal notranslate"><span class="pre">(2</span> <span class="pre">**</span> <span class="pre">k,</span> <span class="pre">k)</span></code>.</p></li>
+<li><p><strong>unique</strong> (<em>bool</em>) – Whether to deduplicate the prefixes before extending.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Extended states, shape <code class="docutils literal notranslate"><span class="pre">(2</span> <span class="pre">**</span> <span class="pre">k</span> <span class="pre">*</span> <span class="pre">n_prefixes,</span> <span class="pre">prefix_len</span> <span class="pre">+</span> <span class="pre">k)</span></code>.
+Rows are block-major: row <code class="docutils literal notranslate"><span class="pre">block_idx</span> <span class="pre">*</span> <span class="pre">n_prefixes</span> <span class="pre">+</span> <span class="pre">prefix_idx</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TensorLike</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.generate_samples">
+<span class="sig-name descname"><span class="pre">generate_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QubitDevice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_prob_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Wires</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.generate_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate samples from a single-state probability callback.</p>
+<p>Wraps a callback that scores one binary state at a time into the batched
+interface used by <a class="reference internal" href="#matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.batch_generate_samples_by_subsets_of_k" title="matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.batch_generate_samples_by_subsets_of_k"><code class="xref py py-meth docutils literal notranslate"><span class="pre">batch_generate_samples_by_subsets_of_k()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> (<em>qml.devices.QubitDevice</em>) – Device to sample from.</p></li>
+<li><p><strong>state_prob_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>TensorLike</em><em>, </em><em>Wires</em><em>]</em><em>, </em><em>TensorLike</em><em>]</em>) – Callback scoring a single binary state on the
+given wires.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Samples of shape <code class="docutils literal notranslate"><span class="pre">(shots,</span> <span class="pre">*batch,</span> <span class="pre">num_wires)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TensorLike</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.scatter_extended_probs">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">scatter_extended_probs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extended_states_probs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix_inverse</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_prefixes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_blocks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling.scatter_extended_probs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scatter unique extended-state probabilities back onto every sample.</p>
+<p>Given the probabilities of the <code class="docutils literal notranslate"><span class="pre">n_blocks</span> <span class="pre">*</span> <span class="pre">n_prefixes</span></code> unique extended
+states, this gathers, for each sample, the probability of every
+candidate block conditioned on that sample’s prefix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>extended_states_probs</strong> (<em>TensorLike</em>) – Probabilities of the extended states,
+shape <code class="docutils literal notranslate"><span class="pre">(n_blocks</span> <span class="pre">*</span> <span class="pre">n_prefixes,</span> <span class="pre">*extra)</span></code> where <code class="docutils literal notranslate"><span class="pre">extra</span></code> are the
+optional circuit-batch dimensions.</p></li>
+<li><p><strong>prefix_inverse</strong> (<em>np.ndarray</em>) – Mapping from each flattened sample to its prefix
+index, shape <code class="docutils literal notranslate"><span class="pre">(prod(batch_shape),)</span></code>.</p></li>
+<li><p><strong>n_prefixes</strong> (<em>int</em>) – Number of unique prefixes.</p></li>
+<li><p><strong>n_blocks</strong> (<em>int</em>) – Number of candidate blocks (<code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">**</span> <span class="pre">k</span></code>).</p></li>
+<li><p><strong>batch_shape</strong> (<em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>) – Shape of the sample batch, <code class="docutils literal notranslate"><span class="pre">(shots,</span> <span class="pre">*extra)</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Per-sample block probabilities, shape <code class="docutils literal notranslate"><span class="pre">(*batch_shape,</span> <span class="pre">n_blocks)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TensorLike</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.devices.sampling_strategies.product_basis_sampling">
+<span id="matchcake-devices-sampling-strategies-product-basis-sampling-module"></span><h2>matchcake.devices.sampling_strategies.product_basis_sampling module<a class="headerlink" href="#module-matchcake.devices.sampling_strategies.product_basis_sampling" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.devices.sampling_strategies.product_basis_sampling.</span></span><span class="sig-name descname"><span class="pre">ProductBasisSampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shots_chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memory_budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deduplicate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy" title="matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingStrategy</span></code></a></p>
+<p>Sampler for measurements in an arbitrary single-qubit product basis.</p>
+<p>Draws samples of a matchgate circuit applied to a product state, with each qubit <span class="math notranslate nohighlight">\(k\)</span>
+measured along its own Bloch direction <span class="math notranslate nohighlight">\(\hat{n}_k\)</span>, i.e. measuring the observable
+<span class="math notranslate nohighlight">\(\hat{n}_k \cdot \vec{\sigma}_k\)</span>. Outcome bit <code class="docutils literal notranslate"><span class="pre">0</span></code> stands for the eigenvalue
+<span class="math notranslate nohighlight">\(+1\)</span> and bit <code class="docutils literal notranslate"><span class="pre">1</span></code> for <span class="math notranslate nohighlight">\(-1\)</span>, so <code class="docutils literal notranslate"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">1)</span></code> is the computational basis and
+<code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">0,</span> <span class="pre">0)</span></code> the X basis. Such measurements leave the matchgate set, since rotating a
+qubit to the X basis takes a Hadamard, but they can still be sampled efficiently
+<a class="reference internal" href="#brod2016" id="id1"><span>[Brod2016]</span></a> (Theorem 3 and Sec. III.1).</p>
+<p>The sampler follows Brod’s construction. An ancilla in <span class="math notranslate nohighlight">\(|+\rangle\)</span> is placed before
+the first qubit, with Majorana operators <span class="math notranslate nohighlight">\(a_0 = X_A\)</span> and <span class="math notranslate nohighlight">\(a_1 = Y_A\)</span>. On the
+states it meets the ancilla is always in <span class="math notranslate nohighlight">\(|+\rangle\)</span>, so <span class="math notranslate nohighlight">\(X_A = 1\)</span>. Its
+Majorana <span class="math notranslate nohighlight">\(a_1\)</span> is the parity index of the extended covariance matrix
+<span class="math notranslate nohighlight">\(\tilde\Lambda\)</span> (see
+<code class="xref py py-func docutils literal notranslate"><span class="pre">extended_covariance_matrix()</span></code>),
+which therefore describes the product state with the ancilla as a Gaussian state. The
+circuit acts on it through the lifted single-particle transition matrix.</p>
+<p>The qubits are then measured one at a time, from the first to the last. When qubit
+<span class="math notranslate nohighlight">\(k\)</span> is reached, the qubits <span class="math notranslate nohighlight">\(l &lt; k\)</span> are in computational basis states with
+known values of <span class="math notranslate nohighlight">\(Z_l\)</span>, and on the current state</p>
+<div class="math notranslate nohighlight">
+\[X_k = -i\,\sigma_k\, a_1 c_{2k}, \qquad
+Y_k = -i\,\sigma_k\, a_1 c_{2k+1}, \qquad
+Z_k = -i\, c_{2k} c_{2k+1},\]</div>
+<p>where <span class="math notranslate nohighlight">\(\sigma_k = \prod_{l&lt;k} Z_l = \pm 1\)</span>. All three are quadratic in the Majorana
+operators <span class="math notranslate nohighlight">\((a_1, c_{2k}, c_{2k+1})\)</span>, and a single-qubit rotation of qubit
+<span class="math notranslate nohighlight">\(k\)</span> acts as a rotation in <span class="math notranslate nohighlight">\(SO(3)\)</span> of these three operators, which keeps the
+state Gaussian. Each step therefore:</p>
+<ol class="arabic">
+<li><p>Rotates the triple <span class="math notranslate nohighlight">\((a_1, c_{2k}, c_{2k+1})\)</span> so that
+<span class="math notranslate nohighlight">\(\hat{n}_k \cdot \vec{\sigma}_k\)</span> becomes <span class="math notranslate nohighlight">\(-i\, c_{2k} c_{2k+1}\)</span>. The new
+<span class="math notranslate nohighlight">\(a_1\)</span> is the direction <span class="math notranslate nohighlight">\(w = (n_z, -\sigma_k n_y, \sigma_k n_x)\)</span> of the old
+triple.</p></li>
+<li><p>Measures <span class="math notranslate nohighlight">\(Z_k\)</span> on the rotated state. The outcome <span class="math notranslate nohighlight">\(\lambda = \pm 1\)</span> has
+probability <span class="math notranslate nohighlight">\((1 - \lambda \tilde\Lambda_{2k, 2k+1}) / 2\)</span>.</p></li>
+<li><p>Projects onto the outcome with the rank-2 update</p>
+<div class="math notranslate nohighlight">
+\[\tilde\Lambda_{ij} \leftarrow \tilde\Lambda_{ij}
++ \lambda \frac{\tilde\Lambda_{2k, i} \tilde\Lambda_{2k+1, j}
+- \tilde\Lambda_{2k, j} \tilde\Lambda_{2k+1, i}}{1 - \lambda \tilde\Lambda_{2k, 2k+1}},\]</div>
+<p>and updates <span class="math notranslate nohighlight">\(\sigma_{k+1} = \lambda\, \sigma_k\)</span>.</p>
+</li>
+</ol>
+<p>After the rotation qubit <span class="math notranslate nohighlight">\(k\)</span> is left in a computational basis state, which is what
+makes <span class="math notranslate nohighlight">\(\sigma_{k+1}\)</span> a number for the next step. The rotation and the update only
+change the probabilities of the qubits already measured, not those of the others, so the
+outcomes follow the distribution of the original measurement. When all the bases are the
+computational basis, the rotations are the identity and the sampler draws ordinary
+computational basis samples.</p>
+<p>The probability of a complete outcome is the product of the conditional probabilities
+and is computed exactly by <a class="reference internal" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.outcome_probabilities" title="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.outcome_probabilities"><code class="xref py py-meth docutils literal notranslate"><span class="pre">outcome_probabilities()</span></code></a>. Marginal probabilities on a
+subset of the qubits are not provided, since whether they can be computed efficiently is
+open <a class="reference internal" href="#brod2016" id="id2"><span>[Brod2016]</span></a> (Sec. IV).</p>
+<p><strong>Cost and implementation.</strong> Step <span class="math notranslate nohighlight">\(k\)</span> touches a matrix of size
+<span class="math notranslate nohighlight">\(d = 2(n - k) + 1\)</span>: <span class="math notranslate nohighlight">\(O(d)\)</span> for the rotation and <span class="math notranslate nohighlight">\(O(d^2)\)</span> for the rank-2
+update, so a shot costs <span class="math notranslate nohighlight">\(\sum_k d^2 \approx \tfrac{4}{3} n^3 = O(n^3)\)</span>, with no
+Pfaffian. The work is organized to be efficient on both CPU and GPU:</p>
+<ul class="simple">
+<li><p>The ancilla is kept as the last index, so the matrix of the unmeasured qubits is always a
+trailing block of a single buffer, updated in place. The update uses <code class="docutils literal notranslate"><span class="pre">baddbmm_</span></code> on CPU
+and two <code class="docutils literal notranslate"><span class="pre">addcmul_</span></code> on CUDA, the fastest kernels on each.</p></li>
+<li><p>The two rotations of each qubit (one per sign <span class="math notranslate nohighlight">\(\sigma_k\)</span>) are computed once, and the
+random numbers are drawn on the compute device, so the loop over the qubits runs without
+host synchronization once every shot has its own matrix.</p></li>
+<li><p>Shots with the same outcomes so far share a single matrix, together with the number of
+shots that follow it (prefix deduplication). The split of these shots between the two
+outcomes of the next qubit is drawn from a binomial distribution, which is the same as
+drawing each shot independently. This saves most of the work for states with few likely
+outcomes. Once the number of distinct prefixes exceeds <a class="reference internal" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.DEDUPLICATION_THRESHOLD" title="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.DEDUPLICATION_THRESHOLD"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DEDUPLICATION_THRESHOLD</span></code></a>
+times the number of shots, every shot gets its own matrix.</p></li>
+<li><p>The shots are processed in chunks that fit a memory budget, so the matrices of a chunk
+stay within memory. See <a class="reference internal" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.shots_per_chunk" title="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.shots_per_chunk"><code class="xref py py-meth docutils literal notranslate"><span class="pre">shots_per_chunk()</span></code></a>.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shots_chunk_size</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Number of shots processed together. Defaults to None, in which case
+it is computed from <code class="docutils literal notranslate"><span class="pre">memory_budget</span></code> by <a class="reference internal" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.shots_per_chunk" title="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.shots_per_chunk"><code class="xref py py-meth docutils literal notranslate"><span class="pre">shots_per_chunk()</span></code></a>.</p></li>
+<li><p><strong>memory_budget</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Memory, in bytes, that the matrices of a chunk may use. Defaults to
+None: <a class="reference internal" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.DEFAULT_CPU_MEMORY_BUDGET" title="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.DEFAULT_CPU_MEMORY_BUDGET"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DEFAULT_CPU_MEMORY_BUDGET</span></code></a> on CPU, and <a class="reference internal" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.DEFAULT_CUDA_MEMORY_FRACTION" title="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.DEFAULT_CUDA_MEMORY_FRACTION"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DEFAULT_CUDA_MEMORY_FRACTION</span></code></a>
+of the free memory on CUDA.</p></li>
+<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>torch.device</em><em>]</em><em>]</em>) – Torch device the samples are computed on, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;cuda&quot;</span></code>. Defaults to None,
+the device of the extended covariance matrix.</p></li>
+<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>torch.dtype</em><em>]</em>) – Floating point dtype of the computation. Defaults to None, the dtype of the
+extended covariance matrix when it is <code class="docutils literal notranslate"><span class="pre">float32</span></code> or <code class="docutils literal notranslate"><span class="pre">float64</span></code>, and <code class="docutils literal notranslate"><span class="pre">float64</span></code>
+otherwise. <code class="docutils literal notranslate"><span class="pre">float32</span></code> is faster, in particular on consumer GPUs, at the cost of
+precision on large circuits.</p></li>
+<li><p><strong>deduplicate</strong> (<em>bool</em>) – Whether shots with the same outcomes so far share their matrix.
+Defaults to True.</p></li>
+</ul>
+</dd>
+</dl>
+<div role="list" class="citation-list">
+<div class="citation" id="brod2016" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Brod2016<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id2">2</a>)</span>
+<p>D. J. Brod, “Efficient classical simulation of matchgate circuits with
+generalized inputs and measurements,” Phys. Rev. A 93, 062332 (2016),
+arXiv:1602.03539.</p>
+</div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.DEDUPLICATION_THRESHOLD">
+<span class="sig-name descname"><span class="pre">DEDUPLICATION_THRESHOLD</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.25</span></em><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.DEDUPLICATION_THRESHOLD" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.DEFAULT_CPU_MEMORY_BUDGET">
+<span class="sig-name descname"><span class="pre">DEFAULT_CPU_MEMORY_BUDGET</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">268435456</span></em><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.DEFAULT_CPU_MEMORY_BUDGET" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.DEFAULT_CUDA_MEMORY_FRACTION">
+<span class="sig-name descname"><span class="pre">DEFAULT_CUDA_MEMORY_FRACTION</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></em><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.DEFAULT_CUDA_MEMORY_FRACTION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.MEMORY_OVERHEAD_FACTOR">
+<span class="sig-name descname"><span class="pre">MEMORY_OVERHEAD_FACTOR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2.0</span></em><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.MEMORY_OVERHEAD_FACTOR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ProductBasisSampling'</span></em><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.PAULI_BLOCH_VECTORS">
+<span class="sig-name descname"><span class="pre">PAULI_BLOCH_VECTORS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'X':</span> <span class="pre">(1.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0),</span> <span class="pre">'Y':</span> <span class="pre">(0.0,</span> <span class="pre">1.0,</span> <span class="pre">0.0),</span> <span class="pre">'Z':</span> <span class="pre">(0.0,</span> <span class="pre">0.0,</span> <span class="pre">1.0)}</span></em><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.PAULI_BLOCH_VECTORS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shots_chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memory_budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deduplicate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.batch_generate_samples">
+<span class="sig-name descname"><span class="pre">batch_generate_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QubitDevice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">states_prob_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Wires</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.batch_generate_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate samples from the extended covariance matrix of the device.</p>
+<p>The probability callback is not used, since the probabilities come from the extended
+covariance matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> (<em>qml.devices.QubitDevice</em>) – Device providing <code class="docutils literal notranslate"><span class="pre">num_wires</span></code>, <code class="docutils literal notranslate"><span class="pre">shots</span></code> and <code class="docutils literal notranslate"><span class="pre">extended_covariance_matrix</span></code>.</p></li>
+<li><p><strong>states_prob_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>TensorLike</em><em>, </em><em>Wires</em><em>]</em><em>, </em><em>TensorLike</em><em>]</em><em>]</em>) – Unused, kept for the <code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingStrategy</span></code> interface.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Keyword Arguments<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>bloch_vectors</strong> – The Bloch vector of the measurement basis of each wire, in the
+order of the device wires, shape (num_wires, 3). Defaults to the computational basis.</p></li>
+<li><p><strong>show_progress</strong> – Whether to display a progress bar. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Samples of shape (shots, …, num_wires).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>TensorLike</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.generate_samples">
+<span class="sig-name descname"><span class="pre">generate_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QubitDevice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_prob_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Wires</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.generate_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate samples from the extended covariance matrix of the device.</p>
+<p>Same as <a class="reference internal" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.batch_generate_samples" title="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.batch_generate_samples"><code class="xref py py-meth docutils literal notranslate"><span class="pre">batch_generate_samples()</span></code></a>, which takes the same keyword arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> (<em>qml.devices.QubitDevice</em>) – Device providing <code class="docutils literal notranslate"><span class="pre">num_wires</span></code>, <code class="docutils literal notranslate"><span class="pre">shots</span></code> and <code class="docutils literal notranslate"><span class="pre">extended_covariance_matrix</span></code>.</p></li>
+<li><p><strong>state_prob_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>TensorLike</em><em>, </em><em>Wires</em><em>]</em><em>, </em><em>TensorLike</em><em>]</em><em>]</em>) – Unused, kept for the <code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingStrategy</span></code> interface.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Samples of shape (shots, …, num_wires).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TensorLike</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.measurement_frames">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">measurement_frames</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bloch_vectors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.measurement_frames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build the rotations that turn the measured observable into <span class="math notranslate nohighlight">\(Z_k\)</span>.</p>
+<p>The rows of each rotation are the new <span class="math notranslate nohighlight">\((a_1, c_{2k}, c_{2k+1})\)</span> written in the
+old ones: <span class="math notranslate nohighlight">\(w = (n_z, -\sigma n_y, \sigma n_x)\)</span>, then two unit vectors
+<span class="math notranslate nohighlight">\(u, v\)</span> orthogonal to <span class="math notranslate nohighlight">\(w\)</span> with <span class="math notranslate nohighlight">\(u \times v = w\)</span>. The rotation is
+proper, and <span class="math notranslate nohighlight">\(-i\,(u \cdot c)(v \cdot c) = \hat{n} \cdot \vec{\sigma}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bloch_vectors</strong> (<em>torch.Tensor</em>) – Unit Bloch vectors, shape (…, 3).</p></li>
+<li><p><strong>signs</strong> (<em>torch.Tensor</em>) – The signs <span class="math notranslate nohighlight">\(\sigma = \pm 1\)</span>, shape (…).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The rotations, shape (…, 3, 3).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.outcome_probabilities">
+<span class="sig-name descname"><span class="pre">outcome_probabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extended_covariance_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bloch_vectors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcomes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.outcome_probabilities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the exact probabilities of complete measurement outcomes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>extended_covariance_matrix</strong> (<em>TensorLike</em>) – The evolved extended covariance matrix,
+shape (…, 2n+1, 2n+1).</p></li>
+<li><p><strong>bloch_vectors</strong> (<em>TensorLike</em>) – The Bloch vector of the measurement basis of each qubit, shape (n, 3).</p></li>
+<li><p><strong>outcomes</strong> (<em>TensorLike</em>) – Outcome bits of all the qubits, shape (m, n).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The probability of each outcome, shape (m, …).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TensorLike</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.pauli_bloch_vectors">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pauli_bloch_vectors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bases</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.pauli_bloch_vectors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the Bloch vectors of the given Pauli bases.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>bases</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – One Pauli letter (<code class="docutils literal notranslate"><span class="pre">&quot;X&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Y&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;Z&quot;</span></code>) per qubit.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Bloch vectors, shape (n, 3).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If a letter is not <code class="docutils literal notranslate"><span class="pre">&quot;X&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Y&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;Z&quot;</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extended_covariance_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bloch_vectors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shots</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_progress</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw samples in the given product basis.</p>
+<p>The random numbers are drawn from the torch generator of the compute device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>extended_covariance_matrix</strong> (<em>TensorLike</em>) – The evolved extended covariance matrix,
+shape (…, 2n+1, 2n+1).</p></li>
+<li><p><strong>bloch_vectors</strong> (<em>TensorLike</em>) – The Bloch vector of the measurement basis of each qubit, shape (n, 3).</p></li>
+<li><p><strong>shots</strong> (<em>int</em>) – The number of samples to draw.</p></li>
+<li><p><strong>show_progress</strong> (<em>bool</em>) – Whether to display a progress bar over the shot chunks.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Outcome bits, shape (shots, …, n).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.shots_per_chunk">
+<span class="sig-name descname"><span class="pre">shots_per_chunk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_qubits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.shots_per_chunk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of shots processed together.</p>
+<p>This is <code class="xref py py-attr docutils literal notranslate"><span class="pre">shots_chunk_size</span></code> when it is set. Otherwise, the number of shots whose
+matrices, one <span class="math notranslate nohighlight">\((2n+1) \times (2n+1)\)</span> matrix per shot and circuit batch element,
+fit in the memory budget, counting <a class="reference internal" href="#matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.MEMORY_OVERHEAD_FACTOR" title="matchcake.devices.sampling_strategies.product_basis_sampling.ProductBasisSampling.MEMORY_OVERHEAD_FACTOR"><code class="xref py py-attr docutils literal notranslate"><span class="pre">MEMORY_OVERHEAD_FACTOR</span></code></a> for the temporaries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_qubits</strong> (<em>int</em>) – Number of qubits.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>) – Number of circuit batch elements.</p></li>
+<li><p><strong>dtype</strong> (<em>torch.dtype</em>) – Floating point dtype of the computation.</p></li>
+<li><p><strong>device</strong> (<em>torch.device</em>) – Torch device of the computation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The number of shots per chunk, at least 1.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.devices.sampling_strategies.qubit_by_qubit_sampling">
+<span id="matchcake-devices-sampling-strategies-qubit-by-qubit-sampling-module"></span><h2>matchcake.devices.sampling_strategies.qubit_by_qubit_sampling module<a class="headerlink" href="#module-matchcake.devices.sampling_strategies.qubit_by_qubit_sampling" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.qubit_by_qubit_sampling.QubitByQubitSampling">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.devices.sampling_strategies.qubit_by_qubit_sampling.</span></span><span class="sig-name descname"><span class="pre">QubitByQubitSampling</span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.qubit_by_qubit_sampling.QubitByQubitSampling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling" title="matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling"><code class="xref py py-class docutils literal notranslate"><span class="pre">KQubitsByKQubitsSampling</span></code></a></p>
+<p>Autoregressive sampler drawing a single qubit per step (<code class="docutils literal notranslate"><span class="pre">K</span> <span class="pre">=</span> <span class="pre">1</span></code>).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.qubit_by_qubit_sampling.QubitByQubitSampling.K">
+<span class="sig-name descname"><span class="pre">K</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#matchcake.devices.sampling_strategies.qubit_by_qubit_sampling.QubitByQubitSampling.K" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.qubit_by_qubit_sampling.QubitByQubitSampling.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'QubitByQubitSampling'</span></em><a class="headerlink" href="#matchcake.devices.sampling_strategies.qubit_by_qubit_sampling.QubitByQubitSampling.NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.devices.sampling_strategies.sampling_strategy">
+<span id="matchcake-devices-sampling-strategies-sampling-strategy-module"></span><h2>matchcake.devices.sampling_strategies.sampling_strategy module<a class="headerlink" href="#module-matchcake.devices.sampling_strategies.sampling_strategy" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.devices.sampling_strategies.sampling_strategy.</span></span><span class="sig-name descname"><span class="pre">SamplingStrategy</span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SamplingStrategy'</span></em><a class="headerlink" href="#matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy.NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy.batch_generate_samples">
+<span class="sig-name descname"><span class="pre">batch_generate_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QubitDevice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">states_prob_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Wires</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy.batch_generate_samples" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy.generate_samples">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">generate_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QubitDevice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_prob_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Wires</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy.generate_samples" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling">
+<span id="matchcake-devices-sampling-strategies-two-qubits-by-two-qubits-sampling-module"></span><h2>matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling module<a class="headerlink" href="#module-matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling.TwoQubitsByTwoQubitsSampling">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling.</span></span><span class="sig-name descname"><span class="pre">TwoQubitsByTwoQubitsSampling</span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling.TwoQubitsByTwoQubitsSampling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling" title="matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling"><code class="xref py py-class docutils literal notranslate"><span class="pre">KQubitsByKQubitsSampling</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling.TwoQubitsByTwoQubitsSampling.K">
+<span class="sig-name descname"><span class="pre">K</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling.TwoQubitsByTwoQubitsSampling.K" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling.TwoQubitsByTwoQubitsSampling.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'2QubitBy2QubitSampling'</span></em><a class="headerlink" href="#matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling.TwoQubitsByTwoQubitsSampling.NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.devices.sampling_strategies">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-matchcake.devices.sampling_strategies" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="matchcake.devices.sampling_strategies.get_sampling_strategy">
+<span class="sig-prename descclassname"><span class="pre">matchcake.devices.sampling_strategies.</span></span><span class="sig-name descname"><span class="pre">get_sampling_strategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy" title="matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy"><span class="pre">SamplingStrategy</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy" title="matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy"><span class="pre">SamplingStrategy</span></a></span></span><a class="headerlink" href="#matchcake.devices.sampling_strategies.get_sampling_strategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a sampling strategy from its name, or the given strategy itself.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy" title="matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy"><em>SamplingStrategy</em></a><em>]</em>) – The name of a sampling strategy, case-insensitive, or a strategy instance.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new strategy of the given name, or <code class="docutils literal notranslate"><span class="pre">name</span></code> when it is already a strategy.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy" title="matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy">SamplingStrategy</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If no strategy has this name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="static/documentation_options.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" src="static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>
