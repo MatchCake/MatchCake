@@ -15,7 +15,6 @@ Subpackages
    matchcake.ml
    matchcake.observables
    matchcake.operations
-   matchcake.states
    matchcake.typing
    matchcake.utils
 
