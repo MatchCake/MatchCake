@@ -17,7 +17,6 @@ import warnings
 from . import (
     matchgate_parameter_sets,  # Alias
     ml,
-    states,
     utils,
 )
 from . import matchgate_parameter_sets as mgp
@@ -27,7 +26,6 @@ from .matchgate_parameter_sets.matchgate_polar_params import MatchgatePolarParam
 from .matchgate_parameter_sets.matchgate_standard_params import MatchgateStandardParams
 from .observables import BatchHamiltonian
 from .operations import MatchgateOperation
-from .states import MixedGaussianState
 from .utils import math
 
 warnings.filterwarnings("ignore", category=Warning, module="docutils")
