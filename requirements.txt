@@ -315,7 +315,7 @@ numpy==2.5.4 ; python_full_version >= '3.12'
     #   seaborn
     #   stim
     #   torchpfaffian
-numpy-typing-compat==20251206.2.4 ; python_full_version < '3.12'
+numpy-typing-compat==20260602.2.4 ; python_full_version < '3.12'
     # via optype
 numpy-typing-compat==20260602.2.5 ; python_full_version >= '3.12'
     # via optype
