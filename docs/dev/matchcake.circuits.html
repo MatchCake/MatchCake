@@ -1,0 +1,883 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>matchcake.circuits package &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="matchcake.constants package" href="matchcake.constants.html" />
+    <link rel="prev" title="matchcake.base package" href="matchcake.base.html" />
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process|mathjax_process|math|output_area'
+  }
+};
+</script>
+
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="index.html">Docs</a></li>
+        
+          <li><a href="matchcake.html">matchcake package</a></li>
+        
+      <li>matchcake.circuits package</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="sources/matchcake.circuits.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+
+<div style="padding: 0 0 1em 0;">
+  <label for="version-select" style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 0.3em; color: #555;">Version</label>
+  <select id="version-select" onchange="window.location.href=this.value" style="width: 100%; padding: 0.3em 0.4em; font-size: 0.9em; border: 1px solid #ccc; border-radius: 3px; background: #fff; cursor: pointer;">
+    
+    <option value="matchcake.circuits.html" selected>dev</option>
+    
+    <option value="../main/matchcake.circuits.html" >main</option>
+    
+    <option value="../1.0.0/matchcake.circuits.html" >1.0.0</option>
+    
+    <option value="../0.2.3/index.html" >0.2.3</option>
+    
+  </select>
+</div>
+
+
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#requirements">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#set-up-a-project-or-an-environment">Set up a project or an environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#install-matchcake">Install MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#pytorch-build-and-installation-size">PyTorch build and installation size</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#quick-usage-preview">Quick Usage Preview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#quantum-circuit-simulation-with-matchcake">Quantum Circuit Simulation with MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#data-classification-with-matchcake">Data Classification with MatchCake</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#for-developers">For Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#citations">Citations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#fermionic-machine-learning-paper">Fermionic Machine Learning Paper</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/matchcake_basics.html">MatchCake Example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#create-the-noninteractingfermionicdevice">Create the NonInteractingFermionicDevice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#define-the-circuit">Define the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#create-the-qnode">Create the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#define-the-hyperparameters-of-the-circuit">Define the hyperparameters of the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#draw-the-circuit">Draw the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#evaluate-the-qnode">Evaluate the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#print-the-expectation-values">Print the expectation values</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/expectation_values.html">Expectation Values</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#hamiltonian">Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/probabilities.html">Probabilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#marginal-probabilities">Marginal probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#single-outcome-probability">Single-outcome probability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/sampling.html">Sampling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#computational-basis-samples">Computational basis samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#expectation-values-from-shots">Expectation values from shots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#sampling-in-the-x-basis">Sampling in the X basis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#pauli-products-and-hamiltonians">Pauli products and Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#arbitrary-product-bases">Arbitrary product bases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#batched-circuits">Batched circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#scaling-to-many-qubits">Scaling to many qubits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#running-on-a-gpu">Running on a GPU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sampling.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/iris_classification.html">Iris classification with FermionicPQCKernel</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html">Nystroem Kernel Approximation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="docs/expectation_values_theory.html">Computing expectation values using the Covariance-Matrix</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="matchcake.html">matchcake package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="matchcake.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section id="matchcake-circuits-package">
+<h1>matchcake.circuits package<a class="headerlink" href="#matchcake-circuits-package" title="Permalink to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-matchcake.circuits.merge_blocks">
+<span id="matchcake-circuits-merge-blocks-module"></span><h2>matchcake.circuits.merge_blocks module<a class="headerlink" href="#module-matchcake.circuits.merge_blocks" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="matchcake.circuits.merge_blocks.merge_blocks">
+<span class="sig-prename descclassname"><span class="pre">matchcake.circuits.merge_blocks.</span></span><span class="sig-name descname"><span class="pre">merge_blocks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">blocks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Operation</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matchcake.circuits.merge_blocks.merge_blocks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge circuit blocks acting on disjoint wires into a single circuit.</p>
+<p>Each block is a quantum function called without arguments (use a <code class="docutils literal notranslate"><span class="pre">lambda</span></code> or
+<code class="xref py py-func docutils literal notranslate"><span class="pre">functools.partial()</span></code> to bind its parameters and wires). A block may start with its own
+state preparations (<code class="xref py py-class docutils literal notranslate"><span class="pre">BasisState</span></code> or
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ProductState</span></code>). Since the blocks act on disjoint
+wires, every state preparation commutes with the gates of the other blocks, so all of them are
+merged into one <code class="xref py py-class docutils literal notranslate"><span class="pre">ProductState</span></code> placed first,
+followed by the gates of every block in order. This is required by the
+<a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice" title="matchcake.devices.nif_device.NonInteractingFermionicDevice"><code class="xref py py-class docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice</span></code></a>, which accepts a single state
+preparation at the start of the circuit.</p>
+<p>Wires of blocks without a state preparation start in <span class="math notranslate nohighlight">\(|0\rangle\)</span>. The merged operations are
+queued when called inside a QNode, so the output of the blocks can be used as the input of the
+next circuit:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"nif.qubit"</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">circuit</span><span class="p">():</span>
+    <span class="n">merge_blocks</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">block_a</span><span class="p">(</span><span class="n">params_a</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">block_b</span><span class="p">(</span><span class="n">params_b</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]))</span>
+    <span class="n">next_block</span><span class="p">(</span><span class="n">params_next</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>blocks</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Any</em><em>]</em>) – The quantum functions to merge, each called without arguments.</p></li>
+<li><p><strong>wires</strong> (<em>Optional</em><em>[</em><em>WiresLike</em><em>]</em>) – Extra wires the merged state preparation must cover, starting in <span class="math notranslate nohighlight">\(|0\rangle\)</span>.
+Defaults to the wires of the blocks only. Only used when a block has a state preparation.</p></li>
+<li><p><strong>contract</strong> (<em>bool</em>) – Whether to contract the gates of all the blocks into a single
+<code class="xref py py-class docutils literal notranslate"><span class="pre">SingleParticleTransitionMatrixOperation</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The merged operations: the merged state preparation (if any) followed by the gates.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Operation]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If two blocks share a wire, or if a state preparation is not a product state
+or comes after a gate in its block.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-matchcake.circuits.merge_generators">
+<span id="matchcake-circuits-merge-generators-module"></span><h2>matchcake.circuits.merge_generators module<a class="headerlink" href="#module-matchcake.circuits.merge_generators" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="matchcake.circuits.merge_generators.merge_generators">
+<span class="sig-prename descclassname"><span class="pre">matchcake.circuits.merge_generators.</span></span><span class="sig-name descname"><span class="pre">merge_generators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">generators</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Operation</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">Operation</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matchcake.circuits.merge_generators.merge_generators" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge generator-based circuits acting on disjoint wires into a single generator of operations.</p>
+<p>This is the counterpart of <a class="reference internal" href="#module-matchcake.circuits.merge_blocks" title="matchcake.circuits.merge_blocks"><code class="xref py py-func docutils literal notranslate"><span class="pre">merge_blocks()</span></code></a> for circuits given as iterables
+of operations, such as generators, lists or
+<code class="xref py py-class docutils literal notranslate"><span class="pre">RandomOperationsGenerator</span></code> instances. The result is meant for
+<a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.execute_generator" title="matchcake.devices.nif_device.NonInteractingFermionicDevice.execute_generator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_generator()</span></code></a> and
+<a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.apply_generator" title="matchcake.devices.nif_device.NonInteractingFermionicDevice.apply_generator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">apply_generator()</span></code></a>.</p>
+<p>A generator may start with its own state preparations (<code class="xref py py-class docutils literal notranslate"><span class="pre">BasisState</span></code> or
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ProductState</span></code>). Since the generators act on
+disjoint wires, every state preparation commutes with the gates of the other generators, so all of
+them are merged into one <code class="xref py py-class docutils literal notranslate"><span class="pre">ProductState</span></code> yielded
+first, followed by the gates of every generator in order. This is required by the
+<a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice" title="matchcake.devices.nif_device.NonInteractingFermionicDevice"><code class="xref py py-class docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice</span></code></a>, which accepts a single state
+preparation at the start of the circuit.</p>
+<p>The merge is lazy: only the leading state preparations of each generator are read before the first
+operation is yielded, and the gates are then streamed one by one, so a long circuit is never stored
+in memory. For the same reason, shared wires and state preparations placed after a gate are only
+detected when the offending operation is reached, and raise a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> at that point.</p>
+<p>The merged state preparation covers the wires of the state preparations, the <code class="docutils literal notranslate"><span class="pre">wires</span></code> attribute of
+the generators that have one (as <code class="xref py py-class docutils literal notranslate"><span class="pre">RandomOperationsGenerator</span></code>), and the
+extra <code class="docutils literal notranslate"><span class="pre">wires</span></code>. Those extra wires start in <span class="math notranslate nohighlight">\(|0\rangle\)</span>, like every device wire the merged
+state preparation does not cover.</p>
+<p>Operations are created without being queued, so the merged generator can be consumed inside a QNode
+with <code class="xref py py-func docutils literal notranslate"><span class="pre">apply()</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">matchcake</span><span class="w"> </span><span class="kn">import</span> <span class="n">NIFDevice</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matchcake.circuits</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomSptmOperationsGenerator</span><span class="p">,</span> <span class="n">merge_generators</span>
+
+<span class="n">left</span> <span class="o">=</span> <span class="n">RandomSptmOperationsGenerator</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">right</span> <span class="o">=</span> <span class="n">RandomSptmOperationsGenerator</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+<span class="n">probs</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">execute_generator</span><span class="p">(</span><span class="n">merge_generators</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">),</span> <span class="n">output_type</span><span class="o">=</span><span class="s2">"probs"</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>generators</strong> (<em>Iterable</em><em>[</em><em>Operation</em><em>]</em>) – The circuits to merge, each an iterable of operations.</p></li>
+<li><p><strong>wires</strong> (<em>Optional</em><em>[</em><em>WiresLike</em><em>]</em>) – Extra wires the merged state preparation must cover, starting in <span class="math notranslate nohighlight">\(|0\rangle\)</span>.
+Only used when a generator has a state preparation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A generator of the merged operations: the merged state preparation (if any) followed by
+the gates.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Iterator[Operation]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If two generators share a wire, or if a state preparation is not a product state
+or comes after a gate in its generator.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-matchcake.circuits.random_generator">
+<span id="matchcake-circuits-random-generator-module"></span><h2>matchcake.circuits.random_generator module<a class="headerlink" href="#module-matchcake.circuits.random_generator" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.circuits.random_generator.RandomOperationsGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.circuits.random_generator.</span></span><span class="sig-name descname"><span class="pre">RandomOperationsGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cuda</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.circuits.random_generator.RandomOperationsGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Random circuit of two-wire operations, starting in a random basis state.</p>
+<p>Iterating over the generator yields a <code class="xref py py-class docutils literal notranslate"><span class="pre">BasisState</span></code> on all its wires, followed by
+<code class="docutils literal notranslate"><span class="pre">n_ops</span></code> operations. Each operation has a type drawn uniformly from <code class="docutils literal notranslate"><span class="pre">op_types</span></code>, acts on a random
+pair of neighbouring wires <code class="docutils literal notranslate"><span class="pre">(w,</span> <span class="pre">w</span> <span class="pre">+</span> <span class="pre">1)</span></code> of <code class="docutils literal notranslate"><span class="pre">wires</span></code> (see <a class="reference internal" href="#matchcake.circuits.random_generator.neighbouring_wire_pairs" title="matchcake.circuits.random_generator.neighbouring_wire_pairs"><code class="xref py py-func docutils literal notranslate"><span class="pre">neighbouring_wire_pairs()</span></code></a>), and
+has random parameters drawn with the <code class="docutils literal notranslate"><span class="pre">random</span></code> class method of its type. The same <code class="docutils literal notranslate"><span class="pre">seed</span></code> gives
+the same circuit at every iteration, and the generator can be iterated over several times.</p>
+<p>The generator is an iterable of operations, so it can be given to
+<a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice.execute_generator" title="matchcake.devices.nif_device.NonInteractingFermionicDevice.execute_generator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_generator()</span></code></a>, merged with
+<a class="reference internal" href="#module-matchcake.circuits.merge_generators" title="matchcake.circuits.merge_generators"><code class="xref py py-func docutils literal notranslate"><span class="pre">merge_generators()</span></code></a>, or used as the body of a QNode with <a class="reference internal" href="#matchcake.circuits.random_generator.RandomOperationsGenerator.circuit" title="matchcake.circuits.random_generator.RandomOperationsGenerator.circuit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">circuit()</span></code></a>.
+The subclasses <code class="xref py py-class docutils literal notranslate"><span class="pre">RandomMatchgateOperationsGenerator</span></code> and
+<code class="xref py py-class docutils literal notranslate"><span class="pre">RandomSptmOperationsGenerator</span></code> set default operation types.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pennylane</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">qml</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">matchcake</span><span class="w"> </span><span class="kn">import</span> <span class="n">NIFDevice</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matchcake.circuits</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomMatchgateOperationsGenerator</span>
+
+<span class="n">generator</span> <span class="o">=</span> <span class="n">RandomMatchgateOperationsGenerator</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">n_ops</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="s2">"probs"</span><span class="p">)</span>
+<span class="n">circuit</span> <span class="o">=</span> <span class="n">qml</span><span class="o">.</span><span class="n">QNode</span><span class="p">(</span><span class="n">generator</span><span class="o">.</span><span class="n">circuit</span><span class="p">,</span> <span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+<span class="n">probs</span> <span class="o">=</span> <span class="n">circuit</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.circuits.random_generator.RandomOperationsGenerator.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cuda</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.circuits.random_generator.RandomOperationsGenerator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configure the random circuit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wires</strong> (<em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>, </em><em>int</em><em>]</em>) – The wires of the circuit, or their number <code class="docutils literal notranslate"><span class="pre">n</span></code> for the wires <code class="docutils literal notranslate"><span class="pre">0,</span> <span class="pre">...,</span> <span class="pre">n</span> <span class="pre">-</span> <span class="pre">1</span></code>.
+At least two of them must be neighbours. They are stored sorted.</p></li>
+<li><p><strong>n_ops</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The number of operations after the state preparation. Defaults to
+<code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">len(wires)</span> <span class="pre">*</span> <span class="pre">len(op_types)</span></code>.</p></li>
+<li><p><strong>batch_size</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The batch size of the parameters of each operation. Unbatched if None.</p></li>
+<li><p><strong>op_types</strong> (<em>Sequence</em><em>[</em><em>Type</em><em>[</em><em>Any</em><em>]</em><em>]</em>) – The operation types to draw from. Each must have a
+<code class="docutils literal notranslate"><span class="pre">random(wires,</span> <span class="pre">batch_size,</span> <span class="pre">seed)</span></code> class method.</p></li>
+<li><p><strong>use_cuda</strong> (<em>bool</em>) – Whether to move each operation to the GPU with its <code class="docutils literal notranslate"><span class="pre">to_cuda</span></code> method.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed of the random generator, for the initial state, the operation types, their
+wires and their parameters. A new random circuit at every iteration if None.</p></li>
+<li><p><strong>output_type</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – The measurement returned by <a class="reference internal" href="#matchcake.circuits.random_generator.RandomOperationsGenerator.get_output_op" title="matchcake.circuits.random_generator.RandomOperationsGenerator.get_output_op"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_output_op()</span></code></a>: <code class="docutils literal notranslate"><span class="pre">&quot;samples&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;probs&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;expval&quot;</span></code>, or None for no measurement.</p></li>
+<li><p><strong>observable</strong> (<em>Optional</em><em>[</em><em>Any</em><em>]</em>) – The observable of the measurement. Required for <code class="docutils literal notranslate"><span class="pre">&quot;expval&quot;</span></code>.</p></li>
+<li><p><strong>output_wires</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>]</em>) – The wires of the <code class="docutils literal notranslate"><span class="pre">&quot;samples&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;probs&quot;</span></code> measurements. Defaults to all
+the wires.</p></li>
+<li><p><strong>initial_state</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>, </em><em>np.ndarray</em><em>]</em><em>]</em>) – The bits of the initial basis state, one per wire in the sorted wire order.
+Drawn at random if None.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments, stored in <code class="docutils literal notranslate"><span class="pre">self.kwargs</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.circuits.random_generator.RandomOperationsGenerator.circuit">
+<span class="sig-name descname"><span class="pre">circuit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">MeasurementProcess</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.circuits.random_generator.RandomOperationsGenerator.circuit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the operations of the circuit and return its measurement, as the body of a QNode.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">circuit</span> <span class="o">=</span> <span class="n">qml</span><span class="o">.</span><span class="n">QNode</span><span class="p">(</span><span class="n">generator</span><span class="o">.</span><span class="n">circuit</span><span class="p">,</span> <span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">generator</span><span class="o">.</span><span class="n">n_wires</span><span class="p">))</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The measurement of <a class="reference internal" href="#matchcake.circuits.random_generator.RandomOperationsGenerator.get_output_op" title="matchcake.circuits.random_generator.RandomOperationsGenerator.get_output_op"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_output_op()</span></code></a>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Optional[MeasurementProcess]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.circuits.random_generator.RandomOperationsGenerator.get_initial_state">
+<span class="sig-name descname"><span class="pre">get_initial_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rn_gen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Generator</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#matchcake.circuits.random_generator.RandomOperationsGenerator.get_initial_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the bits of the initial basis state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rn_gen</strong> (<em>np.random.Generator</em>) – The random generator used to draw the bits when <code class="docutils literal notranslate"><span class="pre">initial_state</span></code> is None.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>One bit per wire, in the sorted wire order.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">initial_state</span></code> does not have one bit per wire.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.circuits.random_generator.RandomOperationsGenerator.get_ops">
+<span class="sig-name descname"><span class="pre">get_ops</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Operation</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matchcake.circuits.random_generator.RandomOperationsGenerator.get_ops" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the operations of the circuit as a list. Same as <a class="reference internal" href="#matchcake.circuits.random_generator.RandomOperationsGenerator.tolist" title="matchcake.circuits.random_generator.RandomOperationsGenerator.tolist"><code class="xref py py-meth docutils literal notranslate"><span class="pre">tolist()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The state preparation followed by the operations.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[Operation]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.circuits.random_generator.RandomOperationsGenerator.get_output_op">
+<span class="sig-name descname"><span class="pre">get_output_op</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">MeasurementProcess</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.circuits.random_generator.RandomOperationsGenerator.get_output_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the measurement set by <code class="docutils literal notranslate"><span class="pre">output_type</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-func docutils literal notranslate"><span class="pre">sample()</span></code> or <code class="xref py py-func docutils literal notranslate"><span class="pre">probs()</span></code> of <code class="docutils literal notranslate"><span class="pre">observable</span></code> on
+<code class="docutils literal notranslate"><span class="pre">output_wires</span></code>, <code class="xref py py-func docutils literal notranslate"><span class="pre">expval()</span></code> of <code class="docutils literal notranslate"><span class="pre">observable</span></code>, or None when <code class="docutils literal notranslate"><span class="pre">output_type</span></code>
+is None.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Optional[MeasurementProcess]</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">output_type</span></code> is not supported.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.circuits.random_generator.RandomOperationsGenerator.n_qubits">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_qubits</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#matchcake.circuits.random_generator.RandomOperationsGenerator.n_qubits" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of wires of the circuit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">len(wires)</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.circuits.random_generator.RandomOperationsGenerator.n_wires">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_wires</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#matchcake.circuits.random_generator.RandomOperationsGenerator.n_wires" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of wires of the circuit. Same as <a class="reference internal" href="#matchcake.circuits.random_generator.RandomOperationsGenerator.n_qubits" title="matchcake.circuits.random_generator.RandomOperationsGenerator.n_qubits"><code class="xref py py-attr docutils literal notranslate"><span class="pre">n_qubits</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">len(wires)</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.circuits.random_generator.RandomOperationsGenerator.output_kwargs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_kwargs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#matchcake.circuits.random_generator.RandomOperationsGenerator.output_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The measurement settings of the generator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">output_type</span></code>, <code class="docutils literal notranslate"><span class="pre">observable</span></code> and <code class="docutils literal notranslate"><span class="pre">output_wires</span></code>, keyed by name.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict[str, Any]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.circuits.random_generator.RandomOperationsGenerator.tolist">
+<span class="sig-name descname"><span class="pre">tolist</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Operation</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matchcake.circuits.random_generator.RandomOperationsGenerator.tolist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the operations of the circuit as a list.</p>
+<p>Inside a QNode, the operations are queued when they are created, so this also applies them to
+the circuit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The state preparation followed by the operations.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[Operation]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="matchcake.circuits.random_generator.neighbouring_wire_pairs">
+<span class="sig-prename descclassname"><span class="pre">matchcake.circuits.random_generator.</span></span><span class="sig-name descname"><span class="pre">neighbouring_wire_pairs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#matchcake.circuits.random_generator.neighbouring_wire_pairs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the pairs of neighbouring wires <code class="docutils literal notranslate"><span class="pre">(w,</span> <span class="pre">w</span> <span class="pre">+</span> <span class="pre">1)</span></code> whose two wires are both in <code class="docutils literal notranslate"><span class="pre">wires</span></code>.</p>
+<p>Random circuits place their two-wire gates on these pairs, so every gate is a nearest-neighbour
+gate that stays on the wires of the circuit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>wires</strong> (<em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>, </em><em>np.ndarray</em><em>]</em>) – The wires of the circuit.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The pairs, shape (n_pairs, 2), in increasing order.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If no two wires of <code class="docutils literal notranslate"><span class="pre">wires</span></code> are neighbours.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-matchcake.circuits.random_matchgate_circuits">
+<span id="matchcake-circuits-random-matchgate-circuits-module"></span><h2>matchcake.circuits.random_matchgate_circuits module<a class="headerlink" href="#module-matchcake.circuits.random_matchgate_circuits" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.circuits.random_matchgate_circuits.RandomMatchgateHaarOperationsGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.circuits.random_matchgate_circuits.</span></span><span class="sig-name descname"><span class="pre">RandomMatchgateHaarOperationsGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cuda</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_swap_noise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.circuits.random_matchgate_circuits.RandomMatchgateHaarOperationsGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.circuits.random_matchgate_circuits.RandomMatchgateOperationsGenerator" title="matchcake.circuits.random_matchgate_circuits.RandomMatchgateOperationsGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RandomMatchgateOperationsGenerator</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.circuits.random_matchgate_circuits.RandomMatchgateHaarOperationsGenerator.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cuda</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_swap_noise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.circuits.random_matchgate_circuits.RandomMatchgateHaarOperationsGenerator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configure the random circuit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wires</strong> (<em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>, </em><em>int</em><em>]</em>) – The wires of the circuit, or their number <code class="docutils literal notranslate"><span class="pre">n</span></code> for the wires <code class="docutils literal notranslate"><span class="pre">0,</span> <span class="pre">...,</span> <span class="pre">n</span> <span class="pre">-</span> <span class="pre">1</span></code>.
+At least two of them must be neighbours. They are stored sorted.</p></li>
+<li><p><strong>n_ops</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The number of operations after the state preparation. Defaults to
+<code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">len(wires)</span> <span class="pre">*</span> <span class="pre">len(op_types)</span></code>.</p></li>
+<li><p><strong>batch_size</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The batch size of the parameters of each operation. Unbatched if None.</p></li>
+<li><p><strong>op_types</strong> (<em>Sequence</em><em>[</em><em>Type</em><em>[</em><em>Any</em><em>]</em><em>]</em>) – The operation types to draw from. Each must have a
+<code class="docutils literal notranslate"><span class="pre">random(wires,</span> <span class="pre">batch_size,</span> <span class="pre">seed)</span></code> class method.</p></li>
+<li><p><strong>use_cuda</strong> (<em>bool</em>) – Whether to move each operation to the GPU with its <code class="docutils literal notranslate"><span class="pre">to_cuda</span></code> method.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed of the random generator, for the initial state, the operation types, their
+wires and their parameters. A new random circuit at every iteration if None.</p></li>
+<li><p><strong>output_type</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – The measurement returned by <code class="xref py py-meth docutils literal notranslate"><span class="pre">get_output_op()</span></code>: <code class="docutils literal notranslate"><span class="pre">&quot;samples&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;probs&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;expval&quot;</span></code>, or None for no measurement.</p></li>
+<li><p><strong>observable</strong> (<em>Optional</em><em>[</em><em>Any</em><em>]</em>) – The observable of the measurement. Required for <code class="docutils literal notranslate"><span class="pre">&quot;expval&quot;</span></code>.</p></li>
+<li><p><strong>output_wires</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>]</em>) – The wires of the <code class="docutils literal notranslate"><span class="pre">&quot;samples&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;probs&quot;</span></code> measurements. Defaults to all
+the wires.</p></li>
+<li><p><strong>initial_state</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>, </em><em>np.ndarray</em><em>]</em><em>]</em>) – The bits of the initial basis state, one per wire in the sorted wire order.
+Drawn at random if None.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments, stored in <code class="docutils literal notranslate"><span class="pre">self.kwargs</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.circuits.random_matchgate_circuits.RandomMatchgateHaarOperationsGenerator.haar_circuit_gen">
+<span class="sig-name descname"><span class="pre">haar_circuit_gen</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.circuits.random_matchgate_circuits.RandomMatchgateHaarOperationsGenerator.haar_circuit_gen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.circuits.random_matchgate_circuits.RandomMatchgateOperationsGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.circuits.random_matchgate_circuits.</span></span><span class="sig-name descname"><span class="pre">RandomMatchgateOperationsGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires:</span> <span class="pre">~typing.Sequence[int]</span> <span class="pre">|</span> <span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_ops:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types:</span> <span class="pre">~collections.abc.Sequence[~typing.Type[~matchcake.operations.matchgate_operation.MatchgateOperation]]</span> <span class="pre">=</span> <span class="pre">(&lt;class</span> <span class="pre">'matchcake.operations.matchgate_operation.MatchgateOperation'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.comp_rotations.CompRxRx'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.fermionic_swap.CompZX'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.comp_rotations.CompRzRz'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.comp_hh.CompHH'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.comp_rotations.CompRyRy'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.fermionic_superposition.FermionicSuperposition'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.rxx.Rxx'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.rzz.Rzz'&gt;)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cuda:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observable:</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_wires:</span> <span class="pre">~typing.Sequence[int]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_state:</span> <span class="pre">~typing.Sequence[int]</span> <span class="pre">|</span> <span class="pre">~numpy.ndarray</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.circuits.random_matchgate_circuits.RandomMatchgateOperationsGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.circuits.random_generator.RandomOperationsGenerator" title="matchcake.circuits.random_generator.RandomOperationsGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RandomOperationsGenerator</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.circuits.random_matchgate_circuits.RandomMatchgateOperationsGenerator.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires:</span> <span class="pre">~typing.Sequence[int]</span> <span class="pre">|</span> <span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_ops:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types:</span> <span class="pre">~collections.abc.Sequence[~typing.Type[~matchcake.operations.matchgate_operation.MatchgateOperation]]</span> <span class="pre">=</span> <span class="pre">(&lt;class</span> <span class="pre">'matchcake.operations.matchgate_operation.MatchgateOperation'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.comp_rotations.CompRxRx'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.fermionic_swap.CompZX'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.comp_rotations.CompRzRz'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.comp_hh.CompHH'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.comp_rotations.CompRyRy'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.fermionic_superposition.FermionicSuperposition'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.rxx.Rxx'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.rzz.Rzz'&gt;)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cuda:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observable:</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_wires:</span> <span class="pre">~typing.Sequence[int]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_state:</span> <span class="pre">~typing.Sequence[int]</span> <span class="pre">|</span> <span class="pre">~numpy.ndarray</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.circuits.random_matchgate_circuits.RandomMatchgateOperationsGenerator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configure the random circuit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wires</strong> (<em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>, </em><em>int</em><em>]</em>) – The wires of the circuit, or their number <code class="docutils literal notranslate"><span class="pre">n</span></code> for the wires <code class="docutils literal notranslate"><span class="pre">0,</span> <span class="pre">...,</span> <span class="pre">n</span> <span class="pre">-</span> <span class="pre">1</span></code>.
+At least two of them must be neighbours. They are stored sorted.</p></li>
+<li><p><strong>n_ops</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The number of operations after the state preparation. Defaults to
+<code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">len(wires)</span> <span class="pre">*</span> <span class="pre">len(op_types)</span></code>.</p></li>
+<li><p><strong>batch_size</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The batch size of the parameters of each operation. Unbatched if None.</p></li>
+<li><p><strong>op_types</strong> (<em>Sequence</em><em>[</em><em>Type</em><em>[</em><em>Any</em><em>]</em><em>]</em>) – The operation types to draw from. Each must have a
+<code class="docutils literal notranslate"><span class="pre">random(wires,</span> <span class="pre">batch_size,</span> <span class="pre">seed)</span></code> class method.</p></li>
+<li><p><strong>use_cuda</strong> (<em>bool</em>) – Whether to move each operation to the GPU with its <code class="docutils literal notranslate"><span class="pre">to_cuda</span></code> method.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed of the random generator, for the initial state, the operation types, their
+wires and their parameters. A new random circuit at every iteration if None.</p></li>
+<li><p><strong>output_type</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – The measurement returned by <code class="xref py py-meth docutils literal notranslate"><span class="pre">get_output_op()</span></code>: <code class="docutils literal notranslate"><span class="pre">&quot;samples&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;probs&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;expval&quot;</span></code>, or None for no measurement.</p></li>
+<li><p><strong>observable</strong> (<em>Optional</em><em>[</em><em>Any</em><em>]</em>) – The observable of the measurement. Required for <code class="docutils literal notranslate"><span class="pre">&quot;expval&quot;</span></code>.</p></li>
+<li><p><strong>output_wires</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>]</em>) – The wires of the <code class="docutils literal notranslate"><span class="pre">&quot;samples&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;probs&quot;</span></code> measurements. Defaults to all
+the wires.</p></li>
+<li><p><strong>initial_state</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>, </em><em>np.ndarray</em><em>]</em><em>]</em>) – The bits of the initial basis state, one per wire in the sorted wire order.
+Drawn at random if None.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments, stored in <code class="docutils literal notranslate"><span class="pre">self.kwargs</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.circuits.random_parametrize_circuit_generator">
+<span id="matchcake-circuits-random-parametrize-circuit-generator-module"></span><h2>matchcake.circuits.random_parametrize_circuit_generator module<a class="headerlink" href="#module-matchcake.circuits.random_parametrize_circuit_generator" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.circuits.random_parametrize_circuit_generator.RandomParametrizeGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.circuits.random_parametrize_circuit_generator.</span></span><span class="sig-name descname"><span class="pre">RandomParametrizeGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cuda</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.circuits.random_parametrize_circuit_generator.RandomParametrizeGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.circuits.random_generator.RandomOperationsGenerator" title="matchcake.circuits.random_generator.RandomOperationsGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RandomOperationsGenerator</span></code></a></p>
+</dd></dl>
+
+</section>
+<section id="module-matchcake.circuits.random_sptm_circuits">
+<span id="matchcake-circuits-random-sptm-circuits-module"></span><h2>matchcake.circuits.random_sptm_circuits module<a class="headerlink" href="#module-matchcake.circuits.random_sptm_circuits" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.circuits.random_sptm_circuits.RandomSptmHaarOperationsGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.circuits.random_sptm_circuits.</span></span><span class="sig-name descname"><span class="pre">RandomSptmHaarOperationsGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cuda</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_swap_noise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.circuits.random_sptm_circuits.RandomSptmHaarOperationsGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.circuits.random_sptm_circuits.RandomSptmOperationsGenerator" title="matchcake.circuits.random_sptm_circuits.RandomSptmOperationsGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RandomSptmOperationsGenerator</span></code></a></p>
+<p>Brickwork circuit of random rotations approximating a Haar-random free-fermion evolution.</p>
+<p>Iterating over the generator yields a <code class="xref py py-class docutils literal notranslate"><span class="pre">BasisState</span></code> on all its wires, an
+<code class="xref py py-class docutils literal notranslate"><span class="pre">SptmIdentity</span></code> on the first pair of neighbouring wires, and then <code class="docutils literal notranslate"><span class="pre">n_ops</span></code>
+operations. These operations are blocks of three rotations <span class="math notranslate nohighlight">\(R_{ZZ} R_{YY} R_{ZZ}\)</span> with random angles
+(<code class="xref py py-class docutils literal notranslate"><span class="pre">SptmCompRzRz</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">SptmCompRyRy</span></code>,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">SptmCompRzRz</span></code>), placed on the pairs of neighbouring wires <code class="docutils literal notranslate"><span class="pre">(w,</span> <span class="pre">w</span> <span class="pre">+</span> <span class="pre">1)</span></code> of
+<code class="docutils literal notranslate"><span class="pre">wires</span></code> in turn, in increasing order and starting over after the last pair. With <code class="docutils literal notranslate"><span class="pre">add_swap_noise</span></code>, a
+fermionic swap (<code class="xref py py-class docutils literal notranslate"><span class="pre">SptmCompZX</span></code>) on a random pair of neighbouring wires is added each
+time the number of operations reaches a multiple of the number of wires. The circuit stops after exactly
+<code class="docutils literal notranslate"><span class="pre">n_ops</span></code> operations, even in the middle of a block. The same <code class="docutils literal notranslate"><span class="pre">seed</span></code> gives the same circuit at every
+iteration.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">matchcake</span><span class="w"> </span><span class="kn">import</span> <span class="n">NIFDevice</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matchcake.circuits</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomSptmHaarOperationsGenerator</span>
+
+<span class="n">generator</span> <span class="o">=</span> <span class="n">RandomSptmHaarOperationsGenerator</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">probs</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">execute_generator</span><span class="p">(</span><span class="n">generator</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="s2">"probs"</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.circuits.random_sptm_circuits.RandomSptmHaarOperationsGenerator.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cuda</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_swap_noise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.circuits.random_sptm_circuits.RandomSptmHaarOperationsGenerator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configure the brickwork circuit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wires</strong> (<em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>, </em><em>int</em><em>]</em>) – The wires of the circuit, or their number <code class="docutils literal notranslate"><span class="pre">n</span></code> for the wires <code class="docutils literal notranslate"><span class="pre">0,</span> <span class="pre">...,</span> <span class="pre">n</span> <span class="pre">-</span> <span class="pre">1</span></code>.
+At least two of them must be neighbours.</p></li>
+<li><p><strong>n_ops</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The number of operations after the state preparation and the identity. Defaults
+to <code class="docutils literal notranslate"><span class="pre">3</span> <span class="pre">*</span> <span class="pre">n</span> <span class="pre">*</span> <span class="pre">(n</span> <span class="pre">-</span> <span class="pre">1)</span></code> for <code class="docutils literal notranslate"><span class="pre">n</span></code> wires, which is <code class="docutils literal notranslate"><span class="pre">n</span></code> sweeps of rotation blocks over the
+<code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">-</span> <span class="pre">1</span></code> pairs of neighbouring wires of <code class="docutils literal notranslate"><span class="pre">0,</span> <span class="pre">...,</span> <span class="pre">n</span> <span class="pre">-</span> <span class="pre">1</span></code>.</p></li>
+<li><p><strong>batch_size</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The batch size of the rotation angles. Unbatched if None.</p></li>
+<li><p><strong>use_cuda</strong> (<em>bool</em>) – Whether to move each operation to the GPU with its <code class="docutils literal notranslate"><span class="pre">to_cuda</span></code> method.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed of the random generator, for the initial state, the rotation angles and the
+wires of the swaps.</p></li>
+<li><p><strong>add_swap_noise</strong> (<em>bool</em>) – Whether to add the random fermionic swaps.</p></li>
+<li><p><strong>initial_state</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>, </em><em>np.ndarray</em><em>]</em><em>]</em>) – The bits of the initial basis state, one per wire. Drawn at random if None.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to <a class="reference internal" href="#matchcake.circuits.random_sptm_circuits.RandomSptmOperationsGenerator" title="matchcake.circuits.random_sptm_circuits.RandomSptmOperationsGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RandomSptmOperationsGenerator</span></code></a>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.circuits.random_sptm_circuits.RandomSptmHaarOperationsGenerator.haar_circuit_gen">
+<span class="sig-name descname"><span class="pre">haar_circuit_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rn_gen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Generator</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">Operation</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matchcake.circuits.random_sptm_circuits.RandomSptmHaarOperationsGenerator.haar_circuit_gen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate the identity and the <code class="docutils literal notranslate"><span class="pre">n_ops</span></code> operations of the brickwork circuit, without the state
+preparation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rn_gen</strong> (<em>Optional</em><em>[</em><em>np.random.Generator</em><em>]</em>) – The random generator of the angles and the wires of the swaps. Defaults to a new
+generator seeded with <code class="docutils literal notranslate"><span class="pre">seed</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A generator of the operations.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Iterator[Operation]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If no two wires of <code class="docutils literal notranslate"><span class="pre">wires</span></code> are neighbours.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.circuits.random_sptm_circuits.RandomSptmOperationsGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.circuits.random_sptm_circuits.</span></span><span class="sig-name descname"><span class="pre">RandomSptmOperationsGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires:</span> <span class="pre">~typing.Sequence[int]</span> <span class="pre">|</span> <span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_ops:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types:</span> <span class="pre">~collections.abc.Sequence[~typing.Type[~matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation]]</span> <span class="pre">=</span> <span class="pre">(&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx.SptmCompRxRx'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmCompZX'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_identity.SptmIdentity'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_comp_hh.SptmCompHH'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition'&gt;)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cuda:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observable:</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_wires:</span> <span class="pre">~typing.Sequence[int]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_state:</span> <span class="pre">~typing.Sequence[int]</span> <span class="pre">|</span> <span class="pre">~numpy.ndarray</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs:</span> <span class="pre">~typing.Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.circuits.random_sptm_circuits.RandomSptmOperationsGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#matchcake.circuits.random_generator.RandomOperationsGenerator" title="matchcake.circuits.random_generator.RandomOperationsGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RandomOperationsGenerator</span></code></a></p>
+<p>Random circuit of single-particle transition matrix (SPTM) operations, starting in a random basis
+state.</p>
+<p>Iterating over the generator yields a <code class="xref py py-class docutils literal notranslate"><span class="pre">BasisState</span></code> on all its wires, followed by <code class="docutils literal notranslate"><span class="pre">n_ops</span></code>
+operations. Each operation has a type drawn uniformly from <code class="docutils literal notranslate"><span class="pre">op_types</span></code>, acts on a random pair of neighbouring
+wires <code class="docutils literal notranslate"><span class="pre">(w,</span> <span class="pre">w</span> <span class="pre">+</span> <span class="pre">1)</span></code> of <code class="docutils literal notranslate"><span class="pre">wires</span></code>, and has random parameters. The same <code class="docutils literal notranslate"><span class="pre">seed</span></code> gives the same circuit at every
+iteration.</p>
+<p>The SPTM operations are only supported by the
+<a class="reference internal" href="matchcake.devices.html#matchcake.devices.nif_device.NonInteractingFermionicDevice" title="matchcake.devices.nif_device.NonInteractingFermionicDevice"><code class="xref py py-class docutils literal notranslate"><span class="pre">NonInteractingFermionicDevice</span></code></a>. Use
+<code class="xref py py-class docutils literal notranslate"><span class="pre">RandomMatchgateOperationsGenerator</span></code> for a circuit that also runs on qubit
+devices.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">matchcake</span><span class="w"> </span><span class="kn">import</span> <span class="n">NIFDevice</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matchcake.circuits</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomSptmOperationsGenerator</span>
+
+<span class="n">generator</span> <span class="o">=</span> <span class="n">RandomSptmOperationsGenerator</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">n_ops</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">probs</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">execute_generator</span><span class="p">(</span><span class="n">generator</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="s2">"probs"</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.circuits.random_sptm_circuits.RandomSptmOperationsGenerator.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires:</span> <span class="pre">~typing.Sequence[int]</span> <span class="pre">|</span> <span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_ops:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types:</span> <span class="pre">~collections.abc.Sequence[~typing.Type[~matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation]]</span> <span class="pre">=</span> <span class="pre">(&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx.SptmCompRxRx'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmCompZX'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_identity.SptmIdentity'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_comp_hh.SptmCompHH'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition'&gt;)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cuda:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observable:</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_wires:</span> <span class="pre">~typing.Sequence[int]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_state:</span> <span class="pre">~typing.Sequence[int]</span> <span class="pre">|</span> <span class="pre">~numpy.ndarray</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs:</span> <span class="pre">~typing.Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.circuits.random_sptm_circuits.RandomSptmOperationsGenerator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configure the random circuit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wires</strong> (<em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>, </em><em>int</em><em>]</em>) – The wires of the circuit, or their number <code class="docutils literal notranslate"><span class="pre">n</span></code> for the wires <code class="docutils literal notranslate"><span class="pre">0,</span> <span class="pre">...,</span> <span class="pre">n</span> <span class="pre">-</span> <span class="pre">1</span></code>.
+At least two of them must be neighbours.</p></li>
+<li><p><strong>n_ops</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The number of operations after the state preparation. Defaults to
+<code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">len(wires)</span> <span class="pre">*</span> <span class="pre">len(op_types)</span></code>.</p></li>
+<li><p><strong>batch_size</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The batch size of the parameters of each operation. Unbatched if None.</p></li>
+<li><p><strong>op_types</strong> (<em>Sequence</em><em>[</em><em>Type</em><em>[</em><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><em>SingleParticleTransitionMatrixOperation</em></a><em>]</em><em>]</em>) – The operation types to draw from.</p></li>
+<li><p><strong>use_cuda</strong> (<em>bool</em>) – Whether to move each operation to the GPU.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed of the random generator, for the initial state, the operation types, their
+wires and their parameters.</p></li>
+<li><p><strong>output_type</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – The measurement returned by <code class="xref py py-meth docutils literal notranslate"><span class="pre">get_output_op()</span></code>: <code class="docutils literal notranslate"><span class="pre">&quot;samples&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;probs&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;expval&quot;</span></code>, or None for no measurement.</p></li>
+<li><p><strong>observable</strong> (<em>Optional</em><em>[</em><em>Any</em><em>]</em>) – The observable of the measurement.</p></li>
+<li><p><strong>output_wires</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>]</em>) – The wires of the measurement. Defaults to all the wires.</p></li>
+<li><p><strong>initial_state</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>, </em><em>np.ndarray</em><em>]</em><em>]</em>) – The bits of the initial basis state, one per wire. Drawn at random if None.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments, stored in <code class="docutils literal notranslate"><span class="pre">self.kwargs</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="matchcake.circuits.random_sptm_circuits.random_sptm_operations_generator">
+<span class="sig-prename descclassname"><span class="pre">matchcake.circuits.random_sptm_circuits.</span></span><span class="sig-name descname"><span class="pre">random_sptm_operations_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_ops:</span> <span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires:</span> <span class="pre">~typing.Sequence[int]</span> <span class="pre">|</span> <span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types:</span> <span class="pre">~collections.abc.Sequence[~typing.Type[~matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation]]</span> <span class="pre">=</span> <span class="pre">(&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_comp_rxrx.SptmCompRxRx'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_fswap.SptmCompZX'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_comp_rzrz.SptmCompRzRz'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_identity.SptmIdentity'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_comp_hh.SptmCompHH'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_comp_ryry.SptmCompRyRy'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'matchcake.operations.single_particle_transition_matrices.sptm_fermionic_superposition.SptmFermionicSuperposition'&gt;)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cuda:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs:</span> <span class="pre">~typing.Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matchcake.circuits.random_sptm_circuits.random_sptm_operations_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a random circuit of single-particle transition matrix (SPTM) operations.</p>
+<p>Each operation has a type drawn uniformly from <code class="docutils literal notranslate"><span class="pre">op_types</span></code>, acts on a random pair of neighbouring
+wires <code class="docutils literal notranslate"><span class="pre">(w,</span> <span class="pre">w</span> <span class="pre">+</span> <span class="pre">1)</span></code> of <code class="docutils literal notranslate"><span class="pre">wires</span></code> (see <a class="reference internal" href="#matchcake.circuits.random_generator.neighbouring_wire_pairs" title="matchcake.circuits.random_generator.neighbouring_wire_pairs"><code class="xref py py-func docutils literal notranslate"><span class="pre">neighbouring_wire_pairs()</span></code></a>),
+and has random parameters drawn with the <code class="docutils literal notranslate"><span class="pre">random</span></code> class method of its type. No state preparation is yielded: use
+<a class="reference internal" href="#matchcake.circuits.random_sptm_circuits.RandomSptmOperationsGenerator" title="matchcake.circuits.random_sptm_circuits.RandomSptmOperationsGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RandomSptmOperationsGenerator</span></code></a> for a circuit that starts with a random basis state.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">matchcake</span><span class="w"> </span><span class="kn">import</span> <span class="n">NIFDevice</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matchcake.circuits</span><span class="w"> </span><span class="kn">import</span> <span class="n">random_sptm_operations_generator</span>
+
+<span class="n">device</span> <span class="o">=</span> <span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">ops</span> <span class="o">=</span> <span class="n">random_sptm_operations_generator</span><span class="p">(</span><span class="n">n_ops</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">probs</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">execute_generator</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="s2">"probs"</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_ops</strong> (<em>int</em>) – The number of operations to generate.</p></li>
+<li><p><strong>wires</strong> (<em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>, </em><em>int</em><em>]</em>) – The wires of the circuit, or their number <code class="docutils literal notranslate"><span class="pre">n</span></code> for the wires <code class="docutils literal notranslate"><span class="pre">0,</span> <span class="pre">...,</span> <span class="pre">n</span> <span class="pre">-</span> <span class="pre">1</span></code>. At
+least two of them must be neighbours.</p></li>
+<li><p><strong>batch_size</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The batch size of the parameters of each operation. Unbatched if None.</p></li>
+<li><p><strong>op_types</strong> (<em>Sequence</em><em>[</em><em>Type</em><em>[</em><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><em>SingleParticleTransitionMatrixOperation</em></a><em>]</em><em>]</em>) – The operation types to draw from.</p></li>
+<li><p><strong>use_cuda</strong> (<em>bool</em>) – Whether to move each operation to the GPU.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed of the random generator. The same seed gives the same circuit. Each
+operation gets its own seed drawn from this generator, so two operations of the same type
+have different parameters.</p></li>
+<li><p><strong>kwargs</strong> – Ignored. Kept for compatibility with the other generators.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A generator of the <code class="docutils literal notranslate"><span class="pre">n_ops</span></code> random operations.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Iterator[<a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation">SingleParticleTransitionMatrixOperation</a>]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If no two wires of <code class="docutils literal notranslate"><span class="pre">wires</span></code> are neighbours.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-matchcake.circuits">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-matchcake.circuits" title="Permalink to this heading">¶</a></h2>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="static/documentation_options.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" src="static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>
