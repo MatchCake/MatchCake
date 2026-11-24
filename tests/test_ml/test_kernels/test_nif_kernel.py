@@ -77,6 +77,100 @@ class TestNIFKernel:
         kernel_instance.compute_similarities(x, x)
         kernel_instance.ansatz_mock.assert_called()
 
+    @pytest.mark.parametrize("shape_0, shape_1", [(0, 4), (4, 0), (0, 0)])
+    def test_forward_with_empty_inputs(self, kernel_instance, shape_0, shape_1):
+        kernel = kernel_instance(torch.rand(shape_0, 10), torch.rand(shape_1, 10))
+        assert kernel.shape == (shape_0, shape_1)
+        assert kernel.dtype == kernel_instance.R_DTYPE
+        kernel_instance.ansatz_mock.assert_not_called()
+
+    def test_forward_with_one_empty_input(self, kernel_instance):
+        kernel = kernel_instance(torch.rand(0, 10))
+        assert kernel.shape == (0, 0)
+
+    def test_transform_with_empty_input(self, kernel_instance):
+        kernel_instance.fit(torch.rand(4, 10))
+        assert kernel_instance.transform(torch.rand(0, 10)).shape == (0, 4)
+
+    def test_fit_drops_cached_train_sptms(self, kernel_instance):
+        x_test = torch.rand(3, 10)
+        kernel_instance.fit(torch.rand(4, 10))
+        assert kernel_instance.transform(x_test).shape == (3, 4)
+        first_sptms_train = kernel_instance.sptms_train
+        kernel_instance.fit(torch.rand(6, 10))
+        assert "sptms_train" not in kernel_instance.__dict__
+        assert kernel_instance.transform(x_test).shape == (3, 6)
+        assert kernel_instance.sptms_train.shape[0] == 6
+        assert kernel_instance.sptms_train is not first_sptms_train
+
+    def test_forward_with_empty_input_keeps_dtype(self):
+        kernel_instance = NIFKernel(r_dtype=torch.float64, c_dtype=torch.complex128)
+        kernel = kernel_instance(torch.rand(0, 10), torch.rand(4, 10))
+        assert kernel.shape == (0, 4)
+        assert kernel.dtype == torch.float64
+
+    def test_fit_on_zero_samples_raises(self, kernel_instance):
+        with pytest.raises(ValueError, match="zero samples"):
+            kernel_instance.fit(torch.rand(0, 10))
+        assert not kernel_instance.is_fitted_
+
+    def test_failed_fit_drops_cached_train_sptms(self, kernel_instance):
+        kernel_instance.fit(torch.rand(4, 10))
+        kernel_instance.transform(torch.rand(3, 10))
+        assert "sptms_train" in kernel_instance.__dict__
+        kernel_instance.alignment = True
+        with pytest.raises(ValueError):
+            kernel_instance.fit(torch.rand(6, 10))
+        assert "sptms_train" not in kernel_instance.__dict__
+
+    def test_are_same_samples_with_numpy_inputs(self):
+        x = np.random.rand(5, 4)
+        assert NIFKernel.are_same_samples(x, x.copy())
+        assert NIFKernel.are_same_samples(torch.from_numpy(x), x.copy())
+        assert not NIFKernel.are_same_samples(x, x + 1.0)
+
+    def test_are_same_samples(self):
+        x = torch.rand(5, 4)
+        assert NIFKernel.are_same_samples(x, x)
+        assert NIFKernel.are_same_samples(x, x.clone())
+        assert NIFKernel.are_same_samples(x, x.clone().to(torch.float64))
+        assert not NIFKernel.are_same_samples(x, x[:3])
+        assert not NIFKernel.are_same_samples(x, torch.flip(x, dims=(0,)))
+        assert not NIFKernel.are_same_samples(x, x + 1.0)
+        integers = torch.randint(0, 4, (5, 4))
+        assert NIFKernel.are_same_samples(integers, integers.to(torch.float32))
+        assert not NIFKernel.are_same_samples(integers, integers.to(torch.float32) + 0.5)
+        assert not NIFKernel.are_same_samples(x, torch.nextafter(x, torch.ones_like(x)))
+
+    @pytest.mark.parametrize("shape_0, shape_1", [(5, 5), (6, 3), (3, 6), (1, 1)])
+    def test_compute_similarities_evaluates_every_pair_of_a_cross_kernel(self, kernel_instance, shape_0, shape_1):
+        x0, x1 = torch.rand(shape_0, 10), torch.rand(shape_1, 10)
+        evaluated = []
+
+        def similarities_func(indices, sptm0, sptm1, p_bar):
+            evaluated.append(indices)
+            return 10.0 * indices[:, 0] + indices[:, 1] + 0.5
+
+        kernel_instance._compute_similarities_func = similarities_func
+        kernel = kernel_instance.compute_similarities(x0, x1)
+        expected = torch.tensor([[10.0 * i + j + 0.5 for j in range(shape_1)] for i in range(shape_0)])
+        torch.testing.assert_close(kernel, expected.to(kernel.dtype))
+        assert len(np.concatenate(evaluated, axis=0)) == shape_0 * shape_1
+
+    def test_compute_similarities_evaluates_one_triangle_for_same_samples(self, kernel_instance):
+        x = torch.rand(5, 10)
+        evaluated = []
+
+        def similarities_func(indices, sptm0, sptm1, p_bar):
+            evaluated.append(indices)
+            return 0.1 * (indices[:, 0] + indices[:, 1])
+
+        kernel_instance._compute_similarities_func = similarities_func
+        kernel = kernel_instance.compute_similarities(x, x.clone())
+        assert len(np.concatenate(evaluated, axis=0)) == 10
+        torch.testing.assert_close(kernel, kernel.T)
+        torch.testing.assert_close(torch.diagonal(kernel), torch.ones(5, dtype=kernel.dtype))
+
     @pytest.mark.parametrize("n_qubits, seed", list(zip(np.arange(2, 12), np.arange(10))))
     def test_queuing(self, n_qubits, seed):
         """

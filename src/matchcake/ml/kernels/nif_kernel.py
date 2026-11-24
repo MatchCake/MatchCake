@@ -1,9 +1,10 @@
 from functools import cached_property, partial
-from typing import Optional, cast
+from typing import Optional, Union, cast
 
 import numpy as np
 import pennylane as qml
 import torch
+from numpy.typing import NDArray
 from tqdm import tqdm
 
 from ...devices.nif_device import NonInteractingFermionicDevice
@@ -35,6 +36,27 @@ class NIFKernel(Kernel):
     DEFAULT_N_QUBITS = 12
     DEFAULT_R_DTYPE = torch.float32
     DEFAULT_C_DTYPE = torch.complex64
+
+    @staticmethod
+    def are_same_samples(x0: torch.Tensor, x1: torch.Tensor) -> bool:
+        """
+        Checks whether two batches of samples are the same set, in the same order.
+
+        The kernel matrix of a set of samples with itself is symmetric with a unit diagonal,
+        so only one triangle has to be evaluated. This is not the case for a cross kernel
+        between two different sets.
+
+        :param x0: The first batch of samples.
+        :param x1: The second batch of samples.
+        :return: True if both batches hold the same samples in the same order.
+        :rtype: bool
+        """
+        if x0 is x1:
+            return True
+        if tuple(x0.shape) != tuple(x1.shape):
+            return False
+        x0, x1 = torch.as_tensor(x0), torch.as_tensor(x1)
+        return bool(torch.equal(x0, x1.to(device=x0.device)))
 
     def __init__(
         self,
@@ -103,6 +125,25 @@ class NIFKernel(Kernel):
         kernel = cast(torch.Tensor, self.compute_similarities(x0, x1, **kwargs))  # type: ignore[arg-type]
         return kernel
 
+    def fit(
+        self, x_train: Union[NDArray, TensorLike], y_train: Optional[Union[NDArray, TensorLike]] = None
+    ) -> "NIFKernel":
+        """
+        Fits the kernel using the provided training data.
+
+        The single-particle transition matrices of the training data are cached for
+        :meth:`transform`. The cache of a previous fit is dropped here, since it depends on both
+        the training data and the parameters of the kernel.
+
+        :param x_train: Training input data.
+        :param y_train: Training target data. Defaults to None.
+        :return: The fitted kernel instance.
+        :rtype: self
+        """
+        self.__dict__.pop("sptms_train", None)
+        super().fit(x_train, y_train)
+        return self
+
     def ansatz(self, x: torch.Tensor):
         """
         Represents an abstract method for implementing a specific ansatz.
@@ -128,6 +169,10 @@ class NIFKernel(Kernel):
         Gram matrix that represents the pairwise similarities. These values are then processed
         and provided as a tensor representation of the similarity matrix.
 
+        When `x0` and `x1` are the same samples, only one triangle is evaluated and mirrored.
+        Otherwise every pair is evaluated. If one of the batches is empty, an empty matrix is
+        returned without evaluating any circuit.
+
         :param x0: The first tensor containing a batch of samples for similarity computation.
         :type x0: torch.Tensor
         :param x1: The second tensor containing another batch of samples for similarity computation.
@@ -135,6 +180,8 @@ class NIFKernel(Kernel):
         :return: A tensor representing the computed similarity matrix.
         :rtype: torch.Tensor
         """
+        if x0.shape[0] == 0 or x1.shape[0] == 0:
+            return torch.zeros((x0.shape[0], x1.shape[0]), dtype=self.R_DTYPE)
         gram = GramMatrix((x0.shape[0], x1.shape[0]), requires_grad=self.training)
         p_bar = tqdm(
             total=int(np.prod(gram.shape)),
@@ -151,7 +198,7 @@ class NIFKernel(Kernel):
             sptm1 = self._x_to_sptm(x1)
         p_bar.set_postfix_str("Evaluating Gram matrix ...")
         _func = partial(self._compute_similarities_func, sptm0=sptm0, sptm1=sptm1, p_bar=p_bar)
-        gram.apply_(_func, batch_size=self.gram_batch_size, symmetrize=True)
+        gram.apply_(_func, batch_size=self.gram_batch_size, symmetrize=self.are_same_samples(x0, x1))
         p_bar.set_postfix_str("Done.")
         p_bar.close()
         return gram.to_tensor().to(dtype=self.R_DTYPE)

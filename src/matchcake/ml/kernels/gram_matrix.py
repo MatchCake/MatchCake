@@ -92,18 +92,21 @@ class GramMatrix:
         symmetrize the matrix.
 
         The `apply_` method processes the Gram matrix in batches of indices and applies
-        the provided function to update the matrix values at those indices. After processing
-        the batches, the matrix can be symmetrized if specified.
+        the provided function to update the matrix values at those indices. With
+        ``symmetrize=True``, only one strict triangle is evaluated, then mirrored across the
+        diagonal, and the diagonal is set to one. This is only valid when the rows and the
+        columns index the same set of samples. With ``symmetrize=False``, every entry is
+        evaluated, which is required for a cross matrix between two different sets of samples.
 
         :param func: A callable that accepts an ndarray of indices and performs an operation
             on the corresponding elements in the matrix.
         :param batch_size: The size of the batches in which the Gram matrix is processed.
             Default is 32.
-        :param symmetrize: Whether to symmetrize the matrix after applying `func`.
-            Default is True.
+        :param symmetrize: Whether to evaluate one triangle only and symmetrize the matrix
+            after applying `func`. Default is True.
         :return: Returns the updated instance of the Gram matrix.
         """
-        for indices in self.indices_batch_generator(batch_size):
+        for indices in self.indices_batch_generator(batch_size, triangular=symmetrize):
             self[indices[:, 0], indices[:, 1]] = func(indices)
         if symmetrize:
             self.symmetrize_()
@@ -174,7 +177,7 @@ class GramMatrix:
         except Exception:  # pragma: no cover
             pass  # pragma: no cover
 
-    def indices_batch_generator(self, batch_size: int = 32) -> Iterator[NDArray[np.int64]]:
+    def indices_batch_generator(self, batch_size: int = 32, triangular: bool = True) -> Iterator[NDArray[np.int64]]:
         """
         Generates batches of indices in the form of tuples within the constraints of a given
         shape and selection logic. The generator iterates over all pairwise index combinations
@@ -183,13 +186,18 @@ class GramMatrix:
 
         :param batch_size: The maximum number of (i, j) index pairs to be included in each batch.
             Defaults to 32.
+        :param triangular: If True, only the indices of one strict triangle are generated (the
+            upper one when there are more columns than rows, the lower one otherwise). If False,
+            every index pair of the matrix is generated. Defaults to True.
         :return: Iterator that yields batches of index pairs as numpy arrays of shape
             (batch_size, 2). Each batch contains tuples of indices in the form (i, j),
             respecting the constraints based on the dimensions of the object's shape.
         """
         batch = []
         for i, j in np.ndindex(self.shape):
-            if j > i and self.shape[0] < self.shape[1]:
+            if not triangular:
+                batch.append((i, j))
+            elif j > i and self.shape[0] < self.shape[1]:
                 batch.append((i, j))
             elif i > j and self.shape[0] >= self.shape[1]:
                 batch.append((i, j))

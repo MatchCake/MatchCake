@@ -136,7 +136,10 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         :type y_train: Optional[Union[NDArray, torch.Tensor]]
         :return: The fitted model instance.
         :rtype: self
+        :raises ValueError: If the training data holds no sample.
         """
+        if len(x_train) == 0:  # type: ignore[arg-type]
+            raise ValueError("Cannot fit a kernel on zero samples.")
         self.x_train_ = x_train
         self.y_train_ = y_train
         self.build_model()

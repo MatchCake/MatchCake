@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, cast
 
 import numpy as np
 import torch
@@ -125,6 +125,41 @@ class LinearNIFKernel(NIFKernel):
         )
         sptm = torch.matrix_exp(h)
         yield SingleParticleTransitionMatrixOperation(sptm, wires=self.wires)
+
+    def build_model(self) -> "LinearNIFKernel":
+        """
+        Execute a forward pass with the training data to initialize the weights of the encoder.
+
+        When `random_state` is not None, the weights of a newly initialized encoder are drawn
+        with `random_state` as the seed, so two kernels built with the same `random_state` and
+        the same number of features have the same weights. An encoder that is already initialized
+        keeps its weights.
+
+        :return: The model instance after building the internal structures.
+        :rtype: self
+        """
+        is_new_encoder = any(torch.nn.parameter.is_lazy(parameter) for parameter in self.encoder.parameters())
+        super().build_model()
+        if is_new_encoder and self.random_state is not None:
+            self._seed_encoder_weights()
+        return self
+
+    def _seed_encoder_weights(self) -> None:
+        """
+        Redraw the weights and the bias of the linear layer of the encoder from the default
+        distribution of :class:`torch.nn.Linear`, with a local generator seeded by `random_state`.
+        The values are drawn on the CPU, so they do not depend on the device of the kernel and
+        the global random number generators are not used.
+        """
+        linear = cast(torch.nn.Linear, self.encoder[1])
+        generator = torch.Generator().manual_seed(self.random_state)
+        bound = float(linear.in_features) ** -0.5
+        with torch.no_grad():
+            for parameter in linear.parameters():
+                values = torch.empty(parameter.shape, dtype=parameter.dtype).uniform_(
+                    -bound, bound, generator=generator
+                )
+                parameter.copy_(values)
 
     @property
     def n_qubits(self) -> int:

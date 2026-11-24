@@ -10,6 +10,8 @@ from matchcake.ml.kernels.fermionic_pqc_kernel import (
 from matchcake.ml.kernels.gram_matrix import GramMatrix
 from matchcake.operations import CompHH, MAngleEmbedding, fSWAP
 
+from ...configs import ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON, TEST_SEED
+
 
 @pytest.mark.parametrize(
     "n_qubits, rotations, entangling_mth",
@@ -127,6 +129,61 @@ class TestFermionicPQCKernel:
         kernel_matrix = kernel_instance(x_train)
         sts_kernel_matrix = state_vector_kernel(x_train)
         torch.testing.assert_close(kernel_matrix, sts_kernel_matrix)
+
+    @pytest.fixture
+    def x_test(self):
+        return np.random.default_rng(TEST_SEED).random((4, 8))
+
+    def test_cross_kernel_against_joint_gram_matrix(self, kernel_instance, x_train, x_test):
+        kernel_instance.fit(x_train)
+        n_train = len(x_train)
+        with torch.no_grad():
+            joint_gram = kernel_instance(np.concatenate([x_train, x_test], axis=0))
+            cross_kernel = kernel_instance(x_train, x_test)
+            transposed_cross_kernel = kernel_instance(x_test, x_train)
+            shuffled_cross_kernel = kernel_instance(x_train, x_train[::-1].copy())
+        torch.testing.assert_close(
+            cross_kernel, joint_gram[:n_train, n_train:], atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
+        )
+        torch.testing.assert_close(
+            transposed_cross_kernel,
+            joint_gram[n_train:, :n_train],
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+        torch.testing.assert_close(
+            shuffled_cross_kernel,
+            torch.flip(joint_gram[:n_train, :n_train], dims=(1,)),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_cross_kernel_of_single_samples(self, kernel_instance, x_test):
+        kernel_instance.fit(x_test)
+        with torch.no_grad():
+            gram = kernel_instance(x_test[:2])
+            single = kernel_instance(x_test[0:1], x_test[1:2])
+        assert single.shape == (1, 1)
+        torch.testing.assert_close(single[0, 0], gram[0, 1], atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+
+    def test_transform_against_joint_gram_matrix(self, kernel_instance, x_train, x_test):
+        kernel_instance.fit(x_train)
+        n_train = len(x_train)
+        with torch.no_grad():
+            joint_gram = kernel_instance(np.concatenate([x_train, x_test], axis=0))
+        transformed = kernel_instance.transform(torch.from_numpy(x_test))
+        torch.testing.assert_close(
+            transformed, joint_gram[n_train:, :n_train], atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
+        )
+
+    def test_transform_after_refit(self, kernel_instance, x_train, x_test):
+        x_test_tensor = torch.from_numpy(x_test)
+        for x_fit in [x_train, x_train[:5] + 0.25, x_train]:
+            kernel_instance.fit(x_fit)
+            transformed = kernel_instance.transform(x_test_tensor)
+            with torch.no_grad():
+                expected = kernel_instance(x_test, x_fit)
+            torch.testing.assert_close(transformed, expected, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
 
     def test_fit_with_preset_depth(self, kernel_instance, x_train):
         kernel_instance.depth_ = 2

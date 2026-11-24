@@ -51,6 +51,36 @@ class TestLinearNIFKernel:
         kernel_matrix = kernel_instance(x_train)
         torch.testing.assert_close(kernel_matrix, kernel_matrix.T)
 
+    def test_encoder_weights_follow_random_state(self, n_qubits, encoder_activation, bias, x_train):
+        kernels = []
+        for global_seed, random_state in [(1, 0), (2, 0), (2, 1)]:
+            torch.manual_seed(global_seed)
+            kernel = LinearNIFKernel(
+                n_qubits=n_qubits, bias=bias, encoder_activation=encoder_activation, random_state=random_state
+            )
+            kernels.append(kernel.fit(x_train))
+        torch.testing.assert_close(kernels[0].encoder[1].weight, kernels[1].encoder[1].weight, atol=0.0, rtol=0.0)
+        assert not torch.equal(kernels[1].encoder[1].weight, kernels[2].encoder[1].weight)
+
+    def test_fit_without_random_state(self, n_qubits, encoder_activation, bias, x_train):
+        kernel = LinearNIFKernel(n_qubits=n_qubits, bias=bias, encoder_activation=encoder_activation)
+        kernel.random_state = None
+        kernel.fit(x_train)
+        assert kernel.is_fitted_
+
+    def test_fit_does_not_initialize_cuda(self, kernel_instance, x_train):
+        was_initialized = torch.cuda.is_initialized()
+        kernel_instance.fit(x_train)
+        assert torch.cuda.is_initialized() == was_initialized
+
+    def test_refit_keeps_the_encoder_weights(self, kernel_instance, x_train):
+        kernel_instance.fit(x_train)
+        with torch.no_grad():
+            kernel_instance.encoder[1].weight.add_(0.5)
+        weights = kernel_instance.encoder[1].weight.detach().clone()
+        kernel_instance.fit(x_train)
+        torch.testing.assert_close(kernel_instance.encoder[1].weight, weights, atol=0.0, rtol=0.0)
+
     def test_n_qubits_setter(self, kernel_instance):
         n_qubits = kernel_instance.n_qubits
         kernel_instance.n_qubits = n_qubits + 1
