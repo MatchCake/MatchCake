@@ -40,9 +40,9 @@ beautifulsoup4==4.15.0
 bleach==6.4.0
     # via nbconvert
 build==1.6.1
-cachetools==8.0.0
+cachetools==8.0.2
     # via pennylane
-certifi==2026.10.23
+certifi==2026.11.20
     # via requests
 cffi==2.1.1 ; implementation_name == 'pypy' or (platform_machine != 'ppc64le' and platform_machine != 's390x' and platform_python_implementation != 'PyPy' and sys_platform == 'linux')
     # via
@@ -54,7 +54,7 @@ charset-normalizer==3.5.2
     # via requests
 click==8.5.1
     # via jupyter-cache
-cloudpickle==3.1.2
+cloudpickle==3.1.3
     # via joblib
 colorama==0.4.6 ; os_name == 'nt' or sys_platform == 'win32'
     # via
@@ -70,7 +70,7 @@ contourpy==1.3.3 ; python_full_version < '3.12'
     # via matplotlib
 contourpy==1.4.0 ; python_full_version >= '3.12'
     # via matplotlib
-coverage==7.17.3
+coverage==7.17.4
     # via pytest-cov
 cryptography==50.0.2 ; platform_machine != 'ppc64le' and platform_machine != 's390x' and sys_platform == 'linux'
     # via secretstorage
@@ -108,7 +108,7 @@ executing==2.3.0
     # via stack-data
 fastjsonschema==2.22.3
     # via nbformat
-filelock==4.2.10
+filelock==4.2.12
     # via
     #   python-discovery
     #   torch
@@ -195,7 +195,7 @@ kiwisolver==1.5.1
     # via matplotlib
 latexcodec==3.0.1
     # via pybtex
-librt==0.16.0 ; platform_python_implementation != 'PyPy'
+librt==0.17.0 ; platform_python_implementation != 'PyPy'
     # via mypy
 markdown-analysis==0.1.5
 markdown-it-py==3.0.0
@@ -203,7 +203,7 @@ markdown-it-py==3.0.0
     #   mdit-py-plugins
     #   myst-parser
     #   rich
-markdownify==1.2.3
+markdownify==1.2.4
     # via markdown-analysis
 markupsafe==3.0.4
     # via
@@ -241,7 +241,7 @@ mypy-extensions==1.2.0
 myst-nb==1.4.0
 myst-parser==3.0.1
     # via myst-nb
-narwhals==2.28.0
+narwhals==2.29.0
     # via scikit-learn
 nbclient==0.11.0
     # via
@@ -273,7 +273,7 @@ networkx==3.7 ; python_full_version >= '3.12'
     #   matchcake
     #   pennylane
     #   torch
-nh3==0.3.7
+nh3==0.3.8
     # via readme-renderer
 nodeenv==1.12.0
     # via pre-commit
@@ -403,7 +403,7 @@ pexpect==4.9.0 ; sys_platform != 'emscripten' and sys_platform != 'win32'
 pillow==13.0.0
     # via matplotlib
 pip==26.3
-platformdirs==4.14.5
+platformdirs==4.14.8
     # via
     #   jupyter-core
     #   pylint
@@ -443,7 +443,7 @@ pygments==2.21.0
     #   rich
     #   sphinx
     #   sphinx-mdinclude
-pylint==4.1.3
+pylint==4.1.4
 pyparsing==3.3.3
     # via matplotlib
 pyproject-hooks==1.3.3
@@ -467,13 +467,13 @@ python-dateutil==4.0.0
     #   jupyter-client
     #   matplotlib
     #   pandas
-python-discovery==1.9.5
+python-discovery==1.9.6
     # via virtualenv
 pythonbasictools==0.0.4
     # via matchcake
 pywin32-ctypes==0.2.3 ; platform_machine != 'ppc64le' and platform_machine != 's390x' and sys_platform == 'win32'
     # via keyring
-pyyaml==6.0.3
+pyyaml==6.0.4
     # via
     #   jupyter-cache
     #   myst-nb
@@ -507,7 +507,7 @@ rpds-py==2026.9.1
     # via
     #   jsonschema
     #   referencing
-ruff==0.17.5
+ruff==0.17.6
 rustworkx==0.18.1
     # via pennylane
 scikit-learn==1.9.1
@@ -541,7 +541,7 @@ snowballstemmer==3.1.1
     # via sphinx
 soupsieve==2.10 ; python_full_version < '3.11.5'
     # via beautifulsoup4
-soupsieve==4.1 ; python_full_version >= '3.11.5'
+soupsieve==4.1.3 ; python_full_version >= '3.11.5'
     # via beautifulsoup4
 sphinx==6.2.1
     # via
@@ -573,7 +573,7 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-sqlalchemy==2.1.8
+sqlalchemy==2.1.9
     # via jupyter-cache
 stack-data==0.6.3
     # via ipython
@@ -645,7 +645,7 @@ urllib3==2.8.0
     #   markdown-analysis
     #   requests
     #   twine
-virtualenv==21.15.6
+virtualenv==21.15.11
     # via pre-commit
 wcwidth==0.9.4
     # via prompt-toolkit
