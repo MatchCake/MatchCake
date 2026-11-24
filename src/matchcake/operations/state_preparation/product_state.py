@@ -4,14 +4,15 @@ from typing import Optional
 import numpy as np
 import pennylane as qml
 import torch
-from pennylane.operation import StatePrepBase
 from pennylane.wires import Wires, WiresLike
 
 from ...typing import TensorLike
+from ...utils.covariance_matrix_toolbox import CovarianceMatrixToolbox
 from ...utils.torch_utils import infer_complex_dtype, infer_real_dtype, torch_dtype_name
+from .gaussian_state_prep_base import GaussianStatePrepBase
 
 
-class ProductState(StatePrepBase):
+class ProductState(GaussianStatePrepBase):
     r"""
     Prepare a product state from per-qubit amplitudes.
 
@@ -375,6 +376,20 @@ class ProductState(StatePrepBase):
         beta = state[..., 1]
         bits = (np.abs(beta) > np.abs(alpha)).astype(int)  # (..., n)
         return bits
+
+    @cached_property
+    def displacement_vector(self) -> TensorLike:
+        r"""
+        Displacement vector :math:`d_\mu = \langle\Psi|\, c_\mu\, |\Psi\rangle` of the prepared state.
+
+        For a product state with per-qubit Bloch vectors :math:`(x_k, y_k, z_k)`,
+        :math:`d_{2k} = x_k \prod_{l<k} z_l` and :math:`d_{2k+1} = y_k \prod_{l<k} z_l`. It vanishes for a
+        computational-basis state.
+
+        :return: Real tensor of shape ``(2n,)``, or ``(B, 2n)`` for a batched state.
+        :rtype: TensorLike
+        """
+        return CovarianceMatrixToolbox.displacement_vector(self.data[0], self.wires)
 
     @cached_property
     def is_basis_state(self):

@@ -12,7 +12,15 @@ from pennylane import BasisState
 from pennylane.devices.execution_config import ExecutionConfig
 from pennylane.devices.preprocess import decompose
 from pennylane.exceptions import DeviceError
-from pennylane.measurements import ExpectationMP, ProbabilityMP, SampleMP, Shots
+from pennylane.measurements import (
+    DensityMatrixMP,
+    ExpectationMP,
+    ProbabilityMP,
+    PurityMP,
+    SampleMP,
+    Shots,
+    VnEntropyMP,
+)
 from pennylane.operation import Operation, StatePrepBase
 from pennylane.ops.op_math import Adjoint, Pow
 from pennylane.ops.qubit.observables import BasisStateProjector
@@ -22,17 +30,24 @@ from pennylane.wires import Wires
 
 from .. import utils
 from ..base.lookup_table import NonInteractingFermionicLookupTable
+from ..measurements.covariance_matrix import CovarianceMatrixMP
 from ..observables.batch_hamiltonian import BatchHamiltonian
 from ..observables.batch_projector import BatchProjector
 from ..operations.matchgate_operation import MatchgateOperation
 from ..operations.single_particle_transition_matrices.single_particle_transition_matrix import (
     SingleParticleTransitionMatrixOperation,
 )
-from ..operations.state_preparation import ProductState, StatePrepFromGates
+from ..operations.state_preparation import (
+    GaussianStatePrep,
+    GaussianStatePrepBase,
+    ProductState,
+    StatePrepFromGates,
+)
 from ..typing import TensorLike
 from ..utils import (
     torch_utils,
 )
+from ..utils.covariance_matrix_toolbox import CovarianceMatrixToolbox
 from ..utils.math import (
     complex_dtype_name_like,
     convert_like_and_cast_to,
@@ -44,9 +59,6 @@ from .expval_strategies.clifford_expval.clifford_expval_strategy import (
 )
 from .expval_strategies.expval_from_probabilities import ExpvalFromProbabilitiesStrategy
 from .expval_strategies.m_pfaffian import MPfaffianExpvalStrategy
-from .expval_strategies.m_pfaffian._extended_covariance import (
-    displacement_vector as _displacement_vector,
-)
 from .expval_strategies.m_pfaffian._extended_covariance import (
     extended_covariance_matrix as _extended_covariance_matrix,
 )
@@ -169,6 +181,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         "StatePrep",
         "BasisState",
         ProductState.__name__,
+        GaussianStatePrep.__name__,
     }
 
     DEFAULT_CONTRACTION_METHOD = "neighbours"
@@ -517,7 +530,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         return self.global_sptm
 
     def apply_state_prep(self, operation: qml.operation.Operation, **kwargs) -> bool:
-        """
+        r"""
         Apply a state preparation operation to the device. Will set the internal state of the device
         only if the operation is a state preparation operation and then return True. Otherwise, it will
         return False.
@@ -525,7 +538,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         A product state preparation (:class:`~pennylane.BasisState` or
         :class:`~matchcake.operations.state_preparation.ProductState`) is extended to the device wires in
         the device wire order, so it can act on part of the wires or list them in any order. The other
-        wires start in :math:`|0\rangle`.
+        wires start in :math:`|0\rangle`. A
+        :class:`~matchcake.operations.state_preparation.GaussianStatePrep` can also act on part of the
+        wires, which it must list in the device wire order.
 
         :param operation: The operation to apply
         :type operation: qml.operation.Operation
@@ -543,7 +558,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         is_applied = True
         if isinstance(operation, BasisState):
             operation = ProductState.from_basis_state(operation)
-        if isinstance(operation, ProductState) and self._wires is not None:
+        if isinstance(operation, GaussianStatePrepBase) and self._wires is not None:
             self._state_prep_op = operation.to_wires(self.wires)
         elif isinstance(operation, StatePrepBase):
             self._state_prep_op = operation
@@ -842,9 +857,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         Without ``bases``, or when every basis is ``"Z"``, the samples are drawn in the computational
         basis by :attr:`sampling_strategy`, or by :attr:`fallback_sampling_strategy` when
         :attr:`sampling_strategy` is a :class:`~matchcake.devices.sampling_strategies.ProductBasisSampling`
-        and the state preparation is not a product state. Otherwise, each wire listed in ``bases`` is measured in its
+        and the state preparation is not a Gaussian state. Otherwise, each wire listed in ``bases`` is measured in its
         own basis and the samples are drawn by :attr:`product_basis_sampling_strategy`, which requires a
-        product state (or basis state) input. Bit ``0`` then stands for the eigenvalue :math:`+1` of the
+        product state, basis state or Gaussian state input. Bit ``0`` then stands for the eigenvalue :math:`+1` of the
         measured Pauli operator, or of :math:`\hat{n} \cdot \vec{\sigma}` for a Bloch vector
         :math:`\hat{n}`, and bit ``1`` for :math:`-1`.
 
@@ -855,7 +870,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :return: Samples of shape (shots, ..., num_wires), also stored in :attr:`samples`.
         :rtype: np.ndarray
         :raises DeviceError: If a non computational basis is requested and the state preparation is
-            not a product state.
+            not a product state, a basis state or a Gaussian state.
         """
         bloch_vectors = self._bases_to_bloch_vectors(bases or {})
         rotated_bases = {
@@ -865,7 +880,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         }
         if not rotated_bases:
             sampling_strategy = self.sampling_strategy
-            if isinstance(sampling_strategy, ProductBasisSampling) and not isinstance(self.state_prep_op, ProductState):
+            if isinstance(sampling_strategy, ProductBasisSampling) and not isinstance(
+                self.state_prep_op, GaussianStatePrepBase
+            ):
                 sampling_strategy = self.fallback_sampling_strategy
             self._samples = sampling_strategy.batch_generate_samples(
                 self,
@@ -873,10 +890,10 @@ class NonInteractingFermionicDevice(qml.devices.Device):
                 show_progress=self.show_progress,
             )
         else:
-            if not isinstance(self.state_prep_op, ProductState):
+            if not isinstance(self.state_prep_op, GaussianStatePrepBase):
                 raise DeviceError(
                     f"Sampling in a basis other than the computational basis on {self.name} requires a product "
-                    f"state or basis state preparation. Got {self.state_prep_op} instead."
+                    f"state, basis state or Gaussian state preparation. Got {self.state_prep_op} instead."
                 )
             self._samples = self.product_basis_sampling_strategy.batch_generate_samples(
                 self, bloch_vectors=bloch_vectors, show_progress=self.show_progress
@@ -959,7 +976,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             show_progress=kwargs.pop("show_progress", self.show_progress),
             pfaffian_chunk_size=kwargs.pop("pfaffian_chunk_size", self.pfaffian_chunk_size),
         )
-        if isinstance(self.state_prep_op, ProductState):
+        if isinstance(self.state_prep_op, GaussianStatePrepBase):
             strategy_kwargs["covariance_matrix"] = self.covariance_matrix
 
         return self.prob_dispatcher(
@@ -1070,6 +1087,114 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         return mp.process_samples(
             self._samples_in_pennylane_layout(), wire_order=self.wires, shot_range=shot_range, bin_size=bin_size
         )
+
+    def partial_trace(
+        self,
+        wires: Union[Wires, List[int]],
+        *,
+        fermionic: bool = False,
+        reduced_wires: Optional[Union[Wires, List[int]]] = None,
+    ) -> GaussianStatePrep:
+        r"""
+        Trace out the given wires of the current state and return the state of the remaining ones.
+
+        See :meth:`reduced_state` for the semantics of the result. This method takes the wires to remove
+        instead of the wires to keep.
+
+        :param wires: Wires to trace out.
+        :type wires: Union[Wires, List[int]]
+        :param fermionic: Whether to allow remaining wires that are not a contiguous block.
+        :type fermionic: bool
+        :param reduced_wires: Wire labels of the returned state preparation. Defaults to ``range(k)`` for
+            ``k`` remaining wires.
+        :type reduced_wires: Optional[Union[Wires, List[int]]]
+        :return: The state of the remaining wires as a state preparation.
+        :rtype: GaussianStatePrep
+        :raises ValueError: If a wire is not a wire of the device.
+        """
+        traced_wires = Wires(wires)
+        unknown_wires = [wire for wire in traced_wires if wire not in self.wires]
+        if unknown_wires:
+            raise ValueError(f"Wires {unknown_wires} are not wires of the device ({self.wires.tolist()}).")
+        kept_wires = [wire for wire in self.wires if wire not in traced_wires]
+        return self.reduced_state(kept_wires, fermionic=fermionic, reduced_wires=reduced_wires)
+
+    def reduced_covariance_matrix(self, wires: Union[Wires, List[int]], *, fermionic: bool = False) -> TensorLike:
+        r"""
+        Majorana covariance matrix of the current state on the given wires, the others being traced out.
+
+        The current state is the initial state evolved by the operations applied so far. Its reduced state
+        on a subset of wires is the fermionic Gaussian state, generally mixed, whose covariance matrix is
+        the principal submatrix of :attr:`covariance_matrix` on the Majorana indices of the kept wires.
+
+        The Majorana operators of the reduced state carry Jordan-Wigner strings that run through the kept
+        wires only. When the kept wires are a contiguous block listed in the device wire order, this is
+        the reduced state of the qubits. Otherwise, a Pauli word on the reduced state stands in the full
+        system for the same word with a :math:`Z` on every removed wire located between two of its
+        :math:`X` or :math:`Y` factors: the result is the reduced state of the fermionic modes, which is
+        not the reduced state of the qubits. That case must be requested with ``fermionic=True``.
+
+        :param wires: Wires to keep.
+        :type wires: Union[Wires, List[int]]
+        :param fermionic: Whether to allow kept wires that are not a contiguous block in the device wire
+            order, and return the fermionic reduced state.
+        :type fermionic: bool
+        :return: The reduced covariance matrix, shape (..., 2k, 2k) for k kept wires.
+        :rtype: TensorLike
+        :raises ValueError: If a wire is not a wire of the device, if no wire is kept, or if the kept wires
+            are not a contiguous block in the device wire order while ``fermionic`` is ``False``.
+        :raises NotImplementedError: If the initial state has a nonzero displacement vector, such as a
+            product state with superposed qubits. Its reduced state is not a Gaussian state of the
+            Majorana operators of the kept wires alone.
+        """
+        kept_wires = Wires(wires)
+        unknown_wires = [wire for wire in kept_wires if wire not in self.wires]
+        if unknown_wires:
+            raise ValueError(f"Wires {unknown_wires} are not wires of the device ({self.wires.tolist()}).")
+        wire_indices = self.wires.indices(kept_wires)
+        CovarianceMatrixToolbox.validate_reduced_wire_indices(wire_indices, fermionic=fermionic)
+        state_prep = self.state_prep_op
+        if isinstance(state_prep, GaussianStatePrepBase):
+            displacement = torch_utils.to_numpy(state_prep.displacement_vector)
+            if not np.allclose(displacement, 0.0, atol=ProductState.ATOL):
+                raise NotImplementedError(
+                    f"The reduced state is only implemented for initial states without displacement: "
+                    f"computational-basis states and GaussianStatePrep. A product state with superposed qubits "
+                    f"has a nonzero displacement vector and its reduced state is not a Gaussian state of the "
+                    f"Majorana operators of the kept wires. Got {state_prep} on {self.name}."
+                )
+        return CovarianceMatrixToolbox.reduce(self.covariance_matrix, wire_indices)
+
+    def reduced_state(
+        self,
+        wires: Union[Wires, List[int]],
+        *,
+        fermionic: bool = False,
+        reduced_wires: Optional[Union[Wires, List[int]]] = None,
+    ) -> GaussianStatePrep:
+        r"""
+        Keep the given wires of the current state, trace out the others, and return a state preparation.
+
+        The returned :class:`~matchcake.operations.state_preparation.GaussianStatePrep` holds the reduced
+        covariance matrix of :meth:`reduced_covariance_matrix` and can be queued as the first operation of
+        another circuit, typically on a smaller device. Inside a QNode, the measurement
+        :func:`matchcake.covariance_matrix` returns the same covariance matrix.
+
+        :param wires: Wires to keep.
+        :type wires: Union[Wires, List[int]]
+        :param fermionic: Whether to allow kept wires that are not a contiguous block in the device wire
+            order, see :meth:`reduced_covariance_matrix`.
+        :type fermionic: bool
+        :param reduced_wires: Wire labels of the returned state preparation. Defaults to ``range(k)`` for
+            ``k`` kept wires.
+        :type reduced_wires: Optional[Union[Wires, List[int]]]
+        :return: The reduced state as a state preparation.
+        :rtype: GaussianStatePrep
+        """
+        reduced_covariance = self.reduced_covariance_matrix(wires, fermionic=fermionic)
+        if reduced_wires is None:
+            reduced_wires = list(range(len(Wires(wires))))
+        return GaussianStatePrep(reduced_covariance, wires=reduced_wires, validate=False)
 
     def reset(self) -> None:
         """Reset the device state to its initial configuration.
@@ -1431,7 +1556,40 @@ class NonInteractingFermionicDevice(qml.devices.Device):
                 return samples[..., self.wires.indices(measurement.wires)]
             mp = self._build_sampled_measurement(SampleMP, measurement.obs)
             return mp.process_samples(samples, wire_order=self.wires)
+        if isinstance(measurement, (CovarianceMatrixMP, VnEntropyMP, PurityMP, DensityMatrixMP)):
+            return self._process_reduced_state_measurement(measurement)
         raise NotImplementedError(f"Measurement {type(measurement).__name__} is not supported by {self.name}.")
+
+    def _process_reduced_state_measurement(self, measurement: qml.measurements.MeasurementProcess) -> Any:
+        """Evaluate a measurement of the reduced state on the wires of the measurement.
+
+        The reduced covariance matrix is computed by :meth:`reduced_covariance_matrix`. Only
+        :class:`~matchcake.measurements.CovarianceMatrixMP` can ask for the fermionic reduced state on
+        wires that are not a contiguous block; the PennyLane measurements are quantities of the qubit
+        reduced state.
+
+        :param measurement: A covariance matrix, Von Neumann entropy, purity or density matrix measurement.
+        :type measurement: qml.measurements.MeasurementProcess
+        :return: The measurement result.
+        :rtype: Any
+        :raises DeviceError: If the circuit is executed with shots, since these measurements are analytic.
+        """
+        if self._active_shots is not None:
+            raise DeviceError(
+                f"Measurement {type(measurement).__name__} is analytic and cannot be estimated from shots "
+                f"on {self.name}. Execute the circuit without shots."
+            )
+        wires = measurement.wires or self.wires
+        is_fermionic = getattr(measurement, "fermionic", False)
+        reduced_covariance = self.reduced_covariance_matrix(wires, fermionic=is_fermionic)
+        if isinstance(measurement, VnEntropyMP):
+            return CovarianceMatrixToolbox.von_neumann_entropy(reduced_covariance, base=measurement.log_base)
+        if isinstance(measurement, PurityMP):
+            return CovarianceMatrixToolbox.purity(reduced_covariance)
+        if isinstance(measurement, DensityMatrixMP):
+            density_matrix = CovarianceMatrixToolbox.to_density_matrix(reduced_covariance)
+            return qml.math.cast(density_matrix, self._c_dtype_name)
+        return reduced_covariance
 
     def _samples_in_pennylane_layout(self) -> np.ndarray:
         """Return the current samples with the axes in the order PennyLane expects.
@@ -1476,10 +1634,10 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :return: The covariance matrix, shape (..., 2n, 2n).
         :rtype: TensorLike
         """
-        if not isinstance(self.state_prep_op, ProductState):
+        if not isinstance(self.state_prep_op, GaussianStatePrepBase):
             raise ValueError(
-                f"Covariance matrix can only be computed for product states. "
-                f"Got {type(self.state_prep_op)} instead of ProductState."
+                f"Covariance matrix can only be computed for product states and Gaussian states. "
+                f"Got {type(self.state_prep_op)} instead of a GaussianStatePrepBase."
             )
         cov0 = self.state_prep_op.covariance_matrix
         sptm = self.global_sptm.sptm_matrix(self.wires)
@@ -1493,22 +1651,23 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         column/row at position 2n (the parity index). Evolves the full
         extended state under the matchgate SPTM as tilde_Q^T tilde_Lambda_0 tilde_Q.
 
-        BasisState inputs are promoted to ProductState first (displacement is zero).
+        BasisState inputs are promoted to ProductState first (displacement is zero), and a
+        :class:`~matchcake.operations.state_preparation.GaussianStatePrep` has no displacement either.
 
-        See expval_from_mpf.md for the math.
+        See docs/expectation_values_theory.md for the math.
         """
         state_prep = self.state_prep_op
         if isinstance(state_prep, BasisState):
             state_prep = ProductState.from_basis_state(state_prep)
-        if not isinstance(state_prep, ProductState):
+        if not isinstance(state_prep, GaussianStatePrepBase):
             raise ValueError(
-                f"Extended covariance matrix requires a ProductState or BasisState. Got {type(state_prep)}."
+                f"Extended covariance matrix requires a ProductState, BasisState or GaussianStatePrep. "
+                f"Got {type(state_prep)}."
             )
         # Build tilde_Lambda_0 from the initial state. Cast to the device's configured
         # precision so r_dtype/c_dtype control the whole m-Pfaffian pipeline.
-        amplitudes = qml.math.cast(state_prep.data[0], self._c_dtype_name)  # (n, 2) complex
         cov0 = qml.math.cast(state_prep.covariance_matrix, self._r_dtype_name)  # (2n, 2n)
-        d0 = _displacement_vector(amplitudes, self.wires)  # (2n,)
+        d0 = state_prep.displacement_vector  # (2n,), cast to the precision of cov0 below
         ext_cov0 = _extended_covariance_matrix(cov0, d0)  # (2n+1, 2n+1)
 
         # Lift SPTM: \tilde{R} = R ⊕ 1

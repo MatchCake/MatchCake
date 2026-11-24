@@ -11,9 +11,10 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 from scipy import sparse
 
-from . import constants, cuda, majorana, math, operators, torch_utils
+from . import constants, covariance_matrix_toolbox, cuda, majorana, math, operators, torch_utils
 from ._pfaffian import pfaffian, sector_pfaffian_features, signed_pfaffian
 from .constants import PAULI_I, PAULI_X, PAULI_Y, PAULI_Z
+from .covariance_matrix_toolbox import CovarianceMatrixToolbox
 from .jordan_wigner import JordanWigner
 from .logm import logm
 from .majorana import (

@@ -1,2 +1,5 @@
-from ._extended_covariance import displacement_vector, extended_covariance_matrix, sptm_lift
+from ....utils.covariance_matrix_toolbox import CovarianceMatrixToolbox
+from ._extended_covariance import extended_covariance_matrix, sptm_lift
 from .m_pfaffian_expval_strategy import MPfaffianExpvalStrategy
+
+displacement_vector = CovarianceMatrixToolbox.displacement_vector

@@ -4,6 +4,22 @@ matchcake.operations.state\_preparation package
 Submodules
 ----------
 
+matchcake.operations.state\_preparation.gaussian\_state\_prep module
+---------------------------------------------------------------------
+
+.. automodule:: matchcake.operations.state_preparation.gaussian_state_prep
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.operations.state\_preparation.gaussian\_state\_prep\_base module
+---------------------------------------------------------------------------
+
+.. automodule:: matchcake.operations.state_preparation.gaussian_state_prep_base
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 matchcake.operations.state\_preparation.minus\_state module
 -----------------------------------------------------------
 

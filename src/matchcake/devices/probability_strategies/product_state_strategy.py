@@ -5,7 +5,8 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 
 from ... import utils
-from ...operations.state_preparation.product_state import ProductState
+from ...operations.state_preparation.gaussian_state_prep_base import GaussianStatePrepBase
+from ...utils.covariance_matrix_toolbox import CovarianceMatrixToolbox
 from ...utils.math import convert_and_cast_like
 from .probability_strategy import ProbabilityStrategy
 
@@ -105,9 +106,7 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
         :return: Principal submatrix of shape ``(..., 2k, 2k)``.
         :rtype: TensorLike
         """
-        wire_indices = np.asarray(wire_indices)
-        majorana_indices = np.stack([2 * wire_indices, 2 * wire_indices + 1], axis=1).ravel()
-        return covariance_matrix[..., majorana_indices[:, None], majorana_indices[None, :]]
+        return CovarianceMatrixToolbox.reduce(covariance_matrix, wire_indices)
 
     @staticmethod
     def _extract_majorana_submatrix_batch(
@@ -219,14 +218,19 @@ class ProductStateProbabilityStrategy(ProbabilityStrategy):
         return convert_and_cast_like(prob, covariance_matrix)
 
     def can_execute(self, state_prep_op: StatePrepBase) -> bool:
-        """Return True for any :class:`~matchcake.operations.ProductState` input.
+        """Return True for any state preparation described by a covariance matrix.
+
+        This covers :class:`~matchcake.operations.state_preparation.ProductState` and
+        :class:`~matchcake.operations.state_preparation.GaussianStatePrep` inputs. The probability
+        formula only relies on the outcome projector being pure, so it also holds for mixed Gaussian
+        states.
 
         :param state_prep_op: State preparation operation.
         :type state_prep_op: StatePrepBase
-        :return: True when ``state_prep_op`` is a ``ProductState``.
+        :return: True when ``state_prep_op`` is a ``GaussianStatePrepBase``.
         :rtype: bool
         """
-        return isinstance(state_prep_op, ProductState)
+        return isinstance(state_prep_op, GaussianStatePrepBase)
 
     def _compute_single(
         self,
