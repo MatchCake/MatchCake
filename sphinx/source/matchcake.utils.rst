@@ -4,10 +4,26 @@ matchcake.utils package
 Submodules
 ----------
 
+matchcake.utils.block\_diagonalize\_covariance module
+-----------------------------------------------------
+
+.. automodule:: matchcake.utils.block_diagonalize_covariance
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 matchcake.utils.constants module
 --------------------------------
 
 .. automodule:: matchcake.utils.constants
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+matchcake.utils.covariance\_matrix\_toolbox module
+--------------------------------------------------
+
+.. automodule:: matchcake.utils.covariance_matrix_toolbox
    :members:
    :undoc-members:
    :show-inheritance:

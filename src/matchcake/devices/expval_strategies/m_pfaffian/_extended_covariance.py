@@ -1,68 +1,10 @@
-from typing import Sequence
-
 import numpy as np
 import pennylane as qml
 import torch
 
 from ....typing import TensorLike
 from ....utils.math import convert_and_cast_like
-from ....utils.torch_utils import infer_complex_dtype, infer_real_dtype
-
-
-def displacement_vector(
-    product_state_amplitudes: TensorLike,
-    wires: Sequence[int],
-) -> torch.Tensor:
-    """Return d in R^{2n} with d[mu] = <c_mu>_rho for rho = product state.
-
-    The product state is |psi_prod> = prod_k (a_k |0> + b_k |1>),
-    where product_state_amplitudes[k, :] = (a_k, b_k).
-
-    JW convention:
-        <c_{2k}>   = (prod_{l<k} <Z_l>) * <X_k>
-        <c_{2k+1}> = (prod_{l<k} <Z_l>) * <Y_k>
-
-    :param product_state_amplitudes: Complex tensor of shape (n, 2).
-    :param wires: Wire labels (unused for the computation; here for API consistency).
-    :return: Real tensor of shape (2n,).
-    """
-    # Preserve the precision of the input amplitudes (complex64 -> float32) instead
-    # of forcing complex128/float64.
-    c_dtype = infer_complex_dtype(product_state_amplitudes)
-    r_dtype = infer_real_dtype(product_state_amplitudes)
-    psi = torch.as_tensor(
-        np.array(product_state_amplitudes)
-        if not isinstance(product_state_amplitudes, torch.Tensor)
-        else product_state_amplitudes,
-        dtype=c_dtype,
-    )
-    alpha = psi[..., 0]  # (..., n)
-    beta = psi[..., 1]  # (..., n)
-
-    x = 2.0 * torch.real(torch.conj(alpha) * beta)
-    y = 2.0 * torch.imag(torch.conj(alpha) * beta)
-    z = torch.abs(alpha) ** 2 - torch.abs(beta) ** 2  # (..., n), real
-
-    n = psi.shape[-2]
-    batch_shape = psi.shape[:-2]
-
-    # Exclusive prefix product: z_prod[k] = z[0] * ... * z[k-1], z_prod[0] = 1.
-    if n > 1:
-        z_prod = torch.cat(
-            [
-                torch.ones(batch_shape + (1,), dtype=r_dtype, device=psi.device),
-                torch.cumprod(z[..., :-1], dim=-1),
-            ],
-            dim=-1,
-        )  # (..., n)
-    else:
-        z_prod = torch.ones(batch_shape + (n,), dtype=r_dtype, device=psi.device)
-
-    d = torch.zeros(batch_shape + (2 * n,), dtype=r_dtype, device=psi.device)
-    d[..., 0::2] = z_prod * x  # <c_{2k}>   = z_prod[k] * <X_k>
-    d[..., 1::2] = z_prod * y  # <c_{2k+1}> = z_prod[k] * <Y_k>
-
-    return d
+from ....utils.torch_utils import infer_real_dtype
 
 
 def extended_covariance_matrix(

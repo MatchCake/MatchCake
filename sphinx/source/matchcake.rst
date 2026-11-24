@@ -12,6 +12,7 @@ Subpackages
    matchcake.constants
    matchcake.devices
    matchcake.matchgate_parameter_sets
+   matchcake.measurements
    matchcake.ml
    matchcake.observables
    matchcake.operations

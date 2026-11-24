@@ -16,6 +16,7 @@ import warnings
 
 from . import (
     matchgate_parameter_sets,  # Alias
+    measurements,
     ml,
     utils,
 )
@@ -24,8 +25,10 @@ from .devices import NIFDevice, NonInteractingFermionicDevice
 from .matchgate_parameter_sets import matchgate_params
 from .matchgate_parameter_sets.matchgate_polar_params import MatchgatePolarParams
 from .matchgate_parameter_sets.matchgate_standard_params import MatchgateStandardParams
+from .measurements import covariance_matrix
 from .observables import BatchHamiltonian
 from .operations import MatchgateOperation
+from .operations.state_preparation import GaussianStatePrep
 from .utils import math
 
 warnings.filterwarnings("ignore", category=Warning, module="docutils")
