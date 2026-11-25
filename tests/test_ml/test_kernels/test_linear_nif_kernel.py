@@ -62,6 +62,17 @@ class TestLinearNIFKernel:
         torch.testing.assert_close(kernels[0].encoder[1].weight, kernels[1].encoder[1].weight, atol=0.0, rtol=0.0)
         assert not torch.equal(kernels[1].encoder[1].weight, kernels[2].encoder[1].weight)
 
+    def test_encoder_weights_follow_the_default_linear_distribution(self, kernel_instance, x_train):
+        kernel_instance.fit(x_train)
+        linear = kernel_instance.encoder[1]
+        bound = linear.in_features**-0.5
+        generator = torch.Generator().manual_seed(kernel_instance.random_state)
+        expected = torch.empty(linear.weight.shape, dtype=linear.weight.dtype).uniform_(
+            -bound, bound, generator=generator
+        )
+        torch.testing.assert_close(linear.weight.detach(), expected, atol=0.0, rtol=0.0)
+        assert linear.weight.abs().max() > 0.5 * bound
+
     def test_fit_without_random_state(self, n_qubits, encoder_activation, bias, x_train):
         kernel = LinearNIFKernel(n_qubits=n_qubits, bias=bias, encoder_activation=encoder_activation)
         kernel.random_state = None
@@ -80,6 +91,34 @@ class TestLinearNIFKernel:
         weights = kernel_instance.encoder[1].weight.detach().clone()
         kernel_instance.fit(x_train)
         torch.testing.assert_close(kernel_instance.encoder[1].weight, weights, atol=0.0, rtol=0.0)
+
+    def test_transform_follows_the_state_of_the_kernel(self, kernel_instance, x_train):
+        x_test = torch.from_numpy(x_train[:4] + 0.01)
+
+        def assert_transform_is_up_to_date():
+            transformed = kernel_instance.transform(x_test)
+            with torch.no_grad():
+                expected = kernel_instance(x_test, kernel_instance.x_train_)
+            torch.testing.assert_close(transformed, expected)
+
+        kernel_instance.fit(x_train)
+        assert_transform_is_up_to_date()
+        with torch.no_grad():
+            kernel_instance.encoder[1].weight.add_(0.05)
+        assert_transform_is_up_to_date()
+        kernel_instance.encoder_activation = "Sigmoid"
+        assert_transform_is_up_to_date()
+        kernel_instance.encoder[-1] = torch.nn.LeakyReLU()
+        assert_transform_is_up_to_date()
+        kernel_instance.encoder[-1].negative_slope = 0.5
+        assert_transform_is_up_to_date()
+        kernel_instance.bias = not kernel_instance.bias
+        assert_transform_is_up_to_date()
+        kernel_instance.fit(x_train, np.arange(len(x_train)) % 2)
+        assert_transform_is_up_to_date()
+        kernel_instance.alignment_iterations = 2
+        kernel_instance._align_kernel()
+        assert_transform_is_up_to_date()
 
     def test_n_qubits_setter(self, kernel_instance):
         n_qubits = kernel_instance.n_qubits

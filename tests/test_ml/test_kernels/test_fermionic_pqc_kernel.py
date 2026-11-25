@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 import pennylane as qml
 import pytest
@@ -184,6 +186,156 @@ class TestFermionicPQCKernel:
             with torch.no_grad():
                 expected = kernel_instance(x_test, x_fit)
             torch.testing.assert_close(transformed, expected, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+
+    def assert_transform_is_up_to_date(self, kernel_instance, x_test):
+        transformed = kernel_instance.transform(torch.from_numpy(x_test))
+        with torch.no_grad():
+            expected = kernel_instance(x_test, kernel_instance.x_train_)
+        torch.testing.assert_close(transformed, expected, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+
+    def test_transform_follows_the_state_of_the_kernel(self, kernel_instance, x_train, x_test):
+        kernel_instance.fit(x_train)
+        self.assert_transform_is_up_to_date(kernel_instance, x_test)
+        kernel_instance.bias_.data = kernel_instance.bias_.data + 0.3
+        self.assert_transform_is_up_to_date(kernel_instance, x_test)
+        with torch.no_grad():
+            kernel_instance.data_scaling_.mul_(0.5)
+        self.assert_transform_is_up_to_date(kernel_instance, x_test)
+        other = FermionicPQCKernel(
+            n_qubits=kernel_instance.n_qubits,
+            rotations=kernel_instance.rotations,
+            entangling_mth=kernel_instance.entangling_mth,
+            random_state=7,
+        ).fit(x_train)
+        kernel_instance.load_state_dict(other.state_dict())
+        self.assert_transform_is_up_to_date(kernel_instance, x_test)
+        kernel_instance.x_train_ = x_train[:6] + 0.1
+        self.assert_transform_is_up_to_date(kernel_instance, x_test)
+        kernel_instance.entangling_mth = "identity" if kernel_instance.entangling_mth != "identity" else "fswap"
+        self.assert_transform_is_up_to_date(kernel_instance, x_test)
+        kernel_instance.rotations = "X,Z" if kernel_instance.rotations != "X,Z" else "Y,Z"
+        self.assert_transform_is_up_to_date(kernel_instance, x_test)
+        kernel_instance.x_train_ = np.concatenate([x_train, x_train[:, ::-1] + 0.2], axis=-1)
+        kernel_instance.bias_ = torch.cat([kernel_instance.bias_.detach(), kernel_instance.bias_.detach() + 0.1])
+        kernel_instance.data_scaling_ = torch.cat([kernel_instance.data_scaling_.detach()] * 2)
+        x_test = np.concatenate([x_test, x_test[:, ::-1]], axis=-1)
+        kernel_instance.depth_ = 1
+        self.assert_transform_is_up_to_date(kernel_instance, x_test)
+        kernel_instance.depth_ = int(np.ceil(x_test.shape[-1] / kernel_instance.n_qubits))
+        self.assert_transform_is_up_to_date(kernel_instance, x_test)
+
+    def test_transform_follows_in_place_changes_of_tensor_x_train(self, kernel_instance, x_train, x_test):
+        x_train_tensor = torch.from_numpy(x_train).clone()
+        kernel_instance.fit(x_train_tensor)
+        self.assert_transform_is_up_to_date(kernel_instance, x_test)
+        x_train_tensor.add_(0.3)
+        self.assert_transform_is_up_to_date(kernel_instance, x_test)
+
+    def test_train_sptms_carry_gradients_after_a_transform(self, kernel_instance, x_train, x_test):
+        kernel_instance.fit(x_train)
+        kernel_instance.transform(torch.from_numpy(x_test))
+        kernel_instance.train()
+        gradients = []
+        for x1_train in [True, False, True]:
+            kernel_instance.zero_grad()
+            kernel = kernel_instance(x_test, kernel_instance.x_train_, x1_train=x1_train)
+            kernel.pow(2).sum().backward()
+            gradients.append(kernel_instance.bias_.grad.detach().clone())
+        torch.testing.assert_close(gradients[0], gradients[1], atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+        torch.testing.assert_close(gradients[2], gradients[1], atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+        copy.deepcopy(kernel_instance)
+
+    def test_fit_draws_the_bias_from_random_state(self, n_qubits, rotations, entangling_mth, x_train):
+        for random_state in [0, 3]:
+            kernel = FermionicPQCKernel(
+                n_qubits=n_qubits, rotations=rotations, entangling_mth=entangling_mth, random_state=random_state
+            ).fit(x_train)
+            expected = np.random.RandomState(random_state).random(x_train.shape[-1])
+            torch.testing.assert_close(kernel.bias_.detach(), torch.from_numpy(expected).to(kernel.R_DTYPE))
+
+    def test_fit_on_zero_samples_keeps_the_fitted_state(self, kernel_instance, x_train):
+        kernel_instance.fit(x_train)
+        with pytest.raises(ValueError, match="zero samples"):
+            kernel_instance.fit(np.empty((0, 12)))
+        assert kernel_instance.bias_.shape == (x_train.shape[-1],)
+        assert kernel_instance.x_train_ is x_train
+
+    def test_refit_on_same_data_gives_same_kernel(self, kernel_instance, x_train):
+        kernel_instance.fit(x_train)
+        with torch.no_grad():
+            first_kernel = kernel_instance(x_train)
+        first_bias = kernel_instance.bias_.detach().clone()
+        kernel_instance.fit(x_train)
+        with torch.no_grad():
+            second_kernel = kernel_instance(x_train)
+        torch.testing.assert_close(kernel_instance.bias_, first_bias, atol=0.0, rtol=0.0)
+        torch.testing.assert_close(second_kernel, first_kernel, atol=0.0, rtol=0.0)
+
+    def test_parameters_are_registered(self, kernel_instance, x_train):
+        assert kernel_instance.bias_ is None
+        assert kernel_instance.data_scaling_ is None
+        kernel_instance.fit(x_train)
+        parameters = dict(kernel_instance.named_parameters())
+        for name in ["bias_", "data_scaling_"]:
+            assert isinstance(parameters[name], torch.nn.Parameter)
+            assert parameters[name].is_leaf
+            assert parameters[name].requires_grad
+            assert parameters[name].dtype == kernel_instance.R_DTYPE
+        torch.testing.assert_close(
+            kernel_instance.data_scaling_, torch.full_like(kernel_instance.data_scaling_, torch.pi)
+        )
+
+    def test_plain_tensors_are_wrapped_into_parameters(self, kernel_instance, x_train):
+        kernel_instance.fit(x_train)
+        kernel_instance.bias_ = torch.zeros(x_train.shape[-1])
+        kernel_instance.data_scaling_ = torch.ones(x_train.shape[-1]) * torch.rand(1).requires_grad_()
+        parameters = dict(kernel_instance.named_parameters())
+        for name in ["bias_", "data_scaling_"]:
+            assert isinstance(parameters[name], torch.nn.Parameter)
+            assert parameters[name].is_leaf
+        torch.testing.assert_close(kernel_instance.bias_, torch.zeros(x_train.shape[-1]))
+        assert kernel_instance.bias_.requires_grad
+        kernel_instance.freeze()
+        kernel_instance.bias_ = torch.ones(x_train.shape[-1])
+        assert not kernel_instance.bias_.requires_grad
+        kernel_instance.data_scaling_ = torch.ones(x_train.shape[-1], dtype=torch.long)
+        assert isinstance(kernel_instance.data_scaling_, torch.nn.Parameter)
+        assert not kernel_instance.data_scaling_.requires_grad
+
+    def test_alignment_with_several_iterations(self, kernel_instance, x_train):
+        kernel_instance.alignment = True
+        kernel_instance.alignment_iterations = 3
+        kernel_instance.alignment_early_stopping_patience = 100
+        kernel_instance.fit(x_train, np.arange(len(x_train)) % 2)
+        assert kernel_instance.is_fitted_
+        assert len(kernel_instance.opt_.history) == 3
+        assert all(np.isfinite(kernel_instance.opt_.history))
+        assert torch.all(torch.isfinite(kernel_instance.bias_))
+
+    def test_alignment_trains_the_parameters(self, n_qubits, rotations, entangling_mth, x_train):
+        kernel_instance = FermionicPQCKernel(
+            n_qubits=n_qubits,
+            rotations=rotations,
+            entangling_mth=entangling_mth,
+            alignment=True,
+            alignment_iterations=4,
+            alignment_learning_rate=5e-2,
+            alignment_early_stopping_patience=100,
+        )
+        x_train = np.random.default_rng(TEST_SEED).random(x_train.shape)
+        kernel_instance.fit(x_train, np.arange(len(x_train)) % 2)
+        initial_scaling = torch.full_like(kernel_instance.data_scaling_, torch.pi)
+        assert not torch.allclose(kernel_instance.data_scaling_, initial_scaling)
+        assert max(kernel_instance.opt_.history) > kernel_instance.opt_.history[0]
+
+    def test_deepcopy_of_fitted_kernel(self, kernel_instance, x_train, x_test):
+        kernel_instance.fit(x_train)
+        expected = kernel_instance.transform(torch.from_numpy(x_test))
+        kernel_instance.train()
+        kernel_instance(x_train)
+        copied = copy.deepcopy(kernel_instance)
+        torch.testing.assert_close(copied.transform(torch.from_numpy(x_test)), expected, atol=0.0, rtol=0.0)
+        assert copied.bias_ is not kernel_instance.bias_
 
     def test_fit_with_preset_depth(self, kernel_instance, x_train):
         kernel_instance.depth_ = 2

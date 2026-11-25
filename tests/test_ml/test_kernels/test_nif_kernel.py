@@ -98,7 +98,7 @@ class TestNIFKernel:
         assert kernel_instance.transform(x_test).shape == (3, 4)
         first_sptms_train = kernel_instance.sptms_train
         kernel_instance.fit(torch.rand(6, 10))
-        assert "sptms_train" not in kernel_instance.__dict__
+        assert kernel_instance._sptms_train_cache is None
         assert kernel_instance.transform(x_test).shape == (3, 6)
         assert kernel_instance.sptms_train.shape[0] == 6
         assert kernel_instance.sptms_train is not first_sptms_train
@@ -117,17 +117,44 @@ class TestNIFKernel:
     def test_failed_fit_drops_cached_train_sptms(self, kernel_instance):
         kernel_instance.fit(torch.rand(4, 10))
         kernel_instance.transform(torch.rand(3, 10))
-        assert "sptms_train" in kernel_instance.__dict__
+        assert kernel_instance._sptms_train_cache is not None
         kernel_instance.alignment = True
         with pytest.raises(ValueError):
             kernel_instance.fit(torch.rand(6, 10))
-        assert "sptms_train" not in kernel_instance.__dict__
+        assert kernel_instance._sptms_train_cache is None
 
     def test_are_same_samples_with_numpy_inputs(self):
         x = np.random.rand(5, 4)
         assert NIFKernel.are_same_samples(x, x.copy())
         assert NIFKernel.are_same_samples(torch.from_numpy(x), x.copy())
         assert not NIFKernel.are_same_samples(x, x + 1.0)
+
+    def test_sptms_train_is_cached_between_transforms(self, kernel_instance):
+        kernel_instance.fit(torch.rand(4, 10))
+        kernel_instance.transform(torch.rand(3, 10))
+        sptms_train = kernel_instance.sptms_train
+        kernel_instance.ansatz_mock.reset_mock()
+        kernel_instance.transform(torch.rand(2, 10))
+        assert kernel_instance.sptms_train is sptms_train
+        assert kernel_instance.ansatz_mock.call_count == 1
+
+    def test_sptms_train_follows_x_train(self, kernel_instance):
+        kernel_instance.fit(torch.rand(4, 10))
+        assert kernel_instance.transform(torch.rand(3, 10)).shape == (3, 4)
+        kernel_instance.x_train_ = torch.rand(6, 10)
+        assert kernel_instance.transform(torch.rand(3, 10)).shape == (3, 6)
+
+    def test_sptms_train_without_cache_attribute(self, kernel_instance):
+        kernel_instance.fit(torch.rand(4, 10))
+        del kernel_instance._sptms_train_cache
+        assert kernel_instance.transform(torch.rand(3, 10)).shape == (3, 4)
+
+    def test_sptms_train_follows_n_qubits(self, kernel_instance):
+        kernel_instance.fit(torch.rand(4, 10))
+        kernel_instance.transform(torch.rand(3, 10))
+        kernel_instance.n_qubits = 3
+        assert kernel_instance.transform(torch.rand(3, 10)).shape == (3, 4)
+        assert kernel_instance.sptms_train.shape == (4, 6, 6)
 
     def test_are_same_samples(self):
         x = torch.rand(5, 4)

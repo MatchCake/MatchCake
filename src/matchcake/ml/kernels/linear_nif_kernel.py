@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import Hashable, Optional, cast
 
 import numpy as np
 import torch
@@ -143,6 +143,9 @@ class LinearNIFKernel(NIFKernel):
         if is_new_encoder and self.random_state is not None:
             self._seed_encoder_weights()
         return self
+
+    def _sptms_train_key(self) -> Hashable:
+        return super()._sptms_train_key(), repr(self.encoder)
 
     def _seed_encoder_weights(self) -> None:
         """

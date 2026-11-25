@@ -1,4 +1,4 @@
-from typing import Optional, Union, cast
+from typing import Any, Hashable, Optional, Union, cast
 
 import numpy as np
 import torch
@@ -78,6 +78,7 @@ class FermionicPQCKernel(NIFKernel):
     DEFAULT_ROTATIONS = "Y,Z"
     DEFAULT_ENTANGLING_MTH = "fswap"
     available_entangling_mth = {"fswap", "identity", "hadamard"}
+    PARAMETER_NAMES = ("bias_", "data_scaling_")
 
     def __init__(
         self,
@@ -134,9 +135,28 @@ class FermionicPQCKernel(NIFKernel):
         if self.entangling_mth not in self.available_entangling_mth:
             raise ValueError(f"Unknown entangling method: {self.entangling_mth}.")
         self.depth_: Optional[int] = None
-        self.bias_: Optional[Parameter] = None
+        self.bias_: Optional[Parameter]
+        self.register_parameter("bias_", None)
         self.encoder = torch.nn.Flatten()
-        self.data_scaling_: Optional[Parameter] = None
+        self.data_scaling_: Optional[Parameter]
+        self.register_parameter("data_scaling_", None)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """
+        Sets an attribute. A plain tensor assigned to `bias_` or `data_scaling_` is wrapped into
+        a parameter, so both stay registered parameters of the kernel. The new parameter is
+        trainable unless the one it replaces was frozen.
+
+        :param name: Name of the attribute.
+        :param value: Value of the attribute.
+        """
+        is_plain_tensor = isinstance(value, torch.Tensor) and not isinstance(value, Parameter)
+        if name in self.PARAMETER_NAMES and is_plain_tensor:
+            current = self._parameters.get(name)
+            requires_grad = current.requires_grad if current is not None else True
+            is_differentiable = value.is_floating_point() or value.is_complex()
+            value = Parameter(value.detach(), requires_grad=requires_grad and is_differentiable)
+        super().__setattr__(name, value)
 
     def fit(self, x_train: Union[NDArray, TensorLike], y_train: Optional[Union[NDArray, TensorLike]] = None):
         """
@@ -145,19 +165,21 @@ class FermionicPQCKernel(NIFKernel):
         on the input shape and the number of qubits. The function adapts the model
         to the provided input shape and prepares it for further processing.
 
+        The bias is drawn with `random_state` as the seed at every fit, so fitting again on the
+        same data gives the same kernel.
+
         :param x_train: Training input data. Can be of type NDArray or torch.Tensor.
         :param y_train: Optional parameter for training target/output data. Can be of
             type NDArray or torch.Tensor.
         :return: Updated instance of the class after fitting the training data.
         """
         x_arr = cast(np.ndarray, x_train)
+        if len(x_arr) == 0:
+            raise ValueError("Cannot fit a kernel on zero samples.")
         n_inputs = int(np.prod(x_arr.shape[1:]))
-        self.bias_ = Parameter(torch.from_numpy(self.np_rn_gen.random(n_inputs))).to(  # type: ignore
-            dtype=self.R_DTYPE, device=self.device
-        )
-        self.data_scaling_ = torch.pi * Parameter(torch.ones(n_inputs)).to(  # type: ignore
-            dtype=self.R_DTYPE, device=self.device
-        )
+        bias = np.random.RandomState(seed=self.random_state).random(n_inputs)
+        self.bias_ = Parameter(torch.as_tensor(bias, dtype=self.R_DTYPE, device=self.device))
+        self.data_scaling_ = Parameter(torch.full((n_inputs,), torch.pi, dtype=self.R_DTYPE, device=self.device))
         if self.depth_ is None:
             self.depth_ = int(max(1, np.ceil(x_arr.shape[-1] / self.n_qubits)))
         super().fit(x_train, y_train)
@@ -197,3 +219,6 @@ class FermionicPQCKernel(NIFKernel):
                 else:
                     raise ValueError(f"Unknown entangling method: {self.entangling_mth}")
         return
+
+    def _sptms_train_key(self) -> Hashable:
+        return super()._sptms_train_key(), self.rotations, self.entangling_mth, self.depth_

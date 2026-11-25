@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 import pytest
 import torch
@@ -45,6 +47,11 @@ class TestNystroem:
         np.testing.assert_allclose(
             features @ features.T, gram, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON
         )
+
+    def test_deepcopy_of_fitted_instance(self, x_train):
+        instance = Nystroem(kernel=FermionicPQCKernel(n_qubits=4), n_components=5, random_state=0).fit(x_train)
+        copied = copy.deepcopy(instance)
+        np.testing.assert_array_equal(copied.transform(x_train), instance.transform(x_train))
 
     def test_freeze(self, instance, x_train):
         instance.fit(x_train)
