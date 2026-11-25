@@ -9,7 +9,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from tqdm import tqdm
 
 from matchcake.typing import TensorLike
-from matchcake.utils.torch_utils import to_numpy, to_tensor
+from matchcake.utils.torch_utils import to_tensor
 
 
 class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
@@ -121,7 +121,7 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
             x_tensor = cast(torch.Tensor, self(x_tensor, self.x_train_, x1_train=True))  # type: ignore[arg-type]
         if is_torch:
             return x_tensor
-        return cast(np.ndarray, to_numpy(x_tensor, dtype=np.float32))  # pragma: no cover
+        return cast(np.ndarray, x_tensor.detach().cpu().numpy())
 
     def fit(self, x_train: Union[NDArray, TensorLike], y_train: Optional[Union[NDArray, TensorLike]] = None):
         """
@@ -238,8 +238,8 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         if self.x_train_ is None or self.y_train_ is None:
             raise ValueError("Training data must be provided before kernel alignment.")
         self.train()
-        centerer = self._create_kernel_centerer()
-        y_kernel = self._create_y_kernel().to(self.device)
+        centerer = self._create_kernel_centerer().to(torch.float64)
+        y_kernel = self._create_y_kernel().to(centerer)
         centered_y_kernel = torch.einsum("ij,jk,kl->il", centerer, y_kernel, centerer)
 
         self.opt_ = OptimizeResult()
@@ -254,6 +254,9 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
             self.train()
             optimizer.zero_grad()
             kernel_matrix = self(self.x_train_, self.x_train_)
+            # The kernel matrix sets the dtype and the device of the alignment.
+            centerer = centerer.to(kernel_matrix)
+            centered_y_kernel = centered_y_kernel.to(kernel_matrix)
             centered_kernel = torch.einsum("ij,jk,kl->il", centerer, kernel_matrix, centerer)
             alignment = torch.einsum("ij,ij->", centered_kernel, centered_y_kernel.detach()) / (
                 torch.norm(centered_kernel) * torch.norm(centered_y_kernel.detach()) + 1e-8

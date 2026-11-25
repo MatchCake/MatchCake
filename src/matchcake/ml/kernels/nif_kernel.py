@@ -184,7 +184,7 @@ class NIFKernel(Kernel):
         """
         if x0.shape[0] == 0 or x1.shape[0] == 0:
             return torch.zeros((x0.shape[0], x1.shape[0]), dtype=self.R_DTYPE)
-        gram = GramMatrix((x0.shape[0], x1.shape[0]), requires_grad=self.training)
+        gram = GramMatrix((x0.shape[0], x1.shape[0]), requires_grad=self.training, dtype=self.R_DTYPE)
         p_bar = tqdm(
             total=int(np.prod(gram.shape)),
             desc="Computing Gram matrix",

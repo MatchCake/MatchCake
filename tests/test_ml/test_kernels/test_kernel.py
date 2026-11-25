@@ -55,6 +55,45 @@ class TestKernel:
         kernel.forward = forward_mock
         kernel.fit(torch.rand(10, 10), torch.arange(10).long())
 
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
+    def test_alignment_follows_the_dtype_of_the_kernel_matrix(self, kernel, dtype):
+        kernel.alignment = True
+        kernel.alignment_iterations = 2
+        parameter = torch.nn.Parameter(torch.ones(10, dtype=dtype))
+        kernel.scale = parameter
+
+        def forward_mock(x0, x1=None):
+            x0, x1 = to_tensor(x0).to(dtype), to_tensor(x0 if x1 is None else x1).to(dtype)
+            return torch.einsum("j,ij,kj->ik", parameter, x0, x1)
+
+        kernel.forward = forward_mock
+        kernel.fit(torch.rand(10, 10), torch.arange(10).long() % 2)
+        assert len(kernel.opt_.history) == 2
+        assert all(np.isfinite(kernel.opt_.history))
+
+    def test_alignment_with_regression_targets(self, kernel):
+        kernel.alignment = True
+        kernel.alignment_iterations = 2
+        parameter = torch.nn.Parameter(torch.ones(10))
+        kernel.scale = parameter
+
+        def forward_mock(x0, x1=None):
+            x0, x1 = to_tensor(x0).float(), to_tensor(x0 if x1 is None else x1).float()
+            return torch.einsum("j,ij,kj->ik", parameter, x0, x1)
+
+        kernel.forward = forward_mock
+        kernel.fit(torch.rand(10, 10), np.random.rand(10))
+        assert len(kernel.opt_.history) == 2
+        assert all(np.isfinite(kernel.opt_.history))
+
+    @pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
+    def test_transform_of_numpy_input_keeps_the_dtype_of_the_kernel(self, kernel, dtype):
+        kernel.forward = MagicMock(return_value=torch.rand(3, 4, dtype=dtype))
+        kernel.x_train_ = np.random.rand(4, 5)
+        transformed = kernel.transform(np.random.rand(3, 5))
+        assert isinstance(transformed, np.ndarray)
+        assert transformed.dtype == torch.empty(0, dtype=dtype).numpy().dtype
+
     def test_align_kernel_no_training_raises(self, kernel):
         kernel.x_train_ = None
         kernel.y_train_ = None

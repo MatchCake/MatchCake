@@ -341,6 +341,76 @@ class TestFermionicPQCKernel:
         kernel_instance.depth_ = 2
         kernel_instance.fit(x_train)
         assert kernel_instance.depth_ == 2
+        kernel_instance.fit(np.concatenate([x_train] * 4, axis=-1))
+        assert kernel_instance.depth_ == 2
+        kernel_instance.depth_ = None
+        kernel_instance.fit(np.concatenate([x_train] * 4, axis=-1))
+        assert kernel_instance.depth_ == 32 // kernel_instance.n_qubits
+
+    def test_refit_with_another_number_of_features(self, kernel_instance, x_train, x_test):
+        assert kernel_instance.depth_ is None
+        kernel_instance.fit(x_train)
+        assert kernel_instance.depth_ == 8 // kernel_instance.n_qubits
+        wide_x_train = np.concatenate([x_train, x_train[::-1] + 0.3], axis=-1)
+        wide_x_test = np.concatenate([x_test, x_test[::-1] + 0.1], axis=-1)
+        kernel_instance.fit(wide_x_train)
+        assert kernel_instance.depth_ == 16 // kernel_instance.n_qubits
+        with torch.no_grad():
+            kernel = kernel_instance(wide_x_test, wide_x_train)
+            other_wide_x_train = wide_x_train.copy()
+            other_wide_x_train[:, 8:] += np.random.default_rng(TEST_SEED).random((len(x_train), 8))
+            other_kernel = kernel_instance(wide_x_test, other_wide_x_train)
+        if kernel_instance.rotations != "Z":
+            assert not torch.allclose(kernel, other_kernel)
+        self.assert_transform_is_up_to_date(kernel_instance, wide_x_test)
+        kernel_instance.fit(x_train)
+        assert kernel_instance.depth_ == 8 // kernel_instance.n_qubits
+        self.assert_transform_is_up_to_date(kernel_instance, x_test)
+
+    def test_depth_follows_the_flattened_number_of_features(self, kernel_instance, x_train):
+        kernel_instance.fit(np.stack([x_train, x_train + 0.1], axis=1))
+        assert kernel_instance.depth_ == 16 // kernel_instance.n_qubits
+        assert kernel_instance.bias_.shape == (16,)
+
+    def test_float64_kernel_is_not_rounded_to_float32(self, n_qubits, rotations, entangling_mth, x_test):
+        kernel_instance = FermionicPQCKernel(
+            n_qubits=n_qubits,
+            rotations=rotations,
+            entangling_mth=entangling_mth,
+            r_dtype=torch.float64,
+            c_dtype=torch.complex128,
+        ).fit(x_test)
+        with torch.no_grad():
+            kernel = kernel_instance(x_test, x_test[::-1].copy())
+        assert kernel.dtype == torch.float64
+        if rotations != "Z":
+            assert not torch.equal(kernel, kernel.to(torch.float32).to(torch.float64))
+
+    def test_depth_of_a_kernel_pickled_without_the_property(self, kernel_instance, x_train):
+        del kernel_instance.__dict__["_depth"]
+        del kernel_instance.__dict__["_is_depth_preset"]
+        kernel_instance.__dict__["depth_"] = 2
+        assert kernel_instance.depth_ == 2
+        kernel_instance.fit(x_train)
+        assert kernel_instance.depth_ == 2
+
+    @pytest.mark.parametrize("alignment_dtype", [torch.float32, torch.float64])
+    def test_kernel_dtype_and_alignment(self, n_qubits, rotations, entangling_mth, x_train, alignment_dtype):
+        c_dtype = torch.complex64 if alignment_dtype == torch.float32 else torch.complex128
+        kernel_instance = FermionicPQCKernel(
+            n_qubits=n_qubits,
+            rotations=rotations,
+            entangling_mth=entangling_mth,
+            r_dtype=alignment_dtype,
+            c_dtype=c_dtype,
+            alignment=True,
+            alignment_iterations=2,
+        )
+        kernel_instance.fit(x_train, np.arange(len(x_train)) % 2)
+        assert len(kernel_instance.opt_.history) == 2
+        assert kernel_instance.transform(torch.from_numpy(x_train)).dtype == alignment_dtype
+        kernel_instance.train()
+        assert kernel_instance(x_train).dtype == alignment_dtype
 
 
 class TestFermionicPQCKernelMiscellaneous:

@@ -134,7 +134,8 @@ class FermionicPQCKernel(NIFKernel):
         self.entangling_mth = entangling_mth
         if self.entangling_mth not in self.available_entangling_mth:
             raise ValueError(f"Unknown entangling method: {self.entangling_mth}.")
-        self.depth_: Optional[int] = None
+        self._depth: Optional[int] = None
+        self._is_depth_preset = False
         self.bias_: Optional[Parameter]
         self.register_parameter("bias_", None)
         self.encoder = torch.nn.Flatten()
@@ -165,6 +166,9 @@ class FermionicPQCKernel(NIFKernel):
         on the input shape and the number of qubits. The function adapts the model
         to the provided input shape and prepares it for further processing.
 
+        Unless `depth_` was set by the user, it is computed again at every fit from the number
+        of features, so every feature of the new training data is encoded.
+
         The bias is drawn with `random_state` as the seed at every fit, so fitting again on the
         same data gives the same kernel.
 
@@ -180,8 +184,8 @@ class FermionicPQCKernel(NIFKernel):
         bias = np.random.RandomState(seed=self.random_state).random(n_inputs)
         self.bias_ = Parameter(torch.as_tensor(bias, dtype=self.R_DTYPE, device=self.device))
         self.data_scaling_ = Parameter(torch.full((n_inputs,), torch.pi, dtype=self.R_DTYPE, device=self.device))
-        if self.depth_ is None:
-            self.depth_ = int(max(1, np.ceil(x_arr.shape[-1] / self.n_qubits)))
+        if not self.__dict__.get("_is_depth_preset", self.depth_ is not None):
+            self._depth = int(max(1, np.ceil(n_inputs / self.n_qubits)))
         super().fit(x_train, y_train)
         return self
 
@@ -222,3 +226,18 @@ class FermionicPQCKernel(NIFKernel):
 
     def _sptms_train_key(self) -> Hashable:
         return super()._sptms_train_key(), self.rotations, self.entangling_mth, self.depth_
+
+    @property
+    def depth_(self) -> Optional[int]:
+        """
+        Number of layers of the circuit. It is computed by `fit` from the number of features,
+        unless it is set by the user, in which case `fit` keeps it. Setting it to None hands it
+        back to `fit`.
+        """
+        # A kernel pickled by an older version holds `depth_` as a plain instance attribute.
+        return self.__dict__.get("_depth", self.__dict__.get("depth_"))
+
+    @depth_.setter
+    def depth_(self, value: Optional[int]) -> None:
+        self._depth = value
+        self._is_depth_preset = value is not None

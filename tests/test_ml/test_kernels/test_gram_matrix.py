@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pytest
 import torch
@@ -78,6 +80,32 @@ class TestGramMatrix:
             torch.testing.assert_close(gram[tril_indices], gram[tril_indices[1], tril_indices[0]])
         else:
             torch.testing.assert_close(gram[triu_indices], gram[triu_indices[1], triu_indices[0]])
+
+    @pytest.mark.parametrize(
+        "dtype, requires_grad", [(dtype, rg) for dtype in [torch.float32, torch.float64] for rg in [True, False]]
+    )
+    def test_dtype(self, dtype, requires_grad):
+        gram = GramMatrix((3, 4), requires_grad=requires_grad, dtype=dtype)
+        value = 1.0 + 1e-12
+        gram.apply_(lambda ids: np.full(len(ids), value), symmetrize=False)
+        assert gram.dtype == dtype
+        assert gram.to_tensor().dtype == dtype
+        assert gram[0, 1].dtype == dtype
+        is_resolved = bool((gram.to_tensor() != 1.0).all())
+        assert is_resolved == (dtype == torch.float64)
+
+    def test_init_closes_its_file_descriptor(self):
+        if not os.path.isdir("/proc/self/fd"):
+            pytest.skip("No /proc filesystem to count the open file descriptors.")
+        gram_matrices = [GramMatrix((2, 2)) for _ in range(3)]
+        n_open = len(os.listdir("/proc/self/fd"))
+        gram_matrices.extend(GramMatrix((2, 2)) for _ in range(40))
+        # A live memory map keeps one descriptor; the one opened to create the file must be closed.
+        assert len(os.listdir("/proc/self/fd")) <= n_open + 40
+        del gram_matrices
+
+    def test_default_dtype(self):
+        assert GramMatrix((2, 2)).dtype == torch.float32
 
     def test_to_tensor(self):
         gram = GramMatrix((4, 5), initial_value=0.0, requires_grad=False)
