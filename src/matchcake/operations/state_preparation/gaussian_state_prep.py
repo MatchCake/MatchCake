@@ -1,14 +1,17 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import numpy as np
 import pennylane as qml
 import torch
 from pennylane.operation import Operator
+from pennylane.ops.functions import bind_new_parameters
+from pennylane.ops.functions.equal import _equal_dispatch, _equal_operators
 from pennylane.wires import Wires, WiresLike
 
 from ...typing import TensorLike
 from ...utils.covariance_matrix_toolbox import CovarianceMatrixToolbox
 from ...utils.math import convert_and_cast_like
+from ...utils.torch_utils import infer_real_dtype
 from .gaussian_state_prep_base import GaussianStatePrepBase
 
 
@@ -30,9 +33,21 @@ class GaussianStatePrep(GaussianStatePrepBase):
     The covariance matrix is given as a ``(2n, 2n)`` matrix, or as a ``(B, 2n, 2n)`` batch of matrices.
     Gradients flow through it.
 
+    A state without a definite fermion parity also has a displacement vector
+    :math:`d_\mu = \mathrm{Tr}(\rho\, c_\mu)`, given with ``displacement_vector``. Such a state obeys
+    Wick's theorem in the algebra extended by the parity mode, with the bordered matrix
+
+    .. math::
+        \widetilde\Lambda = \begin{pmatrix} \Lambda & d \\ -d^\top & 0 \end{pmatrix}.
+
+    It arises as the reduced state of a matchgate circuit started from a product state with superposed
+    qubits, on a block of wires that starts at the first wire of the register. The displacement vector is
+    then the second parameter of the operation and gradients flow through it as well.
+
     The operation is supported natively by ``nif.qubit``. Its :meth:`decomposition` is a
     :class:`pennylane.QubitDensityMatrix` built from the dense density matrix, which can be queued on a
-    mixed-state simulator such as ``default.mixed`` to get a dense reference for small systems.
+    mixed-state simulator such as ``default.mixed`` to get a dense reference for small systems. A state
+    with a nonzero displacement vector has no such decomposition.
     """
 
     num_wires = None
@@ -40,25 +55,76 @@ class GaussianStatePrep(GaussianStatePrepBase):
     ATOL = 1e-5
 
     @staticmethod
-    def compute_decomposition(covariance_matrix: TensorLike, wires: WiresLike) -> List[Operator]:
+    def compute_decomposition(*params: TensorLike, wires: WiresLike) -> List[Operator]:
         r"""
         Decompose into a :class:`pennylane.QubitDensityMatrix` holding the dense density matrix.
 
-        :param covariance_matrix: Covariance matrix of shape ``(2n, 2n)``.
-        :type covariance_matrix: TensorLike
+        :param params: The covariance matrix of shape ``(2n, 2n)``, optionally followed by the displacement
+            vector of shape ``(2n,)``.
+        :type params: TensorLike
         :param wires: Wires of the state.
         :type wires: WiresLike
         :return: The list with the density-matrix preparation.
         :rtype: List[Operator]
         :raises ValueError: If the covariance matrix is batched, since the density-matrix preparation has
             no batch dimension.
+        :raises NotImplementedError: If the displacement vector is not zero.
         """
+        covariance_matrix = params[0]
+        if len(params) > 1 and not GaussianStatePrep._is_zero(params[1]):
+            raise NotImplementedError(
+                "A GaussianStatePrep with a nonzero displacement vector cannot be decomposed into a "
+                "qml.QubitDensityMatrix: its dense density matrix is not implemented. Use a device that "
+                "supports GaussianStatePrep natively (nif.qubit)."
+            )
         if len(qml.math.shape(covariance_matrix)) != 2:
             raise ValueError(
                 "A batched GaussianStatePrep cannot be decomposed into a qml.QubitDensityMatrix, which has "
                 "no batch dimension. Use a device that supports GaussianStatePrep natively."
             )
         return [qml.QubitDensityMatrix(CovarianceMatrixToolbox.to_density_matrix(covariance_matrix), wires=wires)]
+
+    @staticmethod
+    def _is_zero(displacement_vector: TensorLike) -> bool:
+        r"""
+        Tell whether a displacement vector vanishes within :attr:`DISPLACEMENT_ATOL`, the tolerance a
+        device uses to tell whether a state has a displacement.
+
+        :param displacement_vector: Displacement vector of shape ``(..., 2n)``.
+        :type displacement_vector: TensorLike
+        :return: ``True`` when every entry is zero within the tolerance.
+        :rtype: bool
+        """
+        return bool(
+            np.allclose(GaussianStatePrep._to_numpy(displacement_vector), 0.0, atol=GaussianStatePrep.DISPLACEMENT_ATOL)
+        )
+
+    @staticmethod
+    def _to_numpy(tensor: TensorLike) -> np.ndarray:
+        r"""
+        Return the values of a tensor as a NumPy array, detached from any gradient graph.
+
+        :param tensor: The tensor to convert.
+        :type tensor: TensorLike
+        :return: The values of the tensor.
+        :rtype: np.ndarray
+        """
+        if isinstance(tensor, torch.Tensor):
+            return tensor.detach().cpu().numpy()
+        return np.asarray(qml.math.toarray(tensor))
+
+    @classmethod
+    def _unflatten(cls, data, metadata) -> "GaussianStatePrep":
+        r"""
+        Recreate the operation from its parameters and its wires.
+
+        :param data: The covariance matrix, optionally followed by the displacement vector.
+        :param metadata: The wires and the hyperparameters of the operation.
+        :return: The state preparation.
+        :rtype: GaussianStatePrep
+        """
+        displacement_vector = data[1] if len(data) > 1 else None
+        return cls(data[0], wires=metadata[0], validate=False, displacement_vector=displacement_vector)
 
     @classmethod
     def from_polarizations(
@@ -98,6 +164,8 @@ class GaussianStatePrep(GaussianStatePrepBase):
         covariance_matrix: TensorLike,
         wires: WiresLike,
         validate: bool = True,
+        *,
+        displacement_vector: Optional[TensorLike] = None,
     ):
         r"""
         :param covariance_matrix: Real antisymmetric matrix of shape ``(2n, 2n)`` or ``(B, 2n, 2n)``.
@@ -105,9 +173,14 @@ class GaussianStatePrep(GaussianStatePrepBase):
         :param wires: Wires of the state.
         :type wires: WiresLike
         :param validate: Whether to check that the matrix is the covariance matrix of a physical state:
-            real, antisymmetric and with normal-mode polarizations in :math:`[-1, 1]`.
+            real, antisymmetric and with normal-mode polarizations in :math:`[-1, 1]`. With a displacement
+            vector, the polarizations are the ones of the bordered matrix.
         :type validate: bool
-        :raises ValueError: If the shape does not match the wires or if the validation fails.
+        :param displacement_vector: Real displacement vector of shape ``(2n,)`` or ``(B, 2n)``. Defaults to
+            None, for a state with a definite fermion parity. When only one of the covariance matrix and
+            the displacement vector is batched, the other one is repeated along the batch.
+        :type displacement_vector: Optional[TensorLike]
+        :raises ValueError: If a shape does not match the wires or if the validation fails.
         """
         wires = Wires(wires)
         covariance_matrix = qml.math.asarray(covariance_matrix)
@@ -119,9 +192,18 @@ class GaussianStatePrep(GaussianStatePrepBase):
                 f"({2 * n_wires}, {2 * n_wires}) or its batched form (B, {2 * n_wires}, {2 * n_wires}), "
                 f"got shape {shape}."
             )
+        self._has_displacement = displacement_vector is not None
+        if displacement_vector is None:
+            if validate:
+                self._validate(covariance_matrix)
+            super().__init__(covariance_matrix, wires=wires)
+            return
+        covariance_matrix, displacement_vector = self._prepare_displacement(
+            covariance_matrix, displacement_vector, validate
+        )
         if validate:
-            self._validate(covariance_matrix)
-        super().__init__(covariance_matrix, wires=wires)
+            self._validate(covariance_matrix, displacement_vector)
+        super().__init__(covariance_matrix, displacement_vector, wires=wires)
 
     def state_vector(self, wire_order: Optional[WiresLike] = None) -> TensorLike:
         r"""
@@ -143,8 +225,10 @@ class GaussianStatePrep(GaussianStatePrepBase):
 
         The wires of this state must appear in ``wires`` in the same relative order. The Jordan-Wigner
         strings that run through the added wires then act on :math:`|0\rangle` and are trivial, so the
-        fermionic modes of this state are the qubits of the same wires in the larger register. Gradients
-        flow through the covariance matrix.
+        fermionic modes of this state are the qubits of the same wires in the larger register. For the
+        same reason the displacement vector keeps its entries on the wires of this state, and it vanishes
+        on the added wires since :math:`\langle 0 | X | 0 \rangle = \langle 0 | Y | 0 \rangle = 0`.
+        Gradients flow through the covariance matrix and the displacement vector.
 
         :param wires: The wires of the new state. They must contain every wire of this state.
         :type wires: WiresLike
@@ -178,21 +262,79 @@ class GaussianStatePrep(GaussianStatePrepBase):
             CovarianceMatrixToolbox.from_polarizations(vacuum_polarizations), covariance_matrix
         )
         extended = qml.math.einsum("ai,...ij,bj->...ab", embedding, covariance_matrix, embedding) + vacuum
-        return GaussianStatePrep(extended, wires=wires, validate=False)
+        extended_displacement = None
+        if self._has_displacement:
+            extended_displacement = qml.math.einsum("ai,...i->...a", embedding, self.displacement_vector)
+        return GaussianStatePrep(extended, wires=wires, validate=False, displacement_vector=extended_displacement)
 
-    def _validate(self, covariance_matrix: TensorLike) -> None:
+    def _prepare_displacement(
+        self, covariance_matrix: TensorLike, displacement_vector: TensorLike, validate: bool
+    ) -> Tuple[TensorLike, TensorLike]:
+        r"""
+        Bring a covariance matrix and a displacement vector to the same backend, real dtype and batch.
+
+        Both become torch tensors when one of them is a torch tensor, so gradients keep flowing through
+        the one that carries them.
+
+        :param covariance_matrix: Covariance matrix of shape ``(2n, 2n)`` or ``(B, 2n, 2n)``.
+        :type covariance_matrix: TensorLike
+        :param displacement_vector: Displacement vector of shape ``(2n,)`` or ``(B, 2n)``.
+        :type displacement_vector: TensorLike
+        :param validate: Whether to check that the displacement vector is real.
+        :type validate: bool
+        :return: The covariance matrix and the displacement vector.
+        :rtype: Tuple[TensorLike, TensorLike]
+        :raises ValueError: If the shape of the displacement vector does not match the covariance matrix,
+            or if it is not real while ``validate`` is ``True``.
+        """
+        displacement_vector = qml.math.asarray(displacement_vector)
+        covariance_shape = tuple(qml.math.shape(covariance_matrix))
+        shape = tuple(qml.math.shape(displacement_vector))
+        n_majoranas = covariance_shape[-1]
+        if len(shape) not in (1, 2) or shape[-1] != n_majoranas:
+            raise ValueError(
+                f"GaussianStatePrep expects a displacement vector of shape ({n_majoranas},) or its batched "
+                f"form (B, {n_majoranas}), got shape {shape}."
+            )
+        if len(shape) == 2 and len(covariance_shape) == 3 and shape[0] != covariance_shape[0]:
+            raise ValueError(
+                f"The covariance matrix and the displacement vector must have the same batch size, got "
+                f"{covariance_shape[0]} and {shape[0]}."
+            )
+        if "complex" in qml.math.get_dtype_name(displacement_vector):
+            if validate and not np.allclose(self._to_numpy(displacement_vector).imag, 0.0, atol=self.ATOL):
+                raise ValueError("The displacement vector must be real.")
+            displacement_vector = qml.math.real(displacement_vector)
+        if isinstance(covariance_matrix, torch.Tensor) or isinstance(displacement_vector, torch.Tensor):
+            covariance_matrix = torch.as_tensor(covariance_matrix)
+            displacement_vector = torch.as_tensor(displacement_vector).to(
+                dtype=infer_real_dtype(covariance_matrix), device=covariance_matrix.device
+            )
+        else:
+            displacement_vector = convert_and_cast_like(displacement_vector, qml.math.real(covariance_matrix))
+        if len(shape) == 1 and len(covariance_shape) == 3:
+            displacement_vector = qml.math.stack([displacement_vector] * covariance_shape[0])
+        if len(shape) == 2 and len(covariance_shape) == 2:
+            covariance_matrix = qml.math.stack([covariance_matrix] * shape[0])
+        return covariance_matrix, displacement_vector
+
+    def _validate(self, covariance_matrix: TensorLike, displacement_vector: Optional[TensorLike] = None) -> None:
         r"""
         Check that a matrix is the covariance matrix of a physical fermionic Gaussian state.
 
+        With a displacement vector, the check is done on the bordered matrix
+        :math:`\widetilde\Lambda`. A rotation of the extended algebra brings it to its normal modes, where
+        the state is a product of single-mode mixtures, so its polarizations must lie in :math:`[-1, 1]`
+        as well.
+
         :param covariance_matrix: Matrix of shape ``(..., 2n, 2n)``.
         :type covariance_matrix: TensorLike
+        :param displacement_vector: Optional displacement vector of shape ``(..., 2n)``.
+        :type displacement_vector: Optional[TensorLike]
         :raises ValueError: If the matrix is not real, not antisymmetric, or has a normal-mode
             polarization outside :math:`[-1, 1]`, within :attr:`ATOL`.
         """
-        if isinstance(covariance_matrix, torch.Tensor):
-            values = covariance_matrix.detach().cpu().numpy()
-        else:
-            values = np.asarray(qml.math.toarray(covariance_matrix))
+        values = self._to_numpy(covariance_matrix)
         if np.iscomplexobj(values) and not np.allclose(values.imag, 0.0, atol=self.ATOL):
             raise ValueError("The covariance matrix must be real.")
         values = np.real(values)
@@ -203,6 +345,23 @@ class GaussianStatePrep(GaussianStatePrepBase):
             raise ValueError(
                 f"The covariance matrix is not the one of a physical state: its normal-mode polarizations "
                 f"must lie in [-1, 1], got a maximal magnitude of {float(np.max(polarizations))}."
+            )
+        if displacement_vector is None:
+            return
+        displacement = self._to_numpy(displacement_vector)
+        if not np.all(np.isfinite(displacement)):
+            raise ValueError("The displacement vector must be finite.")
+        n_majoranas = values.shape[-1]
+        bordered = np.zeros(values.shape[:-2] + (n_majoranas + 1, n_majoranas + 1))
+        bordered[..., :n_majoranas, :n_majoranas] = values
+        bordered[..., :n_majoranas, n_majoranas] = displacement
+        bordered[..., n_majoranas, :n_majoranas] = -displacement
+        extended_polarizations = np.linalg.svd(bordered, compute_uv=False)
+        if np.any(extended_polarizations > 1.0 + self.ATOL):
+            raise ValueError(
+                f"The covariance matrix and the displacement vector are not the ones of a physical state: "
+                f"the normal-mode polarizations of the bordered matrix must lie in [-1, 1], got a maximal "
+                f"magnitude of {float(np.max(extended_polarizations))}."
             )
 
     @property
@@ -216,9 +375,42 @@ class GaussianStatePrep(GaussianStatePrepBase):
         return self.data[0]
 
     @property
+    def displacement_vector(self) -> TensorLike:
+        r"""
+        Displacement vector :math:`d_\mu = \mathrm{Tr}(\rho\, c_\mu)` of the prepared state.
+
+        :return: Real tensor of shape ``(2n,)``, or ``(B, 2n)`` for a batched state. It is zero when the
+            state was built without a displacement vector.
+        :rtype: TensorLike
+        """
+        if self._has_displacement:
+            return self.data[1]
+        return super().displacement_vector
+
+    @property
     def num_params(self) -> int:
-        return 1
+        return 2 if self._has_displacement else 1
 
     @property
     def ndim_params(self) -> tuple:
-        return (2,)
+        return (2, 1) if self._has_displacement else (2,)
+
+
+@bind_new_parameters.register(GaussianStatePrep)
+def _bind_new_parameters_gaussian_state_prep(op, params):
+    """Reconstruct a GaussianStatePrep with new parameters, the displacement vector being the second one."""
+    displacement_vector = params[1] if len(params) > 1 else None
+    return GaussianStatePrep(params[0], wires=op.wires, validate=False, displacement_vector=displacement_vector)
+
+
+@_equal_dispatch.register(GaussianStatePrep)
+def _equal_gaussian_state_prep(op1, op2, **kwargs):
+    """
+    Compare two GaussianStatePrep for :func:`pennylane.equal`.
+
+    The default comparison pairs the parameters of the two operations and ignores the ones without a
+    partner, so it would not see the displacement vector that only one of them carries.
+    """
+    if op1.num_params != op2.num_params:
+        return "op1 and op2 have different numbers of parameters: only one of them has a displacement vector."
+    return _equal_operators(op1, op2, **kwargs)

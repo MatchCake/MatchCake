@@ -4,6 +4,7 @@ import pytest
 import torch
 from pennylane.wires import Wires
 
+import matchcake as mc
 from matchcake.operations.single_particle_transition_matrices import (
     SingleParticleTransitionMatrixOperation,
 )
@@ -204,3 +205,238 @@ class TestGaussianStatePrep:
         assert torch.autograd.gradcheck(
             extend, (covariance,), eps=GRADCHECK_EPS, atol=GRADCHECK_ATOL, raise_exception=True
         )
+
+    @staticmethod
+    def product_state(n_wires: int, batch_size=None, seed: int = TEST_SEED) -> ProductState:
+        """Build a random product state with superposed qubits, which has a displacement vector.
+
+        :param n_wires: Number of wires.
+        :type n_wires: int
+        :param batch_size: Optional leading batch size.
+        :type batch_size: Optional[int]
+        :param seed: Seed of the random generator.
+        :type seed: int
+        :return: The product state on ``range(n_wires)``.
+        :rtype: ProductState
+        """
+        rng = np.random.default_rng(seed)
+        shape = (n_wires, 2) if batch_size is None else (batch_size, n_wires, 2)
+        amplitudes = rng.normal(size=shape) + 1j * rng.normal(size=shape)
+        amplitudes = amplitudes / np.linalg.norm(amplitudes, axis=-1, keepdims=True)
+        return ProductState(torch.as_tensor(amplitudes), wires=range(n_wires))
+
+    def test_no_displacement_by_default(self):
+        op = GaussianStatePrep(self.random_covariance(2), wires=[0, 1])
+        assert op.num_params == 1
+        assert op.ndim_params == (2,)
+        assert len(op.data) == 1
+        np.testing.assert_array_equal(qml.math.toarray(op.displacement_vector), np.zeros(4))
+
+    @pytest.mark.parametrize("batch_size", [None, 3])
+    def test_displacement_vector_and_batch_size(self, batch_size):
+        product_state = self.product_state(3, batch_size)
+        op = GaussianStatePrep(
+            product_state.covariance_matrix, wires=[0, 1, 2], displacement_vector=product_state.displacement_vector
+        )
+        assert op.num_params == 2
+        assert op.ndim_params == (2, 1)
+        assert op.batch_size == batch_size
+        np.testing.assert_allclose(
+            qml.math.toarray(op.displacement_vector),
+            qml.math.toarray(product_state.displacement_vector),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+        np.testing.assert_allclose(
+            qml.math.toarray(op.covariance_matrix),
+            qml.math.toarray(product_state.covariance_matrix),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    @pytest.mark.parametrize("shape", [(3,), (6,), (2, 2), (1, 2, 4)])
+    def test_init_rejects_wrong_displacement_shapes(self, shape):
+        with pytest.raises(ValueError, match="displacement vector of shape"):
+            GaussianStatePrep(np.zeros((4, 4)), wires=[0, 1], displacement_vector=np.zeros(shape))
+
+    def test_init_rejects_mismatched_batch_sizes(self):
+        with pytest.raises(ValueError, match="same batch size"):
+            GaussianStatePrep(np.zeros((2, 4, 4)), wires=[0, 1], displacement_vector=np.zeros((3, 4)))
+
+    def test_init_repeats_the_unbatched_parameter(self):
+        covariance = self.random_covariance(2)
+        displacements = 0.01 * np.arange(12.0).reshape(3, 4)
+        op = GaussianStatePrep(covariance, wires=[0, 1], displacement_vector=displacements)
+        assert tuple(qml.math.shape(op.covariance_matrix)) == (3, 4, 4)
+        np.testing.assert_array_equal(qml.math.toarray(op.covariance_matrix)[1], covariance)
+        op = GaussianStatePrep(np.stack([covariance] * 3), wires=[0, 1], displacement_vector=displacements[0])
+        assert tuple(qml.math.shape(op.displacement_vector)) == (3, 4)
+        np.testing.assert_array_equal(qml.math.toarray(op.displacement_vector)[2], displacements[0])
+        assert op.batch_size == 3
+
+    def test_init_rejects_unphysical_displacement(self):
+        covariance = np.asarray(CovarianceMatrixToolbox.from_polarizations(np.ones(2)))
+        displacement = np.array([1.0, 0.0, 0.0, 0.0])
+        with pytest.raises(ValueError, match="bordered matrix"):
+            GaussianStatePrep(covariance, wires=[0, 1], displacement_vector=displacement)
+        op = GaussianStatePrep(covariance, wires=[0, 1], validate=False, displacement_vector=displacement)
+        assert op.num_params == 2
+
+    @pytest.mark.parametrize("value", [float("nan"), float("inf")])
+    def test_init_rejects_a_displacement_that_is_not_finite(self, value):
+        with pytest.raises(ValueError, match="must be finite"):
+            GaussianStatePrep(self.random_covariance(2), wires=[0, 1], displacement_vector=np.full(4, value))
+
+    @pytest.mark.parametrize("magnitude, is_zero", [(1e-13, True), (1e-8, False), (1e-3, False)])
+    def test_decomposition_uses_the_displacement_tolerance_of_the_device(self, magnitude, is_zero):
+        displacement = np.array([magnitude, 0.0, 0.0, 0.0])
+        op = GaussianStatePrep(np.zeros((4, 4)), wires=[0, 1], displacement_vector=displacement)
+        device = mc.NonInteractingFermionicDevice(wires=2)
+        device.apply([op])
+        assert device._has_displacement() is not is_zero
+        if is_zero:
+            assert len(op.decomposition()) == 1
+        else:
+            with pytest.raises(NotImplementedError, match="nonzero displacement vector"):
+                op.decomposition()
+
+    def test_equal_sees_the_displacement_vector(self):
+        product_state = self.product_state(2)
+        covariance, displacement = product_state.covariance_matrix, product_state.displacement_vector
+        displaced = GaussianStatePrep(covariance, wires=[0, 1], displacement_vector=displacement)
+        plain = GaussianStatePrep(covariance, wires=[0, 1])
+        assert not qml.equal(displaced, plain)
+        assert not qml.equal(plain, displaced)
+        assert qml.equal(displaced, GaussianStatePrep(covariance, wires=[0, 1], displacement_vector=displacement))
+        assert not qml.equal(
+            displaced, GaussianStatePrep(covariance, wires=[0, 1], validate=False, displacement_vector=-displacement)
+        )
+        assert qml.equal(plain, GaussianStatePrep(covariance, wires=[0, 1]))
+        assert not qml.equal(plain, GaussianStatePrep(covariance, wires=[1, 0]))
+
+    def test_init_accepts_the_displacement_of_a_pure_product_state(self):
+        product_state = self.product_state(3)
+        GaussianStatePrep(
+            product_state.covariance_matrix, wires=[0, 1, 2], displacement_vector=product_state.displacement_vector
+        )
+
+    def test_init_rejects_complex_displacement(self):
+        with pytest.raises(ValueError, match="displacement vector must be real"):
+            GaussianStatePrep(np.zeros((4, 4)), wires=[0, 1], displacement_vector=0.1j * np.ones(4))
+        op = GaussianStatePrep(np.zeros((4, 4)), wires=[0, 1], displacement_vector=0.1 * np.ones(4) + 0.0j)
+        assert not np.iscomplexobj(qml.math.toarray(op.displacement_vector))
+
+    def test_init_converts_both_parameters_to_torch(self):
+        covariance = self.random_covariance(2).astype(np.float32)
+        displacement = torch.full((4,), 0.01, dtype=torch.float64, requires_grad=True)
+        op = GaussianStatePrep(covariance, wires=[0, 1], displacement_vector=displacement)
+        assert isinstance(op.covariance_matrix, torch.Tensor)
+        assert op.displacement_vector.dtype == torch.float32
+        assert op.displacement_vector.requires_grad
+        op = GaussianStatePrep(torch.as_tensor(covariance), wires=[0, 1], displacement_vector=np.full(4, 0.01))
+        assert isinstance(op.displacement_vector, torch.Tensor)
+        assert op.displacement_vector.dtype == torch.float32
+
+    def test_decomposition_rejects_a_displaced_state(self):
+        product_state = self.product_state(2)
+        op = GaussianStatePrep(
+            product_state.covariance_matrix, wires=[0, 1], displacement_vector=product_state.displacement_vector
+        )
+        with pytest.raises(NotImplementedError, match="nonzero displacement vector"):
+            op.decomposition()
+
+    def test_decomposition_with_a_zero_displacement(self):
+        covariance = self.random_covariance(2)
+        (with_displacement,) = GaussianStatePrep(
+            covariance, wires=[0, 1], displacement_vector=np.zeros(4)
+        ).decomposition()
+        (without_displacement,) = GaussianStatePrep(covariance, wires=[0, 1]).decomposition()
+        np.testing.assert_allclose(
+            with_displacement.parameters[0],
+            without_displacement.parameters[0],
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    @pytest.mark.parametrize("batch_size", [None, 2])
+    @pytest.mark.parametrize("wires, n_total", [([0, 1], 4), ([1, 2], 4), ([2, 3], 4), ([0, 2], 4), ([1, 3], 5)])
+    def test_to_wires_pads_the_displacement_with_the_zero_state(self, wires, n_total, batch_size):
+        product_state = self.product_state(len(wires), batch_size)
+        op = GaussianStatePrep(
+            product_state.covariance_matrix, wires=wires, displacement_vector=product_state.displacement_vector
+        )
+        padded = op.to_wires(range(n_total))
+        amplitudes = product_state.data[0]
+        zero_state = torch.zeros(tuple(amplitudes.shape[:-2]) + (n_total, 2), dtype=amplitudes.dtype)
+        zero_state[..., 0] = 1.0
+        zero_state[..., wires, :] = amplitudes
+        expected = ProductState(zero_state, wires=range(n_total))
+        assert padded.num_params == 2
+        assert padded.wires == Wires(range(n_total))
+        np.testing.assert_allclose(
+            qml.math.toarray(padded.displacement_vector),
+            qml.math.toarray(expected.displacement_vector),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+        np.testing.assert_allclose(
+            qml.math.toarray(padded.covariance_matrix),
+            qml.math.toarray(expected.covariance_matrix),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_to_wires_without_displacement_stays_without_displacement(self):
+        padded = GaussianStatePrep(self.random_covariance(2), wires=[1, 2]).to_wires(range(4))
+        assert padded.num_params == 1
+
+    def test_to_wires_displacement_gradient(self):
+        product_state = self.product_state(2)
+        covariance = product_state.covariance_matrix.detach()
+        displacement = product_state.displacement_vector.detach().clone().requires_grad_(True)
+
+        def padded_displacement(vector):
+            op = GaussianStatePrep(covariance, wires=[1, 2], validate=False, displacement_vector=vector)
+            return op.to_wires(range(4)).displacement_vector
+
+        assert torch.autograd.gradcheck(padded_displacement, (displacement,), eps=GRADCHECK_EPS, atol=GRADCHECK_ATOL)
+
+    def test_parameters_can_be_rebound(self):
+        product_state = self.product_state(2)
+        op = GaussianStatePrep(
+            product_state.covariance_matrix, wires=[3, 5], displacement_vector=product_state.displacement_vector
+        )
+        new_parameters = [0.5 * parameter for parameter in op.data]
+        rebound = qml.ops.functions.bind_new_parameters(op, new_parameters)
+        assert isinstance(rebound, GaussianStatePrep)
+        assert rebound.wires == op.wires
+        assert rebound.num_params == 2
+        np.testing.assert_allclose(
+            qml.math.toarray(rebound.displacement_vector),
+            0.5 * qml.math.toarray(op.displacement_vector),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+        plain = GaussianStatePrep(self.random_covariance(2), wires=[3, 5])
+        rebound_plain = qml.ops.functions.bind_new_parameters(plain, [0.5 * plain.data[0]])
+        assert rebound_plain.num_params == 1
+        np.testing.assert_allclose(
+            qml.math.toarray(rebound_plain.covariance_matrix),
+            0.5 * qml.math.toarray(plain.covariance_matrix),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    @pytest.mark.parametrize("with_displacement", [True, False])
+    def test_flatten_and_unflatten(self, with_displacement):
+        product_state = self.product_state(2)
+        displacement = product_state.displacement_vector if with_displacement else None
+        op = GaussianStatePrep(
+            product_state.covariance_matrix, wires=[0, 1], validate=False, displacement_vector=displacement
+        )
+        data, metadata = op._flatten()
+        rebuilt = GaussianStatePrep._unflatten(data, metadata)
+        assert rebuilt.num_params == op.num_params
+        assert rebuilt.wires == op.wires
+        for rebuilt_parameter, parameter in zip(rebuilt.data, op.data, strict=True):
+            np.testing.assert_array_equal(qml.math.toarray(rebuilt_parameter), qml.math.toarray(parameter))

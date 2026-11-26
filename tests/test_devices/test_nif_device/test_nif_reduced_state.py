@@ -151,11 +151,12 @@ class TestNonInteractingFermionicDeviceReducedState:
         with pytest.raises(DeviceError, match="analytic"):
             self.run("nif.qubit", lambda: measurement(wires=[0, 1]), operations=[], shots=10)
 
-    def test_superposed_product_state_is_rejected(self):
+    @pytest.mark.parametrize("measurement", [qml.vn_entropy, qml.purity, qml.density_matrix])
+    def test_superposed_product_state_is_rejected(self, measurement):
         with pytest.raises(NotImplementedError, match="without displacement"):
             self.run(
                 "nif.qubit",
-                lambda: mc.covariance_matrix(wires=[0, 1]),
+                lambda: measurement(wires=[0, 1]),
                 state_prep=lambda: PlusState(wires=range(N_WIRES)),
             )
 

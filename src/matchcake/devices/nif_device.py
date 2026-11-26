@@ -1094,6 +1094,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         *,
         fermionic: bool = False,
         reduced_wires: Optional[Union[Wires, List[int]]] = None,
+        drop_displacement: bool = False,
     ) -> GaussianStatePrep:
         r"""
         Trace out the given wires of the current state and return the state of the remaining ones.
@@ -1108,6 +1109,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :param reduced_wires: Wire labels of the returned state preparation. Defaults to ``range(k)`` for
             ``k`` remaining wires.
         :type reduced_wires: Optional[Union[Wires, List[int]]]
+        :param drop_displacement: Whether to return the reduced state without its displacement vector, see
+            :meth:`reduced_state`.
+        :type drop_displacement: bool
         :return: The state of the remaining wires as a state preparation.
         :rtype: GaussianStatePrep
         :raises ValueError: If a wire is not a wire of the device.
@@ -1117,7 +1121,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         if unknown_wires:
             raise ValueError(f"Wires {unknown_wires} are not wires of the device ({self.wires.tolist()}).")
         kept_wires = [wire for wire in self.wires if wire not in traced_wires]
-        return self.reduced_state(kept_wires, fermionic=fermionic, reduced_wires=reduced_wires)
+        return self.reduced_state(
+            kept_wires, fermionic=fermionic, reduced_wires=reduced_wires, drop_displacement=drop_displacement
+        )
 
     def reduced_covariance_matrix(self, wires: Union[Wires, List[int]], *, fermionic: bool = False) -> TensorLike:
         r"""
@@ -1134,6 +1140,11 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :math:`X` or :math:`Y` factors: the result is the reduced state of the fermionic modes, which is
         not the reduced state of the qubits. That case must be requested with ``fermionic=True``.
 
+        This also holds for an initial state with a nonzero displacement vector, such as a product state
+        with superposed qubits: the products of two Majorana operators of a contiguous block are supported
+        on that block, so their expectation values do not involve the displacement. The covariance matrix
+        alone does not determine the reduced state then, see :meth:`reduced_state`.
+
         :param wires: Wires to keep.
         :type wires: Union[Wires, List[int]]
         :param fermionic: Whether to allow kept wires that are not a contiguous block in the device wire
@@ -1143,26 +1154,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :rtype: TensorLike
         :raises ValueError: If a wire is not a wire of the device, if no wire is kept, or if the kept wires
             are not a contiguous block in the device wire order while ``fermionic`` is ``False``.
-        :raises NotImplementedError: If the initial state has a nonzero displacement vector, such as a
-            product state with superposed qubits. Its reduced state is not a Gaussian state of the
-            Majorana operators of the kept wires alone.
         """
-        kept_wires = Wires(wires)
-        unknown_wires = [wire for wire in kept_wires if wire not in self.wires]
-        if unknown_wires:
-            raise ValueError(f"Wires {unknown_wires} are not wires of the device ({self.wires.tolist()}).")
-        wire_indices = self.wires.indices(kept_wires)
-        CovarianceMatrixToolbox.validate_reduced_wire_indices(wire_indices, fermionic=fermionic)
-        state_prep = self.state_prep_op
-        if isinstance(state_prep, GaussianStatePrepBase):
-            displacement = torch_utils.to_numpy(state_prep.displacement_vector)
-            if not np.allclose(displacement, 0.0, atol=ProductState.ATOL):
-                raise NotImplementedError(
-                    f"The reduced state is only implemented for initial states without displacement: "
-                    f"computational-basis states and GaussianStatePrep. A product state with superposed qubits "
-                    f"has a nonzero displacement vector and its reduced state is not a Gaussian state of the "
-                    f"Majorana operators of the kept wires. Got {state_prep} on {self.name}."
-                )
+        wire_indices = self._reduced_wire_indices(wires, fermionic=fermionic)
         return CovarianceMatrixToolbox.reduce(self.covariance_matrix, wire_indices)
 
     def reduced_state(
@@ -1171,6 +1164,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         *,
         fermionic: bool = False,
         reduced_wires: Optional[Union[Wires, List[int]]] = None,
+        drop_displacement: bool = False,
     ) -> GaussianStatePrep:
         r"""
         Keep the given wires of the current state, trace out the others, and return a state preparation.
@@ -1180,6 +1174,22 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         another circuit, typically on a smaller device. Inside a QNode, the measurement
         :func:`matchcake.covariance_matrix` returns the same covariance matrix.
 
+        When the initial state has a nonzero displacement vector, such as a product state with superposed
+        qubits, the returned state preparation also holds the displacement vector of the kept wires, which
+        is the part of :attr:`displacement_vector` on their Majorana indices. This requires the kept wires
+        to be the first wires of the device: the Majorana operators of the kept wires then carry no
+        Jordan-Wigner string on a removed wire, and the reduced state obeys Wick's theorem with the
+        reduced covariance matrix and the reduced displacement vector.
+
+        With ``drop_displacement=True``, the returned state preparation holds the reduced covariance
+        matrix alone, on any wires that :meth:`reduced_covariance_matrix` accepts. It is the part of the
+        reduced state that is even in the Majorana operators, :math:`(\rho_A + P_A \rho_A P_A) / 2` with
+        :math:`P_A` the parity of the kept wires. A matchgate circuit does not mix the even and the odd
+        parts, so this state gives, after any further matchgate circuit, the exact probabilities and
+        samples in the computational basis and the exact expectation values of the observables that are
+        even in the Majorana operators. The expectation values of the odd observables, such as a single
+        :math:`X` or :math:`Y`, vanish in it.
+
         :param wires: Wires to keep.
         :type wires: Union[Wires, List[int]]
         :param fermionic: Whether to allow kept wires that are not a contiguous block in the device wire
@@ -1188,13 +1198,22 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :param reduced_wires: Wire labels of the returned state preparation. Defaults to ``range(k)`` for
             ``k`` kept wires.
         :type reduced_wires: Optional[Union[Wires, List[int]]]
+        :param drop_displacement: Whether to return the reduced covariance matrix alone, which is the even
+            part of the reduced state.
+        :type drop_displacement: bool
         :return: The reduced state as a state preparation.
         :rtype: GaussianStatePrep
+        :raises NotImplementedError: If the initial state has a nonzero displacement vector and the kept
+            wires are not the first wires of the device, while ``drop_displacement`` is ``False``.
         """
-        reduced_covariance = self.reduced_covariance_matrix(wires, fermionic=fermionic)
+        wire_indices = self._reduced_wire_indices(wires, fermionic=fermionic)
+        reduced_covariance = CovarianceMatrixToolbox.reduce(self.covariance_matrix, wire_indices)
+        reduced_displacement = None if drop_displacement else self._reduced_displacement_vector(wire_indices)
         if reduced_wires is None:
-            reduced_wires = list(range(len(Wires(wires))))
-        return GaussianStatePrep(reduced_covariance, wires=reduced_wires, validate=False)
+            reduced_wires = list(range(len(wire_indices)))
+        return GaussianStatePrep(
+            reduced_covariance, wires=reduced_wires, validate=False, displacement_vector=reduced_displacement
+        )
 
     def reset(self) -> None:
         """Reset the device state to its initial configuration.
@@ -1499,6 +1518,19 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             )
         return {wire: letters.pop() for wire, letters in letters_by_wire.items() if letters != {"Z"}}
 
+    def _has_displacement(self) -> bool:
+        r"""
+        Tell whether the current state has a nonzero displacement vector.
+
+        A matchgate circuit rotates the displacement vector by an orthogonal matrix, so the current state
+        has a displacement exactly when the initial state has one.
+
+        :return: ``True`` for an initial state with a nonzero displacement vector.
+        :rtype: bool
+        """
+        state_prep = self.state_prep_op
+        return isinstance(state_prep, GaussianStatePrepBase) and state_prep.is_displaced()
+
     def _observable_in_sampled_frame(self, observable: qml.operation.Operator) -> qml.operation.Operator:
         """Rewrite an observable for samples drawn in a product basis.
 
@@ -1573,6 +1605,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :return: The measurement result.
         :rtype: Any
         :raises DeviceError: If the circuit is executed with shots, since these measurements are analytic.
+        :raises NotImplementedError: If the measurement is not the covariance matrix and the initial state
+            has a nonzero displacement vector, since the covariance matrix does not determine the state.
         """
         if self._active_shots is not None:
             raise DeviceError(
@@ -1582,6 +1616,14 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         wires = measurement.wires or self.wires
         is_fermionic = getattr(measurement, "fermionic", False)
         reduced_covariance = self.reduced_covariance_matrix(wires, fermionic=is_fermionic)
+        if not isinstance(measurement, CovarianceMatrixMP) and self._has_displacement():
+            raise NotImplementedError(
+                f"Measurement {type(measurement).__name__} is only implemented for initial states without "
+                f"displacement: computational-basis states and GaussianStatePrep without a displacement "
+                f"vector. A state with a nonzero displacement vector, such as a product state with "
+                f"superposed qubits, is not determined by its covariance matrix. Got {self.state_prep_op} "
+                f"on {self.name}."
+            )
         if isinstance(measurement, VnEntropyMP):
             return CovarianceMatrixToolbox.von_neumann_entropy(reduced_covariance, base=measurement.log_base)
         if isinstance(measurement, PurityMP):
@@ -1590,6 +1632,62 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             density_matrix = CovarianceMatrixToolbox.to_density_matrix(reduced_covariance)
             return qml.math.cast(density_matrix, self._c_dtype_name)
         return reduced_covariance
+
+    def _reduced_displacement_vector(self, wire_indices: Sequence[int]) -> Optional[TensorLike]:
+        r"""
+        Displacement vector of the reduced state on the given wire positions, or None when the state has
+        no displacement.
+
+        With :math:`p` removed wires before the kept block, the Majorana operators of the reduced state
+        are :math:`c'_j = Z_{<p}\, c_{\mu_j}`. A product of an odd number of them keeps the string
+        :math:`Z_{<p}`, so its expectation value involves the removed wires and the reduced state has no
+        description by a covariance matrix and a displacement vector. Only :math:`p = 0` is supported:
+        the reduced displacement vector is then the part of :attr:`displacement_vector` on the kept wires.
+
+        :param wire_indices: Positions of the kept wires in the device wire order.
+        :type wire_indices: Sequence[int]
+        :return: The reduced displacement vector of shape (..., 2k), or None.
+        :rtype: Optional[TensorLike]
+        :raises NotImplementedError: If the state has a nonzero displacement vector and the kept wires are
+            not the first wires of the device.
+        """
+        if not self._has_displacement():
+            return None
+        positions = [int(position) for position in wire_indices]
+        if positions != list(range(len(positions))):
+            raise NotImplementedError(
+                f"The reduced state of a state with a nonzero displacement vector, such as a product state "
+                f"with superposed qubits, is only implemented when the kept wires are the first wires of the "
+                f"device, in the device wire order. Got the kept positions {positions} on {self.name} with "
+                f"the initial state {self.state_prep_op}. On other wires, the Jordan-Wigner strings on the "
+                f"removed wires make the odd correlations of the reduced state depend on those wires, so it "
+                f"is not described by a covariance matrix and a displacement vector. Pass "
+                f"drop_displacement=True to get the reduced covariance matrix alone, which gives the exact "
+                f"probabilities, samples and even observables of the reduced state."
+            )
+        indices = CovarianceMatrixToolbox.majorana_indices(positions)
+        return self.displacement_vector[..., indices]  # type: ignore[index]
+
+    def _reduced_wire_indices(self, wires: Union[Wires, List[int]], fermionic: bool = False) -> List[int]:
+        r"""
+        Positions of the wires to keep in the device wire order, checked for a reduced state.
+
+        :param wires: Wires to keep.
+        :type wires: Union[Wires, List[int]]
+        :param fermionic: Whether kept wires that are not a contiguous block are allowed.
+        :type fermionic: bool
+        :return: The positions of the kept wires.
+        :rtype: List[int]
+        :raises ValueError: If a wire is not a wire of the device, if no wire is kept, or if the kept wires
+            are not a contiguous block in the device wire order while ``fermionic`` is ``False``.
+        """
+        kept_wires = Wires(wires)
+        unknown_wires = [wire for wire in kept_wires if wire not in self.wires]
+        if unknown_wires:
+            raise ValueError(f"Wires {unknown_wires} are not wires of the device ({self.wires.tolist()}).")
+        wire_indices = self.wires.indices(kept_wires)
+        CovarianceMatrixToolbox.validate_reduced_wire_indices(wire_indices, fermionic=fermionic)
+        return list(wire_indices)
 
     def _samples_in_pennylane_layout(self) -> np.ndarray:
         """Return the current samples with the axes in the order PennyLane expects.
@@ -1644,6 +1742,26 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         return qml.math.einsum("...ij,...ik,...kl->...jl", sptm, cov0, sptm)
 
     @property
+    def displacement_vector(self) -> TensorLike:
+        r"""Majorana displacement vector :math:`d_\mu = \langle c_\mu \rangle` evolved under the current global SPTM.
+
+        It is :math:`R^\top d_0`, with :math:`d_0` the displacement vector of the initial state and
+        :math:`R` the global SPTM. It vanishes for a state with a definite fermion parity.
+
+        :return: The displacement vector, shape (..., 2n).
+        :rtype: TensorLike
+        """
+        if not isinstance(self.state_prep_op, GaussianStatePrepBase):
+            raise ValueError(
+                f"Displacement vector can only be computed for product states and Gaussian states. "
+                f"Got {type(self.state_prep_op)} instead of a GaussianStatePrepBase."
+            )
+        sptm = self.global_sptm.sptm_matrix(self.wires)
+        # The cast keeps the backend of the displacement vector, so gradients flow through it.
+        d0 = qml.math.cast(self.state_prep_op.displacement_vector, self._r_dtype_name)
+        return qml.math.einsum("...ij,...i->...j", sptm, d0)
+
+    @property
     def extended_covariance_matrix(self) -> TensorLike:
         """Extended (2n+1)x(2n+1) covariance matrix tilde_Lambda.
 
@@ -1651,8 +1769,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         column/row at position 2n (the parity index). Evolves the full
         extended state under the matchgate SPTM as tilde_Q^T tilde_Lambda_0 tilde_Q.
 
-        BasisState inputs are promoted to ProductState first (displacement is zero), and a
-        :class:`~matchcake.operations.state_preparation.GaussianStatePrep` has no displacement either.
+        BasisState inputs are promoted to ProductState first (displacement is zero). A
+        :class:`~matchcake.operations.state_preparation.GaussianStatePrep` has no displacement unless it
+        was given a displacement vector.
 
         See docs/expectation_values_theory.md for the math.
         """

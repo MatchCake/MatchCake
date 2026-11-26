@@ -1,12 +1,13 @@
 from abc import abstractmethod
 
+import numpy as np
 import pennylane as qml
 import torch
 from pennylane.operation import StatePrepBase
 from pennylane.wires import WiresLike
 
 from ...typing import TensorLike
-from ...utils.torch_utils import infer_real_dtype
+from ...utils.torch_utils import infer_real_dtype, to_numpy
 
 
 class GaussianStatePrepBase(StatePrepBase):
@@ -26,7 +27,11 @@ class GaussianStatePrepBase(StatePrepBase):
 
     Subclasses provide :attr:`covariance_matrix`, :meth:`to_wires` and, when the state is not an even
     fermionic Gaussian state, :attr:`displacement_vector`.
+
+    :cvar DISPLACEMENT_ATOL: Absolute tolerance under which a displacement vector is considered zero.
     """
+
+    DISPLACEMENT_ATOL = 1e-12
 
     @abstractmethod
     def to_wires(self, wires: WiresLike) -> "GaussianStatePrepBase":
@@ -40,6 +45,20 @@ class GaussianStatePrepBase(StatePrepBase):
         :return: This state if ``wires`` already matches its wires, otherwise a new state on ``wires``.
         :rtype: GaussianStatePrepBase
         """
+
+    def is_displaced(self) -> bool:
+        r"""
+        Tell whether the prepared state has a nonzero displacement vector.
+
+        A matchgate circuit rotates the displacement vector by an orthogonal matrix, so a state stays
+        displaced, or not displaced, through such a circuit. A batched state is displaced when one of its
+        elements is.
+
+        :return: ``True`` when an entry of :attr:`displacement_vector` exceeds :attr:`DISPLACEMENT_ATOL`
+            in magnitude.
+        :rtype: bool
+        """
+        return not np.allclose(to_numpy(self.displacement_vector), 0.0, atol=self.DISPLACEMENT_ATOL)
 
     @property
     @abstractmethod

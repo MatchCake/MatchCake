@@ -72,6 +72,23 @@ class TestGaussianStatePrepBase:
         prep = ProductState.from_basis_state(np.array([1, 0, 1]), wires=range(3))
         np.testing.assert_allclose(prep.displacement_vector, np.zeros(6), atol=ATOL_MATRIX_COMPARISON)
 
+    def test_is_displaced(self):
+        assert ProductState(self.random_amplitudes(3), wires=range(3)).is_displaced()
+        assert not ProductState.from_basis_state(np.array([1, 0, 1]), wires=range(3)).is_displaced()
+        assert not GaussianStatePrep(np.zeros((4, 4)), wires=[0, 1]).is_displaced()
+
+    @pytest.mark.parametrize("magnitude, is_displaced", [(0.0, False), (1e-13, False), (1e-8, True), (1e-3, True)])
+    def test_is_displaced_tolerance(self, magnitude, is_displaced):
+        displacement = np.array([0.0, magnitude, 0.0, 0.0])
+        prep = GaussianStatePrep(np.zeros((4, 4)), wires=[0, 1], displacement_vector=displacement)
+        assert prep.is_displaced() is is_displaced
+
+    def test_is_displaced_for_a_batch_with_one_displaced_element(self):
+        displacements = np.zeros((3, 4))
+        displacements[1, 2] = 0.5
+        prep = GaussianStatePrep(np.zeros((4, 4)), wires=[0, 1], displacement_vector=displacements)
+        assert prep.is_displaced()
+
     def test_to_wires_is_part_of_the_interface(self):
         prep = ProductState.from_basis_state(np.array([1]), wires=[1])
         extended = prep.to_wires([0, 1])
