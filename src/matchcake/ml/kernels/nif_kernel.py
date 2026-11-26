@@ -1,9 +1,11 @@
-from functools import cached_property, partial
-from typing import Optional, cast
+import hashlib
+from functools import partial
+from typing import Any, Hashable, Optional, Tuple, Union, cast
 
 import numpy as np
 import pennylane as qml
 import torch
+from numpy.typing import NDArray
 from tqdm import tqdm
 
 from ...devices.nif_device import NonInteractingFermionicDevice
@@ -35,6 +37,27 @@ class NIFKernel(Kernel):
     DEFAULT_N_QUBITS = 12
     DEFAULT_R_DTYPE = torch.float32
     DEFAULT_C_DTYPE = torch.complex64
+
+    @staticmethod
+    def are_same_samples(x0: torch.Tensor, x1: torch.Tensor) -> bool:
+        """
+        Checks whether two batches of samples are the same set, in the same order.
+
+        The kernel matrix of a set of samples with itself is symmetric with a unit diagonal,
+        so only one triangle has to be evaluated. This is not the case for a cross kernel
+        between two different sets.
+
+        :param x0: The first batch of samples.
+        :param x1: The second batch of samples.
+        :return: True if both batches hold the same samples in the same order.
+        :rtype: bool
+        """
+        if x0 is x1:
+            return True
+        if tuple(x0.shape) != tuple(x1.shape):
+            return False
+        x0, x1 = torch.as_tensor(x0), torch.as_tensor(x1)
+        return bool(torch.equal(x0, x1.to(device=x0.device)))
 
     def __init__(
         self,
@@ -81,6 +104,7 @@ class NIFKernel(Kernel):
         self._r_dtype = get_torch_dtype(r_dtype, self.DEFAULT_R_DTYPE)
         self._c_dtype = get_torch_dtype(c_dtype, self.DEFAULT_C_DTYPE)
         self._q_device = NonInteractingFermionicDevice(n_qubits, r_dtype=self._r_dtype, c_dtype=self._c_dtype)
+        self._sptms_train_cache: Optional[Tuple[Any, Hashable, TensorLike]] = None
 
     def forward(self, x0: TensorLike, x1: Optional[TensorLike] = None, **kwargs) -> torch.Tensor:
         """
@@ -102,6 +126,24 @@ class NIFKernel(Kernel):
         self.to(dtype=self.R_DTYPE, device=self.device)
         kernel = cast(torch.Tensor, self.compute_similarities(x0, x1, **kwargs))  # type: ignore[arg-type]
         return kernel
+
+    def fit(
+        self, x_train: Union[NDArray, TensorLike], y_train: Optional[Union[NDArray, TensorLike]] = None
+    ) -> "NIFKernel":
+        """
+        Fits the kernel using the provided training data.
+
+        The single-particle transition matrices of the training data are cached for
+        :meth:`transform`, see :attr:`sptms_train`. The cache of a previous fit is dropped here.
+
+        :param x_train: Training input data.
+        :param y_train: Training target data. Defaults to None.
+        :return: The fitted kernel instance.
+        :rtype: self
+        """
+        self._sptms_train_cache = None
+        super().fit(x_train, y_train)
+        return self
 
     def ansatz(self, x: torch.Tensor):
         """
@@ -128,6 +170,11 @@ class NIFKernel(Kernel):
         Gram matrix that represents the pairwise similarities. These values are then processed
         and provided as a tensor representation of the similarity matrix.
 
+        When `x0` and `x1` are the same samples, only one triangle is evaluated and mirrored.
+        Otherwise every pair is evaluated. If one of the batches is empty, an empty matrix is
+        returned without evaluating any circuit. The device is reset afterwards, so it does not
+        keep the last circuit and its autograd graph alive.
+
         :param x0: The first tensor containing a batch of samples for similarity computation.
         :type x0: torch.Tensor
         :param x1: The second tensor containing another batch of samples for similarity computation.
@@ -135,7 +182,9 @@ class NIFKernel(Kernel):
         :return: A tensor representing the computed similarity matrix.
         :rtype: torch.Tensor
         """
-        gram = GramMatrix((x0.shape[0], x1.shape[0]), requires_grad=self.training)
+        if x0.shape[0] == 0 or x1.shape[0] == 0:
+            return torch.zeros((x0.shape[0], x1.shape[0]), dtype=self.R_DTYPE)
+        gram = GramMatrix((x0.shape[0], x1.shape[0]), requires_grad=self.training, dtype=self.R_DTYPE)
         p_bar = tqdm(
             total=int(np.prod(gram.shape)),
             desc="Computing Gram matrix",
@@ -151,7 +200,8 @@ class NIFKernel(Kernel):
             sptm1 = self._x_to_sptm(x1)
         p_bar.set_postfix_str("Evaluating Gram matrix ...")
         _func = partial(self._compute_similarities_func, sptm0=sptm0, sptm1=sptm1, p_bar=p_bar)
-        gram.apply_(_func, batch_size=self.gram_batch_size, symmetrize=True)
+        gram.apply_(_func, batch_size=self.gram_batch_size, symmetrize=self.are_same_samples(x0, x1))
+        self._q_device.reset()
         p_bar.set_postfix_str("Done.")
         p_bar.close()
         return gram.to_tensor().to(dtype=self.R_DTYPE)
@@ -202,6 +252,7 @@ class NIFKernel(Kernel):
                 to_tensor(global_sptm.sptm_matrix(), dtype=self.R_DTYPE, device=cast(torch.Tensor, x).device),
             ).reshape(-1, 2 * self._q_device.num_wires, 2 * self._q_device.num_wires)
             sptms.append(new_sptm)
+        self._q_device.reset()
         x_tensor = cast(torch.Tensor, x)
         stacked_sptms = qml.math.concatenate(sptms, axis=0).reshape(
             x_tensor.shape[0], 2 * self._q_device.num_wires, 2 * self._q_device.num_wires
@@ -220,6 +271,25 @@ class NIFKernel(Kernel):
         )
         p_bar.update(len(indices))
         return expval
+
+    def _sptms_train_key(self) -> Hashable:
+        """
+        Fingerprint of everything, other than the training data, that the single-particle
+        transition matrices of the training data depend on: the number of qubits, the dtypes and
+        the values of the parameters and buffers of the kernel. Subclasses whose ansatz depends on other attributes
+        must extend it with them.
+
+        :return: A hashable fingerprint of the state of the kernel.
+        :rtype: Hashable
+        """
+        digest = hashlib.sha1()
+        for name, tensor in self.state_dict().items():
+            digest.update(name.encode())
+            if torch.nn.parameter.is_lazy(tensor):
+                continue
+            digest.update(str((tensor.dtype, tuple(tensor.shape))).encode())
+            digest.update(tensor.detach().cpu().contiguous().numpy().tobytes())
+        return self.n_qubits, self.R_DTYPE, self.C_DTYPE, digest.hexdigest()
 
     @property
     def wires(self):
@@ -260,6 +330,25 @@ class NIFKernel(Kernel):
     def C_DTYPE(self) -> torch.dtype:
         return getattr(self._q_device, "C_DTYPE", self._c_dtype)
 
-    @cached_property
+    @property
     def sptms_train(self) -> TensorLike:
-        return self._x_to_sptm(self.x_train_)
+        """
+        Single-particle transition matrices of the training data.
+
+        They are computed on the first access and kept for the next ones. They are computed again
+        when the kernel is fitted again, when `x_train_` is replaced by another object, or when
+        the state of the kernel changes (see :meth:`_sptms_train_key`). Values changed in place
+        inside a numpy array of training data are not detected.
+
+        When gradients are being recorded for a parameter of the kernel, the matrices are computed
+        at every access and are not kept, so each of them carries its own autograd graph.
+        """
+        x_train = cast(TensorLike, self.x_train_)
+        if torch.is_grad_enabled() and any(parameter.requires_grad for parameter in self.parameters()):
+            return self._x_to_sptm(x_train)
+        key = (self._sptms_train_key(), getattr(x_train, "_version", None))
+        cache = getattr(self, "_sptms_train_cache", None)
+        if cache is None or cache[0] is not x_train or cache[1] != key:
+            cache = (x_train, key, self._x_to_sptm(x_train))
+            self._sptms_train_cache = cache
+        return cache[2]

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Hashable, Optional, cast
 
 import numpy as np
 import torch
@@ -125,6 +125,69 @@ class LinearNIFKernel(NIFKernel):
         )
         sptm = torch.matrix_exp(h)
         yield SingleParticleTransitionMatrixOperation(sptm, wires=self.wires)
+
+    def build_model(self) -> "LinearNIFKernel":
+        """
+        Execute a forward pass with the training data to initialize the weights of the encoder.
+
+        When `random_state` is not None, the weights of a newly initialized encoder are drawn
+        with `random_state` as the seed, so two kernels built with the same `random_state` and
+        the same number of features have the same weights. An encoder that is already initialized
+        keeps its weights, unless the number of features of the training data changed, in which
+        case a new linear layer is initialized. The new layer stays frozen if the previous one
+        was. An encoder set by the user that does not have the default layout is left as it is.
+
+        :return: The model instance after building the internal structures.
+        :rtype: self
+        """
+        linear = self._encoder_linear
+        if linear is None:
+            super().build_model()
+            return self
+        n_features = int(np.prod(np.shape(self.x_train_)[1:]))  # type: ignore[arg-type]
+        is_frozen = False
+        if not torch.nn.parameter.is_lazy(linear.weight) and linear.in_features != n_features:
+            is_frozen = not linear.weight.requires_grad
+            new_linear = torch.nn.LazyLinear(self.encoder_out_indices[0].size, bias=self.bias, dtype=self.R_DTYPE)
+            self.encoder[1] = new_linear.train(linear.training)
+        is_new_encoder = any(torch.nn.parameter.is_lazy(parameter) for parameter in self.encoder.parameters())
+        super().build_model()
+        if is_new_encoder and self.random_state is not None:
+            self._seed_encoder_weights()
+        if is_frozen:
+            self.encoder[1].requires_grad_(False)
+        return self
+
+    def _sptms_train_key(self) -> Hashable:
+        return super()._sptms_train_key(), repr(self.encoder)
+
+    def _seed_encoder_weights(self) -> None:
+        """
+        Redraw the weights and the bias of the linear layer of the encoder from the default
+        distribution of :class:`torch.nn.Linear`, with a local generator seeded by `random_state`.
+        The values are drawn on the CPU, so they do not depend on the device of the kernel and
+        the global random number generators are not used.
+        """
+        linear = cast(torch.nn.Linear, self._encoder_linear)
+        generator = torch.Generator().manual_seed(self.random_state)
+        bound = float(linear.in_features) ** -0.5
+        with torch.no_grad():
+            for parameter in linear.parameters():
+                values = torch.empty(parameter.shape, dtype=parameter.dtype).uniform_(
+                    -bound, bound, generator=generator
+                )
+                parameter.copy_(values)
+
+    @property
+    def _encoder_linear(self) -> Optional[torch.nn.Linear]:
+        """
+        The linear layer of the encoder when the encoder has the default layout, a sequence
+        whose second module is a linear layer, and None otherwise.
+        """
+        encoder = self.encoder
+        if isinstance(encoder, torch.nn.Sequential) and len(encoder) > 1 and isinstance(encoder[1], torch.nn.Linear):
+            return encoder[1]
+        return None
 
     @property
     def n_qubits(self) -> int:

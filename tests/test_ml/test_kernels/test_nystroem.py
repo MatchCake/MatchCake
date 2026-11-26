@@ -1,8 +1,15 @@
+import copy
+
 import numpy as np
 import pytest
+import torch
 
+from matchcake.ml.kernels.fermionic_pqc_kernel import FermionicPQCKernel
 from matchcake.ml.kernels.linear_nif_kernel import LinearNIFKernel
 from matchcake.ml.kernels.nystroem import Nystroem
+from matchcake.utils.torch_utils import to_numpy
+
+from ...configs import ATOL_APPROX_COMPARISON, RTOL_APPROX_COMPARISON, TEST_SEED
 
 
 class TestNystroem:
@@ -29,6 +36,22 @@ class TestNystroem:
         instance.fit(x_train)
         transformed = instance.transform(x_train)
         assert transformed.shape == (10, 10)
+
+    def test_transform_reproduces_gram_matrix_with_every_sample_as_component(self):
+        x = np.random.default_rng(TEST_SEED).random((12, 8)).astype(np.float32)
+        instance = Nystroem(kernel=FermionicPQCKernel(n_qubits=4, rotations="Y,Z"), n_components=len(x), random_state=0)
+        instance.fit(x)
+        with torch.no_grad():
+            gram = to_numpy(instance.kernel(x))
+        features = instance.transform(x)
+        np.testing.assert_allclose(
+            features @ features.T, gram, atol=ATOL_APPROX_COMPARISON, rtol=RTOL_APPROX_COMPARISON
+        )
+
+    def test_deepcopy_of_fitted_instance(self, x_train):
+        instance = Nystroem(kernel=FermionicPQCKernel(n_qubits=4), n_components=5, random_state=0).fit(x_train)
+        copied = copy.deepcopy(instance)
+        np.testing.assert_array_equal(copied.transform(x_train), instance.transform(x_train))
 
     def test_freeze(self, instance, x_train):
         instance.fit(x_train)

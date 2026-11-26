@@ -1,4 +1,6 @@
-from typing import Optional, Union, cast
+import numbers
+import warnings
+from typing import Any, Hashable, Optional, Union, cast
 
 import numpy as np
 import torch
@@ -78,6 +80,28 @@ class FermionicPQCKernel(NIFKernel):
     DEFAULT_ROTATIONS = "Y,Z"
     DEFAULT_ENTANGLING_MTH = "fswap"
     available_entangling_mth = {"fswap", "identity", "hadamard"}
+    PARAMETER_NAMES = ("bias_", "data_scaling_")
+    MAX_DEPTH = 10_000
+    # Default for a kernel pickled by an older version, which holds no `depth` attribute.
+    depth: Optional[int] = None
+
+    @classmethod
+    def _validate_depth(cls, depth: Optional[int]) -> Optional[int]:
+        """
+        Checks that a number of layers is None or a positive integer of at most `MAX_DEPTH`.
+
+        :param depth: The number of layers to check.
+        :return: The number of layers as an int, or None.
+        :rtype: Optional[int]
+        :raises ValueError: If the number of layers is not None nor a positive integer of at
+            most `MAX_DEPTH`.
+        """
+        if depth is None:
+            return None
+        is_integer = isinstance(depth, numbers.Integral) and not isinstance(depth, bool)
+        if not is_integer or not 1 <= depth <= cls.MAX_DEPTH:
+            raise ValueError(f"The depth must be None or a positive integer of at most {cls.MAX_DEPTH}, got {depth!r}.")
+        return int(depth)
 
     def __init__(
         self,
@@ -94,6 +118,7 @@ class FermionicPQCKernel(NIFKernel):
         c_dtype: Optional[torch.dtype] = None,
         rotations: str = DEFAULT_ROTATIONS,
         entangling_mth: str = DEFAULT_ENTANGLING_MTH,
+        depth: Optional[int] = None,
     ):
         """
         Initializes the class with specified parameters for quantum circuit design and
@@ -116,6 +141,9 @@ class FermionicPQCKernel(NIFKernel):
             as a comma-separated string (e.g., "Y,Z").
         :param entangling_mth: Method for entangling qubits in the quantum circuit. Must
             match one of the supported options.
+        :param depth: Number of layers of the circuit, at most `MAX_DEPTH`. If None, it is computed
+            at every fit from the number of features. A layer encodes `n_qubits` features, so a
+            depth too small to encode every feature drops the last ones, with a warning.
         """
         super().__init__(
             gram_batch_size=gram_batch_size,
@@ -133,10 +161,30 @@ class FermionicPQCKernel(NIFKernel):
         self.entangling_mth = entangling_mth
         if self.entangling_mth not in self.available_entangling_mth:
             raise ValueError(f"Unknown entangling method: {self.entangling_mth}.")
-        self.depth_: Optional[int] = None
-        self.bias_: Optional[Parameter] = None
+        self.depth = depth
+        self._depth: Optional[int] = self._validate_depth(depth)
+        self.bias_: Optional[Parameter]
+        self.register_parameter("bias_", None)
         self.encoder = torch.nn.Flatten()
-        self.data_scaling_: Optional[Parameter] = None
+        self.data_scaling_: Optional[Parameter]
+        self.register_parameter("data_scaling_", None)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """
+        Sets an attribute. A plain tensor assigned to `bias_` or `data_scaling_` is wrapped into
+        a parameter, so both stay registered parameters of the kernel. The new parameter is
+        trainable unless the one it replaces was frozen.
+
+        :param name: Name of the attribute.
+        :param value: Value of the attribute.
+        """
+        is_plain_tensor = isinstance(value, torch.Tensor) and not isinstance(value, Parameter)
+        if name in self.PARAMETER_NAMES and is_plain_tensor:
+            current = self._parameters.get(name)
+            requires_grad = current.requires_grad if current is not None else True
+            is_differentiable = value.is_floating_point() or value.is_complex()
+            value = Parameter(value.detach(), requires_grad=requires_grad and is_differentiable)
+        super().__setattr__(name, value)
 
     def fit(self, x_train: Union[NDArray, TensorLike], y_train: Optional[Union[NDArray, TensorLike]] = None):
         """
@@ -145,22 +193,29 @@ class FermionicPQCKernel(NIFKernel):
         on the input shape and the number of qubits. The function adapts the model
         to the provided input shape and prepares it for further processing.
 
+        Unless `depth` was set by the user, the number of layers is computed again at every fit
+        from the number of features, so every feature of the new training data is encoded.
+
+        The bias is drawn with `random_state` as the seed at every fit, so fitting again on the
+        same data gives the same kernel.
+
         :param x_train: Training input data. Can be of type NDArray or torch.Tensor.
         :param y_train: Optional parameter for training target/output data. Can be of
             type NDArray or torch.Tensor.
         :return: Updated instance of the class after fitting the training data.
         """
         x_arr = cast(np.ndarray, x_train)
+        if len(x_arr) == 0:
+            raise ValueError("Cannot fit a kernel on zero samples.")
+        depth = self._validate_depth(self.depth)
         n_inputs = int(np.prod(x_arr.shape[1:]))
-        self.bias_ = Parameter(torch.from_numpy(self.np_rn_gen.random(n_inputs))).to(  # type: ignore
-            dtype=self.R_DTYPE, device=self.device
-        )
-        self.data_scaling_ = torch.pi * Parameter(torch.ones(n_inputs)).to(  # type: ignore
-            dtype=self.R_DTYPE, device=self.device
-        )
-        if self.depth_ is None:
-            self.depth_ = int(max(1, np.ceil(x_arr.shape[-1] / self.n_qubits)))
-        super().fit(x_train, y_train)
+        with self._restore_state_on_failure():
+            bias = np.random.RandomState(seed=self.random_state).random(n_inputs)
+            self.bias_ = Parameter(torch.as_tensor(bias, dtype=self.R_DTYPE, device=self.device))
+            self.data_scaling_ = Parameter(torch.full((n_inputs,), torch.pi, dtype=self.R_DTYPE, device=self.device))
+            self.__dict__.pop("depth_", None)
+            self._depth = self._depth_in_use(depth, n_inputs)
+            super().fit(x_train, y_train)
         return self
 
     def ansatz(self, x):
@@ -197,3 +252,52 @@ class FermionicPQCKernel(NIFKernel):
                 else:
                     raise ValueError(f"Unknown entangling method: {self.entangling_mth}")
         return
+
+    def _depth_in_use(self, depth: Optional[int], n_inputs: int, stacklevel: int = 3) -> int:
+        """
+        Gives the number of layers of the circuit for a number of features. Warns when the given
+        depth is too small to encode every feature.
+
+        :param depth: The number of layers asked by the user, or None to compute it.
+        :param n_inputs: The number of features to encode.
+        :param stacklevel: The stack level of the warning, so it points to the caller's code.
+        :return: The number of layers to use.
+        :rtype: int
+        """
+        required_depth = int(max(1, np.ceil(n_inputs / self.n_qubits)))
+        if depth is None:
+            return required_depth
+        if depth < required_depth:
+            warnings.warn(
+                f"A depth of {depth} encodes only the first {depth * self.n_qubits} of the {n_inputs} features. "
+                f"A depth of {required_depth} is needed to encode all of them.",
+                UserWarning,
+                stacklevel=stacklevel,
+            )
+        return depth
+
+    def _sptms_train_key(self) -> Hashable:
+        return super()._sptms_train_key(), self.rotations, self.entangling_mth, self.depth_
+
+    @property
+    def depth_(self) -> Optional[int]:
+        """
+        Number of layers of the circuit in use. It is computed by `fit` from the number of
+        features, unless `depth` is set. Setting it also sets `depth`, so `fit` and
+        :func:`sklearn.base.clone` keep it; setting it to None hands it back to `fit`. On a
+        fitted kernel, setting it to None computes it at once from the number of features of
+        the training data.
+        """
+        # A kernel pickled by an older version holds `depth_` as a plain instance attribute.
+        return self.__dict__.get("_depth", self.__dict__.get("depth_"))
+
+    @depth_.setter
+    def depth_(self, value: Optional[int]) -> None:
+        depth = self._validate_depth(value)
+        depth_in_use = depth
+        if self.x_train_ is not None:
+            n_inputs = int(np.prod(np.shape(self.x_train_)[1:]))  # type: ignore[arg-type]
+            # The setter is reached through two `__setattr__` frames.
+            depth_in_use = self._depth_in_use(depth, n_inputs, stacklevel=5)
+        self.depth = depth
+        self._depth = depth_in_use

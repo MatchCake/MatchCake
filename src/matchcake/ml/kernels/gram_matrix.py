@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from tempfile import mkstemp
 from typing import Any, Callable, Iterator, Tuple
@@ -20,26 +21,42 @@ class GramMatrix:
     :type shape: Tuple[int, ...]
     :ivar requires_grad: Whether the matrix requires gradient computation.
     :type requires_grad: bool
+    :ivar dtype: Real floating-point dtype of the entries of the matrix.
+    :type dtype: torch.dtype
     """
+
+    DEFAULT_DTYPE = torch.float32
 
     def __init__(
         self,
         shape: Tuple[int, ...],
         initial_value: float = 0.0,
         requires_grad: bool = False,
+        dtype: torch.dtype = DEFAULT_DTYPE,
     ):
+        """
+        :param shape: Shape of the Gram matrix.
+        :param initial_value: Value of every entry at creation.
+        :param requires_grad: Whether the matrix is kept in memory as a tensor that can carry
+            gradients, instead of on disk.
+        :param dtype: Real floating-point dtype of the entries of the matrix.
+        """
         self._shape = shape
+        self._dtype = dtype
+        self._np_dtype = torch.empty(0, dtype=dtype).numpy().dtype
         self._initial_value = initial_value
-        self._filepath = Path(mkstemp()[1])
+        file_descriptor, filepath = mkstemp()
+        os.close(file_descriptor)
+        self._filepath = Path(filepath)
         self._requires_grad = requires_grad
         self._memmap = None
         self._tensor = None
         if self.requires_grad:
-            self._tensor = torch.full(self._shape, initial_value, dtype=torch.float32)
+            self._tensor = torch.full(self._shape, initial_value, dtype=self._dtype)
         else:
             self._memmap = np.memmap(
                 filename=self._filepath,
-                dtype="float32",
+                dtype=self._np_dtype,
                 mode="r+",
                 shape=self._shape,
             )
@@ -61,7 +78,7 @@ class GramMatrix:
         """
         if self.requires_grad:
             return self._tensor[item]  # type: ignore
-        return to_tensor(self._memmap[item], dtype=torch.float32)  # type: ignore
+        return to_tensor(self._memmap[item], dtype=self._dtype)  # type: ignore
 
     def __setitem__(self, key, value):
         """
@@ -76,9 +93,9 @@ class GramMatrix:
         :type value: Any
         """
         if self.requires_grad:
-            self._tensor[key] = to_tensor(value, dtype=torch.float32, device=self._tensor.device)  # type: ignore
+            self._tensor[key] = to_tensor(value, dtype=self._dtype, device=self._tensor.device)  # type: ignore
         else:
-            self._memmap[key] = to_numpy(value, dtype=np.float32)  # type: ignore
+            self._memmap[key] = to_numpy(value, dtype=self._np_dtype)  # type: ignore
             self._memmap.flush()
 
     def apply_(
@@ -92,18 +109,21 @@ class GramMatrix:
         symmetrize the matrix.
 
         The `apply_` method processes the Gram matrix in batches of indices and applies
-        the provided function to update the matrix values at those indices. After processing
-        the batches, the matrix can be symmetrized if specified.
+        the provided function to update the matrix values at those indices. With
+        ``symmetrize=True``, only one strict triangle is evaluated, then mirrored across the
+        diagonal, and the diagonal is set to one. This is only valid when the rows and the
+        columns index the same set of samples. With ``symmetrize=False``, every entry is
+        evaluated, which is required for a cross matrix between two different sets of samples.
 
         :param func: A callable that accepts an ndarray of indices and performs an operation
             on the corresponding elements in the matrix.
         :param batch_size: The size of the batches in which the Gram matrix is processed.
             Default is 32.
-        :param symmetrize: Whether to symmetrize the matrix after applying `func`.
-            Default is True.
+        :param symmetrize: Whether to evaluate one triangle only and symmetrize the matrix
+            after applying `func`. Default is True.
         :return: Returns the updated instance of the Gram matrix.
         """
-        for indices in self.indices_batch_generator(batch_size):
+        for indices in self.indices_batch_generator(batch_size, triangular=symmetrize):
             self[indices[:, 0], indices[:, 1]] = func(indices)
         if symmetrize:
             self.symmetrize_()
@@ -115,14 +135,14 @@ class GramMatrix:
 
         If `requires_grad` is True, the method returns the original tensor associated
         with the object. Otherwise, it converts the `_memmap` data to a PyTorch tensor
-        with `float32` dtype.
+        with the dtype of the matrix.
 
         :return: The PyTorch tensor representation of the contained data.
         :rtype: torch.Tensor
         """
         if self.requires_grad:
             return self._tensor  # type: ignore
-        return torch.from_numpy(self._memmap).to(dtype=torch.float32)  # type: ignore
+        return torch.from_numpy(self._memmap).to(dtype=self._dtype)  # type: ignore
 
     def symmetrize_(self) -> "GramMatrix":
         """
@@ -174,7 +194,7 @@ class GramMatrix:
         except Exception:  # pragma: no cover
             pass  # pragma: no cover
 
-    def indices_batch_generator(self, batch_size: int = 32) -> Iterator[NDArray[np.int64]]:
+    def indices_batch_generator(self, batch_size: int = 32, triangular: bool = True) -> Iterator[NDArray[np.int64]]:
         """
         Generates batches of indices in the form of tuples within the constraints of a given
         shape and selection logic. The generator iterates over all pairwise index combinations
@@ -183,13 +203,18 @@ class GramMatrix:
 
         :param batch_size: The maximum number of (i, j) index pairs to be included in each batch.
             Defaults to 32.
+        :param triangular: If True, only the indices of one strict triangle are generated (the
+            upper one when there are more columns than rows, the lower one otherwise). If False,
+            every index pair of the matrix is generated. Defaults to True.
         :return: Iterator that yields batches of index pairs as numpy arrays of shape
             (batch_size, 2). Each batch contains tuples of indices in the form (i, j),
             respecting the constraints based on the dimensions of the object's shape.
         """
         batch = []
         for i, j in np.ndindex(self.shape):
-            if j > i and self.shape[0] < self.shape[1]:
+            if not triangular:
+                batch.append((i, j))
+            elif j > i and self.shape[0] < self.shape[1]:
                 batch.append((i, j))
             elif i > j and self.shape[0] >= self.shape[1]:
                 batch.append((i, j))
@@ -207,3 +232,7 @@ class GramMatrix:
     @property
     def requires_grad(self) -> bool:
         return self._requires_grad
+
+    @property
+    def dtype(self) -> torch.dtype:
+        return self._dtype
