@@ -1,4 +1,6 @@
-from typing import Optional, Union, cast
+import copy
+from contextlib import contextmanager, suppress
+from typing import Iterator, Optional, Union, cast
 
 import numpy as np
 import torch
@@ -140,12 +142,13 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         """
         if len(x_train) == 0:  # type: ignore[arg-type]
             raise ValueError("Cannot fit a kernel on zero samples.")
-        self.x_train_ = x_train
-        self.y_train_ = y_train
-        self.build_model()
-        if self.alignment:
-            self._align_kernel()
-        self.is_fitted_ = True
+        with self._restore_state_on_failure():
+            self.x_train_ = x_train
+            self.y_train_ = y_train
+            self.build_model()
+            if self.alignment:
+                self._align_kernel()
+            self.is_fitted_ = True
         return self
 
     def predict(self, x: Union[NDArray, TensorLike]) -> Union[NDArray, torch.Tensor]:
@@ -246,7 +249,7 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
         self.opt_.fun = np.inf  # type: ignore[attr-defined]
         self.opt_.history = []  # type: ignore[attr-defined]
         self.to(device=self.device)
-        best_params = torch.nn.utils.parameters_to_vector(self.parameters()).cpu().detach().clone()
+        best_params = [parameter.detach().cpu().clone() for parameter in self.parameters()]
         best_alignment = -np.inf
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.alignment_learning_rate)
         p_bar = tqdm(np.arange(self.alignment_iterations), desc="Aligning kernel", disable=not verbose)
@@ -265,7 +268,7 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
             self.opt_.fun = alignment.detach().cpu().item()  # type: ignore[attr-defined]
             self.opt_.history.append(self.opt_.fun)  # type: ignore[attr-defined]
             if np.isclose(self.opt_.fun, np.max(self.opt_.history)):  # type: ignore[attr-defined]
-                best_params = torch.nn.utils.parameters_to_vector(self.parameters()).cpu().detach().clone()
+                best_params = [parameter.detach().cpu().clone() for parameter in self.parameters()]
                 best_alignment = self.opt_.fun  # type: ignore[attr-defined]
             if all(
                 [
@@ -280,13 +283,76 @@ class Kernel(torch.nn.Module, TransformerMixin, BaseEstimator):
             loss.backward()
             optimizer.step()
             p_bar.set_postfix_str(f"Alignment score: {self.opt_.fun:.4f}")  # type: ignore[attr-defined]
-        torch.nn.utils.vector_to_parameters(
-            cast(torch.Tensor, to_tensor(best_params, device=self.device)), self.parameters()
-        )
+        # Every parameter keeps its own dtype and device.
+        for parameter, best_value in zip(self.parameters(), best_params):
+            parameter.data = best_value.to(device=parameter.device)
         self.opt_.fun = best_alignment  # type: ignore[attr-defined]
         p_bar.close()
         self.eval()
         return self
+
+    @contextmanager
+    def _restore_state_on_failure(self) -> Iterator[None]:
+        """
+        Context manager that puts the kernel back in the state it had on entry when its body
+        raises, so a failed fit does not leave the kernel half updated.
+
+        The following are restored, for the kernel and for every module it holds:
+
+        - the attributes, as objects, so a layer replaced by the body is put back;
+        - the content of the parameter, buffer, submodule and hook registries;
+        - the values and the `requires_grad` flag of the parameters and the values of the
+          buffers, so the steps of an interrupted training are undone;
+        - the uninitialized state of a lazy module initialized by the body.
+
+        Every module and every tensor is restored in place, so they keep their identity.
+
+        :return: A context manager.
+        :rtype: Iterator[None]
+        """
+        is_lazy = torch.nn.parameter.is_lazy
+        states = []
+        # The saved values must stay ordinary tensors when the fit runs in inference mode.
+        with torch.inference_mode(False):
+            for module in self.modules():
+                attributes = dict(module.__dict__)
+                # The registries are restored in place, since the handle of a hook refers to its registry.
+                registries = [
+                    (value, copy.copy(value))
+                    for name, value in attributes.items()
+                    if name.startswith("_") and isinstance(value, (dict, set))
+                ]
+                # An uninitialized tensor holds an empty placeholder, which is never changed in place.
+                tensors = [
+                    (
+                        tensor,
+                        tensor.__class__,
+                        tensor.data if is_lazy(tensor) else tensor.detach().clone(),
+                        tensor.requires_grad,
+                    )
+                    for tensor in (*module._parameters.values(), *module._buffers.values())
+                    if tensor is not None
+                ]
+                states.append((module, module.__class__, attributes, registries, tensors))
+        try:
+            yield
+        except BaseException:
+            for module, module_class, attributes, registries, tensors in states:
+                # A module that cannot be restored must not hide the error nor stop the others.
+                with suppress(Exception):
+                    module.__dict__.clear()
+                    module.__dict__.update(attributes)
+                    for registry, content in registries:
+                        registry.clear()
+                        registry.update(content)
+                    # A lazy module changes its class once it is initialized, and so do its tensors.
+                    module.__class__ = module_class
+                    for tensor, tensor_class, value, requires_grad in tensors:
+                        tensor.data = value
+                        if isinstance(tensor, torch.nn.Parameter):
+                            tensor.requires_grad_(requires_grad)
+                        tensor.__class__ = tensor_class
+            raise
 
     def _create_y_kernel(self) -> torch.Tensor:
         """

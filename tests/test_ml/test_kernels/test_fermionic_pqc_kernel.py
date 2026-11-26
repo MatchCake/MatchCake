@@ -1,9 +1,11 @@
 import copy
+import warnings
 
 import numpy as np
 import pennylane as qml
 import pytest
 import torch.nn
+from sklearn.base import clone
 
 from matchcake.ml.kernels.fermionic_pqc_kernel import (
     PATTERN_TO_WIRES,
@@ -219,7 +221,8 @@ class TestFermionicPQCKernel:
         kernel_instance.bias_ = torch.cat([kernel_instance.bias_.detach(), kernel_instance.bias_.detach() + 0.1])
         kernel_instance.data_scaling_ = torch.cat([kernel_instance.data_scaling_.detach()] * 2)
         x_test = np.concatenate([x_test, x_test[:, ::-1]], axis=-1)
-        kernel_instance.depth_ = 1
+        with pytest.warns(UserWarning, match="features"):
+            kernel_instance.depth_ = 1
         self.assert_transform_is_up_to_date(kernel_instance, x_test)
         kernel_instance.depth_ = int(np.ceil(x_test.shape[-1] / kernel_instance.n_qubits))
         self.assert_transform_is_up_to_date(kernel_instance, x_test)
@@ -341,7 +344,8 @@ class TestFermionicPQCKernel:
         kernel_instance.depth_ = 2
         kernel_instance.fit(x_train)
         assert kernel_instance.depth_ == 2
-        kernel_instance.fit(np.concatenate([x_train] * 4, axis=-1))
+        with pytest.warns(UserWarning, match="features"):
+            kernel_instance.fit(np.concatenate([x_train] * 4, axis=-1))
         assert kernel_instance.depth_ == 2
         kernel_instance.depth_ = None
         kernel_instance.fit(np.concatenate([x_train] * 4, axis=-1))
@@ -388,11 +392,179 @@ class TestFermionicPQCKernel:
 
     def test_depth_of_a_kernel_pickled_without_the_property(self, kernel_instance, x_train):
         del kernel_instance.__dict__["_depth"]
-        del kernel_instance.__dict__["_is_depth_preset"]
+        del kernel_instance.__dict__["depth"]
         kernel_instance.__dict__["depth_"] = 2
         assert kernel_instance.depth_ == 2
         kernel_instance.fit(x_train)
+        assert "depth_" not in kernel_instance.__dict__
+        assert kernel_instance.depth_ == 8 // kernel_instance.n_qubits
+
+    def test_parameters_of_a_kernel_pickled_without_the_property(self, kernel_instance, x_train):
+        kernel_instance.fit(x_train)
+        kernel_instance.__dict__["depth_"] = kernel_instance.__dict__.pop("_depth")
+        del kernel_instance.__dict__["depth"]
+        assert kernel_instance.get_params()["depth"] is None
+        assert clone(kernel_instance).depth_ is None
+        kernel_instance.set_params(depth=3)
+        assert kernel_instance.fit(x_train).depth_ == 3
+
+    def test_depth_set_by_hand_is_in_use_before_fit(self, kernel_instance):
+        kernel_instance.depth_ = 3
+        assert kernel_instance.depth_ == 3
+        kernel_instance.depth_ = None
+        assert kernel_instance.depth_ is None
+
+    def test_constructor_stores_depth_as_given(self, n_qubits, rotations, entangling_mth):
+        depth = np.int64(3)
+        kernel_instance = FermionicPQCKernel(
+            n_qubits=n_qubits, rotations=rotations, entangling_mth=entangling_mth, depth=depth
+        )
+        assert kernel_instance.depth is depth
+        assert isinstance(kernel_instance.depth_, int)
+
+    def test_depth_argument(self, n_qubits, rotations, entangling_mth, x_train):
+        kernel_instance = FermionicPQCKernel(
+            n_qubits=n_qubits, rotations=rotations, entangling_mth=entangling_mth, depth=3
+        )
+        assert kernel_instance.depth_ == 3
+        assert kernel_instance.get_params()["depth"] == 3
+        kernel_instance.fit(x_train)
+        assert kernel_instance.depth_ == 3
+        with pytest.warns(UserWarning, match="features"):
+            cloned = clone(kernel_instance).fit(np.concatenate([x_train] * 4, axis=-1))
+        assert cloned.depth_ == 3
+        kernel_instance.set_params(depth=None)
+        kernel_instance.fit(x_train)
+        assert kernel_instance.depth_ == 8 // n_qubits
+        kernel_instance.set_params(depth=2)
+        kernel_instance.fit(x_train)
         assert kernel_instance.depth_ == 2
+
+    def test_clone_keeps_a_depth_set_by_hand(self, kernel_instance, x_train):
+        kernel_instance.depth_ = np.int64(2)
+        assert kernel_instance.depth == 2
+        assert isinstance(kernel_instance.depth, int)
+        cloned = clone(kernel_instance)
+        assert cloned.depth_ == 2
+        with pytest.warns(UserWarning, match="features"):
+            cloned.fit(np.concatenate([x_train] * 4, axis=-1))
+        assert cloned.depth_ == 2
+        kernel_instance.depth_ = None
+        assert clone(kernel_instance).depth_ is None
+
+    def test_depth_set_to_none_on_a_fitted_kernel(self, kernel_instance, x_train):
+        kernel_instance.fit(x_train)
+        expected = kernel_instance.transform(x_train)
+        kernel_instance.depth_ = 5
+        assert kernel_instance.depth_ == 5
+        kernel_instance.depth_ = None
+        assert kernel_instance.depth is None
+        assert kernel_instance.depth_ == 8 // kernel_instance.n_qubits
+        np.testing.assert_allclose(
+            kernel_instance.transform(x_train), expected, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
+        )
+
+    @pytest.mark.parametrize("depth", [1, 2])
+    def test_depth_too_small_for_the_features_warns(self, n_qubits, rotations, entangling_mth, x_train, depth):
+        x_wide = np.concatenate([x_train] * 4, axis=-1)
+        kernel_arguments = dict(n_qubits=n_qubits, rotations=rotations, entangling_mth=entangling_mth)
+        kernel_instance = FermionicPQCKernel(depth=depth, **kernel_arguments)
+        with pytest.warns(UserWarning, match=f"only the first {depth * n_qubits} of the 32 features") as record:
+            kernel_instance.fit(x_wide)
+        assert record[0].filename == __file__
+        assert kernel_instance.depth_ == depth
+        kernel_instance = FermionicPQCKernel(**kernel_arguments).fit(x_wide)
+        with pytest.warns(UserWarning, match=f"A depth of {32 // n_qubits} is needed") as record:
+            kernel_instance.depth_ = depth
+        assert record[0].filename == __file__
+        assert kernel_instance.depth_ == depth
+
+    def test_depth_setter_changes_nothing_when_the_warning_is_an_error(self, kernel_instance, x_train):
+        kernel_instance.fit(np.concatenate([x_train] * 4, axis=-1))
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            with pytest.raises(UserWarning, match="features"):
+                kernel_instance.depth_ = 1
+        assert kernel_instance.depth is None
+        assert kernel_instance.depth_ == 32 // kernel_instance.n_qubits
+
+    def test_depth_set_to_none_follows_the_training_data(self, kernel_instance, x_train):
+        kernel_instance.fit(np.concatenate([x_train] * 4, axis=-1))
+        kernel_instance.bias_ = torch.zeros(1)
+        kernel_instance.depth_ = None
+        assert kernel_instance.depth_ == 32 // kernel_instance.n_qubits
+
+    def test_depth_large_enough_does_not_warn(self, n_qubits, rotations, entangling_mth, x_train, recwarn):
+        x_wide = np.concatenate([x_train] * 2, axis=-1)
+        kernel_instance = FermionicPQCKernel(
+            n_qubits=n_qubits, rotations=rotations, entangling_mth=entangling_mth, depth=16 // n_qubits
+        )
+        kernel_instance.fit(x_wide)
+        kernel_instance.depth_ = 16 // n_qubits + 1
+        kernel_instance.fit(x_wide)
+        assert not [warning for warning in recwarn if "features" in str(warning.message)]
+
+    def test_depth_above_the_maximum_raises(self, n_qubits, rotations, entangling_mth, x_train):
+        kernel_arguments = dict(n_qubits=n_qubits, rotations=rotations, entangling_mth=entangling_mth)
+        assert FermionicPQCKernel(depth=FermionicPQCKernel.MAX_DEPTH, **kernel_arguments).depth_ == 10_000
+        with pytest.raises(ValueError, match="at most 10000"):
+            FermionicPQCKernel(depth=FermionicPQCKernel.MAX_DEPTH + 1, **kernel_arguments)
+        with pytest.raises(ValueError, match="at most 10000"):
+            FermionicPQCKernel(depth=10**30, **kernel_arguments)
+        kernel_instance = FermionicPQCKernel(**kernel_arguments).fit(x_train)
+        with pytest.raises(ValueError, match="at most 10000"):
+            kernel_instance.depth_ = FermionicPQCKernel.MAX_DEPTH + 1
+        kernel_instance.set_params(depth=FermionicPQCKernel.MAX_DEPTH + 1)
+        with pytest.raises(ValueError, match="at most 10000"):
+            kernel_instance.fit(x_train)
+        assert kernel_instance.depth_ == 8 // n_qubits
+
+    def test_maximum_depth_of_a_subclass(self, n_qubits, rotations, entangling_mth):
+        class ShallowKernel(FermionicPQCKernel):
+            MAX_DEPTH = 3
+
+        kernel_arguments = dict(n_qubits=n_qubits, rotations=rotations, entangling_mth=entangling_mth)
+        assert ShallowKernel(depth=3, **kernel_arguments).depth_ == 3
+        with pytest.raises(ValueError, match="at most 3"):
+            ShallowKernel(depth=4, **kernel_arguments)
+
+    def test_failed_fit_keeps_the_fitted_state(self, kernel_instance, x_train):
+        kernel_instance.fit(x_train, np.arange(len(x_train)) % 2)
+        state = {name: value for name, value in kernel_instance.__dict__.items() if not name.startswith("_")}
+        parameters = dict(kernel_instance.named_parameters())
+        depth = kernel_instance.depth_
+        expected = kernel_instance.transform(x_train)
+        with pytest.raises(Exception):
+            kernel_instance.fit(np.linspace(0.0, 1.0, num=10))
+        assert kernel_instance.x_train_ is x_train
+        assert kernel_instance.is_fitted_
+        assert kernel_instance.depth_ == depth
+        assert set(state) == {name for name in kernel_instance.__dict__ if not name.startswith("_")}
+        for name, value in dict(kernel_instance.named_parameters()).items():
+            assert value is parameters[name]
+        np.testing.assert_allclose(
+            kernel_instance.transform(x_train), expected, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
+        )
+
+    @pytest.mark.parametrize("depth", [0, -1, 1.5, "2", True])
+    def test_invalid_depth_raises(self, n_qubits, rotations, entangling_mth, x_train, depth):
+        kernel_arguments = dict(n_qubits=n_qubits, rotations=rotations, entangling_mth=entangling_mth)
+        with pytest.raises(ValueError, match="positive integer"):
+            FermionicPQCKernel(depth=depth, **kernel_arguments)
+        kernel_instance = FermionicPQCKernel(**kernel_arguments)
+        with pytest.raises(ValueError, match="positive integer"):
+            kernel_instance.depth_ = depth
+        assert kernel_instance.depth_ is None
+        kernel_instance.fit(x_train)
+        kernel_instance.set_params(depth=depth)
+        with pytest.raises(ValueError, match="positive integer"):
+            kernel_instance.fit(x_train[:5])
+        assert kernel_instance.x_train_ is x_train
+        assert kernel_instance.depth_ == 8 // n_qubits
+        with pytest.raises(ValueError, match="positive integer"):
+            kernel_instance.fit(np.concatenate([x_train] * 2, axis=-1))
+        assert kernel_instance.bias_.shape == (8,)
+        assert kernel_instance.data_scaling_.shape == (8,)
 
     @pytest.mark.parametrize("alignment_dtype", [torch.float32, torch.float64])
     def test_kernel_dtype_and_alignment(self, n_qubits, rotations, entangling_mth, x_train, alignment_dtype):

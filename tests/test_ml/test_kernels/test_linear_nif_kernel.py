@@ -35,6 +35,80 @@ class TestLinearNIFKernel:
         assert kernel.q_device.R_DTYPE == torch.float64
         assert kernel.q_device.C_DTYPE == torch.complex128
 
+    def test_failed_refit_on_another_feature_count_keeps_the_encoder(self, kernel_instance, x_train):
+        kernel_instance.alignment = True
+        kernel_instance.alignment_iterations = 2
+        kernel_instance.fit(x_train, np.arange(len(x_train)) % 2)
+        linear = kernel_instance.encoder[1]
+        with pytest.raises(Exception):
+            kernel_instance.fit(np.concatenate([x_train, x_train[:, :4]], axis=-1), np.arange(4) % 2)
+        assert kernel_instance.x_train_ is x_train
+        assert kernel_instance.encoder[1] is linear
+        assert linear.in_features == 8
+        assert not linear.training
+        assert kernel_instance.transform(x_train).shape == (len(x_train), len(x_train))
+
+    def fail_at_call(self, kernel_instance, n_calls):
+        forward = kernel_instance.forward
+        calls = []
+
+        def failing_forward(*args, **kwargs):
+            calls.append(1)
+            if len(calls) >= n_calls:
+                raise RuntimeError("forward failed")
+            return forward(*args, **kwargs)
+
+        kernel_instance.forward = failing_forward
+
+    @pytest.mark.parametrize("r_dtype, c_dtype", [(torch.float32, torch.complex64), (torch.float64, torch.complex128)])
+    def test_alignment_keeps_the_dtype_of_the_parameters(
+        self, n_qubits, encoder_activation, bias, x_train, r_dtype, c_dtype
+    ):
+        kernel_instance = LinearNIFKernel(
+            n_qubits=n_qubits,
+            bias=bias,
+            encoder_activation=encoder_activation,
+            r_dtype=r_dtype,
+            c_dtype=c_dtype,
+            alignment=True,
+            alignment_iterations=2,
+        )
+        kernel_instance.fit(x_train, np.arange(len(x_train)) % 2)
+        assert all(parameter.dtype == r_dtype for parameter in kernel_instance.parameters())
+
+    def test_failed_alignment_keeps_the_trained_weights(self, kernel_instance, x_train):
+        y_train = np.arange(len(x_train)) % 2
+        kernel_instance.alignment = True
+        kernel_instance.alignment_iterations = 4
+        kernel_instance.fit(x_train, y_train)
+        assert all(parameter.dtype == kernel_instance.R_DTYPE for parameter in kernel_instance.parameters())
+        weights = [parameter.detach().clone() for parameter in kernel_instance.parameters()]
+        expected = kernel_instance.transform(x_train)
+        self.fail_at_call(kernel_instance, n_calls=4)
+        with pytest.raises(RuntimeError, match="forward failed"):
+            kernel_instance.fit(x_train, y_train)
+        del kernel_instance.forward
+        for parameter, weight in zip(kernel_instance.parameters(), weights):
+            torch.testing.assert_close(parameter.detach(), weight, atol=0.0, rtol=0.0)
+        np.testing.assert_array_equal(kernel_instance.transform(x_train), expected)
+
+    def test_fit_after_a_failed_first_fit_equals_a_first_fit(self, n_qubits, encoder_activation, bias, x_train):
+        y_train = np.arange(len(x_train)) % 2
+        kernel_arguments = dict(
+            n_qubits=n_qubits, bias=bias, encoder_activation=encoder_activation, alignment=True, alignment_iterations=4
+        )
+        expected = LinearNIFKernel(**kernel_arguments).fit(x_train, y_train).transform(x_train)
+        kernel_instance = LinearNIFKernel(**kernel_arguments)
+        linear = kernel_instance.encoder[1]
+        self.fail_at_call(kernel_instance, n_calls=4)
+        with pytest.raises(RuntimeError, match="forward failed"):
+            kernel_instance.fit(x_train, y_train)
+        del kernel_instance.forward
+        assert kernel_instance.encoder[1] is linear
+        assert not kernel_instance.is_fitted_
+        assert any(torch.nn.parameter.is_lazy(parameter) for parameter in kernel_instance.parameters())
+        np.testing.assert_array_equal(kernel_instance.fit(x_train, y_train).transform(x_train), expected)
+
     def test_fit(self, kernel_instance, x_train):
         kernel_instance.fit(x_train)
         assert kernel_instance.x_train_ is x_train
