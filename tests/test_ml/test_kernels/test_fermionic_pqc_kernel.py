@@ -326,6 +326,9 @@ class TestFermionicPQCKernel:
             alignment_early_stopping_patience=100,
         )
         x_train = np.random.default_rng(TEST_SEED).random(x_train.shape)
+        untrained_kernel = clone(kernel_instance).set_params(alignment=False).fit(x_train).transform(x_train)
+        if np.allclose(untrained_kernel, 1.0, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON):
+            pytest.skip("The kernel does not depend on its parameters, so the alignment has nothing to train.")
         kernel_instance.fit(x_train, np.arange(len(x_train)) % 2)
         initial_scaling = torch.full_like(kernel_instance.data_scaling_, torch.pi)
         assert not torch.allclose(kernel_instance.data_scaling_, initial_scaling)
