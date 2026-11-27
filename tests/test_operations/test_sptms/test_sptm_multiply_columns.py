@@ -423,3 +423,110 @@ class TestSptmMultiplyColumns:
             np.asarray(result), expected, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
         )
         assert tuple(matrix.shape) == (1, 8, 8)
+
+    @staticmethod
+    def _rotation_layers(angles: torch.Tensor) -> list:
+        """Two layers of 4 by 4 rotations acting on overlapping columns of an 8 by 8 matrix."""
+        cos, sin, zero, one = torch.cos(angles), torch.sin(angles), torch.zeros_like(angles), torch.ones_like(angles)
+        rotations = torch.stack(
+            [cos, zero, -sin, zero, zero, one, zero, zero, sin, zero, cos, zero, zero, zero, zero, one], dim=-1
+        ).reshape(*angles.shape, 4, 4)
+        return [[(0, rotations[0]), (4, rotations[1])], [(2, rotations[2])]]
+
+    @staticmethod
+    def _dense_layers(matrix: torch.Tensor, layers: list) -> torch.Tensor:
+        for layer in layers:
+            for start, block in layer:
+                padded = torch.eye(matrix.shape[-1], dtype=matrix.dtype)
+                padded = padded.expand(*block.shape[:-2], *padded.shape).clone()
+                padded[..., start : start + block.shape[-1], start : start + block.shape[-1]] = block
+                matrix = matrix @ padded
+        return matrix
+
+    def test_layers_of_orthogonal_torch_blocks_are_one_reversible_product(self):
+        angles = torch.tensor([0.3, 0.5, 0.7], dtype=torch.float64, requires_grad=True)
+        matrix = torch.eye(8, dtype=torch.float64)
+        result = SingleParticleTransitionMatrixOperation.multiply_layers(matrix, self._rotation_layers(angles))
+        assert type(result.grad_fn).__name__ == "ReversibleColumnProductBackward"
+        torch.testing.assert_close(
+            result,
+            self._dense_layers(matrix, self._rotation_layers(angles)),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+        torch.testing.assert_close(matrix, torch.eye(8, dtype=torch.float64), atol=0.0, rtol=0.0)
+
+    def test_layers_gradcheck_through_the_angles(self):
+        angles = torch.tensor([0.3, 0.5, 0.7], dtype=torch.float64, requires_grad=True)
+        matrix = torch.randn(8, 8, dtype=torch.float64, generator=torch.Generator().manual_seed(TEST_SEED))
+
+        def product(angles_input: torch.Tensor) -> torch.Tensor:
+            return torch.as_tensor(
+                SingleParticleTransitionMatrixOperation.multiply_layers(matrix, self._rotation_layers(angles_input))
+            )
+
+        assert torch.autograd.gradcheck(product, (angles,), eps=GRADCHECK_EPS, atol=GRADCHECK_ATOL)
+
+    def test_layers_with_a_block_that_is_not_orthogonal_are_differentiated_by_plain_autograd(self):
+        """Undoing a block that is not orthogonal would not give the matrix back, so nothing is undone."""
+        generator = torch.Generator().manual_seed(TEST_SEED)
+        block = torch.randn(4, 4, dtype=torch.float64, generator=generator).requires_grad_()
+        matrix = torch.randn(8, 8, dtype=torch.float64, generator=generator)
+        weights = torch.randn(8, 8, dtype=torch.float64, generator=generator)
+        result = SingleParticleTransitionMatrixOperation.multiply_layers(matrix, [[(2, block)], [(4, block)]])
+        assert type(result.grad_fn).__name__ != "ReversibleColumnProductBackward"
+        (gradient,) = torch.autograd.grad((result * weights).sum(), block)
+        reference = self._dense_layers(matrix, [[(2, block)], [(4, block)]])
+        (expected,) = torch.autograd.grad((reference * weights).sum(), block)
+        torch.testing.assert_close(gradient, expected, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+
+    def test_layers_inside_a_torch_func_transform_are_differentiated_by_plain_autograd(self):
+        angles = torch.tensor([0.3, 0.5, 0.7], dtype=torch.float64)
+        matrix = torch.eye(8, dtype=torch.float64)
+
+        def product(angles_input: torch.Tensor) -> torch.Tensor:
+            return torch.as_tensor(
+                SingleParticleTransitionMatrixOperation.multiply_layers(matrix, self._rotation_layers(angles_input))
+            )
+
+        jacobian = torch.func.jacrev(product)(angles)
+        expected = torch.autograd.functional.jacobian(product, angles)
+        torch.testing.assert_close(jacobian, expected, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON)
+
+    @pytest.mark.parametrize("backend", ["numpy", "torch"])
+    def test_layers_without_gradient_leave_the_matrix_unchanged(self, backend):
+        generator = np.random.default_rng(TEST_SEED)
+        matrix = generator.normal(size=(8, 8))
+        blocks = [generator.normal(size=(4, 4)) for _ in range(3)]
+        expected = matrix.copy()
+        for start, block in zip((0, 4, 2), blocks):
+            expected[:, start : start + 4] = expected[:, start : start + 4] @ block
+        if backend == "torch":
+            matrix_input, block_inputs = torch.from_numpy(matrix.copy()), [torch.from_numpy(block) for block in blocks]
+        else:
+            matrix_input, block_inputs = matrix.copy(), blocks
+        layers = [[(0, block_inputs[0]), (4, block_inputs[1])], [(2, block_inputs[2])]]
+        result = SingleParticleTransitionMatrixOperation.multiply_layers(matrix_input, layers)
+        np.testing.assert_allclose(
+            np.asarray(result), expected, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
+        )
+        np.testing.assert_array_equal(np.asarray(matrix_input), matrix)
+
+    def test_layers_of_another_backend_return_none(self):
+        matrix = pnp.eye(8, requires_grad=True)
+        assert SingleParticleTransitionMatrixOperation.multiply_layers(matrix, [[(0, np.eye(4))]]) is None
+
+    def test_layers_in_half_precision_are_differentiated_by_plain_autograd(self):
+        """The orthogonality tolerance is meaningless at this precision, so nothing is undone."""
+        angles = torch.tensor([0.3, 0.5, 0.7], dtype=torch.float16, requires_grad=True)
+        matrix = torch.eye(8, dtype=torch.float16)
+        result = SingleParticleTransitionMatrixOperation.multiply_layers(matrix, self._rotation_layers(angles))
+        assert type(result.grad_fn).__name__ != "ReversibleColumnProductBackward"
+
+    def test_layers_without_gradient_mode_build_no_graph(self):
+        angles = torch.tensor([0.3, 0.5, 0.7], dtype=torch.float64, requires_grad=True)
+        with torch.no_grad():
+            result = SingleParticleTransitionMatrixOperation.multiply_layers(
+                torch.eye(8, dtype=torch.float64), self._rotation_layers(angles)
+            )
+        assert not result.requires_grad

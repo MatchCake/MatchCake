@@ -381,7 +381,7 @@ class TestNIFApplyOpColumnUpdates:
 
         device.reset()
 
-        assert device._global_sptm_is_shared is False
+        assert device._pending_layers == []
         np.testing.assert_array_equal(self._to_numpy(device.global_sptm.sptm_matrix()), np.eye(2 * N_WIRES))
         device.apply(operations[4:])
         np.testing.assert_allclose(
@@ -517,9 +517,9 @@ class TestNIFApplyOpColumnUpdates:
         device = NonInteractingFermionicDevice(wires=N_WIRES)
         device.apply([SptmCompRyRy(np.array([0.3, 0.4]), wires=[0, 1])])
         duplicate = copy.copy(device)
-        before = np.array(device._global_sptm.single_particle_transition_matrix)
+        before = np.array(device.global_sptm.sptm_matrix())
         duplicate.apply_generator(iter([SptmCompRyRy(np.array([0.5, 0.1]), wires=[1, 2])]))
-        np.testing.assert_array_equal(np.asarray(device._global_sptm.single_particle_transition_matrix), before)
+        np.testing.assert_array_equal(np.asarray(device.global_sptm.sptm_matrix()), before)
         device.apply_generator(iter([SptmCompRzRz(np.array([0.2, 0.7]), wires=[0, 1])]))
         assert not np.allclose(
             np.asarray(device.global_sptm.sptm_matrix()), np.asarray(duplicate.global_sptm.sptm_matrix())
@@ -549,6 +549,86 @@ class TestNIFApplyOpColumnUpdates:
         np.testing.assert_allclose(
             np.asarray(device.global_sptm.sptm_matrix()),
             expected,
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_a_read_without_gradient_mode_keeps_the_gradient_of_the_operations(self):
+        params = torch.tensor([0.3, 0.4], dtype=torch.float64, requires_grad=True)
+        device = NonInteractingFermionicDevice(wires=3)
+        device.apply([SptmCompRyRy(params, wires=[0, 1])])
+        with torch.no_grad():
+            matrix = device.global_sptm.sptm_matrix()
+        assert matrix.requires_grad
+        assert device.global_sptm.sptm_matrix().requires_grad
+
+    def test_an_operation_with_another_batch_size_is_refused_when_it_is_applied(self):
+        device = NonInteractingFermionicDevice(wires=3, contraction_strategy=None)
+        device.apply([SptmCompRyRy(np.full((3, 2), 0.3), wires=[0, 1])])
+        with pytest.raises(ValueError, match="batch size"):
+            device.apply_generator(iter([SptmCompRzRz(np.full((4, 2), 0.5), wires=[1, 2])]))
+
+    def test_an_operation_that_does_not_fit_in_the_matrix_is_refused_when_it_is_applied(self):
+        device = NonInteractingFermionicDevice(wires=2)
+        with pytest.raises(ValueError, match="columns"):
+            device._check_blocks([(2, np.eye(4))], 4)
+
+    def test_a_failed_read_keeps_the_operations_that_were_applied(self, monkeypatch):
+        device = NonInteractingFermionicDevice(wires=3)
+        device.apply([SptmCompRyRy(np.array([0.3, 0.4]), wires=[0, 1])])
+
+        def failing_product(matrix, layers):
+            raise RuntimeError("no product")
+
+        monkeypatch.setattr(SingleParticleTransitionMatrixOperation, "multiply_layers", staticmethod(failing_product))
+        with pytest.raises(RuntimeError, match="no product"):
+            device.global_sptm
+        monkeypatch.undo()
+        expected = SptmCompRyRy(np.array([0.3, 0.4]), wires=[0, 1]).pad(range(3)).sptm_matrix()
+        np.testing.assert_allclose(
+            np.asarray(device.global_sptm.sptm_matrix()),
+            expected,
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    @pytest.mark.parametrize("backend", ["numpy", "torch"])
+    def test_a_matrix_given_by_the_user_can_be_written_into_after_it_is_applied(self, backend):
+        first = np.array(SptmCompRyRy(np.array([0.3, 0.4]), wires=[0, 1]).sptm_matrix())
+        second = np.array(SptmCompRzRz(np.array([0.5, 0.1]), wires=[0, 1]).sptm_matrix())
+        expected = first @ second
+        matrices = [torch.from_numpy(first), torch.from_numpy(second)] if backend == "torch" else [first, second]
+        device = NonInteractingFermionicDevice(wires=2, contraction_strategy=None)
+        device.apply([SingleParticleTransitionMatrixOperation(matrix, wires=[0, 1]) for matrix in matrices])
+        matrices[0][...] = 0.0
+        matrices[1][...] = 0.0
+        np.testing.assert_allclose(
+            np.asarray(device.global_sptm.sptm_matrix()),
+            expected,
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+
+    def test_a_device_saved_before_the_lazy_product_can_be_restored(self):
+        device = NonInteractingFermionicDevice(wires=3)
+        device.apply([SptmCompRyRy(np.array([0.3, 0.4]), wires=[0, 1])])
+        expected = np.array(device.global_sptm.sptm_matrix())
+        state = {key: value for key, value in device.__dict__.items() if key not in ("_pending_layers", "_batch_size")}
+        restored = NonInteractingFermionicDevice.__new__(NonInteractingFermionicDevice)
+        restored.__setstate__(state)
+        assert restored._pending_layers == [] and restored._batch_size is None
+        np.testing.assert_array_equal(np.asarray(restored.global_sptm.sptm_matrix()), expected)
+
+    def test_vectorized_jacobian_through_the_device(self):
+        def matrix_of(angles: torch.Tensor) -> torch.Tensor:
+            device = NonInteractingFermionicDevice(wires=3)
+            device.apply([SptmCompRyRy(angles[:2], wires=[0, 1]), SptmCompRzRz(angles[2:], wires=[1, 2])])
+            return device.global_sptm.sptm_matrix()
+
+        angles = torch.tensor([0.3, 0.4, 0.5, 0.1], dtype=torch.float64)
+        torch.testing.assert_close(
+            torch.autograd.functional.jacobian(matrix_of, angles, vectorize=True),
+            torch.autograd.functional.jacobian(matrix_of, angles),
             atol=ATOL_MATRIX_COMPARISON,
             rtol=RTOL_MATRIX_COMPARISON,
         )

@@ -522,7 +522,7 @@ class TestDisjointSptmOperation:
 
     @staticmethod
     def _three_rotations(backend: str = "numpy") -> list:
-        angles = [np.array([0.3, 0.4]), np.array([0.5, 0.1]), np.array([0.2, 0.7])]
+        angles: list = [np.array([0.3, 0.4]), np.array([0.5, 0.1]), np.array([0.2, 0.7])]
         if backend == "torch":
             angles = [torch.from_numpy(angle) for angle in angles]
         return [SptmCompRyRy(angle, wires=[2 * index, 2 * index + 1]) for index, angle in enumerate(angles)]

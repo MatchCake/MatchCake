@@ -336,8 +336,10 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self._transition_matrix: Optional[TensorLike] = None
         self._lookup_table: Optional[NonInteractingFermionicLookupTable] = None
         self._global_sptm: Optional[SingleParticleTransitionMatrixOperation] = None
-        # True once the stored matrix was handed out, so that the next gate writes into a copy of it.
-        self._global_sptm_is_shared = False
+        # Blocks of the operations applied since the global matrix was last read, one list per operation.
+        self._pending_layers: List[List[Tuple[int, TensorLike]]] = []
+        # Batch size shared by the operations applied so far, None while none of them is batched.
+        self._batch_size: Optional[int] = None
         self._batched = False
         self._samples: Optional[np.ndarray] = None
         self._samples_bases: Dict[Any, np.ndarray] = {}
@@ -382,17 +384,27 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         if self._wires is not None:
             self._setup_wire_dependent_state()
 
+    def __setstate__(self, state: Dict[str, Any]) -> None:
+        """Restore a device, including one saved before its operations were recorded lazily.
+
+        :param state: The attributes of the device.
+        :type state: Dict[str, Any]
+        """
+        self.__dict__.update(state)
+        self.__dict__.setdefault("_pending_layers", [])
+        self.__dict__.setdefault("_batch_size", None)
+
     def __copy__(self) -> "NonInteractingFermionicDevice":
         """Return a shallow copy whose gates do not write into the matrix of this device.
 
         :return: The copy.
         :rtype: NonInteractingFermionicDevice
         """
+        self._materialize_global_sptm()
         new_device = type(self).__new__(type(self))
         new_device.__dict__.update(self.__dict__)
-        # both devices hold the same matrix, so each one copies it before its next gate
-        self._global_sptm_is_shared = True
-        new_device._global_sptm_is_shared = True
+        # each device records its own operations from here on, the stored matrix is never written into
+        new_device._pending_layers = []
         return new_device
 
     def apply(
@@ -549,10 +561,11 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         return self.global_sptm
 
     def _apply_op(self, op: qml.operation.Operation) -> None:
-        """Multiply the global single-particle transition matrix by the one of an operation.
+        """Record the single-particle transition matrix of an operation as the next factor of the global one.
 
-        Only the columns the operation acts on are updated, in place. The matrix is copied first when
-        it was handed out since the last update, so that a matrix read from the device never changes.
+        The blocks of the operation are only kept here. The product is computed when the global
+        matrix is read, see :meth:`_materialize_global_sptm`, so that all the operations applied in
+        between are differentiated together.
 
         :param op: The operation to apply.
         :type op: qml.operation.Operation
@@ -561,19 +574,78 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self._batched = self._batched or (sptm_op.batch_size is not None)
         wires = SingleParticleTransitionMatrixOperation.make_wires_continuous(Wires(self.wires))
         blocks = [(start, qml.math.cast(block, self._r_dtype_name)) for start, block in sptm_op.column_blocks(wires)]
+        self._check_blocks(blocks, 2 * len(wires))
+        if all(qml.math.get_interface(block) in ("numpy", "torch") for _, block in blocks):
+            if type(sptm_op) is SingleParticleTransitionMatrixOperation:
+                # a matrix given by the user may be written into before the product is computed
+                blocks = [
+                    (start, block.clone() if isinstance(block, torch.Tensor) else np.array(block))
+                    for start, block in blocks
+                ]
+            self._pending_layers.append(blocks)
+        else:
+            # other backends cannot be written by columns: the padded matrix is multiplied right away
+            self._materialize_global_sptm()
+            op_sptm = qml.math.cast(sptm_op.pad(self.wires).sptm_matrix(), self._r_dtype_name)
+            matrix = self.update_single_particle_transition_matrix(self._global_sptm, op_sptm)
+            self._global_sptm = SingleParticleTransitionMatrixOperation(matrix, wires=self.wires)
+        self.transition_matrix = None
+
+    def _materialize_global_sptm(self) -> None:
+        """Multiply the global single-particle transition matrix by the operations applied since it was last read.
+
+        The stored matrix is never written into: the product is a new matrix, so a matrix read from
+        the device keeps its values.
+        """
+        if not self._pending_layers:
+            return
+        layers = self._pending_layers
+        wires = SingleParticleTransitionMatrixOperation.make_wires_continuous(Wires(self.wires))
         if self._global_sptm is None:
             matrix = qml.math.cast(np.eye(2 * len(wires)), self._r_dtype_name)
         else:
             matrix = self._global_sptm.single_particle_transition_matrix
-            if self._global_sptm_is_shared:
-                matrix = matrix.clone() if isinstance(matrix, torch.Tensor) else np.array(matrix)
-        matrix = SingleParticleTransitionMatrixOperation.multiply_columns(matrix, blocks)
-        if matrix is None:
-            op_sptm = qml.math.cast(sptm_op.pad(self.wires).sptm_matrix(), self._r_dtype_name)
-            matrix = self.update_single_particle_transition_matrix(self._global_sptm, op_sptm)
-        self._global_sptm = SingleParticleTransitionMatrixOperation(matrix, wires=self.wires)
-        self._global_sptm_is_shared = False
-        self.transition_matrix = None
+        # the operations were applied with the gradient mode of their own time, whatever the mode of this read
+        with torch.enable_grad():
+            product = SingleParticleTransitionMatrixOperation.multiply_layers(matrix, layers)
+        if product is None:
+            # the stored matrix is of another backend, which cannot be written by columns
+            product = matrix
+            for layer in layers:
+                for start, block in layer:
+                    block_wires = wires[start // 2 : (start + qml.math.shape(block)[-1]) // 2]
+                    padded = SingleParticleTransitionMatrixOperation(block, wires=block_wires).pad(wires)
+                    product = self.update_single_particle_transition_matrix(product, padded.sptm_matrix())
+        self._global_sptm = SingleParticleTransitionMatrixOperation(product, wires=self.wires)
+        self._pending_layers = []
+
+    def _check_blocks(self, blocks: Sequence[Tuple[int, TensorLike]], size: int) -> None:
+        """Raise for blocks that the global single-particle transition matrix cannot be multiplied by.
+
+        The product is computed later, when the matrix is read, so an operation that cannot be
+        applied is refused here, where it is applied.
+
+        :param blocks: ``(start, block)`` pairs of an operation, the blocks having shape (..., 2k, 2k).
+        :type blocks: Sequence[Tuple[int, TensorLike]]
+        :param size: The number of rows of the global matrix.
+        :type size: int
+        :raises ValueError: If a block does not fit in the matrix, or if its batch size is neither one
+            nor that of the operations applied before.
+        """
+        for start, block in blocks:
+            shape = qml.math.shape(block)
+            if start < 0 or start + shape[-1] > size:
+                raise ValueError(
+                    f"An operation acts on the columns {start} to {start + shape[-1]} of a single-particle "
+                    f"transition matrix of size {size}."
+                )
+            if len(shape) > 2 and shape[0] != 1:
+                if self._batch_size not in (None, shape[0]):
+                    raise ValueError(
+                        f"An operation has a batch size of {shape[0]}, but the operations applied before it "
+                        f"have a batch size of {self._batch_size}."
+                    )
+                self._batch_size = shape[0]
 
     def apply_state_prep(self, operation: qml.operation.Operation, **kwargs) -> bool:
         r"""
@@ -804,7 +876,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         if kwargs.get("reset", False):
             self.reset()
         apply = kwargs.get("apply", "auto")
-        if apply == "auto" and self._global_sptm is None:
+        if apply == "auto" and self._global_sptm is None and not self._pending_layers:
             apply = True
         elif apply == "auto":
             apply = False
@@ -1309,7 +1381,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :return: None
         """
         self._global_sptm = None
-        self._global_sptm_is_shared = False
+        self._pending_layers = []
+        self._batch_size = None
         self._batched = False
         self._transition_matrix = None
         self._lookup_table = None
@@ -2057,13 +2130,13 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :return: The global SPTM wrapped as a SingleParticleTransitionMatrixOperation.
         :rtype: SingleParticleTransitionMatrixOperation
         """
+        self._materialize_global_sptm()
         if self._global_sptm is None:
             assert self.num_wires is not None
             matrix = qml.math.cast(np.eye(2 * self.num_wires)[None, ...], self._r_dtype_name)
             if not self._batched:
                 matrix = matrix[0]
             return SingleParticleTransitionMatrixOperation(matrix, wires=self.wires)
-        self._global_sptm_is_shared = True
         return self._global_sptm
 
     @global_sptm.setter
@@ -2073,8 +2146,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         if not isinstance(value, SingleParticleTransitionMatrixOperation):
             value = SingleParticleTransitionMatrixOperation(value, wires=self.wires)
         matrix = qml.math.cast(value.sptm_matrix(), self._r_dtype_name)
+        self._pending_layers = []
         self._global_sptm = SingleParticleTransitionMatrixOperation(matrix, wires=value.wires, **value._hyperparameters)
-        self._global_sptm_is_shared = True
         self.transition_matrix = None
 
     @property
@@ -2175,6 +2248,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
 
     @transition_matrix.setter
     def transition_matrix(self, value: Optional[TensorLike]) -> None:
+        if value is not None:
+            self._materialize_global_sptm()
         if self._global_sptm is not None and value is not None:
             global_sptm_matrix = self._global_sptm.sptm_matrix()
             value = convert_like_and_cast_to(

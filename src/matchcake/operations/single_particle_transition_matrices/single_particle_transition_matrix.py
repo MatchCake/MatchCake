@@ -22,6 +22,7 @@ from ...utils.math import (
     fermionic_operator_matmul,
     orthonormalize,
 )
+from ...utils.reversible_column_product import ReversibleColumnProduct
 
 
 class SingleParticleTransitionMatrixOperation(Operation):
@@ -75,6 +76,8 @@ class SingleParticleTransitionMatrixOperation(Operation):
     DEFAULT_CHECK_REAL = True
     REAL_PART_ATOL = 1e-6
     MINUS_ONE_EIGVAL_ATOL = 1e-8
+    # Largest deviation from orthogonality, in units of the machine epsilon, for a block to be undone exactly.
+    REVERSIBLE_ORTHOGONALITY_FACTOR = 1e3
     # Set by the module of DisjointSptmOperation, which cannot be imported from here.
     DISJOINT_PRODUCT_CLASS: Any = None
 
@@ -261,7 +264,10 @@ class SingleParticleTransitionMatrixOperation(Operation):
             return None
         batch_sizes = [qml.math.shape(block)[0] for block in blocks if qml.math.ndim(block) > 2]
         batch_size = max(batch_sizes, default=0)
-        needs_batch = batch_size > 0 and (qml.math.ndim(matrix) == 2 or qml.math.shape(matrix)[0] != batch_size)
+        # a matrix without batch, or with a batch of one, takes the batch of the blocks
+        needs_batch = batch_size > 0 and (
+            qml.math.ndim(matrix) == 2 or (qml.math.shape(matrix)[0] == 1 and batch_size > 1)
+        )
         if "torch" in interfaces:
             tensors = [tensor for tensor in (matrix, *blocks) if isinstance(tensor, torch.Tensor)]
             # a tensor on an accelerator decides where the product lives
@@ -299,6 +305,123 @@ class SingleParticleTransitionMatrixOperation(Operation):
         return np.asarray(block, dtype=matrix.dtype)
 
     @staticmethod
+    def _stacked_groups(matrix: TensorLike, blocks: Sequence[Tuple[int, TensorLike]]) -> List[Tuple[Any, TensorLike]]:
+        """Group blocks acting on disjoint columns by size and stack each group.
+
+        :param matrix: The matrix the blocks multiply, a numpy array or a torch tensor already in the
+            backend, dtype and batch shape of the product, see :meth:`_writable_like`.
+        :type matrix: TensorLike
+        :param blocks: ``(start, block)`` pairs, the blocks having shape (2k, 2k) or (b, 2k, 2k).
+        :type blocks: Sequence[Tuple[int, TensorLike]]
+        :return: For each block size, the columns each block acts on, shape (n_blocks, 2k), and the
+            blocks, shape (n_blocks, 2k, 2k) or (b, n_blocks, 2k, 2k), in the backend of the matrix.
+        :rtype: List[Tuple[Any, TensorLike]]
+        """
+        by_size: dict = {}
+        for start, block in blocks:
+            block = SingleParticleTransitionMatrixOperation._block_like(block, matrix)
+            by_size.setdefault(block.shape[-1], []).append((start, block))
+        groups = []
+        for size, group in by_size.items():
+            indices: Any = np.asarray([start for start, _ in group])[:, None] + np.arange(size)[None, :]
+            if isinstance(matrix, torch.Tensor):
+                indices = torch.as_tensor(indices, device=matrix.device)
+            if all(block.ndim == 2 for _, block in group):
+                stacked = qml.math.stack([block for _, block in group])
+            else:
+                batch_shape = (matrix.shape[0], size, size)
+                stacked = qml.math.stack(
+                    [
+                        block.expand(batch_shape)
+                        if isinstance(block, torch.Tensor)
+                        else np.broadcast_to(block, batch_shape)
+                        for _, block in group
+                    ],
+                    axis=1,
+                )
+            groups.append((indices, stacked))
+        return groups
+
+    @staticmethod
+    def _is_inside_functorch_transform() -> bool:
+        """Whether a ``torch.func`` transform is active, which a custom autograd function does not support.
+
+        :return: True inside ``torch.func.vmap``, ``jacrev``, ``jacfwd`` and the like.
+        :rtype: bool
+        """
+        functorch = getattr(torch._C, "_functorch", None)
+        maybe_current_level = getattr(functorch, "maybe_current_level", None)
+        return maybe_current_level is not None and maybe_current_level() is not None
+
+    @staticmethod
+    def multiply_layers(matrix: TensorLike, layers: Sequence[Sequence[Tuple[int, TensorLike]]]) -> Optional[TensorLike]:
+        r"""Multiply a matrix on the right by a sequence of layers of blocks, without writing into it.
+
+        Each layer is applied as in :meth:`multiply_columns`. With torch tensors that require a
+        gradient, the whole sequence is one
+        :class:`~matchcake.utils.reversible_column_product.ReversibleColumnProduct`, whose backward
+        pass undoes the layers instead of storing what each one needs, so that both passes cost
+        :math:`O(n k^2)` per block. That requires orthogonal blocks. The layers are differentiated
+        by plain autograd instead when a block deviates from orthogonality by more than
+        :attr:`REVERSIBLE_ORTHOGONALITY_FACTOR` machine epsilons, in a precision other than single
+        and double, or inside a ``torch.func`` transform. Inside a transform every product is a new
+        tensor, which costs a copy of the matrix per block.
+
+        :param matrix: The matrix, shape (2n, 2n) or (b, 2n, 2n), a numpy array or a torch tensor.
+        :type matrix: TensorLike
+        :param layers: The layers, in the order they are applied. Each one is a list of
+            ``(start, block)`` pairs acting on disjoint ranges of columns.
+        :type layers: Sequence[Sequence[Tuple[int, TensorLike]]]
+        :return: The product, a new array of shape (2n, 2n) or (b, 2n, 2n), or None when a backend
+            other than numpy and torch is involved.
+        :rtype: Optional[TensorLike]
+        """
+        all_blocks = [block for layer in layers for _, block in layer]
+        target = SingleParticleTransitionMatrixOperation._writable_like(matrix, all_blocks)
+        if target is None:
+            return None
+        if (
+            isinstance(target, torch.Tensor)
+            and torch.is_grad_enabled()
+            and any(isinstance(tensor, torch.Tensor) and tensor.requires_grad for tensor in (target, *all_blocks))
+        ):
+            groups = [
+                group
+                for layer in layers
+                for group in SingleParticleTransitionMatrixOperation._stacked_groups(target, layer)
+            ]
+            with torch.no_grad():
+                defects = [
+                    torch.amax(torch.abs(stacked @ stacked.mT - torch.eye(stacked.shape[-1], device=target.device)))
+                    for _, stacked in groups
+                ]
+                defect = float(torch.stack(defects).max()) if defects else 0.0
+            tolerance = SingleParticleTransitionMatrixOperation.REVERSIBLE_ORTHOGONALITY_FACTOR
+            tolerance = tolerance * torch.finfo(target.dtype).eps
+            is_reversible = defect <= tolerance and target.dtype in (torch.float32, torch.float64)
+            if is_reversible and not SingleParticleTransitionMatrixOperation._is_inside_functorch_transform():
+                return ReversibleColumnProduct.apply(
+                    [indices for indices, _ in groups], target, *[stacked for _, stacked in groups]
+                )
+            if SingleParticleTransitionMatrixOperation._is_inside_functorch_transform():
+                # a transform refuses writes into a tensor it did not create: every product is a new tensor
+                for layer in layers:
+                    for start, block in layer:
+                        block = SingleParticleTransitionMatrixOperation._block_like(block, target)
+                        stop = start + block.shape[-1]
+                        batch_shape = torch.broadcast_shapes(target.shape[:-2], block.shape[:-2])
+                        target = target.expand(*batch_shape, *target.shape[-2:])
+                        target = torch.cat(
+                            [target[..., :, :start], target[..., :, start:stop] @ block, target[..., :, stop:]], dim=-1
+                        )
+                return target
+        if target is matrix:
+            target = target.clone() if isinstance(target, torch.Tensor) else np.array(target)
+        for layer in layers:
+            target = SingleParticleTransitionMatrixOperation.multiply_columns(target, layer)
+        return target
+
+    @staticmethod
     def multiply_columns(matrix: TensorLike, blocks: Sequence[Tuple[int, TensorLike]]) -> Optional[TensorLike]:
         r"""Multiply a matrix on the right by blocks acting on disjoint ranges of columns.
 
@@ -327,37 +450,16 @@ class SingleParticleTransitionMatrixOperation(Operation):
             return None
         if isinstance(matrix, torch.Tensor) and matrix.is_leaf and matrix.requires_grad:
             matrix = matrix.clone()
-        by_size: dict = {}
-        for start, block in blocks:
-            block = SingleParticleTransitionMatrixOperation._block_like(block, matrix)
-            by_size.setdefault(block.shape[-1], []).append((start, block))
-        for size, group in by_size.items():
-            if len(group) == 1:
-                start, block = group[0]
+        for indices, stacked in SingleParticleTransitionMatrixOperation._stacked_groups(matrix, blocks):
+            if indices.shape[0] == 1:
+                start, size = int(indices[0, 0]), indices.shape[1]
                 columns = matrix[..., :, start : start + size]
                 if isinstance(columns, torch.Tensor):
                     # autograd keeps the columns for the gradient of the block, they are overwritten below
                     columns = columns.clone()
-                matrix[..., :, start : start + size] = columns @ block
+                matrix[..., :, start : start + size] = columns @ stacked[..., 0, :, :]
                 continue
-            # indices: (n_blocks, 2k), columns: (..., 2n, n_blocks, 2k)
-            indices: Any = np.asarray([start for start, _ in group])[:, None] + np.arange(size)[None, :]
-            if isinstance(matrix, torch.Tensor):
-                indices = torch.as_tensor(indices, device=matrix.device)
-            if all(block.ndim == 2 for _, block in group):
-                stacked = qml.math.stack([block for _, block in group])  # (n_blocks, 2k, 2k)
-            else:
-                batch_shape = (matrix.shape[0], size, size)
-                stacked = qml.math.stack(  # (b, n_blocks, 2k, 2k)
-                    [
-                        block.expand(batch_shape)
-                        if isinstance(block, torch.Tensor)
-                        else np.broadcast_to(block, batch_shape)
-                        for _, block in group
-                    ],
-                    axis=1,
-                )
-            columns = matrix[..., :, indices]
+            columns = matrix[..., :, indices]  # (..., 2n, n_blocks, 2k)
             if stacked.ndim == 3:
                 matrix[..., :, indices] = qml.math.einsum("...nls,lst->...nlt", columns, stacked)
             else:
