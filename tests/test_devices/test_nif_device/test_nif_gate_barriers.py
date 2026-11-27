@@ -136,6 +136,47 @@ class TestNonInteractingFermionicDeviceGateBarriers:
         return tensor.reshape(-1)
 
     @staticmethod
+    def apply_controlled_z(state: np.ndarray, first_qubit: int, second_qubit: int) -> np.ndarray:
+        """Apply a controlled-Z gate to a dense state vector.
+
+        :param state: State vector of shape ``(2^n,)``.
+        :type state: np.ndarray
+        :param first_qubit: First qubit of the gate.
+        :type first_qubit: int
+        :param second_qubit: Second qubit of the gate.
+        :type second_qubit: int
+        :return: The state vector with a sign on the amplitudes where both qubits are 1.
+        :rtype: np.ndarray
+        """
+        n_qubits = int(np.log2(state.shape[0]))
+        tensor = state.reshape([2] * n_qubits).copy()
+        index = [slice(None)] * n_qubits
+        index[first_qubit] = index[second_qubit] = 1
+        tensor[tuple(index)] *= -1
+        return tensor.reshape(-1)
+
+    @staticmethod
+    def fswaps_to_the_end(n_wires: int, kept_wires):
+        """Build the fSWAP gates that move the wires that are not kept behind the kept ones.
+
+        The kept wires keep their order and end on the first positions.
+
+        :param n_wires: Number of wires.
+        :type n_wires: int
+        :param kept_wires: The kept wires, in increasing order.
+        :return: The list of fSWAP gates on neighbouring positions.
+        """
+        order = list(range(n_wires))
+        operations = []
+        for removed_wire in sorted(set(order) - set(kept_wires), reverse=True):
+            position = order.index(removed_wire)
+            while position + 1 < n_wires and order[position + 1] in kept_wires:
+                operations.append(fSWAP(wires=[position, position + 1]))
+                order[position], order[position + 1] = order[position + 1], order[position]
+                position += 1
+        return operations
+
+    @staticmethod
     def word_expval(state: np.ndarray, letters: str, qubits) -> float:
         """Expectation value of a Pauli word in a dense state vector.
 
@@ -314,6 +355,85 @@ class TestNonInteractingFermionicDeviceGateBarriers:
             np.asarray(unprotected_device.analytic_probability(wires=range(3))) - self.probabilities(state, kept_wires)
         ).max()
         assert difference > ATOL_APPROX_COMPARISON
+
+    @pytest.mark.parametrize(
+        "n_wires, kept_wires",
+        [(4, [0, 2, 3]), (4, [2, 3]), (5, [0, 2, 3]), (5, [1, 3]), (5, [0, 2, 4]), (5, [1, 2, 4])],
+    )
+    @pytest.mark.parametrize("is_displaced", [False, True])
+    def test_reduced_state_without_barrier_is_the_reduced_state_after_fswaps(self, n_wires, kept_wires, is_displaced):
+        r"""
+        Without gate barriers, the reduced state is the one obtained by moving the removed wires behind
+        the kept ones with fSWAP gates and tracing them out there, where the trace-out is exact.
+        """
+        device, _ = self.prepare(n_wires, is_displaced)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            unprotected_state = device.reduced_state(kept_wires, gate_barrier=False)
+        device.apply(self.fswaps_to_the_end(n_wires, kept_wires))
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            moved_state = device.reduced_state(list(range(len(kept_wires))))
+        assert moved_state.barriers == ()
+        assert unprotected_state.num_params == moved_state.num_params
+        for value, expected in zip(unprotected_state.data, moved_state.data):
+            np.testing.assert_allclose(
+                qml.math.toarray(value),
+                qml.math.toarray(expected),
+                atol=ATOL_MATRIX_COMPARISON,
+                rtol=RTOL_MATRIX_COMPARISON,
+            )
+
+    @pytest.mark.parametrize(
+        "n_wires, kept_wires", [(4, [0, 2, 3]), (4, [2, 3]), (5, [0, 2, 3]), (5, [1, 3]), (5, [1, 2, 4])]
+    )
+    @pytest.mark.parametrize("is_displaced", [False, True])
+    def test_reduced_state_without_barrier_is_the_qubit_state_after_controlled_z_gates(
+        self, n_wires, kept_wires, is_displaced
+    ):
+        r"""
+        An fSWAP gate is a SWAP gate times a controlled-Z gate. Without gate barriers, the reduced state
+        is therefore the reduced state of the qubits after a controlled-Z gate between every removed wire
+        and every kept wire behind it, also when gates act across the removed wires afterwards. These
+        gates change the reduced state exactly when it needs a gate barrier.
+        """
+        device, state = self.prepare(n_wires, is_displaced)
+        needs_a_barrier = bool(device.reduced_state(kept_wires).barriers)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            unprotected_state = device.reduced_state(kept_wires, gate_barrier=False)
+        untouched_state = state
+        for removed_wire in sorted(set(range(n_wires)) - set(kept_wires)):
+            for kept_wire in kept_wires:
+                if kept_wire > removed_wire:
+                    state = self.apply_controlled_z(state, removed_wire, kept_wire)
+        n_kept = len(kept_wires)
+        gates = self.random_gates(self.neighbours(n_kept), 1, TEST_SEED + 3)
+        state = self.apply_gates(state, gates, kept_wires)
+        untouched_state = self.apply_gates(untouched_state, gates, kept_wires)
+        unprotected_device = mc.NonInteractingFermionicDevice(wires=n_kept)
+        unprotected_device.apply([unprotected_state, *gates])
+        np.testing.assert_allclose(
+            np.asarray(unprotected_device.analytic_probability(wires=range(n_kept))),
+            self.probabilities(state, kept_wires),
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
+        differences = []
+        for letters in itertools.product("IXYZ", repeat=n_kept):
+            word = "".join(letters)
+            if word == "I" * n_kept:
+                continue
+            expval = float(unprotected_device.exact_expval(self.observable_of(word)))
+            np.testing.assert_allclose(
+                expval,
+                self.word_expval(state, word, kept_wires),
+                atol=ATOL_MATRIX_COMPARISON,
+                rtol=RTOL_MATRIX_COMPARISON,
+                err_msg=f"word {word}",
+            )
+            differences.append(abs(expval - self.word_expval(untouched_state, word, kept_wires)))
+        assert (max(differences) > ATOL_APPROX_COMPARISON) is needs_a_barrier
 
     @pytest.mark.parametrize("entry_point", ["apply", "execute_generator", "qnode"])
     def test_gate_across_a_barrier_is_refused(self, entry_point):
