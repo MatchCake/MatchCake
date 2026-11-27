@@ -10,7 +10,7 @@ class SptmCompHH(SingleParticleTransitionMatrixOperation):
         return cls(wires=wires, **kwargs)
 
     def __init__(self, wires=None, **kwargs):
-        matrix = np.zeros((4, 4), dtype=complex)
+        matrix = np.zeros((4, 4))
         matrix[..., 0, 2] = 1.0
         matrix[..., 1, 1] = -1.0
         matrix[..., 2, 0] = 1.0
