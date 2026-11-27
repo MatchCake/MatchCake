@@ -523,7 +523,8 @@ def nif_split_non_commuting(
                 identity_offsets[index] = offset - constant
         measurements.append(measurement)
     if any(new is not old for new, old in zip(measurements, tape.measurements)):
-        tape = tape.copy(measurements=measurements)
+        # the operations are handed over as they are: without them in the update, every one is copied
+        tape = tape.copy(measurements=measurements, operations=tape.operations)
     candidates = {} if tape.shots.has_partitioned_shots else _unit_coefficient_candidates(tape)
     tapes, postprocessing = qml.transforms.split_non_commuting(tape, grouping_strategy="wires")
     if not candidates and not identity_offsets:

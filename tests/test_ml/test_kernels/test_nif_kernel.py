@@ -10,6 +10,8 @@ from matchcake.ml.kernels import NIFKernel
 from matchcake.operations import SingleParticleTransitionMatrixOperation
 from matchcake.utils.math import dagger, matmul
 
+from ...configs import ATOL_MATRIX_COMPARISON, RTOL_MATRIX_COMPARISON
+
 
 class TestNIFKernel:
     @pytest.fixture
@@ -230,4 +232,6 @@ class TestNIFKernel:
         assert len(tape) == 2, f"Expected 2 operations, got {len(tape)} from {tape}."
 
         global_sptm = kernel.q_device.global_sptm.sptm_matrix()
-        np.testing.assert_allclose(matmul(sptm0, dagger(sptm1)), global_sptm)
+        np.testing.assert_allclose(
+            matmul(sptm0, dagger(sptm1)), global_sptm, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
+        )

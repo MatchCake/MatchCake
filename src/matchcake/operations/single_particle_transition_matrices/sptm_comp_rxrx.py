@@ -21,6 +21,28 @@ class SptmCompRxRx(SingleParticleTransitionMatrixOperation):
         \end{align}
     """
 
+    HAS_BULK_FORMULA = True
+
+    @staticmethod
+    def compute_sptm(params):
+        """Compute the single-particle transition matrices of gates of this class from their angles.
+
+        :param params: The angles, shape (..., 2).
+        :return: The matrices, shape (..., 4, 4).
+        """
+        theta, phi = params[..., 0] / 2, params[..., 1] / 2
+        cos_difference, sin_difference = qml.math.cos(phi - theta), qml.math.sin(phi - theta)
+        cos_sum, sin_sum = qml.math.cos(phi + theta), qml.math.sin(phi + theta)
+        zero = qml.math.zeros_like(cos_sum)
+        return SingleParticleTransitionMatrixOperation.matrix_from_rows(
+            [
+                [cos_difference, zero, zero, -sin_difference],
+                [zero, cos_sum, sin_sum, zero],
+                [zero, -sin_sum, cos_sum, zero],
+                [sin_difference, zero, zero, cos_difference],
+            ]
+        )
+
     @classmethod
     def random_params(cls, batch_size=None, **kwargs):
         params_shape = ([batch_size] if batch_size is not None else []) + [2]
@@ -36,19 +58,7 @@ class SptmCompRxRx(SingleParticleTransitionMatrixOperation):
         if len(params_shape) > 2:
             raise ValueError(f"Invalid shape for the parameters: {params_shape}")
 
-        theta, phi = params[..., 0] / 2, params[..., 1] / 2
-        cos_difference, sin_difference = qml.math.cos(phi - theta), qml.math.sin(phi - theta)
-        cos_sum, sin_sum = qml.math.cos(phi + theta), qml.math.sin(phi + theta)
-        zero = qml.math.zeros_like(cos_sum)
-        matrix = self.matrix_from_rows(
-            [
-                [cos_difference, zero, zero, -sin_difference],
-                [zero, cos_sum, sin_sum, zero],
-                [zero, -sin_sum, cos_sum, zero],
-                [sin_difference, zero, zero, cos_difference],
-            ]
-        )
-        super().__init__(matrix, wires=wires, **kwargs)
+        self._init_from_params(params, wires=wires, **kwargs)
         self._given_params = params
 
     def to_matchgate(self):

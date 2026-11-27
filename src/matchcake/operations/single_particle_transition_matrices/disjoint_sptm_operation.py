@@ -42,6 +42,8 @@ class DisjointSptmOperation(SingleParticleTransitionMatrixOperation):
             raise ValueError(f"The blocks of a {self.__class__.__name__} must act on disjoint wires.")
         wires = self.make_wires_continuous(Wires(block_wires))
         self._dense_matrix: Optional[TensorLike] = None
+        self._stored_matrix = None
+        self._params = None
         self._wires = wires
         Operation.__init__(self, *[block.single_particle_transition_matrix for block in self._blocks], wires=wires)
         self._hyperparameters = {
@@ -70,12 +72,14 @@ class DisjointSptmOperation(SingleParticleTransitionMatrixOperation):
     def _matrix(self) -> TensorLike:
         if self._dense_matrix is None:
             size = 2 * len(self.wires)
-            matrix = self.multiply_columns(np.eye(size, dtype=np.int64), self.column_blocks(Wires(self.wires)))
+            # the identity is of the smallest integer type, so that the blocks alone decide the dtype
+            matrix = self.multiply_columns(np.eye(size, dtype=np.int8), self.column_blocks(Wires(self.wires)))
             if matrix is None:
                 matrices = [block.single_particle_transition_matrix for block in self._blocks]
                 matrices = utils.math.convert_tensors_to_same_type_and_cast_to(matrices, self.casting_priorities)
                 batch_sizes = [qml.math.shape(sub)[0] for sub in matrices if qml.math.ndim(sub) > 2]
-                shape = (*batch_sizes[:1], size, size)
+                # a batch of one is broadcast to the largest batch of the blocks
+                shape = (*([max(batch_sizes)] if batch_sizes else []), size, size)
                 matrix = np.zeros(shape)
                 matrix[...] = np.eye(size)
                 # only the backend is taken from the blocks: an integer block must not make the matrix integer
@@ -84,6 +88,10 @@ class DisjointSptmOperation(SingleParticleTransitionMatrixOperation):
                     matrix[..., start : start + sub.shape[-2], start : start + sub.shape[-1]] = sub
             self._dense_matrix = matrix
         return self._dense_matrix
+
+    @_matrix.setter
+    def _matrix(self, value: TensorLike) -> None:
+        self._dense_matrix = value
 
     @property
     def num_params(self) -> int:  # type: ignore[override]
@@ -96,7 +104,7 @@ class DisjointSptmOperation(SingleParticleTransitionMatrixOperation):
     @property
     def batch_size(self):
         batch_sizes = [block.batch_size for block in self._blocks if block.batch_size is not None]
-        return batch_sizes[0] if batch_sizes else None
+        return max(batch_sizes) if batch_sizes else None
 
 
 SingleParticleTransitionMatrixOperation.DISJOINT_PRODUCT_CLASS = DisjointSptmOperation

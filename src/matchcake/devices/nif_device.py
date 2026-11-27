@@ -78,6 +78,7 @@ from .probability_strategies import (
     ProductStateProbabilityStrategy,
 )
 from .sampling_strategies import ProductBasisSampling, SamplingStrategy, get_sampling_strategy
+from .sptm_circuit_records import SptmCircuitRecords
 from .star_state_finding_strategies import (
     StarStateFindingStrategy,
     get_star_state_finding_strategy,
@@ -174,7 +175,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         GaussianStatePrep.__name__,
     }
 
-    DEFAULT_CONTRACTION_METHOD = "neighbours"
+    DEFAULT_CONTRACTION_METHOD = "bulk"
     DEFAULT_SAMPLING_STRATEGY = "ProductBasisSampling"
     FALLBACK_SAMPLING_STRATEGY = "2QubitBy2QubitSampling"
     DEFAULT_STAR_STATE_FINDING_STRATEGY = "FromSampling"
@@ -324,8 +325,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self._transition_matrix: Optional[TensorLike] = None
         self._lookup_table: Optional[NonInteractingFermionicLookupTable] = None
         self._global_sptm: Optional[SingleParticleTransitionMatrixOperation] = None
-        # Blocks of the operations applied since the global matrix was last read, one list per operation.
-        self._pending_layers: List[List[Tuple[int, TensorLike]]] = []
+        # The operations applied since the global matrix was last read.
+        self._records = SptmCircuitRecords()
+        self._continuous_wires_cache: Optional[Tuple[Wires, Wires, Dict[Any, int]]] = None
         # Batch size shared by the operations applied so far, None while none of them is batched.
         self._batch_size: Optional[int] = None
         self._batched = False
@@ -353,6 +355,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self.contraction_strategy: ContractionStrategy = get_contraction_strategy(
             kwargs.get("contraction_strategy", self.DEFAULT_CONTRACTION_METHOD)
         )
+        # every strategy multiplies in the precision of the device
+        self.contraction_strategy.dtype_name = self._r_dtype_name
         self.star_state_finding_strategy: StarStateFindingStrategy = get_star_state_finding_strategy(
             kwargs.get(
                 "star_state_finding_strategy",
@@ -379,7 +383,12 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :type state: Dict[str, Any]
         """
         self.__dict__.update(state)
-        self.__dict__.setdefault("_pending_layers", [])
+        pending_layers = self.__dict__.pop("_pending_layers", None)
+        self.__dict__.setdefault("_records", SptmCircuitRecords())
+        for layer in pending_layers or []:
+            # operations applied and not yet multiplied when the device was saved
+            self._records.add_blocks(layer)
+        self.__dict__.setdefault("_continuous_wires_cache", None)
         self.__dict__.setdefault("_batch_size", None)
 
     def __copy__(self) -> "NonInteractingFermionicDevice":
@@ -392,7 +401,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         new_device = type(self).__new__(type(self))
         new_device.__dict__.update(self.__dict__)
         # each device records its own operations from here on, the stored matrix is never written into
-        new_device._pending_layers = []
+        new_device._records = SptmCircuitRecords()
         return new_device
 
     def apply(
@@ -551,18 +560,49 @@ class NonInteractingFermionicDevice(qml.devices.Device):
     def _apply_op(self, op: qml.operation.Operation) -> None:
         """Record the single-particle transition matrix of an operation as the next factor of the global one.
 
-        The blocks of the operation are only kept here. The product is computed when the global
-        matrix is read, see :meth:`_materialize_global_sptm`, so that all the operations applied in
-        between are differentiated together.
+        The operation is only recorded here: a gate with a formula for its matrix by its class and
+        parameters, any other operation by its blocks. The product is computed when the global matrix
+        is read, see :meth:`_materialize_global_sptm`, so that all the operations applied in between
+        are differentiated together, and compiled together if the contraction strategy does so.
 
         :param op: The operation to apply.
         :type op: qml.operation.Operation
         """
         sptm_op = SingleParticleTransitionMatrixOperation.from_operation(op)
-        self._batched = self._batched or (sptm_op.batch_size is not None)
-        wires = SingleParticleTransitionMatrixOperation.make_wires_continuous(Wires(self.wires))
+        wires = self._continuous_wires
+        if self._transition_matrix is not None or self._lookup_table is not None:
+            self.transition_matrix = None
+        params = sptm_op._params
+        # this runs once per gate, so the checks are kept to plain attribute reads
+        is_real_array = (isinstance(params, torch.Tensor) and not params.is_complex()) or (
+            type(params) is np.ndarray and not np.iscomplexobj(params)
+        )
+        if sptm_op.HAS_BULK_FORMULA and is_real_array and params is not None:
+            labels = sptm_op.wires.labels
+            if len(labels) == 2 and abs(labels[0] - labels[1]) == 1:
+                position = self._wire_positions.get(min(labels))
+                if position is None:
+                    # raises the error of a wire that is not on the device
+                    position = wires.index(min(labels))
+                start = 2 * position
+                batch_size = params.shape[0] if params.ndim > 1 else None
+                self._batched = self._batched or (batch_size is not None)
+                self._check_block(start, 4, batch_size, 2 * len(wires))
+                # Angles that carry no gradient are copied, since they may be written into before the
+                # product is computed. Angles that carry one are kept, to stay in the autograd graph.
+                if isinstance(params, torch.Tensor):
+                    if not params.requires_grad:
+                        params = params.clone()
+                else:
+                    params = params.copy()
+                self._records.add_gate(type(sptm_op), start, 4, params)
+                return
+        batch_size = sptm_op.batch_size
+        self._batched = self._batched or (batch_size is not None)
         blocks = [(start, qml.math.cast(block, self._r_dtype_name)) for start, block in sptm_op.column_blocks(wires)]
-        self._check_blocks(blocks, 2 * len(wires))
+        for start, block in blocks:
+            shape = qml.math.shape(block)
+            self._check_block(start, shape[-1], shape[0] if len(shape) > 2 else None, 2 * len(wires))
         if all(qml.math.get_interface(block) in ("numpy", "torch") for _, block in blocks):
             if type(sptm_op) is SingleParticleTransitionMatrixOperation:
                 # a matrix given by the user may be written into before the product is computed
@@ -570,70 +610,82 @@ class NonInteractingFermionicDevice(qml.devices.Device):
                     (start, block.clone() if isinstance(block, torch.Tensor) else np.array(block))
                     for start, block in blocks
                 ]
-            self._pending_layers.append(blocks)
+            self._records.add_blocks(blocks)
         else:
             # other backends cannot be written by columns: the padded matrix is multiplied right away
             self._materialize_global_sptm()
             op_sptm = qml.math.cast(sptm_op.pad(self.wires).sptm_matrix(), self._r_dtype_name)
             matrix = self.update_single_particle_transition_matrix(self._global_sptm, op_sptm)
             self._global_sptm = SingleParticleTransitionMatrixOperation(matrix, wires=self.wires)
-        self.transition_matrix = None
 
     def _materialize_global_sptm(self) -> None:
         """Multiply the global single-particle transition matrix by the operations applied since it was last read.
 
-        The stored matrix is never written into: the product is a new matrix, so a matrix read from
-        the device keeps its values.
+        The contraction strategy is asked for a plan of the recorded operations, see
+        :meth:`~matchcake.devices.contraction_strategies.contraction_strategy.ContractionStrategy.build_plan`.
+        Without one they are multiplied one by one. The stored matrix is never written into: the
+        product is a new matrix, so a matrix read from the device keeps its values.
         """
-        if not self._pending_layers:
+        if len(self._records) == 0:
             return
-        layers = self._pending_layers
-        wires = SingleParticleTransitionMatrixOperation.make_wires_continuous(Wires(self.wires))
+        wires = self._continuous_wires
         if self._global_sptm is None:
             matrix = qml.math.cast(np.eye(2 * len(wires)), self._r_dtype_name)
         else:
             matrix = self._global_sptm.single_particle_transition_matrix
+        product = None
         # the operations were applied with the gradient mode of their own time, whatever the mode of this read
         with torch.enable_grad():
-            product = SingleParticleTransitionMatrixOperation.multiply_layers(matrix, layers)
+            if qml.math.get_interface(matrix) in ("numpy", "torch"):
+                groups = self.contraction_strategy.build_plan(self._records, 2 * len(wires), self._r_dtype_name)
+                if groups is not None:
+                    product = SingleParticleTransitionMatrixOperation.multiply_groups(matrix, groups)
+                else:
+                    product = SingleParticleTransitionMatrixOperation.multiply_layers(
+                        matrix, self._records.block_layers(self._r_dtype_name)
+                    )
         if product is None:
             # the stored matrix is of another backend, which cannot be written by columns
             product = matrix
-            for layer in layers:
+            for layer in self._records.block_layers(self._r_dtype_name):
                 for start, block in layer:
                     block_wires = wires[start // 2 : (start + qml.math.shape(block)[-1]) // 2]
                     padded = SingleParticleTransitionMatrixOperation(block, wires=block_wires).pad(wires)
-                    product = self.update_single_particle_transition_matrix(product, padded.sptm_matrix())
+                    product = self.update_single_particle_transition_matrix(
+                        product, qml.math.cast(padded.sptm_matrix(), self._r_dtype_name)
+                    )
         self._global_sptm = SingleParticleTransitionMatrixOperation(product, wires=self.wires)
-        self._pending_layers = []
+        self._records.clear()
 
-    def _check_blocks(self, blocks: Sequence[Tuple[int, TensorLike]], size: int) -> None:
-        """Raise for blocks that the global single-particle transition matrix cannot be multiplied by.
+    def _check_block(self, start: int, block_size: int, batch_size: Optional[int], size: int) -> None:
+        """Raise for a block that the global single-particle transition matrix cannot be multiplied by.
 
         The product is computed later, when the matrix is read, so an operation that cannot be
         applied is refused here, where it is applied.
 
-        :param blocks: ``(start, block)`` pairs of an operation, the blocks having shape (..., 2k, 2k).
-        :type blocks: Sequence[Tuple[int, TensorLike]]
-        :param size: The number of rows of the global matrix.
+        :param start: The first column the block acts on.
+        :type start: int
+        :param block_size: The number of columns the block acts on.
+        :type block_size: int
+        :param batch_size: The batch size of the block, None without batch.
+        :type batch_size: Optional[int]
+        :param size: The number of columns of the global matrix.
         :type size: int
-        :raises ValueError: If a block does not fit in the matrix, or if its batch size is neither one
+        :raises ValueError: If the block does not fit in the matrix, or if its batch size is neither one
             nor that of the operations applied before.
         """
-        for start, block in blocks:
-            shape = qml.math.shape(block)
-            if start < 0 or start + shape[-1] > size:
+        if start < 0 or start + block_size > size:
+            raise ValueError(
+                f"An operation acts on the columns {start} to {start + block_size} of a single-particle "
+                f"transition matrix of size {size}."
+            )
+        if batch_size is not None and batch_size != 1:
+            if self._batch_size not in (None, batch_size):
                 raise ValueError(
-                    f"An operation acts on the columns {start} to {start + shape[-1]} of a single-particle "
-                    f"transition matrix of size {size}."
+                    f"An operation has a batch size of {batch_size}, but the operations applied before it "
+                    f"have a batch size of {self._batch_size}."
                 )
-            if len(shape) > 2 and shape[0] != 1:
-                if self._batch_size not in (None, shape[0]):
-                    raise ValueError(
-                        f"An operation has a batch size of {shape[0]}, but the operations applied before it "
-                        f"have a batch size of {self._batch_size}."
-                    )
-                self._batch_size = shape[0]
+            self._batch_size = batch_size
 
     def apply_state_prep(self, operation: qml.operation.Operation, **kwargs) -> bool:
         r"""
@@ -864,7 +916,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         if kwargs.get("reset", False):
             self.reset()
         apply = kwargs.get("apply", "auto")
-        if apply == "auto" and self._global_sptm is None and not self._pending_layers:
+        if apply == "auto" and self._global_sptm is None and len(self._records) == 0:
             apply = True
         elif apply == "auto":
             apply = False
@@ -1369,7 +1421,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :return: None
         """
         self._global_sptm = None
-        self._pending_layers = []
+        self._records.clear()
         self._batch_size = None
         self._batched = False
         self._transition_matrix = None
@@ -2112,6 +2164,32 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         return qml.math.einsum("...ij,...ik,...kl->...jl", lifted_sptm, ext_cov0, lifted_sptm)
 
     @property
+    def _continuous_wires(self) -> Wires:
+        """The wires of the global single-particle transition matrix: the continuous span of the device wires.
+
+        :return: The wires, computed once for the wires of the device.
+        :rtype: Wires
+        """
+        cached = self._continuous_wires_cache
+        if cached is None or cached[0] is not self.wires:
+            continuous_wires = SingleParticleTransitionMatrixOperation.make_wires_continuous(Wires(self.wires))
+            positions = {label: position for position, label in enumerate(continuous_wires.labels)}
+            cached = (self.wires, continuous_wires, positions)
+            self._continuous_wires_cache = cached
+        return cached[1]
+
+    @property
+    def _wire_positions(self) -> Dict[Any, int]:
+        """The position of each wire label in :attr:`_continuous_wires`.
+
+        :return: The positions by label.
+        :rtype: Dict[Any, int]
+        """
+        self._continuous_wires
+        assert self._continuous_wires_cache is not None
+        return self._continuous_wires_cache[2]
+
+    @property
     def global_sptm(self) -> SingleParticleTransitionMatrixOperation:
         """The current global single-particle transition matrix.
 
@@ -2134,7 +2212,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         if not isinstance(value, SingleParticleTransitionMatrixOperation):
             value = SingleParticleTransitionMatrixOperation(value, wires=self.wires)
         matrix = qml.math.cast(value.sptm_matrix(), self._r_dtype_name)
-        self._pending_layers = []
+        self._records.clear()
         self._global_sptm = SingleParticleTransitionMatrixOperation(matrix, wires=value.wires, **value._hyperparameters)
         self.transition_matrix = None
 

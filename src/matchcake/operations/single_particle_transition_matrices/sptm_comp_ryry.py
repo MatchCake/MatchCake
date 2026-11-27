@@ -23,6 +23,29 @@ class SptmCompRyRy(SingleParticleTransitionMatrixOperation):
     ALLOWED_ANGLES = [np.pi, 3 * np.pi]
     EQUAL_ALLOWED_ANGLES = [0, np.pi, 2 * np.pi, 3 * np.pi]
 
+    HAS_BULK_FORMULA = True
+
+    @staticmethod
+    def compute_sptm(params):
+        """Compute the single-particle transition matrices of gates of this class from their angles.
+
+        :param params: The angles, shape (..., 2).
+        :return: The matrices, shape (..., 4, 4).
+        """
+        theta, phi = params[..., 0], params[..., 1]
+        half_sum, half_difference = (theta + phi) / 2, (theta - phi) / 2
+        cos_sum, sin_sum = qml.math.cos(half_sum), qml.math.sin(half_sum)
+        cos_difference, sin_difference = qml.math.cos(half_difference), qml.math.sin(half_difference)
+        zero = qml.math.zeros_like(cos_sum)
+        return SingleParticleTransitionMatrixOperation.matrix_from_rows(
+            [
+                [cos_sum, zero, -sin_sum, zero],
+                [zero, cos_difference, zero, sin_difference],
+                [sin_sum, zero, cos_sum, zero],
+                [zero, -sin_difference, zero, cos_difference],
+            ]
+        )
+
     @classmethod
     def random_params(cls, batch_size=None, **kwargs):
         params_shape = ([batch_size] if batch_size is not None else []) + [2]
@@ -42,20 +65,7 @@ class SptmCompRyRy(SingleParticleTransitionMatrixOperation):
             self.check_angles(params)
         if kwargs.get("clip_angles", self.DEFAULT_CLIP_ANGLES):
             params = self.clip_angles(params)
-        theta, phi = params[..., 0], params[..., 1]
-        half_sum, half_difference = (theta + phi) / 2, (theta - phi) / 2
-        cos_sum, sin_sum = qml.math.cos(half_sum), qml.math.sin(half_sum)
-        cos_difference, sin_difference = qml.math.cos(half_difference), qml.math.sin(half_difference)
-        zero = qml.math.zeros_like(cos_sum)
-        matrix = self.matrix_from_rows(
-            [
-                [cos_sum, zero, -sin_sum, zero],
-                [zero, cos_difference, zero, sin_difference],
-                [sin_sum, zero, cos_sum, zero],
-                [zero, -sin_difference, zero, cos_difference],
-            ]
-        )
-        super().__init__(matrix, wires=wires, **kwargs)
+        self._init_from_params(params, wires=wires, **kwargs)
         self._given_params = params
 
     def to_matchgate(self):

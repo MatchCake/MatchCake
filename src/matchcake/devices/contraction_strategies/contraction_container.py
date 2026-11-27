@@ -1,6 +1,7 @@
 import warnings
 from typing import Callable, Iterable, List, Optional, Union, cast
 
+import pennylane as qml
 from pennylane.wires import Wires
 
 from ...operations.matchgate_operation import MatchgateOperation
@@ -19,6 +20,8 @@ class _ContractionMatchgatesContainer:
     def __init__(self):
         self.op_container = {}
         self.wires_set = set({})
+        # Name of the real dtype the operations are contracted in, None to keep that of each operation.
+        self.dtype_name: Optional[str] = None
 
     @property
     def all_wires(self) -> Wires:
@@ -62,6 +65,31 @@ class _ContractionMatchgatesContainer:
         :rtype: bool
         """
         raise NotImplementedError
+
+    def cast(
+        self, op: Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]
+    ) -> Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]:
+        """Return an operation in the precision this container contracts in.
+
+        Without :attr:`dtype_name` the operation is returned as it is. With it, the operation is
+        converted to its single-particle transition matrix in that dtype, so that every product of the
+        contraction is done in the precision of the device and not in that of the parameters.
+
+        :param op: The operation to add.
+        :type op: Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]
+        :return: The operation, as a single-particle transition matrix operation of dtype
+            :attr:`dtype_name` when it is set.
+        :rtype: Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]
+        """
+        if self.dtype_name is None:
+            return op
+        sptm_op = SingleParticleTransitionMatrixOperation.from_operation(op)
+        matrix = sptm_op.sptm_matrix()
+        if qml.math.get_dtype_name(matrix) == self.dtype_name:
+            return sptm_op
+        return SingleParticleTransitionMatrixOperation(
+            qml.math.cast(matrix, self.dtype_name), wires=sptm_op.wires, **sptm_op._hyperparameters
+        )
 
     def try_add(self, op: Union[MatchgateOperation, SingleParticleTransitionMatrixOperation]) -> bool:
         try:
@@ -111,6 +139,7 @@ class _ContractionMatchgatesContainer:
         :param op: The operation to add.
         :return: The contracted operation if the container was cleared, None otherwise.
         """
+        op = self.cast(op)
         if not self.try_add(op):
             contracted_op = self.contract_and_clear()
             self.add(op)

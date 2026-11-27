@@ -381,7 +381,7 @@ class TestNIFApplyOpColumnUpdates:
 
         device.reset()
 
-        assert device._pending_layers == []
+        assert len(device._records) == 0
         np.testing.assert_array_equal(self._to_numpy(device.global_sptm.sptm_matrix()), np.eye(2 * N_WIRES))
         device.apply(operations[4:])
         np.testing.assert_allclose(
@@ -571,16 +571,16 @@ class TestNIFApplyOpColumnUpdates:
     def test_an_operation_that_does_not_fit_in_the_matrix_is_refused_when_it_is_applied(self):
         device = NonInteractingFermionicDevice(wires=2)
         with pytest.raises(ValueError, match="columns"):
-            device._check_blocks([(2, np.eye(4))], 4)
+            device._check_block(2, 4, None, 4)
 
     def test_a_failed_read_keeps_the_operations_that_were_applied(self, monkeypatch):
-        device = NonInteractingFermionicDevice(wires=3)
+        device = NonInteractingFermionicDevice(wires=3, contraction_strategy="bulk")
         device.apply([SptmCompRyRy(np.array([0.3, 0.4]), wires=[0, 1])])
 
-        def failing_product(matrix, layers):
+        def failing_product(matrix, groups):
             raise RuntimeError("no product")
 
-        monkeypatch.setattr(SingleParticleTransitionMatrixOperation, "multiply_layers", staticmethod(failing_product))
+        monkeypatch.setattr(SingleParticleTransitionMatrixOperation, "multiply_groups", staticmethod(failing_product))
         with pytest.raises(RuntimeError, match="no product"):
             device.global_sptm
         monkeypatch.undo()
@@ -613,10 +613,10 @@ class TestNIFApplyOpColumnUpdates:
         device = NonInteractingFermionicDevice(wires=3)
         device.apply([SptmCompRyRy(np.array([0.3, 0.4]), wires=[0, 1])])
         expected = np.array(device.global_sptm.sptm_matrix())
-        state = {key: value for key, value in device.__dict__.items() if key not in ("_pending_layers", "_batch_size")}
+        state = {key: value for key, value in device.__dict__.items() if key not in ("_records", "_batch_size")}
         restored = NonInteractingFermionicDevice.__new__(NonInteractingFermionicDevice)
         restored.__setstate__(state)
-        assert restored._pending_layers == [] and restored._batch_size is None
+        assert len(restored._records) == 0 and restored._batch_size is None
         np.testing.assert_array_equal(np.asarray(restored.global_sptm.sptm_matrix()), expected)
 
     def test_vectorized_jacobian_through_the_device(self):
