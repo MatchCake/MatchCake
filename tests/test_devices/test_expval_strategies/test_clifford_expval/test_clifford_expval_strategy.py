@@ -33,6 +33,10 @@ class TestCliffordExpvalStrategy:
                 qml.X(0) @ qml.X(1),
             ),
             (
+                [CompHH(wires=[0, 1])],
+                qml.Hamiltonian([0.5, 0.3], [2.0 * (qml.X(0) @ qml.X(1)), qml.Y(0) @ qml.Y(1)]),
+            ),
+            (
                 [CompZX(wires=[0, 1])],
                 qml.X(0) @ qml.X(1),
             ),
@@ -244,3 +248,9 @@ class TestCliffordExpvalStrategy:
         projector = BasisStateProjector([0, 0], wires=[0, 1])
         hamiltonian = strategy._format_observable(projector)
         assert hamiltonian is not None
+
+    def test_format_observable_drops_a_cancelled_non_pauli_part_as_terms_would(self, strategy):
+        """``observable.terms()`` simplifies the cancelled projector away, leaving ``Z_0`` alone."""
+        projector = qml.Projector([0], wires=[2])
+        hamiltonian = strategy._format_observable(qml.sum(qml.Z(0), projector, -1.0 * projector))
+        assert [type(operator) for operator in hamiltonian.ops] == [qml.Z]

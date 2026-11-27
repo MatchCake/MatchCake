@@ -58,7 +58,7 @@ class TestProductBasisSampling:
     def extended_covariance_matrix(amplitudes: np.ndarray, operations: list) -> torch.Tensor:
         device = NonInteractingFermionicDevice(wires=len(amplitudes))
         device.apply([ProductState(amplitudes, wires=range(len(amplitudes)))] + operations)
-        return device.extended_covariance_matrix
+        return torch.as_tensor(device.extended_covariance_matrix)
 
     @staticmethod
     def reference_probabilities(amplitudes: np.ndarray, operations: list, bloch_vectors: np.ndarray) -> np.ndarray:
