@@ -14,6 +14,7 @@ from matchcake.operations import (
     CompZX,
     MatchgateIdentity,
 )
+from matchcake.operations.state_preparation.state_prep_from_gates import StatePrepFromGates
 from matchcake.utils import get_block_diagonal_matrix
 from matchcake.utils.torch_utils import to_tensor
 
@@ -131,6 +132,15 @@ class TestCliffordExpvalStrategy:
         expvals = strategy.compute_clifford_expvals(state_prep_op)
         targets = get_block_diagonal_matrix(n_qubits)[triu_indices]
         np.testing.assert_allclose(expvals, targets)
+
+    def test_compute_clifford_expvals_from_gates_matches_the_basis_state(self, strategy):
+        state_prep_op = StatePrepFromGates(
+            lambda wires: iter([qml.X(wires[1]), qml.Identity(wires[0])]), wires=[0, 1, 2]
+        )
+        np.testing.assert_allclose(
+            strategy.compute_clifford_expvals(state_prep_op),
+            strategy.compute_clifford_expvals(qml.BasisState(np.array([0, 1, 0]), [0, 1, 2])),
+        )
 
     @pytest.mark.parametrize("n_qubits", np.linspace(2, 10, num=8, dtype=int))
     def test_compute_clifford_expvals_ones_init(self, n_qubits, strategy):
