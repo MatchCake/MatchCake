@@ -14,6 +14,9 @@ from ..utils.math import (
     fermionic_operator_matmul,
 )
 
+# Sentinel distinguishing "shots not provided" from an explicit ``shots=None``.
+UNSET = object()
+
 
 def circuit_or_fop_matmul(
     first_matrix: Any,

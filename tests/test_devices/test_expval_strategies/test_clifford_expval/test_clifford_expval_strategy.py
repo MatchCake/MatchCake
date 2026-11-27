@@ -14,6 +14,7 @@ from matchcake.operations import (
     CompZX,
     MatchgateIdentity,
 )
+from matchcake.operations.state_preparation.state_prep_from_gates import StatePrepFromGates
 from matchcake.utils import get_block_diagonal_matrix
 from matchcake.utils.torch_utils import to_tensor
 
@@ -31,6 +32,10 @@ class TestCliffordExpvalStrategy:
             (
                 [CompHH(wires=[0, 1])],
                 qml.X(0) @ qml.X(1),
+            ),
+            (
+                [CompHH(wires=[0, 1])],
+                qml.Hamiltonian([0.5, 0.3], [2.0 * (qml.X(0) @ qml.X(1)), qml.Y(0) @ qml.Y(1)]),
             ),
             (
                 [CompZX(wires=[0, 1])],
@@ -127,6 +132,15 @@ class TestCliffordExpvalStrategy:
         expvals = strategy.compute_clifford_expvals(state_prep_op)
         targets = get_block_diagonal_matrix(n_qubits)[triu_indices]
         np.testing.assert_allclose(expvals, targets)
+
+    def test_compute_clifford_expvals_from_gates_matches_the_basis_state(self, strategy):
+        state_prep_op = StatePrepFromGates(
+            lambda wires: iter([qml.X(wires[1]), qml.Identity(wires[0])]), wires=[0, 1, 2]
+        )
+        np.testing.assert_allclose(
+            strategy.compute_clifford_expvals(state_prep_op),
+            strategy.compute_clifford_expvals(qml.BasisState(np.array([0, 1, 0]), [0, 1, 2])),
+        )
 
     @pytest.mark.parametrize("n_qubits", np.linspace(2, 10, num=8, dtype=int))
     def test_compute_clifford_expvals_ones_init(self, n_qubits, strategy):
@@ -244,3 +258,9 @@ class TestCliffordExpvalStrategy:
         projector = BasisStateProjector([0, 0], wires=[0, 1])
         hamiltonian = strategy._format_observable(projector)
         assert hamiltonian is not None
+
+    def test_format_observable_drops_a_cancelled_non_pauli_part_as_terms_would(self, strategy):
+        """``observable.terms()`` simplifies the cancelled projector away, leaving ``Z_0`` alone."""
+        projector = qml.Projector([0], wires=[2])
+        hamiltonian = strategy._format_observable(qml.sum(qml.Z(0), projector, -1.0 * projector))
+        assert [type(operator) for operator in hamiltonian.ops] == [qml.Z]
