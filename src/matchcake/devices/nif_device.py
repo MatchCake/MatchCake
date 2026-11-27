@@ -382,6 +382,19 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         if self._wires is not None:
             self._setup_wire_dependent_state()
 
+    def __copy__(self) -> "NonInteractingFermionicDevice":
+        """Return a shallow copy whose gates do not write into the matrix of this device.
+
+        :return: The copy.
+        :rtype: NonInteractingFermionicDevice
+        """
+        new_device = type(self).__new__(type(self))
+        new_device.__dict__.update(self.__dict__)
+        # both devices hold the same matrix, so each one copies it before its next gate
+        self._global_sptm_is_shared = True
+        new_device._global_sptm_is_shared = True
+        return new_device
+
     def apply(
         self,
         operations: Iterable[qml.operation.Operation],
@@ -415,6 +428,10 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :param kwargs: Additional keyword arguments
         :return: None
         """
+        # A subclass that overrides apply_op is still called for every operation. The base one is
+        # skipped because it marks the matrix it returns as shared, which costs a copy per gate.
+        is_overridden = type(self).apply_op is not NonInteractingFermionicDevice.apply_op
+        apply_op = self.apply_op if is_overridden else self._apply_op
         if self._wires is None:
             ops = list(op_iterator)
             all_wires = Wires.all_wires([op.wires for op in ops if len(op.wires) > 0])
@@ -440,7 +457,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             for j, op_j in enumerate(op_list):
                 if op_j is None:
                     continue
-                self.apply_op(op_j)
+                apply_op(op_j)
                 self.apply_metadata["n_contracted_operations"] = (
                     self.apply_metadata.get("n_contracted_operations", 0) + 1
                 )
@@ -455,7 +472,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self.p_bar_set_total(self.apply_metadata["n_operations"])
         last_op = self.contraction_strategy.get_reminding()
         if last_op is not None:
-            self.apply_op(last_op)
+            apply_op(last_op)
             self.apply_metadata["n_contracted_operations"] = self.apply_metadata.get("n_contracted_operations", 0) + 1
         self.apply_metadata["percentage_contracted"] = (
             100
@@ -528,6 +545,18 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :return: The updated single-particle transition matrix, represented as an
             instance of ``SingleParticleTransitionMatrixOperation``.
         """
+        self._apply_op(op)
+        return self.global_sptm
+
+    def _apply_op(self, op: qml.operation.Operation) -> None:
+        """Multiply the global single-particle transition matrix by the one of an operation.
+
+        Only the columns the operation acts on are updated, in place. The matrix is copied first when
+        it was handed out since the last update, so that a matrix read from the device never changes.
+
+        :param op: The operation to apply.
+        :type op: qml.operation.Operation
+        """
         sptm_op = SingleParticleTransitionMatrixOperation.from_operation(op)
         self._batched = self._batched or (sptm_op.batch_size is not None)
         wires = SingleParticleTransitionMatrixOperation.make_wires_continuous(Wires(self.wires))
@@ -545,7 +574,6 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self._global_sptm = SingleParticleTransitionMatrixOperation(matrix, wires=self.wires)
         self._global_sptm_is_shared = False
         self.transition_matrix = None
-        return self._global_sptm
 
     def apply_state_prep(self, operation: qml.operation.Operation, **kwargs) -> bool:
         r"""

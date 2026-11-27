@@ -7,7 +7,6 @@ from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 
 from ... import utils
-from ...utils.math import convert_and_cast_like
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
@@ -21,6 +20,11 @@ class DisjointSptmOperation(SingleParticleTransitionMatrixOperation):
     :meth:`SingleParticleTransitionMatrixOperation.multiply_columns`. The dense matrix on the
     continuous span of all the wires is built the first time it is asked for, so every other use is
     that of a :class:`SingleParticleTransitionMatrixOperation`.
+
+    :func:`pennylane.equal` compares the dense matrices: ``qml.equal(dense_operation, self)`` is True
+    for the same matrix on the same wires, however it is split into blocks. With the arguments the
+    other way around it is False, because PennyLane first requires its second argument to be an
+    instance of the type of the first.
     """
 
     def __init__(self, blocks: Sequence[SingleParticleTransitionMatrixOperation], **kwargs):
@@ -49,6 +53,16 @@ class DisjointSptmOperation(SingleParticleTransitionMatrixOperation):
         kwargs.pop("normalize", None)
         self.kwargs = kwargs
 
+    def decomposition(self) -> List[Operation]:
+        """Decompose this operation into its blocks, which commute since they act on disjoint wires.
+
+        :return: The blocks, queued when a recording is active.
+        :rtype: List[Operation]
+        """
+        if qml.QueuingManager.recording():
+            return [qml.apply(block) for block in self._blocks]
+        return list(self._blocks)
+
     def column_blocks(self, wires: Wires) -> List[Tuple[int, TensorLike]]:
         return [pair for block in self._blocks for pair in block.column_blocks(wires)]
 
@@ -64,7 +78,8 @@ class DisjointSptmOperation(SingleParticleTransitionMatrixOperation):
                 shape = (*batch_sizes[:1], size, size)
                 matrix = np.zeros(shape)
                 matrix[...] = np.eye(size)
-                matrix = convert_and_cast_like(matrix, matrices[0])
+                # only the backend is taken from the blocks: an integer block must not make the matrix integer
+                matrix = qml.math.convert_like(matrix, matrices[0])
                 for (start, _), sub in zip(self.column_blocks(Wires(self.wires)), matrices):
                     matrix[..., start : start + sub.shape[-2], start : start + sub.shape[-1]] = sub
             self._dense_matrix = matrix

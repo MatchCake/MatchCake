@@ -6,6 +6,7 @@ import torch
 from pennylane.exceptions import MatrixUndefinedError, PowUndefinedError
 from pennylane.math import expm
 from pennylane.operation import Operation, Operator, StatePrepBase
+from pennylane.ops.functions.equal import _equal_dispatch, _equal_operators
 from pennylane.ops.op_math import Adjoint, Pow
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires, WiresLike
@@ -219,12 +220,33 @@ class SingleParticleTransitionMatrixOperation(Operation):
         return qml.math.real(matrix)
 
     @staticmethod
+    def matrix_from_rows(rows: Sequence[Sequence[TensorLike]]) -> TensorLike:
+        """Build a (batch of) square matrix from its entries with one stack.
+
+        Writing the entries one by one into a buffer costs one indexed assignment each, which
+        autograd records separately. Every entry must be a tensor of the same backend, dtype and
+        shape, zeros included.
+
+        :param rows: The entries, row by row, each of shape (...).
+        :type rows: Sequence[Sequence[TensorLike]]
+        :return: The matrix, shape (..., len(rows), len(rows)).
+        :rtype: TensorLike
+        """
+        size = len(rows)
+        entries = [entry for row in rows for entry in row]
+        if isinstance(entries[0], torch.Tensor):
+            # qml.math.stack converts every entry again, which costs more than the stack itself
+            return torch.stack(entries, dim=-1).reshape(*entries[0].shape, size, size)
+        stacked = qml.math.stack(entries, axis=-1)
+        return qml.math.reshape(stacked, (*qml.math.shape(entries[0]), size, size))
+
+    @staticmethod
     def _writable_like(matrix: TensorLike, blocks: Sequence[TensorLike]) -> Optional[TensorLike]:
         """Return ``matrix`` in the backend, dtype and batch shape its product with ``blocks`` has.
 
         The matrix is returned as it is when it already has them, and as a new array otherwise. Torch
         has priority over numpy, as in :attr:`casting_priorities`. The dtype is the promotion of all the
-        dtypes, and a batched block makes the matrix batched.
+        dtypes, and a batched block makes the matrix batched, a batch of one being broadcast.
 
         :param matrix: The matrix whose columns are about to be updated, shape (..., 2n, 2n).
         :type matrix: TensorLike
@@ -238,20 +260,27 @@ class SingleParticleTransitionMatrixOperation(Operation):
         if not interfaces <= {"numpy", "torch"}:
             return None
         batch_sizes = [qml.math.shape(block)[0] for block in blocks if qml.math.ndim(block) > 2]
+        batch_size = max(batch_sizes, default=0)
+        needs_batch = batch_size > 0 and (qml.math.ndim(matrix) == 2 or qml.math.shape(matrix)[0] != batch_size)
         if "torch" in interfaces:
-            reference = next(tensor for tensor in (matrix, *blocks) if isinstance(tensor, torch.Tensor))
+            tensors = [tensor for tensor in (matrix, *blocks) if isinstance(tensor, torch.Tensor)]
+            # a tensor on an accelerator decides where the product lives
+            reference = next((tensor for tensor in tensors if tensor.device.type != "cpu"), tensors[0])
             dtype = torch.as_tensor(matrix).dtype
             for block in blocks:
                 dtype = torch.promote_types(dtype, torch.as_tensor(block).dtype)
-            matrix = torch.as_tensor(matrix, device=reference.device).to(dtype)
-            if batch_sizes and matrix.ndim == 2:
-                matrix = matrix.expand(batch_sizes[0], *matrix.shape).clone()
+            if not isinstance(matrix, torch.Tensor):
+                # torch.as_tensor would share the memory of the numpy array, which must stay as it is
+                matrix = torch.tensor(np.asarray(matrix))
+            matrix = matrix.to(device=reference.device, dtype=dtype)
+            if needs_batch:
+                matrix = matrix.expand(batch_size, *matrix.shape[-2:]).clone()
             return matrix
         numpy_dtype = np.result_type(matrix, *blocks)
         if matrix.dtype != numpy_dtype:
             matrix = matrix.astype(numpy_dtype)
-        if batch_sizes and matrix.ndim == 2:
-            matrix = np.broadcast_to(matrix, (batch_sizes[0], *matrix.shape)).copy()
+        if needs_batch:
+            matrix = np.broadcast_to(matrix, (batch_size, *matrix.shape[-2:])).copy()
         return matrix
 
     @staticmethod
@@ -691,6 +720,10 @@ class SingleParticleTransitionMatrixOperation(Operation):
         if not isinstance(other, SingleParticleTransitionMatrixOperation):
             raise ValueError(f"Cannot multiply {self.__class__.__name__} with {type(other)}")
 
+        if self.blocks is None and other.blocks is None and self.cs_wires == other.cs_wires:
+            matrix = qml.math.einsum("...ij,...jk->...ik", self._matrix, other._matrix)
+            return SingleParticleTransitionMatrixOperation(matrix, wires=self.cs_wires, **self._hyperparameters)
+
         all_wires = Wires.all_wires([self.wires, other.wires], sort=True)
         wires = self.make_wires_continuous(all_wires)
 
@@ -702,30 +735,6 @@ class SingleParticleTransitionMatrixOperation(Operation):
         if matrix is None:
             matrix = qml.math.einsum("...ij,...jk->...ik", padded, other.pad(wires).sptm_matrix())
         return SingleParticleTransitionMatrixOperation(matrix, wires=wires, **self._hyperparameters)
-
-    def __imatmul__(self, other):
-        """Multiply this operation on the right by ``other``, writing into its own matrix when possible.
-
-        When ``other`` acts within the wires of this operation, only the columns it acts on are
-        updated, in place, and this operation is returned. Any tensor that was read from this
-        operation before then holds the new values too. Otherwise the result is that of ``self @ other``.
-
-        :param other: The operation to multiply by.
-        :type other: SingleParticleTransitionMatrixOperation
-        :return: The product.
-        :rtype: SingleParticleTransitionMatrixOperation
-        """
-        if not isinstance(other, SingleParticleTransitionMatrixOperation):
-            raise ValueError(f"Cannot multiply {self.__class__.__name__} with {type(other)}")
-        wires = self.make_wires_continuous(Wires.all_wires([self.wires, other.wires], sort=True))
-        if wires != self.cs_wires or self.blocks is not None:
-            return self @ other
-        matrix = self.multiply_columns(self._matrix, other.column_blocks(wires))
-        if matrix is None:
-            return self @ other
-        self._matrix = matrix
-        self.data = (matrix,)
-        return self
 
     def column_blocks(self, wires: Wires) -> List[Tuple[int, TensorLike]]:
         """Return the blocks of this operation with the first column each acts on in a larger matrix.
@@ -931,4 +940,45 @@ class SingleParticleTransitionMatrixOperation(Operation):
 
     @property
     def cs_wires(self):
-        return Wires(make_wires_continuous(self.wires))
+        # map_wires copies the operation and replaces its wires, so the cache is tied to the wires object
+        cached = getattr(self, "_cs_wires_cache", None)
+        wires = self.wires
+        if cached is None or cached[0] is not wires:
+            cached = (wires, Wires(make_wires_continuous(wires)))
+            self._cs_wires_cache = cached
+        return cached[1]
+
+
+@_equal_dispatch.register(SingleParticleTransitionMatrixOperation)
+def _equal_sptm_operations(
+    op1, op2, check_interface=True, check_trainability=True, rtol=1e-5, atol=1e-9
+) -> Union[bool, str]:
+    """
+    Compare two single-particle transition matrix operations for :func:`pennylane.equal`.
+
+    The default comparison pairs the parameters of the two operations. An operation kept as blocks
+    on disjoint wires holds one parameter per block, so it would differ from the same operation
+    stored as one matrix, and from the same operation split into other blocks. When either
+    operation is kept as blocks, the dense matrices are compared instead.
+
+    PennyLane requires ``op2`` to be an instance of the type of ``op1`` before it calls this
+    function, so ``qml.equal(disjoint_operation, dense_operation)`` is False whatever the matrices.
+    """
+    if op1.blocks is None and op2.blocks is None:
+        return _equal_operators(
+            op1, op2, check_interface=check_interface, check_trainability=check_trainability, rtol=rtol, atol=atol
+        )
+    if op1.wires != op2.wires:
+        return f"op1 and op2 have different wires. Got {op1.wires} and {op2.wires}."
+    if op1.hyperparameters != op2.hyperparameters:
+        return f"op1 and op2 have different hyperparameters. Got {op1.hyperparameters} and {op2.hyperparameters}."
+    matrix1, matrix2 = op1.sptm_matrix(), op2.sptm_matrix()
+    if qml.math.shape(matrix1) != qml.math.shape(matrix2):
+        return "op1 and op2 have matrices of different shapes."
+    if not qml.math.allclose(matrix1, matrix2, rtol=rtol, atol=atol):
+        return "op1 and op2 have different single-particle transition matrices."
+    if check_trainability and qml.math.requires_grad(matrix1) != qml.math.requires_grad(matrix2):
+        return "The matrices of op1 and op2 have different trainability."
+    if check_interface and qml.math.get_interface(matrix1) != qml.math.get_interface(matrix2):
+        return "The matrices of op1 and op2 have different interfaces."
+    return True

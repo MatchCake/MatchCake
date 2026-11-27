@@ -1,7 +1,6 @@
 import numpy as np
 import pennylane as qml
 
-from ...utils.math import convert_and_cast_like
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 
 
@@ -36,35 +35,26 @@ class SptmCompRyRy(SingleParticleTransitionMatrixOperation):
         if params_shape[-1] != 2:
             raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")
 
-        if len(params_shape) == 1:
-            matrix = np.zeros((4, 4), dtype=complex)
-        elif len(params_shape) == 2:
-            matrix = np.zeros((params_shape[0], 4, 4), dtype=complex)
-        else:
+        if len(params_shape) > 2:
             raise ValueError(f"Invalid shape for the parameters: {params_shape}")
 
-        if params_shape[-1] != 2:  # pragma: no cover
-            raise ValueError(f"Invalid number of parameters: {params_shape[-1]}. Expected 2.")  # pragma: no cover
         if kwargs.get("check_angles", self.DEFAULT_CHECK_ANGLES):
             self.check_angles(params)
         if kwargs.get("clip_angles", self.DEFAULT_CLIP_ANGLES):
             params = self.clip_angles(params)
-        matrix = convert_and_cast_like(matrix, params)
         theta, phi = params[..., 0], params[..., 1]
-        theta_plus_phi = (theta + phi) / 2
-        theta_minus_phi = (theta - phi) / 2
-
-        matrix[..., 0, 0] = qml.math.cos(theta_plus_phi)
-        matrix[..., 0, 2] = -qml.math.sin(theta_plus_phi)
-
-        matrix[..., 1, 1] = qml.math.cos(theta_minus_phi)
-        matrix[..., 3, 1] = -qml.math.sin(theta_minus_phi)
-
-        matrix[..., 2, 0] = qml.math.sin(theta_plus_phi)
-        matrix[..., 2, 2] = qml.math.cos(theta_plus_phi)
-
-        matrix[..., 1, 3] = qml.math.sin(theta_minus_phi)
-        matrix[..., 3, 3] = qml.math.cos(theta_minus_phi)
+        half_sum, half_difference = (theta + phi) / 2, (theta - phi) / 2
+        cos_sum, sin_sum = qml.math.cos(half_sum), qml.math.sin(half_sum)
+        cos_difference, sin_difference = qml.math.cos(half_difference), qml.math.sin(half_difference)
+        zero = qml.math.zeros_like(cos_sum)
+        matrix = self.matrix_from_rows(
+            [
+                [cos_sum, zero, -sin_sum, zero],
+                [zero, cos_difference, zero, sin_difference],
+                [sin_sum, zero, cos_sum, zero],
+                [zero, -sin_difference, zero, cos_difference],
+            ]
+        )
         super().__init__(matrix, wires=wires, **kwargs)
         self._given_params = params
 
