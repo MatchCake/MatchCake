@@ -22,6 +22,29 @@ class SptmCompRzRz(SingleParticleTransitionMatrixOperation):
     ALLOWED_ANGLES = None
     EQUAL_ALLOWED_ANGLES = None
 
+    HAS_BULK_FORMULA = True
+
+    @staticmethod
+    def compute_sptm(params):
+        """Compute the single-particle transition matrices of gates of this class from their angles.
+
+        :param params: The angles, shape (..., 2).
+        :return: The matrices, shape (..., 4, 4).
+        """
+        theta, phi = params[..., 0], params[..., 1]
+        half_sum, half_difference = (theta + phi) / 2, (theta - phi) / 2
+        cos_sum, sin_sum = qml.math.cos(half_sum), qml.math.sin(half_sum)
+        cos_difference, sin_difference = qml.math.cos(half_difference), qml.math.sin(half_difference)
+        zero = qml.math.zeros_like(cos_sum)
+        return SingleParticleTransitionMatrixOperation.matrix_from_rows(
+            [
+                [cos_sum, sin_sum, zero, zero],
+                [-sin_sum, cos_sum, zero, zero],
+                [zero, zero, cos_difference, sin_difference],
+                [zero, zero, -sin_difference, cos_difference],
+            ]
+        )
+
     @classmethod
     def random_params(cls, batch_size=None, **kwargs):
         params_shape = ([batch_size] if batch_size is not None else []) + [2]
@@ -42,20 +65,7 @@ class SptmCompRzRz(SingleParticleTransitionMatrixOperation):
         if self.hyperparameters.get("clip_angles", self.DEFAULT_CLIP_ANGLES):
             params = self.clip_angles(params)
 
-        theta, phi = params[..., 0], params[..., 1]
-        half_sum, half_difference = (theta + phi) / 2, (theta - phi) / 2
-        cos_sum, sin_sum = qml.math.cos(half_sum), qml.math.sin(half_sum)
-        cos_difference, sin_difference = qml.math.cos(half_difference), qml.math.sin(half_difference)
-        zero = qml.math.zeros_like(cos_sum)
-        matrix = self.matrix_from_rows(
-            [
-                [cos_sum, sin_sum, zero, zero],
-                [-sin_sum, cos_sum, zero, zero],
-                [zero, zero, cos_difference, sin_difference],
-                [zero, zero, -sin_difference, cos_difference],
-            ]
-        )
-        super().__init__(matrix, wires=wires, **kwargs)
+        self._init_from_params(params, wires=wires, **kwargs)
         self._given_params = params
 
     def to_matchgate(self):

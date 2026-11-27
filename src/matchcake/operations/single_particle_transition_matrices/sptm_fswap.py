@@ -1,6 +1,8 @@
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 import numpy as np
+import pennylane as qml
+import torch
 from pennylane.wires import Wires, WiresLike
 
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
@@ -45,6 +47,26 @@ class SptmCompZX(SingleParticleTransitionMatrixOperation):
         sptm = SptmCompZX(wires=[0, 2]).sptm_matrix()
     """
 
+    HAS_BULK_FORMULA = True
+
+    @staticmethod
+    def compute_sptm(params):
+        """Return the single-particle transition matrix of the swap of adjacent wires, once per gate.
+
+        :param params: An empty array per gate, shape (..., 0), which gives the backend, the dtype
+            and the number of gates.
+        :return: The matrices, shape (..., 4, 4).
+        """
+        matrix = np.zeros((4, 4))
+        matrix[[0, 1, 2, 3], [2, 3, 0, 1]] = 1.0
+        shape = (*qml.math.shape(params)[:-1], 4, 4)
+        if isinstance(params, torch.Tensor):
+            return torch.as_tensor(matrix, dtype=params.dtype, device=params.device).expand(shape)
+        return np.broadcast_to(matrix.astype(params.dtype), shape)
+
+    # The matrix only depends on the distance between the wires and on their order.
+    _MATRIX_CACHE: Dict[Tuple[int, bool], np.ndarray] = {}
+
     @classmethod
     def random(cls, wires: WiresLike, batch_size: Optional[int] = None, **kwargs: Any) -> "SptmCompZX":
         """Return the fermionic swap on the given wires.
@@ -70,19 +92,27 @@ class SptmCompZX(SingleParticleTransitionMatrixOperation):
         """
         wires_arr = Wires(wires).toarray()
         wire0, wire1 = np.sort(wires_arr)
-        size = 2 * (wire1 - wire0 + 1)
-        matrix = np.zeros((size, size), dtype=int)
+        key = (int(wire1 - wire0), bool(wire0 != wires_arr[0]))
+        if key not in self._MATRIX_CACHE:
+            size = 2 * (key[0] + 1)
+            matrix = np.zeros((size, size), dtype=int)
 
-        first_idx = 2 * (wire1 - wire0)
-        matrix[:2, first_idx : first_idx + 2] = np.eye(2)
+            first_idx = 2 * key[0]
+            matrix[:2, first_idx : first_idx + 2] = np.eye(2)
 
-        rows, cols = np.where(np.eye(size, k=-2))
-        matrix[rows, cols] = 1
+            rows, cols = np.where(np.eye(size, k=-2))
+            matrix[rows, cols] = 1
 
-        if wire0 != wires_arr[0]:
-            matrix = matrix.T
+            if key[1]:
+                matrix = matrix.T
+            self._MATRIX_CACHE[key] = matrix
+        # each gate gets its own copy, so that writing into one does not change the others
+        matrix = self._MATRIX_CACHE[key].copy()
 
         super().__init__(matrix, wires=wires, **kwargs)
+        if key[0] == 1:
+            # on adjacent wires the matrix is the same 4 by 4 constant for every gate, see compute_sptm
+            self._params = np.zeros(0)
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
         """Return the inverse of this fermionic swap.

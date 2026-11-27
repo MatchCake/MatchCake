@@ -582,3 +582,32 @@ class TestDisjointSptmOperation:
         same = SptmCompRyRy(np.array([0.3, 0.4]), wires=[0, 1])
         assert qml.equal(first, same)
         assert not qml.equal(first, second)
+
+    def test_the_dense_matrix_can_be_replaced(self):
+        operation = DisjointSptmOperation(self._three_rotations())
+        replacement = np.eye(12)
+        assert operation._stored_matrix is None and operation._params is None
+
+        operation._matrix = replacement
+
+        assert operation.sptm_matrix() is replacement
+        assert operation._stored_matrix is None
+        assert operation.batch_size is None
+
+    @pytest.mark.parametrize("batch_sizes", [(1, 3), (3, 1)])
+    def test_pennylane_numpy_blocks_with_a_batch_of_one_are_broadcast_to_the_largest_batch(self, batch_sizes):
+        """The dense fallback used to take the batch of the first batched block, whatever the others."""
+        generator = np.random.default_rng(TEST_SEED)
+        angles = [generator.uniform(0.0, 2.0, size=(batch_size, 2)) for batch_size in batch_sizes]
+        blocks = [
+            SptmCompRzRz(pnp.array(angles[0], requires_grad=True), wires=[0, 1]),
+            SptmCompRzRz(pnp.array(angles[1], requires_grad=True), wires=[2, 3]),
+        ]
+        operation = DisjointSptmOperation(blocks)
+        expected = np.zeros((3, 8, 8))
+        expected[:, :4, :4] = np.asarray(SptmCompRzRz(angles[0], wires=[0, 1]).sptm_matrix())
+        expected[:, 4:, 4:] = np.asarray(SptmCompRzRz(angles[1], wires=[2, 3]).sptm_matrix())
+        assert operation.batch_size == 3
+        np.testing.assert_allclose(
+            np.asarray(operation.sptm_matrix()), expected, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
+        )

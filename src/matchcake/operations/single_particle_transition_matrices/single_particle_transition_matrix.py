@@ -80,6 +80,8 @@ class SingleParticleTransitionMatrixOperation(Operation):
     REVERSIBLE_ORTHOGONALITY_FACTOR = 1e3
     # Set by the module of DisjointSptmOperation, which cannot be imported from here.
     DISJOINT_PRODUCT_CLASS: Any = None
+    # True for a gate class whose matrix is a function of its parameters, see compute_sptm.
+    HAS_BULK_FORMULA = False
 
     @staticmethod
     def make_wires_continuous(wires: Wires):
@@ -223,6 +225,21 @@ class SingleParticleTransitionMatrixOperation(Operation):
         return qml.math.real(matrix)
 
     @staticmethod
+    def compute_sptm(params: TensorLike) -> TensorLike:
+        """Compute the single-particle transition matrices of many gates of this class in one call.
+
+        Only the gate classes with :attr:`HAS_BULK_FORMULA` define it. They keep their parameters
+        and compute their matrix when it is first asked for, so that a device can gather the
+        parameters of all the gates of a circuit and compute their matrices together.
+
+        :param params: The parameters of the gates, shape (..., n_params).
+        :type params: TensorLike
+        :return: The matrices, shape (..., 2k, 2k).
+        :rtype: TensorLike
+        """
+        raise NotImplementedError("This operation has no formula for its single-particle transition matrix.")
+
+    @staticmethod
     def matrix_from_rows(rows: Sequence[Sequence[TensorLike]]) -> TensorLike:
         """Build a (batch of) square matrix from its entries with one stack.
 
@@ -354,6 +371,102 @@ class SingleParticleTransitionMatrixOperation(Operation):
         return maybe_current_level is not None and maybe_current_level() is not None
 
     @staticmethod
+    def _reversible_product(matrix: torch.Tensor, groups: Sequence[Tuple[Any, torch.Tensor]]) -> Optional[torch.Tensor]:
+        """Multiply a matrix by stacks of blocks with the reversible backward pass, when that is valid.
+
+        :param matrix: The matrix, shape (2n, 2n) or (b, 2n, 2n), with the batch of the product.
+        :type matrix: torch.Tensor
+        :param groups: The columns each block acts on, shape (n_blocks, 2k), and the blocks, shape
+            (n_blocks, 2k, 2k) or (b, n_blocks, 2k, 2k), for each step.
+        :type groups: Sequence[Tuple[Any, torch.Tensor]]
+        :return: The product, or None when a block deviates from orthogonality by more than
+            :attr:`REVERSIBLE_ORTHOGONALITY_FACTOR` machine epsilons, in a precision other than
+            single and double, or inside a ``torch.func`` transform.
+        :rtype: Optional[torch.Tensor]
+        """
+        if matrix.dtype not in (torch.float32, torch.float64):
+            return None
+        if SingleParticleTransitionMatrixOperation._is_inside_functorch_transform():
+            return None
+        with torch.no_grad():
+            defects = [
+                torch.amax(torch.abs(stacked @ stacked.mT - torch.eye(stacked.shape[-1], device=matrix.device)))
+                for _, stacked in groups
+            ]
+            defect = float(torch.stack(defects).max()) if defects else 0.0
+        tolerance = SingleParticleTransitionMatrixOperation.REVERSIBLE_ORTHOGONALITY_FACTOR
+        if defect > tolerance * torch.finfo(matrix.dtype).eps:
+            return None
+        return ReversibleColumnProduct.apply([indices for indices, _ in groups], matrix, *[s for _, s in groups])
+
+    @staticmethod
+    def multiply_groups(matrix: TensorLike, groups: Sequence[Tuple[Any, TensorLike]]) -> TensorLike:
+        r"""Multiply a matrix on the right by stacks of blocks, without writing into it.
+
+        This is :meth:`multiply_layers` for blocks that are already stacked, as a compiled circuit
+        gives them: nothing is done block by block.
+
+        :param matrix: The matrix, shape (2n, 2n) or (b, 2n, 2n), a numpy array or a torch tensor.
+        :type matrix: TensorLike
+        :param groups: For each step, the columns each block acts on, shape (n_blocks, 2k), and the
+            blocks, shape (n_blocks, 2k, 2k) or (b, n_blocks, 2k, 2k). The blocks of a step act on
+            disjoint columns. All of them are numpy arrays or all of them are torch tensors, with one
+            dtype, and the batched ones with one batch size.
+        :type groups: Sequence[Tuple[Any, TensorLike]]
+        :return: The product, a new array of shape (2n, 2n) or (b, 2n, 2n), in the backend of the blocks.
+        :rtype: TensorLike
+        """
+        if len(groups) == 0:
+            return matrix
+        if isinstance(matrix, torch.Tensor) and not isinstance(groups[0][1], torch.Tensor):
+            # torch has priority over numpy: the blocks follow the matrix
+            groups = [
+                (torch.as_tensor(indices, device=matrix.device), torch.as_tensor(stacked, device=matrix.device))
+                for indices, stacked in groups
+            ]
+        reference = groups[0][1]
+        batch_size = max((stacked.shape[0] for _, stacked in groups if stacked.ndim == 4), default=0)
+        target: Any
+        if isinstance(reference, torch.Tensor):
+            # a numpy matrix is copied: torch.as_tensor would share its memory
+            target = matrix if isinstance(matrix, torch.Tensor) else torch.tensor(np.asarray(matrix))
+            dtype = torch.promote_types(target.dtype, reference.dtype)
+            # a matrix on an accelerator stays there, and the blocks follow it
+            device = target.device if target.device.type != "cpu" else reference.device
+            target = target.to(device=device, dtype=dtype)
+            if reference.dtype != dtype or reference.device != device:
+                groups = [(indices.to(device), stacked.to(device=device, dtype=dtype)) for indices, stacked in groups]
+            if batch_size > 0 and (target.ndim == 2 or (target.shape[0] == 1 and batch_size > 1)):
+                target = target.expand(batch_size, *target.shape[-2:])
+            needs_gradient = torch.is_grad_enabled() and (
+                target.requires_grad or any(stacked.requires_grad for _, stacked in groups)
+            )
+            if needs_gradient:
+                product = SingleParticleTransitionMatrixOperation._reversible_product(target, groups)
+                if product is not None:
+                    return product
+            if SingleParticleTransitionMatrixOperation._is_inside_functorch_transform():
+                # a transform refuses writes into a tensor it did not create: every product is a new tensor
+                for indices, stacked in groups:
+                    for position in range(indices.shape[0]):
+                        start, stop = int(indices[position, 0]), int(indices[position, -1]) + 1
+                        block = stacked[..., position, :, :]
+                        target = torch.cat(
+                            [target[..., :, :start], target[..., :, start:stop] @ block, target[..., :, stop:]], dim=-1
+                        )
+                return target
+            target = target.clone()
+            for indices, stacked in groups:
+                target[..., :, indices] = (target[..., :, indices].transpose(-3, -2) @ stacked).transpose(-3, -2)
+            return target
+        target = np.array(matrix, dtype=np.result_type(matrix, reference))
+        if batch_size > 0 and (target.ndim == 2 or (target.shape[0] == 1 and batch_size > 1)):
+            target = np.broadcast_to(target, (batch_size, *target.shape[-2:])).copy()
+        for indices, stacked in groups:
+            target[..., :, indices] = np.swapaxes(np.swapaxes(target[..., :, indices], -3, -2) @ stacked, -3, -2)
+        return target
+
+    @staticmethod
     def multiply_layers(matrix: TensorLike, layers: Sequence[Sequence[Tuple[int, TensorLike]]]) -> Optional[TensorLike]:
         r"""Multiply a matrix on the right by a sequence of layers of blocks, without writing into it.
 
@@ -390,19 +503,9 @@ class SingleParticleTransitionMatrixOperation(Operation):
                 for layer in layers
                 for group in SingleParticleTransitionMatrixOperation._stacked_groups(target, layer)
             ]
-            with torch.no_grad():
-                defects = [
-                    torch.amax(torch.abs(stacked @ stacked.mT - torch.eye(stacked.shape[-1], device=target.device)))
-                    for _, stacked in groups
-                ]
-                defect = float(torch.stack(defects).max()) if defects else 0.0
-            tolerance = SingleParticleTransitionMatrixOperation.REVERSIBLE_ORTHOGONALITY_FACTOR
-            tolerance = tolerance * torch.finfo(target.dtype).eps
-            is_reversible = defect <= tolerance and target.dtype in (torch.float32, torch.float64)
-            if is_reversible and not SingleParticleTransitionMatrixOperation._is_inside_functorch_transform():
-                return ReversibleColumnProduct.apply(
-                    [indices for indices, _ in groups], target, *[stacked for _, stacked in groups]
-                )
+            product = SingleParticleTransitionMatrixOperation._reversible_product(target, groups)
+            if product is not None:
+                return product
             if SingleParticleTransitionMatrixOperation._is_inside_functorch_transform():
                 # a transform refuses writes into a tensor it did not create: every product is a new tensor
                 for layer in layers:
@@ -727,7 +830,8 @@ class SingleParticleTransitionMatrixOperation(Operation):
         if normalize:
             matrix = orthonormalize(matrix)
         matrix = self._enforce_real(matrix, check_real)
-        self._matrix = matrix
+        self._stored_matrix: Optional[TensorLike] = matrix
+        self._params: Optional[TensorLike] = None
         self._wires = wires
         super().__init__(matrix, wires=wires)
         self._hyperparameters = {
@@ -837,6 +941,46 @@ class SingleParticleTransitionMatrixOperation(Operation):
         if matrix is None:
             matrix = qml.math.einsum("...ij,...jk->...ik", padded, other.pad(wires).sptm_matrix())
         return SingleParticleTransitionMatrixOperation(matrix, wires=wires, **self._hyperparameters)
+
+    def decomposition(self) -> List[Operator]:
+        """Decompose this operation into the qubit unitary of its single-particle transition matrix.
+
+        :return: A single ``QubitUnitary``, queued when a recording is active.
+        :rtype: List[Operator]
+        """
+        return self.compute_decomposition(self._matrix, wires=self.wires)
+
+    def _init_from_params(self, params: TensorLike, wires: Optional[WiresLike] = None, **kwargs) -> None:
+        """Initialize a gate from its parameters, leaving its matrix to be computed when asked for.
+
+        The parameters are the data of the operation, as for any PennyLane gate. The matrix is
+        ``compute_sptm(params)``.
+
+        :param params: The parameters of the gate, shape (n_params,) or (batch, n_params).
+        :type params: TensorLike
+        :param wires: The wires the gate acts on.
+        :type wires: Optional[WiresLike]
+        :param kwargs: Hyperparameters of :class:`SingleParticleTransitionMatrixOperation`, and others
+            that are kept in ``kwargs``.
+        :raises ValueError: If ``check_matrix`` is True and the matrix is not in SO(4).
+        """
+        self._stored_matrix = None
+        self._params = params
+        self._wires = wires
+        Operation.__init__(self, params, wires=wires)
+        self._hyperparameters = {
+            "clip_angles": kwargs.pop("clip_angles", self.DEFAULT_CLIP_ANGLES),
+            "check_angles": kwargs.pop("check_angles", self.DEFAULT_CHECK_ANGLES),
+            "check_matrix": kwargs.pop("check_matrix", self.DEFAULT_CHECK_MATRIX),
+            "check_real": kwargs.pop("check_real", self.DEFAULT_CHECK_REAL),
+        }
+        kwargs.pop("normalize", None)
+        if "complex" in qml.math.get_dtype_name(params).lower():
+            # complex parameters are refused or made real where the gate is built, as for a matrix
+            self._matrix
+        if self._hyperparameters["check_matrix"] and not self.check_is_in_so4():
+            raise ValueError(f"Matrix is not in SO(4): {self._matrix}")
+        self.kwargs = kwargs
 
     def column_blocks(self, wires: Wires) -> List[Tuple[int, TensorLike]]:
         """Return the blocks of this operation with the first column each acts on in a larger matrix.
@@ -996,6 +1140,17 @@ class SingleParticleTransitionMatrixOperation(Operation):
         return SingleParticleTransitionMatrixOperation(powered, wires=self.wires, **self._hyperparameters)
 
     @property
+    def _matrix(self) -> TensorLike:
+        if self._stored_matrix is None:
+            check_real = self._hyperparameters.get("check_real", self.DEFAULT_CHECK_REAL)
+            self._stored_matrix = self._enforce_real(self.compute_sptm(self._params), check_real)
+        return self._stored_matrix
+
+    @_matrix.setter
+    def _matrix(self, value: TensorLike) -> None:
+        self._stored_matrix = value
+
+    @property
     def blocks(self) -> Optional[List["SingleParticleTransitionMatrixOperation"]]:
         """The operations on disjoint wires this operation is the product of, if it is kept as such.
 
@@ -1032,6 +1187,10 @@ class SingleParticleTransitionMatrixOperation(Operation):
 
     @property
     def batch_size(self):
+        if self._stored_matrix is None and self._params is not None:
+            # the batch of a gate that has not computed its matrix yet is that of its parameters
+            params_shape = qml.math.shape(self._params)
+            return params_shape[0] if len(params_shape) > 1 else None
         if qml.math.ndim(self._matrix) > 2:
             return self.shape[0]
         return None
@@ -1060,13 +1219,14 @@ def _equal_sptm_operations(
 
     The default comparison pairs the parameters of the two operations. An operation kept as blocks
     on disjoint wires holds one parameter per block, so it would differ from the same operation
-    stored as one matrix, and from the same operation split into other blocks. When either
-    operation is kept as blocks, the dense matrices are compared instead.
+    stored as one matrix, and from the same operation split into other blocks, and the parameters
+    of a gate class are its angles and not its matrix. When either operation is kept as blocks, or
+    when the two are of different classes, the dense matrices are compared instead.
 
     PennyLane requires ``op2`` to be an instance of the type of ``op1`` before it calls this
     function, so ``qml.equal(disjoint_operation, dense_operation)`` is False whatever the matrices.
     """
-    if op1.blocks is None and op2.blocks is None:
+    if op1.blocks is None and op2.blocks is None and type(op1) is type(op2):
         return _equal_operators(
             op1, op2, check_interface=check_interface, check_trainability=check_trainability, rtol=rtol, atol=atol
         )

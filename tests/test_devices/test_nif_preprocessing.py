@@ -13,6 +13,7 @@ from matchcake.devices.nif_preprocessing import (
     live_observable,
     nif_split_non_commuting,
 )
+from matchcake.operations import SptmCompRyRy, SptmCompRzRz
 
 from ..configs import ATOL_SCALAR_COMPARISON, RTOL_SCALAR_COMPARISON
 
@@ -461,3 +462,37 @@ class TestNifPreprocessing:
         """Casting a pennylane.numpy array on a single-precision device would cut it from autograd."""
         coefficients = pnp.array([0.5, 0.3], requires_grad=True)
         assert _in_working_precision(coefficients, qml.Z(0), torch.float32) is coefficients
+
+    @pytest.mark.parametrize(
+        "observable",
+        [
+            0.5 * qml.Z(0) + qml.X(1),
+            qml.Hamiltonian([0.5, 0.3], WORDS, grouping_type="qwc"),
+        ],
+    )
+    def test_a_rebuilt_measurement_keeps_the_operations_of_the_tape(
+        self, observable: qml.operation.Operator, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        operations = [
+            qml.BasisState(np.array([0, 1, 0]), wires=range(N_QUBITS)),
+            SptmCompRyRy(np.array([0.3, 0.4]), wires=[0, 1]),
+            SptmCompRzRz(torch.tensor([0.5, 0.1], dtype=torch.float64), wires=[1, 2]),
+        ]
+        tape = qml.tape.QuantumScript(operations, [qml.expval(observable)])
+        copy_tape = qml.tape.QuantumScript.copy
+        rebuilt_tapes = []
+
+        def spying_copy(self: qml.tape.QuantumScript, *args, **kwargs) -> qml.tape.QuantumScript:
+            copied = copy_tape(self, *args, **kwargs)
+            if self is tape:
+                rebuilt_tapes.append(copied)
+            return copied
+
+        monkeypatch.setattr(qml.tape.QuantumScript, "copy", spying_copy)
+        nif_split_non_commuting(tape)
+
+        assert len(rebuilt_tapes) == 1
+        assert rebuilt_tapes[0].measurements[0] is not tape.measurements[0]
+        assert len(rebuilt_tapes[0].operations) == len(operations)
+        assert all(new is old for new, old in zip(rebuilt_tapes[0].operations, operations))
+        assert all(operation._stored_matrix is None for operation in operations[1:])
