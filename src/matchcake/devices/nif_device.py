@@ -1,8 +1,9 @@
+import warnings
 from collections import defaultdict
 from dataclasses import replace as _dataclass_replace
 from functools import partial
 from itertools import product
-from typing import Any, Dict, Iterable, List, Literal, Mapping, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, List, Literal, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pennylane as qml
@@ -31,6 +32,7 @@ from pennylane.wires import Wires
 from .. import utils
 from ..base.lookup_table import NonInteractingFermionicLookupTable
 from ..measurements.covariance_matrix import CovarianceMatrixMP
+from ..measurements.reduced_state import ReducedStateMP
 from ..observables.batch_hamiltonian import BatchHamiltonian
 from ..observables.batch_projector import BatchProjector
 from ..operations.matchgate_operation import MatchgateOperation
@@ -430,6 +432,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             is_prep = self.apply_state_prep(op, index=i)
             if is_prep:
                 continue
+            self._check_operation_against_barriers(op)
             op = self.convert_op_to_supported(op)
             op_list = self.contraction_strategy.get_next_operations(op)
             for j, op_j in enumerate(op_list):
@@ -658,8 +661,10 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :return: The computed expectation value of the given observable.
         :rtype: TensorLike
         :raises DeviceError: If the expectation value of the observable cannot
-            be computed on the current device due to compatibility issues.
+            be computed on the current device due to compatibility issues, or if the observable
+            breaks the rule of a gate barrier of the initial state.
         """
+        self._check_observable_against_barriers(observable)
         if isinstance(observable, BatchHamiltonian):
             return qml.math.stack(
                 [qml.math.real(c * self.exact_expval(op)) for c, op in zip(observable.coeffs, observable.ops)]
@@ -870,7 +875,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :return: Samples of shape (shots, ..., num_wires), also stored in :attr:`samples`.
         :rtype: np.ndarray
         :raises DeviceError: If a non computational basis is requested and the state preparation is
-            not a product state, a basis state or a Gaussian state.
+            not a product state, a basis state or a Gaussian state, or if such a basis is requested
+            on a wire that is on the right of a gate barrier of the initial state.
         """
         bloch_vectors = self._bases_to_bloch_vectors(bases or {})
         rotated_bases = {
@@ -878,6 +884,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             for wire, bloch_vector in zip(self.wires, bloch_vectors)
             if not np.allclose(bloch_vector, ProductBasisSampling.PAULI_BLOCH_VECTORS["Z"])
         }
+        self._check_sampling_bases_against_barriers(rotated_bases)
         if not rotated_bases:
             sampling_strategy = self.sampling_strategy
             if isinstance(sampling_strategy, ProductBasisSampling) and not isinstance(
@@ -1092,8 +1099,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self,
         wires: Union[Wires, List[int]],
         *,
-        fermionic: bool = False,
         reduced_wires: Optional[Union[Wires, List[int]]] = None,
+        gate_barrier: bool = True,
     ) -> GaussianStatePrep:
         r"""
         Trace out the given wires of the current state and return the state of the remaining ones.
@@ -1103,11 +1110,12 @@ class NonInteractingFermionicDevice(qml.devices.Device):
 
         :param wires: Wires to trace out.
         :type wires: Union[Wires, List[int]]
-        :param fermionic: Whether to allow remaining wires that are not a contiguous block.
-        :type fermionic: bool
         :param reduced_wires: Wire labels of the returned state preparation. Defaults to ``range(k)`` for
             ``k`` remaining wires.
         :type reduced_wires: Optional[Union[Wires, List[int]]]
+        :param gate_barrier: Whether the returned state preparation carries the gate barriers left by the
+            removed wires, see :meth:`reduced_state`.
+        :type gate_barrier: bool
         :return: The state of the remaining wires as a state preparation.
         :rtype: GaussianStatePrep
         :raises ValueError: If a wire is not a wire of the device.
@@ -1117,9 +1125,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         if unknown_wires:
             raise ValueError(f"Wires {unknown_wires} are not wires of the device ({self.wires.tolist()}).")
         kept_wires = [wire for wire in self.wires if wire not in traced_wires]
-        return self.reduced_state(kept_wires, fermionic=fermionic, reduced_wires=reduced_wires)
+        return self.reduced_state(kept_wires, reduced_wires=reduced_wires, gate_barrier=gate_barrier)
 
-    def reduced_covariance_matrix(self, wires: Union[Wires, List[int]], *, fermionic: bool = False) -> TensorLike:
+    def reduced_covariance_matrix(self, wires: Union[Wires, List[int]], *, gate_barrier: bool = True) -> TensorLike:
         r"""
         Majorana covariance matrix of the current state on the given wires, the others being traced out.
 
@@ -1132,69 +1140,125 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         the reduced state of the qubits. Otherwise, a Pauli word on the reduced state stands in the full
         system for the same word with a :math:`Z` on every removed wire located between two of its
         :math:`X` or :math:`Y` factors: the result is the reduced state of the fermionic modes, which is
-        not the reduced state of the qubits. That case must be requested with ``fermionic=True``.
+        not the reduced state of the qubits. A matrix cannot carry the gate barriers that make this safe,
+        so that case is refused here. :meth:`reduced_state` returns the reduced state with its barriers,
+        and ``gate_barrier=False`` returns the matrix of the fermionic reduced state with a warning.
+
+        This also holds for an initial state with a nonzero displacement vector, such as a product state
+        with superposed qubits: the products of two Majorana operators of a contiguous block are supported
+        on that block, so their expectation values do not involve the displacement. The covariance matrix
+        alone does not determine the reduced state then, see :meth:`reduced_state`.
 
         :param wires: Wires to keep.
         :type wires: Union[Wires, List[int]]
-        :param fermionic: Whether to allow kept wires that are not a contiguous block in the device wire
-            order, and return the fermionic reduced state.
-        :type fermionic: bool
+        :param gate_barrier: Whether to refuse the kept wires that are not listed in the device wire order
+            or that have a removed wire or a gate barrier of the initial state between them.
+        :type gate_barrier: bool
         :return: The reduced covariance matrix, shape (..., 2k, 2k) for k kept wires.
         :rtype: TensorLike
         :raises ValueError: If a wire is not a wire of the device, if no wire is kept, or if the kept wires
-            are not a contiguous block in the device wire order while ``fermionic`` is ``False``.
-        :raises NotImplementedError: If the initial state has a nonzero displacement vector, such as a
-            product state with superposed qubits. Its reduced state is not a Gaussian state of the
-            Majorana operators of the kept wires alone.
+            are not listed in the device wire order or have a removed wire or a gate barrier between them
+            while ``gate_barrier`` is ``True``.
         """
-        kept_wires = Wires(wires)
-        unknown_wires = [wire for wire in kept_wires if wire not in self.wires]
-        if unknown_wires:
-            raise ValueError(f"Wires {unknown_wires} are not wires of the device ({self.wires.tolist()}).")
-        wire_indices = self.wires.indices(kept_wires)
-        CovarianceMatrixToolbox.validate_reduced_wire_indices(wire_indices, fermionic=fermionic)
-        state_prep = self.state_prep_op
-        if isinstance(state_prep, GaussianStatePrepBase):
-            displacement = torch_utils.to_numpy(state_prep.displacement_vector)
-            if not np.allclose(displacement, 0.0, atol=ProductState.ATOL):
-                raise NotImplementedError(
-                    f"The reduced state is only implemented for initial states without displacement: "
-                    f"computational-basis states and GaussianStatePrep. A product state with superposed qubits "
-                    f"has a nonzero displacement vector and its reduced state is not a Gaussian state of the "
-                    f"Majorana operators of the kept wires. Got {state_prep} on {self.name}."
+        wire_indices = self._reduced_wire_indices(wires, any_order=True)
+        if self._has_barrier_inside(wire_indices):
+            if gate_barrier:
+                raise ValueError(
+                    f"The kept wires (device positions {wire_indices}) are not a block of neighbouring wires "
+                    f"listed in the device wire order without gate barrier on {self.name}: a removed wire or "
+                    f"a gate barrier lies between them. The Jordan-Wigner strings of their Majorana operators then "
+                    f"run through removed wires, so the covariance matrix restricted to them describes the "
+                    f"reduced state of the fermionic modes, which differs from the reduced state of the qubits "
+                    f"and from what a qubit simulator returns. A matrix cannot carry the gate barriers that "
+                    f"make this safe: use reduced_state, partial_trace or matchcake.reduced_state to get the "
+                    f"reduced state with its barriers, or pass gate_barrier=False to get the covariance "
+                    f"matrix of the fermionic reduced state."
                 )
+            warnings.warn(CovarianceMatrixToolbox.FERMIONIC_REDUCTION_WARNING, UserWarning, stacklevel=2)
         return CovarianceMatrixToolbox.reduce(self.covariance_matrix, wire_indices)
 
     def reduced_state(
         self,
         wires: Union[Wires, List[int]],
         *,
-        fermionic: bool = False,
         reduced_wires: Optional[Union[Wires, List[int]]] = None,
+        gate_barrier: bool = True,
     ) -> GaussianStatePrep:
         r"""
         Keep the given wires of the current state, trace out the others, and return a state preparation.
 
-        The returned :class:`~matchcake.operations.state_preparation.GaussianStatePrep` holds the reduced
-        covariance matrix of :meth:`reduced_covariance_matrix` and can be queued as the first operation of
-        another circuit, typically on a smaller device. Inside a QNode, the measurement
-        :func:`matchcake.covariance_matrix` returns the same covariance matrix.
+        The returned :class:`~matchcake.operations.state_preparation.GaussianStatePrep` holds the principal
+        submatrix of :attr:`covariance_matrix` on the kept wires and can be queued as the first operation
+        of another circuit, typically on a smaller device. Inside a QNode, the measurement
+        :func:`matchcake.reduced_state` returns the same state preparation.
 
-        :param wires: Wires to keep.
+        Any set of wires can be kept. The Majorana operators of the kept wires still hold the
+        Jordan-Wigner strings of the removed wires, and the returned state remembers where with its
+        :attr:`~matchcake.operations.state_preparation.GaussianStatePrepBase.barriers`:
+
+        - a barrier before a kept wire when a removed wire lies between it and the previous kept wire;
+        - a barrier before the first kept wire when wires are removed before it and the state has a
+          nonzero displacement vector, such as a product state with superposed qubits;
+        - the barriers of the initial state of this device, moved to the kept wires.
+
+        The expectation value of a Pauli word in the returned state is the one of the reduced state of
+        the qubits when, for every barrier, the word has an even number of :math:`X` and :math:`Y` on the
+        wires on the right of the barrier. A matchgate on one side of a barrier keeps this parity. A
+        device started from the returned state therefore gives exact results for the gates on one side of
+        a barrier, for the probabilities and the samples in the computational basis and for the
+        observables that follow the rule, and it raises a :class:`~pennylane.exceptions.DeviceError` for
+        the other gates and observables.
+
+        When the state has a nonzero displacement vector, the returned state preparation holds the part
+        of :attr:`displacement_vector` on the kept wires. With a barrier before the first kept wire, the
+        observables with an odd number of :math:`X` and :math:`Y` are refused, and the covariance matrix
+        is returned alone.
+
+        With ``gate_barrier=False``, the returned state has no barrier, and a warning is raised when it
+        would have had one. It is then the reduced state of the fermionic modes: a Pauli word on it stands
+        for the same word with a :math:`Z` on every removed wire that its Jordan-Wigner strings cross, and
+        nothing checks the gates and the observables any more.
+
+        :param wires: Wires to keep, in the device wire order.
         :type wires: Union[Wires, List[int]]
-        :param fermionic: Whether to allow kept wires that are not a contiguous block in the device wire
-            order, see :meth:`reduced_covariance_matrix`.
-        :type fermionic: bool
         :param reduced_wires: Wire labels of the returned state preparation. Defaults to ``range(k)`` for
             ``k`` kept wires.
         :type reduced_wires: Optional[Union[Wires, List[int]]]
+        :param gate_barrier: Whether the returned state preparation carries its gate barriers. With
+            ``False``, the wires can be listed in any order.
+        :type gate_barrier: bool
         :return: The reduced state as a state preparation.
         :rtype: GaussianStatePrep
+        :raises ValueError: If a wire is not a wire of the device, if no wire is kept, or if the kept wires
+            are not listed in the device wire order while ``gate_barrier`` is ``True``.
         """
-        reduced_covariance = self.reduced_covariance_matrix(wires, fermionic=fermionic)
+        wire_indices = self._reduced_wire_indices(wires, any_order=not gate_barrier)
+        reduced_covariance = CovarianceMatrixToolbox.reduce(self.covariance_matrix, wire_indices)
+        barriers: Tuple[int, ...] = ()
+        if gate_barrier:
+            barriers = self._reduced_barriers(wire_indices)
+        elif wire_indices != sorted(wire_indices) or self._reduced_barriers(wire_indices):
+            warnings.warn(CovarianceMatrixToolbox.FERMIONIC_REDUCTION_WARNING, UserWarning, stacklevel=2)
+        reduced_displacement = None
+        # With a barrier before the first kept wire, the odd observables are refused and the
+        # displacement vector of the kept wires, which holds the strings of the removed wires, is dropped.
+        is_displacement_dropped = self._has_displacement() and 0 in barriers
+        if self._has_displacement() and not is_displacement_dropped:
+            indices = CovarianceMatrixToolbox.majorana_indices(wire_indices)
+            reduced_displacement = self.displacement_vector[..., indices]  # type: ignore[index]
+        # The mark stays as long as a barrier does: the wires that remain without any barrier are on the
+        # left of every barrier, where nothing was dropped.
+        odd_part_dropped = bool(barriers) and (is_displacement_dropped or self._is_odd_part_dropped())
         if reduced_wires is None:
-            reduced_wires = list(range(len(Wires(wires))))
-        return GaussianStatePrep(reduced_covariance, wires=reduced_wires, validate=False)
+            reduced_wires = list(range(len(wire_indices)))
+        return GaussianStatePrep(
+            reduced_covariance,
+            wires=reduced_wires,
+            validate=False,
+            displacement_vector=reduced_displacement,
+            barriers=barriers,
+            odd_part_dropped=odd_part_dropped,
+        )
 
     def reset(self) -> None:
         """Reset the device state to its initial configuration.
@@ -1432,6 +1496,97 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         # The sum broadcasts the unbatched identity term over the batch dimensions.
         return sum(weighted_terms[1:], weighted_terms[0])
 
+    def _check_observable_against_barriers(self, observable: qml.operation.Operator) -> None:
+        r"""
+        Check that the expectation value of an observable is the one of the reduced state of the qubits.
+
+        With gate barriers on the initial state, a Pauli word is exact when, for every barrier, it has an
+        even number of :math:`X` and :math:`Y` on the wires on the right of the barrier. The observables
+        that are evaluated term by term (:class:`~matchcake.observables.BatchHamiltonian`,
+        :class:`pennylane.Hermitian`) are checked on their terms, and the projectors on computational-basis
+        states only hold :math:`Z` operators.
+
+        :param observable: The observable to check.
+        :type observable: qml.operation.Operator
+        :raises DeviceError: If a Pauli word of the observable breaks the rule of a barrier, or if the
+            observable has no Pauli representation to check.
+        """
+        barriers = self.barriers
+        if not barriers:
+            return
+        if isinstance(observable, (BatchHamiltonian, qml.Hermitian, BasisStateProjector, BatchProjector)):
+            return
+        pauli_rep = observable.pauli_rep
+        if pauli_rep is None:
+            raise DeviceError(
+                f"The observable {observable} has no Pauli representation, so {self.name} cannot check it "
+                f"against the gate barriers of the initial state (before the device positions "
+                f"{list(barriers)}). Use an observable made of Pauli words."
+            )
+        for pauli_word in pauli_rep:
+            transverse_positions = [
+                self.wires.index(wire) for wire, letter in pauli_word.items() if letter in ("X", "Y")
+            ]
+            for barrier in barriers:
+                if sum(position >= barrier for position in transverse_positions) % 2 == 1:
+                    raise DeviceError(
+                        f"The Pauli word {pauli_word} of the observable {observable} has an odd number of X "
+                        f"and Y on the right of the gate barrier before the device position {barrier} on "
+                        f"{self.name}. The initial state is a reduced state: wires were traced out at this "
+                        f"barrier, and the expectation value of this word in it is not the one of the "
+                        f"reduced state of the qubits."
+                    )
+
+    def _check_operation_against_barriers(self, operation: qml.operation.Operator) -> None:
+        r"""
+        Check that an operation does not act on both sides of a gate barrier of the initial state.
+
+        A matchgate on one side of a barrier keeps the parity of the number of Majorana operators on the
+        right of the barrier, on which the exactness of the results relies. A gate with wires on both
+        sides does not. A barrier before the first wire of the device has no wire on its left.
+
+        :param operation: The operation to check.
+        :type operation: qml.operation.Operator
+        :raises DeviceError: If the wires of the operation are on both sides of a barrier.
+        """
+        barriers = self.barriers
+        if not barriers or len(operation.wires) == 0:
+            return
+        positions = self.wires.indices(operation.wires)
+        first_position, last_position = min(positions), max(positions)
+        for barrier in barriers:
+            if first_position < barrier <= last_position:
+                raise DeviceError(
+                    f"The operation {operation} acts on both sides of the gate barrier before the device "
+                    f"position {barrier} on {self.name}. The initial state is a reduced state: wires were "
+                    f"traced out at this barrier, and a gate across it would not be the gate on the qubits "
+                    f"but the same gate with a Z on the removed wires."
+                )
+
+    def _check_sampling_bases_against_barriers(self, rotated_bases: Mapping[Any, Any]) -> None:
+        r"""
+        Check that the wires sampled in another basis than the computational one are on the left of
+        every gate barrier of the initial state.
+
+        The distribution of samples in the X or Y basis of a wire involves Pauli words with a single
+        :math:`X` or :math:`Y` on that wire, which are not exact on the right of a barrier.
+
+        :param rotated_bases: The wires that are not sampled in the computational basis, as keys.
+        :type rotated_bases: Mapping[Any, Any]
+        :raises DeviceError: If such a wire is on the right of a barrier.
+        """
+        barriers = self.barriers
+        if not barriers or not rotated_bases:
+            return
+        first_barrier = min(barriers)
+        blocked_wires = [wire for wire in rotated_bases if self.wires.index(wire) >= first_barrier]
+        if blocked_wires:
+            raise DeviceError(
+                f"The wires {blocked_wires} cannot be sampled in another basis than the computational one "
+                f"on {self.name}: they are on the right of the gate barrier before the device position "
+                f"{first_barrier}, left by wires that were traced out of the initial state."
+            )
+
     def _dot(self, a: TensorLike, b: TensorLike) -> TensorLike:
         r"""
         Compute the dot product of two arrays.
@@ -1499,6 +1654,44 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             )
         return {wire: letters.pop() for wire, letters in letters_by_wire.items() if letters != {"Z"}}
 
+    def _has_displacement(self) -> bool:
+        r"""
+        Tell whether the current state has a nonzero displacement vector.
+
+        A matchgate circuit rotates the displacement vector by an orthogonal matrix, so the current state
+        has a displacement exactly when the initial state has one.
+
+        :return: ``True`` for an initial state with a nonzero displacement vector.
+        :rtype: bool
+        """
+        state_prep = self.state_prep_op
+        return isinstance(state_prep, GaussianStatePrepBase) and state_prep.is_displaced()
+
+    def _is_odd_part_dropped(self) -> bool:
+        r"""
+        Tell whether the current state stands for a state whose displacement vector was dropped.
+
+        :return: The mark of the initial state, see
+            :attr:`~matchcake.operations.state_preparation.GaussianStatePrepBase.odd_part_dropped`.
+        :rtype: bool
+        """
+        state_prep = self.state_prep_op
+        return isinstance(state_prep, GaussianStatePrepBase) and state_prep.odd_part_dropped
+
+    def _has_barrier_inside(self, wire_indices: Sequence[int]) -> bool:
+        r"""
+        Tell whether a removed wire or a gate barrier of the current state lies between the given wires.
+
+        :param wire_indices: Positions of the kept wires in the device wire order.
+        :type wire_indices: Sequence[int]
+        :return: ``True`` when the reduced state on these wires needs a barrier between two of its wires,
+            or when the wires are not listed in increasing order.
+        :rtype: bool
+        """
+        positions = [int(position) for position in wire_indices]
+        has_gap = not CovarianceMatrixToolbox.are_wires_contiguous(positions)
+        return has_gap or any(min(positions) < barrier <= max(positions) for barrier in self.barriers)
+
     def _observable_in_sampled_frame(self, observable: qml.operation.Operator) -> qml.operation.Operator:
         """Rewrite an observable for samples drawn in a product basis.
 
@@ -1556,23 +1749,29 @@ class NonInteractingFermionicDevice(qml.devices.Device):
                 return samples[..., self.wires.indices(measurement.wires)]
             mp = self._build_sampled_measurement(SampleMP, measurement.obs)
             return mp.process_samples(samples, wire_order=self.wires)
-        if isinstance(measurement, (CovarianceMatrixMP, VnEntropyMP, PurityMP, DensityMatrixMP)):
+        if isinstance(measurement, (CovarianceMatrixMP, ReducedStateMP, VnEntropyMP, PurityMP, DensityMatrixMP)):
             return self._process_reduced_state_measurement(measurement)
         raise NotImplementedError(f"Measurement {type(measurement).__name__} is not supported by {self.name}.")
 
     def _process_reduced_state_measurement(self, measurement: qml.measurements.MeasurementProcess) -> Any:
         """Evaluate a measurement of the reduced state on the wires of the measurement.
 
-        The reduced covariance matrix is computed by :meth:`reduced_covariance_matrix`. Only
-        :class:`~matchcake.measurements.CovarianceMatrixMP` can ask for the fermionic reduced state on
-        wires that are not a contiguous block; the PennyLane measurements are quantities of the qubit
-        reduced state.
+        The covariance matrix is computed by :meth:`reduced_covariance_matrix` and the state preparation
+        by :meth:`reduced_state`. The PennyLane measurements are quantities of the reduced state of the
+        qubits, which the covariance matrix gives on a contiguous block of wires without gate barrier.
 
-        :param measurement: A covariance matrix, Von Neumann entropy, purity or density matrix measurement.
+        :param measurement: A covariance matrix, reduced state, Von Neumann entropy, purity or density
+            matrix measurement.
         :type measurement: qml.measurements.MeasurementProcess
         :return: The measurement result.
         :rtype: Any
-        :raises DeviceError: If the circuit is executed with shots, since these measurements are analytic.
+        :raises DeviceError: If the circuit is executed with shots, since these measurements are analytic,
+            or if an entropy, a purity or a density matrix is asked on wires with a gate barrier of the
+            initial state between two of them, or on wires that are not all on the left of every barrier
+            when a displacement vector was dropped.
+        :raises NotImplementedError: If an entropy, a purity or a density matrix is asked while the initial
+            state has a nonzero displacement vector, since the covariance matrix does not determine the
+            state.
         """
         if self._active_shots is not None:
             raise DeviceError(
@@ -1580,16 +1779,110 @@ class NonInteractingFermionicDevice(qml.devices.Device):
                 f"on {self.name}. Execute the circuit without shots."
             )
         wires = measurement.wires or self.wires
-        is_fermionic = getattr(measurement, "fermionic", False)
-        reduced_covariance = self.reduced_covariance_matrix(wires, fermionic=is_fermionic)
+        if isinstance(measurement, ReducedStateMP):
+            return self.reduced_state(
+                wires, reduced_wires=measurement.reduced_wires, gate_barrier=measurement.gate_barrier
+            )
+        if isinstance(measurement, CovarianceMatrixMP):
+            return self.reduced_covariance_matrix(wires, gate_barrier=measurement.gate_barrier)
+        wire_indices = self._reduced_wire_indices(wires, any_order=True)
+        # When a displacement vector was dropped, the wires on the right of a barrier may have lost their
+        # odd part, so every barrier that is not on the right of the measured wires is refused.
+        first_refused_position = 0 if self._is_odd_part_dropped() else min(wire_indices) + 1
+        crossed_barriers = [
+            barrier
+            for barrier in self.barriers
+            if barrier == 0 or first_refused_position <= barrier <= max(wire_indices)
+        ]
+        if crossed_barriers:
+            raise DeviceError(
+                f"Measurement {type(measurement).__name__} on the device positions {wire_indices} cannot be "
+                f"evaluated on {self.name}: the initial state {self.state_prep_op} has gate barriers before "
+                f"the positions {crossed_barriers}, left by wires that were traced out. The reduced state "
+                f"of the qubits is then not determined by the covariance matrix of these wires."
+            )
+        reduced_covariance = self.reduced_covariance_matrix(wires)
+        if self._has_displacement():
+            raise NotImplementedError(
+                f"Measurement {type(measurement).__name__} is only implemented for initial states without "
+                f"displacement: computational-basis states and GaussianStatePrep without a displacement "
+                f"vector. A state with a nonzero displacement vector, such as a product state with "
+                f"superposed qubits, is not determined by its covariance matrix. Got {self.state_prep_op} "
+                f"on {self.name}."
+            )
         if isinstance(measurement, VnEntropyMP):
             return CovarianceMatrixToolbox.von_neumann_entropy(reduced_covariance, base=measurement.log_base)
         if isinstance(measurement, PurityMP):
             return CovarianceMatrixToolbox.purity(reduced_covariance)
-        if isinstance(measurement, DensityMatrixMP):
-            density_matrix = CovarianceMatrixToolbox.to_density_matrix(reduced_covariance)
-            return qml.math.cast(density_matrix, self._c_dtype_name)
-        return reduced_covariance
+        density_matrix = CovarianceMatrixToolbox.to_density_matrix(reduced_covariance)
+        return qml.math.cast(density_matrix, self._c_dtype_name)
+
+    def _reduced_barriers(self, wire_indices: Sequence[int]) -> Tuple[int, ...]:
+        r"""
+        Gate barriers of the reduced state on the given wire positions, in the order of the kept wires.
+
+        With the kept positions :math:`k_0 < k_1 < \dots`, the reduced state has:
+
+        - a barrier before the kept wire :math:`i \geq 1` when a removed wire lies between
+          :math:`k_{i-1}` and :math:`k_i`, since the Majorana operators of the wires :math:`k_j` with
+          :math:`j \geq i` hold the Jordan-Wigner string of that removed wire;
+        - every barrier :math:`p` of the current state, moved before the first kept wire at a position
+          :math:`\geq p`. It is dropped when no kept wire is on its right. When no kept wire is on its
+          left, it becomes a barrier before the first kept wire, which is only needed when it was one
+          already, when the state has a nonzero displacement vector, or when a displacement vector was
+          dropped earlier (:attr:`~matchcake.operations.state_preparation.GaussianStatePrepBase.odd_part_dropped`):
+          otherwise the Pauli words with an odd number of :math:`X` and :math:`Y` vanish in the reduced
+          state of the qubits as well;
+        - a barrier before the first kept wire when wires are removed before it and the state has a
+          nonzero displacement vector.
+
+        :param wire_indices: Positions of the kept wires in the device wire order, in increasing order.
+        :type wire_indices: Sequence[int]
+        :return: The sorted positions of the barriers of the reduced state.
+        :rtype: Tuple[int, ...]
+        """
+        positions = sorted(int(position) for position in wire_indices)
+        is_displaced = self._has_displacement()
+        has_odd_part = is_displaced or self._is_odd_part_dropped()
+        barriers = {index for index in range(1, len(positions)) if positions[index] - positions[index - 1] > 1}
+        for barrier in self.barriers:
+            n_kept_before = sum(position < barrier for position in positions)
+            if n_kept_before == len(positions):
+                continue
+            if n_kept_before > 0 or barrier == 0 or has_odd_part:
+                barriers.add(n_kept_before)
+        if positions[0] > 0 and is_displaced:
+            barriers.add(0)
+        return tuple(sorted(barriers))
+
+    def _reduced_wire_indices(self, wires: Union[Wires, List[int]], any_order: bool = False) -> List[int]:
+        r"""
+        Positions of the wires to keep in the device wire order, checked for a reduced state.
+
+        :param wires: Wires to keep.
+        :type wires: Union[Wires, List[int]]
+        :param any_order: Whether the kept wires can be listed in another order than the one of the device.
+        :type any_order: bool
+        :return: The positions of the kept wires, in the order they are given.
+        :rtype: List[int]
+        :raises ValueError: If a wire is not a wire of the device, if no wire is kept, if a wire is
+            repeated, or if the kept wires are not listed in the device wire order while ``any_order`` is
+            ``False``.
+        """
+        kept_wires = Wires(wires)
+        unknown_wires = [wire for wire in kept_wires if wire not in self.wires]
+        if unknown_wires:
+            raise ValueError(f"Wires {unknown_wires} are not wires of the device ({self.wires.tolist()}).")
+        wire_indices = [int(index) for index in self.wires.indices(kept_wires)]
+        CovarianceMatrixToolbox.validate_reduced_wire_indices(wire_indices, allow_gaps=True)
+        if not any_order and wire_indices != sorted(wire_indices):
+            raise ValueError(
+                f"The kept wires {kept_wires.tolist()} must be listed in the device wire order "
+                f"({self.wires.tolist()}). Reordering fermionic modes is not a relabeling of qubits, and a "
+                f"reduced state with gate barriers is only defined in the device wire order. Pass "
+                f"gate_barrier=False to get the reduced state of the fermionic modes in this order."
+            )
+        return wire_indices
 
     def _samples_in_pennylane_layout(self) -> np.ndarray:
         """Return the current samples with the axes in the order PennyLane expects.
@@ -1628,6 +1921,21 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             return False
 
     @property
+    def barriers(self) -> Tuple[int, ...]:
+        r"""
+        Gate barriers of the current state, as positions in the device wire order.
+
+        They are the barriers of the initial state, see
+        :attr:`~matchcake.operations.state_preparation.GaussianStatePrepBase.barriers`. A barrier at
+        position :math:`p` sits just before the wire at position :math:`p`.
+
+        :return: The sorted positions of the barriers, empty for a state without barrier.
+        :rtype: Tuple[int, ...]
+        """
+        state_prep = self.state_prep_op
+        return state_prep.barriers if isinstance(state_prep, GaussianStatePrepBase) else ()
+
+    @property
     def covariance_matrix(self) -> TensorLike:
         """Majorana covariance matrix evolved under the current global SPTM.
 
@@ -1644,6 +1952,26 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         return qml.math.einsum("...ij,...ik,...kl->...jl", sptm, cov0, sptm)
 
     @property
+    def displacement_vector(self) -> TensorLike:
+        r"""Majorana displacement vector :math:`d_\mu = \langle c_\mu \rangle` evolved under the current global SPTM.
+
+        It is :math:`R^\top d_0`, with :math:`d_0` the displacement vector of the initial state and
+        :math:`R` the global SPTM. It vanishes for a state with a definite fermion parity.
+
+        :return: The displacement vector, shape (..., 2n).
+        :rtype: TensorLike
+        """
+        if not isinstance(self.state_prep_op, GaussianStatePrepBase):
+            raise ValueError(
+                f"Displacement vector can only be computed for product states and Gaussian states. "
+                f"Got {type(self.state_prep_op)} instead of a GaussianStatePrepBase."
+            )
+        sptm = self.global_sptm.sptm_matrix(self.wires)
+        # The cast keeps the backend of the displacement vector, so gradients flow through it.
+        d0 = qml.math.cast(self.state_prep_op.displacement_vector, self._r_dtype_name)
+        return qml.math.einsum("...ij,...i->...j", sptm, d0)
+
+    @property
     def extended_covariance_matrix(self) -> TensorLike:
         """Extended (2n+1)x(2n+1) covariance matrix tilde_Lambda.
 
@@ -1651,8 +1979,9 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         column/row at position 2n (the parity index). Evolves the full
         extended state under the matchgate SPTM as tilde_Q^T tilde_Lambda_0 tilde_Q.
 
-        BasisState inputs are promoted to ProductState first (displacement is zero), and a
-        :class:`~matchcake.operations.state_preparation.GaussianStatePrep` has no displacement either.
+        BasisState inputs are promoted to ProductState first (displacement is zero). A
+        :class:`~matchcake.operations.state_preparation.GaussianStatePrep` has no displacement unless it
+        was given a displacement vector.
 
         See docs/expectation_values_theory.md for the math.
         """

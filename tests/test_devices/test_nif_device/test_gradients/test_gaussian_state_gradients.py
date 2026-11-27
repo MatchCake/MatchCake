@@ -27,6 +27,7 @@ KEPT_WIRES = [1, 2]
 BASIS_STATE = np.array([1, 0, 1, 0])
 
 
+@pytest.mark.filterwarnings("ignore:The reduced state is returned without gate barriers:UserWarning")
 class TestNonInteractingFermionicDeviceGaussianStateGradients:
     r"""
     Guard the gradient chain through the Gaussian state preparation and the reduced-state
@@ -40,7 +41,7 @@ class TestNonInteractingFermionicDeviceGaussianStateGradients:
         "expval": lambda: qml.expval(qml.X(1) @ qml.X(2) + 0.5 * qml.Z(0) @ qml.Z(3)),
         "probs": lambda: qml.probs(wires=[0, 1]),
         "covariance_matrix": lambda: mc.covariance_matrix(wires=KEPT_WIRES),
-        "fermionic_covariance_matrix": lambda: mc.covariance_matrix(wires=[0, 2], fermionic=True),
+        "fermionic_covariance_matrix": lambda: mc.covariance_matrix(wires=[0, 2], gate_barrier=False),
         "vn_entropy": lambda: qml.vn_entropy(wires=KEPT_WIRES),
         "purity": lambda: qml.purity(wires=KEPT_WIRES),
         "density_matrix": lambda: qml.density_matrix(wires=KEPT_WIRES),

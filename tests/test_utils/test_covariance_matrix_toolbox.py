@@ -320,15 +320,15 @@ class TestCovarianceMatrixToolbox:
         CovarianceMatrixToolbox.validate_reduced_wire_indices(wire_indices)
 
     @pytest.mark.parametrize("wire_indices", [[0, 2], [1, 0]])
-    def test_validate_reduced_wire_indices_needs_opt_in_for_fermionic(self, wire_indices):
-        with pytest.raises(ValueError, match="fermionic=True"):
+    def test_validate_reduced_wire_indices_needs_opt_in_for_gaps(self, wire_indices):
+        with pytest.raises(ValueError, match="not a contiguous block"):
             CovarianceMatrixToolbox.validate_reduced_wire_indices(wire_indices)
-        CovarianceMatrixToolbox.validate_reduced_wire_indices(wire_indices, fermionic=True)
+        CovarianceMatrixToolbox.validate_reduced_wire_indices(wire_indices, allow_gaps=True)
 
     @pytest.mark.parametrize("wire_indices, message", [([], "At least one wire"), ([1, 1], "distinct")])
     def test_validate_reduced_wire_indices_rejects_empty_and_repeated(self, wire_indices, message):
         with pytest.raises(ValueError, match=message):
-            CovarianceMatrixToolbox.validate_reduced_wire_indices(wire_indices, fermionic=True)
+            CovarianceMatrixToolbox.validate_reduced_wire_indices(wire_indices, allow_gaps=True)
 
     @pytest.mark.parametrize("batch_size", [None, 2])
     def test_reduce_is_principal_submatrix(self, batch_size):

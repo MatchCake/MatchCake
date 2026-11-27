@@ -7,6 +7,8 @@ from such a mixed state. It builds on the covariance-matrix formalism of
 the state of the device is a computational-basis state $`|x\rangle`$ evolved by the
 matchgate circuit $`V`$, and it is fully described by its Majorana covariance matrix
 $`\Lambda = R^\top \Lambda_0 R`$, with $`R`$ the single-particle transition matrix of $`V`$.
+Section 7 treats the initial product states with superposed qubits, which also carry a
+displacement vector.
 
 ## 1. The reduced state is Gaussian
 
@@ -114,10 +116,13 @@ Gaussian state, but it differs from the reduced state of the qubits, and so do i
 and its purity. The reduced state of the qubits on such wires is not Gaussian in general and
 has no covariance-matrix description.
 
-MatchCake therefore accepts only contiguous kept wires by default, and raises an error
-otherwise. With `fermionic=True` it returns the principal submatrix, the reduced state of the
-fermionic modes. The Pfaffian formula of Section 2.1 for non-contiguous wires is not
-implemented.
+The measurements that return a matrix or a number (`mc.covariance_matrix`, the entropy, the
+purity and the density matrix) therefore accept only contiguous kept wires, and raise an error
+otherwise. With `gate_barrier=False`, `mc.covariance_matrix` returns the principal submatrix,
+the reduced state of the fermionic modes, with a warning. The Pfaffian formula of Section 2.1
+for non-contiguous wires is not implemented. `mc.reduced_state`, `reduced_state` and
+`partial_trace` accept any kept wires: the state they return remembers the removed wires with
+gate barriers, described in Section 8.
 Expectation values and probabilities on arbitrary wires are not affected by this restriction:
 they are computed from the full covariance matrix.
 
@@ -314,7 +319,7 @@ columns $`4`$ and $`5`$:
 \end{pmatrix} .
 ```
 
-This is what MatchCake returns with `fermionic=True`.
+This is what MatchCake returns with `gate_barrier=False`.
 
 **The qubit matrix.** The reduced system has two wires, $`0'`$ and $`1'`$, which are the
 original wires $`0`$ and $`2`$, and its own Majorana operators
@@ -376,7 +381,7 @@ means $`-\langle X_0 X_2 \rangle`$, and the entry $`(0, 3)`$ means $`\langle Y_0
   still inside, whereas $`\langle Y_0 Y_2 \rangle = 0`$ for the qubits.
 
 MatchCake raises an error for `wires=[0, 2]`, because the principal submatrix is not the
-reduced state of the qubits, and returns the fermionic matrix when `fermionic=True` is passed.
+reduced state of the qubits, and returns the fermionic matrix when `gate_barrier=False` is passed.
 
 ## 3. Normal modes, entropy and purity
 
@@ -455,7 +460,8 @@ after each outcome, which also holds for a mixed state.
 
 The device therefore runs a circuit from a mixed Gaussian state with the same code paths as
 from a product state: the initial covariance matrix is the only difference, and the
-displacement vector of the extended covariance matrix is zero.
+displacement vector of the extended covariance matrix is zero unless the state preparation
+carries one (Section 7).
 
 ## 5. In MatchCake
 
@@ -465,6 +471,7 @@ to a measurement are the wires that are kept:
 | Measurement | Result |
 | --- | --- |
 | `mc.covariance_matrix(wires)` | $`\Lambda_A`$ |
+| `mc.reduced_state(wires)` | `GaussianStatePrep` of the reduced state |
 | `qml.vn_entropy(wires)` | $`S(\rho_A)`$ |
 | `qml.purity(wires)` | $`\mathrm{Tr}\, \rho_A^2`$ |
 | `qml.density_matrix(wires)` | $`\rho_A`$, for a small number of wires |
@@ -472,8 +479,10 @@ to a measurement are the wires that are kept:
 A mixed Gaussian state enters a circuit through the state preparation
 `mc.GaussianStatePrep(covariance_matrix, wires)`, queued as the first operation. Feeding it the
 result of `mc.covariance_matrix` continues the computation on the reduced system, typically on
-a device with fewer wires. Outside of a `QNode`, the device methods `reduced_covariance_matrix`,
-`reduced_state` and `partial_trace` give the same reduced state.
+a device with fewer wires. `mc.reduced_state` returns that state preparation directly, to be
+queued with `qml.apply`. It also holds the displacement vector of Section 7 and the gate
+barriers of Section 8, which a matrix cannot carry. Outside of a `QNode`, the device methods
+`reduced_covariance_matrix`, `reduced_state` and `partial_trace` give the same results.
 
 The functions behind these features take a covariance matrix and are the static methods of
 `matchcake.utils.CovarianceMatrixToolbox`: `von_neumann_entropy`, `purity`, `mode_polarizations`,
@@ -505,15 +514,178 @@ $`\lambda_j + \lambda_k`$. The components along the gauge directions are project
 gradient of `CovarianceMatrixToolbox.block_diagonalize` is exact for any quantity that depends on the state
 only.
 
-## 7. Limitations
+## 7. Initial states with a displacement vector
 
-- **Initial states without displacement.** A product state with superposed qubits has a
-  nonzero displacement vector, and its reduced state is Gaussian only in the extended algebra
-  that includes the parity of the traced-out wires. The reduced-state features raise a
-  `NotImplementedError` for such inputs. Computational-basis states and `GaussianStatePrep`
-  are supported.
-- **Contiguous kept wires.** See Section 2.2. Other sets of wires need `fermionic=True` and give
-  the reduced state of the fermionic modes.
+A product state with superposed qubits is not an even Gaussian state. Next to its covariance
+matrix it has a displacement vector $`d_\mu = \langle c_\mu \rangle`$, and it obeys Wick's
+theorem with the extended covariance matrix of
+[Section 5 of the expectation-value document](expectation_values_theory.md):
+
+```math
+\widetilde\Lambda = \begin{pmatrix} \Lambda & d \\ -d^\top & 0 \end{pmatrix},
+\qquad
+\langle c_{\mu_1} \cdots c_{\mu_m} \rangle \propto
+\begin{cases}
+\mathrm{Pf}\big(\Lambda|_S\big) & m \text{ even}, \\ \mathrm{Pf}\big(\widetilde\Lambda|_{S \cup \{2n\}}\big) & m \text{ odd},
+\end{cases}
+```
+
+with $`S = \{\mu_1, \ldots, \mu_m\}`$ and $`2n`$ the index of the parity mode. A matchgate
+circuit maps $`d`$ to $`R^\top d`$.
+
+### 7.1 The Jordan-Wigner string of the removed wires
+
+Let $`A`$ be a contiguous block of kept wires, with $`p`$ removed wires before it. The Majorana
+operators of the reduced system have Jordan-Wigner strings that start at the first kept wire, so
+
+```math
+c'_j = Z_\text{pre}\, c_{\mu_j},
+\qquad
+Z_\text{pre} = \prod_{b < \min A} Z_b ,
+\qquad
+c'_{j_1} \cdots c'_{j_m} = (Z_\text{pre})^m\, c_{\mu_{j_1}} \cdots c_{\mu_{j_m}} ,
+```
+
+since $`Z_\text{pre}`$ commutes with the Majorana operators of the kept wires and squares to the
+identity.
+
+**Even products.** The strings cancel. The even expectation values of the reduced state are
+those of the full state, so its covariance matrix is the principal submatrix
+$`\Lambda_A = \Pi_A \Lambda \Pi_A^\top`$ for every contiguous block, with or without a
+displacement vector.
+
+**Odd products, kept wires first.** For $`p = 0`$ there is no string, and the odd expectation
+values of the reduced state are Pfaffians of $`\widetilde\Lambda`$ on the indices of $`A`$ and the
+parity mode. The reduced state obeys Wick's theorem with
+
+```math
+\widetilde\Lambda_A = \begin{pmatrix} \Lambda_A & d_A \\ -d_A^\top & 0 \end{pmatrix},
+```
+
+where $`d_A`$ is the part of $`d`$ on the Majorana indices of $`A`$. Tracing out the last wires is
+deleting their rows and columns from $`\widetilde\Lambda`$.
+
+**Odd products, other kept wires.** For $`p > 0`$ one string survives. With
+$`Z_b = -i\, c_{2b} c_{2b+1}`$, the displacement vector of the reduced state is a Pfaffian that
+includes the removed wires,
+
+```math
+d'_j = \langle Z_\text{pre}\, c_{\mu_j} \rangle \propto
+\mathrm{Pf}\big( \widetilde\Lambda|_{I_\text{pre} \cup \{\mu_j,\, 2n\}} \big) ,
+```
+
+with $`I_\text{pre}`$ the Majorana indices of the $`p`$ removed wires. It is not the part of $`d`$
+on $`A`$, and the higher odd expectation values are not given by Wick's theorem with
+$`\Lambda_A`$ and $`d'`$: the reduced state has no description by one covariance matrix and one
+displacement vector. For a product state without gates, for example, the entry of $`d`$ for
+$`X`$ on wire $`k`$ is $`x_k \prod_{l<k} z_l`$, while the reduced state has
+$`\langle X_k \rangle = x_k`$.
+
+### 7.2 The even part of the reduced state
+
+The even expectation values define a state on their own,
+
+```math
+\rho_A^\text{even} = \tfrac{1}{2} \big( \rho_A + P_A\, \rho_A\, P_A \big) ,
+```
+
+with $`P_A`$ the parity of the kept wires. It is the Gaussian state with covariance matrix
+$`\Lambda_A`$ and no displacement vector. A matchgate circuit maps even products to even
+products, so it never mixes the even and the odd parts of a state. Starting a circuit from
+$`\rho_A^\text{even}`$ therefore gives the exact value of every quantity that is even in the
+Majorana operators: the probabilities and the samples in the computational basis, and the
+expectation values of the Pauli words with an even number of $`X`$ and $`Y`$. The odd
+expectation values, such as $`\langle X_k \rangle`$, vanish in it.
+
+### 7.3 In MatchCake
+
+| Feature | State with a displacement vector |
+| --- | --- |
+| `mc.covariance_matrix(wires)`, `reduced_covariance_matrix` | $`\Lambda_A`$, on the same wires as without displacement |
+| `mc.reduced_state`, `reduced_state`, `partial_trace`, kept wires from the first wire | `GaussianStatePrep` with $`\Lambda_A`$ and $`d_A`$ |
+| `mc.reduced_state`, `reduced_state`, `partial_trace`, other kept wires | `GaussianStatePrep` with $`\Lambda_A`$ alone, the state $`\rho_A^\text{even}`$, and a barrier before its first wire (Section 8) |
+| `qml.vn_entropy`, `qml.purity`, `qml.density_matrix` | `NotImplementedError` |
+
+A reduced state with a displacement vector enters another circuit through
+`mc.GaussianStatePrep(covariance_matrix, wires, displacement_vector=...)`. The entropy, the
+purity and the density matrix of Section 3 are those of a state without displacement, and they
+are not evaluated from $`\Lambda_A`$ alone when the state has one.
+
+## 8. Gate barriers
+
+Sections 2.2 and 7.1 have the same cause: a Majorana operator of a kept wire still holds a
+$`Z`$ on every removed wire before it. MatchCake records where with barriers, so that the
+reduced state on any wires can be used without returning a wrong result.
+
+### 8.1 The rule
+
+Let $`W`$ be a Pauli word on the kept wires and $`b`$ a removed wire. Each $`X`$ or $`Y`$ of
+$`W`$ is an odd number of Majorana operators of its wire, and each $`Z`$ an even number. The
+principal submatrix of Section 2.1 keeps the Jordan-Wigner strings on the removed wires, so the
+expectation value it gives for $`W`$ is
+
+```math
+\langle W \rangle_{\Pi_A \Lambda \Pi_A^\top} =
+\Big\langle W \prod_{b} Z_b^{\,m_b(W)} \Big\rangle ,
+```
+
+where $`m_b(W)`$ is the number of $`X`$ and $`Y`$ of $`W`$ on the kept wires after $`b`$. The
+strings cancel, and the value is the one of the reduced state of the qubits, exactly when
+$`m_b(W)`$ is even for every removed wire $`b`$. The removed wires between the same two kept
+wires give the same condition, and the removed wires after the last kept wire give none. A
+**barrier** before a kept wire stands for the removed wires located just before it:
+
+- a barrier before a kept wire other than the first one, for removed wires between two kept
+  wires (Section 2.2);
+- a barrier before the first kept wire, for removed wires in front of the kept ones. Its
+  condition is an even number of $`X`$ and $`Y`$ in the whole word. It is only needed for a
+  state with a displacement vector (Section 7), since the other words vanish otherwise.
+
+**A Pauli word is exact when it has an even number of $`X`$ and $`Y`$ on the right of every
+barrier.** The words made of $`Z`$ only always are, hence the probabilities and the samples in
+the computational basis.
+
+### 8.2 Gates
+
+A matchgate on two neighbouring kept wires on the same side of a barrier is quadratic in the
+Majorana operators of that side. It maps a word to words with the same parities $`m_b`$, so
+the exact words stay exact after any number of such gates. A gate with one wire on each side of
+a barrier does not keep these parities. In the reduced register it is the gate on the qubits
+with a $`Z`$ on the removed wires, which is another gate.
+
+### 8.3 In MatchCake
+
+`mc.reduced_state`, `reduced_state` and `partial_trace` return a `GaussianStatePrep` with the
+positions of its barriers in `barriers`. A device started from it raises a `DeviceError` for
+
+- a gate that acts on both sides of a barrier;
+- an observable with a Pauli word that breaks the rule;
+- samples in another basis than the computational one on a wire on the right of a barrier;
+- an entropy, a purity or a density matrix on wires with a barrier between two of them, or on
+  wires that are not all on the left of every barrier when a displacement vector was dropped.
+
+Everything else is exact. The barriers follow the state: a further reduction inherits them, and
+a wire added in $`|0\rangle`$ in the place of removed wires is on the left of their barrier. A
+state with a barrier before its first wire is returned without displacement vector, since the
+words that would use it are refused. Such a state is marked (`odd_part_dropped`): its barrier is
+kept for as long as a wire remains on its right, also after wires are added and removed again on
+its left, because the words with an odd number of $`X`$ and $`Y`$ on its right do not vanish in
+the reduced state of the qubits.
+
+With `gate_barrier=False`, the state is returned without barrier and with a warning. It is
+then the reduced state of the fermionic modes of Section 2.2, and nothing checks the gates and
+the observables any more. `mc.covariance_matrix` and `reduced_covariance_matrix` return a
+matrix, which cannot carry a barrier: they refuse the kept wires with a removed wire or a
+barrier between them, unless `gate_barrier=False` is passed.
+
+## 9. Limitations
+
+- **Initial states with a displacement vector.** See Section 7. The entropy, the purity and the
+  density matrix are not implemented for them, and their reduced state on wires that do not
+  start at the first wire only gives the quantities that are even in the Majorana operators.
+- **Gate barriers.** See Section 8. A reduced state on wires that are not a contiguous block
+  cannot be evolved by gates across the removed wires, and only gives the observables that
+  follow the rule of its barriers.
 - **Wire order of a Gaussian state preparation.** A `GaussianStatePrep` can act on part of the
   wires of the device, the other wires starting in $`|0\rangle`$, but it must list its wires
   in the order of the device: permuting fermionic modes is not a relabeling of qubits.

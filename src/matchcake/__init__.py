@@ -25,7 +25,7 @@ from .devices import NIFDevice, NonInteractingFermionicDevice
 from .matchgate_parameter_sets import matchgate_params
 from .matchgate_parameter_sets.matchgate_polar_params import MatchgatePolarParams
 from .matchgate_parameter_sets.matchgate_standard_params import MatchgateStandardParams
-from .measurements import covariance_matrix
+from .measurements import covariance_matrix, reduced_state
 from .observables import BatchHamiltonian
 from .operations import MatchgateOperation
 from .operations.state_preparation import GaussianStatePrep

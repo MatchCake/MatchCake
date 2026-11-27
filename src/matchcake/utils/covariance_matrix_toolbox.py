@@ -28,7 +28,17 @@ class CovarianceMatrixToolbox:
 
     Every method takes tensors with arbitrary leading batch dimensions and returns its result in the
     backend of its input.
+
+    :cvar FERMIONIC_REDUCTION_WARNING: Message of the warning raised when a reduced state is requested
+        without its gate barriers.
     """
+
+    FERMIONIC_REDUCTION_WARNING = (
+        "The reduced state is returned without gate barriers: it is the reduced state of the fermionic "
+        "modes, not of the qubits. A Pauli word on it stands for the same word with a Z on every removed "
+        "wire that its Jordan-Wigner strings cross, and the gates and the observables that act across "
+        "the removed wires are no longer checked."
+    )
 
     @staticmethod
     def displacement_vector(
@@ -122,30 +132,30 @@ class CovarianceMatrixToolbox:
         return bool(np.array_equal(positions, np.arange(positions[0], positions[0] + positions.size)))
 
     @staticmethod
-    def validate_reduced_wire_indices(wire_indices: Union[Sequence[int], np.ndarray], fermionic: bool = False) -> None:
+    def validate_reduced_wire_indices(wire_indices: Union[Sequence[int], np.ndarray], allow_gaps: bool = False) -> None:
         r"""
         Check that the reduced state on the given wire positions is the one the caller expects.
 
         :param wire_indices: Positions of the kept wires in the register.
         :type wire_indices: Union[Sequence[int], np.ndarray]
-        :param fermionic: Whether the caller asked for the fermionic reduced state, which is defined for any
+        :param allow_gaps: Whether the caller accepts the fermionic reduced state, which is defined for any
             set of distinct positions.
-        :type fermionic: bool
+        :type allow_gaps: bool
         :raises ValueError: If no wire is kept, if a wire is repeated, or if the positions are not a contiguous
-            block in increasing order while ``fermionic`` is ``False``.
+            block in increasing order while ``allow_gaps`` is ``False``.
         """
         positions = np.asarray(wire_indices, dtype=int).reshape(-1)
         if positions.size == 0:
             raise ValueError("At least one wire must be kept.")
         if len(set(positions.tolist())) != positions.size:
             raise ValueError(f"The kept wires must be distinct, got the positions {positions.tolist()}.")
-        if not fermionic and not CovarianceMatrixToolbox.are_wires_contiguous(positions):
+        if not allow_gaps and not CovarianceMatrixToolbox.are_wires_contiguous(positions):
             raise ValueError(
                 f"The kept wires (register positions {positions.tolist()}) are not a contiguous block listed in "
                 f"register order. The Jordan-Wigner strings of their Majorana operators then run through the "
                 f"removed wires, so the covariance matrix restricted to them describes the reduced state of "
                 f"the fermionic modes, which differs from the reduced state of the qubits and from what a "
-                f"qubit simulator returns. Pass fermionic=True to get the fermionic reduced state."
+                f"qubit simulator returns."
             )
 
     @staticmethod

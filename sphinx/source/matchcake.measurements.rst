@@ -12,6 +12,14 @@ matchcake.measurements.covariance\_matrix module
    :undoc-members:
    :show-inheritance:
 
+matchcake.measurements.reduced\_state module
+---------------------------------------------
+
+.. automodule:: matchcake.measurements.reduced_state
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 
