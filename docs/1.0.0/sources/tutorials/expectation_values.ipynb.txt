@@ -1,0 +1,351 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "831ed13b3c47965c",
+   "metadata": {},
+   "source": [
+    "# Expectation Values\n",
+    "\n",
+    "MatchCake can efficiently compute expectation values of Hamiltonians of the form\n",
+    "\n",
+    "$$\n",
+    "\\mathcal{H} = \\sum_{k=0}^{K-1} \\alpha_k P_k,\n",
+    "$$\n",
+    "\n",
+    "where each $P_k$ is an arbitrary Pauli word, for any matchgate circuit $V$ applied to\n",
+    "any qubit product state $|\\psi_\\text{prod}\\rangle = \\bigotimes_{k=0}^{n-1}(a_k|0\\rangle + b_k|1\\rangle)$:\n",
+    "\n",
+    "$$\n",
+    "\\langle\\mathcal{H}\\rangle = \\langle\\psi_\\text{prod}|V^\\dagger \\mathcal{H} V|\\psi_\\text{prod}\\rangle.\n",
+    "$$\n",
+    "\n",
+    "This includes Pauli words that break total fermionic parity (e.g. $Z_k I_{k+1}$,\n",
+    "$I_k Z_{k+1}$) as well as superposition initial states such as $|+\\rangle^{\\otimes n}$.\n",
+    "\n",
+    "The algorithm is based on the extended covariance matrix formalism. See\n",
+    "[`docs/expectation_values_theory.md`](../docs/expectation_values_theory.md) for the\n",
+    "full derivation and references."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "initial_id",
+   "metadata": {
+    "ExecuteTime": {
+     "end_time": "2026-05-22T01:08:10.975974918Z",
+     "start_time": "2026-05-22T01:08:07.497358036Z"
+    },
+    "execution": {
+     "iopub.execute_input": "2026-05-22T00:55:19.146237Z",
+     "iopub.status.busy": "2026-05-22T00:55:19.145879Z",
+     "iopub.status.idle": "2026-05-22T00:55:23.230701Z",
+     "shell.execute_reply": "2026-05-22T00:55:23.228543Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import pennylane as qml\n",
+    "\n",
+    "import matchcake as mc\n",
+    "from matchcake.operations.state_preparation import ProductState"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "dd075bec7985b56e",
+   "metadata": {},
+   "source": [
+    "## Hamiltonian\n",
+    "\n",
+    "We construct a Hamiltonian on 3 qubits that mixes parity-preserving and\n",
+    "parity-breaking Pauli words."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "4a9bbd1ddc47da05",
+   "metadata": {
+    "ExecuteTime": {
+     "end_time": "2026-05-22T01:08:11.036628588Z",
+     "start_time": "2026-05-22T01:08:10.982702562Z"
+    },
+    "execution": {
+     "iopub.execute_input": "2026-05-22T00:55:23.236597Z",
+     "iopub.status.busy": "2026-05-22T00:55:23.235984Z",
+     "iopub.status.idle": "2026-05-22T00:55:23.260191Z",
+     "shell.execute_reply": "2026-05-22T00:55:23.257794Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.1 * (X(0) @ X(1)) + 0.2 * (Y(1) @ Y(2)) + 0.3 * (Z(0) @ Z(1)) + 0.4 * (Y(1) @ X(2)) + 0.5 * (X(0) @ Y(1)) + 0.6 * (Z(1) @ I(2)) + 0.7 * (I(1) @ Z(2))\n"
+     ]
+    }
+   ],
+   "source": [
+    "hamiltonian = qml.Hamiltonian(\n",
+    "    [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],\n",
+    "    [\n",
+    "        qml.X(0) @ qml.X(1),\n",
+    "        qml.Y(1) @ qml.Y(2),\n",
+    "        qml.Z(0) @ qml.Z(1),\n",
+    "        qml.Y(1) @ qml.X(2),\n",
+    "        qml.X(0) @ qml.Y(1),\n",
+    "        qml.Z(1) @ qml.I(2),\n",
+    "        qml.I(1) @ qml.Z(2),\n",
+    "    ],\n",
+    ")\n",
+    "n = len(hamiltonian.wires)\n",
+    "sptm = mc.operations.SingleParticleTransitionMatrixOperation.random(wires=hamiltonian.wires, seed=0)\n",
+    "U = sptm.to_qubit_operation()\n",
+    "print(hamiltonian)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "e1160132f3a794b0",
+   "metadata": {},
+   "source": [
+    "## Basis state initialization\n",
+    "\n",
+    "We initialize the system in a computational-basis product state using\n",
+    "`ProductState.from_basis_state` and verify against `default.qubit`."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "47655530e0bf27ba",
+   "metadata": {
+    "ExecuteTime": {
+     "end_time": "2026-05-22T01:08:11.128080142Z",
+     "start_time": "2026-05-22T01:08:11.040410177Z"
+    },
+    "execution": {
+     "iopub.execute_input": "2026-05-22T00:55:23.265462Z",
+     "iopub.status.busy": "2026-05-22T00:55:23.265029Z",
+     "iopub.status.idle": "2026-05-22T00:55:23.326618Z",
+     "shell.execute_reply": "2026-05-22T00:55:23.323455Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "expval = -0.787843\n",
+      "svs_expval = -0.787843\n",
+      "Results agree with state-vector simulation.\n"
+     ]
+    }
+   ],
+   "source": [
+    "state_prep = ProductState.from_basis_state([1, 0, 1], wires=hamiltonian.wires)\n",
+    "\n",
+    "\n",
+    "@qml.qnode(mc.NIFDevice(n))\n",
+    "def circuit():\n",
+    "    state_prep.queue()\n",
+    "    sptm.queue()\n",
+    "    return qml.expval(hamiltonian)\n",
+    "\n",
+    "\n",
+    "@qml.qnode(qml.device(\"default.qubit\", wires=n))\n",
+    "def svs_circuit():\n",
+    "    state_prep.queue()\n",
+    "    U.queue()\n",
+    "    return qml.expval(hamiltonian)\n",
+    "\n",
+    "\n",
+    "expval = circuit()\n",
+    "svs_expval = svs_circuit()\n",
+    "print(f\"{expval = :.6f}\")\n",
+    "print(f\"{svs_expval = :.6f}\")\n",
+    "np.testing.assert_allclose(expval, svs_expval, atol=1e-5)\n",
+    "print(\"Results agree with state-vector simulation.\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "d9aca123e430c370",
+   "metadata": {},
+   "source": [
+    "## Arbitrary product state initialization\n",
+    "\n",
+    "`ProductState` accepts arbitrary per-qubit amplitudes $(a_k, b_k)$, enabling\n",
+    "superposition initial states. Here we initialize all qubits in $|+\\rangle =\n",
+    "\\frac{1}{\\sqrt{2}}(|0\\rangle + |1\\rangle)$ and evaluate the same Hamiltonian,\n",
+    "including the parity-breaking terms $Z_1 I_2$ and $I_1 Z_2$."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "acaafc08ff736474",
+   "metadata": {
+    "ExecuteTime": {
+     "end_time": "2026-05-22T01:08:11.205977410Z",
+     "start_time": "2026-05-22T01:08:11.132818739Z"
+    },
+    "execution": {
+     "iopub.execute_input": "2026-05-22T00:55:23.331582Z",
+     "iopub.status.busy": "2026-05-22T00:55:23.331078Z",
+     "iopub.status.idle": "2026-05-22T00:55:23.376846Z",
+     "shell.execute_reply": "2026-05-22T00:55:23.375266Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "expval_plus = 0.066344\n",
+      "svs_expval_plus = 0.066344\n",
+      "Results agree with state-vector simulation.\n"
+     ]
+    }
+   ],
+   "source": [
+    "plus_amplitudes = np.full((n, 2), 1.0 / np.sqrt(2), dtype=complex)\n",
+    "state_prep_plus = ProductState(plus_amplitudes, wires=hamiltonian.wires)\n",
+    "\n",
+    "\n",
+    "@qml.qnode(mc.NIFDevice(n))\n",
+    "def circuit_plus():\n",
+    "    state_prep_plus.queue()\n",
+    "    sptm.queue()\n",
+    "    return qml.expval(hamiltonian)\n",
+    "\n",
+    "\n",
+    "@qml.qnode(qml.device(\"default.qubit\", wires=n))\n",
+    "def svs_circuit_plus():\n",
+    "    state_prep_plus.queue()\n",
+    "    U.queue()\n",
+    "    return qml.expval(hamiltonian)\n",
+    "\n",
+    "\n",
+    "expval_plus = circuit_plus()\n",
+    "svs_expval_plus = svs_circuit_plus()\n",
+    "print(f\"{expval_plus = :.6f}\")\n",
+    "print(f\"{svs_expval_plus = :.6f}\")\n",
+    "np.testing.assert_allclose(expval_plus, svs_expval_plus, atol=1e-5)\n",
+    "print(\"Results agree with state-vector simulation.\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6783cbda9606180f",
+   "metadata": {},
+   "source": [
+    "## Mixed product state\n",
+    "\n",
+    "Any per-qubit amplitudes are valid. Below we mix $|+\\rangle$, $|0\\rangle$, and\n",
+    "a $y$-rotated state to demonstrate the general case."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "5a3a923d35f08202",
+   "metadata": {
+    "ExecuteTime": {
+     "end_time": "2026-05-22T01:08:11.314217790Z",
+     "start_time": "2026-05-22T01:08:11.209921093Z"
+    },
+    "execution": {
+     "iopub.execute_input": "2026-05-22T00:55:23.381825Z",
+     "iopub.status.busy": "2026-05-22T00:55:23.381506Z",
+     "iopub.status.idle": "2026-05-22T00:55:23.424040Z",
+     "shell.execute_reply": "2026-05-22T00:55:23.420667Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "expval_mixed = -0.169835\n",
+      "svs_expval_mixed = -0.169835\n",
+      "Results agree with state-vector simulation.\n"
+     ]
+    }
+   ],
+   "source": [
+    "theta = np.pi / 3\n",
+    "mixed_amplitudes = np.array(\n",
+    "    [\n",
+    "        [1.0, 1.0],\n",
+    "        [1.0, 0.0],\n",
+    "        [np.cos(theta / 2), np.sin(theta / 2)],\n",
+    "    ],\n",
+    "    dtype=complex,\n",
+    ")\n",
+    "mixed_amplitudes /= np.linalg.norm(mixed_amplitudes, axis=1, keepdims=True)\n",
+    "state_prep_mixed = ProductState(mixed_amplitudes, wires=hamiltonian.wires)\n",
+    "\n",
+    "\n",
+    "@qml.qnode(mc.NIFDevice(n))\n",
+    "def circuit_mixed():\n",
+    "    state_prep_mixed.queue()\n",
+    "    sptm.queue()\n",
+    "    return qml.expval(hamiltonian)\n",
+    "\n",
+    "\n",
+    "@qml.qnode(qml.device(\"default.qubit\", wires=n))\n",
+    "def svs_circuit_mixed():\n",
+    "    state_prep_mixed.queue()\n",
+    "    U.queue()\n",
+    "    return qml.expval(hamiltonian)\n",
+    "\n",
+    "\n",
+    "expval_mixed = circuit_mixed()\n",
+    "svs_expval_mixed = svs_circuit_mixed()\n",
+    "print(f\"{expval_mixed = :.6f}\")\n",
+    "print(f\"{svs_expval_mixed = :.6f}\")\n",
+    "np.testing.assert_allclose(expval_mixed, svs_expval_mixed, atol=1e-5)\n",
+    "print(\"Results agree with state-vector simulation.\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6a1d2ec0a17d7121",
+   "metadata": {},
+   "source": [
+    "## Further reading\n",
+    "\n",
+    "For the mathematical details behind this computation, the extended Majorana algebra,\n",
+    "the displacement vector, the $(2n+1)\\times(2n+1)$ covariance matrix, the SPTM lift,\n",
+    "and the Pfaffian formula, see\n",
+    "[`docs/expectation_values_theory.md`](../docs/expectation_values_theory.md)."
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.12.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

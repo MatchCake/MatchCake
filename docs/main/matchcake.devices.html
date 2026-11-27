@@ -1,0 +1,1319 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>matchcake.devices package &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="matchcake.devices.contraction_strategies package" href="matchcake.devices.contraction_strategies.html" />
+    <link rel="prev" title="matchcake.constants package" href="matchcake.constants.html" />
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process|mathjax_process|math|output_area'
+  }
+};
+</script>
+
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="index.html">Docs</a></li>
+        
+          <li><a href="matchcake.html">matchcake package</a></li>
+        
+      <li>matchcake.devices package</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="sources/matchcake.devices.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+
+<div style="padding: 0 0 1em 0;">
+  <label for="version-select" style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 0.3em; color: #555;">Version</label>
+  <select id="version-select" onchange="window.location.href=this.value" style="width: 100%; padding: 0.3em 0.4em; font-size: 0.9em; border: 1px solid #ccc; border-radius: 3px; background: #fff; cursor: pointer;">
+    
+    <option value="../dev/matchcake.devices.html" >dev</option>
+    
+    <option value="matchcake.devices.html" selected>main</option>
+    
+    <option value="../1.0.0/matchcake.devices.html" >1.0.0</option>
+    
+    <option value="../0.2.3/index.html" >0.2.3</option>
+    
+  </select>
+</div>
+
+
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#requirements">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#set-up-a-project-or-an-environment">Set up a project or an environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#install-matchcake">Install MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#pytorch-build-and-installation-size">PyTorch build and installation size</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#quick-usage-preview">Quick Usage Preview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#quantum-circuit-simulation-with-matchcake">Quantum Circuit Simulation with MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#data-classification-with-matchcake">Data Classification with MatchCake</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#for-developers">For Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#citation">Citation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#fermionic-machine-learning-paper">Fermionic Machine Learning Paper</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/matchcake_basics.html">MatchCake Example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#create-the-noninteractingfermionicdevice">Create the NonInteractingFermionicDevice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#define-the-circuit">Define the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#create-the-qnode">Create the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#define-the-hyperparameters-of-the-circuit">Define the hyperparameters of the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#draw-the-circuit">Draw the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#evaluate-the-qnode">Evaluate the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/matchcake_basics.html#print-the-expectation-values">Print the expectation values</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/expectation_values.html">Expectation Values</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#hamiltonian">Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/expectation_values.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/probabilities.html">Probabilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#marginal-probabilities">Marginal probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#single-outcome-probability">Single-outcome probability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/probabilities.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/iris_classification.html">Iris classification with FermionicPQCKernel</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/iris_classification.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html">Nystroem Kernel Approximation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/nystroem_kernel_approximation.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="docs/expectation_values_theory.html">Computing expectation values using the Covariance-Matrix</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="matchcake.html">matchcake package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="matchcake.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section id="matchcake-devices-package">
+<h1>matchcake.devices package<a class="headerlink" href="#matchcake-devices-package" title="Permalink to this heading">¶</a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.devices.contraction_strategies.html">matchcake.devices.contraction_strategies package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies.contraction_container">matchcake.devices.contraction_strategies.contraction_container module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies.contraction_strategy">matchcake.devices.contraction_strategies.contraction_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#matchcake.devices.contraction_strategies.contraction_strategy.ContractionStrategy"><code class="docutils literal notranslate"><span class="pre">ContractionStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies.forward_strategy">matchcake.devices.contraction_strategies.forward_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#matchcake.devices.contraction_strategies.forward_strategy.ForwardContractionStrategy"><code class="docutils literal notranslate"><span class="pre">ForwardContractionStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies.horizontal_strategy">matchcake.devices.contraction_strategies.horizontal_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#matchcake.devices.contraction_strategies.horizontal_strategy.HorizontalContractionStrategy"><code class="docutils literal notranslate"><span class="pre">HorizontalContractionStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies.neighbours_strategy">matchcake.devices.contraction_strategies.neighbours_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#matchcake.devices.contraction_strategies.neighbours_strategy.NeighboursContractionStrategy"><code class="docutils literal notranslate"><span class="pre">NeighboursContractionStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies.none_strategy">matchcake.devices.contraction_strategies.none_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#matchcake.devices.contraction_strategies.none_strategy.NoneContractionStrategy"><code class="docutils literal notranslate"><span class="pre">NoneContractionStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies.vertical_strategy">matchcake.devices.contraction_strategies.vertical_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#matchcake.devices.contraction_strategies.vertical_strategy.VerticalContractionStrategy"><code class="docutils literal notranslate"><span class="pre">VerticalContractionStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#module-matchcake.devices.contraction_strategies">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.contraction_strategies.html#matchcake.devices.contraction_strategies.get_contraction_strategy"><code class="docutils literal notranslate"><span class="pre">get_contraction_strategy()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.devices.expval_strategies.html">matchcake.devices.expval_strategies package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.expval_strategies.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.expval_strategies.clifford_expval.html">matchcake.devices.expval_strategies.clifford_expval package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.expval_strategies.m_pfaffian.html">matchcake.devices.expval_strategies.m_pfaffian package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.expval_strategies.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.expval_strategies.html#module-matchcake.devices.expval_strategies.expval_from_probabilities">matchcake.devices.expval_strategies.expval_from_probabilities module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.expval_strategies.html#matchcake.devices.expval_strategies.expval_from_probabilities.ExpvalFromProbabilitiesStrategy"><code class="docutils literal notranslate"><span class="pre">ExpvalFromProbabilitiesStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.expval_strategies.html#module-matchcake.devices.expval_strategies.expval_strategy">matchcake.devices.expval_strategies.expval_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.expval_strategies.html#matchcake.devices.expval_strategies.expval_strategy.ExpvalStrategy"><code class="docutils literal notranslate"><span class="pre">ExpvalStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.expval_strategies.html#module-matchcake.devices.expval_strategies.terms_splitter">matchcake.devices.expval_strategies.terms_splitter module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.expval_strategies.html#matchcake.devices.expval_strategies.terms_splitter.TermsSplitter"><code class="docutils literal notranslate"><span class="pre">TermsSplitter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.expval_strategies.html#module-matchcake.devices.expval_strategies">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.devices.probability_strategies.html">matchcake.devices.probability_strategies package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.probability_strategies.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.probability_strategies.html#module-matchcake.devices.probability_strategies.clifford_sum_strategy">matchcake.devices.probability_strategies.clifford_sum_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.probability_strategies.html#matchcake.devices.probability_strategies.clifford_sum_strategy.CliffordSumStrategy"><code class="docutils literal notranslate"><span class="pre">CliffordSumStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.probability_strategies.html#module-matchcake.devices.probability_strategies.explicit_sum_strategy">matchcake.devices.probability_strategies.explicit_sum_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.probability_strategies.html#matchcake.devices.probability_strategies.explicit_sum_strategy.ExplicitSumStrategy"><code class="docutils literal notranslate"><span class="pre">ExplicitSumStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.probability_strategies.html#module-matchcake.devices.probability_strategies.lookup_table_strategy">matchcake.devices.probability_strategies.lookup_table_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.probability_strategies.html#matchcake.devices.probability_strategies.lookup_table_strategy.LookupTableStrategy"><code class="docutils literal notranslate"><span class="pre">LookupTableStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.probability_strategies.html#module-matchcake.devices.probability_strategies.probability_func_dispatcher">matchcake.devices.probability_strategies.probability_func_dispatcher module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.probability_strategies.html#matchcake.devices.probability_strategies.probability_func_dispatcher.ProbabilityFuncDispatcher"><code class="docutils literal notranslate"><span class="pre">ProbabilityFuncDispatcher</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.probability_strategies.html#module-matchcake.devices.probability_strategies.probability_strategy">matchcake.devices.probability_strategies.probability_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.probability_strategies.html#matchcake.devices.probability_strategies.probability_strategy.ProbabilityStrategy"><code class="docutils literal notranslate"><span class="pre">ProbabilityStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.probability_strategies.html#module-matchcake.devices.probability_strategies.product_state_strategy">matchcake.devices.probability_strategies.product_state_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.probability_strategies.html#matchcake.devices.probability_strategies.product_state_strategy.ProductStateProbabilityStrategy"><code class="docutils literal notranslate"><span class="pre">ProductStateProbabilityStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.probability_strategies.html#module-matchcake.devices.probability_strategies">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.probability_strategies.html#matchcake.devices.probability_strategies.get_probability_strategy"><code class="docutils literal notranslate"><span class="pre">get_probability_strategy()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.devices.sampling_strategies.html">matchcake.devices.sampling_strategies package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#module-matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling">matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#matchcake.devices.sampling_strategies.k_qubits_by_k_qubits_sampling.KQubitsByKQubitsSampling"><code class="docutils literal notranslate"><span class="pre">KQubitsByKQubitsSampling</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#module-matchcake.devices.sampling_strategies.qubit_by_qubit_sampling">matchcake.devices.sampling_strategies.qubit_by_qubit_sampling module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#matchcake.devices.sampling_strategies.qubit_by_qubit_sampling.QubitByQubitSampling"><code class="docutils literal notranslate"><span class="pre">QubitByQubitSampling</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#module-matchcake.devices.sampling_strategies.sampling_strategy">matchcake.devices.sampling_strategies.sampling_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#matchcake.devices.sampling_strategies.sampling_strategy.SamplingStrategy"><code class="docutils literal notranslate"><span class="pre">SamplingStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#module-matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling">matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#matchcake.devices.sampling_strategies.two_qubits_by_two_qubits_sampling.TwoQubitsByTwoQubitsSampling"><code class="docutils literal notranslate"><span class="pre">TwoQubitsByTwoQubitsSampling</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#module-matchcake.devices.sampling_strategies">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.sampling_strategies.html#matchcake.devices.sampling_strategies.get_sampling_strategy"><code class="docutils literal notranslate"><span class="pre">get_sampling_strategy()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html">matchcake.devices.star_state_finding_strategies package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#module-matchcake.devices.star_state_finding_strategies.a_star_strategy">matchcake.devices.star_state_finding_strategies.a_star_strategy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#module-matchcake.devices.star_state_finding_strategies.from_sampling_strategy">matchcake.devices.star_state_finding_strategies.from_sampling_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#matchcake.devices.star_state_finding_strategies.from_sampling_strategy.FromSamplingStrategy"><code class="docutils literal notranslate"><span class="pre">FromSamplingStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#module-matchcake.devices.star_state_finding_strategies.greedy_strategy">matchcake.devices.star_state_finding_strategies.greedy_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#matchcake.devices.star_state_finding_strategies.greedy_strategy.GreedyStrategy"><code class="docutils literal notranslate"><span class="pre">GreedyStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#module-matchcake.devices.star_state_finding_strategies.star_state_finding_strategy">matchcake.devices.star_state_finding_strategies.star_state_finding_strategy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#matchcake.devices.star_state_finding_strategies.star_state_finding_strategy.StarStateFindingStrategy"><code class="docutils literal notranslate"><span class="pre">StarStateFindingStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#module-matchcake.devices.star_state_finding_strategies">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="matchcake.devices.star_state_finding_strategies.html#matchcake.devices.star_state_finding_strategies.get_star_state_finding_strategy"><code class="docutils literal notranslate"><span class="pre">get_star_state_finding_strategy()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-matchcake.devices.device_utils">
+<span id="matchcake-devices-device-utils-module"></span><h2>matchcake.devices.device_utils module<a class="headerlink" href="#module-matchcake.devices.device_utils" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="matchcake.devices.device_utils.circuit_or_fop_matmul">
+<span class="sig-prename descclassname"><span class="pre">matchcake.devices.device_utils.</span></span><span class="sig-name descname"><span class="pre">circuit_or_fop_matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">first_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fop_direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="matchcake.constants.html#matchcake.constants.MatmulDirectionType" title="matchcake.constants.MatmulDirectionType"><span class="pre">MatmulDirectionType</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">MatmulDirectionType.RL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">circuit_direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="matchcake.constants.html#matchcake.constants.MatmulDirectionType" title="matchcake.constants.MatmulDirectionType"><span class="pre">MatmulDirectionType</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">MatmulDirectionType.LR</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'einsum'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'matmul'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'&#64;'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'&#64;'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.devices.device_utils.circuit_or_fop_matmul" title="Permalink to this definition">¶</a></dt>
+<dd><p>Matmul two operators together. The direction of the matmul will depend on the type of the
+operators. If both operators are MatchgateOperations, the direction of the matmul will be
+determined by the <cite>circuit_direction</cite> parameter. If both operators are SingleParticleTransitionMatrixOperations,
+the direction of the matmul will be determined by the <cite>fop_direction</cite> parameter. If one operator is a
+MatchgateOperation and the other is a SingleParticleTransitionMatrixOperation, the MatchgateOperation
+will be converted to a SingleParticleTransitionMatrixOperation and the matmul will be performed in the
+direction of the SingleParticleTransitionMatrixOperation.</p>
+<p>If the type of the operator is not recognized, a ValueError will be raised.</p>
+</dd></dl>
+
+</section>
+<section id="module-matchcake.devices.nif_device">
+<span id="matchcake-devices-nif-device-module"></span><h2>matchcake.devices.nif_device module<a class="headerlink" href="#module-matchcake.devices.nif_device" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matchcake.devices.nif_device.</span></span><span class="sig-name descname"><span class="pre">NonInteractingFermionicDevice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shots</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">type</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">type</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pfaffian_chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_progress</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Device</span></code></p>
+<p>The Non-Interacting Fermionic Simulator device. This device simulates non-interacting fermions using
+matchgate operations and single particle transition matrices.</p>
+<p>The initial state of the device is the Z-zero state <span class="math notranslate nohighlight">\(|0\rangle_{Z}^{\otimes N}\)</span> unless a state preparation
+operation is applied at the beginning of the circuit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wires</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>Wires</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – The number of wires of the device</p></li>
+<li><p><strong>shots</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The number of shots used by the device. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code> (analytic mode).</p></li>
+<li><p><strong>r_dtype</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>torch.dtype</em><em>, </em><em>type</em><em>]</em><em>]</em>) – The real floating-point dtype used for real-valued tensors. Accepts a <code class="docutils literal notranslate"><span class="pre">torch.dtype</span></code>, a
+numpy scalar type (e.g. <code class="docutils literal notranslate"><span class="pre">np.float32</span></code>) or a Python builtin (e.g. <code class="docutils literal notranslate"><span class="pre">float</span></code>). Defaults to the class
+attribute <a class="reference internal" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.R_DTYPE" title="matchcake.devices.nif_device.NonInteractingFermionicDevice.R_DTYPE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">R_DTYPE</span></code></a> (<code class="docutils literal notranslate"><span class="pre">torch.float64</span></code>).</p></li>
+<li><p><strong>c_dtype</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>torch.dtype</em><em>, </em><em>type</em><em>]</em><em>]</em>) – The complex dtype used for complex-valued tensors throughout the pipeline (single-particle
+transition matrices, lookup table, observables). Accepts a <code class="docutils literal notranslate"><span class="pre">torch.dtype</span></code>, a numpy scalar type
+(e.g. <code class="docutils literal notranslate"><span class="pre">np.complex64</span></code>) or a Python builtin (e.g. <code class="docutils literal notranslate"><span class="pre">complex</span></code>). Defaults to the class attribute
+<a class="reference internal" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.C_DTYPE" title="matchcake.devices.nif_device.NonInteractingFermionicDevice.C_DTYPE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">C_DTYPE</span></code></a> (<code class="docutils literal notranslate"><span class="pre">torch.complex128</span></code>) to preserve maximum precision. Set to e.g. <code class="docutils literal notranslate"><span class="pre">torch.complex64</span></code>
+to reduce memory usage and computation cost.</p></li>
+<li><p><strong>pfaffian_chunk_size</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Max number of matrices reduced per batched Pfaffian call, forwarded to
+<code class="xref py py-func docutils literal notranslate"><span class="pre">matchcake.utils.pfaffian()</span></code> to bound memory. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code> (no chunking).</p></li>
+<li><p><strong>show_progress</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – Whether to display progress bars while applying operations and computing
+probabilities. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>, meaning progress is shown only when an external progress bar is
+supplied through the <code class="docutils literal notranslate"><span class="pre">p_bar</span></code> keyword argument.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Kwargs<span class="colon">:</span></dt>
+<dd class="field-even"><p>Additional keyword arguments</p>
+</dd>
+<dt class="field-odd">Keyword Arguments<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>majorana_getter</strong> – The Majorana getter to use. Defaults to a new instance of MajoranaGetter.</p></li>
+<li><p><strong>contraction_strategy</strong> – The contraction strategy used to merge consecutive operations. Accepts a
+strategy name or instance, or <code class="docutils literal notranslate"><span class="pre">None</span></code> to disable contraction. Defaults to
+<a class="reference internal" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_CONTRACTION_METHOD" title="matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_CONTRACTION_METHOD"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DEFAULT_CONTRACTION_METHOD</span></code></a>.</p></li>
+<li><p><strong>sampling_strategy</strong> – The strategy used to draw samples in finite-shot mode. Defaults to
+<a class="reference internal" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_SAMPLING_STRATEGY" title="matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_SAMPLING_STRATEGY"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DEFAULT_SAMPLING_STRATEGY</span></code></a>.</p></li>
+<li><p><strong>star_state_finding_strategy</strong> – The strategy to find the star state. Defaults to
+<a class="reference internal" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_STAR_STATE_FINDING_STRATEGY" title="matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_STAR_STATE_FINDING_STRATEGY"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DEFAULT_STAR_STATE_FINDING_STRATEGY</span></code></a>.</p></li>
+<li><p><strong>p_bar</strong> – An external progress bar reused by the device instead of creating its own. Defaults to
+<code class="docutils literal notranslate"><span class="pre">None</span></code>. Supplying one turns <code class="docutils literal notranslate"><span class="pre">show_progress</span></code> on unless <code class="docutils literal notranslate"><span class="pre">show_progress</span></code> is given a boolean value.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Note<span class="colon">:</span></dt>
+<dd class="field-even"><p>This device is a simulator for non-interacting fermions. It is based on the <code class="docutils literal notranslate"><span class="pre">default.qubit</span></code> device.</p>
+</dd>
+<dt class="field-odd">Note<span class="colon">:</span></dt>
+<dd class="field-odd"><p>This device supports batch execution.</p>
+</dd>
+<dt class="field-even">Note<span class="colon">:</span></dt>
+<dd class="field-even"><p>Probabilities are routed by <code class="xref py py-attr docutils literal notranslate"><span class="pre">prob_dispatcher</span></code>, a fixed ordered chain of strategies resolved by
+each strategy’s <code class="docutils literal notranslate"><span class="pre">can_execute</span></code>. There is no keyword to select a strategy; to pin one, replace
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">prob_dispatcher</span></code> on the constructed device.</p>
+</dd>
+<dt class="field-odd">Note<span class="colon">:</span></dt>
+<dd class="field-odd"><p>This device is in development, and its API is subject to change.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.C_DTYPE">
+<span class="sig-name descname"><span class="pre">C_DTYPE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">torch.complex128</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.C_DTYPE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_CONTRACTION_METHOD">
+<span class="sig-name descname"><span class="pre">DEFAULT_CONTRACTION_METHOD</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'neighbours'</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_CONTRACTION_METHOD" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_SAMPLING_STRATEGY">
+<span class="sig-name descname"><span class="pre">DEFAULT_SAMPLING_STRATEGY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'2QubitBy2QubitSampling'</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_SAMPLING_STRATEGY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_STAR_STATE_FINDING_STRATEGY">
+<span class="sig-name descname"><span class="pre">DEFAULT_STAR_STATE_FINDING_STRATEGY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'FromSampling'</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.DEFAULT_STAR_STATE_FINDING_STRATEGY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.R_DTYPE">
+<span class="sig-name descname"><span class="pre">R_DTYPE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">torch.float64</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.R_DTYPE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shots</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">type</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">type</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pfaffian_chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_progress</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.analytic_probability">
+<span class="sig-name descname"><span class="pre">analytic_probability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.analytic_probability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the (marginal) probability of each computational basis
+state from the last run of the device.</p>
+<p>PennyLane uses the convention
+<span class="math notranslate nohighlight">\(|q_0,q_1,\dots,q_{N-1}\rangle\)</span> where <span class="math notranslate nohighlight">\(q_0\)</span> is the most
+significant bit.</p>
+<p>If no wires are specified, then all the basis states representable by
+the device are considered and no marginalization takes place.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">marginal_prob()</span></code> may be used as a utility method
+to calculate the marginal probability distribution.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>wires</strong> (<em>Iterable</em><em>[</em><em>Number</em><em>, </em><em>str</em><em>]</em><em>, </em><em>Number</em><em>, </em><em>str</em><em>, </em><em>Wires</em>) – wires to return
+marginal probabilities for. Wires not provided are traced out of the system.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of the probabilities</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array[float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.apply">
+<span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Operation</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Operation</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.apply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a list of operations to the device. Updates the <code class="docutils literal notranslate"><span class="pre">_transition_matrix</span></code> attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>operations</strong> (<em>Iterable</em><em>[</em><em>qml.operation.Operation</em><em>]</em>) – The operations to apply.</p></li>
+<li><p><strong>rotations</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>qml.operation.Operation</em><em>]</em><em>]</em>) – The rotations to apply.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.apply_generator">
+<span class="sig-name descname"><span class="pre">apply_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_iterator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Operation</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice" title="matchcake.devices.nif_device.NonInteractingFermionicDevice"><span class="pre">NonInteractingFermionicDevice</span></a></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.apply_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a generator of gates to the device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>op_iterator</strong> (<em>Iterable</em><em>[</em><em>qml.operation.Operation</em><em>]</em>) – The generator of operations to apply</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.apply_op">
+<span class="sig-name descname"><span class="pre">apply_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Operation</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.apply_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies a given quantum operation to compute and update the single-particle
+transition matrix representation.</p>
+<p>This method processes the input operation, converts it into its corresponding
+single-particle transition matrix operation, and updates the global single-
+particle transition matrix attribute. It also determines if batching is
+enabled by checking the dimensions of the resulting matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>op</strong> – The quantum operation to be applied, represented as an instance
+of <code class="docutils literal notranslate"><span class="pre">qml.operation.Operation</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The updated single-particle transition matrix, represented as an
+instance of <code class="docutils literal notranslate"><span class="pre">SingleParticleTransitionMatrixOperation</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.apply_state_prep">
+<span class="sig-name descname"><span class="pre">apply_state_prep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Operation</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.apply_state_prep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a state preparation operation to the device. Will set the internal state of the device
+only if the operation is a state preparation operation and then return True. Otherwise, it will
+return False.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>operation</strong> (<em>qml.operation.Operation</em>) – The operation to apply</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the operation was applied, False otherwise</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.casting_priorities">
+<span class="sig-name descname"><span class="pre">casting_priorities</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['numpy',</span> <span class="pre">'autograd',</span> <span class="pre">'jax',</span> <span class="pre">'tf',</span> <span class="pre">'torch']</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.casting_priorities" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.close_p_bar">
+<span class="sig-name descname"><span class="pre">close_p_bar</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.close_p_bar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the progress bar if one is active.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.compute_star_state">
+<span class="sig-name descname"><span class="pre">compute_star_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.compute_star_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the star state of the device. The star state is the state that has the highest probability.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Additional keyword arguments</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The star state and its probability</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.convert_op_to_supported">
+<span class="sig-name descname"><span class="pre">convert_op_to_supported</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Operation</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Operation</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.convert_op_to_supported" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ensure an operation is supported by the device, converting native matchgates when possible.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">op</span></code> is already a <code class="xref py py-class docutils literal notranslate"><span class="pre">MatchgateOperation</span></code> or a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">SingleParticleTransitionMatrixOperation</span></code> (or a subclass of either), or if it
+already knows how to produce a single-particle transition matrix (it exposes a
+<code class="docutils literal notranslate"><span class="pre">to_sptm_operation</span></code> method or a <code class="docutils literal notranslate"><span class="pre">single_particle_transition_matrix</span></code> attribute), it is
+returned unchanged and handled downstream by <a class="reference internal" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.apply_op" title="matchcake.devices.nif_device.NonInteractingFermionicDevice.apply_op"><code class="xref py py-meth docutils literal notranslate"><span class="pre">apply_op()</span></code></a>. Otherwise, the operation’s
+matrix is fed to the <code class="xref py py-class docutils literal notranslate"><span class="pre">MatchgateOperation</span></code> constructor, which validates that it is a
+matchgate. If the matrix is a matchgate, the resulting <code class="xref py py-class docutils literal notranslate"><span class="pre">MatchgateOperation</span></code> is
+returned; if not, a <code class="xref py py-class docutils literal notranslate"><span class="pre">DeviceError</span></code> is raised.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>op</strong> (<em>qml.operation.Operation</em>) – The operation to check and convert.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A supported operation equivalent to <code class="docutils literal notranslate"><span class="pre">op</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>qml.operation.Operation</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>DeviceError</strong> – If <code class="docutils literal notranslate"><span class="pre">op</span></code> is neither a supported operation nor a matchgate.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.covariance_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">covariance_matrix</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.covariance_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Majorana covariance matrix evolved under the current global SPTM.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The covariance matrix, shape (…, 2n, 2n).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>TensorLike</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.exact_expval">
+<span class="sig-name descname"><span class="pre">exact_expval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Operator</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.exact_expval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the expectation value of a given observable.</p>
+<p>This method evaluates the expectation value of the provided observable by using
+appropriate execution strategies or by splitting its terms. If the observable
+cannot be computed using any of the defined strategies, an error is raised.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>observable</strong> (<em>qml.operation.Operator</em>) – The observable for which the expectation value is to be
+computed. It must be of a compatible type such as BasisStateProjector
+or BatchProjector, or match the supported execution strategies.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The computed expectation value of the given observable.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TensorLike</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>DeviceError</strong> – If the expectation value of the observable cannot
+be computed on the current device due to compatibility issues.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.execute">
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QuantumScript</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">QuantumScript</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ExecutionConfig</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute a batch of circuits and return their results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>circuits</strong> (<em>Union</em><em>[</em><em>QuantumScript</em><em>, </em><em>Iterable</em><em>[</em><em>QuantumScript</em><em>]</em><em>]</em>) – A single circuit or an iterable of circuits to execute.</p></li>
+<li><p><strong>execution_config</strong> (<em>Optional</em><em>[</em><em>ExecutionConfig</em><em>]</em>) – Execution configuration options.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A single result for a single circuit, or a tuple of results for a batch.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[Any, tuple]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.execute_generator">
+<span class="sig-name descname"><span class="pre">execute_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">op_iterator:</span> <span class="pre">~typing.Iterable[~pennylane.operation.Operation],</span> <span class="pre">observable:</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">output_type:</span> <span class="pre">~typing.Literal['samples',</span> <span class="pre">'expval',</span> <span class="pre">'probs',</span> <span class="pre">'star_state',</span> <span class="pre">'*state']</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">*,</span> <span class="pre">shots:</span> <span class="pre">~typing.Any</span> <span class="pre">=</span> <span class="pre">&lt;object</span> <span class="pre">object&gt;,</span> <span class="pre">**kwargs</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.execute_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute a generator of operations on the device and return the result in the specified output type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>op_iterator</strong> (<em>Iterable</em><em>[</em><em>qml.operation.Operation</em><em>]</em>) – A generator of operations to execute</p></li>
+<li><p><strong>observable</strong> (<em>Optional</em>) – The observable to measure</p></li>
+<li><p><strong>output_type</strong> (<em>Optional</em><em>[</em><em>Literal</em><em>[</em><em>&quot;samples&quot;</em><em>, </em><em>&quot;expval&quot;</em><em>, </em><em>&quot;probs&quot;</em><em>]</em><em>]</em>) – The type of output to return. Supported types are “samples”, “expval”, and “probs”</p></li>
+<li><p><strong>shots</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Number of shots for sample-based outputs, forwarded to <a class="reference internal" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.execute_output" title="matchcake.devices.nif_device.NonInteractingFermionicDevice.execute_output"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_output()</span></code></a>.
+When provided, it overrides the device-level default for this call.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments</p></li>
+</ul>
+</dd>
+<dt class="field-even">Keyword Arguments<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>reset</strong> – Whether to reset the device before applying the operations. Default is False.</p></li>
+<li><p><strong>apply</strong> – Whether to apply the operations. Where “auto” will apply the operations if the transition matrix
+is None which means that no operations have been applied yet. Default is “auto”.</p></li>
+<li><p><strong>wires</strong> – The wires to measure the observable on. Default is None.</p></li>
+<li><p><strong>shot_range</strong> – The range of shots to measure the observable on. Default is None.</p></li>
+<li><p><strong>bin_size</strong> – The size of the bins to measure the observable on. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The result of the execution in the specified output type</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.execute_output">
+<span class="sig-name descname"><span class="pre">execute_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observable:</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type:</span> <span class="pre">~typing.Literal['samples'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'expval'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'probs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'star_state'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'*state']</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shots:</span> <span class="pre">~typing.Any</span> <span class="pre">=</span> <span class="pre">&lt;object</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.execute_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the result of the execution in the specified output type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>observable</strong> (<em>Optional</em>) – The observable to measure</p></li>
+<li><p><strong>output_type</strong> (<em>Optional</em><em>[</em><em>Literal</em><em>[</em><em>&quot;samples&quot;</em><em>, </em><em>&quot;expval&quot;</em><em>, </em><em>&quot;probs&quot;</em><em>]</em><em>]</em>) – The type of output to return. Supported types are “samples”, “expval”, and “probs”</p></li>
+<li><p><strong>shots</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Number of shots for sample-based outputs. When provided, it overrides the
+device-level default for this call. When omitted, the device-level default (set at
+construction, <code class="docutils literal notranslate"><span class="pre">None</span></code> by default for analytic execution) is used. This is the preferred
+way to specify shots for direct <code class="docutils literal notranslate"><span class="pre">execute_output</span></code>/<code class="docutils literal notranslate"><span class="pre">execute_generator</span></code> use; with a
+QNode, use the <code class="docutils literal notranslate"><span class="pre">qml.set_shots</span></code> transform instead.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments</p></li>
+</ul>
+</dd>
+<dt class="field-even">Keyword Arguments<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>reset</strong> – Whether to reset the device before applying the operations. Default is False.</p></li>
+<li><p><strong>apply</strong> – Whether to apply the operations. Where “auto” will apply the operations if the transition matrix
+is None which means that no operations have been applied yet. Default is “auto”.</p></li>
+<li><p><strong>wires</strong> – The wires to measure the observable on. Default is None.</p></li>
+<li><p><strong>shot_range</strong> – The range of shots to measure the observable on. Default is None.</p></li>
+<li><p><strong>bin_size</strong> – The size of the bins to measure the observable on. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The result of the execution in the specified output type</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.expval">
+<span class="sig-name descname"><span class="pre">expval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shot_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.expval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the expectation value of a given observable.</p>
+<p>Uses the exact analytic method when no shots are active, and the PennyLane
+measurement process API for shot-based estimation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>observable</strong> (<em>qml.operation.Operator</em>) – Observable for which the expectation value is being calculated.</p></li>
+<li><p><strong>shot_range</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>]</em>) – Tuple specifying the range of shots to consider.</p></li>
+<li><p><strong>bin_size</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Integer specifying the number of shots per bin.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The computed expectation value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TensorLike</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.extended_covariance_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extended_covariance_matrix</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.extended_covariance_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extended (2n+1)x(2n+1) covariance matrix tilde_Lambda.</p>
+<p>Lifts the standard covariance matrix by appending a displacement
+column/row at position 2n (the parity index). Evolves the full
+extended state under the matchgate SPTM as tilde_Q^T tilde_Lambda_0 tilde_Q.</p>
+<p>BasisState inputs are promoted to ProductState first (displacement is zero).</p>
+<p>See expval_from_mpf.md for the math.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.generate_samples">
+<span class="sig-name descname"><span class="pre">generate_samples</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.generate_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the computational basis samples generated for all wires.</p>
+<p>Note that PennyLane uses the convention <span class="math notranslate nohighlight">\(|q_0,q_1,\dots,q_{N-1}\rangle\)</span> where
+<span class="math notranslate nohighlight">\(q_0\)</span> is the most significant bit.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This method should be overwritten on devices that
+generate their own computational basis samples, with the resulting
+computational basis samples stored as <code class="docutils literal notranslate"><span class="pre">self._samples</span></code>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array of samples in the shape <code class="docutils literal notranslate"><span class="pre">(dev.shots,</span> <span class="pre">dev.num_wires)</span></code></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>array[complex]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.get_state_probability">
+<span class="sig-name descname"><span class="pre">get_state_probability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_binary_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.get_state_probability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thin wrapper around <a class="reference internal" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.get_states_probability" title="matchcake.devices.nif_device.NonInteractingFermionicDevice.get_states_probability"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_states_probability()</span></code></a> for a single outcome.</p>
+<p>Accepts the same input formats (int, str, list, array) and returns a scalar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_binary_state</strong> (<em>TensorLike</em>) – The desired binary state. Accepts int, str, list, or array.</p></li>
+<li><p><strong>wires</strong> (<em>Optional</em><em>[</em><em>Wires</em><em>]</em>) – Wires to measure. Defaults to all device wires.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Scalar probability.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TensorLike</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.get_states_probability">
+<span class="sig-name descname"><span class="pre">get_states_probability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_binary_states</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.get_states_probability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute probabilities for one or a batch of basis outcomes.</p>
+<p>Dispatches through <code class="xref py py-attr docutils literal notranslate"><span class="pre">prob_dispatcher</span></code> which routes to the first compatible
+strategy. Routing is determined by each strategy’s <code class="docutils literal notranslate"><span class="pre">can_execute</span></code> method — no
+manual <code class="docutils literal notranslate"><span class="pre">is_basis_state</span></code> check is performed here.</p>
+<p>Detects input dimensionality:</p>
+<ul class="simple">
+<li><p>1-D input <code class="docutils literal notranslate"><span class="pre">(k,)</span></code> → returns a scalar.</p></li>
+<li><p>2-D input <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">k)</span></code> → returns a <code class="docutils literal notranslate"><span class="pre">(B,)</span></code> vector.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_binary_states</strong> (<em>TensorLike</em>) – Binary outcomes. Accepts int, str, list, or array
+of shape <code class="docutils literal notranslate"><span class="pre">(k,)</span></code> (single) or <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">k)</span></code> (batch).</p></li>
+<li><p><strong>wires</strong> (<em>Optional</em><em>[</em><em>Wires</em><em>]</em>) – Measured wires. For a single outcome this is a flat <code class="docutils literal notranslate"><span class="pre">Wires</span></code>; for
+a batch it is broadcast to <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">k)</span></code>. Defaults to all device wires.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Scalar for single input, <code class="docutils literal notranslate"><span class="pre">(B,)</span></code> vector for batch input.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TensorLike</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.global_sptm">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">global_sptm</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.global_sptm" title="Permalink to this definition">¶</a></dt>
+<dd><p>The current global single-particle transition matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The global SPTM wrapped as a SingleParticleTransitionMatrixOperation.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation">SingleParticleTransitionMatrixOperation</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.initialize_p_bar">
+<span class="sig-name descname"><span class="pre">initialize_p_bar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tqdm</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.initialize_p_bar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the progress bar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The progress bar instance, or None if progress display is disabled.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Optional[tqdm.tqdm]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.lookup_table">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">lookup_table</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable" title="matchcake.base.lookup_table.NonInteractingFermionicLookupTable"><span class="pre">NonInteractingFermionicLookupTable</span></a></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.lookup_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lazily-constructed lookup table for the current transition matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The lookup table.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="matchcake.base.html#matchcake.base.lookup_table.NonInteractingFermionicLookupTable" title="matchcake.base.lookup_table.NonInteractingFermionicLookupTable">NonInteractingFermionicLookupTable</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'nif.qubit'</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.num_wires">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_wires</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.num_wires" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of wires on this device, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when wires are not yet determined.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of wires, or None if the device has not been assigned wires yet.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Optional[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.p_bar_set_n">
+<span class="sig-name descname"><span class="pre">p_bar_set_n</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.p_bar_set_n" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the current count on the progress bar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – The current iteration count.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.p_bar_set_postfix">
+<span class="sig-name descname"><span class="pre">p_bar_set_postfix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.p_bar_set_postfix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set a postfix dict on the progress bar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.p_bar_set_postfix_str">
+<span class="sig-name descname"><span class="pre">p_bar_set_postfix_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.p_bar_set_postfix_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set a postfix string on the progress bar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.p_bar_set_total">
+<span class="sig-name descname"><span class="pre">p_bar_set_total</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">total</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.p_bar_set_total" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the total count on the progress bar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>total</strong> (<em>int</em>) – The total number of iterations.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.preprocess_transforms">
+<span class="sig-name descname"><span class="pre">preprocess_transforms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">execution_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ExecutionConfig</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CompilePipeline</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.preprocess_transforms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the compile pipeline for preprocessing circuits before execution.</p>
+<p>The pipeline decomposes unsupported operations, splits circuits with non-commuting
+observables (preserving BatchHamiltonian measurements), and expands broadcast dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>execution_config</strong> (<em>Optional</em><em>[</em><em>ExecutionConfig</em><em>]</em>) – Execution configuration options.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The preprocessing compile pipeline.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>CompilePipeline</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.probability">
+<span class="sig-name descname"><span class="pre">probability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wires</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Wires</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shot_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.probability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the marginal probability of each computational basis state.</p>
+<p>Uses the analytic method when no shots are active and sample-based estimation otherwise.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wires</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Wires</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em><em>]</em>) – Wires to return marginal probabilities for. Defaults to all device wires.</p></li>
+<li><p><strong>shot_range</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>]</em>) – Tuple specifying the range of shots to consider.</p></li>
+<li><p><strong>bin_size</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Integer specifying the number of shots per bin.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The computed probabilities.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TensorLike</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the device state to its initial configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.sample_basis_states">
+<span class="sig-name descname"><span class="pre">sample_basis_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">number_of_states</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_probability</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.sample_basis_states" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample basis state indices from a probability distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>number_of_states</strong> (<em>int</em>) – The number of basis states to sample from.</p></li>
+<li><p><strong>state_probability</strong> (<em>np.ndarray</em>) – The probability vector over basis states. Shape (number_of_states,)
+or (batch, number_of_states) for batched sampling.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sampled basis state indices, shape (shots,) or (batch, shots).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If no shots are set on the device.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.samples">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>The computational basis samples from the last execution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sample array of shape (shots, num_wires), or None.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Optional[TensorLike]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.setup_execution_config">
+<span class="sig-name descname"><span class="pre">setup_execution_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ExecutionConfig</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">circuit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QuantumScript</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ExecutionConfig</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.setup_execution_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configure execution settings, defaulting to torch backpropagation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<em>Optional</em><em>[</em><em>ExecutionConfig</em><em>]</em>) – Initial execution configuration.</p></li>
+<li><p><strong>circuit</strong> (<em>Optional</em><em>[</em><em>QuantumScript</em><em>]</em>) – The circuit to configure execution for.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The updated execution configuration.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ExecutionConfig</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.shots">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shots</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.shots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return shots as int or None for the current execution context.</p>
+<p>During a circuit execution the count comes from <code class="docutils literal notranslate"><span class="pre">_current_shots</span></code> (set per-circuit).
+At all other times the device-level default is used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of shots, or None for analytic execution.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Optional[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.star_probability">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">star_probability</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.star_probability" title="Permalink to this definition">¶</a></dt>
+<dd><p>The probability of the star state from the last computation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Star state probability, or None if not yet computed.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Optional[TensorLike]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.star_state">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">star_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.star_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>The star state (highest-probability basis state) from the last computation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Star state array, or None if not yet computed.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Optional[TensorLike]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.state">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.state" title="Permalink to this definition">¶</a></dt>
+<dd><p>NIF device does not support dense state representation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>state vector of the device</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>array[complex]</p>
+</dd>
+<dt class="field-odd">Note<span class="colon">:</span></dt>
+<dd class="field-odd"><p>This function comes from the <code class="docutils literal notranslate"><span class="pre">default.qubit</span></code> device.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.state_prep_op">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">state_prep_op</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">StatePrepBase</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.state_prep_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>The current state preparation operator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The state preparation operator.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>StatePrepBase</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.states_to_binary">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">states_to_binary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples:</span> <span class="pre">~numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_wires:</span> <span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype:</span> <span class="pre">type</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpy.int64'&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.states_to_binary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert an array of integer state indices to binary representation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<em>np.ndarray</em>) – Array of integer state indices, shape (…).</p></li>
+<li><p><strong>num_wires</strong> (<em>int</em>) – Number of wires (bits per state).</p></li>
+<li><p><strong>dtype</strong> (<em>type</em>) – Output integer dtype.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Binary state array, shape (…, num_wires).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.supports_derivatives">
+<span class="sig-name descname"><span class="pre">supports_derivatives</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">execution_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ExecutionConfig</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">circuit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QuantumScript</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.supports_derivatives" title="Permalink to this definition">¶</a></dt>
+<dd><p>Declare derivative support. Backpropagation is supported for analytic circuits.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>execution_config</strong> (<em>Optional</em><em>[</em><em>ExecutionConfig</em><em>]</em>) – The requested execution configuration.</p></li>
+<li><p><strong>circuit</strong> (<em>Optional</em><em>[</em><em>QuantumScript</em><em>]</em>) – The circuit to check derivative support for.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True when derivatives can be computed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.transition_matrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transition_matrix</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.transition_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>The transition matrix derived from the global SPTM.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The transition matrix, or None if no operations have been applied.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Optional[TensorLike]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.update_p_bar">
+<span class="sig-name descname"><span class="pre">update_p_bar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.update_p_bar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the progress bar by one step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matchcake.devices.nif_device.NonInteractingFermionicDevice.update_single_particle_transition_matrix">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_single_particle_transition_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old_sptm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_sptm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="matchcake.operations.single_particle_transition_matrices.html#matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation" title="matchcake.operations.single_particle_transition_matrices.single_particle_transition_matrix.SingleParticleTransitionMatrixOperation"><span class="pre">SingleParticleTransitionMatrixOperation</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">generic</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ArrayBox</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InterfaceTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></span><a class="headerlink" href="#matchcake.devices.nif_device.NonInteractingFermionicDevice.update_single_particle_transition_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the old single particle transition matrix by performing a matrix multiplication with the new single
+particle transition matrix.
+:param old_sptm: The old single particle transition matrix
+:param new_sptm: The new single particle transition matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The updated single particle transition matrix.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-matchcake.devices">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-matchcake.devices" title="Permalink to this heading">¶</a></h2>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="static/documentation_options.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" src="static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>

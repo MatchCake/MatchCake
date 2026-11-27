@@ -1,0 +1,833 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "c529aa37",
+   "metadata": {},
+   "source": [
+    "# Reduced States and Mixed Gaussian States\n",
+    "\n",
+    "After a matchgate circuit, the state of a subset of the wires is obtained by tracing out the\n",
+    "other wires. This reduced state is generally mixed, but it remains a fermionic Gaussian state,\n",
+    "fully described by its Majorana covariance matrix\n",
+    "$\\Lambda_{\\mu\\nu} = i\\,\\mathrm{Tr}(\\rho\\, c_\\mu c_\\nu)$ restricted to the kept wires. MatchCake\n",
+    "can therefore\n",
+    "\n",
+    "- read the covariance matrix, the Von Neumann entropy, the purity and the density matrix of a\n",
+    "  subsystem with measurements in a `QNode`;\n",
+    "- start another circuit from a mixed Gaussian state with `mc.GaussianStatePrep`, for example\n",
+    "  from the reduced state of a previous circuit;\n",
+    "- differentiate through the whole chain.\n",
+    "\n",
+    "The theory is detailed in\n",
+    "[Tracing out wires and mixed Gaussian states](https://github.com/MatchCake/MatchCake/blob/main/docs/partial_trace_theory.md)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "ddcbcd87",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2026-11-26T21:26:03.755185Z",
+     "iopub.status.busy": "2026-11-26T21:26:03.755089Z",
+     "iopub.status.idle": "2026-11-26T21:26:06.784509Z",
+     "shell.execute_reply": "2026-11-26T21:26:06.784002Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import pennylane as qml\n",
+    "import torch\n",
+    "\n",
+    "import matchcake as mc\n",
+    "from matchcake.operations import CompRxRx, CompRyRy, CompRzRz, SptmCompRxRx, SptmCompRyRy, SptmCompRzRz\n",
+    "from matchcake.utils import CovarianceMatrixToolbox"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "62b4e026",
+   "metadata": {},
+   "source": [
+    "## Matchgate circuit\n",
+    "\n",
+    "We use a brick-wall circuit of matchgates on 6 qubits, applied to the basis state\n",
+    "$|101010\\rangle$. Every gate is also understood by `default.qubit`, which we use as a reference."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "b817c182",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2026-11-26T21:26:06.786227Z",
+     "iopub.status.busy": "2026-11-26T21:26:06.785953Z",
+     "iopub.status.idle": "2026-11-26T21:26:06.790204Z",
+     "shell.execute_reply": "2026-11-26T21:26:06.789822Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "n = 6\n",
+    "wires = list(range(n))\n",
+    "basis_state = np.array([1, 0, 1, 0, 1, 0])\n",
+    "rng = np.random.default_rng(0)\n",
+    "angles = rng.uniform(0, np.pi, size=(2, n - 1, 3, 2))\n",
+    "\n",
+    "\n",
+    "def brick_wall(layer_angles, circuit_wires):\n",
+    "    # layer_angles: (n_layers, len(circuit_wires) - 1, 3, 2)\n",
+    "    for layer in layer_angles:\n",
+    "        for position, gate_angles in enumerate(layer):\n",
+    "            pair = [circuit_wires[position], circuit_wires[position + 1]]\n",
+    "            CompRxRx(gate_angles[0], wires=pair)\n",
+    "            CompRyRy(gate_angles[1], wires=pair)\n",
+    "            CompRzRz(gate_angles[2], wires=pair)\n",
+    "\n",
+    "\n",
+    "def first_circuit(measurement):\n",
+    "    qml.BasisState(basis_state, wires=wires)\n",
+    "    brick_wall(angles, wires)\n",
+    "    return measurement()\n",
+    "\n",
+    "\n",
+    "def run_first_circuit(device_name, measurement):\n",
+    "    return qml.QNode(first_circuit, qml.device(device_name, wires=n))(measurement)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "fa62372c",
+   "metadata": {},
+   "source": [
+    "## Reading a subsystem\n",
+    "\n",
+    "The wires given to a measurement are the wires that are kept; the others are traced out.\n",
+    "`qml.vn_entropy` and `qml.purity` are the usual PennyLane measurements. With a pure state on\n",
+    "the whole register, the entropy of a subsystem is the entanglement entropy between the\n",
+    "subsystem and the rest."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "fc2edb20",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2026-11-26T21:26:06.791097Z",
+     "iopub.status.busy": "2026-11-26T21:26:06.790996Z",
+     "iopub.status.idle": "2026-11-26T21:26:06.884773Z",
+     "shell.execute_reply": "2026-11-26T21:26:06.884380Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "entropy = 0.878858  (default.qubit: 0.878858)\n",
+      "purity  = 0.468633  (default.qubit: 0.468633)\n"
+     ]
+    }
+   ],
+   "source": [
+    "kept_wires = [0, 1, 2, 3]\n",
+    "\n",
+    "\n",
+    "def subsystem_measurements():\n",
+    "    return qml.vn_entropy(wires=kept_wires), qml.purity(wires=kept_wires)\n",
+    "\n",
+    "\n",
+    "entropy, purity = run_first_circuit(\"nif.qubit\", subsystem_measurements)\n",
+    "expected_entropy, expected_purity = run_first_circuit(\"default.qubit\", subsystem_measurements)\n",
+    "print(f\"entropy = {float(entropy):.6f}  (default.qubit: {float(expected_entropy):.6f})\")\n",
+    "print(f\"purity  = {float(purity):.6f}  (default.qubit: {float(expected_purity):.6f})\")\n",
+    "np.testing.assert_allclose(entropy, expected_entropy, atol=1e-8)\n",
+    "np.testing.assert_allclose(purity, expected_purity, atol=1e-8)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "c89f0962",
+   "metadata": {},
+   "source": [
+    "The cost does not depend on the size of the Hilbert space: both quantities are computed from\n",
+    "the $2k \\times 2k$ covariance matrix of the $k$ kept wires. The entanglement entropy of every\n",
+    "cut of a larger system is then cheap."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "3f79e8b1",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2026-11-26T21:26:06.885898Z",
+     "iopub.status.busy": "2026-11-26T21:26:06.885791Z",
+     "iopub.status.idle": "2026-11-26T21:26:08.372689Z",
+     "shell.execute_reply": "2026-11-26T21:26:08.372191Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "entropy of wires 0..4  = 1.4169\n",
+      "entropy of wires 0..9  = 1.3000\n",
+      "entropy of wires 0..19 = 0.7734\n",
+      "entropy of wires 0..29 = 0.8444\n",
+      "entropy of wires 0..34 = 1.0176\n"
+     ]
+    }
+   ],
+   "source": [
+    "n_large = 40\n",
+    "large_wires = list(range(n_large))\n",
+    "large_angles = rng.uniform(0, np.pi, size=(3, n_large - 1, 3, 2))\n",
+    "cuts = [5, 10, 20, 30, 35]\n",
+    "\n",
+    "\n",
+    "@qml.qnode(mc.NIFDevice(wires=n_large))\n",
+    "def large_circuit():\n",
+    "    qml.BasisState(np.arange(n_large) % 2, wires=large_wires)\n",
+    "    brick_wall(large_angles, large_wires)\n",
+    "    return [qml.vn_entropy(wires=large_wires[:cut]) for cut in cuts]\n",
+    "\n",
+    "\n",
+    "for cut, cut_entropy in zip(cuts, large_circuit()):\n",
+    "    print(f\"entropy of wires 0..{cut - 1:<2} = {float(cut_entropy):.4f}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "517a28d7",
+   "metadata": {},
+   "source": [
+    "## The reduced covariance matrix\n",
+    "\n",
+    "`mc.covariance_matrix(wires)` returns the covariance matrix $\\Lambda_A$ of the kept wires. It\n",
+    "describes the reduced state completely. Its normal-mode polarizations $|\\lambda_j| \\le 1$ tell\n",
+    "how mixed the state is: a mode with $|\\lambda_j| = 1$ is pure, and at most as many modes are\n",
+    "mixed as there are traced-out wires.\n",
+    "\n",
+    "For a small number of wires, `qml.density_matrix(wires)` returns the dense reduced density\n",
+    "matrix, which is also what `CovarianceMatrixToolbox.to_density_matrix` computes from $\\Lambda_A$."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "7f5ce14d",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2026-11-26T21:26:08.373793Z",
+     "iopub.status.busy": "2026-11-26T21:26:08.373677Z",
+     "iopub.status.idle": "2026-11-26T21:26:08.489392Z",
+     "shell.execute_reply": "2026-11-26T21:26:08.488958Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "reduced covariance shape = (8, 8)\n",
+      "mode polarizations       = [0.2033 0.8945 1.     1.    ]\n",
+      "The reduced density matrix agrees with state-vector simulation.\n"
+     ]
+    }
+   ],
+   "source": [
+    "reduced_covariance = np.asarray(run_first_circuit(\"nif.qubit\", lambda: mc.covariance_matrix(wires=kept_wires)))\n",
+    "print(f\"reduced covariance shape = {reduced_covariance.shape}\")\n",
+    "print(f\"mode polarizations       = {np.round(CovarianceMatrixToolbox.mode_polarizations(reduced_covariance), 4)}\")\n",
+    "\n",
+    "expected_density = run_first_circuit(\"default.qubit\", lambda: qml.density_matrix(wires=kept_wires))\n",
+    "np.testing.assert_allclose(CovarianceMatrixToolbox.to_density_matrix(reduced_covariance), expected_density, atol=1e-8)\n",
+    "np.testing.assert_allclose(\n",
+    "    run_first_circuit(\"nif.qubit\", lambda: qml.density_matrix(wires=kept_wires)), expected_density, atol=1e-8\n",
+    ")\n",
+    "print(\"The reduced density matrix agrees with state-vector simulation.\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "078f0376",
+   "metadata": {},
+   "source": [
+    "## Continuing on the reduced state\n",
+    "\n",
+    "`mc.GaussianStatePrep(covariance_matrix, wires)` prepares the Gaussian state with the given\n",
+    "covariance matrix. Queued as the first operation of a circuit, it starts a 4-qubit simulation\n",
+    "from the mixed reduced state of the 6-qubit circuit. Expectation values, probabilities and\n",
+    "samples are then computed as usual.\n",
+    "\n",
+    "The reference applies the same follow-up gates to the kept wires of the full 6-qubit system."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "30349c3d",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2026-11-26T21:26:08.490353Z",
+     "iopub.status.busy": "2026-11-26T21:26:08.490246Z",
+     "iopub.status.idle": "2026-11-26T21:26:08.551400Z",
+     "shell.execute_reply": "2026-11-26T21:26:08.550973Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "expval = 0.374603  (default.qubit: 0.374603)\n",
+      "probs  = [0.391  0.2631 0.0528 0.2931]\n"
+     ]
+    }
+   ],
+   "source": [
+    "n_kept = len(kept_wires)\n",
+    "follow_up_angles = rng.uniform(0, np.pi, size=(1, n_kept - 1, 3, 2))\n",
+    "observable = qml.X(0) @ qml.Z(1) @ qml.X(2) + 0.5 * qml.Z(0) @ qml.Z(3)\n",
+    "\n",
+    "\n",
+    "@qml.qnode(mc.NIFDevice(wires=n_kept))\n",
+    "def follow_up_circuit(covariance_matrix):\n",
+    "    mc.GaussianStatePrep(covariance_matrix, wires=range(n_kept))\n",
+    "    brick_wall(follow_up_angles, list(range(n_kept)))\n",
+    "    return qml.expval(observable), qml.probs(wires=[0, 1])\n",
+    "\n",
+    "\n",
+    "@qml.qnode(qml.device(\"default.qubit\", wires=n))\n",
+    "def full_reference_circuit():\n",
+    "    qml.BasisState(basis_state, wires=wires)\n",
+    "    brick_wall(angles, wires)\n",
+    "    brick_wall(follow_up_angles, kept_wires)\n",
+    "    return qml.expval(observable), qml.probs(wires=[0, 1])\n",
+    "\n",
+    "\n",
+    "expval, probs = follow_up_circuit(reduced_covariance)\n",
+    "expected_expval, expected_probs = full_reference_circuit()\n",
+    "print(f\"expval = {float(expval):.6f}  (default.qubit: {float(expected_expval):.6f})\")\n",
+    "print(f\"probs  = {np.round(np.asarray(probs), 4)}\")\n",
+    "np.testing.assert_allclose(expval, expected_expval, atol=1e-8)\n",
+    "np.testing.assert_allclose(probs, expected_probs, atol=1e-8)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "dbae9616",
+   "metadata": {},
+   "source": [
+    "With shots, the device samples the mixed state directly. The follow-up gates are written here\n",
+    "with their single-particle transition matrix counterparts (`SptmCompRxRx`, ...), which act\n",
+    "directly on the covariance matrix."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "86658c4e",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2026-11-26T21:26:08.552352Z",
+     "iopub.status.busy": "2026-11-26T21:26:08.552247Z",
+     "iopub.status.idle": "2026-11-26T21:26:08.566465Z",
+     "shell.execute_reply": "2026-11-26T21:26:08.566019Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "estimated probs = [0.39   0.2644 0.0512 0.2944]\n"
+     ]
+    }
+   ],
+   "source": [
+    "_ = torch.manual_seed(0)\n",
+    "\n",
+    "\n",
+    "@qml.set_shots(20_000)\n",
+    "@qml.qnode(mc.NIFDevice(wires=n_kept))\n",
+    "def sampled_follow_up_circuit(covariance_matrix):\n",
+    "    mc.GaussianStatePrep(covariance_matrix, wires=range(n_kept))\n",
+    "    for position, gate_angles in enumerate(follow_up_angles[0]):\n",
+    "        SptmCompRxRx(gate_angles[0], wires=[position, position + 1])\n",
+    "        SptmCompRyRy(gate_angles[1], wires=[position, position + 1])\n",
+    "        SptmCompRzRz(gate_angles[2], wires=[position, position + 1])\n",
+    "    return qml.probs(wires=[0, 1])\n",
+    "\n",
+    "\n",
+    "estimated_probs = sampled_follow_up_circuit(reduced_covariance)\n",
+    "print(f\"estimated probs = {np.round(np.asarray(estimated_probs), 4)}\")\n",
+    "np.testing.assert_allclose(estimated_probs, expected_probs, atol=2e-2)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3cc971f3",
+   "metadata": {},
+   "source": [
+    "Outside of a `QNode`, the device gives the same reduced state as a ready-to-queue state\n",
+    "preparation with `reduced_state` (wires to keep) or `partial_trace` (wires to remove)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "a6b41c65",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2026-11-26T21:26:08.567441Z",
+     "iopub.status.busy": "2026-11-26T21:26:08.567337Z",
+     "iopub.status.idle": "2026-11-26T21:26:08.610732Z",
+     "shell.execute_reply": "2026-11-26T21:26:08.610302Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "GaussianStatePrep on wires [0, 1, 2, 3]\n"
+     ]
+    }
+   ],
+   "source": [
+    "device = mc.NIFDevice(wires=n)\n",
+    "with qml.queuing.AnnotatedQueue() as queue:\n",
+    "    qml.BasisState(basis_state, wires=wires)\n",
+    "    brick_wall(angles, wires)\n",
+    "device.apply(queue.queue)\n",
+    "\n",
+    "reduced_state = device.partial_trace([4, 5])\n",
+    "print(f\"{reduced_state.name} on wires {reduced_state.wires.tolist()}\")\n",
+    "np.testing.assert_allclose(reduced_state.covariance_matrix, reduced_covariance, atol=1e-8)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "5d1e7a42",
+   "metadata": {},
+   "source": [
+    "Inside a `QNode`, the measurement `mc.reduced_state(wires)` returns the same state preparation.\n",
+    "It is queued with `qml.apply` at the start of the next circuit. Unlike the covariance matrix, it\n",
+    "also carries the displacement vector of a product state with superposed qubits and the gate\n",
+    "barriers of the last section."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "8b3f9c61",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2026-11-26T21:26:08.611636Z",
+     "iopub.status.busy": "2026-11-26T21:26:08.611523Z",
+     "iopub.status.idle": "2026-11-26T21:26:08.675519Z",
+     "shell.execute_reply": "2026-11-26T21:26:08.675128Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "expval = 0.374603  (default.qubit: 0.374603)\n"
+     ]
+    }
+   ],
+   "source": [
+    "@qml.qnode(mc.NIFDevice(wires=n))\n",
+    "def first_circuit_state():\n",
+    "    qml.BasisState(basis_state, wires=wires)\n",
+    "    brick_wall(angles, wires)\n",
+    "    return mc.reduced_state(wires=kept_wires)\n",
+    "\n",
+    "\n",
+    "@qml.qnode(mc.NIFDevice(wires=n_kept))\n",
+    "def follow_up_from_state(state):\n",
+    "    qml.apply(state)\n",
+    "    brick_wall(follow_up_angles, list(range(n_kept)))\n",
+    "    return qml.expval(observable)\n",
+    "\n",
+    "\n",
+    "state_expval = follow_up_from_state(first_circuit_state())\n",
+    "print(f\"expval = {float(state_expval):.6f}  (default.qubit: {float(expected_expval):.6f})\")\n",
+    "np.testing.assert_allclose(state_expval, expected_expval, atol=1e-8)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4e1f7a90",
+   "metadata": {},
+   "source": [
+    "## Chaining circuits with generators\n",
+    "\n",
+    "The same chain works with `execute_generator`, which consumes the operations one at a time\n",
+    "instead of a queued circuit. The trace-out is a method of the device and not an operation, so it\n",
+    "cannot be yielded in the middle of a generator. Each segment of the circuit is one call to\n",
+    "`execute_generator`, and the reduced state returned by `partial_trace` is the first operation\n",
+    "of the next segment."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "9b3c5d12",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2026-11-26T21:26:08.676479Z",
+     "iopub.status.busy": "2026-11-26T21:26:08.676374Z",
+     "iopub.status.idle": "2026-11-26T21:26:08.732736Z",
+     "shell.execute_reply": "2026-11-26T21:26:08.732340Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "expval = 0.374603  (default.qubit: 0.374603)\n"
+     ]
+    }
+   ],
+   "source": [
+    "def brick_wall_generator(layer_angles, circuit_wires):\n",
+    "    for layer in layer_angles:\n",
+    "        for position, gate_angles in enumerate(layer):\n",
+    "            pair = [circuit_wires[position], circuit_wires[position + 1]]\n",
+    "            yield CompRxRx(gate_angles[0], wires=pair)\n",
+    "            yield CompRyRy(gate_angles[1], wires=pair)\n",
+    "            yield CompRzRz(gate_angles[2], wires=pair)\n",
+    "\n",
+    "\n",
+    "def first_segment():\n",
+    "    yield qml.BasisState(basis_state, wires=wires)\n",
+    "    yield from brick_wall_generator(angles, wires)\n",
+    "\n",
+    "\n",
+    "def follow_up_segment(state_prep, circuit_wires):\n",
+    "    yield state_prep\n",
+    "    yield from brick_wall_generator(follow_up_angles, circuit_wires)\n",
+    "\n",
+    "\n",
+    "large_device = mc.NIFDevice(wires=n)\n",
+    "large_device.execute_generator(first_segment())\n",
+    "reduced_state = large_device.partial_trace([4, 5])\n",
+    "\n",
+    "small_device = mc.NIFDevice(wires=n_kept)\n",
+    "generator_expval = small_device.execute_generator(\n",
+    "    follow_up_segment(reduced_state, list(range(n_kept))), observable=observable, output_type=\"expval\"\n",
+    ")\n",
+    "print(f\"expval = {float(generator_expval):.6f}  (default.qubit: {float(expected_expval):.6f})\")\n",
+    "np.testing.assert_allclose(generator_expval, expected_expval, atol=1e-8)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "c7a2e648",
+   "metadata": {},
+   "source": [
+    "### Reusing the same device\n",
+    "\n",
+    "A new device is not required after a trace-out. The same device can continue from the reduced\n",
+    "state with two arguments:\n",
+    "\n",
+    "- `reduced_wires` labels the state preparation with the kept wires of the device. The state is\n",
+    "  then extended to the whole register, with the traced-out wires back in $|0\\rangle$.\n",
+    "- `reset=True` clears the operations of the previous segment. Without it, the device keeps its\n",
+    "  previous state and, by default, does not apply the new operations.\n",
+    "\n",
+    "The device keeps its number of wires, so the following segments are only cheaper on a smaller\n",
+    "device."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "2f8d0b35",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2026-11-26T21:26:08.733657Z",
+     "iopub.status.busy": "2026-11-26T21:26:08.733553Z",
+     "iopub.status.idle": "2026-11-26T21:26:08.749676Z",
+     "shell.execute_reply": "2026-11-26T21:26:08.749255Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "expval = 0.374603  (default.qubit: 0.374603)\n"
+     ]
+    }
+   ],
+   "source": [
+    "reduced_state = large_device.partial_trace([4, 5], reduced_wires=kept_wires)\n",
+    "same_device_expval = large_device.execute_generator(\n",
+    "    follow_up_segment(reduced_state, kept_wires), observable=observable, output_type=\"expval\", reset=True\n",
+    ")\n",
+    "print(f\"expval = {float(same_device_expval):.6f}  (default.qubit: {float(expected_expval):.6f})\")\n",
+    "np.testing.assert_allclose(same_device_expval, expected_expval, atol=1e-8)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "c575cbed",
+   "metadata": {},
+   "source": [
+    "## Other mixed Gaussian states\n",
+    "\n",
+    "A `GaussianStatePrep` does not have to come from a partial trace. `from_polarizations` builds\n",
+    "the product of single-mode mixtures\n",
+    "$\\tfrac{1+\\lambda_j}{2}|0\\rangle\\langle 0| + \\tfrac{1-\\lambda_j}{2}|1\\rangle\\langle 1|$, such as\n",
+    "the thermal state of $H = \\sum_j \\epsilon_j Z_j / 2$ at inverse temperature $\\beta$, for which\n",
+    "$\\lambda_j = -\\tanh(\\beta \\epsilon_j / 2)$."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "7ef6c536",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2026-11-26T21:26:08.750565Z",
+     "iopub.status.busy": "2026-11-26T21:26:08.750458Z",
+     "iopub.status.idle": "2026-11-26T21:26:08.781201Z",
+     "shell.execute_reply": "2026-11-26T21:26:08.780819Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "expval  = 0.139542\n",
+      "entropy = 1.608146  (unchanged by the unitary circuit)\n"
+     ]
+    }
+   ],
+   "source": [
+    "beta = 1.5\n",
+    "energies = np.array([0.5, 1.0, 1.5, 2.0])\n",
+    "polarizations = -np.tanh(beta * energies / 2)\n",
+    "\n",
+    "\n",
+    "@qml.qnode(mc.NIFDevice(wires=n_kept))\n",
+    "def thermal_circuit():\n",
+    "    mc.GaussianStatePrep.from_polarizations(polarizations, wires=range(n_kept))\n",
+    "    brick_wall(follow_up_angles, list(range(n_kept)))\n",
+    "    return qml.expval(observable), qml.vn_entropy(wires=range(n_kept))\n",
+    "\n",
+    "\n",
+    "thermal_expval, thermal_entropy = thermal_circuit()\n",
+    "print(f\"expval  = {float(thermal_expval):.6f}\")\n",
+    "print(f\"entropy = {float(thermal_entropy):.6f}  (unchanged by the unitary circuit)\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "90951b78",
+   "metadata": {},
+   "source": [
+    "## Gate barriers\n",
+    "\n",
+    "A matrix cannot remember which wires were removed. When a removed wire lies between two kept\n",
+    "wires, the Jordan-Wigner strings of the kept Majorana operators run through it, and the\n",
+    "covariance matrix restricted to the kept wires describes the reduced state of the\n",
+    "*fermionic modes*, which is not the reduced state of the qubits. `mc.covariance_matrix` and the\n",
+    "entropy measurements therefore raise an error for such wires.\n",
+    "\n",
+    "`mc.reduced_state`, `reduced_state` and `partial_trace` accept any kept wires. The state they\n",
+    "return carries a *gate barrier* at the place of the removed wire. Gates on one side of the\n",
+    "barrier, probabilities, samples and the observables with an even number of $X$ and $Y$ on the\n",
+    "right of the barrier are exact. The device raises a `DeviceError` for the other gates and\n",
+    "observables, whose result would not be the one of the reduced state of the qubits.\n",
+    "`gate_barrier=False` returns the state without barrier, with a warning."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "2c7efd89",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2026-11-26T21:26:08.782294Z",
+     "iopub.status.busy": "2026-11-26T21:26:08.782141Z",
+     "iopub.status.idle": "2026-11-26T21:26:08.914168Z",
+     "shell.execute_reply": "2026-11-26T21:26:08.913733Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "ValueError: The kept wires (device positions [0, 2]) are not a block of neighbouring wires listed in the device wire order without gate barrier on nif.qubit: a removed wire or a gate barrier lies between them. The Jordan-Wigner strings of their Majorana operators then run through removed wires, so the covariance matrix restricted to them describes the reduced state of the fermionic modes, which differs from the reduced state of the qubits and from what a qubit simulator returns. A matrix cannot carry the gate barriers that make this safe: use reduced_state, partial_trace or matchcake.reduced_state to get the reduced state with its barriers, or pass gate_barrier=False to get the covariance matrix of the fermionic reduced state.\n",
+      "\n",
+      "barriers = (1,)\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "expval = -0.387392  (default.qubit: -0.387392)\n",
+      "\n",
+      "DeviceError: The Pauli word X(0) @ X(1) of the observable X(0) @ X(1) has an odd number of X and Y on the right of the gate barrier before the device position 1 on nif.qubit. The initial state is a reduced state: wires were traced out at this barrier, and the expectation value of this word in it is not the one of the reduced state of the qubits.\n"
+     ]
+    }
+   ],
+   "source": [
+    "try:\n",
+    "    run_first_circuit(\"nif.qubit\", lambda: qml.vn_entropy(wires=[0, 2]))\n",
+    "except ValueError as error:\n",
+    "    print(f\"ValueError: {error}\")\n",
+    "\n",
+    "gap_wires = [0, 2, 3]\n",
+    "gap_state = run_first_circuit(\"nif.qubit\", lambda: mc.reduced_state(wires=gap_wires))\n",
+    "print(f\"\\nbarriers = {gap_state.barriers}\")\n",
+    "\n",
+    "\n",
+    "@qml.qnode(mc.NIFDevice(wires=len(gap_wires)))\n",
+    "def gap_circuit(gap_observable):\n",
+    "    qml.apply(gap_state)\n",
+    "    CompRxRx(follow_up_angles[0, 0, 0], wires=[1, 2])\n",
+    "    return qml.expval(gap_observable)\n",
+    "\n",
+    "\n",
+    "@qml.qnode(qml.device(\"default.qubit\", wires=n))\n",
+    "def gap_reference_circuit():\n",
+    "    qml.BasisState(basis_state, wires=wires)\n",
+    "    brick_wall(angles, wires)\n",
+    "    CompRxRx(follow_up_angles[0, 0, 0], wires=[2, 3])\n",
+    "    return qml.expval(qml.Z(0) @ qml.X(2) @ qml.Y(3))\n",
+    "\n",
+    "\n",
+    "gap_expval = gap_circuit(qml.Z(0) @ qml.X(1) @ qml.Y(2))\n",
+    "print(f\"expval = {float(gap_expval):.6f}  (default.qubit: {float(gap_reference_circuit()):.6f})\")\n",
+    "np.testing.assert_allclose(gap_expval, gap_reference_circuit(), atol=1e-8)\n",
+    "\n",
+    "try:\n",
+    "    gap_circuit(qml.X(0) @ qml.X(1))\n",
+    "except qml.exceptions.DeviceError as error:\n",
+    "    print(f\"\\nDeviceError: {error}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "f59bcf0f",
+   "metadata": {},
+   "source": [
+    "Expectation values and probabilities on non-contiguous wires are not concerned: they are\n",
+    "computed from the covariance matrix of the full register.\n",
+    "\n",
+    "## Gradients\n",
+    "\n",
+    "All of the above is differentiable with torch. Here the parameters of the first circuit are\n",
+    "optimized through the reduced covariance matrix and the second circuit, and the entropy of the\n",
+    "cut is differentiated as well."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "id": "b8048919",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2026-11-26T21:26:08.915270Z",
+     "iopub.status.busy": "2026-11-26T21:26:08.915161Z",
+     "iopub.status.idle": "2026-11-26T21:26:09.091972Z",
+     "shell.execute_reply": "2026-11-26T21:26:09.091485Z"
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "loss               = 0.462489\n",
+      "gradient shape     = (2, 5, 3, 2)\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "gradient magnitude = 0.853773\n"
+     ]
+    }
+   ],
+   "source": [
+    "torch_angles = torch.tensor(angles, requires_grad=True)\n",
+    "torch_follow_up_angles = torch.tensor(follow_up_angles)\n",
+    "\n",
+    "\n",
+    "@qml.qnode(mc.NIFDevice(wires=n), interface=\"torch\")\n",
+    "def torch_first_circuit(layer_angles):\n",
+    "    qml.BasisState(basis_state, wires=wires)\n",
+    "    brick_wall(layer_angles, wires)\n",
+    "    return mc.covariance_matrix(wires=kept_wires), qml.vn_entropy(wires=kept_wires)\n",
+    "\n",
+    "\n",
+    "@qml.qnode(mc.NIFDevice(wires=n_kept), interface=\"torch\")\n",
+    "def torch_follow_up_circuit(covariance_matrix):\n",
+    "    mc.GaussianStatePrep(covariance_matrix, wires=range(n_kept))\n",
+    "    brick_wall(torch_follow_up_angles, list(range(n_kept)))\n",
+    "    return qml.expval(observable)\n",
+    "\n",
+    "\n",
+    "covariance_matrix, cut_entropy = torch_first_circuit(torch_angles)\n",
+    "loss = torch_follow_up_circuit(covariance_matrix) + 0.1 * cut_entropy\n",
+    "loss.backward()\n",
+    "print(f\"loss               = {loss.item():.6f}\")\n",
+    "print(f\"gradient shape     = {tuple(torch_angles.grad.shape)}\")\n",
+    "print(f\"gradient magnitude = {torch_angles.grad.norm().item():.6f}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "b36865ae",
+   "metadata": {},
+   "source": [
+    "## References\n",
+    "\n",
+    "1. S. Bravyi, *Lagrangian representation for fermionic linear optics*, Quantum Inf. Comput. 5,\n",
+    "   216 (2005), [arXiv:quant-ph/0404180](https://arxiv.org/abs/quant-ph/0404180).\n",
+    "2. I. Peschel, *Calculation of reduced density matrices from correlation functions*,\n",
+    "   J. Phys. A 36, L205 (2003), [arXiv:cond-mat/0212631](https://arxiv.org/abs/cond-mat/0212631)."
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.12.16"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

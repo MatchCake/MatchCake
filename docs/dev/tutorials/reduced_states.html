@@ -1,0 +1,837 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Reduced States and Mixed Gaussian States &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="../static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="../static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Iris classification with FermionicPQCKernel" href="iris_classification.html" />
+    <link rel="prev" title="Sampling" href="sampling.html" />
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process|mathjax_process|math|output_area'
+  }
+};
+</script>
+
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="../index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a></li>
+        
+      <li>Reduced States and Mixed Gaussian States</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="../sources/tutorials/reduced_states.ipynb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="../search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+
+<div style="padding: 0 0 1em 0;">
+  <label for="version-select" style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 0.3em; color: #555;">Version</label>
+  <select id="version-select" onchange="window.location.href=this.value" style="width: 100%; padding: 0.3em 0.4em; font-size: 0.9em; border: 1px solid #ccc; border-radius: 3px; background: #fff; cursor: pointer;">
+    
+    <option value="reduced_states.html" selected>dev</option>
+    
+    <option value="../../main/index.html" >main</option>
+    
+    <option value="../../1.0.0/index.html" >1.0.0</option>
+    
+    <option value="../../0.2.3/index.html" >0.2.3</option>
+    
+  </select>
+</div>
+
+
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#requirements">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#set-up-a-project-or-an-environment">Set up a project or an environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#install-matchcake">Install MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#pytorch-build-and-installation-size">PyTorch build and installation size</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#quick-usage-preview">Quick Usage Preview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#quantum-circuit-simulation-with-matchcake">Quantum Circuit Simulation with MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#data-classification-with-matchcake">Data Classification with MatchCake</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#for-developers">For Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#citations">Citations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#fermionic-machine-learning-paper">Fermionic Machine Learning Paper</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="matchcake_basics.html">MatchCake Example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#create-the-noninteractingfermionicdevice">Create the NonInteractingFermionicDevice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#define-the-circuit">Define the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#create-the-qnode">Create the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#define-the-hyperparameters-of-the-circuit">Define the hyperparameters of the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#draw-the-circuit">Draw the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#evaluate-the-qnode">Evaluate the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matchcake_basics.html#print-the-expectation-values">Print the expectation values</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="expectation_values.html">Expectation Values</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="expectation_values.html#hamiltonian">Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="expectation_values.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="expectation_values.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="expectation_values.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="expectation_values.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="probabilities.html">Probabilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="probabilities.html#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="probabilities.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="probabilities.html#marginal-probabilities">Marginal probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="probabilities.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="probabilities.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="probabilities.html#single-outcome-probability">Single-outcome probability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="probabilities.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sampling.html">Sampling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sampling.html#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sampling.html#computational-basis-samples">Computational basis samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sampling.html#expectation-values-from-shots">Expectation values from shots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sampling.html#sampling-in-the-x-basis">Sampling in the X basis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sampling.html#pauli-products-and-hamiltonians">Pauli products and Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sampling.html#arbitrary-product-bases">Arbitrary product bases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sampling.html#batched-circuits">Batched circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sampling.html#scaling-to-many-qubits">Scaling to many qubits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sampling.html#running-on-a-gpu">Running on a GPU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sampling.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Reduced States and Mixed Gaussian States</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reading-a-subsystem">Reading a subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-reduced-covariance-matrix">The reduced covariance matrix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#continuing-on-the-reduced-state">Continuing on the reduced state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#chaining-circuits-with-generators">Chaining circuits with generators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#other-mixed-gaussian-states">Other mixed Gaussian states</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gate-barriers">Gate barriers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gradients">Gradients</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="iris_classification.html">Iris classification with FermionicPQCKernel</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iris_classification.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="nystroem_kernel_approximation.html">Nystroem Kernel Approximation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nystroem_kernel_approximation.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../theory.html">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../docs/expectation_values_theory.html">Computing expectation values using the Covariance-Matrix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../docs/partial_trace_theory.html">Tracing out wires and mixed Gaussian states</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../matchcake.html">matchcake package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section class="tex2jax_ignore mathjax_ignore" id="reduced-states-and-mixed-gaussian-states">
+<h1>Reduced States and Mixed Gaussian States<a class="headerlink" href="#reduced-states-and-mixed-gaussian-states" title="Permalink to this heading">¶</a></h1>
+<p>After a matchgate circuit, the state of a subset of the wires is obtained by tracing out the
+other wires. This reduced state is generally mixed, but it remains a fermionic Gaussian state,
+fully described by its Majorana covariance matrix
+<span class="math notranslate nohighlight">\(\Lambda_{\mu\nu} = i\,\mathrm{Tr}(\rho\, c_\mu c_\nu)\)</span> restricted to the kept wires. MatchCake
+can therefore</p>
+<ul class="simple">
+<li><p>read the covariance matrix, the Von Neumann entropy, the purity and the density matrix of a
+subsystem with measurements in a <code class="docutils literal notranslate"><span class="pre">QNode</span></code>;</p></li>
+<li><p>start another circuit from a mixed Gaussian state with <code class="docutils literal notranslate"><span class="pre">mc.GaussianStatePrep</span></code>, for example
+from the reduced state of a previous circuit;</p></li>
+<li><p>differentiate through the whole chain.</p></li>
+</ul>
+<p>The theory is detailed in
+<a class="reference external" href="https://github.com/MatchCake/MatchCake/blob/main/docs/partial_trace_theory.md">Tracing out wires and mixed Gaussian states</a>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pennylane</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">qml</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matchcake</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matchcake.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">CompRxRx</span><span class="p">,</span> <span class="n">CompRyRy</span><span class="p">,</span> <span class="n">CompRzRz</span><span class="p">,</span> <span class="n">SptmCompRxRx</span><span class="p">,</span> <span class="n">SptmCompRyRy</span><span class="p">,</span> <span class="n">SptmCompRzRz</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matchcake.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">CovarianceMatrixToolbox</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="matchgate-circuit">
+<h2>Matchgate circuit<a class="headerlink" href="#matchgate-circuit" title="Permalink to this heading">¶</a></h2>
+<p>We use a brick-wall circuit of matchgates on 6 qubits, applied to the basis state
+<span class="math notranslate nohighlight">\(|101010\rangle\)</span>. Every gate is also understood by <code class="docutils literal notranslate"><span class="pre">default.qubit</span></code>, which we use as a reference.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">wires</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+<span class="n">basis_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">angles</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">brick_wall</span><span class="p">(</span><span class="n">layer_angles</span><span class="p">,</span> <span class="n">circuit_wires</span><span class="p">):</span>
+    <span class="c1"># layer_angles: (n_layers, len(circuit_wires) - 1, 3, 2)</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layer_angles</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">position</span><span class="p">,</span> <span class="n">gate_angles</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">layer</span><span class="p">):</span>
+            <span class="n">pair</span> <span class="o">=</span> <span class="p">[</span><span class="n">circuit_wires</span><span class="p">[</span><span class="n">position</span><span class="p">],</span> <span class="n">circuit_wires</span><span class="p">[</span><span class="n">position</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]]</span>
+            <span class="n">CompRxRx</span><span class="p">(</span><span class="n">gate_angles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wires</span><span class="o">=</span><span class="n">pair</span><span class="p">)</span>
+            <span class="n">CompRyRy</span><span class="p">(</span><span class="n">gate_angles</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">wires</span><span class="o">=</span><span class="n">pair</span><span class="p">)</span>
+            <span class="n">CompRzRz</span><span class="p">(</span><span class="n">gate_angles</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">wires</span><span class="o">=</span><span class="n">pair</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">first_circuit</span><span class="p">(</span><span class="n">measurement</span><span class="p">):</span>
+    <span class="n">qml</span><span class="o">.</span><span class="n">BasisState</span><span class="p">(</span><span class="n">basis_state</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+    <span class="n">brick_wall</span><span class="p">(</span><span class="n">angles</span><span class="p">,</span> <span class="n">wires</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">measurement</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">run_first_circuit</span><span class="p">(</span><span class="n">device_name</span><span class="p">,</span> <span class="n">measurement</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">QNode</span><span class="p">(</span><span class="n">first_circuit</span><span class="p">,</span> <span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="n">device_name</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">n</span><span class="p">))(</span><span class="n">measurement</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="reading-a-subsystem">
+<h2>Reading a subsystem<a class="headerlink" href="#reading-a-subsystem" title="Permalink to this heading">¶</a></h2>
+<p>The wires given to a measurement are the wires that are kept; the others are traced out.
+<code class="docutils literal notranslate"><span class="pre">qml.vn_entropy</span></code> and <code class="docutils literal notranslate"><span class="pre">qml.purity</span></code> are the usual PennyLane measurements. With a pure state on
+the whole register, the entropy of a subsystem is the entanglement entropy between the
+subsystem and the rest.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">kept_wires</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">subsystem_measurements</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">vn_entropy</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">kept_wires</span><span class="p">),</span> <span class="n">qml</span><span class="o">.</span><span class="n">purity</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">kept_wires</span><span class="p">)</span>
+
+
+<span class="n">entropy</span><span class="p">,</span> <span class="n">purity</span> <span class="o">=</span> <span class="n">run_first_circuit</span><span class="p">(</span><span class="s2">"nif.qubit"</span><span class="p">,</span> <span class="n">subsystem_measurements</span><span class="p">)</span>
+<span class="n">expected_entropy</span><span class="p">,</span> <span class="n">expected_purity</span> <span class="o">=</span> <span class="n">run_first_circuit</span><span class="p">(</span><span class="s2">"default.qubit"</span><span class="p">,</span> <span class="n">subsystem_measurements</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"entropy = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">entropy</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">  (default.qubit: </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">expected_entropy</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"purity  = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">purity</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">  (default.qubit: </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">expected_purity</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">entropy</span><span class="p">,</span> <span class="n">expected_entropy</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">purity</span><span class="p">,</span> <span class="n">expected_purity</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>entropy = 0.878858  (default.qubit: 0.878858)
+purity  = 0.468633  (default.qubit: 0.468633)
+</pre></div>
+</div>
+</div>
+</div>
+<p>The cost does not depend on the size of the Hilbert space: both quantities are computed from
+the <span class="math notranslate nohighlight">\(2k \times 2k\)</span> covariance matrix of the <span class="math notranslate nohighlight">\(k\)</span> kept wires. The entanglement entropy of every
+cut of a larger system is then cheap.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n_large</span> <span class="o">=</span> <span class="mi">40</span>
+<span class="n">large_wires</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_large</span><span class="p">))</span>
+<span class="n">large_angles</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_large</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="n">cuts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">35</span><span class="p">]</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">n_large</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">large_circuit</span><span class="p">():</span>
+    <span class="n">qml</span><span class="o">.</span><span class="n">BasisState</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_large</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">large_wires</span><span class="p">)</span>
+    <span class="n">brick_wall</span><span class="p">(</span><span class="n">large_angles</span><span class="p">,</span> <span class="n">large_wires</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">qml</span><span class="o">.</span><span class="n">vn_entropy</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">large_wires</span><span class="p">[:</span><span class="n">cut</span><span class="p">])</span> <span class="k">for</span> <span class="n">cut</span> <span class="ow">in</span> <span class="n">cuts</span><span class="p">]</span>
+
+
+<span class="k">for</span> <span class="n">cut</span><span class="p">,</span> <span class="n">cut_entropy</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cuts</span><span class="p">,</span> <span class="n">large_circuit</span><span class="p">()):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"entropy of wires 0..</span><span class="si">{</span><span class="n">cut</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">:</span><span class="s2">&lt;2</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">cut_entropy</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>entropy of wires 0..4  = 1.4169
+entropy of wires 0..9  = 1.3000
+entropy of wires 0..19 = 0.7734
+entropy of wires 0..29 = 0.8444
+entropy of wires 0..34 = 1.0176
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="the-reduced-covariance-matrix">
+<h2>The reduced covariance matrix<a class="headerlink" href="#the-reduced-covariance-matrix" title="Permalink to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">mc.covariance_matrix(wires)</span></code> returns the covariance matrix <span class="math notranslate nohighlight">\(\Lambda_A\)</span> of the kept wires. It
+describes the reduced state completely. Its normal-mode polarizations <span class="math notranslate nohighlight">\(|\lambda_j| \le 1\)</span> tell
+how mixed the state is: a mode with <span class="math notranslate nohighlight">\(|\lambda_j| = 1\)</span> is pure, and at most as many modes are
+mixed as there are traced-out wires.</p>
+<p>For a small number of wires, <code class="docutils literal notranslate"><span class="pre">qml.density_matrix(wires)</span></code> returns the dense reduced density
+matrix, which is also what <code class="docutils literal notranslate"><span class="pre">CovarianceMatrixToolbox.to_density_matrix</span></code> computes from <span class="math notranslate nohighlight">\(\Lambda_A\)</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">reduced_covariance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">run_first_circuit</span><span class="p">(</span><span class="s2">"nif.qubit"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">mc</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">kept_wires</span><span class="p">)))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"reduced covariance shape = </span><span class="si">{</span><span class="n">reduced_covariance</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mode polarizations       = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">CovarianceMatrixToolbox</span><span class="o">.</span><span class="n">mode_polarizations</span><span class="p">(</span><span class="n">reduced_covariance</span><span class="p">),</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="n">expected_density</span> <span class="o">=</span> <span class="n">run_first_circuit</span><span class="p">(</span><span class="s2">"default.qubit"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">qml</span><span class="o">.</span><span class="n">density_matrix</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">kept_wires</span><span class="p">))</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">CovarianceMatrixToolbox</span><span class="o">.</span><span class="n">to_density_matrix</span><span class="p">(</span><span class="n">reduced_covariance</span><span class="p">),</span> <span class="n">expected_density</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span>
+    <span class="n">run_first_circuit</span><span class="p">(</span><span class="s2">"nif.qubit"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">qml</span><span class="o">.</span><span class="n">density_matrix</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">kept_wires</span><span class="p">)),</span> <span class="n">expected_density</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-8</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"The reduced density matrix agrees with state-vector simulation."</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>reduced covariance shape = (8, 8)
+mode polarizations       = [0.2033 0.8945 1.     1.    ]
+The reduced density matrix agrees with state-vector simulation.
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="continuing-on-the-reduced-state">
+<h2>Continuing on the reduced state<a class="headerlink" href="#continuing-on-the-reduced-state" title="Permalink to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">mc.GaussianStatePrep(covariance_matrix,</span> <span class="pre">wires)</span></code> prepares the Gaussian state with the given
+covariance matrix. Queued as the first operation of a circuit, it starts a 4-qubit simulation
+from the mixed reduced state of the 6-qubit circuit. Expectation values, probabilities and
+samples are then computed as usual.</p>
+<p>The reference applies the same follow-up gates to the kept wires of the full 6-qubit system.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n_kept</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kept_wires</span><span class="p">)</span>
+<span class="n">follow_up_angles</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_kept</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="n">observable</span> <span class="o">=</span> <span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">qml</span><span class="o">.</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">Z</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">n_kept</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">follow_up_circuit</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="p">):</span>
+    <span class="n">mc</span><span class="o">.</span><span class="n">GaussianStatePrep</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="n">n_kept</span><span class="p">))</span>
+    <span class="n">brick_wall</span><span class="p">(</span><span class="n">follow_up_angles</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_kept</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">observable</span><span class="p">),</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"default.qubit"</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">n</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">full_reference_circuit</span><span class="p">():</span>
+    <span class="n">qml</span><span class="o">.</span><span class="n">BasisState</span><span class="p">(</span><span class="n">basis_state</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+    <span class="n">brick_wall</span><span class="p">(</span><span class="n">angles</span><span class="p">,</span> <span class="n">wires</span><span class="p">)</span>
+    <span class="n">brick_wall</span><span class="p">(</span><span class="n">follow_up_angles</span><span class="p">,</span> <span class="n">kept_wires</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">observable</span><span class="p">),</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+
+<span class="n">expval</span><span class="p">,</span> <span class="n">probs</span> <span class="o">=</span> <span class="n">follow_up_circuit</span><span class="p">(</span><span class="n">reduced_covariance</span><span class="p">)</span>
+<span class="n">expected_expval</span><span class="p">,</span> <span class="n">expected_probs</span> <span class="o">=</span> <span class="n">full_reference_circuit</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"expval = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">expval</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">  (default.qubit: </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">expected_expval</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"probs  = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">probs</span><span class="p">),</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">expval</span><span class="p">,</span> <span class="n">expected_expval</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">expected_probs</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expval = 0.374603  (default.qubit: 0.374603)
+probs  = [0.391  0.2631 0.0528 0.2931]
+</pre></div>
+</div>
+</div>
+</div>
+<p>With shots, the device samples the mixed state directly. The follow-up gates are written here
+with their single-particle transition matrix counterparts (<code class="docutils literal notranslate"><span class="pre">SptmCompRxRx</span></code>, …), which act
+directly on the covariance matrix.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">_</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">set_shots</span><span class="p">(</span><span class="mi">20_000</span><span class="p">)</span>
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">n_kept</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sampled_follow_up_circuit</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="p">):</span>
+    <span class="n">mc</span><span class="o">.</span><span class="n">GaussianStatePrep</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="n">n_kept</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">position</span><span class="p">,</span> <span class="n">gate_angles</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">follow_up_angles</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">SptmCompRxRx</span><span class="p">(</span><span class="n">gate_angles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="n">position</span><span class="p">,</span> <span class="n">position</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">SptmCompRyRy</span><span class="p">(</span><span class="n">gate_angles</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="n">position</span><span class="p">,</span> <span class="n">position</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">SptmCompRzRz</span><span class="p">(</span><span class="n">gate_angles</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="n">position</span><span class="p">,</span> <span class="n">position</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">probs</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+
+<span class="n">estimated_probs</span> <span class="o">=</span> <span class="n">sampled_follow_up_circuit</span><span class="p">(</span><span class="n">reduced_covariance</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"estimated probs = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">estimated_probs</span><span class="p">),</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">estimated_probs</span><span class="p">,</span> <span class="n">expected_probs</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">2e-2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>estimated probs = [0.39   0.2644 0.0512 0.2944]
+</pre></div>
+</div>
+</div>
+</div>
+<p>Outside of a <code class="docutils literal notranslate"><span class="pre">QNode</span></code>, the device gives the same reduced state as a ready-to-queue state
+preparation with <code class="docutils literal notranslate"><span class="pre">reduced_state</span></code> (wires to keep) or <code class="docutils literal notranslate"><span class="pre">partial_trace</span></code> (wires to remove).</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">device</span> <span class="o">=</span> <span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">qml</span><span class="o">.</span><span class="n">queuing</span><span class="o">.</span><span class="n">AnnotatedQueue</span><span class="p">()</span> <span class="k">as</span> <span class="n">queue</span><span class="p">:</span>
+    <span class="n">qml</span><span class="o">.</span><span class="n">BasisState</span><span class="p">(</span><span class="n">basis_state</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+    <span class="n">brick_wall</span><span class="p">(</span><span class="n">angles</span><span class="p">,</span> <span class="n">wires</span><span class="p">)</span>
+<span class="n">device</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">queue</span><span class="o">.</span><span class="n">queue</span><span class="p">)</span>
+
+<span class="n">reduced_state</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">partial_trace</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">reduced_state</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> on wires </span><span class="si">{</span><span class="n">reduced_state</span><span class="o">.</span><span class="n">wires</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">reduced_state</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">,</span> <span class="n">reduced_covariance</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>GaussianStatePrep on wires [0, 1, 2, 3]
+</pre></div>
+</div>
+</div>
+</div>
+<p>Inside a <code class="docutils literal notranslate"><span class="pre">QNode</span></code>, the measurement <code class="docutils literal notranslate"><span class="pre">mc.reduced_state(wires)</span></code> returns the same state preparation.
+It is queued with <code class="docutils literal notranslate"><span class="pre">qml.apply</span></code> at the start of the next circuit. Unlike the covariance matrix, it
+also carries the displacement vector of a product state with superposed qubits and the gate
+barriers of the last section.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">n</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">first_circuit_state</span><span class="p">():</span>
+    <span class="n">qml</span><span class="o">.</span><span class="n">BasisState</span><span class="p">(</span><span class="n">basis_state</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+    <span class="n">brick_wall</span><span class="p">(</span><span class="n">angles</span><span class="p">,</span> <span class="n">wires</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mc</span><span class="o">.</span><span class="n">reduced_state</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">kept_wires</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">n_kept</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">follow_up_from_state</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+    <span class="n">qml</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+    <span class="n">brick_wall</span><span class="p">(</span><span class="n">follow_up_angles</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_kept</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">observable</span><span class="p">)</span>
+
+
+<span class="n">state_expval</span> <span class="o">=</span> <span class="n">follow_up_from_state</span><span class="p">(</span><span class="n">first_circuit_state</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"expval = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">state_expval</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">  (default.qubit: </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">expected_expval</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">state_expval</span><span class="p">,</span> <span class="n">expected_expval</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expval = 0.374603  (default.qubit: 0.374603)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="chaining-circuits-with-generators">
+<h2>Chaining circuits with generators<a class="headerlink" href="#chaining-circuits-with-generators" title="Permalink to this heading">¶</a></h2>
+<p>The same chain works with <code class="docutils literal notranslate"><span class="pre">execute_generator</span></code>, which consumes the operations one at a time
+instead of a queued circuit. The trace-out is a method of the device and not an operation, so it
+cannot be yielded in the middle of a generator. Each segment of the circuit is one call to
+<code class="docutils literal notranslate"><span class="pre">execute_generator</span></code>, and the reduced state returned by <code class="docutils literal notranslate"><span class="pre">partial_trace</span></code> is the first operation
+of the next segment.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">brick_wall_generator</span><span class="p">(</span><span class="n">layer_angles</span><span class="p">,</span> <span class="n">circuit_wires</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layer_angles</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">position</span><span class="p">,</span> <span class="n">gate_angles</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">layer</span><span class="p">):</span>
+            <span class="n">pair</span> <span class="o">=</span> <span class="p">[</span><span class="n">circuit_wires</span><span class="p">[</span><span class="n">position</span><span class="p">],</span> <span class="n">circuit_wires</span><span class="p">[</span><span class="n">position</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]]</span>
+            <span class="k">yield</span> <span class="n">CompRxRx</span><span class="p">(</span><span class="n">gate_angles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wires</span><span class="o">=</span><span class="n">pair</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">CompRyRy</span><span class="p">(</span><span class="n">gate_angles</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">wires</span><span class="o">=</span><span class="n">pair</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">CompRzRz</span><span class="p">(</span><span class="n">gate_angles</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">wires</span><span class="o">=</span><span class="n">pair</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">first_segment</span><span class="p">():</span>
+    <span class="k">yield</span> <span class="n">qml</span><span class="o">.</span><span class="n">BasisState</span><span class="p">(</span><span class="n">basis_state</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+    <span class="k">yield from</span> <span class="n">brick_wall_generator</span><span class="p">(</span><span class="n">angles</span><span class="p">,</span> <span class="n">wires</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">follow_up_segment</span><span class="p">(</span><span class="n">state_prep</span><span class="p">,</span> <span class="n">circuit_wires</span><span class="p">):</span>
+    <span class="k">yield</span> <span class="n">state_prep</span>
+    <span class="k">yield from</span> <span class="n">brick_wall_generator</span><span class="p">(</span><span class="n">follow_up_angles</span><span class="p">,</span> <span class="n">circuit_wires</span><span class="p">)</span>
+
+
+<span class="n">large_device</span> <span class="o">=</span> <span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+<span class="n">large_device</span><span class="o">.</span><span class="n">execute_generator</span><span class="p">(</span><span class="n">first_segment</span><span class="p">())</span>
+<span class="n">reduced_state</span> <span class="o">=</span> <span class="n">large_device</span><span class="o">.</span><span class="n">partial_trace</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
+
+<span class="n">small_device</span> <span class="o">=</span> <span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">n_kept</span><span class="p">)</span>
+<span class="n">generator_expval</span> <span class="o">=</span> <span class="n">small_device</span><span class="o">.</span><span class="n">execute_generator</span><span class="p">(</span>
+    <span class="n">follow_up_segment</span><span class="p">(</span><span class="n">reduced_state</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_kept</span><span class="p">))),</span> <span class="n">observable</span><span class="o">=</span><span class="n">observable</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="s2">"expval"</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"expval = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">generator_expval</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">  (default.qubit: </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">expected_expval</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">generator_expval</span><span class="p">,</span> <span class="n">expected_expval</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expval = 0.374603  (default.qubit: 0.374603)
+</pre></div>
+</div>
+</div>
+</div>
+<section id="reusing-the-same-device">
+<h3>Reusing the same device<a class="headerlink" href="#reusing-the-same-device" title="Permalink to this heading">¶</a></h3>
+<p>A new device is not required after a trace-out. The same device can continue from the reduced
+state with two arguments:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">reduced_wires</span></code> labels the state preparation with the kept wires of the device. The state is
+then extended to the whole register, with the traced-out wires back in <span class="math notranslate nohighlight">\(|0\rangle\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reset=True</span></code> clears the operations of the previous segment. Without it, the device keeps its
+previous state and, by default, does not apply the new operations.</p></li>
+</ul>
+<p>The device keeps its number of wires, so the following segments are only cheaper on a smaller
+device.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">reduced_state</span> <span class="o">=</span> <span class="n">large_device</span><span class="o">.</span><span class="n">partial_trace</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">reduced_wires</span><span class="o">=</span><span class="n">kept_wires</span><span class="p">)</span>
+<span class="n">same_device_expval</span> <span class="o">=</span> <span class="n">large_device</span><span class="o">.</span><span class="n">execute_generator</span><span class="p">(</span>
+    <span class="n">follow_up_segment</span><span class="p">(</span><span class="n">reduced_state</span><span class="p">,</span> <span class="n">kept_wires</span><span class="p">),</span> <span class="n">observable</span><span class="o">=</span><span class="n">observable</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="s2">"expval"</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"expval = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">same_device_expval</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">  (default.qubit: </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">expected_expval</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">same_device_expval</span><span class="p">,</span> <span class="n">expected_expval</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expval = 0.374603  (default.qubit: 0.374603)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="other-mixed-gaussian-states">
+<h2>Other mixed Gaussian states<a class="headerlink" href="#other-mixed-gaussian-states" title="Permalink to this heading">¶</a></h2>
+<p>A <code class="docutils literal notranslate"><span class="pre">GaussianStatePrep</span></code> does not have to come from a partial trace. <code class="docutils literal notranslate"><span class="pre">from_polarizations</span></code> builds
+the product of single-mode mixtures
+<span class="math notranslate nohighlight">\(\tfrac{1+\lambda_j}{2}|0\rangle\langle 0| + \tfrac{1-\lambda_j}{2}|1\rangle\langle 1|\)</span>, such as
+the thermal state of <span class="math notranslate nohighlight">\(H = \sum_j \epsilon_j Z_j / 2\)</span> at inverse temperature <span class="math notranslate nohighlight">\(\beta\)</span>, for which
+<span class="math notranslate nohighlight">\(\lambda_j = -\tanh(\beta \epsilon_j / 2)\)</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">beta</span> <span class="o">=</span> <span class="mf">1.5</span>
+<span class="n">energies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])</span>
+<span class="n">polarizations</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">beta</span> <span class="o">*</span> <span class="n">energies</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">n_kept</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">thermal_circuit</span><span class="p">():</span>
+    <span class="n">mc</span><span class="o">.</span><span class="n">GaussianStatePrep</span><span class="o">.</span><span class="n">from_polarizations</span><span class="p">(</span><span class="n">polarizations</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="n">n_kept</span><span class="p">))</span>
+    <span class="n">brick_wall</span><span class="p">(</span><span class="n">follow_up_angles</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_kept</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">observable</span><span class="p">),</span> <span class="n">qml</span><span class="o">.</span><span class="n">vn_entropy</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="n">n_kept</span><span class="p">))</span>
+
+
+<span class="n">thermal_expval</span><span class="p">,</span> <span class="n">thermal_entropy</span> <span class="o">=</span> <span class="n">thermal_circuit</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"expval  = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">thermal_expval</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"entropy = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">thermal_entropy</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">  (unchanged by the unitary circuit)"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expval  = 0.139542
+entropy = 1.608146  (unchanged by the unitary circuit)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="gate-barriers">
+<h2>Gate barriers<a class="headerlink" href="#gate-barriers" title="Permalink to this heading">¶</a></h2>
+<p>A matrix cannot remember which wires were removed. When a removed wire lies between two kept
+wires, the Jordan-Wigner strings of the kept Majorana operators run through it, and the
+covariance matrix restricted to the kept wires describes the reduced state of the
+<em>fermionic modes</em>, which is not the reduced state of the qubits. <code class="docutils literal notranslate"><span class="pre">mc.covariance_matrix</span></code> and the
+entropy measurements therefore raise an error for such wires.</p>
+<p><code class="docutils literal notranslate"><span class="pre">mc.reduced_state</span></code>, <code class="docutils literal notranslate"><span class="pre">reduced_state</span></code> and <code class="docutils literal notranslate"><span class="pre">partial_trace</span></code> accept any kept wires. The state they
+return carries a <em>gate barrier</em> at the place of the removed wire. Gates on one side of the
+barrier, probabilities, samples and the observables with an even number of <span class="math notranslate nohighlight">\(X\)</span> and <span class="math notranslate nohighlight">\(Y\)</span> on the
+right of the barrier are exact. The device raises a <code class="docutils literal notranslate"><span class="pre">DeviceError</span></code> for the other gates and
+observables, whose result would not be the one of the reduced state of the qubits.
+<code class="docutils literal notranslate"><span class="pre">gate_barrier=False</span></code> returns the state without barrier, with a warning.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">run_first_circuit</span><span class="p">(</span><span class="s2">"nif.qubit"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">qml</span><span class="o">.</span><span class="n">vn_entropy</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]))</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ValueError: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="n">gap_wires</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="n">gap_state</span> <span class="o">=</span> <span class="n">run_first_circuit</span><span class="p">(</span><span class="s2">"nif.qubit"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">mc</span><span class="o">.</span><span class="n">reduced_state</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">gap_wires</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">barriers = </span><span class="si">{</span><span class="n">gap_state</span><span class="o">.</span><span class="n">barriers</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">gap_wires</span><span class="p">)))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gap_circuit</span><span class="p">(</span><span class="n">gap_observable</span><span class="p">):</span>
+    <span class="n">qml</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">gap_state</span><span class="p">)</span>
+    <span class="n">CompRxRx</span><span class="p">(</span><span class="n">follow_up_angles</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">gap_observable</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"default.qubit"</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">n</span><span class="p">))</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gap_reference_circuit</span><span class="p">():</span>
+    <span class="n">qml</span><span class="o">.</span><span class="n">BasisState</span><span class="p">(</span><span class="n">basis_state</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+    <span class="n">brick_wall</span><span class="p">(</span><span class="n">angles</span><span class="p">,</span> <span class="n">wires</span><span class="p">)</span>
+    <span class="n">CompRxRx</span><span class="p">(</span><span class="n">follow_up_angles</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+
+
+<span class="n">gap_expval</span> <span class="o">=</span> <span class="n">gap_circuit</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"expval = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">gap_expval</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">  (default.qubit: </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">gap_reference_circuit</span><span class="p">())</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">gap_expval</span><span class="p">,</span> <span class="n">gap_reference_circuit</span><span class="p">(),</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">gap_circuit</span><span class="p">(</span><span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">@</span> <span class="n">qml</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+<span class="k">except</span> <span class="n">qml</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">DeviceError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">DeviceError: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ValueError: The kept wires (device positions [0, 2]) are not a block of neighbouring wires listed in the device wire order without gate barrier on nif.qubit: a removed wire or a gate barrier lies between them. The Jordan-Wigner strings of their Majorana operators then run through removed wires, so the covariance matrix restricted to them describes the reduced state of the fermionic modes, which differs from the reduced state of the qubits and from what a qubit simulator returns. A matrix cannot carry the gate barriers that make this safe: use reduced_state, partial_trace or matchcake.reduced_state to get the reduced state with its barriers, or pass gate_barrier=False to get the covariance matrix of the fermionic reduced state.
+
+barriers = (1,)
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expval = -0.387392  (default.qubit: -0.387392)
+
+DeviceError: The Pauli word X(0) @ X(1) of the observable X(0) @ X(1) has an odd number of X and Y on the right of the gate barrier before the device position 1 on nif.qubit. The initial state is a reduced state: wires were traced out at this barrier, and the expectation value of this word in it is not the one of the reduced state of the qubits.
+</pre></div>
+</div>
+</div>
+</div>
+<p>Expectation values and probabilities on non-contiguous wires are not concerned: they are
+computed from the covariance matrix of the full register.</p>
+</section>
+<section id="gradients">
+<h2>Gradients<a class="headerlink" href="#gradients" title="Permalink to this heading">¶</a></h2>
+<p>All of the above is differentiable with torch. Here the parameters of the first circuit are
+optimized through the reduced covariance matrix and the second circuit, and the entropy of the
+cut is differentiated as well.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">torch_angles</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">angles</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">torch_follow_up_angles</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">follow_up_angles</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">n</span><span class="p">),</span> <span class="n">interface</span><span class="o">=</span><span class="s2">"torch"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">torch_first_circuit</span><span class="p">(</span><span class="n">layer_angles</span><span class="p">):</span>
+    <span class="n">qml</span><span class="o">.</span><span class="n">BasisState</span><span class="p">(</span><span class="n">basis_state</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="n">wires</span><span class="p">)</span>
+    <span class="n">brick_wall</span><span class="p">(</span><span class="n">layer_angles</span><span class="p">,</span> <span class="n">wires</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mc</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">kept_wires</span><span class="p">),</span> <span class="n">qml</span><span class="o">.</span><span class="n">vn_entropy</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">kept_wires</span><span class="p">)</span>
+
+
+<span class="nd">@qml</span><span class="o">.</span><span class="n">qnode</span><span class="p">(</span><span class="n">mc</span><span class="o">.</span><span class="n">NIFDevice</span><span class="p">(</span><span class="n">wires</span><span class="o">=</span><span class="n">n_kept</span><span class="p">),</span> <span class="n">interface</span><span class="o">=</span><span class="s2">"torch"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">torch_follow_up_circuit</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="p">):</span>
+    <span class="n">mc</span><span class="o">.</span><span class="n">GaussianStatePrep</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="n">n_kept</span><span class="p">))</span>
+    <span class="n">brick_wall</span><span class="p">(</span><span class="n">torch_follow_up_angles</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_kept</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">qml</span><span class="o">.</span><span class="n">expval</span><span class="p">(</span><span class="n">observable</span><span class="p">)</span>
+
+
+<span class="n">covariance_matrix</span><span class="p">,</span> <span class="n">cut_entropy</span> <span class="o">=</span> <span class="n">torch_first_circuit</span><span class="p">(</span><span class="n">torch_angles</span><span class="p">)</span>
+<span class="n">loss</span> <span class="o">=</span> <span class="n">torch_follow_up_circuit</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">cut_entropy</span>
+<span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"loss               = </span><span class="si">{</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"gradient shape     = </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="n">torch_angles</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"gradient magnitude = </span><span class="si">{</span><span class="n">torch_angles</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">norm</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loss               = 0.462489
+gradient shape     = (2, 5, 3, 2)
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>gradient magnitude = 0.853773
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>S. Bravyi, <em>Lagrangian representation for fermionic linear optics</em>, Quantum Inf. Comput. 5,
+216 (2005), <a class="reference external" href="https://arxiv.org/abs/quant-ph/0404180">arXiv:quant-ph/0404180</a>.</p></li>
+<li><p>I. Peschel, <em>Calculation of reduced density matrices from correlation functions</em>,
+J. Phys. A 36, L205 (2003), <a class="reference external" href="https://arxiv.org/abs/cond-mat/0212631">arXiv:cond-mat/0212631</a>.</p></li>
+</ol>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="../static/documentation_options.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <script type="text/javascript" src="../static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" src="../static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>

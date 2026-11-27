@@ -1,0 +1,1015 @@
+
+
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Tracing out wires and mixed Gaussian states &mdash; MatchCake  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="../static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../static/css/theme.min.css" type="text/css" />
+  <link rel="stylesheet" href="../static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="matchcake package" href="../matchcake.html" />
+    <link rel="prev" title="Computing expectation values using the Covariance-Matrix" href="expectation_values_theory.html" />
+<script type="text/javascript">
+window.MathJax = {
+  options: {
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process|mathjax_process|math|output_area'
+  }
+};
+</script>
+
+
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="site-nav-toggle hidden-lg-up"><i class="icon-menu"></i></a>
+            <a class="site-title" href="../index.html">
+                MatchCake
+            </a>
+        </div>
+    </header>
+
+
+<div class="breadcrumbs-outer hidden-xs-down">
+    <div class="container">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a></li>
+        
+          <li><a href="../theory.html">Theory</a></li>
+        
+      <li>Tracing out wires and mixed Gaussian states</li>
+    
+    
+      <li class="breadcrumbs-aside">
+        
+            
+            <a href="../sources/docs/partial_trace_theory.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+</div>
+    </div>
+</div>
+    <div class="main-outer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 site-nav">
+                    
+<div role="search">
+    <form class="search" action="../search.html" method="get">
+        <div class="icon-input">
+            <input type="text" name="q" placeholder="Search" />
+            <span class="icon-search"></span>
+        </div>
+        <input type="submit" value="Go" class="d-hidden" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+                    <div class="site-nav-tree">
+                        
+
+<div style="padding: 0 0 1em 0;">
+  <label for="version-select" style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 0.3em; color: #555;">Version</label>
+  <select id="version-select" onchange="window.location.href=this.value" style="width: 100%; padding: 0.3em 0.4em; font-size: 0.9em; border: 1px solid #ccc; border-radius: 3px; background: #fff; cursor: pointer;">
+    
+    <option value="partial_trace_theory.html" selected>dev</option>
+    
+    <option value="../../main/index.html" >main</option>
+    
+    <option value="../../1.0.0/index.html" >1.0.0</option>
+    
+    <option value="../../0.2.3/index.html" >0.2.3</option>
+    
+  </select>
+</div>
+
+
+                            
+                            
+                                <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">MatchCake</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#description">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#requirements">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#installation">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#set-up-a-project-or-an-environment">Set up a project or an environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#install-matchcake">Install MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#last-unstable-version">Last unstable version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#pytorch-build-and-installation-size">PyTorch build and installation size</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#quick-usage-preview">Quick Usage Preview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#quantum-circuit-simulation-with-matchcake">Quantum Circuit Simulation with MatchCake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#data-classification-with-matchcake">Data Classification with MatchCake</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#tutorials">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#for-developers">For Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#notes">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#about">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#important-links">Important Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#found-a-bug-or-have-a-feature-request">Found a bug or have a feature request?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#license">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html#citations">Citations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../readme.html#fermionic-machine-learning-paper">Fermionic Machine Learning Paper</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/matchcake_basics.html">MatchCake Example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#create-the-noninteractingfermionicdevice">Create the NonInteractingFermionicDevice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#define-the-circuit">Define the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#create-the-qnode">Create the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#define-the-hyperparameters-of-the-circuit">Define the hyperparameters of the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#draw-the-circuit">Draw the circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#evaluate-the-qnode">Evaluate the QNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/matchcake_basics.html#print-the-expectation-values">Print the expectation values</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/expectation_values.html">Expectation Values</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/expectation_values.html#hamiltonian">Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/expectation_values.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/expectation_values.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/expectation_values.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/expectation_values.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/probabilities.html">Probabilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/probabilities.html#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/probabilities.html#basis-state-initialization">Basis state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/probabilities.html#marginal-probabilities">Marginal probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/probabilities.html#arbitrary-product-state-initialization">Arbitrary product state initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/probabilities.html#mixed-product-state">Mixed product state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/probabilities.html#single-outcome-probability">Single-outcome probability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/probabilities.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/sampling.html">Sampling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/sampling.html#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/sampling.html#computational-basis-samples">Computational basis samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/sampling.html#expectation-values-from-shots">Expectation values from shots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/sampling.html#sampling-in-the-x-basis">Sampling in the X basis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/sampling.html#pauli-products-and-hamiltonians">Pauli products and Hamiltonians</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/sampling.html#arbitrary-product-bases">Arbitrary product bases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/sampling.html#batched-circuits">Batched circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/sampling.html#scaling-to-many-qubits">Scaling to many qubits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/sampling.html#running-on-a-gpu">Running on a GPU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/sampling.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/reduced_states.html">Reduced States and Mixed Gaussian States</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/reduced_states.html#matchgate-circuit">Matchgate circuit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/reduced_states.html#reading-a-subsystem">Reading a subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/reduced_states.html#the-reduced-covariance-matrix">The reduced covariance matrix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/reduced_states.html#continuing-on-the-reduced-state">Continuing on the reduced state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/reduced_states.html#chaining-circuits-with-generators">Chaining circuits with generators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/reduced_states.html#other-mixed-gaussian-states">Other mixed Gaussian states</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/reduced_states.html#gate-barriers">Gate barriers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/reduced_states.html#gradients">Gradients</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/reduced_states.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/iris_classification.html">Iris classification with FermionicPQCKernel</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/iris_classification.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html">Nystroem Kernel Approximation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#load-the-data">Load the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#split-the-data">Split the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#build-the-sklearn-pipeline">Build the SKlearn Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#train-the-model">Train the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#evaluate-the-pipeline">Evaluate the Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/nystroem_kernel_approximation.html#visualize-the-results">Visualize the results</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../theory.html">Theory</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="expectation_values_theory.html">Computing expectation values using the Covariance-Matrix</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Tracing out wires and mixed Gaussian states</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../matchcake.html">matchcake package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../matchcake.html#module-matchcake">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+                            
+                        
+
+                    </div>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div class="document">
+                        
+                            
+  <section class="tex2jax_ignore mathjax_ignore" id="tracing-out-wires-and-mixed-gaussian-states">
+<h1>Tracing out wires and mixed Gaussian states<a class="headerlink" href="#tracing-out-wires-and-mixed-gaussian-states" title="Permalink to this heading">¶</a></h1>
+<p>This document explains how MatchCake traces out wires of a matchgate circuit, why the
+reduced state stays classically tractable although it is mixed, and how a circuit is run
+from such a mixed state. It builds on the covariance-matrix formalism of
+<a class="reference internal" href="expectation_values_theory.html"><span class="std std-doc">Computing expectation values using the Covariance-Matrix</span></a>:
+the state of the device is a computational-basis state <span class="math notranslate nohighlight">\(|x\rangle\)</span> evolved by the
+matchgate circuit <span class="math notranslate nohighlight">\(V\)</span>, and it is fully described by its Majorana covariance matrix
+<span class="math notranslate nohighlight">\(\Lambda = R^\top \Lambda_0 R\)</span>, with <span class="math notranslate nohighlight">\(R\)</span> the single-particle transition matrix of <span class="math notranslate nohighlight">\(V\)</span>.
+Section 7 treats the initial product states with superposed qubits, which also carry a
+displacement vector.</p>
+<section id="the-reduced-state-is-gaussian">
+<h2>1. The reduced state is Gaussian<a class="headerlink" href="#the-reduced-state-is-gaussian" title="Permalink to this heading">¶</a></h2>
+<p>Split the <span class="math notranslate nohighlight">\(n\)</span> wires into a kept set <span class="math notranslate nohighlight">\(A\)</span> and a traced-out set <span class="math notranslate nohighlight">\(B\)</span>. The reduced
+state <span class="math notranslate nohighlight">\(\rho_A = \mathrm{Tr}_B |\psi\rangle\langle\psi|\)</span> is characterized by the
+expectation values of the operators supported on <span class="math notranslate nohighlight">\(A\)</span>. In the fermionic picture these
+are the products of the Majorana operators <span class="math notranslate nohighlight">\(c_\mu\)</span> with <span class="math notranslate nohighlight">\(\mu \in I_A = \{2a, 2a+1 : a \in A\}\)</span>,
+and their expectation values in <span class="math notranslate nohighlight">\(\rho_A\)</span> are the same as in <span class="math notranslate nohighlight">\(|\psi\rangle\)</span>. Wick’s theorem
+therefore still applies, with the principal submatrix of the covariance matrix,</p>
+<div class="math notranslate nohighlight">
+\[
+\langle c_{\mu_1} \cdots c_{\mu_{2k}} \rangle_{\rho_A}
+= i^{-k}\, \mathrm{Pf}\big(\Lambda_A|_{\{\mu_1, \ldots, \mu_{2k}\}}\big),
+\qquad
+\Lambda_A = \Lambda|_{I_A \times I_A},
+\]</div>
+<p>and the odd products vanish because <span class="math notranslate nohighlight">\(|x\rangle\)</span> has a definite fermion parity. The
+reduced state is thus a fermionic Gaussian state with covariance matrix <span class="math notranslate nohighlight">\(\Lambda_A\)</span>.
+Unlike <span class="math notranslate nohighlight">\(\Lambda\)</span>, the submatrix <span class="math notranslate nohighlight">\(\Lambda_A\)</span> does not square to <span class="math notranslate nohighlight">\(-\mathbb{1}\)</span> in
+general: the reduced state is mixed.</p>
+</section>
+<section id="qubits-versus-fermionic-modes">
+<h2>2. Qubits versus fermionic modes<a class="headerlink" href="#qubits-versus-fermionic-modes" title="Permalink to this heading">¶</a></h2>
+<section id="the-reduced-covariance-matrix">
+<h3>2.1 The reduced covariance matrix<a class="headerlink" href="#the-reduced-covariance-matrix" title="Permalink to this heading">¶</a></h3>
+<p>Let <span class="math notranslate nohighlight">\(\mu_0 &lt; \mu_1 &lt; \cdots &lt; \mu_{2|A|-1}\)</span> be the Majorana indices <span class="math notranslate nohighlight">\(I_A\)</span> of the kept wires,
+and <span class="math notranslate nohighlight">\(\Lambda\)</span> the covariance matrix of the full register. The covariance matrix of the reduced
+state of the qubits of <span class="math notranslate nohighlight">\(A\)</span> is <span class="math notranslate nohighlight">\((\Lambda_A)_{jk} = i\, \mathrm{Tr}(\rho_A\, c'_j c'_k)\)</span>, with
+<span class="math notranslate nohighlight">\(c'_j\)</span> the Majorana operators of the reduced system. Written in the full system, the Pauli
+word <span class="math notranslate nohighlight">\(c'_j c'_k\)</span> is the product <span class="math notranslate nohighlight">\(c_{\mu_j} c_{\mu_k}\)</span> times a <span class="math notranslate nohighlight">\(Z_b = -i\, c_{2b} c_{2b+1}\)</span> on
+every traced-out wire <span class="math notranslate nohighlight">\(b\)</span> located between the wires of <span class="math notranslate nohighlight">\(\mu_j\)</span> and <span class="math notranslate nohighlight">\(\mu_k\)</span>. Wick’s theorem
+then gives every entry as a single Pfaffian of a submatrix of <span class="math notranslate nohighlight">\(\Lambda\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[
+(\Lambda_A)_{jk} = (-1)^{r_{jk}}\, \mathrm{Pf}\big(\Lambda|_{S_{jk}}\big),
+\qquad
+S_{jk} = \{\mu_j, \mu_k\} \cup \bigcup_{b \in B_{jk}} \{2b, 2b+1\},
+\qquad j &lt; k,
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(B_{jk} \subseteq B\)</span> is the set of traced-out wires located between the wires of
+<span class="math notranslate nohighlight">\(\mu_j\)</span> and <span class="math notranslate nohighlight">\(\mu_k\)</span>, and <span class="math notranslate nohighlight">\(r_{jk} = |B_{jk}|\)</span>. The other entries follow from
+<span class="math notranslate nohighlight">\(\Lambda_A^\top = -\Lambda_A\)</span>. The submatrix <span class="math notranslate nohighlight">\(\Lambda|_{S_{jk}}\)</span> gathers the entry
+<span class="math notranslate nohighlight">\(\Lambda_{\mu_j \mu_k}\)</span>, the block of the traced-out wires <span class="math notranslate nohighlight">\(\Lambda_B|_{B_{jk}}\)</span>, and the
+correlations between the two kept Majorana operators and those wires.</p>
+<p><strong>Contiguous kept wires.</strong> No traced-out wire lies between two kept wires, so <span class="math notranslate nohighlight">\(r_{jk} = 0\)</span>
+and <span class="math notranslate nohighlight">\(S_{jk} = \{\mu_j, \mu_k\}\)</span> for every pair. The Pfaffian of a <span class="math notranslate nohighlight">\(2 \times 2\)</span> antisymmetric
+matrix is its upper off-diagonal entry, and the formula reduces to</p>
+<div class="math notranslate nohighlight">
+\[
+(\Lambda_A)_{jk} = \Lambda_{\mu_j \mu_k}
+\qquad \Longleftrightarrow \qquad
+\Lambda_A = \Pi_A\, \Lambda\, \Pi_A^\top ,
+\]</div>
+<p>with <span class="math notranslate nohighlight">\(\Pi_A\)</span> the <span class="math notranslate nohighlight">\(2|A| \times 2n\)</span> matrix that selects the rows of <span class="math notranslate nohighlight">\(I_A\)</span>. The block
+<span class="math notranslate nohighlight">\(\Lambda_B\)</span> of the traced-out wires and the correlations between <span class="math notranslate nohighlight">\(A\)</span> and <span class="math notranslate nohighlight">\(B\)</span> drop out.
+This is all that MatchCake computes when it traces out wires: <code class="docutils literal notranslate"><span class="pre">mc.covariance_matrix(wires)</span></code>,
+<code class="docutils literal notranslate"><span class="pre">reduced_covariance_matrix</span></code> and <code class="docutils literal notranslate"><span class="pre">partial_trace</span></code> return this principal submatrix, and
+<code class="docutils literal notranslate"><span class="pre">qml.vn_entropy</span></code>, <code class="docutils literal notranslate"><span class="pre">qml.purity</span></code> and <code class="docutils literal notranslate"><span class="pre">qml.density_matrix</span></code> are evaluated from it (Section 3).</p>
+<p><strong>One traced-out wire in between.</strong> When a single traced-out wire <span class="math notranslate nohighlight">\(b\)</span> separates the wires of
+<span class="math notranslate nohighlight">\(\mu_j\)</span> and <span class="math notranslate nohighlight">\(\mu_k\)</span>, the Pfaffian is the one of a <span class="math notranslate nohighlight">\(4 \times 4\)</span> matrix:</p>
+<div class="math notranslate nohighlight">
+\[
+(\Lambda_A)_{jk} = -\Big( \Lambda_{\mu_j \mu_k}\, \Lambda_{2b,\, 2b+1}
+- \Lambda_{\mu_j,\, 2b+1}\, \Lambda_{2b,\, \mu_k}
++ \Lambda_{\mu_j,\, 2b}\, \Lambda_{2b+1,\, \mu_k} \Big) .
+\]</div>
+<p>Since <span class="math notranslate nohighlight">\(\Lambda_{2b,\, 2b+1} = -\langle Z_b \rangle\)</span>, the first term is the submatrix entry
+weighted by the polarization of the traced-out wire, and the two others are the correlations
+of the kept Majorana operators with that wire. The entry differs from <span class="math notranslate nohighlight">\(\Lambda_{\mu_j \mu_k}\)</span>
+in general.</p>
+</section>
+<section id="non-contiguous-kept-wires">
+<h3>2.2 Non-contiguous kept wires<a class="headerlink" href="#non-contiguous-kept-wires" title="Permalink to this heading">¶</a></h3>
+<p>For kept wires that are not a contiguous block, two different matrices can be called the
+reduced covariance matrix:</p>
+<ul class="simple">
+<li><p>the matrix <span class="math notranslate nohighlight">\(\Lambda_A\)</span> of Section 2.1, with its Pfaffians. It holds the two-point functions
+of the reduced state of the qubits. That state is not Gaussian in general, so <span class="math notranslate nohighlight">\(\Lambda_A\)</span>
+does not determine it: its higher-order correlations are not Pfaffians of <span class="math notranslate nohighlight">\(\Lambda_A\)</span>, and
+it cannot be given to <code class="docutils literal notranslate"><span class="pre">GaussianStatePrep</span></code>.</p></li>
+<li><p>the principal submatrix <span class="math notranslate nohighlight">\(\Pi_A \Lambda \Pi_A^\top\)</span>, that is the formula of Section 2.1 with
+the Jordan-Wigner strings on the traced-out wires dropped (<span class="math notranslate nohighlight">\(r_{jk} = 0\)</span>). It is the
+covariance matrix of the reduced state of the fermionic modes, which is Gaussian but is not
+the reduced state of the qubits.</p></li>
+</ul>
+<p>When a traced-out wire <span class="math notranslate nohighlight">\(b\)</span> lies between two kept wires, the product of two kept Majorana
+operators on each side of <span class="math notranslate nohighlight">\(b\)</span> keeps a factor <span class="math notranslate nohighlight">\(Z_b\)</span>. For the kept wires <span class="math notranslate nohighlight">\(\{0, 2\}\)</span> of a
+three-wire register, for example,</p>
+<div class="math notranslate nohighlight">
+\[
+c_1 c_4 = (Y_0)(Z_0 Z_1 X_2) = i\, X_0 Z_1 X_2 ,
+\]</div>
+<p>so the entry <span class="math notranslate nohighlight">\((1, 2)\)</span> of the principal submatrix, <span class="math notranslate nohighlight">\(\Lambda_{1,4} = i \langle c_1 c_4 \rangle\)</span>, holds
+<span class="math notranslate nohighlight">\(-\langle X_0 Z_1 X_2 \rangle\)</span> and not <span class="math notranslate nohighlight">\(-\langle X_0 X_2 \rangle\)</span>. A Pauli word on the reduced system then stands in the original
+system for the same word dressed with a <span class="math notranslate nohighlight">\(Z\)</span> on every traced-out wire located between two of
+its <span class="math notranslate nohighlight">\(X\)</span> or <span class="math notranslate nohighlight">\(Y\)</span> factors. This is what the reduced state of the fermionic modes describes. It is a valid
+Gaussian state, but it differs from the reduced state of the qubits, and so do its entropy
+and its purity. The reduced state of the qubits on such wires is not Gaussian in general and
+has no covariance-matrix description.</p>
+<p>The measurements that return a matrix or a number (<code class="docutils literal notranslate"><span class="pre">mc.covariance_matrix</span></code>, the entropy, the
+purity and the density matrix) therefore accept only contiguous kept wires, and raise an error
+otherwise. With <code class="docutils literal notranslate"><span class="pre">gate_barrier=False</span></code>, <code class="docutils literal notranslate"><span class="pre">mc.covariance_matrix</span></code> returns the principal submatrix,
+the reduced state of the fermionic modes, with a warning. The Pfaffian formula of Section 2.1
+for non-contiguous wires is not implemented. <code class="docutils literal notranslate"><span class="pre">mc.reduced_state</span></code>, <code class="docutils literal notranslate"><span class="pre">reduced_state</span></code> and
+<code class="docutils literal notranslate"><span class="pre">partial_trace</span></code> accept any kept wires: the state they return remembers the removed wires with
+gate barriers, described in Section 8.
+Expectation values and probabilities on arbitrary wires are not affected by this restriction:
+they are computed from the full covariance matrix.</p>
+</section>
+<section id="worked-example-on-three-wires">
+<h3>2.3 Worked example on three wires<a class="headerlink" href="#worked-example-on-three-wires" title="Permalink to this heading">¶</a></h3>
+<p>This example follows every step from a state on three wires to the covariance matrix of two
+of them. All the numbers can be checked by hand.</p>
+<section id="step-1-the-state-and-its-majorana-operators">
+<h4>Step 1: the state and its Majorana operators<a class="headerlink" href="#step-1-the-state-and-its-majorana-operators" title="Permalink to this heading">¶</a></h4>
+<p>Take the three-wire state</p>
+<div class="math notranslate nohighlight">
+\[
+|\psi\rangle = \tfrac{1}{2}\big( |000\rangle + |110\rangle + |101\rangle + |011\rangle \big) ,
+\]</div>
+<p>where the bits are those of wires <span class="math notranslate nohighlight">\(0\)</span>, <span class="math notranslate nohighlight">\(1\)</span> and <span class="math notranslate nohighlight">\(2\)</span>, in this order. Every basis state in
+it has an even number of ones, so the state has a definite fermion parity. It can be prepared
+by a matchgate circuit from <span class="math notranslate nohighlight">\(|000\rangle\)</span>, so it is a fermionic Gaussian state.</p>
+<p>Three wires carry six Majorana operators, two per wire. Wire <span class="math notranslate nohighlight">\(k\)</span> owns <span class="math notranslate nohighlight">\(c_{2k}\)</span> and
+<span class="math notranslate nohighlight">\(c_{2k+1}\)</span>, and each one carries a string of <span class="math notranslate nohighlight">\(Z\)</span> on the wires before it:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Wire</p></th>
+<th class="head"><p>Majorana indices</p></th>
+<th class="head"><p>Operators</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(0\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(0, 1\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(c_0 = X_0\)</span>, <span class="math notranslate nohighlight">\(c_1 = Y_0\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(1\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(2, 3\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(c_2 = Z_0 X_1\)</span>, <span class="math notranslate nohighlight">\(c_3 = Z_0 Y_1\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(2\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(4, 5\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(c_4 = Z_0 Z_1 X_2\)</span>, <span class="math notranslate nohighlight">\(c_5 = Z_0 Z_1 Y_2\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="step-2-the-covariance-matrix-of-the-full-state">
+<h4>Step 2: the covariance matrix of the full state<a class="headerlink" href="#step-2-the-covariance-matrix-of-the-full-state" title="Permalink to this heading">¶</a></h4>
+<p>The covariance matrix is the <span class="math notranslate nohighlight">\(6 \times 6\)</span> matrix
+<span class="math notranslate nohighlight">\(\Lambda_{\mu\nu} = i \langle\psi| c_\mu c_\nu |\psi\rangle\)</span> for <span class="math notranslate nohighlight">\(\mu \neq \nu\)</span>, with zeros on
+the diagonal. It is antisymmetric, so only the entries with <span class="math notranslate nohighlight">\(\mu &lt; \nu\)</span> need to be computed.
+Each product <span class="math notranslate nohighlight">\(c_\mu c_\nu\)</span> is a Pauli word, obtained with <span class="math notranslate nohighlight">\(Y Z = i X\)</span>, <span class="math notranslate nohighlight">\(X Z = -i Y\)</span> and
+<span class="math notranslate nohighlight">\(Z^2 = \mathbb{1}\)</span>. Three of them have a non-zero expectation value in <span class="math notranslate nohighlight">\(|\psi\rangle\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\begin{aligned}
+c_1 c_2 &amp;= Y_0 Z_0 X_1 = i\, X_0 X_1
+&amp;&amp;\Rightarrow\quad \Lambda_{1,2} = i \cdot i\, \langle X_0 X_1 \rangle = -\langle X_0 X_1 \rangle = -1 ,
+\\ c_3 c_4 &amp;= Z_0 Y_1 Z_0 Z_1 X_2 = i\, X_1 X_2
+&amp;&amp;\Rightarrow\quad \Lambda_{3,4} = -\langle X_1 X_2 \rangle = -1 ,
+\\ c_0 c_5 &amp;= X_0 Z_0 Z_1 Y_2 = -i\, Y_0 Z_1 Y_2
+&amp;&amp;\Rightarrow\quad \Lambda_{0,5} = i \cdot (-i)\, \langle Y_0 Z_1 Y_2 \rangle = \langle Y_0 Z_1 Y_2 \rangle = -1 .
+\end{aligned}
+\end{split}\]</div>
+<p>The expectation values are read from the state. <span class="math notranslate nohighlight">\(X_0 X_1\)</span> flips the bits of wires <span class="math notranslate nohighlight">\(0\)</span> and
+<span class="math notranslate nohighlight">\(1\)</span>: it exchanges <span class="math notranslate nohighlight">\(|000\rangle\)</span> with <span class="math notranslate nohighlight">\(|110\rangle\)</span> and <span class="math notranslate nohighlight">\(|101\rangle\)</span> with <span class="math notranslate nohighlight">\(|011\rangle\)</span>,
+which leaves <span class="math notranslate nohighlight">\(|\psi\rangle\)</span> unchanged, so <span class="math notranslate nohighlight">\(\langle X_0 X_1 \rangle = 1\)</span>. In the same way
+<span class="math notranslate nohighlight">\(\langle X_1 X_2 \rangle = 1\)</span>. The operator <span class="math notranslate nohighlight">\(Y_0 Z_1 Y_2\)</span> flips the bits of wires <span class="math notranslate nohighlight">\(0\)</span> and
+<span class="math notranslate nohighlight">\(2\)</span> and gives a factor <span class="math notranslate nohighlight">\(-1\)</span> to each of the four basis states, so
+<span class="math notranslate nohighlight">\(Y_0 Z_1 Y_2 |\psi\rangle = -|\psi\rangle\)</span> and <span class="math notranslate nohighlight">\(\langle Y_0 Z_1 Y_2 \rangle = -1\)</span>. The twelve
+other products with <span class="math notranslate nohighlight">\(\mu &lt; \nu\)</span> have a vanishing expectation value. For example
+<span class="math notranslate nohighlight">\(c_2 c_3 = i Z_1\)</span> and <span class="math notranslate nohighlight">\(\langle Z_1 \rangle = 0\)</span>, because wire <span class="math notranslate nohighlight">\(1\)</span> is <span class="math notranslate nohighlight">\(0\)</span> in half of the
+basis states and <span class="math notranslate nohighlight">\(1\)</span> in the other half.</p>
+<p>Placing the three values at their positions, and their opposites at the transposed positions,
+gives</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\Lambda = \begin{pmatrix}
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; -1
+\\ 0 &amp; 0 &amp; -1 &amp; 0 &amp; 0 &amp; 0
+\\ 0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0
+\\ 0 &amp; 0 &amp; 0 &amp; 0 &amp; -1 &amp; 0
+\\ 0 &amp; 0 &amp; 0 &amp; 1 &amp; 0 &amp; 0
+\\ 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0
+\end{pmatrix} .
+\end{split}\]</div>
+<p>Rows and columns are numbered from <span class="math notranslate nohighlight">\(0\)</span> to <span class="math notranslate nohighlight">\(5\)</span>. Every row holds a single <span class="math notranslate nohighlight">\(\pm 1\)</span>, and one
+can check that <span class="math notranslate nohighlight">\(\Lambda^2 = -\mathbb{1}\)</span>: the state is pure.</p>
+</section>
+<section id="step-3-keeping-wires-0-and-1-tracing-out-wire-2">
+<h4>Step 3: keeping wires 0 and 1, tracing out wire 2<a class="headerlink" href="#step-3-keeping-wires-0-and-1-tracing-out-wire-2" title="Permalink to this heading">¶</a></h4>
+<p><strong>The selection matrix.</strong> The kept wires <span class="math notranslate nohighlight">\(A = \{0, 1\}\)</span> own the Majorana indices
+<span class="math notranslate nohighlight">\(I_A = \{0, 1, 2, 3\}\)</span>, which we list in increasing order as
+<span class="math notranslate nohighlight">\((\mu_0, \mu_1, \mu_2, \mu_3) = (0, 1, 2, 3)\)</span>. The selection matrix <span class="math notranslate nohighlight">\(\Pi_A\)</span> has one row per
+kept Majorana index and one column per Majorana index of the full register, so it is
+<span class="math notranslate nohighlight">\(4 \times 6\)</span>. Row <span class="math notranslate nohighlight">\(j\)</span> is zero everywhere except for a <span class="math notranslate nohighlight">\(1\)</span> in column <span class="math notranslate nohighlight">\(\mu_j\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\Pi_A = \begin{pmatrix}
+1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0
+\\ 0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0
+\\ 0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 &amp; 0
+\\ 0 &amp; 0 &amp; 0 &amp; 1 &amp; 0 &amp; 0
+\end{pmatrix} .
+\end{split}\]</div>
+<p>The wires form a contiguous block, so Section 2.1 gives
+<span class="math notranslate nohighlight">\(\Lambda_A = \Pi_A\, \Lambda\, \Pi_A^\top\)</span>.</p>
+<p><strong>The product.</strong> Multiplying by <span class="math notranslate nohighlight">\(\Pi_A\)</span> on the left keeps the rows <span class="math notranslate nohighlight">\(0, 1, 2, 3\)</span> of
+<span class="math notranslate nohighlight">\(\Lambda\)</span>, and multiplying by <span class="math notranslate nohighlight">\(\Pi_A^\top\)</span> on the right keeps the columns <span class="math notranslate nohighlight">\(0, 1, 2, 3\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\Pi_A\, \Lambda = \begin{pmatrix}
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; -1
+\\ 0 &amp; 0 &amp; -1 &amp; 0 &amp; 0 &amp; 0
+\\ 0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0
+\\ 0 &amp; 0 &amp; 0 &amp; 0 &amp; -1 &amp; 0
+\end{pmatrix},
+\qquad
+\Lambda_A = \Pi_A\, \Lambda\, \Pi_A^\top = \begin{pmatrix}
+0 &amp; 0 &amp; 0 &amp; 0
+\\ 0 &amp; 0 &amp; -1 &amp; 0
+\\ 0 &amp; 1 &amp; 0 &amp; 0
+\\ 0 &amp; 0 &amp; 0 &amp; 0
+\end{pmatrix} .
+\end{split}\]</div>
+<p>In other words, <span class="math notranslate nohighlight">\((\Lambda_A)_{jk} = \Lambda_{\mu_j \mu_k}\)</span>: the reduced covariance matrix is
+<span class="math notranslate nohighlight">\(\Lambda\)</span> with the rows and the columns of the traced-out wire, <span class="math notranslate nohighlight">\(4\)</span> and <span class="math notranslate nohighlight">\(5\)</span>, deleted.</p>
+<p><strong>What was lost.</strong> The entry <span class="math notranslate nohighlight">\(\Lambda_{1,2}\)</span> links two kept Majorana operators and survives.
+The entries <span class="math notranslate nohighlight">\(\Lambda_{0,5}\)</span> and <span class="math notranslate nohighlight">\(\Lambda_{3,4}\)</span> link a kept Majorana operator to one of the
+traced-out wire, in column <span class="math notranslate nohighlight">\(5\)</span> and column <span class="math notranslate nohighlight">\(4\)</span>, and are deleted. Rows <span class="math notranslate nohighlight">\(0\)</span> and <span class="math notranslate nohighlight">\(3\)</span> of
+<span class="math notranslate nohighlight">\(\Lambda_A\)</span> are now empty, so <span class="math notranslate nohighlight">\(\Lambda_A^2 \neq -\mathbb{1}\)</span>: the reduced state is mixed.</p>
+<p><strong>Entropy and purity.</strong> Section 3 computes them from the polarizations <span class="math notranslate nohighlight">\(|\lambda_j|\)</span>, the
+non-negative eigenvalues of <span class="math notranslate nohighlight">\(i \Lambda_A\)</span>. Here the only non-zero block of <span class="math notranslate nohighlight">\(\Lambda_A\)</span> sits
+on the indices <span class="math notranslate nohighlight">\((1, 2)\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+i \begin{pmatrix} 0 &amp; -1 \\ 1 &amp; 0 \end{pmatrix}
+\ \text{has eigenvalues}\ \pm 1,
+\qquad
+\text{and the empty rows } 0 \text{ and } 3 \text{ give the eigenvalue } 0 \text{ twice.}
+\end{split}\]</div>
+<p>The eigenvalues of <span class="math notranslate nohighlight">\(i \Lambda_A\)</span> are therefore <span class="math notranslate nohighlight">\((-1, 0, 0, 1)\)</span>, and the two polarizations
+are <span class="math notranslate nohighlight">\(|\lambda_0| = 1\)</span> and <span class="math notranslate nohighlight">\(|\lambda_1| = 0\)</span>: one pure mode and one maximally mixed mode.
+With <span class="math notranslate nohighlight">\(p_j = (1 + |\lambda_j|)/2\)</span>, that is <span class="math notranslate nohighlight">\(p_0 = 1\)</span> and <span class="math notranslate nohighlight">\(p_1 = 1/2\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[
+S(\rho_A) = \underbrace{0}_{\text{mode } 0} + \underbrace{\ln 2}_{\text{mode } 1} = \ln 2,
+\qquad
+\mathrm{Tr}\, \rho_A^2 = \frac{1 + 1^2}{2} \cdot \frac{1 + 0^2}{2} = \frac{1}{2} .
+\]</div>
+<p><strong>In MatchCake.</strong> The same steps with the toolbox, starting from the state vector:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matchcake.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">CovarianceMatrixToolbox</span>
+
+<span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">state</span><span class="p">[[</span><span class="mb">0b000</span><span class="p">,</span> <span class="mb">0b110</span><span class="p">,</span> <span class="mb">0b101</span><span class="p">,</span> <span class="mb">0b011</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">covariance</span> <span class="o">=</span> <span class="n">CovarianceMatrixToolbox</span><span class="o">.</span><span class="n">from_density_matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">state</span><span class="p">))</span>  <span class="c1"># Step 2</span>
+<span class="n">reduced</span> <span class="o">=</span> <span class="n">CovarianceMatrixToolbox</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">covariance</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>                      <span class="c1"># Step 3</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">CovarianceMatrixToolbox</span><span class="o">.</span><span class="n">mode_polarizations</span><span class="p">(</span><span class="n">reduced</span><span class="p">))</span>   <span class="c1"># [0. 1.]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">CovarianceMatrixToolbox</span><span class="o">.</span><span class="n">von_neumann_entropy</span><span class="p">(</span><span class="n">reduced</span><span class="p">))</span>  <span class="c1"># 0.6931... = ln 2</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">CovarianceMatrixToolbox</span><span class="o">.</span><span class="n">purity</span><span class="p">(</span><span class="n">reduced</span><span class="p">))</span>               <span class="c1"># 0.5</span>
+</pre></div>
+</div>
+<p>In a circuit that prepares this state on <code class="docutils literal notranslate"><span class="pre">nif.qubit</span></code>, <code class="docutils literal notranslate"><span class="pre">mc.covariance_matrix(wires=[0,</span> <span class="pre">1])</span></code>
+returns the same <code class="docutils literal notranslate"><span class="pre">reduced</span></code> matrix.</p>
+</section>
+<section id="step-4-keeping-wires-0-and-2-tracing-out-wire-1">
+<h4>Step 4: keeping wires 0 and 2, tracing out wire 1<a class="headerlink" href="#step-4-keeping-wires-0-and-2-tracing-out-wire-1" title="Permalink to this heading">¶</a></h4>
+<p>The kept wires are not contiguous any more: wire <span class="math notranslate nohighlight">\(1\)</span> sits between them. This is the case of
+Section 2.2, with two different matrices.</p>
+<p><strong>The selection matrix.</strong> The kept wires own the Majorana indices
+<span class="math notranslate nohighlight">\((\mu_0, \mu_1, \mu_2, \mu_3) = (0, 1, 4, 5)\)</span>, so the <span class="math notranslate nohighlight">\(1\)</span> of rows <span class="math notranslate nohighlight">\(2\)</span> and <span class="math notranslate nohighlight">\(3\)</span> moves to the
+columns <span class="math notranslate nohighlight">\(4\)</span> and <span class="math notranslate nohighlight">\(5\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\Pi_A = \begin{pmatrix}
+1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0
+\\ 0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0
+\\ 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 &amp; 0
+\\ 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 1
+\end{pmatrix} .
+\end{split}\]</div>
+<p><strong>The fermionic matrix.</strong> Keeping the rows and the columns <span class="math notranslate nohighlight">\(0, 1, 4, 5\)</span> of <span class="math notranslate nohighlight">\(\Lambda\)</span> gives</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\Pi_A\, \Lambda\, \Pi_A^\top = \begin{pmatrix}
+\Lambda_{0,0} &amp; \Lambda_{0,1} &amp; \Lambda_{0,4} &amp; \Lambda_{0,5}
+\\ \Lambda_{1,0} &amp; \Lambda_{1,1} &amp; \Lambda_{1,4} &amp; \Lambda_{1,5}
+\\ \Lambda_{4,0} &amp; \Lambda_{4,1} &amp; \Lambda_{4,4} &amp; \Lambda_{4,5}
+\\ \Lambda_{5,0} &amp; \Lambda_{5,1} &amp; \Lambda_{5,4} &amp; \Lambda_{5,5}
+\end{pmatrix}
+= \begin{pmatrix}
+0 &amp; 0 &amp; 0 &amp; -1
+\\ 0 &amp; 0 &amp; 0 &amp; 0
+\\ 0 &amp; 0 &amp; 0 &amp; 0
+\\ 1 &amp; 0 &amp; 0 &amp; 0
+\end{pmatrix} .
+\end{split}\]</div>
+<p>This is what MatchCake returns with <code class="docutils literal notranslate"><span class="pre">gate_barrier=False</span></code>.</p>
+<p><strong>The qubit matrix.</strong> The reduced system has two wires, <span class="math notranslate nohighlight">\(0'\)</span> and <span class="math notranslate nohighlight">\(1'\)</span>, which are the
+original wires <span class="math notranslate nohighlight">\(0\)</span> and <span class="math notranslate nohighlight">\(2\)</span>, and its own Majorana operators
+<span class="math notranslate nohighlight">\(c'_0 = X_{0'}\)</span>, <span class="math notranslate nohighlight">\(c'_1 = Y_{0'}\)</span>, <span class="math notranslate nohighlight">\(c'_2 = Z_{0'} X_{1'}\)</span>, <span class="math notranslate nohighlight">\(c'_3 = Z_{0'} Y_{1'}\)</span>. Its
+covariance matrix is <span class="math notranslate nohighlight">\((\Lambda_A)_{jk} = i \langle c'_j c'_k \rangle\)</span>, given by the Pfaffian
+formula of Section 2.1. The six entries with <span class="math notranslate nohighlight">\(j &lt; k\)</span> fall in two groups.</p>
+<ul class="simple">
+<li><p>Two entries stay within one kept wire, <span class="math notranslate nohighlight">\((j, k) = (0, 1)\)</span> and <span class="math notranslate nohighlight">\((2, 3)\)</span>. No traced-out wire
+lies in between, so they are copied: <span class="math notranslate nohighlight">\((\Lambda_A)_{0,1} = \Lambda_{0,1} = 0\)</span> and
+<span class="math notranslate nohighlight">\((\Lambda_A)_{2,3} = \Lambda_{4,5} = 0\)</span>.</p></li>
+<li><p>Four entries link the two kept wires, with <span class="math notranslate nohighlight">\(j \in \{0, 1\}\)</span> and <span class="math notranslate nohighlight">\(k \in \{2, 3\}\)</span>. The
+traced-out wire <span class="math notranslate nohighlight">\(1\)</span>, with Majorana indices <span class="math notranslate nohighlight">\(\{2, 3\}\)</span>, lies in between, so
+<span class="math notranslate nohighlight">\(r_{jk} = 1\)</span> and <span class="math notranslate nohighlight">\(S_{jk} = \{\mu_j, 2, 3, \mu_k\}\)</span>.</p></li>
+</ul>
+<p>The Pfaffian of a <span class="math notranslate nohighlight">\(4 \times 4\)</span> antisymmetric matrix <span class="math notranslate nohighlight">\(M\)</span> is
+<span class="math notranslate nohighlight">\(\mathrm{Pf}(M) = M_{0,1} M_{2,3} - M_{0,2} M_{1,3} + M_{0,3} M_{1,2}\)</span>. Applied to the submatrix of
+<span class="math notranslate nohighlight">\(\Lambda\)</span> on the indices <span class="math notranslate nohighlight">\(S_{jk}\)</span> in increasing order, and with the sign <span class="math notranslate nohighlight">\((-1)^{r_{jk}} = -1\)</span>,
+the four entries are</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\begin{aligned}
+(\Lambda_A)_{0,2} &amp;= -\mathrm{Pf}\big(\Lambda|_{\{0, 2, 3, 4\}}\big)
+= -\big( \Lambda_{0,2} \Lambda_{3,4} - \Lambda_{0,3} \Lambda_{2,4} + \Lambda_{0,4} \Lambda_{2,3} \big)
+= -\big( 0 \cdot (-1) - 0 \cdot 0 + 0 \cdot 0 \big) = 0 ,
+\\ (\Lambda_A)_{0,3} &amp;= -\mathrm{Pf}\big(\Lambda|_{\{0, 2, 3, 5\}}\big)
+= -\big( \Lambda_{0,2} \Lambda_{3,5} - \Lambda_{0,3} \Lambda_{2,5} + \Lambda_{0,5} \Lambda_{2,3} \big)
+= -\big( 0 \cdot 0 - 0 \cdot 0 + (-1) \cdot 0 \big) = 0 ,
+\\ (\Lambda_A)_{1,2} &amp;= -\mathrm{Pf}\big(\Lambda|_{\{1, 2, 3, 4\}}\big)
+= -\big( \Lambda_{1,2} \Lambda_{3,4} - \Lambda_{1,3} \Lambda_{2,4} + \Lambda_{1,4} \Lambda_{2,3} \big)
+= -\big( (-1) \cdot (-1) - 0 \cdot 0 + 0 \cdot 0 \big) = -1 ,
+\\ (\Lambda_A)_{1,3} &amp;= -\mathrm{Pf}\big(\Lambda|_{\{1, 2, 3, 5\}}\big)
+= -\big( \Lambda_{1,2} \Lambda_{3,5} - \Lambda_{1,3} \Lambda_{2,5} + \Lambda_{1,5} \Lambda_{2,3} \big)
+= -\big( (-1) \cdot 0 - 0 \cdot 0 + 0 \cdot 0 \big) = 0 .
+\end{aligned}
+\end{split}\]</div>
+<p>Filling the lower triangle by antisymmetry,</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\Lambda_A = \begin{pmatrix}
+0 &amp; 0 &amp; 0 &amp; 0
+\\ 0 &amp; 0 &amp; -1 &amp; 0
+\\ 0 &amp; 1 &amp; 0 &amp; 0
+\\ 0 &amp; 0 &amp; 0 &amp; 0
+\end{pmatrix} .
+\end{split}\]</div>
+<p><strong>Comparing the two.</strong> In the reduced system <span class="math notranslate nohighlight">\(c'_1 c'_2 = i\, X_{0'} X_{1'}\)</span>, exactly as
+<span class="math notranslate nohighlight">\(c_1 c_2\)</span> in Step 2, so the entry <span class="math notranslate nohighlight">\((1, 2)\)</span> of a covariance matrix on these two wires
+means <span class="math notranslate nohighlight">\(-\langle X_0 X_2 \rangle\)</span>, and the entry <span class="math notranslate nohighlight">\((0, 3)\)</span> means <span class="math notranslate nohighlight">\(\langle Y_0 Y_2 \rangle\)</span>.</p>
+<ul class="simple">
+<li><p>The qubit matrix has <span class="math notranslate nohighlight">\((\Lambda_A)_{1,2} = -1\)</span>, that is <span class="math notranslate nohighlight">\(\langle X_0 X_2 \rangle = 1\)</span>. This
+is correct: <span class="math notranslate nohighlight">\(X_0 X_2\)</span> exchanges <span class="math notranslate nohighlight">\(|000\rangle\)</span> with <span class="math notranslate nohighlight">\(|101\rangle\)</span> and <span class="math notranslate nohighlight">\(|110\rangle\)</span> with
+<span class="math notranslate nohighlight">\(|011\rangle\)</span>, which leaves <span class="math notranslate nohighlight">\(|\psi\rangle\)</span> unchanged. The value comes from the product
+<span class="math notranslate nohighlight">\(\Lambda_{1,2} \Lambda_{3,4}\)</span> of the two correlations that go through the traced-out wire,
+which the selection matrix alone never sees.</p></li>
+<li><p>The fermionic matrix has <span class="math notranslate nohighlight">\(0\)</span> there, and <span class="math notranslate nohighlight">\(-1\)</span> at the entry <span class="math notranslate nohighlight">\((0, 3)\)</span>. That entry is
+<span class="math notranslate nohighlight">\(\Lambda_{0,5} = \langle Y_0 Z_1 Y_2 \rangle\)</span>, with the <span class="math notranslate nohighlight">\(Z_1\)</span> of the Jordan-Wigner string
+still inside, whereas <span class="math notranslate nohighlight">\(\langle Y_0 Y_2 \rangle = 0\)</span> for the qubits.</p></li>
+</ul>
+<p>MatchCake raises an error for <code class="docutils literal notranslate"><span class="pre">wires=[0,</span> <span class="pre">2]</span></code>, because the principal submatrix is not the
+reduced state of the qubits, and returns the fermionic matrix when <code class="docutils literal notranslate"><span class="pre">gate_barrier=False</span></code> is passed.</p>
+</section>
+</section>
+</section>
+<section id="normal-modes-entropy-and-purity">
+<h2>3. Normal modes, entropy and purity<a class="headerlink" href="#normal-modes-entropy-and-purity" title="Permalink to this heading">¶</a></h2>
+<p>Every real antisymmetric matrix can be brought to a block-diagonal form by a special
+orthogonal matrix. Writing the decomposition in the convention of the single-particle
+transition matrices,</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\Lambda_A = R_A^\top \Lambda_D R_A,
+\qquad
+\Lambda_D = \bigoplus_{j=1}^{|A|} (-\lambda_j) \begin{pmatrix} 0 &amp; 1 \\ -1 &amp; 0 \end{pmatrix},
+\qquad
+R_A \in SO(2|A|),
+\end{split}\]</div>
+<p>the numbers <span class="math notranslate nohighlight">\(\lambda_j \in [-1, 1]\)</span> are the polarizations <span class="math notranslate nohighlight">\(\langle Z_j \rangle\)</span> of the
+<strong>normal modes</strong>. The block-diagonal matrix <span class="math notranslate nohighlight">\(\Lambda_D\)</span> is the covariance matrix of a
+product of single-mode mixtures, and <span class="math notranslate nohighlight">\(R_A\)</span> is the transition matrix of a Gaussian unitary
+<span class="math notranslate nohighlight">\(V_A\)</span>, so that</p>
+<div class="math notranslate nohighlight">
+\[
+\rho_A = V_A \Big( \bigotimes_j \rho_j \Big) V_A^\dagger,
+\qquad
+\rho_j = \frac{1 + \lambda_j}{2}\, |0\rangle\langle 0| + \frac{1 - \lambda_j}{2}\, |1\rangle\langle 1| .
+\]</div>
+<p>A mode with <span class="math notranslate nohighlight">\(|\lambda_j| = 1\)</span> is pure and a mode with <span class="math notranslate nohighlight">\(\lambda_j = 0\)</span> is maximally mixed.
+At most <span class="math notranslate nohighlight">\(\min(|A|, |B|)\)</span> modes are mixed when the full state is pure. The magnitudes
+<span class="math notranslate nohighlight">\(|\lambda_j|\)</span> are the non-negative eigenvalues of the Hermitian matrix <span class="math notranslate nohighlight">\(i \Lambda_A\)</span>.</p>
+<p>The spectrum of <span class="math notranslate nohighlight">\(\rho_A\)</span> is the one of the product of the <span class="math notranslate nohighlight">\(\rho_j\)</span>, which gives the
+Von Neumann entropy and the purity in terms of the occupation probabilities
+<span class="math notranslate nohighlight">\(p_j = (1 + \lambda_j)/2\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[
+S(\rho_A) = -\sum_j \big[ p_j \ln p_j + (1 - p_j) \ln (1 - p_j) \big],
+\qquad
+\mathrm{Tr}\, \rho_A^2 = \prod_j \frac{1 + \lambda_j^2}{2}
+= 2^{-|A|} \sqrt{\det\big(\mathbb{1} - \Lambda_A^2\big)} .
+\]</div>
+<p>For a pure full state, <span class="math notranslate nohighlight">\(S(\rho_A)\)</span> is the entanglement entropy between <span class="math notranslate nohighlight">\(A\)</span> and <span class="math notranslate nohighlight">\(B\)</span>.</p>
+<p>The density matrix itself follows from the Wick expansion over the even subsets <span class="math notranslate nohighlight">\(S\)</span> of
+Majorana indices, with <span class="math notranslate nohighlight">\(c'_S\)</span> the ordered product of the Majorana operators of <span class="math notranslate nohighlight">\(S\)</span> in the
+reduced system:</p>
+<div class="math notranslate nohighlight">
+\[
+\rho_A = \frac{1}{2^{|A|}} \sum_{|S|\ \mathrm{even}} i^{|S|/2}\, \mathrm{Pf}\big(\Lambda_A|_S\big)\, c'_S .
+\]</div>
+<p>The sum has <span class="math notranslate nohighlight">\(2^{2|A|-1}\)</span> terms, so the dense density matrix is only available for a small
+number of kept wires.</p>
+</section>
+<section id="starting-a-circuit-from-a-mixed-gaussian-state">
+<h2>4. Starting a circuit from a mixed Gaussian state<a class="headerlink" href="#starting-a-circuit-from-a-mixed-gaussian-state" title="Permalink to this heading">¶</a></h2>
+<p>Nothing in the covariance-matrix formalism requires the initial state to be pure. A matchgate
+circuit <span class="math notranslate nohighlight">\(U\)</span> with transition matrix <span class="math notranslate nohighlight">\(R_2\)</span> maps any Gaussian state with covariance matrix
+<span class="math notranslate nohighlight">\(\Lambda_A\)</span> to the Gaussian state with covariance matrix</p>
+<div class="math notranslate nohighlight">
+\[
+\Lambda_A \mapsto R_2^\top \Lambda_A R_2 .
+\]</div>
+<p>Expectation values of Pauli words are Pfaffians of submatrices of the evolved matrix, by
+Wick’s theorem. The probability of a computational-basis outcome <span class="math notranslate nohighlight">\(y\)</span> on a set of wires
+<span class="math notranslate nohighlight">\(W\)</span> is the overlap of the state with a pure Gaussian projector,</p>
+<div class="math notranslate nohighlight">
+\[
+p(y) = 2^{-|W|}\, \Big| \mathrm{Pf}\big( \Lambda|_W + \Lambda_y \big) \Big| ,
+\]</div>
+<p>with <span class="math notranslate nohighlight">\(\Lambda_y\)</span> the covariance matrix of <span class="math notranslate nohighlight">\(|y\rangle\)</span>. Only the projector needs to be pure
+for this formula. Sampling measures the qubits one at a time, updating the covariance matrix
+after each outcome, which also holds for a mixed state.</p>
+<p>The device therefore runs a circuit from a mixed Gaussian state with the same code paths as
+from a product state: the initial covariance matrix is the only difference, and the
+displacement vector of the extended covariance matrix is zero unless the state preparation
+carries one (Section 7).</p>
+</section>
+<section id="in-matchcake">
+<h2>5. In MatchCake<a class="headerlink" href="#in-matchcake" title="Permalink to this heading">¶</a></h2>
+<p>Inside a <code class="docutils literal notranslate"><span class="pre">QNode</span></code> on <code class="docutils literal notranslate"><span class="pre">nif.qubit</span></code>, the subsystem is read with measurements, and the wires given
+to a measurement are the wires that are kept:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Measurement</p></th>
+<th class="head"><p>Result</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mc.covariance_matrix(wires)</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\Lambda_A\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">mc.reduced_state(wires)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GaussianStatePrep</span></code> of the reduced state</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">qml.vn_entropy(wires)</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(S(\rho_A)\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">qml.purity(wires)</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\mathrm{Tr}\, \rho_A^2\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">qml.density_matrix(wires)</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\rho_A\)</span>, for a small number of wires</p></td>
+</tr>
+</tbody>
+</table>
+<p>A mixed Gaussian state enters a circuit through the state preparation
+<code class="docutils literal notranslate"><span class="pre">mc.GaussianStatePrep(covariance_matrix,</span> <span class="pre">wires)</span></code>, queued as the first operation. Feeding it the
+result of <code class="docutils literal notranslate"><span class="pre">mc.covariance_matrix</span></code> continues the computation on the reduced system, typically on
+a device with fewer wires. <code class="docutils literal notranslate"><span class="pre">mc.reduced_state</span></code> returns that state preparation directly, to be
+queued with <code class="docutils literal notranslate"><span class="pre">qml.apply</span></code>. It also holds the displacement vector of Section 7 and the gate
+barriers of Section 8, which a matrix cannot carry. Outside of a <code class="docutils literal notranslate"><span class="pre">QNode</span></code>, the device methods
+<code class="docutils literal notranslate"><span class="pre">reduced_covariance_matrix</span></code>, <code class="docutils literal notranslate"><span class="pre">reduced_state</span></code> and <code class="docutils literal notranslate"><span class="pre">partial_trace</span></code> give the same results.</p>
+<p>The functions behind these features take a covariance matrix and are the static methods of
+<code class="docutils literal notranslate"><span class="pre">matchcake.utils.CovarianceMatrixToolbox</span></code>: <code class="docutils literal notranslate"><span class="pre">von_neumann_entropy</span></code>, <code class="docutils literal notranslate"><span class="pre">purity</span></code>, <code class="docutils literal notranslate"><span class="pre">mode_polarizations</span></code>,
+<code class="docutils literal notranslate"><span class="pre">reduce</span></code>, <code class="docutils literal notranslate"><span class="pre">to_density_matrix</span></code> and <code class="docutils literal notranslate"><span class="pre">block_diagonalize</span></code>, which returns <span class="math notranslate nohighlight">\(R_A\)</span> and the
+polarizations.</p>
+</section>
+<section id="gradients">
+<h2>6. Gradients<a class="headerlink" href="#gradients" title="Permalink to this heading">¶</a></h2>
+<p>The reduced covariance matrix is a linear function of <span class="math notranslate nohighlight">\(\Lambda\)</span>, and every output of a
+circuit started from a <code class="docutils literal notranslate"><span class="pre">GaussianStatePrep</span></code> is a polynomial function of its covariance matrix.
+Gradients therefore flow from the outputs of a second circuit back to the parameters of the
+first one without any special treatment.</p>
+<p>The entropy and the purity depend on <span class="math notranslate nohighlight">\(\Lambda_A\)</span> through its spectrum only. The purity is
+computed from a determinant and is smooth everywhere. The entropy has an infinite slope at
+<span class="math notranslate nohighlight">\(|\lambda_j| = 1\)</span>, where a mode becomes pure. MatchCake drops the vanishing terms there, so
+the gradient stays finite, but it is not informative at such a point.</p>
+<p>The decomposition <span class="math notranslate nohighlight">\(\Lambda_A = R_A^\top \Lambda_D R_A\)</span> is not unique: rotations inside a
+mode, and rotations between two modes with equal or opposite polarizations, leave
+<span class="math notranslate nohighlight">\(\Lambda_A\)</span> unchanged. Writing <span class="math notranslate nohighlight">\(dR_A = \Omega R_A\)</span> with <span class="math notranslate nohighlight">\(\Omega\)</span> antisymmetric gives</p>
+<div class="math notranslate nohighlight">
+\[
+R_A\, d\Lambda_A\, R_A^\top = [\Lambda_D, \Omega] + d\Lambda_D ,
+\]</div>
+<p>which is inverted block by block, dividing by <span class="math notranslate nohighlight">\(\lambda_j - \lambda_k\)</span> or
+<span class="math notranslate nohighlight">\(\lambda_j + \lambda_k\)</span>. The components along the gauge directions are projected out, so the
+gradient of <code class="docutils literal notranslate"><span class="pre">CovarianceMatrixToolbox.block_diagonalize</span></code> is exact for any quantity that depends on the state
+only.</p>
+</section>
+<section id="initial-states-with-a-displacement-vector">
+<h2>7. Initial states with a displacement vector<a class="headerlink" href="#initial-states-with-a-displacement-vector" title="Permalink to this heading">¶</a></h2>
+<p>A product state with superposed qubits is not an even Gaussian state. Next to its covariance
+matrix it has a displacement vector <span class="math notranslate nohighlight">\(d_\mu = \langle c_\mu \rangle\)</span>, and it obeys Wick’s
+theorem with the extended covariance matrix of
+<a class="reference internal" href="expectation_values_theory.html"><span class="std std-doc">Section 5 of the expectation-value document</span></a>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\widetilde\Lambda = \begin{pmatrix} \Lambda &amp; d \\ -d^\top &amp; 0 \end{pmatrix},
+\qquad
+\langle c_{\mu_1} \cdots c_{\mu_m} \rangle \propto
+\begin{cases}
+\mathrm{Pf}\big(\Lambda|_S\big) &amp; m \text{ even}, \\ \mathrm{Pf}\big(\widetilde\Lambda|_{S \cup \{2n\}}\big) &amp; m \text{ odd},
+\end{cases}
+\end{split}\]</div>
+<p>with <span class="math notranslate nohighlight">\(S = \{\mu_1, \ldots, \mu_m\}\)</span> and <span class="math notranslate nohighlight">\(2n\)</span> the index of the parity mode. A matchgate
+circuit maps <span class="math notranslate nohighlight">\(d\)</span> to <span class="math notranslate nohighlight">\(R^\top d\)</span>.</p>
+<section id="the-jordan-wigner-string-of-the-removed-wires">
+<h3>7.1 The Jordan-Wigner string of the removed wires<a class="headerlink" href="#the-jordan-wigner-string-of-the-removed-wires" title="Permalink to this heading">¶</a></h3>
+<p>Let <span class="math notranslate nohighlight">\(A\)</span> be a contiguous block of kept wires, with <span class="math notranslate nohighlight">\(p\)</span> removed wires before it. The Majorana
+operators of the reduced system have Jordan-Wigner strings that start at the first kept wire, so</p>
+<div class="math notranslate nohighlight">
+\[
+c'_j = Z_\text{pre}\, c_{\mu_j},
+\qquad
+Z_\text{pre} = \prod_{b &lt; \min A} Z_b ,
+\qquad
+c'_{j_1} \cdots c'_{j_m} = (Z_\text{pre})^m\, c_{\mu_{j_1}} \cdots c_{\mu_{j_m}} ,
+\]</div>
+<p>since <span class="math notranslate nohighlight">\(Z_\text{pre}\)</span> commutes with the Majorana operators of the kept wires and squares to the
+identity.</p>
+<p><strong>Even products.</strong> The strings cancel. The even expectation values of the reduced state are
+those of the full state, so its covariance matrix is the principal submatrix
+<span class="math notranslate nohighlight">\(\Lambda_A = \Pi_A \Lambda \Pi_A^\top\)</span> for every contiguous block, with or without a
+displacement vector.</p>
+<p><strong>Odd products, kept wires first.</strong> For <span class="math notranslate nohighlight">\(p = 0\)</span> there is no string, and the odd expectation
+values of the reduced state are Pfaffians of <span class="math notranslate nohighlight">\(\widetilde\Lambda\)</span> on the indices of <span class="math notranslate nohighlight">\(A\)</span> and the
+parity mode. The reduced state obeys Wick’s theorem with</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\widetilde\Lambda_A = \begin{pmatrix} \Lambda_A &amp; d_A \\ -d_A^\top &amp; 0 \end{pmatrix},
+\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(d_A\)</span> is the part of <span class="math notranslate nohighlight">\(d\)</span> on the Majorana indices of <span class="math notranslate nohighlight">\(A\)</span>. Tracing out the last wires is
+deleting their rows and columns from <span class="math notranslate nohighlight">\(\widetilde\Lambda\)</span>.</p>
+<p><strong>Odd products, other kept wires.</strong> For <span class="math notranslate nohighlight">\(p &gt; 0\)</span> one string survives. With
+<span class="math notranslate nohighlight">\(Z_b = -i\, c_{2b} c_{2b+1}\)</span>, the displacement vector of the reduced state is a Pfaffian that
+includes the removed wires,</p>
+<div class="math notranslate nohighlight">
+\[
+d'_j = \langle Z_\text{pre}\, c_{\mu_j} \rangle \propto
+\mathrm{Pf}\big( \widetilde\Lambda|_{I_\text{pre} \cup \{\mu_j,\, 2n\}} \big) ,
+\]</div>
+<p>with <span class="math notranslate nohighlight">\(I_\text{pre}\)</span> the Majorana indices of the <span class="math notranslate nohighlight">\(p\)</span> removed wires. It is not the part of <span class="math notranslate nohighlight">\(d\)</span>
+on <span class="math notranslate nohighlight">\(A\)</span>, and the higher odd expectation values are not given by Wick’s theorem with
+<span class="math notranslate nohighlight">\(\Lambda_A\)</span> and <span class="math notranslate nohighlight">\(d'\)</span>: the reduced state has no description by one covariance matrix and one
+displacement vector. For a product state without gates, for example, the entry of <span class="math notranslate nohighlight">\(d\)</span> for
+<span class="math notranslate nohighlight">\(X\)</span> on wire <span class="math notranslate nohighlight">\(k\)</span> is <span class="math notranslate nohighlight">\(x_k \prod_{l&lt;k} z_l\)</span>, while the reduced state has
+<span class="math notranslate nohighlight">\(\langle X_k \rangle = x_k\)</span>.</p>
+</section>
+<section id="the-even-part-of-the-reduced-state">
+<h3>7.2 The even part of the reduced state<a class="headerlink" href="#the-even-part-of-the-reduced-state" title="Permalink to this heading">¶</a></h3>
+<p>The even expectation values define a state on their own,</p>
+<div class="math notranslate nohighlight">
+\[
+\rho_A^\text{even} = \tfrac{1}{2} \big( \rho_A + P_A\, \rho_A\, P_A \big) ,
+\]</div>
+<p>with <span class="math notranslate nohighlight">\(P_A\)</span> the parity of the kept wires. It is the Gaussian state with covariance matrix
+<span class="math notranslate nohighlight">\(\Lambda_A\)</span> and no displacement vector. A matchgate circuit maps even products to even
+products, so it never mixes the even and the odd parts of a state. Starting a circuit from
+<span class="math notranslate nohighlight">\(\rho_A^\text{even}\)</span> therefore gives the exact value of every quantity that is even in the
+Majorana operators: the probabilities and the samples in the computational basis, and the
+expectation values of the Pauli words with an even number of <span class="math notranslate nohighlight">\(X\)</span> and <span class="math notranslate nohighlight">\(Y\)</span>. The odd
+expectation values, such as <span class="math notranslate nohighlight">\(\langle X_k \rangle\)</span>, vanish in it.</p>
+</section>
+<section id="id1">
+<h3>7.3 In MatchCake<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Feature</p></th>
+<th class="head"><p>State with a displacement vector</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mc.covariance_matrix(wires)</span></code>, <code class="docutils literal notranslate"><span class="pre">reduced_covariance_matrix</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\Lambda_A\)</span>, on the same wires as without displacement</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">mc.reduced_state</span></code>, <code class="docutils literal notranslate"><span class="pre">reduced_state</span></code>, <code class="docutils literal notranslate"><span class="pre">partial_trace</span></code>, kept wires from the first wire</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GaussianStatePrep</span></code> with <span class="math notranslate nohighlight">\(\Lambda_A\)</span> and <span class="math notranslate nohighlight">\(d_A\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mc.reduced_state</span></code>, <code class="docutils literal notranslate"><span class="pre">reduced_state</span></code>, <code class="docutils literal notranslate"><span class="pre">partial_trace</span></code>, other kept wires</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GaussianStatePrep</span></code> with <span class="math notranslate nohighlight">\(\Lambda_A\)</span> alone, the state <span class="math notranslate nohighlight">\(\rho_A^\text{even}\)</span>, and a barrier before its first wire (Section 8)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">qml.vn_entropy</span></code>, <code class="docutils literal notranslate"><span class="pre">qml.purity</span></code>, <code class="docutils literal notranslate"><span class="pre">qml.density_matrix</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>A reduced state with a displacement vector enters another circuit through
+<code class="docutils literal notranslate"><span class="pre">mc.GaussianStatePrep(covariance_matrix,</span> <span class="pre">wires,</span> <span class="pre">displacement_vector=...)</span></code>. The entropy, the
+purity and the density matrix of Section 3 are those of a state without displacement, and they
+are not evaluated from <span class="math notranslate nohighlight">\(\Lambda_A\)</span> alone when the state has one.</p>
+</section>
+</section>
+<section id="gate-barriers">
+<h2>8. Gate barriers<a class="headerlink" href="#gate-barriers" title="Permalink to this heading">¶</a></h2>
+<p>Sections 2.2 and 7.1 have the same cause: a Majorana operator of a kept wire still holds a
+<span class="math notranslate nohighlight">\(Z\)</span> on every removed wire before it. MatchCake records where with barriers, so that the
+reduced state on any wires can be used without returning a wrong result.</p>
+<section id="the-rule">
+<h3>8.1 The rule<a class="headerlink" href="#the-rule" title="Permalink to this heading">¶</a></h3>
+<p>Let <span class="math notranslate nohighlight">\(W\)</span> be a Pauli word on the kept wires and <span class="math notranslate nohighlight">\(b\)</span> a removed wire. Each <span class="math notranslate nohighlight">\(X\)</span> or <span class="math notranslate nohighlight">\(Y\)</span> of
+<span class="math notranslate nohighlight">\(W\)</span> is an odd number of Majorana operators of its wire, and each <span class="math notranslate nohighlight">\(Z\)</span> an even number. The
+principal submatrix of Section 2.1 keeps the Jordan-Wigner strings on the removed wires, so the
+expectation value it gives for <span class="math notranslate nohighlight">\(W\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[
+\langle W \rangle_{\Pi_A \Lambda \Pi_A^\top} =
+\Big\langle W \prod_{b} Z_b^{\,m_b(W)} \Big\rangle ,
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(m_b(W)\)</span> is the number of <span class="math notranslate nohighlight">\(X\)</span> and <span class="math notranslate nohighlight">\(Y\)</span> of <span class="math notranslate nohighlight">\(W\)</span> on the kept wires after <span class="math notranslate nohighlight">\(b\)</span>. The
+strings cancel, and the value is the one of the reduced state of the qubits, exactly when
+<span class="math notranslate nohighlight">\(m_b(W)\)</span> is even for every removed wire <span class="math notranslate nohighlight">\(b\)</span>. The removed wires between the same two kept
+wires give the same condition, and the removed wires after the last kept wire give none. A
+<strong>barrier</strong> before a kept wire stands for the removed wires located just before it:</p>
+<ul class="simple">
+<li><p>a barrier before a kept wire other than the first one, for removed wires between two kept
+wires (Section 2.2);</p></li>
+<li><p>a barrier before the first kept wire, for removed wires in front of the kept ones. Its
+condition is an even number of <span class="math notranslate nohighlight">\(X\)</span> and <span class="math notranslate nohighlight">\(Y\)</span> in the whole word. It is only needed for a
+state with a displacement vector (Section 7), since the other words vanish otherwise.</p></li>
+</ul>
+<p><strong>A Pauli word is exact when it has an even number of <span class="math notranslate nohighlight">\(X\)</span> and <span class="math notranslate nohighlight">\(Y\)</span> on the right of every
+barrier.</strong> The words made of <span class="math notranslate nohighlight">\(Z\)</span> only always are, hence the probabilities and the samples in
+the computational basis.</p>
+</section>
+<section id="gates">
+<h3>8.2 Gates<a class="headerlink" href="#gates" title="Permalink to this heading">¶</a></h3>
+<p>A matchgate on two neighbouring kept wires on the same side of a barrier is quadratic in the
+Majorana operators of that side. It maps a word to words with the same parities <span class="math notranslate nohighlight">\(m_b\)</span>, so
+the exact words stay exact after any number of such gates. A gate with one wire on each side of
+a barrier does not keep these parities. In the reduced register it is the gate on the qubits
+with a <span class="math notranslate nohighlight">\(Z\)</span> on the removed wires, which is another gate.</p>
+</section>
+<section id="id2">
+<h3>8.3 In MatchCake<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">mc.reduced_state</span></code>, <code class="docutils literal notranslate"><span class="pre">reduced_state</span></code> and <code class="docutils literal notranslate"><span class="pre">partial_trace</span></code> return a <code class="docutils literal notranslate"><span class="pre">GaussianStatePrep</span></code> with the
+positions of its barriers in <code class="docutils literal notranslate"><span class="pre">barriers</span></code>. A device started from it raises a <code class="docutils literal notranslate"><span class="pre">DeviceError</span></code> for</p>
+<ul class="simple">
+<li><p>a gate that acts on both sides of a barrier;</p></li>
+<li><p>an observable with a Pauli word that breaks the rule;</p></li>
+<li><p>samples in another basis than the computational one on a wire on the right of a barrier;</p></li>
+<li><p>an entropy, a purity or a density matrix on wires with a barrier between two of them, or on
+wires that are not all on the left of every barrier when a displacement vector was dropped.</p></li>
+</ul>
+<p>Everything else is exact. The barriers follow the state: a further reduction inherits them, and
+a wire added in <span class="math notranslate nohighlight">\(|0\rangle\)</span> in the place of removed wires is on the left of their barrier. A
+state with a barrier before its first wire is returned without displacement vector, since the
+words that would use it are refused. Such a state is marked (<code class="docutils literal notranslate"><span class="pre">odd_part_dropped</span></code>): its barrier is
+kept for as long as a wire remains on its right, also after wires are added and removed again on
+its left, because the words with an odd number of <span class="math notranslate nohighlight">\(X\)</span> and <span class="math notranslate nohighlight">\(Y\)</span> on its right do not vanish in
+the reduced state of the qubits.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">gate_barrier=False</span></code>, the state is returned without barrier and with a warning. It is
+then the reduced state of the fermionic modes of Section 2.2, and nothing checks the gates and
+the observables any more. <code class="docutils literal notranslate"><span class="pre">mc.covariance_matrix</span></code> and <code class="docutils literal notranslate"><span class="pre">reduced_covariance_matrix</span></code> return a
+matrix, which cannot carry a barrier: they refuse the kept wires with a removed wire or a
+barrier between them, unless <code class="docutils literal notranslate"><span class="pre">gate_barrier=False</span></code> is passed.</p>
+</section>
+</section>
+<section id="limitations">
+<h2>9. Limitations<a class="headerlink" href="#limitations" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><strong>Initial states with a displacement vector.</strong> See Section 7. The entropy, the purity and the
+density matrix are not implemented for them, and their reduced state on wires that do not
+start at the first wire only gives the quantities that are even in the Majorana operators.</p></li>
+<li><p><strong>Gate barriers.</strong> See Section 8. A reduced state on wires that are not a contiguous block
+cannot be evolved by gates across the removed wires, and only gives the observables that
+follow the rule of its barriers.</p></li>
+<li><p><strong>Wire order of a Gaussian state preparation.</strong> A <code class="docutils literal notranslate"><span class="pre">GaussianStatePrep</span></code> can act on part of the
+wires of the device, the other wires starting in <span class="math notranslate nohighlight">\(|0\rangle\)</span>, but it must list its wires
+in the order of the device: permuting fermionic modes is not a relabeling of qubits.</p></li>
+<li><p><strong>Analytic only.</strong> The reduced-state measurements are not estimated from shots.</p></li>
+</ul>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>S. Bravyi, “Lagrangian representation for fermionic linear optics,” Quantum Inf. Comput. 5,
+216 (2005), <a class="reference external" href="https://arxiv.org/abs/quant-ph/0404180">arXiv:quant-ph/0404180</a>.</p></li>
+<li><p>I. Peschel, “Calculation of reduced density matrices from correlation functions,”
+J. Phys. A 36, L205 (2003), <a class="reference external" href="https://arxiv.org/abs/cond-mat/0212631">arXiv:cond-mat/0212631</a>.</p></li>
+<li><p>F. Iglói and I. Peschel, “On reduced density matrices for disjoint subsystems,”
+EPL 89, 40001 (2010), <a class="reference external" href="https://arxiv.org/abs/0910.5671">arXiv:0910.5671</a>.</p></li>
+<li><p>D. J. Brod, “Efficient classical simulation of matchgate circuits with generalized inputs
+and measurements,” Phys. Rev. A 93, 062332 (2016),
+<a class="reference external" href="https://arxiv.org/abs/1602.03539">arXiv:1602.03539</a>.</p></li>
+</ul>
+</section>
+</section>
+
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+    <script type="text/javascript" src="../static/documentation_options.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <script type="text/javascript" src="../static/sphinx_highlight.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" src="../static/js/theme.js"></script>
+  
+    <div class="footer" role="contentinfo">
+        <div class="container">
+            &#169; Copyright 2023, Jérémie Gince.
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 6.2.1.
+        </div>
+    </div>  
+
+</body>
+</html>
