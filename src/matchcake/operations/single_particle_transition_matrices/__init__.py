@@ -1,3 +1,4 @@
+from .disjoint_sptm_operation import DisjointSptmOperation
 from .single_particle_transition_matrix import SingleParticleTransitionMatrixOperation
 from .sptm_angle_embedding import SptmAngleEmbedding
 from .sptm_comp_hh import SptmCompHH

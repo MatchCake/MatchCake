@@ -336,6 +336,8 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         self._transition_matrix: Optional[TensorLike] = None
         self._lookup_table: Optional[NonInteractingFermionicLookupTable] = None
         self._global_sptm: Optional[SingleParticleTransitionMatrixOperation] = None
+        # True once the stored matrix was handed out, so that the next gate writes into a copy of it.
+        self._global_sptm_is_shared = False
         self._batched = False
         self._samples: Optional[np.ndarray] = None
         self._samples_bases: Dict[Any, np.ndarray] = {}
@@ -526,11 +528,24 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :return: The updated single-particle transition matrix, represented as an
             instance of ``SingleParticleTransitionMatrixOperation``.
         """
-        op_sptm = SingleParticleTransitionMatrixOperation.from_operation(op).pad(self.wires).sptm_matrix()
-        op_sptm = qml.math.cast(op_sptm, self._r_dtype_name)
-        self._batched = self._batched or (qml.math.ndim(op_sptm) > 2)
-        self.global_sptm = self.update_single_particle_transition_matrix(self._global_sptm, op_sptm)
-        return self.global_sptm
+        sptm_op = SingleParticleTransitionMatrixOperation.from_operation(op)
+        self._batched = self._batched or (sptm_op.batch_size is not None)
+        wires = SingleParticleTransitionMatrixOperation.make_wires_continuous(Wires(self.wires))
+        blocks = [(start, qml.math.cast(block, self._r_dtype_name)) for start, block in sptm_op.column_blocks(wires)]
+        if self._global_sptm is None:
+            matrix = qml.math.cast(np.eye(2 * len(wires)), self._r_dtype_name)
+        else:
+            matrix = self._global_sptm.single_particle_transition_matrix
+            if self._global_sptm_is_shared:
+                matrix = matrix.clone() if isinstance(matrix, torch.Tensor) else np.array(matrix)
+        matrix = SingleParticleTransitionMatrixOperation.multiply_columns(matrix, blocks)
+        if matrix is None:
+            op_sptm = qml.math.cast(sptm_op.pad(self.wires).sptm_matrix(), self._r_dtype_name)
+            matrix = self.update_single_particle_transition_matrix(self._global_sptm, op_sptm)
+        self._global_sptm = SingleParticleTransitionMatrixOperation(matrix, wires=self.wires)
+        self._global_sptm_is_shared = False
+        self.transition_matrix = None
+        return self._global_sptm
 
     def apply_state_prep(self, operation: qml.operation.Operation, **kwargs) -> bool:
         r"""
@@ -1266,6 +1281,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
         :return: None
         """
         self._global_sptm = None
+        self._global_sptm_is_shared = False
         self._batched = False
         self._transition_matrix = None
         self._lookup_table = None
@@ -2019,6 +2035,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             if not self._batched:
                 matrix = matrix[0]
             return SingleParticleTransitionMatrixOperation(matrix, wires=self.wires)
+        self._global_sptm_is_shared = True
         return self._global_sptm
 
     @global_sptm.setter
@@ -2029,6 +2046,7 @@ class NonInteractingFermionicDevice(qml.devices.Device):
             value = SingleParticleTransitionMatrixOperation(value, wires=self.wires)
         matrix = qml.math.cast(value.sptm_matrix(), self._r_dtype_name)
         self._global_sptm = SingleParticleTransitionMatrixOperation(matrix, wires=value.wires, **value._hyperparameters)
+        self._global_sptm_is_shared = True
         self.transition_matrix = None
 
     @property

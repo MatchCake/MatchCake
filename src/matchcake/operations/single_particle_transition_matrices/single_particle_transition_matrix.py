@@ -1,4 +1,4 @@
-from typing import Any, Callable, Iterable, List, Literal, Optional, Sequence, Union
+from typing import Any, Callable, Iterable, List, Literal, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pennylane as qml
@@ -74,6 +74,8 @@ class SingleParticleTransitionMatrixOperation(Operation):
     DEFAULT_CHECK_REAL = True
     REAL_PART_ATOL = 1e-6
     MINUS_ONE_EIGVAL_ATOL = 1e-8
+    # Set by the module of DisjointSptmOperation, which cannot be imported from here.
+    DISJOINT_PRODUCT_CLASS: Any = None
 
     @staticmethod
     def make_wires_continuous(wires: Wires):
@@ -215,6 +217,123 @@ class SingleParticleTransitionMatrixOperation(Operation):
                     f"imaginary part is {max_abs_imaginary}, which exceeds {atol}."
                 )
         return qml.math.real(matrix)
+
+    @staticmethod
+    def _writable_like(matrix: TensorLike, blocks: Sequence[TensorLike]) -> Optional[TensorLike]:
+        """Return ``matrix`` in the backend, dtype and batch shape its product with ``blocks`` has.
+
+        The matrix is returned as it is when it already has them, and as a new array otherwise. Torch
+        has priority over numpy, as in :attr:`casting_priorities`. The dtype is the promotion of all the
+        dtypes, and a batched block makes the matrix batched.
+
+        :param matrix: The matrix whose columns are about to be updated, shape (..., 2n, 2n).
+        :type matrix: TensorLike
+        :param blocks: The blocks it is multiplied by, each of shape (..., 2k, 2k).
+        :type blocks: Sequence[TensorLike]
+        :return: The matrix to write into, or None when a backend other than numpy and torch is
+            involved, which cannot be written in place.
+        :rtype: Optional[TensorLike]
+        """
+        interfaces = {qml.math.get_interface(tensor) for tensor in (matrix, *blocks)}
+        if not interfaces <= {"numpy", "torch"}:
+            return None
+        batch_sizes = [qml.math.shape(block)[0] for block in blocks if qml.math.ndim(block) > 2]
+        if "torch" in interfaces:
+            reference = next(tensor for tensor in (matrix, *blocks) if isinstance(tensor, torch.Tensor))
+            dtype = torch.as_tensor(matrix).dtype
+            for block in blocks:
+                dtype = torch.promote_types(dtype, torch.as_tensor(block).dtype)
+            matrix = torch.as_tensor(matrix, device=reference.device).to(dtype)
+            if batch_sizes and matrix.ndim == 2:
+                matrix = matrix.expand(batch_sizes[0], *matrix.shape).clone()
+            return matrix
+        numpy_dtype = np.result_type(matrix, *blocks)
+        if matrix.dtype != numpy_dtype:
+            matrix = matrix.astype(numpy_dtype)
+        if batch_sizes and matrix.ndim == 2:
+            matrix = np.broadcast_to(matrix, (batch_sizes[0], *matrix.shape)).copy()
+        return matrix
+
+    @staticmethod
+    def _block_like(block: TensorLike, matrix: TensorLike) -> TensorLike:
+        """Return ``block`` in the backend, dtype and device of ``matrix``, keeping its gradient.
+
+        :param block: A block, shape (..., 2k, 2k).
+        :type block: TensorLike
+        :param matrix: A numpy array or a torch tensor.
+        :type matrix: TensorLike
+        :return: The block, shape (..., 2k, 2k).
+        :rtype: TensorLike
+        """
+        if isinstance(matrix, torch.Tensor):
+            return torch.as_tensor(block, device=matrix.device).to(matrix.dtype)
+        return np.asarray(block, dtype=matrix.dtype)
+
+    @staticmethod
+    def multiply_columns(matrix: TensorLike, blocks: Sequence[Tuple[int, TensorLike]]) -> Optional[TensorLike]:
+        r"""Multiply a matrix on the right by blocks acting on disjoint ranges of columns.
+
+        The product of ``matrix`` with a block padded with the identity only changes the columns the
+        block acts on,
+
+        .. math::
+            R_{:, [s, s + 2k)} \leftarrow R_{:, [s, s + 2k)} B,
+
+        which costs :math:`O(n k^2)` instead of the :math:`O(n^3)` of the padded product. Blocks of the
+        same size are applied in one batched product. The columns are written in place, so ``matrix``
+        must not be shared with a caller that still needs its previous value, see
+        :meth:`_writable_like` for when a new array is returned instead.
+
+        :param matrix: The matrix, shape (2n, 2n) or (b, 2n, 2n), a numpy array or a torch tensor.
+        :type matrix: TensorLike
+        :param blocks: ``(start, block)`` pairs: the first column each block acts on and the block,
+            shape (2k, 2k) or (b, 2k, 2k). The column ranges must not overlap.
+        :type blocks: Sequence[Tuple[int, TensorLike]]
+        :return: The product, shape (2n, 2n) or (b, 2n, 2n), or None when a backend other than numpy
+            and torch is involved.
+        :rtype: Optional[TensorLike]
+        """
+        matrix = SingleParticleTransitionMatrixOperation._writable_like(matrix, [block for _, block in blocks])
+        if matrix is None:
+            return None
+        if isinstance(matrix, torch.Tensor) and matrix.is_leaf and matrix.requires_grad:
+            matrix = matrix.clone()
+        by_size: dict = {}
+        for start, block in blocks:
+            block = SingleParticleTransitionMatrixOperation._block_like(block, matrix)
+            by_size.setdefault(block.shape[-1], []).append((start, block))
+        for size, group in by_size.items():
+            if len(group) == 1:
+                start, block = group[0]
+                columns = matrix[..., :, start : start + size]
+                if isinstance(columns, torch.Tensor):
+                    # autograd keeps the columns for the gradient of the block, they are overwritten below
+                    columns = columns.clone()
+                matrix[..., :, start : start + size] = columns @ block
+                continue
+            # indices: (n_blocks, 2k), columns: (..., 2n, n_blocks, 2k)
+            indices: Any = np.asarray([start for start, _ in group])[:, None] + np.arange(size)[None, :]
+            if isinstance(matrix, torch.Tensor):
+                indices = torch.as_tensor(indices, device=matrix.device)
+            if all(block.ndim == 2 for _, block in group):
+                stacked = qml.math.stack([block for _, block in group])  # (n_blocks, 2k, 2k)
+            else:
+                batch_shape = (matrix.shape[0], size, size)
+                stacked = qml.math.stack(  # (b, n_blocks, 2k, 2k)
+                    [
+                        block.expand(batch_shape)
+                        if isinstance(block, torch.Tensor)
+                        else np.broadcast_to(block, batch_shape)
+                        for _, block in group
+                    ],
+                    axis=1,
+                )
+            columns = matrix[..., :, indices]
+            if stacked.ndim == 3:
+                matrix[..., :, indices] = qml.math.einsum("...nls,lst->...nlt", columns, stacked)
+            else:
+                matrix[..., :, indices] = qml.math.einsum("bnls,blst->bnlt", columns, stacked)
+        return matrix
 
     @classmethod
     def clip_angles(cls, angles):
@@ -389,7 +508,9 @@ class SingleParticleTransitionMatrixOperation(Operation):
     ) -> "Optional[SingleParticleTransitionMatrixOperation]":
         """
         This method will contract multiple SingleParticleTransitionMatrixOperations into a single one.
-        Each operation must act on a different set of wires.
+        Each operation must act on a different set of wires. The operations are kept as separate
+        blocks, see :class:`DisjointSptmOperation`, and are only written into one dense matrix when
+        that matrix is asked for.
 
         :param ops: The operations to contract.
         :param kwargs: Additional keyword arguments.
@@ -404,28 +525,7 @@ class SingleParticleTransitionMatrixOperation(Operation):
         if len(ops) == 1:
             return ops[0]
 
-        all_wires = Wires.all_wires([op.cs_wires for op in ops], sort=True)
-        all_wires = cls.make_wires_continuous(all_wires)
-        batch_sizes = [op.batch_size for op in ops if op.batch_size is not None] + [None]
-        batch_size = batch_sizes[0]
-        if batch_size is None:
-            matrix = np.eye(2 * len(all_wires), dtype=complex)
-        else:
-            matrix = np.zeros((batch_size, 2 * len(all_wires), 2 * len(all_wires)), dtype=complex)
-            matrix[:, ...] = np.eye(2 * len(all_wires), dtype=matrix.dtype)
-
-        ops_sptms = [op.sptm_matrix() for op in ops]
-        ops_sptms = utils.math.convert_tensors_to_same_type_and_cast_to(
-            ops_sptms, cls.casting_priorities, dtype=complex
-        )
-        matrix = utils.math.convert_like_and_cast_to(matrix, ops_sptms[0], dtype=complex)
-
-        for op, op_matrix in zip(ops, ops_sptms):
-            wire0_idx = all_wires.index(op.sorted_wires[0])
-            slice_0 = slice(2 * wire0_idx, 2 * wire0_idx + op_matrix.shape[-2])
-            slice_1 = slice(2 * wire0_idx, 2 * wire0_idx + op_matrix.shape[-1])
-            matrix[..., slice_0, slice_1] = utils.math.convert_and_cast_like(op_matrix, matrix)
-        return SingleParticleTransitionMatrixOperation(matrix, wires=all_wires, **kwargs)
+        return cls.DISJOINT_PRODUCT_CLASS(ops, **kwargs)
 
     @classmethod
     def random_params(cls, batch_size=None, **kwargs):
@@ -594,14 +694,48 @@ class SingleParticleTransitionMatrixOperation(Operation):
         all_wires = Wires.all_wires([self.wires, other.wires], sort=True)
         wires = self.make_wires_continuous(all_wires)
 
-        _self = self.pad(wires).sptm_matrix()
-        other = self.from_operation(other, **self._hyperparameters).pad(wires).sptm_matrix()
+        padded = self.pad(wires)._matrix
+        if qml.math.get_interface(padded) in ("numpy", "torch"):
+            # pad returns the stored matrix itself when the wires are already the right ones
+            padded = padded.clone() if isinstance(padded, torch.Tensor) else np.array(padded)
+        matrix = self.multiply_columns(padded, other.column_blocks(wires))
+        if matrix is None:
+            matrix = qml.math.einsum("...ij,...jk->...ik", padded, other.pad(wires).sptm_matrix())
+        return SingleParticleTransitionMatrixOperation(matrix, wires=wires, **self._hyperparameters)
 
-        return SingleParticleTransitionMatrixOperation(
-            qml.math.einsum("...ij,...jk->...ik", _self, other),
-            wires=wires,
-            **self._hyperparameters,
-        )
+    def __imatmul__(self, other):
+        """Multiply this operation on the right by ``other``, writing into its own matrix when possible.
+
+        When ``other`` acts within the wires of this operation, only the columns it acts on are
+        updated, in place, and this operation is returned. Any tensor that was read from this
+        operation before then holds the new values too. Otherwise the result is that of ``self @ other``.
+
+        :param other: The operation to multiply by.
+        :type other: SingleParticleTransitionMatrixOperation
+        :return: The product.
+        :rtype: SingleParticleTransitionMatrixOperation
+        """
+        if not isinstance(other, SingleParticleTransitionMatrixOperation):
+            raise ValueError(f"Cannot multiply {self.__class__.__name__} with {type(other)}")
+        wires = self.make_wires_continuous(Wires.all_wires([self.wires, other.wires], sort=True))
+        if wires != self.cs_wires or self.blocks is not None:
+            return self @ other
+        matrix = self.multiply_columns(self._matrix, other.column_blocks(wires))
+        if matrix is None:
+            return self @ other
+        self._matrix = matrix
+        self.data = (matrix,)
+        return self
+
+    def column_blocks(self, wires: Wires) -> List[Tuple[int, TensorLike]]:
+        """Return the blocks of this operation with the first column each acts on in a larger matrix.
+
+        :param wires: The continuous wires of the larger matrix, which must contain those of this operation.
+        :type wires: Wires
+        :return: ``(start, block)`` pairs, the blocks having shape (..., 2k, 2k).
+        :rtype: List[Tuple[int, TensorLike]]
+        """
+        return [(2 * wires.index(self.cs_wires[0]), self._matrix)]
 
     def adjoint(self) -> "SingleParticleTransitionMatrixOperation":
         return SingleParticleTransitionMatrixOperation(
@@ -749,6 +883,15 @@ class SingleParticleTransitionMatrixOperation(Operation):
         matrix = self.sptm_matrix() if exponent >= 0 else dagger(self.sptm_matrix())
         powered = qml.math.linalg.matrix_power(matrix, abs(exponent))
         return SingleParticleTransitionMatrixOperation(powered, wires=self.wires, **self._hyperparameters)
+
+    @property
+    def blocks(self) -> Optional[List["SingleParticleTransitionMatrixOperation"]]:
+        """The operations on disjoint wires this operation is the product of, if it is kept as such.
+
+        :return: None for an operation stored as one matrix.
+        :rtype: Optional[List[SingleParticleTransitionMatrixOperation]]
+        """
+        return None
 
     @property
     def single_particle_transition_matrix(self) -> TensorLike:
