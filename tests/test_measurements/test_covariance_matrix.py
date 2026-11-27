@@ -63,23 +63,23 @@ class TestCovarianceMatrix:
         measurement = covariance_matrix(wires=[1, 2])
         assert isinstance(measurement, CovarianceMatrixMP)
         assert measurement.wires == Wires([1, 2])
-        assert measurement.fermionic is False
+        assert measurement.gate_barrier is True
         assert measurement.numeric_type is float
         assert str(measurement) == "covariance_matrix"
         assert measurement.shape() == (4, 4)
         assert covariance_matrix().shape(num_device_wires=3) == (6, 6)
         assert covariance_matrix().wires == Wires([])
 
-    def test_hash_depends_on_wires_and_fermionic(self):
+    def test_hash_depends_on_wires_and_gate_barrier(self):
         assert covariance_matrix(wires=[0, 1]).hash == covariance_matrix(wires=[0, 1]).hash
         assert covariance_matrix(wires=[0, 1]).hash != covariance_matrix(wires=[1, 2]).hash
-        assert covariance_matrix(wires=[0, 2]).hash != covariance_matrix(wires=[0, 2], fermionic=True).hash
+        assert covariance_matrix(wires=[0, 2]).hash != covariance_matrix(wires=[0, 2], gate_barrier=False).hash
 
-    def test_flatten_round_trip_keeps_fermionic(self):
-        measurement = covariance_matrix(wires=[0, 2], fermionic=True)
+    def test_flatten_round_trip_keeps_gate_barrier(self):
+        measurement = covariance_matrix(wires=[0, 2], gate_barrier=False)
         rebuilt = CovarianceMatrixMP._unflatten(*measurement._flatten())
         assert rebuilt.wires == measurement.wires
-        assert rebuilt.fermionic is True
+        assert rebuilt.gate_barrier is False
 
     def test_is_queued_in_a_tape(self):
         with qml.tape.QuantumTape() as tape:
@@ -101,10 +101,11 @@ class TestCovarianceMatrix:
 
     @pytest.mark.parametrize("device_name", ["default.qubit", "default.mixed", "nif.qubit"])
     @pytest.mark.parametrize("wires", [[0, 2], [1, 0], [0, 3]])
-    def test_other_wires_need_the_fermionic_opt_in(self, device_name, wires, full_covariance):
-        with pytest.raises(ValueError, match="fermionic=True"):
+    def test_other_wires_need_to_give_up_the_gate_barrier(self, device_name, wires, full_covariance):
+        with pytest.raises(ValueError, match="gate_barrier=False"):
             self.run(device_name, lambda: covariance_matrix(wires=wires))
-        result = self.run(device_name, lambda: covariance_matrix(wires=wires, fermionic=True))
+        with pytest.warns(UserWarning, match="without gate barriers"):
+            result = self.run(device_name, lambda: covariance_matrix(wires=wires, gate_barrier=False))
         indices = np.stack([2 * np.asarray(wires), 2 * np.asarray(wires) + 1], axis=1).reshape(-1)
         np.testing.assert_allclose(
             qml.math.toarray(result),

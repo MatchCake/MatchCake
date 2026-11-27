@@ -89,6 +89,11 @@ class TestGaussianStatePrepBase:
         prep = GaussianStatePrep(np.zeros((4, 4)), wires=[0, 1], displacement_vector=displacements)
         assert prep.is_displaced()
 
+    def test_no_barrier_by_default(self):
+        assert ProductState(self.random_amplitudes(3), wires=range(3)).barriers == ()
+        assert GaussianStatePrep(np.zeros((4, 4)), wires=[0, 1]).barriers == ()
+        assert GaussianStatePrep(np.zeros((4, 4)), wires=[0, 1], barriers=[1]).barriers == (1,)
+
     def test_to_wires_is_part_of_the_interface(self):
         prep = ProductState.from_basis_state(np.array([1]), wires=[1])
         extended = prep.to_wires([0, 1])

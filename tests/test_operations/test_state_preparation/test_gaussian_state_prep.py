@@ -1,3 +1,6 @@
+import copy
+import pickle
+
 import numpy as np
 import pennylane as qml
 import pytest
@@ -299,6 +302,78 @@ class TestGaussianStatePrep:
         else:
             with pytest.raises(NotImplementedError, match="nonzero displacement vector"):
                 op.decomposition()
+
+    def test_no_barrier_by_default(self):
+        op = GaussianStatePrep(self.random_covariance(2), wires=[0, 1])
+        assert op.barriers == ()
+        assert GaussianStatePrep(self.random_covariance(2), wires=[0, 1], barriers=[]).barriers == ()
+        assert ProductState.from_basis_state(np.array([1, 0]), wires=[0, 1]).barriers == ()
+
+    @pytest.mark.parametrize(
+        "barriers, expected",
+        [([2], (2,)), ((2, 0, 2), (0, 2)), (np.array([1, 2]), (1, 2)), ([np.int64(1)], (1,)), (range(3), (0, 1, 2))],
+    )
+    def test_barriers_are_sorted_positions(self, barriers, expected):
+        op = GaussianStatePrep(self.random_covariance(3), wires=[0, 1, 2], barriers=barriers)
+        assert op.barriers == expected
+        assert all(type(barrier) is int for barrier in op.barriers)
+
+    @pytest.mark.parametrize("barriers", [[3], [-1], [1.0], ["1"], [True], 1, "01", [[0, 1]]])
+    def test_init_rejects_bad_barriers(self, barriers):
+        with pytest.raises(ValueError, match="[Bb]arrier"):
+            GaussianStatePrep(self.random_covariance(3), wires=[0, 1, 2], barriers=barriers)
+
+    def test_barriers_take_part_in_equality_and_hash(self):
+        covariance = self.random_covariance(3)
+        plain = GaussianStatePrep(covariance, wires=[0, 1, 2])
+        with_barrier = GaussianStatePrep(covariance, wires=[0, 1, 2], barriers=[1])
+        assert not qml.equal(plain, with_barrier)
+        assert not qml.equal(with_barrier, plain)
+        assert not qml.equal(with_barrier, GaussianStatePrep(covariance, wires=[0, 1, 2], barriers=[2]))
+        assert qml.equal(with_barrier, GaussianStatePrep(covariance, wires=[0, 1, 2], barriers=(1,)))
+        assert plain.hash != with_barrier.hash
+        assert with_barrier.hash == GaussianStatePrep(covariance, wires=[0, 1, 2], barriers=[1]).hash
+
+    @pytest.mark.parametrize("with_displacement", [False, True])
+    def test_barriers_survive_the_copies_of_the_operation(self, with_displacement):
+        product_state = self.product_state(3)
+        displacement = product_state.displacement_vector if with_displacement else None
+        op = GaussianStatePrep(
+            product_state.covariance_matrix, wires=[0, 1, 2], displacement_vector=displacement, barriers=[1, 2]
+        )
+        copies = [
+            copy.copy(op),
+            copy.deepcopy(op),
+            pickle.loads(pickle.dumps(op)),
+            GaussianStatePrep._unflatten(*op._flatten()),
+            qml.ops.functions.bind_new_parameters(op, op.parameters),
+            op.map_wires({0: "a", 1: "b", 2: "c"}),
+        ]
+        for copied in copies:
+            assert copied.barriers == (1, 2)
+            assert copied.num_params == op.num_params
+        assert qml.equal(copies[1], op)
+        assert copies[-1].wires == Wires(["a", "b", "c"])
+
+    @pytest.mark.parametrize(
+        "wires, new_wires, barriers, expected",
+        [
+            ([0, 1, 2], [0, 1, 2], (1,), (1,)),
+            ([0, 1, 2], [0, 1, 2, 3, 4], (1, 2), (1, 2)),
+            ([2, 3], [0, 1, 2, 3], (0,), (2,)),
+            ([0, 2, 3], [0, 1, 2, 3, 4], (1,), (2,)),
+            ([1, 3], [0, 1, 2, 3, 4], (0, 1), (1, 3)),
+        ],
+    )
+    def test_to_wires_keeps_the_barriers_before_their_wires(self, wires, new_wires, barriers, expected):
+        op = GaussianStatePrep(self.random_covariance(len(wires)), wires=wires, barriers=barriers)
+        assert op.to_wires(new_wires).barriers == expected
+
+    def test_decomposition_rejects_a_state_with_barriers(self):
+        op = GaussianStatePrep(self.random_covariance(2), wires=[0, 1], barriers=[1])
+        with pytest.raises(NotImplementedError, match="gate barriers"):
+            op.decomposition()
+        assert len(GaussianStatePrep(self.random_covariance(2), wires=[0, 1], barriers=[]).decomposition()) == 1
 
     def test_equal_sees_the_displacement_vector(self):
         product_state = self.product_state(2)

@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import Tuple
 
 import numpy as np
 import pennylane as qml
@@ -26,7 +27,8 @@ class GaussianStatePrepBase(StatePrepBase):
     samples.
 
     Subclasses provide :attr:`covariance_matrix`, :meth:`to_wires` and, when the state is not an even
-    fermionic Gaussian state, :attr:`displacement_vector`.
+    fermionic Gaussian state, :attr:`displacement_vector`. A state obtained by tracing out wires can
+    also have :attr:`barriers`.
 
     :cvar DISPLACEMENT_ATOL: Absolute tolerance under which a displacement vector is considered zero.
     """
@@ -59,6 +61,38 @@ class GaussianStatePrepBase(StatePrepBase):
         :rtype: bool
         """
         return not np.allclose(to_numpy(self.displacement_vector), 0.0, atol=self.DISPLACEMENT_ATOL)
+
+    @property
+    def barriers(self) -> Tuple[int, ...]:
+        r"""
+        Positions of the gate barriers of the prepared state, in the order of its wires.
+
+        A barrier at position :math:`p` sits just before the wire at position :math:`p`. It marks wires
+        that were traced out there, and whose Jordan-Wigner strings are still hidden in the Majorana
+        operators of the wires at positions :math:`\geq p`. The expectation value of a Pauli word is the
+        one of the reduced state of the qubits exactly when, for every barrier, the word has an even
+        number of :math:`X` and :math:`Y` on the wires at positions :math:`\geq p`. A device therefore
+        refuses the gates that act on both sides of a barrier and the observables that break this rule.
+
+        :return: The sorted positions of the barriers, empty by default.
+        :rtype: Tuple[int, ...]
+        """
+        return ()
+
+    @property
+    def odd_part_dropped(self) -> bool:
+        r"""
+        Whether the prepared state stands for a state whose displacement vector was dropped.
+
+        A reduced state loses its displacement vector when wires are traced out before its first wire:
+        its Pauli words with an odd number of :math:`X` and :math:`Y` then depend on the removed wires.
+        The barrier left there must be kept as long as a wire remains on its right, even after wires are
+        added and removed again on its left.
+
+        :return: ``True`` when a displacement vector was dropped, ``False`` by default.
+        :rtype: bool
+        """
+        return False
 
     @property
     @abstractmethod

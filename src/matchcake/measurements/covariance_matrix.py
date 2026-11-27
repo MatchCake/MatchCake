@@ -1,3 +1,4 @@
+import warnings
 from typing import Optional
 
 import pennylane as qml
@@ -16,15 +17,15 @@ class CovarianceMatrixMP(StateMeasurement):
 
     :param wires: The wires to keep. ``None`` keeps all the wires of the device.
     :type wires: Optional[Wires]
-    :param fermionic: Whether wires that do not form a contiguous block in register order are allowed,
-        in which case the fermionic reduced state is returned.
-    :type fermionic: bool
+    :param gate_barrier: Whether to refuse the wires for which the covariance matrix alone, without gate
+        barriers, would describe the reduced state of the fermionic modes and not of the qubits.
+    :type gate_barrier: bool
     """
 
     _shortname = "covariance_matrix"
 
-    def __init__(self, wires: Optional[Wires] = None, fermionic: bool = False):
-        self.fermionic = bool(fermionic)
+    def __init__(self, wires: Optional[Wires] = None, gate_barrier: bool = True):
+        self.gate_barrier = bool(gate_barrier)
         super().__init__(wires=wires)
 
     def __str__(self) -> str:
@@ -43,7 +44,17 @@ class CovarianceMatrixMP(StateMeasurement):
         """
         wire_order = Wires(wire_order)
         wire_indices = wire_order.indices(self.wires) if self.wires else list(range(len(wire_order)))
-        CovarianceMatrixToolbox.validate_reduced_wire_indices(wire_indices, fermionic=self.fermionic)
+        CovarianceMatrixToolbox.validate_reduced_wire_indices(wire_indices, allow_gaps=True)
+        if not CovarianceMatrixToolbox.are_wires_contiguous(wire_indices):
+            if self.gate_barrier:
+                raise ValueError(
+                    f"The kept wires (register positions {list(wire_indices)}) are not a contiguous block "
+                    f"listed in register order. A covariance matrix cannot carry the gate barriers that the "
+                    f"removed wires leave between them. Use matchcake.reduced_state on nif.qubit to get the "
+                    f"reduced state with its barriers, or pass gate_barrier=False to get the covariance "
+                    f"matrix of the reduced state of the fermionic modes."
+                )
+            warnings.warn(CovarianceMatrixToolbox.FERMIONIC_REDUCTION_WARNING, UserWarning, stacklevel=2)
         return CovarianceMatrixToolbox.reduce(CovarianceMatrixToolbox.from_density_matrix(density_matrix), wire_indices)
 
     def process_state(self, state: TensorLike, wire_order: Wires) -> TensorLike:
@@ -74,12 +85,12 @@ class CovarianceMatrixMP(StateMeasurement):
         return 2 * n_wires, 2 * n_wires
 
     def _flatten(self):
-        metadata = (("wires", self.raw_wires), ("fermionic", self.fermionic))
+        metadata = (("wires", self.raw_wires), ("gate_barrier", self.gate_barrier))
         return (None, None), metadata
 
     @property
     def hash(self) -> int:
-        fingerprint = (self.__class__.__name__, tuple(self.wires.tolist()), self.fermionic)
+        fingerprint = (self.__class__.__name__, tuple(self.wires.tolist()), self.gate_barrier)
         return hash(fingerprint)
 
     @property
@@ -87,7 +98,7 @@ class CovarianceMatrixMP(StateMeasurement):
         return float
 
 
-def covariance_matrix(wires: Optional[WiresLike] = None, fermionic: bool = False) -> CovarianceMatrixMP:
+def covariance_matrix(wires: Optional[WiresLike] = None, gate_barrier: bool = True) -> CovarianceMatrixMP:
     r"""
     Majorana covariance matrix of the state on a subset of the wires, the other wires being traced out.
 
@@ -118,16 +129,19 @@ def covariance_matrix(wires: Optional[WiresLike] = None, fermionic: bool = False
     The kept wires must form a contiguous block listed in register order. Otherwise the Jordan-Wigner
     strings of the kept Majorana operators run through the removed wires, and the principal submatrix
     describes the reduced state of the fermionic modes, which is not the reduced state of the qubits.
-    Pass ``fermionic=True`` to get that fermionic reduced state.
+    A matrix cannot carry the gate barriers that make this safe: use :func:`matchcake.reduced_state` to
+    get the reduced state with its barriers, or pass ``gate_barrier=False`` to get the covariance matrix
+    of the fermionic reduced state, with a warning.
 
     The measurement is analytic, differentiable, and supported by ``nif.qubit`` as well as by the dense
     simulators (``default.qubit``, ``default.mixed``).
 
     :param wires: The wires to keep. ``None`` keeps all the wires of the device.
     :type wires: Optional[WiresLike]
-    :param fermionic: Whether to allow kept wires that are not a contiguous block in register order.
-    :type fermionic: bool
+    :param gate_barrier: Whether to refuse kept wires that are not a contiguous block in register order.
+        With ``False``, the covariance matrix of the fermionic reduced state is returned for them.
+    :type gate_barrier: bool
     :return: The measurement process, of result shape ``(2k, 2k)`` for ``k`` kept wires.
     :rtype: CovarianceMatrixMP
     """
-    return CovarianceMatrixMP(wires=None if wires is None else Wires(wires), fermionic=fermionic)
+    return CovarianceMatrixMP(wires=None if wires is None else Wires(wires), gate_barrier=gate_barrier)

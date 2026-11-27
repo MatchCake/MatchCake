@@ -133,15 +133,17 @@ class TestNonInteractingFermionicDeviceReducedState:
     @pytest.mark.parametrize("measurement", [qml.vn_entropy, qml.purity, qml.density_matrix, mc.covariance_matrix])
     @pytest.mark.parametrize("wires", [[0, 2], [1, 0], [0, 1, 3]])
     def test_non_contiguous_wires_are_rejected(self, measurement, wires):
-        with pytest.raises(ValueError, match="fermionic=True"):
+        with pytest.raises(ValueError, match="gate_barrier=False"):
             self.run("nif.qubit", lambda: measurement(wires=wires))
 
     @pytest.mark.parametrize("wires", [[0, 2], [1, 3], [0, 2, 4], [2, 0]])
     def test_fermionic_covariance_matrix_matches_dense(self, wires):
-        self.assert_matches_default_qubit(lambda: mc.covariance_matrix(wires=wires, fermionic=True))
+        with pytest.warns(UserWarning, match="without gate barriers"):
+            self.assert_matches_default_qubit(lambda: mc.covariance_matrix(wires=wires, gate_barrier=False))
 
     def test_fermionic_reduced_state_differs_from_the_qubit_one(self):
-        fermionic_covariance = self.run("nif.qubit", lambda: mc.covariance_matrix(wires=[0, 2], fermionic=True))
+        with pytest.warns(UserWarning, match="without gate barriers"):
+            fermionic_covariance = self.run("nif.qubit", lambda: mc.covariance_matrix(wires=[0, 2], gate_barrier=False))
         qubit_density = self.run("default.qubit", lambda: qml.density_matrix(wires=[0, 2]))
         difference = np.abs(CovarianceMatrixToolbox.to_density_matrix(fermionic_covariance) - qubit_density).max()
         assert difference > ATOL_MATRIX_COMPARISON
@@ -265,10 +267,32 @@ class TestNonInteractingFermionicDeviceReducedState:
         )
 
     def test_reduced_state_options(self, prepared_device):
-        reduced_state = prepared_device.reduced_state([0, 2], fermionic=True, reduced_wires=["a", "b"])
+        with pytest.warns(UserWarning, match="without gate barriers"):
+            reduced_state = prepared_device.reduced_state([0, 2], gate_barrier=False, reduced_wires=["a", "b"])
         assert reduced_state.wires == Wires(["a", "b"])
-        with pytest.raises(ValueError, match="fermionic=True"):
-            prepared_device.reduced_state([0, 2])
+        assert reduced_state.barriers == ()
+        reduced_state = prepared_device.reduced_state([0, 2], reduced_wires=["a", "b"])
+        assert reduced_state.wires == Wires(["a", "b"])
+        assert reduced_state.barriers == (1,)
+        with pytest.raises(ValueError, match="gate_barrier=False"):
+            prepared_device.reduced_covariance_matrix([0, 2])
+
+    def test_reduced_state_in_another_wire_order(self, prepared_device):
+        with pytest.raises(ValueError, match="device wire order"):
+            prepared_device.reduced_state([2, 0])
+        with pytest.warns(UserWarning, match="without gate barriers"):
+            reduced_state = prepared_device.reduced_state([1, 0], gate_barrier=False)
+        with pytest.warns(UserWarning, match="without gate barriers"):
+            expected = prepared_device.reduced_covariance_matrix([1, 0], gate_barrier=False)
+        np.testing.assert_allclose(
+            reduced_state.covariance_matrix, expected, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
+        )
+
+    def test_reduced_state_without_gate_barrier_does_not_warn_when_none_is_needed(self, prepared_device, recwarn):
+        reduced_state = prepared_device.reduced_state([0, 1, 2], gate_barrier=False)
+        prepared_device.reduced_covariance_matrix([1, 2, 3], gate_barrier=False)
+        assert reduced_state.barriers == ()
+        assert not [warning for warning in recwarn if "gate barriers" in str(warning.message)]
 
     def test_partial_trace_is_the_complement_of_reduced_state(self, prepared_device):
         np.testing.assert_allclose(
@@ -278,14 +302,15 @@ class TestNonInteractingFermionicDeviceReducedState:
             rtol=RTOL_MATRIX_COMPARISON,
         )
         assert prepared_device.partial_trace([0], reduced_wires=[5, 6, 7, 8]).wires == Wires([5, 6, 7, 8])
-        fermionic_state = prepared_device.partial_trace([1], fermionic=True)
+        with pytest.warns(UserWarning, match="without gate barriers"):
+            fermionic_state = prepared_device.partial_trace([1], gate_barrier=False)
         assert fermionic_state.wires == Wires([0, 1, 2, 3])
+        assert fermionic_state.barriers == ()
+        assert prepared_device.partial_trace([1]).barriers == (1,)
 
     def test_partial_trace_rejects_bad_wires(self, prepared_device):
         with pytest.raises(ValueError, match="not wires of the device"):
             prepared_device.partial_trace([9])
-        with pytest.raises(ValueError, match="fermionic=True"):
-            prepared_device.partial_trace([1])
         with pytest.raises(ValueError, match="At least one wire"):
             prepared_device.partial_trace(range(N_WIRES))
 

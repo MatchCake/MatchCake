@@ -2,6 +2,7 @@ import numpy as np
 import pennylane as qml
 import pytest
 import torch
+from pennylane.exceptions import DeviceError
 
 import matchcake as mc
 from matchcake.operations import CompRxRx, CompRyRy, CompRzRz, fSWAP
@@ -232,10 +233,12 @@ class TestNonInteractingFermionicDeviceReducedProductState:
         full_majoranas = self.majoranas(N_WIRES)
         kept_majoranas = [full_majoranas[2 * wire + offset] for wire in kept_wires for offset in (0, 1)]
         expected = self.covariance_of(lambda operator: state.conj() @ operator @ state, kept_majoranas)
-        with pytest.raises(ValueError, match="fermionic=True"):
+        with pytest.raises(ValueError, match="gate_barrier=False"):
             prepared_device.reduced_covariance_matrix(kept_wires)
+        with pytest.warns(UserWarning, match="without gate barriers"):
+            reduced_covariance = prepared_device.reduced_covariance_matrix(kept_wires, gate_barrier=False)
         np.testing.assert_allclose(
-            qml.math.toarray(prepared_device.reduced_covariance_matrix(kept_wires, fermionic=True)),
+            qml.math.toarray(reduced_covariance),
             expected,
             atol=ATOL_MATRIX_COMPARISON,
             rtol=RTOL_MATRIX_COMPARISON,
@@ -304,39 +307,57 @@ class TestNonInteractingFermionicDeviceReducedProductState:
             )
 
     @pytest.mark.parametrize(
-        "kept_wires, fermionic",
-        [([1, 2], False), ([3, 4], False), ([4], False), ([1, 2, 3, 4], False), ([0, 2], True), ([1, 0], True)],
+        "kept_wires, barriers, num_params",
+        [
+            ([1, 2], (0,), 1),
+            ([3, 4], (0,), 1),
+            ([4], (0,), 1),
+            ([1, 2, 3, 4], (0,), 1),
+            ([0, 2], (1,), 2),
+            ([1, 3, 4], (0, 1), 1),
+        ],
     )
-    def test_reduced_state_away_from_the_first_wires_is_rejected(self, prepared_device, kept_wires, fermionic):
-        with pytest.raises(NotImplementedError, match="first wires of the device"):
-            prepared_device.reduced_state(kept_wires, fermionic=fermionic)
+    def test_barriers_of_the_reduced_state(self, prepared_device, kept_wires, barriers, num_params):
+        reduced_state = prepared_device.reduced_state(kept_wires)
+        assert reduced_state.barriers == barriers
+        assert reduced_state.num_params == num_params
 
-    def test_partial_trace_of_the_first_wires_is_rejected(self, prepared_device):
-        with pytest.raises(NotImplementedError, match="drop_displacement=True"):
-            prepared_device.partial_trace([0, 1])
+    def test_reduced_state_without_gate_barrier_keeps_the_displacement_vector(self, prepared_device):
+        with pytest.warns(UserWarning, match="without gate barriers"):
+            reduced_state = prepared_device.reduced_state([1, 2], gate_barrier=False)
+        assert reduced_state.barriers == ()
+        assert reduced_state.num_params == 2
+        np.testing.assert_allclose(
+            qml.math.toarray(reduced_state.displacement_vector),
+            qml.math.toarray(prepared_device.displacement_vector)[2:6],
+            atol=ATOL_MATRIX_COMPARISON,
+            rtol=RTOL_MATRIX_COMPARISON,
+        )
 
-    @pytest.mark.parametrize("kept_wires", [[0, 1], [1, 2], [3, 4], [2, 3, 4], [1, 2, 3, 4]])
+    @pytest.mark.parametrize("kept_wires", [[1, 2], [3, 4], [2, 3, 4], [1, 2, 3, 4]])
     @pytest.mark.parametrize("letters", ["ZI", "ZZ", "XX", "XY", "YX", "YY", "XI"])
-    def test_follow_up_circuit_without_the_displacement_vector(
-        self, prepared_device, operations, angles, kept_wires, letters
-    ):
+    def test_follow_up_circuit_behind_a_leading_barrier(self, prepared_device, operations, angles, kept_wires, letters):
         r"""
-        Reduce the state to a block of wires without its displacement vector, run a second circuit from
-        it, and compare with the same second circuit applied to those wires of the full system. The
-        probabilities and the words with an even number of X and Y are exact, the other words vanish.
+        Reduce the state to a block of wires that does not start at the first wire, run a second circuit
+        from it, and compare with the same second circuit applied to those wires of the full system. The
+        probabilities and the words with an even number of X and Y are exact, the other words are refused.
         """
         n_kept = len(kept_wires)
-        reduced_state = prepared_device.reduced_state(kept_wires, drop_displacement=True)
+        reduced_state = prepared_device.reduced_state(kept_wires)
+        assert reduced_state.barriers == (0,)
         assert reduced_state.num_params == 1
         observable = qml.prod(*[getattr(qml, letter)(wire) for wire, letter in enumerate(letters) if letter != "I"])
         follow_up_operations = self.brick_wall(range(n_kept), 1, TEST_SEED + 2)
 
-        @qml.qnode(qml.device("nif.qubit", wires=n_kept))
-        def follow_up():
-            qml.apply(reduced_state)
-            for operation in follow_up_operations:
-                qml.apply(operation)
-            return qml.expval(observable), qml.probs()
+        def follow_up(measurement, state_prep=reduced_state):
+            @qml.qnode(qml.device("nif.qubit", wires=n_kept))
+            def circuit():
+                qml.apply(state_prep)
+                for operation in follow_up_operations:
+                    qml.apply(operation)
+                return measurement()
+
+            return circuit()
 
         final_state = self.state_vector(
             self.amplitudes_from_angles(angles), operations + self.brick_wall(kept_wires, 1, TEST_SEED + 2)
@@ -346,25 +367,33 @@ class TestNonInteractingFermionicDeviceReducedProductState:
             full_letters[wire] = letter
         word = self.pauli_word("".join(full_letters))
         exact_expval = (final_state.conj() @ word @ final_state).real.item()
-        is_even = (letters.count("X") + letters.count("Y")) % 2 == 0
-        if not is_even:
-            assert abs(exact_expval) > ATOL_APPROX_COMPARISON
         expected_probabilities = torch.diagonal(self.reduced_density_matrix(final_state, kept_wires)).real.numpy()
-        expval, probabilities = follow_up()
         np.testing.assert_allclose(
-            expval, exact_expval if is_even else 0.0, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
+            follow_up(qml.probs), expected_probabilities, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
         )
-        np.testing.assert_allclose(
-            probabilities, expected_probabilities, atol=ATOL_MATRIX_COMPARISON, rtol=RTOL_MATRIX_COMPARISON
-        )
+        if (letters.count("X") + letters.count("Y")) % 2 == 0:
+            np.testing.assert_allclose(
+                follow_up(lambda: qml.expval(observable)),
+                exact_expval,
+                atol=ATOL_MATRIX_COMPARISON,
+                rtol=RTOL_MATRIX_COMPARISON,
+            )
+            return
+        with pytest.raises(DeviceError, match="odd number of X and Y"):
+            follow_up(lambda: qml.expval(observable))
+        with pytest.warns(UserWarning, match="without gate barriers"):
+            unprotected_state = prepared_device.reduced_state(kept_wires, gate_barrier=False)
+        unprotected_expval = follow_up(lambda: qml.expval(observable), unprotected_state)
+        assert abs(float(unprotected_expval) - exact_expval) > ATOL_APPROX_COMPARISON
 
     def test_reporter_snippet(self):
         n_wires = 4
         device = mc.NIFDevice(wires=n_wires)
         amplitudes = self.amplitudes_from_angles(self.random_angles(n_wires))
         device.apply(ProductState(state=amplitudes, wires=device.wires))
-        reduced_state = device.partial_trace([0, 1], drop_displacement=True)
+        reduced_state = device.partial_trace([0, 1])
         assert reduced_state.num_params == 1
+        assert reduced_state.barriers == (0,)
         np.testing.assert_allclose(
             qml.math.toarray(reduced_state.covariance_matrix),
             qml.math.toarray(ProductState(amplitudes[2:], wires=[0, 1]).covariance_matrix),
