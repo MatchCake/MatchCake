@@ -150,7 +150,7 @@ class TestNonInteractingFermionicDeviceGateBarriers:
         """
         n_qubits = int(np.log2(state.shape[0]))
         tensor = state.reshape([2] * n_qubits).copy()
-        index = [slice(None)] * n_qubits
+        index: list = [slice(None)] * n_qubits
         index[first_qubit] = index[second_qubit] = 1
         tensor[tuple(index)] *= -1
         return tensor.reshape(-1)
